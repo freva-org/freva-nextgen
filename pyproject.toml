@@ -24,6 +24,7 @@ mypy = {version = "^1.4.1", extras = ["tests"]}
 black = {version = "^23.7.0", extras = ["tests"]}
 pytest-mypy = {version = "^0.10.3", extras = ["tests"]}
 pytest-mock = {version = "^3.11.1", extras = ["tests"]}
+mock = {version = "^5.1.0", extras = ["tests"]}
 
 [build-system]
 requires = ["poetry-core"]
