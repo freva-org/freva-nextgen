@@ -3,7 +3,7 @@
 branch = True
 omit = .converage*
 [report]
-fail_under = 90
+fail_under = 95
 # Regexes for lines to exclude from consideration
 exclude_lines =
     # Have to re-enable the standard pragma
