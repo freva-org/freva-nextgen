@@ -1,0 +1,6 @@
+# This is the default toml config file that is used by the rest API server.
+#
+[solr]
+hostname = "localhost"
+port = 8983
+core = "files"

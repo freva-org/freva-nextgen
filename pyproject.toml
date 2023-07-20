@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "databrowser"
+version = "2023.4.1"
+description = ""
+authors = ["DKRZ - CLINIT <freva@dkrz.de>"]
+readme = "README.md"
+packages = [{include = "databrowser", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+aiohttp = "^3.8.4"
+fastapi = "^0.95.1"
+typer = "^0.7.0"
+uvicorn = "^0.21.1"
+python-dotenv = "^1.0.0"
+python-dateutil = "^2.8.2"
+
+[tool.poetry.group.dev.dependencies]
+httpx = {version = "^0.24.1", extras = ["tests"]}
+pytest = {version = "^7.4.0", extras = ["tests"]}
+pytest-asyncio = {version = "^0.21.1", extras = ["tests"]}
+pytest-cov = {version = "^4.1.0", extras = ["tests"]}
+mypy = {version = "^1.4.1", extras = ["tests"]}
+black = {version = "^23.7.0", extras = ["tests"]}
+pytest-mypy = {version = "^0.10.3", extras = ["tests"]}
+pytest-mock = {version = "^3.11.1", extras = ["tests"]}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
