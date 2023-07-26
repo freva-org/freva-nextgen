@@ -33,7 +33,13 @@ jobs:
           poetry run python3 -m pytest -vv --cov=$PWD/src --cov-report=html:coverage_report --junitxml coverage.xml --cov-report xml $PWD/src/databrowser/tests
           poetry run python3 -m coverage report
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v3
+        with:
+          files: coverage.xml
+          fail_ci_if_error: true
+          verbose: true
+          flags: unittests
+
 
   docs:
     runs-on: ubuntu-latest
