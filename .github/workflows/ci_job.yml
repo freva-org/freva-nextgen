@@ -17,7 +17,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: "latest"
+          python-version: "3.11"
       - name: Set up services
         run: |
           docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
@@ -51,7 +51,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: "latest"
+          python-version: "3.11"
       - name: Set up services
         run: |
           docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
