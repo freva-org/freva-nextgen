@@ -30,7 +30,7 @@ jobs:
         run: poetry run mypy --install-types --non-interactive
       - name: Run Tests
         run: |
-          poetry run python3 -m pytest -vv --cov=$(PWD)/src --cov-report=html:coverage_report --junitxml coverage.xml --cov-report xml $PWD/src/databrowser/tests
+          poetry run python3 -m pytest -vv --cov=$PWD/src --cov-report=html:coverage_report --junitxml coverage.xml --cov-report xml $PWD/src/databrowser/tests
           poetry run python3 -m coverage report
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
