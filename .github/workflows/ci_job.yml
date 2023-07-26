@@ -1,4 +1,4 @@
-name: CLI Test
+name: CI Tests
 
 permissions:
   pull-requests: write

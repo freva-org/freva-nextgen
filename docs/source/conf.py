@@ -21,7 +21,7 @@ release = __version__
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["sphinx_code_tabs"]
+extensions = ["sphinx_code_tabs", "sphinx_copybutton"]
 
 html_static_path = ["_static"]
 html_theme = "furo"
@@ -30,6 +30,7 @@ templates_path = ["_templates"]
 exclude_patterns = []
 html_favicon = html_logo
 html_theme_options = {
+    "source_repository": "https://github.com/FREVA-CLINT/databrowserAPI",
     "navigation_with_keys": True,
     "top_of_page_button": "edit",
 }

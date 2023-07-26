@@ -12,6 +12,5 @@ test:
 	poetry run python3 -m coverage report
 
 docs:
-	python3 -m pip install -e .[docs]
 	make -C docs clean
 	make -C docs html
