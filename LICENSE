@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 BSD 3-Clause License
-=======
-BSD 2-Clause License
->>>>>>> 744acea10e216f304534f36285777e236709982a
 
 Copyright (c) 2023, Climate Informatics and Technologies (CLINT)
 
@@ -16,13 +12,10 @@ modification, are permitted provided that the following conditions are met:
    this list of conditions and the following disclaimer in the documentation
    and/or other materials provided with the distribution.
 
-<<<<<<< HEAD
 3. Neither the name of the copyright holder nor the names of its
    contributors may be used to endorse or promote products derived from
    this software without specific prior written permission.
 
-=======
->>>>>>> 744acea10e216f304534f36285777e236709982a
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
