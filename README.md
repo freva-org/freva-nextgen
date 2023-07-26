@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # The freva databrowser API
 
 [![License](https://img.shields.io/badge/License-BSD-purple.svg)](LICENSE)
@@ -72,3 +73,7 @@ This will start the required services and containers to create the development e
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+=======
+# databrowserAPI
+A REST API for the freva databrowser
+>>>>>>> 744acea10e216f304534f36285777e236709982a
