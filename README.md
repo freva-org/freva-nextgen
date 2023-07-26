@@ -1,8 +1,8 @@
 # Project Name
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-311/)
-[![Poetry](https://img.shields.io/badge/poetry-1.5.1-blue)](https://python-poetry.org/)
+[![License](https://img.shields.io/badge/License-BSD-purple.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11-purple.svg)](https://www.python.org/downloads/release/python-311/)
+[![Poetry](https://img.shields.io/badge/poetry-1.5.1-purple)](https://python-poetry.org/)
 
 Short project description.
 
