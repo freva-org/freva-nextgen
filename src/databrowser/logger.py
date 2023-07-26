@@ -6,9 +6,7 @@ import os
 from pathlib import Path
 
 THIS_NAME: str = "databrowser-api"
-LOG_DIR: Path = Path(
-    os.environ.get("API_LOGDIR") or Path(f"/tmp/log/{THIS_NAME}")
-)
+LOG_DIR: Path = Path(os.environ.get("API_LOGDIR") or Path(f"/tmp/log/{THIS_NAME}"))
 LOG_DIR.mkdir(exist_ok=True, parents=True)
 logger_format = logging.Formatter(
     "%(name)s - %(asctime)s - %(levelname)s: %(message)s",

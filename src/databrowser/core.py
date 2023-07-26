@@ -282,13 +282,8 @@ class Translator:
         """Translate the facets names to a given flavour."""
         if self.translate:
             if backwards:
-                return {
-                    self.backward_lookup.get(k, k): v
-                    for (k, v) in facets.items()
-                }
-            return {
-                self.foreward_lookup.get(k, k): v for (k, v) in facets.items()
-            }
+                return {self.backward_lookup.get(k, k): v for (k, v) in facets.items()}
+            return {self.foreward_lookup.get(k, k): v for (k, v) in facets.items()}
         return facets
 
 
@@ -327,9 +322,7 @@ class SolrSearch:
         self.uniq_key = uniq_key
         query = parse_qs(query_params)
         try:
-            self.batch_size = int(
-                query.pop("batch_size", [""])[0] or self.batch_size
-            )
+            self.batch_size = int(query.pop("batch_size", [""])[0] or self.batch_size)
         except ValueError:
             pass
         try:
@@ -401,9 +394,7 @@ class SolrSearch:
             raise ValueError(f"Choose `time_select` from {methods}") from exc
         start, _, end = time.lower().partition("to")
         try:
-            start = parse(
-                start or "1", default=datetime(1, 1, 1, 0, 0, 0)
-            ).isoformat()
+            start = parse(start or "1", default=datetime(1, 1, 1, 0, 0, 0)).isoformat()
             end = parse(
                 end or "9999", default=datetime(9999, 12, 31, 23, 59, 59)
             ).isoformat()
@@ -476,9 +467,7 @@ class SolrSearch:
                 for k in [self.uniq_key] + self.translator.facet_hierachy
                 if result.get(k)
             }
-            catalogue["catalog_dict"].append(
-                self.translator.translate_facets(source)
-            )
+            catalogue["catalog_dict"].append(self.translator.translate_facets(source))
         return search_status, IntakeCatalogue(
             catalogue=catalogue, total_count=total_count
         )
@@ -491,8 +480,7 @@ class SolrSearch:
                 for out in results.get("response", {}).get("docs", [{}]):
                     source = {
                         k: out[k]
-                        for k in [self.uniq_key]
-                        + self.translator.facet_hierachy
+                        for k in [self.uniq_key] + self.translator.facet_hierachy
                         if out.get(k)
                     }
                     entry = self.translator.translate_facets(source)
@@ -500,9 +488,7 @@ class SolrSearch:
                     for line in list(encoder.iterencode(entry)):
                         yield line
 
-    async def intake_catalogue(
-        self, search: IntakeCatalogue
-    ) -> AsyncIterator[str]:
+    async def intake_catalogue(self, search: IntakeCatalogue) -> AsyncIterator[str]:
         """Create an intake catalogue from the solr search."""
         iteritems = tuple(
             range(self.batch_size + 1, search.total_count, self.batch_size)
@@ -638,9 +624,7 @@ class SolrSearch:
         fastapi.HTTPException: If anything went wrong an error is risen
         """
         if response.status not in (200, 201):
-            raise HTTPException(
-                status_code=response.status, detail=response.text
-            )
+            raise HTTPException(status_code=response.status, detail=response.text)
 
     async def _make_iterable(self) -> AsyncIterator[str]:
         async with aiohttp.ClientSession(timeout=self.timeout) as session:
