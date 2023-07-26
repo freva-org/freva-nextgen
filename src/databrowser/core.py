@@ -8,11 +8,7 @@ from json import JSONEncoder
 from typing import (
     Any,
     AsyncIterator,
-    ClassVar,
     Dict,
-    Hashable,
-    Iterator,
-    Iterable,
     List,
     Literal,
     Tuple,
@@ -83,6 +79,13 @@ class Translator:
 
     flavour: str
     translate: bool = True
+    flavours: tuple[FlavourType, ...] = (
+        "freva",
+        "cmip6",
+        "cmip5",
+        "cordex",
+        "nextgems",
+    )
 
     @property
     def facet_hierachy(self) -> list[str]:
@@ -117,7 +120,6 @@ class Translator:
             "product": "primary",
             "realm": "primary",
             "variable": "parimary",
-            "time": "primary",
             "time_aggregation": "primary",
             "time_frequency": "primary",
             "cmor_table": "secundary",
@@ -249,6 +251,11 @@ class Translator:
             "nextgems": self._nextgems_lookup,
         }[self.flavour]
 
+    @property
+    def cordex_keys(self) -> Tuple[str, ...]:
+        """Define the keys that make a cordex dataset."""
+        return ("rcm_name", "driving_model", "rcm_version")
+
     @cached_property
     def primary_keys(self) -> list[str]:
         """Define which search facets are primary for which standard."""
@@ -258,7 +265,7 @@ class Translator:
             if v == "primary"
         ]
         if self.flavour in ("cordex",):
-            for key in ("rcm_name", "driving_model", "rcm_version"):
+            for key in self.cordex_keys:
                 _keys.append(key)
         return _keys
 
@@ -346,6 +353,7 @@ class SolrSearch:
         self.url, self.query = self._get_url()
         self.query["start"] = start
         self.query["sort"] = f"{self.uniq_key} desc"
+        print(start)
 
     @staticmethod
     def adjust_time_string(
@@ -357,22 +365,22 @@ class SolrSearch:
         Parameters
         ----------
 
-            time: str, default: ""
-                Special search facet to refine/subset search results by time.
-                This can be a string representation of a time range or a single
-                time step. The time steps have to follow ISO-8601. Valid strings are
-                ``%Y-%m-%dT%H:%M`` to ``%Y-%m-%dT%H:%M`` for time ranges and
-                ``%Y-%m-%dT%H:%M``. **Note**: You don't have to give the full string
-                format to subset time steps ``%Y``, ``%Y-%m`` etc are also valid.
-            time_select: str, default: flexible
-                Operator that specifies how the time period is selected. Choose from
-                flexible (default), strict or file. ``strict`` returns only those files
-                that have the *entire* time period covered. The time search ``2000 to
-                2012`` will not select files containing data from 2010 to 2020 with
-                the ``strict`` method. ``flexible`` will select those files as
-                ``flexible`` returns those files that have either start or end period
-                covered. ``file`` will only return files where the entire time
-                period is contained within *one single* file.
+        time: str, default: ""
+            Special search facet to refine/subset search results by time.
+            This can be a string representation of a time range or a single
+            time step. The time steps have to follow ISO-8601. Valid strings are
+            ``%Y-%m-%dT%H:%M`` to ``%Y-%m-%dT%H:%M`` for time ranges and
+            ``%Y-%m-%dT%H:%M``. **Note**: You don't have to give the full string
+            format to subset time steps ``%Y``, ``%Y-%m`` etc are also valid.
+        time_select: str, default: flexible
+            Operator that specifies how the time period is selected. Choose from
+            flexible (default), strict or file. ``strict`` returns only those files
+            that have the *entire* time period covered. The time search ``2000 to
+            2012`` will not select files containing data from 2010 to 2020 with
+            the ``strict`` method. ``flexible`` will select those files as
+            ``flexible`` returns those files that have either start or end period
+            covered. ``file`` will only return files where the entire time
+            period is contained within *one single* file.
 
         Raises
         ------

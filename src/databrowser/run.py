@@ -1,16 +1,20 @@
 """Main script that runs the rest API."""
 
-import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Union
+from typing import Dict, List, Literal, Union
 
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Request,
+    Query,
+)
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 
-from .core import FlavourType, SearchResult, SolrSearch
+from .core import FlavourType, SolrSearch, Translator
 from .config import ServerConfig, defaults
 from ._version import __version__
 
@@ -26,17 +30,39 @@ solr_config = ServerConfig(
 )
 
 
-class Query(BaseModel):
-    query: Optional[Dict[str, str]] = None
-
-
 class FacetResults(BaseModel):
     facets: Dict[str, List[Union[str, int]]]
 
 
+class SearchFlavours(BaseModel):
+    flavours: List[FlavourType]
+    attributes: Dict[FlavourType, List[str]]
+
+
+@app.get("/search_attributes")
+async def search_attributes() -> SearchFlavours:
+    """Get all available search flavours and thier attributes."""
+    attributes = {}
+    for flavour in Translator.flavours:
+        translator = Translator(flavour)
+        if flavour in ("cordex",):
+            attributes[flavour] = list(translator.foreward_lookup.values())
+        else:
+            attributes[flavour] = [
+                f
+                for f in translator.foreward_lookup.values()
+                if f not in translator.cordex_keys
+            ]
+    return SearchFlavours(
+        flavours=list(Translator.flavours), attributes=attributes
+    )
+
+
 @app.get("/intake_catalogue/{flavour}/{uniq_key}")
 async def intake_catalogue(
-    flavour: FlavourType, uniq_key: Literal["file", "uri"], request: Request
+    flavour: FlavourType,
+    uniq_key: Literal["file", "uri"],
+    request: Request,
 ) -> StreamingResponse:
     """Create an intake catalogue from a freva search."""
     solr_search = SolrSearch(
@@ -57,7 +83,9 @@ async def intake_catalogue(
 
 @app.get("/facet_search/{flavour}/{uniq_key}")
 async def search_facets(
-    flavour: FlavourType, uniq_key: Literal["file", "uri"], request: Request
+    flavour: FlavourType,
+    uniq_key: Literal["file", "uri"],
+    request: Request,
 ) -> JSONResponse:
     """Get the search facets."""
     solr_search = SolrSearch(
@@ -74,6 +102,7 @@ async def search_facets(
 async def databrowser(
     flavour: FlavourType, uniq_key: Literal["file", "uri"], request: Request
 ) -> StreamingResponse:
+    """Search for datasets."""
     solr_search = SolrSearch(
         solr_config,
         flavour=flavour,
