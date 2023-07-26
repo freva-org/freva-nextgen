@@ -29,6 +29,8 @@ mock = {version = "^5.1.0", extras = ["tests"]}
 sphinx = {version = "^7.1.0", extras = ["docs"]}
 furo = {version = "^2023.5.20", extras = ["docs"]}
 sphinx-code-tabs = {version = "^0.5.5", extras = ["docs"]}
+flake8 = {version = "^6.0.0", extras = ["tests"]}
+isort = {version = "^5.12.0", extras = ["tests"]}
 
 [build-system]
 requires = ["poetry-core"]

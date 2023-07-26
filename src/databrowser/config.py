@@ -5,15 +5,15 @@ be overridden with a specific toml file holding configurations.
 """
 
 import logging
+import os
 from dataclasses import dataclass
 from pathlib import Path
-import os
 from typing import Tuple, TypedDict
-import tomli
 
 import requests
+import tomli
 
-from .logger import logger, logger_file_handle, THIS_NAME
+from .logger import THIS_NAME, logger, logger_file_handle
 
 CONFIG_TYPE = TypedDict(
     "CONFIG_TYPE",
@@ -42,12 +42,16 @@ class ServerConfig:
         Set the logging level to DEBUG
     """
 
-    config_file: Path = Path(os.environ.get("API_CONFIG") or defaults["API_CONFIG"])
+    config_file: Path = Path(
+        os.environ.get("API_CONFIG") or defaults["API_CONFIG"]
+    )
     debug: bool = False
 
     def reload(self) -> None:
         """Reload the configuration."""
-        self.config_file = Path(os.environ.get("API_CONFIG") or defaults["API_CONFIG"])
+        self.config_file = Path(
+            os.environ.get("API_CONFIG") or defaults["API_CONFIG"]
+        )
         self.debug = defaults["DEBUG"]
         self.__post_init__()
 
@@ -108,7 +112,9 @@ class ServerConfig:
             self._config = tomli.loads(self.config_file.read_text("utf-8"))
         except Exception as error:
             logger.warning("Failed to load %s", error)
-            self._config = tomli.loads(defaults["API_CONFIG"].read_text("utf-8"))
+            self._config = tomli.loads(
+                defaults["API_CONFIG"].read_text("utf-8")
+            )
         if self.debug:
             self.set_debug()
         self._solr_fields = self._get_solr_fields()

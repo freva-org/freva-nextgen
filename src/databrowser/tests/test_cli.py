@@ -1,11 +1,12 @@
 """Test the command line interface cli."""
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from types import TracebackType
 
 import mock
-from types import TracebackType
 from pytest_mock import MockerFixture
 from typer.testing import CliRunner
+
 from databrowser.cli import cli
 
 

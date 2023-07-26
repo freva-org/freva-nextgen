@@ -45,7 +45,9 @@ def test_time_selection(client: TestClient) -> None:
         params={"time": "1898 to 1901", "time_select": "foo", "batch_size": 2},
     )
     assert res2.status_code == 500
-    res3 = client.get("databrowser/freva/file", params={"time": "fx", "batch_size": 2})
+    res3 = client.get(
+        "databrowser/freva/file", params={"time": "fx", "batch_size": 2}
+    )
     assert res3.status_code == 500
 
 

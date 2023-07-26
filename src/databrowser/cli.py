@@ -6,10 +6,10 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Optional
 
-import uvicorn
 import typer
+import uvicorn
 
-from .config import defaults, ServerConfig
+from .config import ServerConfig, defaults
 
 cli = typer.Typer(help="Run the databrowser rest API")
 

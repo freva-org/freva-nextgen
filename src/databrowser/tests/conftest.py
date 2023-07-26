@@ -6,9 +6,9 @@ from typing import Iterator
 import pytest
 from fastapi.testclient import TestClient
 
-from databrowser.config import defaults, ServerConfig
-from databrowser.tests.mock import read_data
+from databrowser.config import ServerConfig, defaults
 from databrowser.run import app
+from databrowser.tests.mock import read_data
 
 
 @pytest.fixture(scope="module")

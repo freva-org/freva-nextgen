@@ -3,8 +3,9 @@ import logging
 from pathlib import Path
 from typing import List
 
-from databrowser.config import defaults, ServerConfig
 from pytest import LogCaptureFixture
+
+from databrowser.config import ServerConfig, defaults
 
 
 def test_valid_config() -> None:
@@ -20,7 +21,7 @@ def test_valid_config() -> None:
 
 def test_invalid_config(caplog: LogCaptureFixture) -> None:
     """Test the behaviour for an invalid config file."""
-    cfg = ServerConfig(Path("/foo/bar.toml"), debug=True)
+    _ = ServerConfig(Path("/foo/bar.toml"), debug=True)
     records: List[logging.LogRecord] = caplog.records
     assert any([record.levelname == "WARNING" for record in records])
     assert any(["Failed to load" in record.message for record in records])

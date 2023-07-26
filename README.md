@@ -51,7 +51,7 @@ docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
 After solr is up and running you can start the REST server the following:
 
 ```console
-python run_server.py --config-file api_config.toml --debug --dev --port 7777
+poetry run python run_server.py --config-file api_config.toml --debug --dev --port 7777
 ```
 
 The ``--debug`` and ``--dev`` flag will make sure that any changes are loaded.

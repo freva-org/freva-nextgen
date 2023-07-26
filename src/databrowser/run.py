@@ -4,19 +4,13 @@ import os
 from pathlib import Path
 from typing import Dict, List, Literal, Union
 
-from fastapi import (
-    FastAPI,
-    HTTPException,
-    Request,
-    Query,
-)
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
-
-from .core import FlavourType, SolrSearch, Translator
-from .config import ServerConfig, defaults
 from ._version import __version__
+from .config import ServerConfig, defaults
+from .core import FlavourType, SolrSearch, Translator
 
 app = FastAPI(
     debug=bool(os.environ.get("DEBUG", int(defaults["DEBUG"]))),
@@ -53,7 +47,9 @@ async def search_attributes() -> SearchFlavours:
                 for f in translator.foreward_lookup.values()
                 if f not in translator.cordex_keys
             ]
-    return SearchFlavours(flavours=list(Translator.flavours), attributes=attributes)
+    return SearchFlavours(
+        flavours=list(Translator.flavours), attributes=attributes
+    )
 
 
 @app.get("/intake_catalogue/{flavour}/{uniq_key}")
