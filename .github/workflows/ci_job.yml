@@ -30,11 +30,7 @@ jobs:
          python -m poetry --version
     -
       name: Install dependencies
-      run: python3 -m poetry --no-root --no-interaction --no-ansi --no-dev
-    -
-      name: Install dev dependencies
-      run: python -m poetry install --no-root --no-interaction --no-ansi --no-dev --no-root --extras "tests docs"
-
+      run: python3 -m poetry install --no-root --no-interaction --no-ansi --no-dev --no-root --all-extras
     -
       name: formating
       run: poetry run black --check -t py311 src
@@ -76,10 +72,7 @@ jobs:
          python -m poetry --version
     -
       name: Install dependencies
-      run: python3 -m poetry --no-root --no-interaction --no-ansi --no-dev
-    -
-      name: Install dev dependencies
-      run: python3 -m poetry install --no-root --no-interaction --no-ansi --no-dev --no-root --extras "tests docs"
+      run: python3 -m poetry install --no-root --no-interaction --no-ansi --no-dev --no-root --all-extras
     -
       name: Creating docs
       run: poetry run make -C docs html
