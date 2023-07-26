@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install poetry
-          python3 -m poetry install --no-root --no-interaction --no-ansi --no-dev --no-root --all-extras
+          python3 -m poetry install --no-interaction
       - name: formating
         run: poetry run black --check -t py311 src
       - name: type checking
@@ -55,7 +55,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install poetry
-          python3 -m poetry install --no-root --no-interaction --no-ansi --no-dev --no-root --all-extras
+          python3 -m poetry install --no-interaction
       - name: Creating docs
         run: python3 -m poetry run make -C docs html
       - name: Setup Pages
