@@ -1,6 +1,5 @@
 name: CLI Test
 
-# Set the access for individual scopes, or use permissions: write-all
 permissions:
   pull-requests: write
 
