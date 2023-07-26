@@ -10,6 +10,25 @@ Welcome to the Freva Databrowser REST API Documentation
    :maxdepth: 2
    :caption: Contents:
 
+.. image:: https://img.shields.io/badge/License-BSD-purple.svg
+   :target: LICENSE
+
+.. image:: https://img.shields.io/badge/python-3.11-purple.svg
+   :target: https://www.python.org/downloads/release/python-311/
+
+.. image:: https://img.shields.io/badge/poetry-1.5.1-purple
+   :target: https://python-poetry.org/
+
+.. image:: https://img.shields.io/badge/ViewOn-GitHub-purple
+   :target: https://github.com/FREVA-CLINT/databrowserAPI
+
+.. image:: https://github.com/FREVA-CLINT/databrowserAPI/actions/workflows/ci_job.yml/badge.svg
+   :target: https://github.com/FREVA-CLINT/databrowserAPI/actions
+
+.. image:: https://codecov.io/github/FREVA-CLINT/databrowserAPI/branch/init/graph/badge.svg?token=dGhXxh7uP3
+   :target: https://codecov.io/github/FREVA-CLINT/databrowserAPI
+
+
 The Freva Databrowser REST API is a powerful tool that enables you to search
 for climate and environmental datasets seamlessly in various programming
 languages. By generating RESTful requests, you can effortlessly access
