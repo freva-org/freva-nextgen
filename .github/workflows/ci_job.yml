@@ -73,7 +73,8 @@ jobs:
   dependabot:
     name: Merge PR by dependabot
     runs-on: ubuntu-latest
-    needs: [ci]
+    needs: [ci, docs]
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
     steps:
       - name: Dependabot metadata
         id: metadata
