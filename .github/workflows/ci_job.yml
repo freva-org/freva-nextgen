@@ -24,9 +24,9 @@ jobs:
         run: |
           python3 -m pip install poetry
           python3 -m poetry install --no-interaction
-      - name: formating
+      - name: Check code style
         run: poetry run black --check -t py311 src
-      - name: type checking
+      - name: Check type annotations
         run: poetry run mypy --install-types --non-interactive
       - name: Run Tests
         run: |
@@ -35,6 +35,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.xml
           fail_ci_if_error: true
           verbose: true
