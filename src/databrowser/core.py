@@ -16,7 +16,6 @@ from typing import (
     Union,
     cast,
 )
-from urllib.parse import parse_qs
 
 import aiohttp
 from dateutil.parser import ParserError, parse
@@ -322,27 +321,18 @@ class SolrSearch:
         *,
         uniq_key: Literal["file", "uri"] = "file",
         flavour: FlavourType = "freva",
-        query_params: str,
+        batch_size: int = 150,
+        start: int = 0,
+        multi_version: bool = False,
+        translate: bool = True,
+        **query: list[str],
     ) -> None:
         self._config = config
         self.uniq_key = uniq_key
-        query = parse_qs(query_params)
-        try:
-            self.batch_size = int(
-                query.pop("batch_size", [""])[0] or self.batch_size
-            )
-        except ValueError:
-            pass
-        try:
-            start = int(query.pop("start", ["0"])[0])
-        except ValueError:
-            start = 0
-        self.multi_version = query.pop("multi_version", ["0"])[0].lower() in (
-            "1",
-            "true",
-        )
-        translate = query.pop("translate", ["1"])[0].lower() in ("1", "true")
+        self.batch_size = batch_size
+        self.multi_version = multi_version
         self.translator = Translator(flavour, translate)
+        translate = query.pop("translate", ["1"])[0].lower() in ("1", "true")
         try:
             self.time = self.adjust_time_string(
                 query.pop("time", [""])[0],
@@ -354,7 +344,6 @@ class SolrSearch:
         self.url, self.query = self._get_url()
         self.query["start"] = start
         self.query["sort"] = f"{self.uniq_key} desc"
-        print(start)
 
     @staticmethod
     def adjust_time_string(
@@ -527,10 +516,10 @@ class SolrSearch:
                 yield line
         yield "\n]\n}"
 
-    async def facet_search(
+    async def metadata_search(
         self,
     ) -> Tuple[int, SearchResult]:
-        """Initialise the apache solr facet field search.
+        """Initialise the apache solr metadata search.
 
         Returns
         -------
@@ -565,7 +554,7 @@ class SolrSearch:
             search_results=[
                 {
                     **{self.uniq_key: k[self.uniq_key]},
-                    **{"fs_type": k["fs_type"][0]},
+                    **{"fs_type": k.get("fs_type", "posix")},
                 }
                 for k in search.get("response", {}).get("docs", [])
             ],
@@ -597,6 +586,9 @@ class SolrSearch:
                     search = await res.json()
                 except HTTPException:
                     search = {}
+        total_count = search.get("response", {}).get("numFound", 0)
+        if not total_count:
+            search_status = 400
         return search_status, SearchResult(
             total_count=search.get("response", {}).get("numFound", 0),
             facets={},

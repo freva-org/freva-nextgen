@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 def test_attributes(client: TestClient) -> None:
     """Test getting the attributes."""
-    res1 = client.get("search_attributes")
+    res1 = client.get("overview")
     assert isinstance(res1.json()["flavours"], list)
     assert isinstance(res1.json()["attributes"], dict)
 
@@ -15,8 +15,9 @@ def test_databrowser(client: TestClient) -> None:
     """Test the default databrowser functionality."""
     res1 = client.get(
         "databrowser/cmip6/uri",
-        params={"batch_size": 2, "start": "f", "activity_id": "cmip"},
+        params={"batch_size": 2, "activity_id": "cmipx"},
     )
+    assert res1.status_code == 400
     res2 = client.get(
         "databrowser/cmip6/uri",
         params={"translate": "false", "product": "cmip", "batch_size": 2},
@@ -24,13 +25,14 @@ def test_databrowser(client: TestClient) -> None:
     res3 = client.get(
         "databrowser/freva/uri", params={"product": "cmip", "batch_size": 2}
     )
-    assert len(res1.text.split()) > 0
-    assert res1.text == res2.text == res3.text
+    assert len(res1.text.split()) == 0
+    assert res2.text == res3.text
     res3 = client.get(
         "databrowser/freva/uri", params={"foo": "cmip", "batch_size": "t"}
     )
-    assert res3.status_code == 400
-    assert res3.text.split() == []
+    assert res3.status_code == 422
+    res4 = client.get("databrowser/cmip6/uri", params={"foo": "bar"})
+    assert res4.status_code == 400
 
 
 def test_time_selection(client: TestClient) -> None:
@@ -51,32 +53,32 @@ def test_time_selection(client: TestClient) -> None:
     assert res3.status_code == 500
 
 
-def test_facet_search(client: TestClient) -> None:
+def test_metadata_search(client: TestClient) -> None:
     """Test the facet search functionality."""
     res1 = client.get(
-        "facet_search/cmip6/uri",
+        "metadata_search/cmip6/uri",
         params={"start": 0, "activity_id": "cmip", "batch_size": 2},
     ).json()
     assert len(res1["search_results"]) > 0
     assert "activity_id" in res1["facets"]
     res2 = client.get(
-        "facet_search/cmip6/uri",
+        "metadata_search/cmip6/uri",
         params={"start": 1000, "activity_id": "cmip", "batch_size": 2},
     ).json()
     assert "rcm_name" not in res2["primary_facets"]
     assert res2["search_results"] == []
     res3 = client.get(
-        "facet_search/cmip5/uri",
+        "metadata_search/cmip5/uri",
         params={"activity_id": "cmip", "translate": "false", "batch_size": 2},
     )
     assert res3.status_code == 400
     res4 = client.get(
-        "facet_search/cmip5/uri",
+        "metadata_search/cmip5/uri",
         params={"activity_id": "cmip", "translate": "true", "batch_size": 2},
     )
     assert res4.status_code == 400
     res5 = client.get(
-        "facet_search/cordex/uri",
+        "metadata_search/cordex/uri",
         params={"domain": "eur-11", "translate": "true"},
     ).json()
     assert "rcm_name" in res5["facets"]
@@ -92,7 +94,6 @@ def test_intake_search(client: TestClient) -> None:
     assert res1.json() == json.loads(res1.text)
     res2 = client.get(
         "intake_catalogue/cmip6/uri",
-        params={"batch_size": 3},
     )
     assert len(res2.json()["catalog_dict"]) > len(res1.json()["catalog_dict"])
 
