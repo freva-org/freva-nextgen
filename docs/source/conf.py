@@ -21,7 +21,11 @@ release = __version__
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["sphinx_code_tabs", "sphinx_copybutton"]
+extensions = [
+    "sphinx_code_tabs",
+    "sphinx_copybutton",
+    "sphinxcontrib.httpdomain",
+]
 
 html_static_path = ["_static"]
 html_theme = "furo"
