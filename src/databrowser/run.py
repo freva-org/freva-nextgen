@@ -14,7 +14,7 @@ from .config import ServerConfig, defaults
 from .core import FlavourType, SolrSearch, Translator
 
 app = FastAPI(
-    debug=bool(os.environ.get("DEBUG", int(defaults["DEBUG"]))),
+    debug=bool(int(os.environ.get("DEBUG", "0"))),
     title=defaults["NAME"],
     description="Key-Value pair data search api",
     version=__version__,

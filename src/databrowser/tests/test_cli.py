@@ -46,11 +46,11 @@ def test_cli(mocker: MockerFixture) -> None:
                 host="0.0.0.0",
                 port=8080,
                 reload=True,
-                log_level=10,
+                log_level=20,
                 workers=None,
                 env_file=str(Path(temp_dir) / "foo.txt"),
             )
-            result2 = runner.invoke(cli)
+            result2 = runner.invoke(cli, ["--debug"])
             assert result2.exit_code == 0
             mock_run.assert_called_with(
                 "databrowser.run:app",

@@ -23,14 +23,14 @@ def start(
     port: int = typer.Option(
         os.environ.get("API_PORT", 8080), help="The port the api is running on"
     ),
-    dev: bool = typer.Option(False, help="Turn on developing mode"),
-    debug: bool = typer.Option(False, help="Turn on debug mode"),
+    dev: bool = typer.Option(False, help="Add test data to the dev solr."),
+    debug: bool = typer.Option(False, help="Turn on debug mode."),
 ) -> None:
     """Start rest API databrowser server."""
 
     defaults["API_CONFIG"] = (config_file or defaults["API_CONFIG"]).absolute()
     defaults["DEBUG"] = debug
-    cfg = ServerConfig(defaults["API_CONFIG"], debug=dev)
+    cfg = ServerConfig(defaults["API_CONFIG"], debug=debug)
     if dev:
         from .tests.mock import read_data
 
