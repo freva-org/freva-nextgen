@@ -168,6 +168,7 @@ Searching for datasets locations
 
     :statuscode 200: no error
     :statuscode 400: no entries found for this query
+    :statuscode 422: invalid query parameters
     :resheader Content-Type: ``text/plain``: `stream` providing a list of data
                               files or locations that match the search criteria.
 
@@ -352,6 +353,7 @@ Searching for metadata
 
     :statuscode 200: no error
     :statuscode 400: no entries found for this query
+    :statuscode 422: invalid query parameters
     :resheader Content-Type: ``application/json``: Metadata matching the data
                              query.
 
@@ -587,6 +589,7 @@ Generating an intake-esm catalogue
 
     :statuscode 200: no error
     :statuscode 400: no entries found for this query
+    :statuscode 422: invalid query parameters
     :resheader Content-Type: ``application/json``: the intake-esm catalogue
 
 
