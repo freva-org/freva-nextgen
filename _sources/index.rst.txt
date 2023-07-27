@@ -114,10 +114,7 @@ climate data landscape.
    :maxdepth: 2
    :caption: Content
 
-   Attributes
-   Databrowser
-   Facets
-   IntakeCatalogue
+   APIRef
 
 
 Indices and tables
