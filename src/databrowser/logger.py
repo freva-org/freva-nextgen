@@ -5,6 +5,8 @@ import os
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
+from rich.logging import RichHandler
+
 THIS_NAME: str = "databrowser-api"
 LOG_DIR: Path = Path(
     os.environ.get("API_LOGDIR") or Path(f"/tmp/log/{THIS_NAME}")
@@ -25,11 +27,10 @@ logger_file_handle = RotatingFileHandler(
     delay=False,
 )
 logger_file_handle.setFormatter(logger_format)
-logger_file_handle.setLevel(logging.WARNING)
+logger_file_handle.setLevel(logging.INFO)
 
 
-logger_stream_handle = logging.StreamHandler()
-logger_stream_handle.setFormatter(logger_format)
+logger_stream_handle = RichHandler(rich_tracebacks=True)
 logger_stream_handle.setLevel(logging.INFO)
 
 logger = logging.getLogger(THIS_NAME)
