@@ -33,6 +33,7 @@ flake8 = {version = "^6.0.0", extras = ["tests"]}
 isort = {version = "^5.12.0", extras = ["tests"]}
 sphinx-copybutton = {version = "^0.5.2", extras = ["docs"]}
 sphinxcontrib-httpdomain = {version = "^1.8.1", extras = ["docs"]}
+pydata-sphinx-theme = {version = "^0.13.3", extras = ["docs"]}
 
 [build-system]
 requires = ["poetry-core"]
