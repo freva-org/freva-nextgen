@@ -78,7 +78,7 @@ to fine-tune your searches and retrieve tailored results. These methods include:
   catalogues, streamlining your data analysis workflow.
 
 How to Use the Documentation
-----------------------------
+++++++++++++++++++++++++++++
 This user documentation serves as a comprehensive guide to effectively using
 the Freva Databrowser REST API in various programming languages. It provides
 detailed explanations of available endpoints, query parameters,
@@ -87,13 +87,13 @@ you'll find step-by-step instructions and examples to leverage the API's full
 potential.
 
 Authentication
----------------
++++++++++++++++
 The Freva Databrowser REST API is open and publicly accessible, and as such,
 it doesn't require authentication. This means you can quickly start exploring
 and accessing climate data without any additional setup.
 
 Feedback and Support
----------------------
+++++++++++++++++++++
 We value your feedback and are committed to improving the API continuously.
 If you encounter any issues, have questions, or wish to suggest improvements,
 please don't hesitate to reach out to our support team. Your input is
@@ -101,7 +101,7 @@ invaluable in enhancing the Freva Databrowser REST API to better suit your
 needs.
 
 Conclusion
-----------
++++++++++++
 The Freva Databrowser REST API opens up a world of possibilities for
 effortlessly searching and accessing climate datasets in various
 programming languages. With its RESTful nature and support for
@@ -111,7 +111,7 @@ climate data landscape.
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 10
    :caption: Content
 
    APIRef
