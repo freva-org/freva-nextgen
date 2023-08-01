@@ -406,6 +406,7 @@ class SolrSearch:
         self.query["start"] = 0
         self.query["facet"] = "true"
         self.query["facet.mincount"] = "1"
+        self.query["facet.limit"] = "-1"
         self.query["rows"] = self.batch_size
         self.query["facet.field"] = self._config.solr_fields
         self.query["fl"] = [self.uniq_key] + self._config.solr_fields
