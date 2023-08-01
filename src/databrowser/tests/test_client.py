@@ -53,6 +53,25 @@ def test_time_selection(client: TestClient) -> None:
     assert res3.status_code == 500
 
 
+def test_primary_facets(client: TestClient) -> None:
+    """Test the functionality of primary facet definitions."""
+    res1 = client.get("metadata_search/freva/file").json()
+    res2 = client.get("metadata_search/cmip6/file").json()
+    res3 = client.get(
+        "metadata_search/cmip6/file", params={"translate": "f"}
+    ).json()
+    assert "primary_facets" in res1
+    assert "primary_facets" in res2
+    assert "primary_facets" in res3
+    assert (
+        len(res1["primary_facets"])
+        == len(res2["primary_facets"])
+        == len(res3["primary_facets"])
+    )
+    assert res1["primary_facets"] == res3["primary_facets"]
+    assert res1["primary_facets"] != res2["primary_facets"]
+
+
 def test_metadata_search(client: TestClient) -> None:
     """Test the facet search functionality."""
     res1 = client.get(
