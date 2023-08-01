@@ -35,7 +35,7 @@ cd databrowserAPI
 4. Set up the project environment using Poetry:
 
 ```console
-poetry install --no-root --all-extras
+poetry install --all-extras
 ```
 
 Make sure poetry is available in your python environment
@@ -57,7 +57,9 @@ poetry run python run_server.py --config-file api_config.toml --debug --dev --po
 ```
 
 The ``--debug`` and ``--dev`` flag will make sure that any changes are loaded.
-You can choose any port you like.
+You can choose any port you like. Furthermore the ``--dev`` flag will pre
+load an empty apache solr server with some data. If you don't like that
+simply do not pass the ``--dev`` flag.
 
 ### Testing
 
