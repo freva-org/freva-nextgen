@@ -120,6 +120,15 @@ def test_intake_search(client: TestClient) -> None:
         "intake_catalogue/cmip6/uri",
     )
     assert len(res2.json()["catalog_dict"]) > len(res1.json()["catalog_dict"])
+    res3 = client.get(
+        "intake_catalogue/cmip6/uri",
+        params={
+            "activity_id": "cmip",
+            "batch_size": 3,
+            "multi-version": False,
+        },
+    )
+    assert len(res1.json()["catalog_dict"]) > len(res3.json()["catalog_dict"])
 
 
 def test_bad_intake_request(client: TestClient) -> None:
