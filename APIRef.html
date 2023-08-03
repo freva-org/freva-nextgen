@@ -513,12 +513,12 @@ Identifiers (URIs).</p></li>
 </dd>
 <dt class="field-even">Query Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>batch_size</strong> – Control the number of maximum items returned by the
+<li><p><strong>batch-size</strong> – Control the number of maximum items returned by the
 query. Default is 150.</p></li>
 <li><p><strong>start</strong> – Specify the starting point for receiving search results.
 Default is 0.</p></li>
-<li><p><strong>multi_version</strong> – Use versioned datasets for querying instead of the
-latest datasets. Default is False.</p></li>
+<li><p><strong>multi-version</strong> – Use versioned datasets for querying instead of the
+latest datasets. Default is false.</p></li>
 <li><p><strong>**search_facets</strong> – With any other query parameters you refine your
 data search. Query parameters could be, depending
 on the DRS standard flavour <code class="docutils literal notranslate"><span class="pre">product</span></code>, <code class="docutils literal notranslate"><span class="pre">project</span></code>
@@ -628,7 +628,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="w">    </span><span class="c1">// Build the query string</span>
 <span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">query</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
 <span class="w">    </span><span class="n">snprintf</span><span class="p">(</span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">query</span><span class="p">),</span>
-<span class="w">        </span><span class="s">&quot;?product=%s&amp;fs_type=%s&amp;batch_size=%d&amp;start=%d&amp;multi_version=%d&quot;</span><span class="p">,</span><span class="n">product</span><span class="p">,</span><span class="w"> </span><span class="n">fs_type</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="n">batch_size</span><span class="p">,</span><span class="w"> </span><span class="n">start</span><span class="p">,</span><span class="w"> </span><span class="n">multi_version</span><span class="p">);</span>
+<span class="w">        </span><span class="s">&quot;?product=%s&amp;fs_type=%s&amp;batch-size=%d&amp;start=%d&amp;multi-version=%d&quot;</span><span class="p">,</span><span class="n">product</span><span class="p">,</span><span class="w"> </span><span class="n">fs_type</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="n">batch_size</span><span class="p">,</span><span class="w"> </span><span class="n">start</span><span class="p">,</span><span class="w"> </span><span class="n">multi_version</span><span class="p">);</span>
 
 <span class="w">    </span><span class="c1">// Initialize curl</span>
 <span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
@@ -694,12 +694,14 @@ Identifiers (URIs).</p></li>
 </dd>
 <dt class="field-even">Query Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>batch_size</strong> – Control the number of maximum items returned by the
+<li><p><strong>batch-size</strong> – Control the number of maximum items returned by the
 query. Default is 150.</p></li>
 <li><p><strong>start</strong> – Specify the starting point for receiving search results.
 Default is 0.</p></li>
-<li><p><strong>multi_version</strong> – Use versioned datasets for querying instead of the
+<li><p><strong>multi-version</strong> – Use versioned datasets for querying instead of the
 latest datasets. Default is false.</p></li>
+<li><p><strong>facets</strong> – The facets that should be part of the output, by default
+all facets will be returned.</p></li>
 <li><p><strong>translate</strong> – Translate the metadata output to the required DRS flavour.
 Default is true</p></li>
 <li><p><strong>**search_facets</strong> – With any other query parameters you refine your
@@ -725,7 +727,7 @@ query.</p>
 each facet entry contains a list of facet values
 followed by the number of occurrences of this
 facet.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">search_result</span></code>: Array of length <code class="docutils literal notranslate"><span class="pre">batch_size</span></code>
+<li><p><code class="docutils literal notranslate"><span class="pre">search_result</span></code>: Array of length <code class="docutils literal notranslate"><span class="pre">batch-size</span></code>
 of found datasets along with additional information
 stored in a table.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">facet_mapping</span></code>: Translation rules describing
@@ -933,11 +935,13 @@ Identifiers (URIs).</p></li>
 </dd>
 <dt class="field-even">Query Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>batch_size</strong> – Control the number of maximum items returned by the
+<li><p><strong>batch-size</strong> – Control the number of maximum items returned by the
 query. Default is 150.</p></li>
 <li><p><strong>start</strong> – Specify the starting point for receiving search results.
 Default is 0.</p></li>
-<li><p><strong>multi_version</strong> – Use versioned datasets for querying instead of the
+<li><p><strong>max-results</strong> – Raise an Error if more results are found than that
+number, -1 for do not raise at all.</p></li>
+<li><p><strong>multi-version</strong> – Use versioned datasets for querying instead of the
 latest datasets. Default is false.</p></li>
 <li><p><strong>translate</strong> – Translate the metadata output to the required DRS flavour.
 Default is true</p></li>
