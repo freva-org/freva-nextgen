@@ -113,7 +113,7 @@ def test_intake_search(client: TestClient) -> None:
     """Test the creation of intake catalogues."""
     res1 = client.get(
         "intake_catalogue/cmip6/uri",
-        params={"activity_id": "cmip", "batch_size": 3},
+        params={"activity_id": "cmip", "batch_size": 2, "multi-version": True},
     )
     assert res1.json() == json.loads(res1.text)
     res2 = client.get(
