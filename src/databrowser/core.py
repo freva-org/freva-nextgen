@@ -131,6 +131,7 @@ class Translator:
             "rcm_name": "secundary",
             "rcm_version": "secundary",
             "dataset": "secundary",
+            "time": "secundary",
         }
 
     @property
@@ -253,6 +254,13 @@ class Translator:
             "nextgems": self._nextgems_lookup,
         }[self.flavour]
 
+    @cached_property
+    def valid_facets(self) -> list[str]:
+        """Get all valid facets for a flavour."""
+        if self.translate:
+            return list(self.foreward_lookup.values())
+        return list(self.foreward_lookup.keys())
+
     @property
     def cordex_keys(self) -> Tuple[str, ...]:
         """Define the keys that make a cordex dataset."""
@@ -314,8 +322,22 @@ class SolrSearch:
     ----------
     config: ServerConfig
         An instance of the server configuration class.
-    query_params: str
-        String representation of the apache solr search facets used for qeury.
+    uniq_key: str, default: file
+        The type of search result, which can be either "file" or "uri". This
+        parameter determines whether the search will be based on file paths or
+        Uniform Resource Identifiers (URIs).
+    flavour: str, default: freva
+        The Data Reference Syntax (DRS) standard specifying the type of climate
+        datasets to query. The available DRS standards can be retrieved using the
+        ``GET /overview`` method.
+    batch_size: int, default: 150
+        Control the number of maximum items returned.
+    start: int, default: 0
+        Specify the starting point for receiving results.
+    multi_version: bool, default: False
+        Use versioned datasets in stead of latest versions.
+    translate: bool, default: True
+        Translate the output to the required DRS flavour.
 
     Attributes
     ----------
@@ -340,14 +362,14 @@ class SolrSearch:
         start: int = 0,
         multi_version: bool = False,
         translate: bool = True,
+        _translator: Union[None, Translator] = None,
         **query: list[str],
     ) -> None:
         self._config = config
         self.uniq_key = uniq_key
         self.batch_size = batch_size
         self.multi_version = multi_version
-        self.translator = Translator(flavour, translate)
-        translate = query.pop("translate", ["1"])[0].lower() in ("1", "true")
+        self.translator = _translator or Translator(flavour, translate)
         try:
             self.time = self.adjust_time_string(
                 query.pop("time", [""])[0],
@@ -359,6 +381,62 @@ class SolrSearch:
         self.url, self.query = self._get_url()
         self.query["start"] = start
         self.query["sort"] = f"{self.uniq_key} desc"
+
+    @classmethod
+    async def validate_parameters(
+        cls,
+        config: ServerConfig,
+        *,
+        uniq_key: Literal["file", "uri"] = "file",
+        flavour: FlavourType = "freva",
+        batch_size: int = 150,
+        start: int = 0,
+        multi_version: bool = False,
+        translate: bool = True,
+        **query: list[str],
+    ) -> "SolrSearch":
+        """Create an instance of an SolrSearch class with parameter validation.
+
+        Parameters
+        ----------
+        config: ServerConfig
+            An instance of the server configuration class.
+        uniq_key: str, default: file
+            The type of search result, which can be either "file" or "uri". This
+            parameter determines whether the search will be based on file paths or
+            Uniform Resource Identifiers (URIs).
+        flavour: str, default: freva
+            The Data Reference Syntax (DRS) standard specifying the type of climate
+            datasets to query. The available DRS standards can be retrieved using the
+            ``GET /overview`` method.
+        batch_size: int, default: 150
+            Control the number of maximum items returned.
+        start: int, default: 0
+            Specify the starting point for receiving results.
+        multi_version: bool, default: False
+            Use versioned datasets in stead of latest versions.
+        translate: bool, default: True
+            Translate the output to the required DRS flavour.
+        """
+        translator = Translator(flavour, translate)
+        for key in query:
+            if key not in translator.valid_facets and key not in (
+                "time_select",
+            ):
+                raise HTTPException(
+                    status_code=422, detail="Could not validate input"
+                )
+        return SolrSearch(
+            config,
+            flavour=flavour,
+            translate=translate,
+            uniq_key=uniq_key,
+            batch_size=batch_size,
+            start=start,
+            multi_version=multi_version,
+            _translator=translator,
+            **query,
+        )
 
     @staticmethod
     def adjust_time_string(
@@ -438,8 +516,8 @@ class SolrSearch:
                 try:
                     await self.check_for_status(res)
                     search = await res.json()
-                except HTTPException:
-                    search = {}
+                except HTTPException:  # pragma: no cover
+                    search = {}  # pragma: no cover
         total_count = cast(int, search.get("response", {}).get("numFound", 0))
         facets = search.get("facet_counts", {}).get("facet_fields", {})
         var_name = self.translator.foreward_lookup["variable"]
@@ -566,10 +644,13 @@ class SolrSearch:
                 try:
                     await self.check_for_status(res)
                     search = await res.json()
-                except HTTPException:
-                    search = {}
+                except HTTPException:  # pragma: no cover
+                    search = {}  # pragma: no cover
+        total_count = search.get("response", {}).get("numFound", 0)
+        if total_count == 0:
+            search_status = 400
         return search_status, SearchResult(
-            total_count=search.get("response", {}).get("numFound", 0),
+            total_count=total_count,
             facets=self.translator.translate_query(
                 search.get("facet_counts", {}).get("facet_fields", {})
             ),
@@ -610,8 +691,8 @@ class SolrSearch:
                 try:
                     await self.check_for_status(res)
                     search = await res.json()
-                except HTTPException:
-                    search = {}
+                except HTTPException:  # pragma: no cover
+                    search = {}  # pragma: no cover
         total_count = search.get("response", {}).get("numFound", 0)
         if not total_count:
             search_status = 400
@@ -659,7 +740,7 @@ class SolrSearch:
         if response.status not in (200, 201):
             raise HTTPException(
                 status_code=response.status, detail=response.text
-            )
+            )  # pragma: no cover
 
     async def _make_iterable(self) -> AsyncIterator[str]:
         async with aiohttp.ClientSession(timeout=self.timeout) as session:

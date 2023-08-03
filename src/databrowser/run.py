@@ -114,7 +114,7 @@ async def intake_catalogue(
     request: Request = Required,
 ) -> StreamingResponse:
     """Create an intake catalogue from a freva search."""
-    solr_search = SolrSearch(
+    solr_search = await SolrSearch.validate_parameters(
         solr_config,
         flavour=flavour,
         uniq_key=uniq_key,
@@ -148,7 +148,7 @@ async def metadata_search(
     request: Request = Required,
 ) -> JSONResponse:
     """Get the search facets."""
-    solr_search = SolrSearch(
+    solr_search = await SolrSearch.validate_parameters(
         solr_config,
         flavour=flavour,
         uniq_key=uniq_key,
@@ -173,7 +173,7 @@ async def databrowser(
     request: Request = Required,
 ) -> StreamingResponse:
     """Search for datasets."""
-    solr_search = SolrSearch(
+    solr_search = await SolrSearch.validate_parameters(
         solr_config,
         flavour=flavour,
         uniq_key=uniq_key,
