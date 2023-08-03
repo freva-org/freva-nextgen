@@ -60,6 +60,14 @@ class SolrConfig:
                 "by default all facets will be returned."
             ),
         ),
+        "max-results": Query(
+            title="Max. Results",
+            alias="max-results",
+            description=(
+                "Raise an Error if more results are found than that"
+                "number, -1 for all results."
+            ),
+        ),
     }
 
     @staticmethod
@@ -111,6 +119,7 @@ async def intake_catalogue(
     start: Annotated[int, SolrConfig.params["start"]] = 0,
     multi_version: Annotated[bool, SolrConfig.params["multi-version"]] = False,
     translate: Annotated[bool, SolrConfig.params["translate"]] = True,
+    max_results: Annotated[int, SolrConfig.params["max-results"]] = -1,
     request: Request = Required,
 ) -> StreamingResponse:
     """Create an intake catalogue from a freva search."""
@@ -127,6 +136,8 @@ async def intake_catalogue(
     status_code, result = await solr_search.init_intake_catalogue()
     if result.total_count == 0:
         raise HTTPException(status_code=400, detail="No results found.")
+    elif result.total_count > max_results and max_results > 0:
+        raise HTTPException(status_code=400, detail="Result stream too big.")
     return StreamingResponse(
         solr_search.intake_catalogue(result),
         status_code=status_code,

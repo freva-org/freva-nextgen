@@ -155,15 +155,15 @@ Searching for datasets locations
                     will be based on file paths or Uniform Resource
                     Identifiers (URIs).
     :type uniq_key: str
-    :query batch_size: Control the number of maximum items returned by the
+    :query batch-size: Control the number of maximum items returned by the
                        query. Default is 150.
-    :type batch_size: int
+    :type batch-size: int
     :query start: Specify the starting point for receiving search results.
                  Default is 0.
     :type start: int
-    :query multi_version: Use versioned datasets for querying instead of the
+    :query multi-version: Use versioned datasets for querying instead of the
                           latest datasets. Default is false.
-    :type multi_version: bool
+    :type multi-version: bool
     :query \**search_facets: With any other query parameters you refine your
                              data search. Query parameters could be, depending
                              on the DRS standard flavour ``product``, ``project``
@@ -274,7 +274,7 @@ Searching for datasets locations
                 // Build the query string
                 char query[256];
                 snprintf(query, sizeof(query),
-                    "?product=%s&fs_type=%s&batch_size=%d&start=%d&multi_version=%d",product, fs_type , batch_size, start, multi_version);
+                    "?product=%s&fs_type=%s&batch-size=%d&start=%d&multi-version=%d",product, fs_type , batch_size, start, multi_version);
 
                 // Initialize curl
                 curl = curl_easy_init();
@@ -336,15 +336,15 @@ Searching for metadata
                     will be based on file paths or Uniform Resource
                     Identifiers (URIs).
     :type uniq_key: str
-    :query batch_size: Control the number of maximum items returned by the
+    :query batch-size: Control the number of maximum items returned by the
                        query. Default is 150.
-    :type batch_size: int
+    :type batch-size: int
     :query start: Specify the starting point for receiving search results.
                  Default is 0.
     :type start: int
-    :query multi_version: Use versioned datasets for querying instead of the
+    :query multi-version: Use versioned datasets for querying instead of the
                           latest datasets. Default is false.
-    :type multi_version: bool
+    :type multi-version: bool
     :query facets: The facets that should be part of the output, by default
                     all facets will be returned.
     :type facets: str, list
@@ -368,7 +368,7 @@ Searching for metadata
                                each facet entry contains a list of facet values
                                followed by the number of occurrences of this
                                facet.
-                             - ``search_result``: Array of length ``batch_size``
+                             - ``search_result``: Array of length ``batch-size``
                                of found datasets along with additional information
                                stored in a table.
                              - ``facet_mapping``: Translation rules describing
@@ -575,15 +575,18 @@ Generating an intake-esm catalogue
                     will be based on file paths or Uniform Resource
                     Identifiers (URIs).
     :type uniq_key: str
-    :query batch_size: Control the number of maximum items returned by the
+    :query batch-size: Control the number of maximum items returned by the
                        query. Default is 150.
-    :type batch_size: int
+    :type batch-size: int
     :query start: Specify the starting point for receiving search results.
                  Default is 0.
     :type start: int
-    :query multi_version: Use versioned datasets for querying instead of the
+    :query max-results: Raise an Error if more results are found than that
+                        number, -1 for do not raise at all.
+    :type max-results: int
+    :query multi-version: Use versioned datasets for querying instead of the
                           latest datasets. Default is false.
-    :type multi_version: bool
+    :type multi-version: bool
     :query translate: Translate the metadata output to the required DRS flavour.
                       Default is true
     :type translate: bool

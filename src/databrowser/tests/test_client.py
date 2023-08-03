@@ -47,7 +47,9 @@ def test_time_selection(client: TestClient) -> None:
         params={"time": "1898 to 1901", "time_select": "foo", "batch_size": 2},
     )
     assert res2.status_code == 500
-    res3 = client.get("databrowser/freva/file", params={"time": "fx", "batch_size": 2})
+    res3 = client.get(
+        "databrowser/freva/file", params={"time": "fx", "batch_size": 2}
+    )
     assert res3.status_code == 500
 
 
@@ -55,7 +57,9 @@ def test_primary_facets(client: TestClient) -> None:
     """Test the functionality of primary facet definitions."""
     res1 = client.get("metadata_search/freva/file").json()
     res2 = client.get("metadata_search/cmip6/file").json()
-    res3 = client.get("metadata_search/cmip6/file", params={"translate": "f"}).json()
+    res3 = client.get(
+        "metadata_search/cmip6/file", params={"translate": "f"}
+    ).json()
     assert "primary_facets" in res1
     assert "primary_facets" in res2
     assert "primary_facets" in res3
@@ -125,6 +129,15 @@ def test_intake_search(client: TestClient) -> None:
         },
     )
     assert len(res1.json()["catalog_dict"]) > len(res3.json()["catalog_dict"])
+    res4 = client.get(
+        "intake_catalogue/cmip6/uri",
+        params={
+            "batch_size": 3,
+            "multi-version": False,
+            "max-results": 1,
+        },
+    )
+    assert res4.status_code == 400
 
 
 def test_bad_intake_request(client: TestClient) -> None:
@@ -147,5 +160,7 @@ def test_parameter_validation(client: TestClient) -> None:
         "databrowser/cmip6/uri",
         params={"product": "cmip", "translate": "true"},
     ).status_code
-    res3 = client.get("databrowser/cmip6/uri", params={"activity_": "cmip"}).status_code
+    res3 = client.get(
+        "databrowser/cmip6/uri", params={"activity_": "cmip"}
+    ).status_code
     assert res1 == res2 == res3 == 422
