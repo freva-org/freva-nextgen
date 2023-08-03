@@ -57,12 +57,12 @@ Specific ``GET`` Methods
 The Freva Databrowser REST API offers specific ``GET`` methods that allow you
 to fine-tune your searches and retrieve tailored results. These methods include:
 
-- Search by Key-Value Pairs: Use the ``GET /databrowser`` endpoint to
+- :ref:`databrowser`: Use the ``GET /databrowser`` endpoint to
   make key-value paired queries and find climate datasets that match your
   specific criteria. This method enables you to target datasets based on
   parameters such as `variables`, `models`, `time ranges`, and `experiments`.
 
-- Query All Facets: The ``GET /search_facets`` endpoint allows you to query
+- :ref:`search_facets`: The ``GET /metadata_search`` endpoint allows you to query
   all available facets of the indexed data. By exploring facets like
   `models`, `experiments`, and `institutions`, you can gain valuable insights
   into the dataset's metadata, assisting you in refining your search effectively.
@@ -71,7 +71,11 @@ to fine-tune your searches and retrieve tailored results. These methods include:
   metadata categories, aiding you in identifying the most relevant data for
   your research.
 
-- Generating Intake-ESM Catalogues: The ``GET /intake_catalogue`` lets you seamlessly
+- :ref:`overview`: With help of the ``GET /overview`` method you can check
+  wich Data Reference Syntax and how the search facets in earch standard are
+  defined.
+
+- :ref:`intake`: The ``GET /intake_catalogue`` lets you seamlessly
   generate Intake-ESM catalogues from your search queries.
   Intake-ESM is a powerful data cataloging tool widely used in Earth System
   Model (ESM) analysis. This integration allows you to create curated
