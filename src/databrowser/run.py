@@ -52,6 +52,14 @@ class SolrConfig:
             alias="translate",
             description="Translate the output to the required DRS flavour.",
         ),
+        "facets": Query(
+            title="Facets",
+            alias="facets",
+            description=(
+                "The facets that should be part of the output, "
+                "by default all facets will be returned."
+            ),
+        ),
     }
 
     @staticmethod
@@ -101,7 +109,7 @@ async def intake_catalogue(
     uniq_key: Literal["file", "uri"],
     batch_size: Annotated[int, SolrConfig.params["batch-size"]] = 150,
     start: Annotated[int, SolrConfig.params["start"]] = 0,
-    multi_version: Annotated[bool, SolrConfig.params["multi-version"]] = True,
+    multi_version: Annotated[bool, SolrConfig.params["multi-version"]] = False,
     translate: Annotated[bool, SolrConfig.params["translate"]] = True,
     request: Request = Required,
 ) -> StreamingResponse:
@@ -132,8 +140,11 @@ async def metadata_search(
     uniq_key: Literal["file", "uri"],
     batch_size: Annotated[int, SolrConfig.params["batch-size"]] = 150,
     start: Annotated[int, SolrConfig.params["start"]] = 0,
-    multi_version: Annotated[bool, SolrConfig.params["multi-version"]] = True,
+    multi_version: Annotated[bool, SolrConfig.params["multi-version"]] = False,
     translate: Annotated[bool, SolrConfig.params["translate"]] = True,
+    facets: Annotated[
+        Union[List[str], None], SolrConfig.params["facets"]
+    ] = None,
     request: Request = Required,
 ) -> JSONResponse:
     """Get the search facets."""
@@ -147,7 +158,7 @@ async def metadata_search(
         translate=translate,
         **SolrConfig.process_parameters(request),
     )
-    status_code, result = await solr_search.metadata_search()
+    status_code, result = await solr_search.metadata_search(facets or [])
     return JSONResponse(content=result.dict(), status_code=status_code)
 
 
@@ -157,7 +168,7 @@ async def databrowser(
     uniq_key: Literal["file", "uri"],
     batch_size: Annotated[int, SolrConfig.params["batch-size"]] = 150,
     start: Annotated[int, SolrConfig.params["start"]] = 0,
-    multi_version: Annotated[bool, SolrConfig.params["multi-version"]] = True,
+    multi_version: Annotated[bool, SolrConfig.params["multi-version"]] = False,
     translate: Annotated[bool, SolrConfig.params["translate"]] = True,
     request: Request = Required,
 ) -> StreamingResponse:

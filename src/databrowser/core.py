@@ -9,6 +9,7 @@ from typing import (
     Any,
     AsyncIterator,
     Dict,
+    Iterable,
     List,
     Literal,
     Tuple,
@@ -282,20 +283,28 @@ class Translator:
 
     def translate_facets(
         self,
-        facets: Dict[str, Any],
+        facets: Iterable[str],
         backwards: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> List[str]:
         """Translate the facets names to a given flavour."""
         if self.translate:
             if backwards:
-                return {
-                    self.backward_lookup.get(k, k): v
-                    for (k, v) in facets.items()
-                }
-            return {
-                self.foreward_lookup.get(k, k): v for (k, v) in facets.items()
-            }
-        return facets
+                return [self.backward_lookup.get(f, f) for f in facets]
+            return [self.foreward_lookup.get(f, f) for f in facets]
+        return list(facets)
+
+    def translate_query(
+        self,
+        query: Dict[str, Any],
+        backwards: bool = False,
+    ) -> Dict[str, Any]:
+        """Translate the queries names to a given flavour."""
+        return dict(
+            zip(
+                self.translate_facets(query.keys(), backwards=backwards),
+                query.values(),
+            )
+        )
 
 
 class SolrSearch:
@@ -346,7 +355,7 @@ class SolrSearch:
             )
         except ValueError as err:
             raise HTTPException(status_code=500, detail=str(err)) from err
-        self.facets = self.translator.translate_facets(query, backwards=True)
+        self.facets = self.translator.translate_query(query, backwards=True)
         self.url, self.query = self._get_url()
         self.query["start"] = start
         self.query["sort"] = f"{self.uniq_key} desc"
@@ -474,7 +483,7 @@ class SolrSearch:
                 if result.get(k)
             }
             catalogue["catalog_dict"].append(
-                self.translator.translate_facets(source)
+                self.translator.translate_query(source)
             )
         return search_status, IntakeCatalogue(
             catalogue=catalogue, total_count=total_count
@@ -492,7 +501,7 @@ class SolrSearch:
                         + self.translator.facet_hierachy
                         if out.get(k)
                     }
-                    entry = self.translator.translate_facets(source)
+                    entry = self.translator.translate_query(source)
                     yield ",\n   "
                     for line in list(encoder.iterencode(entry)):
                         yield line
@@ -525,6 +534,7 @@ class SolrSearch:
 
     async def metadata_search(
         self,
+        facets: List[str],
     ) -> Tuple[int, SearchResult]:
         """Initialise the apache solr metadata search.
 
@@ -532,13 +542,16 @@ class SolrSearch:
         -------
         int: status code of the apache solr query.
         """
+        search_facets = [f for f in facets if f not in ("*", "all")]
         self.query["facet"] = "true"
         self.query["rows"] = self.batch_size
         self.query["facet.sort"] = "index"
         self.query["facet.mincount"] = "1"
         self.query["facet.limit"] = "-1"
         self.query["wt"] = "json"
-        self.query["facet.field"] = self._config.solr_fields
+        self.query["facet.field"] = self.translator.translate_facets(
+            search_facets or self._config.solr_fields, backwards=True
+        )
         self.query["fl"] = [self.uniq_key, "fs_type"]
         logger.info(
             "Query %s for uniq_key: %s with %s",
@@ -546,6 +559,7 @@ class SolrSearch:
             self.uniq_key,
             self.query,
         )
+
         async with aiohttp.ClientSession(timeout=self.timeout) as session:
             async with session.get(self.url, params=self.query) as res:
                 search_status = res.status
@@ -556,7 +570,7 @@ class SolrSearch:
                     search = {}
         return search_status, SearchResult(
             total_count=search.get("response", {}).get("numFound", 0),
-            facets=self.translator.translate_facets(
+            facets=self.translator.translate_query(
                 search.get("facet_counts", {}).get("facet_fields", {})
             ),
             search_results=[
@@ -566,7 +580,11 @@ class SolrSearch:
                 }
                 for k in search.get("response", {}).get("docs", [])
             ],
-            facet_mapping=self.translator.foreward_lookup,
+            facet_mapping={
+                k: self.translator.foreward_lookup[k]
+                for k in self.query["facet.field"]
+                if k in self.translator.foreward_lookup
+            },
             primary_facets=self.translator.primary_keys,
         )
 

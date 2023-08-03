@@ -162,7 +162,7 @@ Searching for datasets locations
                  Default is 0.
     :type start: int
     :query multi_version: Use versioned datasets for querying instead of the
-                          latest datasets. Default is False.
+                          latest datasets. Default is false.
     :type multi_version: bool
     :query \**search_facets: With any other query parameters you refine your
                              data search. Query parameters could be, depending
@@ -345,6 +345,9 @@ Searching for metadata
     :query multi_version: Use versioned datasets for querying instead of the
                           latest datasets. Default is false.
     :type multi_version: bool
+    :query facets: The facets that should be part of the output, by default
+                    all facets will be returned.
+    :type facets: str, list
     :query translate: Translate the metadata output to the required DRS flavour.
                       Default is true
     :type translate: bool

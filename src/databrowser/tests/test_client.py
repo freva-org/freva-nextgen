@@ -103,6 +103,11 @@ def test_metadata_search(client: TestClient) -> None:
     assert "rcm_name" in res5["facets"]
     assert "rcm_name" in res5["primary_facets"]
 
+    res6 = client.get(
+        "metadata_search/cmip6/uri", params={"facets": "activity_id"}
+    ).json()
+    assert len(res6["facets"].keys()) == 1
+
 
 def test_intake_search(client: TestClient) -> None:
     """Test the creation of intake catalogues."""
