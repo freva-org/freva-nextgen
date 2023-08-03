@@ -110,26 +110,26 @@ class Translator:
     def _freva_facets(self) -> dict[str, str]:
         """Define the freva search facets and their relevance"""
         return {
-            "experiment": "primary",
-            "ensemble": "primary",
-            "fs_type": "secundary",
-            "grid_label": "secundary",
-            "institute": "primary",
-            "model": "primary",
             "project": "primary",
             "product": "primary",
-            "realm": "primary",
-            "variable": "parimary",
-            "time_aggregation": "primary",
+            "institute": "primary",
+            "model": "primary",
+            "experiment": "primary",
             "time_frequency": "primary",
+            "realm": "primary",
+            "variable": "primary",
+            "ensemble": "primary",
+            "time_aggregation": "primary",
+            "fs_type": "secundary",
+            "grid_label": "secundary",
             "cmor_table": "secundary",
-            "dataset": "secundary",
             "driving_model": "secundary",
             "format": "secundary",
             "grid_id": "secundary",
             "level_type": "secundary",
             "rcm_name": "secundary",
             "rcm_version": "secundary",
+            "dataset": "secundary",
         }
 
     @property
