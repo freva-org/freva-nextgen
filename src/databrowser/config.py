@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Tuple, TypedDict
 
+from motor.motor_asyncio import AsyncIOMotorClient
 import requests
 import tomli
 
@@ -54,6 +55,36 @@ class ServerConfig:
         )
         self.debug = defaults["DEBUG"]
         self.__post_init__()
+
+    @property
+    def mongo_url(self) -> str:
+        """Get the url to the mongodb."""
+        host = (
+            os.environ.get("MONGO_HOST", "")
+            or self._config["mongo_db"]["hostname"]
+        )
+        port = (
+            os.environ.get("MONGO_PORT", "")
+            or self._config["mongo_db"]["port"]
+        )
+        user = (
+            os.environ.get("MONGO_USER", "")
+            or self._config["mongo_db"]["user"]
+        )
+        pw = (
+            os.environ.get("MONGO_PASSWORD", "")
+            or self._config["mongo_db"]["password"]
+        )
+
+        return f"mongodb://{user}:{pw}@{host}:{port}"
+
+    @property
+    def mongo_db(self) -> str:
+        """Get the database name where the stats is stored."""
+        return (
+            os.environ.get("MONGO_NAME", "")
+            or self._config["mongo_db"]["name"]
+        )
 
     @property
     def solr_fields(self) -> list[str]:
@@ -118,3 +149,5 @@ class ServerConfig:
         if self.debug:
             self.set_debug()
         self._solr_fields = self._get_solr_fields()
+        self.mongo_client = AsyncIOMotorClient(self.mongo_url)
+        self.mongo_instance = self.mongo_client[self.mongo_db]

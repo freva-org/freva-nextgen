@@ -19,10 +19,17 @@ app = FastAPI(
     description="Key-Value pair data search api",
     version=__version__,
 )
+
 solr_config = ServerConfig(
     Path(os.environ.get("API_CONFIG", defaults["API_CONFIG"])),
     debug=bool(os.environ.get("DEBUG", int(defaults["DEBUG"]))),
 )
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    # Close the MongoDB connection on application shutdown
+    solr_config.mongo_client.close()
 
 
 class SolrConfig:
@@ -134,6 +141,7 @@ async def intake_catalogue(
         **SolrConfig.process_parameters(request),
     )
     status_code, result = await solr_search.init_intake_catalogue()
+    await solr_search.store_results(result.total_count, status_code)
     if result.total_count == 0:
         raise HTTPException(status_code=400, detail="No results found.")
     elif result.total_count > max_results and max_results > 0:
@@ -170,6 +178,7 @@ async def metadata_search(
         **SolrConfig.process_parameters(request),
     )
     status_code, result = await solr_search.metadata_search(facets or [])
+    await solr_search.store_results(result.total_count, status_code)
     return JSONResponse(content=result.dict(), status_code=status_code)
 
 
@@ -195,8 +204,20 @@ async def databrowser(
         **SolrConfig.process_parameters(request),
     )
     status_code, result = await solr_search.init_stream()
+    await solr_search.store_results(result.total_count, status_code)
     return StreamingResponse(
         solr_search.stream_response(result),
         status_code=status_code,
         media_type="text/plain",
     )
+
+
+@app.get("/search")
+async def search() -> List[Dict[str, Union[int, str, List[str]]]]:
+    collection = solr_config.mongo_instance["search_queries"]
+    stats = []
+    async for document in collection.find():
+        document.pop("_id")
+        print(document)
+        stats.append(document)
+    return stats
