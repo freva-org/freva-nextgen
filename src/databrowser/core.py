@@ -1,13 +1,16 @@
 """The core functionality to interact with the apache solr search system."""
 
-
+import asyncio
 from dataclasses import dataclass
 from datetime import datetime
-from functools import cached_property
+from functools import cached_property, wraps
 from json import JSONEncoder
 from typing import (
     Any,
     AsyncIterator,
+    Awaitable,
+    Callable,
+    Coroutine,
     Dict,
     Iterable,
     List,
@@ -42,6 +45,20 @@ IntakeType = TypedDict(
         "catalog_dict": List[Dict[str, Any]],
     },
 )
+
+
+def ensure_future(
+    async_func: Callable[..., Awaitable[Any]]
+) -> Callable[..., Coroutine[Any, Any, asyncio.Task[Any]]]:
+    """Decorator that runs any given asyncio function in the background."""
+
+    @wraps(async_func)
+    async def wrapper(*args: Any, **kwargs: Any) -> asyncio.Task[Any]:
+        """Async wrapper function that creates the call."""
+        loop = asyncio.get_event_loop()
+        return asyncio.ensure_future(async_func(*args, **kwargs), loop=loop)
+
+    return wrapper
 
 
 class SearchResult(BaseModel):
@@ -567,6 +584,7 @@ class SolrSearch:
             catalogue=catalogue, total_count=total_count
         )
 
+    @ensure_future
     async def store_results(self, num_results: int, status: int) -> None:
         """Store the query into a database.
 
@@ -577,6 +595,8 @@ class SolrSearch:
         status: int
             The HTTP request status
         """
+        if num_results == 0:
+            return
         data = {
             "num_results": num_results,
             "flavour": self.translator.flavour,
@@ -584,12 +604,14 @@ class SolrSearch:
             "server_status": status,
             "date": datetime.now(),
         }
-        try:
-            collection = self._config.mongo_instance["search_queries"]
-        except TypeError:  # pragma: no cover
-            return  # pragma: no cover
+        facets = {k: "&".join(v) for (k, v) in self.facets.items()}
         data.update(self.facets)
-        await collection.insert_one({"metadata": data, "query": self.facets})
+        try:
+            await self._config.mongo_collection.insert_one(
+                {"metadata": data, "query": facets}
+            )
+        except Exception as error:
+            logger.warning("Could not add stats to mongodb: %s", error)
 
     async def _iterintake(self) -> AsyncIterator[str]:
         encoder = JSONEncoder(indent=3)

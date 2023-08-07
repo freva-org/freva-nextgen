@@ -12,6 +12,7 @@ from pydantic import BaseModel, Required
 from ._version import __version__
 from .config import ServerConfig, defaults
 from .core import FlavourType, SolrSearch, Translator
+from .logger import logger
 
 app = FastAPI(
     debug=bool(int(os.environ.get("DEBUG", "0"))),
@@ -27,9 +28,12 @@ solr_config = ServerConfig(
 
 
 @app.on_event("shutdown")
-async def shutdown_event():
-    # Close the MongoDB connection on application shutdown
-    solr_config.mongo_client.close()
+async def shutdown_event() -> None:
+    """Close the MongoDB connection on application shutdown."""
+    try:
+        solr_config.mongo_client.close()
+    except Exception as error:  # pragma: no cover
+        logger.warning("Could not shutdown mongodb connection: %s", error)
 
 
 class SolrConfig:
@@ -210,14 +214,3 @@ async def databrowser(
         status_code=status_code,
         media_type="text/plain",
     )
-
-
-@app.get("/search")
-async def search() -> List[Dict[str, Union[int, str, List[str]]]]:
-    collection = solr_config.mongo_instance["search_queries"]
-    stats = []
-    async for document in collection.find():
-        document.pop("_id")
-        print(document)
-        stats.append(document)
-    return stats

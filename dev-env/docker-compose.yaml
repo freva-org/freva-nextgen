@@ -18,5 +18,3 @@ services:
       MONGO_INITDB_DATABASE: search_stats
     ports:
       - "27017:27017"
-    volumes:
-      - ./mongodb:/data/db:rw

@@ -10,9 +10,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Tuple, TypedDict
 
-from motor.motor_asyncio import AsyncIOMotorClient
 import requests
 import tomli
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from .logger import THIS_NAME, logger, logger_file_handle
 
@@ -149,5 +149,9 @@ class ServerConfig:
         if self.debug:
             self.set_debug()
         self._solr_fields = self._get_solr_fields()
-        self.mongo_client = AsyncIOMotorClient(self.mongo_url)
-        self.mongo_instance = self.mongo_client[self.mongo_db]
+        self.mongo_client = AsyncIOMotorClient(
+            self.mongo_url, serverSelectionTimeoutMS=5000
+        )
+        self.mongo_collection = self.mongo_client[self.mongo_db][
+            "search_queries"
+        ]

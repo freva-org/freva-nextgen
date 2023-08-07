@@ -2,6 +2,9 @@
 import json
 
 from fastapi.testclient import TestClient
+from pymongo import MongoClient
+
+from databrowser.config import ServerConfig
 
 
 def test_attributes(client: TestClient) -> None:
@@ -164,3 +167,27 @@ def test_parameter_validation(client: TestClient) -> None:
         "databrowser/cmip6/uri", params={"activity_": "cmip"}
     ).status_code
     assert res1 == res2 == res3 == 422
+
+
+def test_no_mongo_parameter_insert(client_no_mongo: TestClient) -> None:
+    """Test the insertion of data into the mongodb."""
+    res1 = client_no_mongo.get(
+        "databrowser/cmip6/uri",
+        params={"activity_id": "cmip"},
+    ).status_code
+    assert res1 == 200
+
+
+def tests_mongo_parameter_insert(
+    client: TestClient, cfg: ServerConfig
+) -> None:
+    """Test the successfull insertion of the search stats."""
+    res1 = client.get(
+        "databrowser/cmip6/uri",
+        params={"activity_id": "cmip"},
+    ).status_code
+    assert res1 == 200
+    mongo_client = MongoClient(cfg.mongo_url)  # type: ignore
+    collection = mongo_client[cfg.mongo_db]["search_queries"]
+    stats = list(collection.find({}))
+    assert len(stats) > 0
