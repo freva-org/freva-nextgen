@@ -40,11 +40,11 @@ class SolrConfig:
     """Class holding all apache solr config parameters."""
 
     params: dict[str, Any] = {
-        "batch-size": Query(
-            alias="batch_size",
-            title="Batch size",
-            description="Control the number of maximum items returned.",
-            ge=1,
+        "batch_size": Query(
+            alias="max-results",
+            title="Max. results",
+            description="Control the number of maximum result items returned.",
+            ge=0,
             le=1500,
         ),
         "start": Query(
@@ -53,10 +53,10 @@ class SolrConfig:
             description="Specify the starting point for receiving results.",
             ge=0,
         ),
-        "multi-version": Query(
-            alias="multi_version",
+        "multi_version": Query(
+            alias="multi-version",
             title="Multi Version",
-            description="Use versioned datasets in stead of latest versions.",
+            description="Use versioned datasets instead of latest versions.",
         ),
         "translate": Query(
             title="Translate",
@@ -71,7 +71,7 @@ class SolrConfig:
                 "by default all facets will be returned."
             ),
         ),
-        "max-results": Query(
+        "max_results": Query(
             title="Max. Results",
             alias="max-results",
             description=(
@@ -91,6 +91,7 @@ class SolrConfig:
         for key, param in SolrConfig.params.items():
             _ = query.pop(key, [""])
             _ = query.pop(param.alias, [""])
+
         return query
 
 
@@ -126,11 +127,10 @@ async def overview() -> SearchFlavours:
 async def intake_catalogue(
     flavour: FlavourType,
     uniq_key: Literal["file", "uri"],
-    batch_size: Annotated[int, SolrConfig.params["batch-size"]] = 150,
     start: Annotated[int, SolrConfig.params["start"]] = 0,
-    multi_version: Annotated[bool, SolrConfig.params["multi-version"]] = False,
+    multi_version: Annotated[bool, SolrConfig.params["multi_version"]] = False,
     translate: Annotated[bool, SolrConfig.params["translate"]] = True,
-    max_results: Annotated[int, SolrConfig.params["max-results"]] = -1,
+    max_results: Annotated[int, SolrConfig.params["max_results"]] = -1,
     request: Request = Required,
 ) -> StreamingResponse:
     """Create an intake catalogue from a freva search."""
@@ -138,7 +138,6 @@ async def intake_catalogue(
         solr_config,
         flavour=flavour,
         uniq_key=uniq_key,
-        batch_size=batch_size,
         start=start,
         multi_version=multi_version,
         translate=translate,
@@ -161,10 +160,10 @@ async def intake_catalogue(
 async def metadata_search(
     flavour: FlavourType,
     uniq_key: Literal["file", "uri"],
-    batch_size: Annotated[int, SolrConfig.params["batch-size"]] = 150,
     start: Annotated[int, SolrConfig.params["start"]] = 0,
-    multi_version: Annotated[bool, SolrConfig.params["multi-version"]] = False,
+    multi_version: Annotated[bool, SolrConfig.params["multi_version"]] = False,
     translate: Annotated[bool, SolrConfig.params["translate"]] = True,
+    max_results: Annotated[int, SolrConfig.params["batch_size"]] = 150,
     facets: Annotated[
         Union[List[str], None], SolrConfig.params["facets"]
     ] = None,
@@ -175,13 +174,14 @@ async def metadata_search(
         solr_config,
         flavour=flavour,
         uniq_key=uniq_key,
-        batch_size=batch_size,
         start=start,
         multi_version=multi_version,
         translate=translate,
         **SolrConfig.process_parameters(request),
     )
-    status_code, result = await solr_search.metadata_search(facets or [])
+    status_code, result = await solr_search.metadata_search(
+        facets or [], max_results=max_results
+    )
     await solr_search.store_results(result.total_count, status_code)
     return JSONResponse(content=result.dict(), status_code=status_code)
 
@@ -190,9 +190,8 @@ async def metadata_search(
 async def databrowser(
     flavour: FlavourType,
     uniq_key: Literal["file", "uri"],
-    batch_size: Annotated[int, SolrConfig.params["batch-size"]] = 150,
     start: Annotated[int, SolrConfig.params["start"]] = 0,
-    multi_version: Annotated[bool, SolrConfig.params["multi-version"]] = False,
+    multi_version: Annotated[bool, SolrConfig.params["multi_version"]] = False,
     translate: Annotated[bool, SolrConfig.params["translate"]] = True,
     request: Request = Required,
 ) -> StreamingResponse:
@@ -201,7 +200,6 @@ async def databrowser(
         solr_config,
         flavour=flavour,
         uniq_key=uniq_key,
-        batch_size=batch_size,
         start=start,
         multi_version=multi_version,
         translate=translate,

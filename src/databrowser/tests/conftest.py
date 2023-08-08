@@ -26,8 +26,9 @@ def cfg() -> Iterator[ServerConfig]:
 def client(cfg: ServerConfig) -> Iterator[TestClient]:
     """Setup the test client for the unit test."""
 
-    with TestClient(app) as test_client:
-        yield test_client
+    with mock.patch("databrowser.run.SolrSearch.batch_size", 3):
+        with TestClient(app) as test_client:
+            yield test_client
 
 
 @pytest.fixture(scope="function")
