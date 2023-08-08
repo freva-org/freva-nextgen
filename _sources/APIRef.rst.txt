@@ -155,9 +155,6 @@ Searching for datasets locations
                     will be based on file paths or Uniform Resource
                     Identifiers (URIs).
     :type uniq_key: str
-    :query batch-size: Control the number of maximum items returned by the
-                       query. Default is 150.
-    :type batch-size: int
     :query start: Specify the starting point for receiving search results.
                  Default is 0.
     :type start: int
@@ -170,7 +167,6 @@ Searching for datasets locations
                              ``model`` etc.
 
     :statuscode 200: no error
-    :statuscode 400: no entries found for this query
     :statuscode 422: invalid query parameters
     :resheader Content-Type: ``text/plain``: `stream` providing a list of data
                               files or locations that match the search criteria.
@@ -267,14 +263,13 @@ Searching for datasets locations
                 // Query parameters
                 const char *product = "EUR-11";
                 const char *fs_type = "swift"
-                const int batch_size = 50;
                 const int start = 0;
                 const int multi_version = 0; // 0 for false, 1 for true
 
                 // Build the query string
                 char query[256];
                 snprintf(query, sizeof(query),
-                    "?product=%s&fs_type=%s&batch-size=%d&start=%d&multi-version=%d",product, fs_type , batch_size, start, multi_version);
+                    "?product=%s&fs_type=%s&start=%d&multi-version=%d",product, fs_type , start, multi_version);
 
                 // Initialize curl
                 curl = curl_easy_init();
@@ -336,9 +331,9 @@ Searching for metadata
                     will be based on file paths or Uniform Resource
                     Identifiers (URIs).
     :type uniq_key: str
-    :query batch-size: Control the number of maximum items returned by the
+    :query max-results: Control the number of maximum items returned by the
                        query. Default is 150.
-    :type batch-size: int
+    :type max-results: int
     :query start: Specify the starting point for receiving search results.
                  Default is 0.
     :type start: int
@@ -358,7 +353,6 @@ Searching for metadata
     :type \**search_facets: str, list[str]
 
     :statuscode 200: no error
-    :statuscode 400: no entries found for this query
     :statuscode 422: invalid query parameters
     :resheader Content-Type: ``application/json``: Metadata matching the data
                              query.
@@ -368,7 +362,7 @@ Searching for metadata
                                each facet entry contains a list of facet values
                                followed by the number of occurrences of this
                                facet.
-                             - ``search_result``: Array of length ``batch-size``
+                             - ``search_result``: Array of length ``max-results``
                                of found datasets along with additional information
                                stored in a table.
                              - ``facet_mapping``: Translation rules describing
@@ -575,9 +569,6 @@ Generating an intake-esm catalogue
                     will be based on file paths or Uniform Resource
                     Identifiers (URIs).
     :type uniq_key: str
-    :query batch-size: Control the number of maximum items returned by the
-                       query. Default is 150.
-    :type batch-size: int
     :query start: Specify the starting point for receiving search results.
                  Default is 0.
     :type start: int

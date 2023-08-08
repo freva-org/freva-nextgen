@@ -513,8 +513,6 @@ Identifiers (URIs).</p></li>
 </dd>
 <dt class="field-even">Query Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>batch-size</strong> – Control the number of maximum items returned by the
-query. Default is 150.</p></li>
 <li><p><strong>start</strong> – Specify the starting point for receiving search results.
 Default is 0.</p></li>
 <li><p><strong>multi-version</strong> – Use versioned datasets for querying instead of the
@@ -528,7 +526,6 @@ on the DRS standard flavour <code class="docutils literal notranslate"><span cla
 <dt class="field-odd">Status Codes<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.1">200 OK</a></span> – no error</p></li>
-<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.1">400 Bad Request</a></span> – no entries found for this query</p></li>
 <li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc4918#section-11.2">422 Unprocessable Entity</a></span> – invalid query parameters</p></li>
 </ul>
 </dd>
@@ -621,14 +618,13 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="w">    </span><span class="c1">// Query parameters</span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;EUR-11&quot;</span><span class="p">;</span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">fs_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;swift&quot;</span>
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">batch_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">50</span><span class="p">;</span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">multi_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="c1">// 0 for false, 1 for true</span>
 
 <span class="w">    </span><span class="c1">// Build the query string</span>
 <span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">query</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
 <span class="w">    </span><span class="n">snprintf</span><span class="p">(</span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">query</span><span class="p">),</span>
-<span class="w">        </span><span class="s">&quot;?product=%s&amp;fs_type=%s&amp;batch-size=%d&amp;start=%d&amp;multi-version=%d&quot;</span><span class="p">,</span><span class="n">product</span><span class="p">,</span><span class="w"> </span><span class="n">fs_type</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="n">batch_size</span><span class="p">,</span><span class="w"> </span><span class="n">start</span><span class="p">,</span><span class="w"> </span><span class="n">multi_version</span><span class="p">);</span>
+<span class="w">        </span><span class="s">&quot;?product=%s&amp;fs_type=%s&amp;start=%d&amp;multi-version=%d&quot;</span><span class="p">,</span><span class="n">product</span><span class="p">,</span><span class="w"> </span><span class="n">fs_type</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="n">start</span><span class="p">,</span><span class="w"> </span><span class="n">multi_version</span><span class="p">);</span>
 
 <span class="w">    </span><span class="c1">// Initialize curl</span>
 <span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
@@ -694,7 +690,7 @@ Identifiers (URIs).</p></li>
 </dd>
 <dt class="field-even">Query Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>batch-size</strong> – Control the number of maximum items returned by the
+<li><p><strong>max-results</strong> – Control the number of maximum items returned by the
 query. Default is 150.</p></li>
 <li><p><strong>start</strong> – Specify the starting point for receiving search results.
 Default is 0.</p></li>
@@ -713,7 +709,6 @@ on the DRS standard flavour <code class="docutils literal notranslate"><span cla
 <dt class="field-odd">Status Codes<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.1">200 OK</a></span> – no error</p></li>
-<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.1">400 Bad Request</a></span> – no entries found for this query</p></li>
 <li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc4918#section-11.2">422 Unprocessable Entity</a></span> – invalid query parameters</p></li>
 </ul>
 </dd>
@@ -727,7 +722,7 @@ query.</p>
 each facet entry contains a list of facet values
 followed by the number of occurrences of this
 facet.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">search_result</span></code>: Array of length <code class="docutils literal notranslate"><span class="pre">batch-size</span></code>
+<li><p><code class="docutils literal notranslate"><span class="pre">search_result</span></code>: Array of length <code class="docutils literal notranslate"><span class="pre">max-results</span></code>
 of found datasets along with additional information
 stored in a table.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">facet_mapping</span></code>: Translation rules describing
@@ -935,8 +930,6 @@ Identifiers (URIs).</p></li>
 </dd>
 <dt class="field-even">Query Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>batch-size</strong> – Control the number of maximum items returned by the
-query. Default is 150.</p></li>
 <li><p><strong>start</strong> – Specify the starting point for receiving search results.
 Default is 0.</p></li>
 <li><p><strong>max-results</strong> – Raise an Error if more results are found than that
