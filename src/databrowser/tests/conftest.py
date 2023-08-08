@@ -9,6 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from databrowser.config import ServerConfig, defaults
+from databrowser.run import app
 from databrowser.tests.mock import read_data
 
 
@@ -21,14 +22,11 @@ def cfg() -> Iterator[ServerConfig]:
     yield cfg
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def client(cfg: ServerConfig) -> Iterator[TestClient]:
     """Setup the test client for the unit test."""
-    from databrowser.run import app
 
     with TestClient(app) as test_client:
-        from databrowser.run import app
-
         yield test_client
 
 
@@ -41,8 +39,6 @@ def client_no_mongo(cfg: ServerConfig) -> Iterator[TestClient]:
         cfg = ServerConfig(defaults["API_CONFIG"], debug=True)
         for core in cfg.solr_cores:
             asyncio.run(read_data(core, cfg.solr_host, cfg.solr_port))
-        with mock.patch("databrowser.run.solr_config", cfg):
-            from databrowser.run import app
-
+        with mock.patch("databrowser.run.solr_config.mongo_collection", None):
             with TestClient(app) as test_client:
                 yield test_client

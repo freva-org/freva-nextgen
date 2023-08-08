@@ -20,7 +20,7 @@ def test_databrowser(client: TestClient) -> None:
         "databrowser/cmip6/uri",
         params={"batch_size": 2, "activity_id": "cmipx"},
     )
-    assert res1.status_code == 400
+    assert res1.status_code == 200
     res2 = client.get(
         "databrowser/cmip6/uri",
         params={"translate": "false", "product": "cmip", "batch_size": 2},
@@ -98,7 +98,7 @@ def test_metadata_search(client: TestClient) -> None:
         "metadata_search/cmip6/uri",
         params={"activity_id": "cmipx", "translate": "true", "batch_size": 2},
     )
-    assert res4.status_code == 400
+    assert res4.status_code == 200
     res5 = client.get(
         "metadata_search/cordex/uri",
         params={"domain": "eur-11", "translate": "true"},
@@ -135,7 +135,7 @@ def test_intake_search(client: TestClient) -> None:
     res4 = client.get(
         "intake_catalogue/cmip6/uri",
         params={
-            "batch_size": 3,
+            "batch-size": 3,
             "multi-version": False,
             "max-results": 1,
         },
@@ -183,11 +183,21 @@ def tests_mongo_parameter_insert(
 ) -> None:
     """Test the successfull insertion of the search stats."""
     res1 = client.get(
-        "databrowser/cmip6/uri",
-        params={"activity_id": "cmip"},
+        "databrowser/cordex/uri",
+        params={"variable": ["wind", "cape"]},
     ).status_code
     assert res1 == 200
     mongo_client = MongoClient(cfg.mongo_url)  # type: ignore
     collection = mongo_client[cfg.mongo_db]["search_queries"]
     stats = list(collection.find({}))
     assert len(stats) > 0
+    assert isinstance(stats[0], dict)
+    assert "metadata" in stats[0]
+    assert "query" in stats[0]
+    assert isinstance(stats[0]["query"], dict)
+    assert isinstance(stats[0]["metadata"], dict)
+    # The search keys should have been converted to strings.
+    assert (
+        len([k for k in stats[0]["query"].values() if not isinstance(k, str)])
+        == 0
+    )
