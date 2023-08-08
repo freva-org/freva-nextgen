@@ -605,7 +605,6 @@ class SolrSearch:
             "date": datetime.now(),
         }
         facets = {k: "&".join(v) for (k, v) in self.facets.items()}
-        data.update(self.facets)
         try:
             await self._config.mongo_collection.insert_one(
                 {"metadata": data, "query": facets}
@@ -692,11 +691,8 @@ class SolrSearch:
                     search = await res.json()
                 except HTTPException:  # pragma: no cover
                     search = {}  # pragma: no cover
-        total_count = search.get("response", {}).get("numFound", 0)
-        if total_count == 0:
-            search_status = 400
         return search_status, SearchResult(
-            total_count=total_count,
+            total_count=search.get("response", {}).get("numFound", 0),
             facets=self.translator.translate_query(
                 search.get("facet_counts", {}).get("facet_fields", {})
             ),
@@ -739,9 +735,6 @@ class SolrSearch:
                     search = await res.json()
                 except HTTPException:  # pragma: no cover
                     search = {}  # pragma: no cover
-        total_count = search.get("response", {}).get("numFound", 0)
-        if not total_count:
-            search_status = 400
         return search_status, SearchResult(
             total_count=search.get("response", {}).get("numFound", 0),
             facets={},
@@ -759,7 +752,7 @@ class SolrSearch:
         url = f"{self._config.get_core_url(core)}/select/"
         query = []
         for key, value in self.facets.items():
-            search_value = " AND ".join(map(str.lower, value))
+            search_value = " OR ".join(map(str.lower, value))
             query.append(f"{key.lower()}:({search_value})")
         return url, {
             "fq": self.time + ["", " AND ".join(query) or "*:*"],
