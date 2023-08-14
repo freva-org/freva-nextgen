@@ -46,7 +46,6 @@ jobs:
         name: Build and push vault image
         uses: docker/build-push-action@v4
         with:
-          context: assets/vault/
           platforms: linux/amd64
           push: true
           tags: |
