@@ -76,7 +76,7 @@ It's best to use the system in production within a dedicated docker container.
 You can pull the container from the GitHub container registry:
 
 ```console
-docker pull docker.io/foo.bar
+docker pull ghcr.io/freva-clint/databrowserapi:latest
 ```
 
 There are two fundamental different options to configure the service.
@@ -110,4 +110,3 @@ variables can be set:
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-=======
