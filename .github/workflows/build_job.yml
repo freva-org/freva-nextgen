@@ -8,7 +8,7 @@ run-name: ${{ github.actor }} is building the container
       - init
 
 jobs:
-  build-and-push-vault-image:
+  build-and-push-image:
     runs-on: ubuntu-latest
     permissions:
       contents: read
