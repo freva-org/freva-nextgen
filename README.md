@@ -17,8 +17,8 @@ scientists, researchers, and data enthusiasts.
 
 - [Installation](#installation)
 - [Usage](#usage)
+- [Development Environment](#development-environment)
 - [Testing](#testing)
-- [Docker Development Environment](#docker-development-environment)
 - [License](#license)
 
 ## Installation
@@ -49,11 +49,13 @@ Then, run the following command:
 ```console
 docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
 ```
+This will start the required services and containers to create the development
+environment. You can now develop and test the project within this environment.
 
 After solr is up and running you can start the REST server the following:
 
 ```console
-poetry run python run_server.py --config-file api_config.toml --debug --dev --port 7777
+poetry run python -m databrowser.cli --config-file api_config.toml --debug --dev --port 7777
 ```
 
 The ``--debug`` and ``--dev`` flag will make sure that any changes are loaded.
@@ -63,13 +65,47 @@ simply do not pass the ``--dev`` flag.
 
 ### Testing
 
-This project uses `pytest` for testing. To run the tests, use the following command:
+This project uses `pytest` for testing. To run the tests, use the following
+command:
 
 ```console
 make test
 ```
+## Docker production container
+It's best to use the system in production within a dedicated docker container.
+You can pull the container from the GitHub container registry:
 
-This will start the required services and containers to create the development environment. You can now develop and test the project within this environment.
+```console
+docker pull docker.io/foo.bar
+```
+
+There are two fundamental different options to configure the service.
+
+1. via the `config` ``.toml`` file.
+2. via environment variables.
+
+Note, that the order here is important. First, any configuration from the
+config file is loaded, only if the configuration wasn't found in the config
+file then environment variables are evaluated. The following environment
+variables can be set:
+
+- ``DEBUG``: Start server in debug mode (1), (default: 0 -> no debug).
+- ``API_PORT``: the port the rest service should be running on (default 8080).
+- ``API_WORKER``: the number of multi-process work serving the API (default: 8).
+- ``SOLR_HOST``: host name of the solr server, host name and port should be
+                 separated by a ``:``, for example ``localhost:8983``
+- ``SOLR_CORE`` : name of the solr core that contains datasets with multiple
+                  versions
+- ``MONGO_HOST``: host name of the mongodb server, where query statistics are
+                 stored. Host name and port should separated by a ``:``, for
+                 example ``localhost:27017``
+- ``MONGO_USER``: user name for the mongodb.
+- ``MONGO_PASSWORD``: password to log on to the mongodb.
+- ``MONGO_DB``: database name of the mongodb instance.
+
+> ``📝`` You can override the path to the default config file using the ``API_CONFIG``
+         environment variable. The default location of this config file is
+         ``/opt/databrowser/api_config.toml``.
 
 ## License
 

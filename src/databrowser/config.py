@@ -43,47 +43,37 @@ class ServerConfig:
         Set the logging level to DEBUG
     """
 
-    config_file: Path = Path(
-        os.environ.get("API_CONFIG") or defaults["API_CONFIG"]
-    )
+    config_file: Path = Path(os.environ.get("API_CONFIG") or defaults["API_CONFIG"])
     debug: bool = False
 
     def reload(self) -> None:
         """Reload the configuration."""
-        self.config_file = Path(
-            os.environ.get("API_CONFIG") or defaults["API_CONFIG"]
-        )
+        self.config_file = Path(os.environ.get("API_CONFIG") or defaults["API_CONFIG"])
         self.debug = defaults["DEBUG"]
         self.__post_init__()
 
     @property
     def mongo_url(self) -> str:
         """Get the url to the mongodb."""
-        host = (
-            os.environ.get("MONGO_HOST", "")
-            or self._config["mongo_db"]["hostname"]
+        host = self._config.get("mongo_db", {}).get("hostname", "") or os.environ.get(
+            "MONGO_HOST", "localhost"
         )
-        port = (
-            os.environ.get("MONGO_PORT", "")
-            or self._config["mongo_db"]["port"]
+        host, _, m_port = host.partition(":")
+        port = m_port or str(self._config.get("mongo_db", {}).get("port", 27017))
+        user = self._config.get("mongo_db", {}).get("user", "") or os.environ.get(
+            "MONGO_USER", ""
         )
-        user = (
-            os.environ.get("MONGO_USER", "")
-            or self._config["mongo_db"]["user"]
-        )
-        pw = (
-            os.environ.get("MONGO_PASSWORD", "")
-            or self._config["mongo_db"]["password"]
+        passwd = self._config.get("mongo_db", {}).get("password", "") or os.environ.get(
+            "MONGO_PASSWORD", ""
         )
 
-        return f"mongodb://{user}:{pw}@{host}:{port}"
+        return f"mongodb://{user}:{passwd}@{host}:{port}"
 
     @property
     def mongo_db(self) -> str:
         """Get the database name where the stats is stored."""
-        return (
-            os.environ.get("MONGO_NAME", "")
-            or self._config["mongo_db"]["name"]
+        return self._config.get("mongo_db", {}).get("name", "") or os.environ.get(
+            "MONGO_DB", ""
         )
 
     @property
@@ -105,22 +95,25 @@ class ServerConfig:
     @property
     def solr_cores(self) -> Tuple[str, str]:
         """Get the names of the solr core."""
-        core = os.environ.get("API_CORE", "") or self._config["solr"]["core"]
+        core = self._config.get("solr", {}).get("core", "") or os.environ.get(
+            "SOLR_CORE", "files"
+        )
         return core, "latest"
 
     @property
     def solr_host(self) -> str:
         """Get the hostname of the running apache solr server."""
         return (
-            os.environ.get("API_SOLR_SERVER", "").partition(":")[0]
-            or self._config["solr"]["hostname"]
+            self._config.get("solr", {}).get("hostname", "")
+            or os.environ.get("SOLR_HOST", "").partition(":")[0]
         )
 
     @property
     def solr_port(self) -> str:
         """Get the port of the running apache solr server."""
-        return os.environ.get("API_SOLR_SERVER", "").partition(":")[-1] or str(
-            self._config["solr"]["port"]
+        return (
+            str(self._config.get("solr", {}).get("port", ""))
+            or os.environ.get("SOLR_HOST", "").partition(":")[-1]
         )
 
     def get_core_url(self, core: str) -> str:
@@ -143,15 +136,11 @@ class ServerConfig:
             self._config = tomli.loads(self.config_file.read_text("utf-8"))
         except Exception as error:
             logger.warning("Failed to load %s", error)
-            self._config = tomli.loads(
-                defaults["API_CONFIG"].read_text("utf-8")
-            )
+            self._config = tomli.loads(defaults["API_CONFIG"].read_text("utf-8"))
         if self.debug:
             self.set_debug()
         self._solr_fields = self._get_solr_fields()
         self.mongo_client = AsyncIOMotorClient(
             self.mongo_url, serverSelectionTimeoutMS=5000
         )
-        self.mongo_collection = self.mongo_client[self.mongo_db][
-            "search_queries"
-        ]
+        self.mongo_collection = self.mongo_client[self.mongo_db]["search_queries"]

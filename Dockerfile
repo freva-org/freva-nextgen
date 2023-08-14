@@ -13,7 +13,7 @@ RUN set -e &&\
     adduser --uid 1000 --gid 1000 --gecos "Default user" \
     --shell /bin/bash --disabled-password freva --home /opt/databrowser &&\
     chown -R freva:freva /opt/databrowser
-COPY --chown=freva:freva api_config.toml $API_CONFIG
+COPY --chown=freva:freva src/databrowser/api_config.toml $API_CONFIG
 FROM base as builder
 COPY . /opt/app
 WORKDIR /opt/app
