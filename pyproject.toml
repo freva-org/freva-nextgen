@@ -19,6 +19,16 @@ rich = "^13.5.1"
 motor = "^3.2.0"
 requests = "^2.31.0"
 
+[tool.pytest.ini_options]
+env = [
+    "MONGO_HOST=localhost:27017",
+    "MONGO_DB=search_stats",
+    "MONGO_USER=admin",
+    "MONGO_PASSWORD=example",
+    "SOLR_HOST=localhost:8983",
+    "SOLR_CORE=files"
+]
+
 [tool.poetry.group.dev.dependencies]
 httpx = {version = "^0.24.1", extras = ["tests"]}
 pytest = {version = "^7.4.0", extras = ["tests"]}
@@ -39,6 +49,7 @@ sphinxcontrib-httpdomain = {version = "^1.8.1", extras = ["docs"]}
 pydata-sphinx-theme = {version = "^0.13.3", extras = ["docs"]}
 motor-stubs = {version = "^1.7.1", extras = ["tests"]}
 pymongo = {version = "^4.4.1", extras = ["tests"]}
+pytest-env = {version = "^0.8.2", extras = ["tests"]}
 
 [build-system]
 requires = ["poetry-core"]
