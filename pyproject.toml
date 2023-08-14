@@ -23,8 +23,8 @@ requests = "^2.31.0"
 env = [
     "MONGO_HOST=localhost:27017",
     "MONGO_DB=search_stats",
-    "MONGO_USER=admin",
-    "MONGO_PASSWORD=example",
+    "MONGO_USER=mongo",
+    "MONGO_PASSWORD=secret",
     "SOLR_HOST=localhost:8983",
     "SOLR_CORE=files"
 ]
