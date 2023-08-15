@@ -57,25 +57,25 @@ Specific ``GET`` Methods
 The Freva Databrowser REST API offers specific ``GET`` methods that allow you
 to fine-tune your searches and retrieve tailored results. These methods include:
 
-- :ref:`databrowser`: Use the ``GET /databrowser`` endpoint to
+- :ref:`databrowser`: Use the ``GET /api/databrowser/data_search`` endpoint to
   make key-value paired queries and find climate datasets that match your
   specific criteria. This method enables you to target datasets based on
   parameters such as `variables`, `models`, `time ranges`, and `experiments`.
 
-- :ref:`search_facets`: The ``GET /metadata_search`` endpoint allows you to query
-  all available facets of the indexed data. By exploring facets like
-  `models`, `experiments`, and `institutions`, you can gain valuable insights
-  into the dataset's metadata, assisting you in refining your search effectively.
-  You can also count the number of datasets available within each facet.
-  This feature provides an overview of the dataset distribution across various
-  metadata categories, aiding you in identifying the most relevant data for
-  your research.
+- :ref:`search_facets`: The ``GET /api/databrowser/metadata_search`` endpoint
+  allows you to query all available facets of the indexed data. By exploring
+  facets like `models`, `experiments`, and `institutions`, you can gain
+  valuable insights into the dataset's metadata, assisting you in refining
+  your search effectively. You can also count the number of datasets available
+  within each facet. This feature provides an overview of the dataset
+  distribution across various metadata categories, aiding you in identifying
+  the most relevant data for your research.
 
-- :ref:`overview`: With help of the ``GET /overview`` method you can check
-  wich Data Reference Syntax and how the search facets in earch standard are
-  defined.
+- :ref:`overview`: With help of the ``GET /api/databrowser/overview`` method
+  you can check which Data Reference Syntax and how the search facets in each
+  standard are defined.
 
-- :ref:`intake`: The ``GET /intake_catalogue`` lets you seamlessly
+- :ref:`intake`: The ``GET /ap/databrowser/intake_catalogue`` lets you seamlessly
   generate Intake-ESM catalogues from your search queries.
   Intake-ESM is a powerful data cataloging tool widely used in Earth System
   Model (ESM) analysis. This integration allows you to create curated

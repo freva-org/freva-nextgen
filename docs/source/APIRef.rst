@@ -6,7 +6,7 @@ API Reference
 Getting an overview
 -------------------
 
-.. http:get:: /overview
+.. http:get:: /api/databrowser/overview
 
     This endpoint allows you to retrieve an overview of the different
     Data Reference Syntax (DRS) standards implemented in the Freva Databrowser
@@ -26,7 +26,7 @@ Getting an overview
 
     .. sourcecode:: http
 
-        GET /overview HTTP/1.1
+        GET /api/databrowser/overview HTTP/1.1
         Host: api.freva.example
 
     Example Response
@@ -83,20 +83,20 @@ Getting an overview
 
             # Parse the json-content with jq
             curl -X GET \
-                http://api.freva.example/overview | jq .attributes.cordex
+                http://api.freva.example/api/databrowser/overview | jq .attributes.cordex
 
         .. code-tab:: python
             :caption: Python
 
             import requests
-            response = requests.get("http://api.freva.example/overview")
+            response = requests.get("http://api.freva.example/api/databrowser/overview")
             data = response.json()
 
         .. code-tab:: r
             :caption: gnuR
 
             library(httr)
-            response <- GET("http://api.freva.example/overview")
+            response <- GET("http://api.freva.example/api/databrowser/overview")
             data <- jsonlite::fromJSON(content(response, as = "text", encoding = "utf-8"))
 
         .. code-tab:: julia
@@ -104,7 +104,7 @@ Getting an overview
 
             using HTTP
             using JSON
-            response = HTTP.get("http://api.freva.example/overview")
+            response = HTTP.get("http://api.freva.example/api/databrowser/overview")
             data = JSON.parse(String(HTTP.body(response)))
 
         .. code-tab:: c
@@ -119,7 +119,7 @@ Getting an overview
 
                 curl = curl_easy_init();
                 if (curl) {
-                    char url[] = "https://api.freva.example/overview";
+                    char url[] = "https://api.freva.example/api/databrowser/overview";
 
                     curl_easy_setopt(curl, CURLOPT_URL, url);
                     res = curl_easy_perform(curl);
@@ -136,7 +136,7 @@ Getting an overview
 Searching for datasets locations
 ---------------------------------
 
-.. http:get:: /databrowser/(str:flavour)/(str:uniq_key)
+.. http:get:: /api/databrowser/data_search/(str:flavour)/(str:uniq_key)
 
     This endpoint allows you to search for climate datasets based on the specified
     Data Reference Syntax (DRS) standard (`flavour`) and the type of search result
@@ -184,7 +184,7 @@ Searching for datasets locations
 
     .. sourcecode:: http
 
-        GET /databrowser/freva/file?product=EUR-11&fs_type=swift HTTP/1.1
+        GET /api/databrowser/data_search/freva/file?product=EUR-11&fs_type=swift HTTP/1.1
         Host: api.freva.example
 
     Example Response
@@ -215,14 +215,14 @@ Searching for datasets locations
             :caption: Shell
 
             curl -X GET \
-            'http://api.freva.example/databrowser/freva/file?product=EUR-11&fs_type=swift'
+            'http://api.freva.example/api/databrowser/data_search/freva/file?product=EUR-11&fs_type=swift'
 
         .. code-tab:: python
             :caption: Python
 
             import requests
             response = requests.get(
-                "http://api.freva.example/databrowser/freva/file",
+                "http://api.freva.example/api/databrowser/data_search/freva/file",
                 pramas={"product": "EUR-11", "fs_type": "swift"}
             )
             data = list(response.iter_lines(decode_unicode=True))
@@ -232,7 +232,7 @@ Searching for datasets locations
 
             library(httr)
             response <- GET(
-                "http://api.freva.example/databrowser/freva/file",
+                "http://api.freva.example/api/databrowser/data_search/freva/file",
                 query = list(product = "EUR-11", fs_type = "swift")
             )
             data <- strsplit(content(response, as = "text", encoding = "UTF-8"), "\n")[[1]]
@@ -244,7 +244,7 @@ Searching for datasets locations
 
             using HTTP
             response = HTTP.get(
-                "http://api.freva.example/metadata_search/freva/file",
+                "http://api.freva.example/api/databrowser/data_search/freva/file",
                 query = Dict("product" => "EUR-11", "fs_type" => "swift")
             )
             data = split(String(HTTP.body(response)),"\n")
@@ -258,7 +258,7 @@ Searching for datasets locations
             int main() {
                 CURL *curl;
                 CURLcode res;
-                const char *url = "https://api.freva.example/databrowser/freva/file";
+                const char *url = "https://api.freva.example/api/databrowser/data_search/freva/file";
 
                 // Query parameters
                 const char *product = "EUR-11";
@@ -311,7 +311,7 @@ effortlessly in the Freva Databrowser REST API!
 Searching for metadata
 ----------------------
 
-.. http:get:: /metadata_search/(str:flavour)/(str:uniq_key)
+.. http:get:: /api/databrowser/metadata_search/(str:flavour)/(str:uniq_key)
 
     This endpoint allows you to search metadata (facets) based on the
     specified Data Reference Syntax (DRS) standard (`flavour`) and the type of
@@ -331,12 +331,6 @@ Searching for metadata
                     will be based on file paths or Uniform Resource
                     Identifiers (URIs).
     :type uniq_key: str
-    :query max-results: Control the number of maximum items returned by the
-                       query. Default is 150.
-    :type max-results: int
-    :query start: Specify the starting point for receiving search results.
-                 Default is 0.
-    :type start: int
     :query multi-version: Use versioned datasets for querying instead of the
                           latest datasets. Default is false.
     :type multi-version: bool
@@ -362,15 +356,11 @@ Searching for metadata
                                each facet entry contains a list of facet values
                                followed by the number of occurrences of this
                                facet.
-                             - ``search_result``: Array of length ``max-results``
-                               of found datasets along with additional information
-                               stored in a table.
                              - ``facet_mapping``: Translation rules describing
                                how to map the freva DRS standard to the desired
                                standard. This can be useful if ``GET /search_facets``
                                was instructed to *not* tranlate the facet entries
                                and the translation should be done from client side.
-
                              - ``primary_facets``: Array of facets that are most
                                important. This can be useful for building clients
                                that should hide lesser used metadata by default.
@@ -385,7 +375,7 @@ Searching for metadata
 
     .. sourcecode:: http
 
-        GET /metadata_search/freva/file?product=EUR-11 HTTP/1.1
+        GET /api/databrowser/metadata_search/freva/file?product=EUR-11 HTTP/1.1
         Host: api.freva.example
 
     Example Response
@@ -420,15 +410,6 @@ Searching for metadata
                "time_frequency": ["1day", "3", "3hr", "3", "fx", "1"],
                "variable": ["orog", "1", "pr", "3", "tas", "3"]
            },
-           "search_results": [
-               {"file": "https://swift.dkrz.de/...", "fs_type": "swift"},
-               {"file": "https://swift.dkrz.de/...", "fs_type": "swift"},
-               {"file": "/home/wilfred/workspace/...", "fs_type": "posix"},
-               {"file": "/home/wilfred/workspace/...", "fs_type": "posix"},
-               {"file": "/home/wilfred/workspace/...", "fs_type": "posix"},
-               {"file": "/arch/bb1203/...", "fs_type": "hsm"},
-               {"file": "/arch/bb1203/...", "fs_type": "hsm"}
-           ],
            "facet_mapping": {
                "experiment": "experiment",
                "ensemble": "ensemble",
@@ -465,7 +446,7 @@ Searching for metadata
         .. code-tab:: bash
             :caption: Shell
 
-            curl -X GET 'http://api.freva.example/metadata_search/freva/file?product=EUR-11'
+            curl -X GET 'http://api.freva.example/api/databrowser/metadata_search/freva/file?product=EUR-11'
 
 
         .. code-tab:: python
@@ -473,7 +454,7 @@ Searching for metadata
 
             import requests
             response = requests.get(
-                "http://api.freva.example/metadata_search/freva/file",
+                "http://api.freva.example/api/databrowser/metadata_search/freva/file",
                 pramas={"product": "EUR-11"}
             )
             data = response.json()
@@ -483,7 +464,7 @@ Searching for metadata
 
             library(httr)
             response <- GET(
-                "http://api.freva.example/metadata_search/freva/file",
+                "http://api.freva.example/api/databrowser/metadata_search/freva/file",
                 query = list(product = "EUR-11")
             )
             data <- jsonlite::fromJSON(content(response, as = "text", encoding = "utf-8"))
@@ -494,7 +475,7 @@ Searching for metadata
             using HTTP
             using JSON
             response = HTTP.get(
-                "http://api.freva.example/metadata_search/freva/file",
+                "http://api.freva.example/api/databrowser/metadata_search/freva/file",
                 query = Dict("product" => "EUR-11")
             )
             data = JSON.parse(String(HTTP.body(response)))
@@ -508,7 +489,7 @@ Searching for metadata
             int main() {
                 CURL *curl;
                 CURLcode res;
-                const char *url = "https://api.example.com/metadata_search/freva/file";
+                const char *url = "https://api.example.com/api/databrowser/metadata_search/freva/file";
 
                 // Query parameters
                 const char *product = "EUR-11";
@@ -551,7 +532,7 @@ Searching for metadata
 Generating an intake-esm catalogue
 ----------------------------------
 
-.. http:get:: /intake_catalogue/(str:flavour)/(str:uniq_key)
+.. http:get:: /api/databrowser/intake_catalogue/(str:flavour)/(str:uniq_key)
 
     This endpoint generates an intake-esm catalogue in JSON format from a `freva`
     search. The catalogue includes metadata about the datasets found in the search
@@ -562,7 +543,7 @@ Generating an intake-esm catalogue
     :param flavour: The Data Reference Syntax (DRS) standard specifying the
                     type of climate datasets to query. The available
                     DRS standards can be retrieved using the
-                    ``GET /overview`` method.
+                    ``GET /api/datasets/overview`` method.
     :type flavour: str
     :param uniq_key: The type of search result, which can be either "file" or
                     "uri". This parameter determines whether the search
@@ -604,7 +585,7 @@ Generating an intake-esm catalogue
 
     .. sourcecode:: http
 
-        GET /intake_catalogue/freva/file?product=EUR-11 HTTP/1.1
+        GET /api/databrowser/intake_catalogue/freva/file?product=EUR-11 HTTP/1.1
         Host: api.freva.example
 
     Example Response
@@ -675,7 +656,7 @@ Generating an intake-esm catalogue
             :caption: Shell
 
             curl -X GET \
-            'http://api.freva.example/intake_catalogue/freva/file?product=EUR-11' > catalogue.json
+            'http://api.freva.example/api/databrowser/intake_catalogue/freva/file?product=EUR-11' > catalogue.json
 
         .. code-tab:: python
             :caption: Python
@@ -683,7 +664,7 @@ Generating an intake-esm catalogue
             import requests
             import intake
             response = requests.get(
-                "http://api.freva.example/intake_catalogue/freva/file",
+                "http://api.freva.example/api/databrowser/intake_catalogue/freva/file",
                 pramas={"product": "EUR-11"}
             )
             cat = intake.open_esm_datastore(cat)
@@ -693,7 +674,7 @@ Generating an intake-esm catalogue
 
             library(httr)
             response <- GET(
-                "http://api.freva.example/intake_catalogue/freva/file",
+                "http://api.freva.example/api/databrowser/intake_catalogue/freva/file",
                 query = list(product = "EUR-11")
             )
             json_content <- content(response, "text", encoding="utf-8")
@@ -705,7 +686,7 @@ Generating an intake-esm catalogue
             using HTTP
             using JSON
             response = HTTP.get(
-                "http://api.freva.example/intake_catalogue/freva/file",
+                "http://api.freva.example/api/databrowser/intake_catalogue/freva/file",
                 query = Dict("product" => "EUR-11")
             )
             data = JSON.parse(String(HTTP.body(response)))
@@ -726,7 +707,7 @@ Generating an intake-esm catalogue
 
                 curl = curl_easy_init();
                 if (curl) {
-                    char url[] = "http://api.freva.example/intake_catalogue/freva/file?product=EUR-11";
+                    char url[] = "http://api.freva.example/api/databrowser/intake_catalogue/freva/file?product=EUR-11";
                     curl_easy_setopt(curl, CURLOPT_URL, url);
 
                     fp = fopen("intake_catalogue.json", "w");

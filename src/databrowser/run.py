@@ -104,7 +104,7 @@ class SearchFlavours(BaseModel):
     attributes: Dict[FlavourType, List[str]]
 
 
-@app.get("/overview")
+@app.get("/api/databrowser/overview")
 async def overview() -> SearchFlavours:
     """Get all available search flavours and thier attributes."""
     attributes = {}
@@ -123,7 +123,7 @@ async def overview() -> SearchFlavours:
     )
 
 
-@app.get("/intake_catalogue/{flavour}/{uniq_key}")
+@app.get("/api/databrowser/intake_catalogue/{flavour}/{uniq_key}")
 async def intake_catalogue(
     flavour: FlavourType,
     uniq_key: Literal["file", "uri"],
@@ -156,8 +156,39 @@ async def intake_catalogue(
     )
 
 
-@app.get("/metadata_search/{flavour}/{uniq_key}")
+@app.get("/api/databrowser/metadata_search/{flavour}/{uniq_key}")
 async def metadata_search(
+    flavour: FlavourType,
+    uniq_key: Literal["file", "uri"],
+    start: Annotated[int, SolrConfig.params["start"]] = 0,
+    multi_version: Annotated[bool, SolrConfig.params["multi_version"]] = False,
+    translate: Annotated[bool, SolrConfig.params["translate"]] = True,
+    facets: Annotated[
+        Union[List[str], None], SolrConfig.params["facets"]
+    ] = None,
+    request: Request = Required,
+) -> JSONResponse:
+    """Get the search facets."""
+    solr_search = await SolrSearch.validate_parameters(
+        solr_config,
+        flavour=flavour,
+        uniq_key=uniq_key,
+        start=start,
+        multi_version=multi_version,
+        translate=translate,
+        **SolrConfig.process_parameters(request),
+    )
+    status_code, result = await solr_search.extended_search(
+        facets or [], max_results=0
+    )
+    await solr_search.store_results(result.total_count, status_code)
+    output = result.dict()
+    del output["search_results"]
+    return JSONResponse(content=output, status_code=status_code)
+
+
+@app.get("/api/databrowser/extended_search/{flavour}/{uniq_key}")
+async def extended_search(
     flavour: FlavourType,
     uniq_key: Literal["file", "uri"],
     start: Annotated[int, SolrConfig.params["start"]] = 0,
@@ -179,15 +210,15 @@ async def metadata_search(
         translate=translate,
         **SolrConfig.process_parameters(request),
     )
-    status_code, result = await solr_search.metadata_search(
+    status_code, result = await solr_search.extended_search(
         facets or [], max_results=max_results
     )
     await solr_search.store_results(result.total_count, status_code)
     return JSONResponse(content=result.dict(), status_code=status_code)
 
 
-@app.get("/databrowser/{flavour}/{uniq_key}")
-async def databrowser(
+@app.get("/api/databrowser/data_search/{flavour}/{uniq_key}")
+async def data_search(
     flavour: FlavourType,
     uniq_key: Literal["file", "uri"],
     start: Annotated[int, SolrConfig.params["start"]] = 0,
