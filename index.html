@@ -359,22 +359,22 @@ request capabilities, the Freva Databrowser REST API accommodates your needs.</p
 <p>The Freva Databrowser REST API offers specific <code class="docutils literal notranslate"><span class="pre">GET</span></code> methods that allow you
 to fine-tune your searches and retrieve tailored results. These methods include:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="APIRef.html#databrowser"><span class="std std-ref">Searching for datasets locations</span></a>: Use the <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/databrowser</span></code> endpoint to
+<li><p><a class="reference internal" href="APIRef.html#databrowser"><span class="std std-ref">Searching for datasets locations</span></a>: Use the <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/api/databrowser/data_search</span></code> endpoint to
 make key-value paired queries and find climate datasets that match your
 specific criteria. This method enables you to target datasets based on
 parameters such as <cite>variables</cite>, <cite>models</cite>, <cite>time ranges</cite>, and <cite>experiments</cite>.</p></li>
-<li><p><a class="reference internal" href="APIRef.html#search-facets"><span class="std std-ref">Searching for metadata</span></a>: The <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/metadata_search</span></code> endpoint allows you to query
-all available facets of the indexed data. By exploring facets like
-<cite>models</cite>, <cite>experiments</cite>, and <cite>institutions</cite>, you can gain valuable insights
-into the dataset’s metadata, assisting you in refining your search effectively.
-You can also count the number of datasets available within each facet.
-This feature provides an overview of the dataset distribution across various
-metadata categories, aiding you in identifying the most relevant data for
-your research.</p></li>
-<li><p><a class="reference internal" href="APIRef.html#overview"><span class="std std-ref">Getting an overview</span></a>: With help of the <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/overview</span></code> method you can check
-wich Data Reference Syntax and how the search facets in earch standard are
-defined.</p></li>
-<li><p><a class="reference internal" href="APIRef.html#intake"><span class="std std-ref">Generating an intake-esm catalogue</span></a>: The <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/intake_catalogue</span></code> lets you seamlessly
+<li><p><a class="reference internal" href="APIRef.html#search-facets"><span class="std std-ref">Searching for metadata</span></a>: The <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/api/databrowser/metadata_search</span></code> endpoint
+allows you to query all available facets of the indexed data. By exploring
+facets like <cite>models</cite>, <cite>experiments</cite>, and <cite>institutions</cite>, you can gain
+valuable insights into the dataset’s metadata, assisting you in refining
+your search effectively. You can also count the number of datasets available
+within each facet. This feature provides an overview of the dataset
+distribution across various metadata categories, aiding you in identifying
+the most relevant data for your research.</p></li>
+<li><p><a class="reference internal" href="APIRef.html#overview"><span class="std std-ref">Getting an overview</span></a>: With help of the <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/api/databrowser/overview</span></code> method
+you can check which Data Reference Syntax and how the search facets in each
+standard are defined.</p></li>
+<li><p><a class="reference internal" href="APIRef.html#intake"><span class="std std-ref">Generating an intake-esm catalogue</span></a>: The <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/ap/databrowser/intake_catalogue</span></code> lets you seamlessly
 generate Intake-ESM catalogues from your search queries.
 Intake-ESM is a powerful data cataloging tool widely used in Earth System
 Model (ESM) analysis. This integration allows you to create curated
