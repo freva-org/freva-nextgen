@@ -118,9 +118,7 @@ async def overview() -> SearchFlavours:
                 for f in translator.foreward_lookup.values()
                 if f not in translator.cordex_keys
             ]
-    return SearchFlavours(
-        flavours=list(Translator.flavours), attributes=attributes
-    )
+    return SearchFlavours(flavours=list(Translator.flavours), attributes=attributes)
 
 
 @app.get("/api/databrowser/intake_catalogue/{flavour}/{uniq_key}")
@@ -160,12 +158,9 @@ async def intake_catalogue(
 async def metadata_search(
     flavour: FlavourType,
     uniq_key: Literal["file", "uri"],
-    start: Annotated[int, SolrConfig.params["start"]] = 0,
     multi_version: Annotated[bool, SolrConfig.params["multi_version"]] = False,
     translate: Annotated[bool, SolrConfig.params["translate"]] = True,
-    facets: Annotated[
-        Union[List[str], None], SolrConfig.params["facets"]
-    ] = None,
+    facets: Annotated[Union[List[str], None], SolrConfig.params["facets"]] = None,
     request: Request = Required,
 ) -> JSONResponse:
     """Get the search facets."""
@@ -173,14 +168,12 @@ async def metadata_search(
         solr_config,
         flavour=flavour,
         uniq_key=uniq_key,
-        start=start,
         multi_version=multi_version,
         translate=translate,
+        start=0,
         **SolrConfig.process_parameters(request),
     )
-    status_code, result = await solr_search.extended_search(
-        facets or [], max_results=0
-    )
+    status_code, result = await solr_search.extended_search(facets or [], max_results=0)
     await solr_search.store_results(result.total_count, status_code)
     output = result.dict()
     del output["search_results"]
@@ -195,9 +188,7 @@ async def extended_search(
     multi_version: Annotated[bool, SolrConfig.params["multi_version"]] = False,
     translate: Annotated[bool, SolrConfig.params["translate"]] = True,
     max_results: Annotated[int, SolrConfig.params["batch_size"]] = 150,
-    facets: Annotated[
-        Union[List[str], None], SolrConfig.params["facets"]
-    ] = None,
+    facets: Annotated[Union[List[str], None], SolrConfig.params["facets"]] = None,
     request: Request = Required,
 ) -> JSONResponse:
     """Get the search facets."""
