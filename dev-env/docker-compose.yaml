@@ -1,0 +1,20 @@
+version: "3.9"
+services:
+  solr:
+    image: solr:latest
+    environment:
+      CORE: files
+    ports:
+      - "8983:8983"
+    volumes:
+      - ./config/solr/managed-schema.xml:/opt/solr/managed-schema.xml:ro
+      - ./config/solr/synonyms.txt:/opt/solr/synonyms.txt:ro
+      - ./create_cores.sh:/docker-entrypoint-initdb.d/create_cores.sh:ro
+  mongodb:
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: secret
+      MONGO_INITDB_DATABASE: search_stats
+    ports:
+      - "27017:27017"

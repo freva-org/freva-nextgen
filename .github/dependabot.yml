@@ -1,0 +1,6 @@
+version: 2
+updates:
+  - package-ecosystem: "poetry"
+    directory: "/"
+    schedule:
+      interval: "daily" # You can change the update frequency as needed

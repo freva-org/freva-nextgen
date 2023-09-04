@@ -1,0 +1,56 @@
+[tool.poetry]
+name = "databrowser"
+version = "2023.4.1"
+description = ""
+authors = ["DKRZ - CLINIT <freva@dkrz.de>"]
+readme = "README.md"
+packages = [{include = "databrowser", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+aiohttp = "^3.8.4"
+fastapi = "^0.95.1"
+typer = "^0.7.0"
+uvicorn = "^0.21.1"
+python-dotenv = "^1.0.0"
+python-dateutil = "^2.8.2"
+tomli = "^2.0.1"
+rich = "^13.5.1"
+motor = "^3.2.0"
+requests = "^2.31.0"
+
+[tool.pytest.ini_options]
+env = [
+    "MONGO_HOST=localhost:27017",
+    "MONGO_DB=search_stats",
+    "MONGO_USER=mongo",
+    "MONGO_PASSWORD=secret",
+    "SOLR_HOST=localhost:8983",
+    "SOLR_CORE=files"
+]
+
+[tool.poetry.group.dev.dependencies]
+httpx = {version = "^0.24.1", extras = ["tests"]}
+pytest = {version = "^7.4.0", extras = ["tests"]}
+pytest-asyncio = {version = "^0.21.1", extras = ["tests"]}
+pytest-cov = {version = "^4.1.0", extras = ["tests"]}
+mypy = {version = "^1.4.1", extras = ["tests"]}
+black = {version = "^23.7.0", extras = ["tests"]}
+pytest-mypy = {version = "^0.10.3", extras = ["tests"]}
+pytest-mock = {version = "^3.11.1", extras = ["tests"]}
+mock = {version = "^5.1.0", extras = ["tests"]}
+sphinx = {version = "^7.1.0", extras = ["docs"]}
+furo = {version = "^2023.5.20", extras = ["docs"]}
+sphinx-code-tabs = {version = "^0.5.5", extras = ["docs"]}
+flake8 = {version = "^6.0.0", extras = ["tests"]}
+isort = {version = "^5.12.0", extras = ["tests"]}
+sphinx-copybutton = {version = "^0.5.2", extras = ["docs"]}
+sphinxcontrib-httpdomain = {version = "^1.8.1", extras = ["docs"]}
+pydata-sphinx-theme = {version = "^0.13.3", extras = ["docs"]}
+motor-stubs = {version = "^1.7.1", extras = ["tests"]}
+pymongo = {version = "^4.4.1", extras = ["tests"]}
+pytest-env = {version = "^0.8.2", extras = ["tests"]}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
