@@ -43,3 +43,14 @@ def client_no_mongo(cfg: ServerConfig) -> Iterator[TestClient]:
         with mock.patch("databrowser.run.solr_config.mongo_collection", None):
             with TestClient(app) as test_client:
                 yield test_client
+
+
+@pytest.fixture(scope="function")
+def client_no_solr(cfg: ServerConfig) -> Iterator[TestClient]:
+    """Setup a client with an invalid mongodb."""
+    env = os.environ.copy()
+    env["SOLR_HOST"] = "foo.bar.de"
+    with mock.patch.dict(os.environ, env, clear=True):
+        ServerConfig(defaults["API_CONFIG"], debug=True)
+        with TestClient(app) as test_client:
+            yield test_client

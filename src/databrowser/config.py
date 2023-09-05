@@ -7,8 +7,9 @@ be overridden with a specific toml file holding configurations.
 import logging
 import os
 from dataclasses import dataclass
+from functools import cached_property
 from pathlib import Path
-from typing import Iterator, Tuple, TypedDict
+from typing import Iterator, List, Tuple, TypedDict
 
 import requests
 import tomli
@@ -48,6 +49,24 @@ class ServerConfig:
     )
     debug: bool = False
 
+    def __post_init__(self) -> None:
+        try:
+            self._config = tomli.loads(self.config_file.read_text("utf-8"))
+        except Exception as error:
+            logger.warning("Failed to load %s", error)
+            self._config = tomli.loads(
+                defaults["API_CONFIG"].read_text("utf-8")
+            )
+        if self.debug:
+            self.set_debug()
+        self.mongo_client = AsyncIOMotorClient(
+            self.mongo_url, serverSelectionTimeoutMS=5000
+        )
+        self.mongo_collection = self.mongo_client[self.mongo_db][
+            "search_queries"
+        ]
+        self._solr_fields = self._get_solr_fields()
+
     def reload(self) -> None:
         """Reload the configuration."""
         self.config_file = Path(
@@ -82,10 +101,10 @@ class ServerConfig:
             "name", ""
         ) or os.environ.get("MONGO_DB", "search_stats")
 
-    @property
-    def solr_fields(self) -> Iterator[str]:
+    @cached_property
+    def solr_fields(self) -> List[str]:
         """Get all relevant solr facet fields."""
-        return self._solr_fields
+        return list(self._solr_fields)
 
     @property
     def log_level(self) -> int:
@@ -129,26 +148,16 @@ class ServerConfig:
 
     def _get_solr_fields(self) -> Iterator[str]:
         url = f"{self.get_core_url(self.solr_cores[-1])}/schema/fields"
-        for entry in requests.get(url, timeout=5).json().get("fields", []):
-            if entry["type"] in ("extra_facet", "text_general") and entry[
-                "name"
-            ] not in ("file_name", "file", "file_no_version"):
-                yield entry["name"]
-
-    def __post_init__(self) -> None:
         try:
-            self._config = tomli.loads(self.config_file.read_text("utf-8"))
-        except Exception as error:
-            logger.warning("Failed to load %s", error)
-            self._config = tomli.loads(
-                defaults["API_CONFIG"].read_text("utf-8")
-            )
-        if self.debug:
-            self.set_debug()
-        self._solr_fields = self._get_solr_fields()
-        self.mongo_client = AsyncIOMotorClient(
-            self.mongo_url, serverSelectionTimeoutMS=5000
-        )
-        self.mongo_collection = self.mongo_client[self.mongo_db][
-            "search_queries"
-        ]
+            for entry in requests.get(url, timeout=5).json().get("fields", []):
+                if entry["type"] in ("extra_facet", "text_general") and entry[
+                    "name"
+                ] not in ("file_name", "file", "file_no_version"):
+                    yield entry["name"]
+        except (
+            requests.exceptions.ConnectionError
+        ) as error:  # pragma: no cover
+            logger.error(
+                "Connection to %s failed: %s", url, error
+            )  # pragma: no cover
+            yield ""  # pragma: no cover

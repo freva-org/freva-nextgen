@@ -1,6 +1,7 @@
 """The core functionality to interact with the apache solr search system."""
 
 import asyncio
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from functools import cached_property, wraps
@@ -293,7 +294,9 @@ class Translator:
                 if v == "primary"
             ]
         else:
-            _keys = [k for (k, v) in self._freva_facets.items() if v == "primary"]
+            _keys = [
+                k for (k, v) in self._freva_facets.items() if v == "primary"
+            ]
         if self.flavour in ("cordex",):
             for key in self.cordex_keys:
                 _keys.append(key)
@@ -393,6 +396,32 @@ class SolrSearch:
         self.query["start"] = start
         self.query["sort"] = f"{self.uniq_key} desc"
 
+    @asynccontextmanager
+    async def _session_get(self) -> AsyncIterator[Tuple[int, Dict[str, Any]]]:
+        """Wrap the get request round a try and catch statement."""
+        logger.info(
+            "Query %s for uniq_key: %s with %s",
+            self.url,
+            self.uniq_key,
+            self.query,
+        )
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
+            try:
+                async with session.get(self.url, params=self.query) as res:
+                    status = res.status
+                    try:
+                        await self.check_for_status(res)
+                        search = await res.json()
+                    except HTTPException:  # pragma: no cover
+                        search = {}  # pragma: no cover
+            except Exception as error:
+                logger.error("Connection to %s failed: %s", self.url, error)
+                raise HTTPException(
+                    status_code=503,
+                    detail="Could not connect to search instance",
+                )
+        yield status, search
+
     @classmethod
     async def validate_parameters(
         cls,
@@ -428,8 +457,12 @@ class SolrSearch:
         """
         translator = Translator(flavour, translate)
         for key in query:
-            if key not in translator.valid_facets and key not in ("time_select",):
-                raise HTTPException(status_code=422, detail="Could not validate input.")
+            if key not in translator.valid_facets and key not in (
+                "time_select",
+            ):
+                raise HTTPException(
+                    status_code=422, detail="Could not validate input."
+                )
         return SolrSearch(
             config,
             flavour=flavour,
@@ -487,7 +520,9 @@ class SolrSearch:
             raise ValueError(f"Choose `time_select` from {methods}") from exc
         start, _, end = time.lower().partition("to")
         try:
-            start = parse(start or "1", default=datetime(1, 1, 1, 0, 0, 0)).isoformat()
+            start = parse(
+                start or "1", default=datetime(1, 1, 1, 0, 0, 0)
+            ).isoformat()
             end = parse(
                 end or "9999", default=datetime(9999, 12, 31, 23, 59, 59)
             ).isoformat()
@@ -502,23 +537,11 @@ class SolrSearch:
         self.query["facet.mincount"] = "1"
         self.query["facet.limit"] = "-1"
         self.query["rows"] = self.batch_size
-        self.query["facet.field"] = list(self._config.solr_fields)
-        self.query["fl"] = [self.uniq_key] + list(self._config.solr_fields)
+        self.query["facet.field"] = self._config.solr_fields
+        self.query["fl"] = [self.uniq_key] + self._config.solr_fields
         self.query["wt"] = "json"
-        logger.info(
-            "Query %s for uniq_key: %s with %s",
-            self.url,
-            self.uniq_key,
-            self.query,
-        )
-        async with aiohttp.ClientSession(timeout=self.timeout) as session:
-            async with session.get(self.url, params=self.query) as res:
-                search_status = res.status
-                try:
-                    await self.check_for_status(res)
-                    search = await res.json()
-                except HTTPException:  # pragma: no cover
-                    search = {}  # pragma: no cover
+        async with self._session_get() as res:
+            search_status, search = res
         total_count = cast(int, search.get("response", {}).get("numFound", 0))
         facets = search.get("facet_counts", {}).get("facet_fields", {})
         var_name = self.translator.foreward_lookup["variable"]
@@ -561,7 +584,9 @@ class SolrSearch:
                 for k in [self.uniq_key] + self.translator.facet_hierachy
                 if result.get(k)
             }
-            catalogue["catalog_dict"].append(self.translator.translate_query(source))
+            catalogue["catalog_dict"].append(
+                self.translator.translate_query(source)
+            )
         return search_status, IntakeCatalogue(
             catalogue=catalogue, total_count=total_count
         )
@@ -596,21 +621,23 @@ class SolrSearch:
 
     async def _iterintake(self) -> AsyncIterator[str]:
         encoder = JSONEncoder(indent=3)
-        async with aiohttp.ClientSession(timeout=self.timeout) as session:
-            async with session.get(self.url, params=self.query) as res:
-                results = await res.json()
-                for out in results.get("response", {}).get("docs", [{}]):
-                    source = {
-                        k: out[k]
-                        for k in [self.uniq_key] + self.translator.facet_hierachy
-                        if out.get(k)
-                    }
-                    entry = self.translator.translate_query(source)
-                    yield ",\n   "
-                    for line in list(encoder.iterencode(entry)):
-                        yield line
 
-    async def intake_catalogue(self, search: IntakeCatalogue) -> AsyncIterator[str]:
+        async with self._session_get() as res:
+            _, results = res
+            for out in results.get("response", {}).get("docs", [{}]):
+                source = {
+                    k: out[k]
+                    for k in [self.uniq_key] + self.translator.facet_hierachy
+                    if out.get(k)
+                }
+                entry = self.translator.translate_query(source)
+                yield ",\n   "
+                for line in list(encoder.iterencode(entry)):
+                    yield line
+
+    async def intake_catalogue(
+        self, search: IntakeCatalogue
+    ) -> AsyncIterator[str]:
         """Create an intake catalogue from the solr search."""
         iteritems = tuple(
             range(self.batch_size + 1, search.total_count, self.batch_size)
@@ -653,7 +680,7 @@ class SolrSearch:
         self.query["facet.limit"] = "-1"
         self.query["wt"] = "json"
         self.query["facet.field"] = self.translator.translate_facets(
-            search_facets or list(self._config.solr_fields), backwards=True
+            search_facets or self._config.solr_fields, backwards=True
         )
         self.query["fl"] = [self.uniq_key, "fs_type"]
         logger.info(
@@ -663,14 +690,8 @@ class SolrSearch:
             self.query,
         )
 
-        async with aiohttp.ClientSession(timeout=self.timeout) as session:
-            async with session.get(self.url, params=self.query) as res:
-                search_status = res.status
-                try:
-                    await self.check_for_status(res)
-                    search = await res.json()
-                except HTTPException:  # pragma: no cover
-                    search = {}  # pragma: no cover
+        async with self._session_get() as res:
+            search_status, search = res
         return search_status, SearchResult(
             total_count=search.get("response", {}).get("numFound", 0),
             facets=self.translator.translate_query(
@@ -707,14 +728,8 @@ class SolrSearch:
         )
         self.query["start"] = 0
         self.query["rows"] = self.batch_size
-        async with aiohttp.ClientSession(timeout=self.timeout) as session:
-            async with session.get(self.url, params=self.query) as res:
-                search_status = res.status
-                try:
-                    await self.check_for_status(res)
-                    search = await res.json()
-                except HTTPException:  # pragma: no cover
-                    search = {}  # pragma: no cover
+        async with self._session_get() as res:
+            search_status, search = res
         return search_status, SearchResult(
             total_count=search.get("response", {}).get("numFound", 0),
             facets={},
@@ -762,9 +777,8 @@ class SolrSearch:
             )  # pragma: no cover
 
     async def _make_iterable(self) -> AsyncIterator[str]:
-        async with aiohttp.ClientSession(timeout=self.timeout) as session:
-            async with session.get(self.url, params=self.query) as res:
-                results = await res.json()
+        async with self._session_get() as res:
+            _, results = res
         for out in results.get("response", {}).get("docs", []):
             yield f"{out[self.uniq_key]}\n"
 
