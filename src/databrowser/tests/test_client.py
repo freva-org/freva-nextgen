@@ -30,9 +30,7 @@ def test_databrowser(client: TestClient) -> None:
     )
     assert len(res1.text.split()) == 0
     assert res2.text == res3.text
-    res4 = client.get(
-        "/api/databrowser/data_search/cmip6/uri", params={"foo": "bar"}
-    )
+    res4 = client.get("/api/databrowser/data_search/cmip6/uri", params={"foo": "bar"})
     assert res4.status_code == 422
     res5 = client.get(
         "/api/databrowser/data_search/cmip6/uri",
@@ -66,9 +64,7 @@ def test_time_selection(client: TestClient) -> None:
         params={"time": "1898 to 1901", "time_select": "foo"},
     )
     assert res2.status_code == 500
-    res3 = client.get(
-        "/api/databrowser/data_search/freva/file", params={"time": "fx"}
-    )
+    res3 = client.get("/api/databrowser/data_search/freva/file", params={"time": "fx"})
     assert res3.status_code == 500
 
 
@@ -192,7 +188,7 @@ def test_intake_search(client: TestClient) -> None:
             "max-results": 1,
         },
     )
-    assert res4.status_code == 400
+    assert res4.status_code == 413
 
 
 def test_bad_intake_request(client: TestClient) -> None:
@@ -201,7 +197,7 @@ def test_bad_intake_request(client: TestClient) -> None:
         "api/databrowser/intake_catalogue/cmip6/uri",
         params={"activity_id": "cmip2"},
     )
-    assert res1.status_code == 400
+    assert res1.status_code == 404
 
 
 def test_parameter_validation(client: TestClient) -> None:
@@ -230,9 +226,7 @@ def test_no_mongo_parameter_insert(client_no_mongo: TestClient) -> None:
     assert res1 == 200
 
 
-def tests_mongo_parameter_insert(
-    client: TestClient, cfg: ServerConfig
-) -> None:
+def tests_mongo_parameter_insert(client: TestClient, cfg: ServerConfig) -> None:
     """Test the successfull insertion of the search stats."""
     res1 = client.get(
         "api/databrowser/data_search/cordex/uri",
@@ -249,7 +243,4 @@ def tests_mongo_parameter_insert(
     assert isinstance(stats[0]["query"], dict)
     assert isinstance(stats[0]["metadata"], dict)
     # The search keys should have been converted to strings.
-    assert (
-        len([k for k in stats[0]["query"].values() if not isinstance(k, str)])
-        == 0
-    )
+    assert len([k for k in stats[0]["query"].values() if not isinstance(k, str)]) == 0

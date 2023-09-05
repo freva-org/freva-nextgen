@@ -118,7 +118,9 @@ async def overview() -> SearchFlavours:
                 for f in translator.foreward_lookup.values()
                 if f not in translator.cordex_keys
             ]
-    return SearchFlavours(flavours=list(Translator.flavours), attributes=attributes)
+    return SearchFlavours(
+        flavours=list(Translator.flavours), attributes=attributes
+    )
 
 
 @app.get("/api/databrowser/intake_catalogue/{flavour}/{uniq_key}")
@@ -144,13 +146,15 @@ async def intake_catalogue(
     status_code, result = await solr_search.init_intake_catalogue()
     await solr_search.store_results(result.total_count, status_code)
     if result.total_count == 0:
-        raise HTTPException(status_code=400, detail="No results found.")
-    elif result.total_count > max_results and max_results > 0:
-        raise HTTPException(status_code=400, detail="Result stream too big.")
+        raise HTTPException(status_code=404, detail="No results found.")
+    if result.total_count > max_results and max_results > 0:
+        raise HTTPException(status_code=413, detail="Result stream too big.")
+    file_name = f"IntakeEsmCatalogue_{flavour}_{uniq_key}.json"
     return StreamingResponse(
         solr_search.intake_catalogue(result),
         status_code=status_code,
         media_type="application/x-ndjson",
+        headers={"Content-Disposition": f'attachment; filename="{file_name}"'},
     )
 
 
@@ -160,7 +164,9 @@ async def metadata_search(
     uniq_key: Literal["file", "uri"],
     multi_version: Annotated[bool, SolrConfig.params["multi_version"]] = False,
     translate: Annotated[bool, SolrConfig.params["translate"]] = True,
-    facets: Annotated[Union[List[str], None], SolrConfig.params["facets"]] = None,
+    facets: Annotated[
+        Union[List[str], None], SolrConfig.params["facets"]
+    ] = None,
     request: Request = Required,
 ) -> JSONResponse:
     """Get the search facets."""
@@ -173,7 +179,9 @@ async def metadata_search(
         start=0,
         **SolrConfig.process_parameters(request),
     )
-    status_code, result = await solr_search.extended_search(facets or [], max_results=0)
+    status_code, result = await solr_search.extended_search(
+        facets or [], max_results=0
+    )
     await solr_search.store_results(result.total_count, status_code)
     output = result.dict()
     del output["search_results"]
@@ -188,7 +196,9 @@ async def extended_search(
     multi_version: Annotated[bool, SolrConfig.params["multi_version"]] = False,
     translate: Annotated[bool, SolrConfig.params["translate"]] = True,
     max_results: Annotated[int, SolrConfig.params["batch_size"]] = 150,
-    facets: Annotated[Union[List[str], None], SolrConfig.params["facets"]] = None,
+    facets: Annotated[
+        Union[List[str], None], SolrConfig.params["facets"]
+    ] = None,
     request: Request = Required,
 ) -> JSONResponse:
     """Get the search facets."""

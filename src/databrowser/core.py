@@ -579,14 +579,16 @@ class SolrSearch:
             "catalog_dict": [],
         }
         for result in search.get("response", {}).get("docs", []):
-            source = {
-                k: result[k]
-                for k in [self.uniq_key] + self.translator.facet_hierachy
-                if result.get(k)
-            }
+            source = {}
+            for k in [self.uniq_key] + self.translator.facet_hierachy:
+                if isinstance(result.get(k), list) and len(result.get(k)) == 1:
+                    source[k] = result[k][0]
+                elif result.get(k):
+                    source[k] = result[k]
             catalogue["catalog_dict"].append(
                 self.translator.translate_query(source)
             )
+
         return search_status, IntakeCatalogue(
             catalogue=catalogue, total_count=total_count
         )
