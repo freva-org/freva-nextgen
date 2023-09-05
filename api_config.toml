@@ -8,6 +8,6 @@ core = "files"
 [mongo_db]
 hostname = "localhost"
 port = 27017
-user = "admin"
-password = "example"
+user = "mongo"
+password = "secret"
 name = "search_stats"

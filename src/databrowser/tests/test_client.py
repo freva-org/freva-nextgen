@@ -43,6 +43,15 @@ def test_databrowser(client: TestClient) -> None:
     assert len(res2.text.split()) < len(res5.text.split())
 
 
+def test_no_solr(client_no_solr: TestClient) -> None:
+    """Test what happens if there is no connection to the solr."""
+    res = client_no_solr.get(
+        "/api/databrowser/data_search/cmip6/uri",
+        params={"activity_id": "cmipx"},
+    )
+    assert res.status_code == 503
+
+
 def test_time_selection(client: TestClient) -> None:
     """Test the time select functionality of the API."""
     res1 = client.get(
@@ -179,7 +188,7 @@ def test_intake_search(client: TestClient) -> None:
             "max-results": 1,
         },
     )
-    assert res4.status_code == 400
+    assert res4.status_code == 413
 
 
 def test_bad_intake_request(client: TestClient) -> None:
@@ -188,7 +197,7 @@ def test_bad_intake_request(client: TestClient) -> None:
         "api/databrowser/intake_catalogue/cmip6/uri",
         params={"activity_id": "cmip2"},
     )
-    assert res1.status_code == 400
+    assert res1.status_code == 404
 
 
 def test_parameter_validation(client: TestClient) -> None:
