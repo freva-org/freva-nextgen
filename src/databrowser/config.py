@@ -8,7 +8,7 @@ import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Tuple, TypedDict
+from typing import Iterator, Tuple, TypedDict
 
 import requests
 import tomli
@@ -83,7 +83,7 @@ class ServerConfig:
         ) or os.environ.get("MONGO_DB", "search_stats")
 
     @property
-    def solr_fields(self) -> list[str]:
+    def solr_fields(self) -> Iterator[str]:
         """Get all relevant solr facet fields."""
         return self._solr_fields
 
@@ -127,15 +127,13 @@ class ServerConfig:
         server = f"{self.solr_host}:{self.solr_port}"
         return f"http://{server}/solr/{core}"
 
-    def _get_solr_fields(self) -> list[str]:
+    def _get_solr_fields(self) -> Iterator[str]:
         url = f"{self.get_core_url(self.solr_cores[-1])}/schema/fields"
-        fields = []
         for entry in requests.get(url, timeout=5).json().get("fields", []):
             if entry["type"] in ("extra_facet", "text_general") and entry[
                 "name"
             ] not in ("file_name", "file", "file_no_version"):
-                fields.append(entry["name"])
-        return fields
+                yield entry["name"]
 
     def __post_init__(self) -> None:
         try:

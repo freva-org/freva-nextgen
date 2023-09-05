@@ -293,9 +293,7 @@ class Translator:
                 if v == "primary"
             ]
         else:
-            _keys = [
-                k for (k, v) in self._freva_facets.items() if v == "primary"
-            ]
+            _keys = [k for (k, v) in self._freva_facets.items() if v == "primary"]
         if self.flavour in ("cordex",):
             for key in self.cordex_keys:
                 _keys.append(key)
@@ -430,12 +428,8 @@ class SolrSearch:
         """
         translator = Translator(flavour, translate)
         for key in query:
-            if key not in translator.valid_facets and key not in (
-                "time_select",
-            ):
-                raise HTTPException(
-                    status_code=422, detail="Could not validate input."
-                )
+            if key not in translator.valid_facets and key not in ("time_select",):
+                raise HTTPException(status_code=422, detail="Could not validate input.")
         return SolrSearch(
             config,
             flavour=flavour,
@@ -493,9 +487,7 @@ class SolrSearch:
             raise ValueError(f"Choose `time_select` from {methods}") from exc
         start, _, end = time.lower().partition("to")
         try:
-            start = parse(
-                start or "1", default=datetime(1, 1, 1, 0, 0, 0)
-            ).isoformat()
+            start = parse(start or "1", default=datetime(1, 1, 1, 0, 0, 0)).isoformat()
             end = parse(
                 end or "9999", default=datetime(9999, 12, 31, 23, 59, 59)
             ).isoformat()
@@ -510,8 +502,8 @@ class SolrSearch:
         self.query["facet.mincount"] = "1"
         self.query["facet.limit"] = "-1"
         self.query["rows"] = self.batch_size
-        self.query["facet.field"] = self._config.solr_fields
-        self.query["fl"] = [self.uniq_key] + self._config.solr_fields
+        self.query["facet.field"] = list(self._config.solr_fields)
+        self.query["fl"] = [self.uniq_key] + list(self._config.solr_fields)
         self.query["wt"] = "json"
         logger.info(
             "Query %s for uniq_key: %s with %s",
@@ -569,9 +561,7 @@ class SolrSearch:
                 for k in [self.uniq_key] + self.translator.facet_hierachy
                 if result.get(k)
             }
-            catalogue["catalog_dict"].append(
-                self.translator.translate_query(source)
-            )
+            catalogue["catalog_dict"].append(self.translator.translate_query(source))
         return search_status, IntakeCatalogue(
             catalogue=catalogue, total_count=total_count
         )
@@ -612,8 +602,7 @@ class SolrSearch:
                 for out in results.get("response", {}).get("docs", [{}]):
                     source = {
                         k: out[k]
-                        for k in [self.uniq_key]
-                        + self.translator.facet_hierachy
+                        for k in [self.uniq_key] + self.translator.facet_hierachy
                         if out.get(k)
                     }
                     entry = self.translator.translate_query(source)
@@ -621,9 +610,7 @@ class SolrSearch:
                     for line in list(encoder.iterencode(entry)):
                         yield line
 
-    async def intake_catalogue(
-        self, search: IntakeCatalogue
-    ) -> AsyncIterator[str]:
+    async def intake_catalogue(self, search: IntakeCatalogue) -> AsyncIterator[str]:
         """Create an intake catalogue from the solr search."""
         iteritems = tuple(
             range(self.batch_size + 1, search.total_count, self.batch_size)
@@ -666,7 +653,7 @@ class SolrSearch:
         self.query["facet.limit"] = "-1"
         self.query["wt"] = "json"
         self.query["facet.field"] = self.translator.translate_facets(
-            search_facets or self._config.solr_fields, backwards=True
+            search_facets or list(self._config.solr_fields), backwards=True
         )
         self.query["fl"] = [self.uniq_key, "fs_type"]
         logger.info(
