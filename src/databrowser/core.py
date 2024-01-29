@@ -628,7 +628,9 @@ class SolrSearch:
             _, results = res
             for out in results.get("response", {}).get("docs", [{}]):
                 source = {
-                    k: out[k]
+                    k: out[k][0]
+                    if isinstance(out.get(k), list) and len(out.get(k)) == 1
+                    else out.get(k)
                     for k in [self.uniq_key] + self.translator.facet_hierachy
                     if out.get(k)
                 }
