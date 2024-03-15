@@ -97,6 +97,7 @@ deps = .
        sphinx-copybutton
        sphinxcontrib-httpdomain
        pydata-sphinx-theme
+allowlist_externals = make
 commands = make -C docs clean
            make -C docs html
 [testenv:lint]
