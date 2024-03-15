@@ -2,13 +2,13 @@
 <!DOCTYPE html>
 
 
-<html lang="en" >
+<html lang="en" data-content_root="./" >
 
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>API Reference &#8212; Databrowser API 2023.4.1 documentation</title>
+    <title>API Reference &#8212; Databrowser API 2403.0.1 documentation</title>
   
   
   
@@ -18,27 +18,28 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
-<link href="_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link href="_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
 
   
-  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
-  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+  <link href="_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=362ab14a" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="_static/code-tabs.css?v=1bc26e2f" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=d7f69917"></script>
+    <script src="_static/documentation_options.js?v=76095c9e"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
-    <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="_static/copybutton.js?v=f281be69"></script>
     <script src="_static/code-tabs.js?v=c983d12e"></script>
@@ -56,7 +57,15 @@
 
   
   
-  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
   
   <input type="checkbox"
           class="sidebar-toggle"
@@ -91,15 +100,17 @@
 </form></div>
   </div>
   
-    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    <header class="bd-header navbar navbar-expand-lg bd-navbar">
 <div class="bd-header__inner bd-page-width">
   <label class="sidebar-toggle primary-toggle" for="__primary">
     <span class="fa-solid fa-bars"></span>
   </label>
   
-  <div class="navbar-header-items__start">
+  
+  <div class=" navbar-header-items__start">
     
       <div class="navbar-item">
+
   
 
 <a class="navbar-brand logo" href="index.html">
@@ -107,31 +118,26 @@
   
   
   
+  
     
     
       
     
     
-    <img src="_static/logo.png" class="logo__image only-light" alt="Logo image"/>
-    <script>document.write(`<img src="_static/logo.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+    <img src="_static/logo.png" class="logo__image only-light" alt="Databrowser API 2403.0.1 documentation - Home"/>
+    <script>document.write(`<img src="_static/logo.png" class="logo__image only-dark" alt="Databrowser API 2403.0.1 documentation - Home"/>`);</script>
   
   
 </a></div>
     
   </div>
   
-  
   <div class=" navbar-header-items">
     
     <div class="me-auto navbar-header-items__center">
       
-        <div class="navbar-item"><nav class="navbar-nav">
-  <p class="sidebar-header-items__title"
-     role="heading"
-     aria-level="1"
-     aria-label="Site Navigation">
-    Site Navigation
-  </p>
+        <div class="navbar-item">
+<nav class="navbar-nav">
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item current active">
@@ -150,23 +156,27 @@
       
         <div class="navbar-item navbar-persistent--container">
           
-<script>
-document.write(`
-  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <i class="fa-solid fa-magnifying-glass"></i>
-  </button>
-`);
-</script>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
         </div>
       
       
         <div class="navbar-item">
+
 <script>
 document.write(`
-  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
-    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
-    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
   </button>
 `);
 </script></div>
@@ -182,8 +192,8 @@ document.write(`
           
           
           
-          <a href="https://github.com/FREVA-CLINT/databrowserAPI" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
-            <label class="sr-only">GitHub</label></a>
+          <a href="https://github.com/FREVA-CLINT/databrowserAPI" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
         </li>
 </ul></div>
       
@@ -193,27 +203,33 @@ document.write(`
   
   
     <div class="navbar-persistent--mobile">
-<script>
-document.write(`
-  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <i class="fa-solid fa-magnifying-glass"></i>
-  </button>
-`);
-</script>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
     </div>
   
 
   
-    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+    <label class="sidebar-toggle secondary-toggle" for="__secondary" tabindex="0">
       <span class="fa-solid fa-outdent"></span>
     </label>
   
 </div>
 
-    </nav>
+    </header>
   
+
   <div class="bd-container">
     <div class="bd-container__inner bd-page-width">
+      
+      
       
       <div class="bd-sidebar-primary bd-sidebar">
         
@@ -224,13 +240,8 @@ document.write(`
     
       <div class="sidebar-header-items__center">
         
-          <div class="navbar-item"><nav class="navbar-nav">
-  <p class="sidebar-header-items__title"
-     role="heading"
-     aria-level="1"
-     aria-label="Site Navigation">
-    Site Navigation
-  </p>
+          <div class="navbar-item">
+<nav class="navbar-nav">
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item current active">
@@ -249,12 +260,13 @@ document.write(`
       <div class="sidebar-header-items__end">
         
           <div class="navbar-item">
+
 <script>
 document.write(`
-  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
-    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
-    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
   </button>
 `);
 </script></div>
@@ -270,8 +282,8 @@ document.write(`
           
           
           
-          <a href="https://github.com/FREVA-CLINT/databrowserAPI" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
-            <label class="sr-only">GitHub</label></a>
+          <a href="https://github.com/FREVA-CLINT/databrowserAPI" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
         </li>
 </ul></div>
         
@@ -297,6 +309,12 @@ document.write(`
          spellcheck="false"/>
   <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
 </form></div>
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"></div>
+</nav></div>
     </div>
   
   
@@ -323,8 +341,8 @@ document.write(`
 
 
 
-<nav aria-label="Breadcrumbs">
-  <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
+<nav aria-label="Breadcrumb">
+  <ul class="bd-breadcrumbs">
     
     <li class="breadcrumb-item breadcrumb-home">
       <a href="index.html" class="nav-link" aria-label="Home">
@@ -346,10 +364,10 @@ document.write(`
               
                 
 <div id="searchbox"></div>
-                <article class="bd-article" role="main">
+                <article class="bd-article">
                   
   <section id="api-reference">
-<h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this heading">#</a></h1>
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading">#</a></h1>
 <p>The Freva Databrowser REST API is a powerful tool that enables you to search
 for climate and environmental datasets seamlessly in various programming
 languages. By generating RESTful requests, you can effortlessly access
@@ -361,10 +379,10 @@ you can easily integrate the API into your preferred language and environment.
 Whether you use Python, JavaScript, R, Julia, or any other language with HTTP
 request capabilities, the Freva Databrowser REST API accommodates your needs.</p>
 <section id="getting-an-overview">
-<span id="overview"></span><h2>Getting an overview<a class="headerlink" href="#getting-an-overview" title="Permalink to this heading">#</a></h2>
+<span id="overview"></span><h2>Getting an overview<a class="headerlink" href="#getting-an-overview" title="Link to this heading">#</a></h2>
 <dl class="http get">
 <dt class="sig sig-object http" id="get--api-databrowser-overview">
-<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/databrowser/overview</span></span><a class="headerlink" href="#get--api-databrowser-overview" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/databrowser/overview</span></span><a class="headerlink" href="#get--api-databrowser-overview" title="Link to this definition">#</a></dt>
 <dd><p>This endpoint allows you to retrieve an overview of the different
 Data Reference Syntax (DRS) standards implemented in the Freva Databrowser
 REST API. The DRS standards define the structure and metadata organisation
@@ -389,14 +407,14 @@ and their search facets.</p>
 </dd>
 </dl>
 <section id="example-request">
-<h3>Example Request<a class="headerlink" href="#example-request" title="Permalink to this heading">#</a></h3>
+<h3>Example Request<a class="headerlink" href="#example-request" title="Link to this heading">#</a></h3>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/databrowser/overview</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
 <span class="na">Host</span><span class="o">:</span> <span class="l">api.freva.example</span>
 </pre></div>
 </div>
 </section>
 <section id="example-response">
-<h3>Example Response<a class="headerlink" href="#example-response" title="Permalink to this heading">#</a></h3>
+<h3>Example Response<a class="headerlink" href="#example-response" title="Link to this heading">#</a></h3>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
@@ -436,7 +454,7 @@ and their search facets.</p>
 </div>
 </section>
 <section id="code-examples">
-<h3>Code examples<a class="headerlink" href="#code-examples" title="Permalink to this heading">#</a></h3>
+<h3>Code examples<a class="headerlink" href="#code-examples" title="Link to this heading">#</a></h3>
 <p>Below you can find example usages of this request in different scripting and
 programming languages</p>
 <div class="tabs docutils container" data-tabgroup="">
@@ -498,10 +516,10 @@ curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span
 <p>—</p>
 </section>
 <section id="searching-for-datasets-locations">
-<span id="databrowser"></span><h2>Searching for datasets locations<a class="headerlink" href="#searching-for-datasets-locations" title="Permalink to this heading">#</a></h2>
+<span id="databrowser"></span><h2>Searching for datasets locations<a class="headerlink" href="#searching-for-datasets-locations" title="Link to this heading">#</a></h2>
 <dl class="http get">
 <dt class="sig sig-object http" id="get--api-databrowser-data_search-(str-flavour)-(str-uniq_key)">
-<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/databrowser/data_search/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">flavour</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">uniq_key</span></em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-databrowser-data_search-(str-flavour)-(str-uniq_key)" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/databrowser/data_search/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">flavour</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">uniq_key</span></em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-databrowser-data_search-(str-flavour)-(str-uniq_key)" title="Link to this definition">#</a></dt>
 <dd><p>This endpoint allows you to search for climate datasets based on the specified
 Data Reference Syntax (DRS) standard (<cite>flavour</cite>) and the type of search result
 (<cite>uniq_key</cite>), which can be either “file” or “uri”. The <cite>databrowser</cite> method
@@ -547,7 +565,7 @@ files or locations that match the search criteria.</p></li>
 </dd>
 </dl>
 <section id="id1">
-<h3>Example Request<a class="headerlink" href="#id1" title="Permalink to this heading">#</a></h3>
+<h3>Example Request<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
 <p>Here’s an example of how to use this endpoint with additional parameters.
 In this example we use the <cite>freva</cite> DRS standard and search for <cite>file</cite> entries.
 Here we also want to get only those datasets that belong to the <code class="docutils literal notranslate"><span class="pre">EUR-11</span></code>
@@ -558,7 +576,7 @@ Here we also want to get only those datasets that belong to the <code class="doc
 </div>
 </section>
 <section id="id2">
-<h3>Example Response<a class="headerlink" href="#id2" title="Permalink to this heading">#</a></h3>
+<h3>Example Response<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">plain/text</span>
 
@@ -574,7 +592,7 @@ day_194912011200-194912101200.zarr\n
 </div>
 </section>
 <section id="id3">
-<h3>Code examples<a class="headerlink" href="#id3" title="Permalink to this heading">#</a></h3>
+<h3>Code examples<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
 <p>Below you can find example usages of this request in different scripting and
 programming languages.</p>
 <div class="tabs docutils container" data-tabgroup="">
@@ -674,10 +692,10 @@ Make the most of the <cite>databrowser</cite> endpoint to access valuable climat
 effortlessly in the Freva Databrowser REST API!</p>
 </section>
 <section id="searching-for-metadata">
-<span id="search-facets"></span><h2>Searching for metadata<a class="headerlink" href="#searching-for-metadata" title="Permalink to this heading">#</a></h2>
+<span id="search-facets"></span><h2>Searching for metadata<a class="headerlink" href="#searching-for-metadata" title="Link to this heading">#</a></h2>
 <dl class="http get">
 <dt class="sig sig-object http" id="get--api-databrowser-metadata_search-(str-flavour)-(str-uniq_key)">
-<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/databrowser/metadata_search/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">flavour</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">uniq_key</span></em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-databrowser-metadata_search-(str-flavour)-(str-uniq_key)" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/databrowser/metadata_search/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">flavour</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">uniq_key</span></em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-databrowser-metadata_search-(str-flavour)-(str-uniq_key)" title="Link to this definition">#</a></dt>
 <dd><p>This endpoint allows you to search metadata (facets) based on the
 specified Data Reference Syntax (DRS) standard (<cite>flavour</cite>) and the type of
 search result (<cite>uniq_key</cite>), which can be either <cite>file</cite> or <cite>uri</cite>.
@@ -742,7 +760,7 @@ that should hide lesser used metadata by default.</p></li>
 </dd>
 </dl>
 <section id="id4">
-<h3>Example Request<a class="headerlink" href="#id4" title="Permalink to this heading">#</a></h3>
+<h3>Example Request<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
 <p>Here’s an example of how to use this endpoint with additional parameters.
 In this example we use the <cite>freva</cite> DRS standard and search for <cite>file</cite> entries.
 Here we also want to get only those datasets that belong to the <code class="docutils literal notranslate"><span class="pre">EUR-11</span></code>
@@ -753,7 +771,7 @@ Here we also want to get only those datasets that belong to the <code class="doc
 </div>
 </section>
 <section id="id5">
-<h3>Example Response<a class="headerlink" href="#id5" title="Permalink to this heading">#</a></h3>
+<h3>Example Response<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
@@ -809,7 +827,7 @@ Here we also want to get only those datasets that belong to the <code class="doc
 </div>
 </section>
 <section id="id6">
-<h3>Code examples<a class="headerlink" href="#id6" title="Permalink to this heading">#</a></h3>
+<h3>Code examples<a class="headerlink" href="#id6" title="Link to this heading">#</a></h3>
 <p>Below you can find example usages of this request in different scripting and
 programming languages.</p>
 <div class="tabs docutils container" data-tabgroup="">
@@ -900,10 +918,10 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <p>—</p>
 </section>
 <section id="generating-an-intake-esm-catalogue">
-<span id="intake"></span><h2>Generating an intake-esm catalogue<a class="headerlink" href="#generating-an-intake-esm-catalogue" title="Permalink to this heading">#</a></h2>
+<span id="intake"></span><h2>Generating an intake-esm catalogue<a class="headerlink" href="#generating-an-intake-esm-catalogue" title="Link to this heading">#</a></h2>
 <dl class="http get">
 <dt class="sig sig-object http" id="get--api-databrowser-intake_catalogue-(str-flavour)-(str-uniq_key)">
-<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/databrowser/intake_catalogue/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">flavour</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">uniq_key</span></em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-databrowser-intake_catalogue-(str-flavour)-(str-uniq_key)" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/databrowser/intake_catalogue/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">flavour</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">uniq_key</span></em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-databrowser-intake_catalogue-(str-flavour)-(str-uniq_key)" title="Link to this definition">#</a></dt>
 <dd><p>This endpoint generates an intake-esm catalogue in JSON format from a <cite>freva</cite>
 search. The catalogue includes metadata about the datasets found in the search
 results. Intake-esm is a data cataloging system that allows easy organization,
@@ -952,7 +970,7 @@ on the DRS standard flavour <code class="docutils literal notranslate"><span cla
 </dd>
 </dl>
 <section id="id7">
-<h3>Example Request<a class="headerlink" href="#id7" title="Permalink to this heading">#</a></h3>
+<h3>Example Request<a class="headerlink" href="#id7" title="Link to this heading">#</a></h3>
 <p>Here’s an example of how to use this endpoint with additional parameters.
 In this example we want to create an intake-catalogue that follows the
 <cite>freva</cite> DRS standard and points to data files rather than uris.
@@ -964,7 +982,7 @@ Here we also want to get only those datasets that belong to the <code class="doc
 </div>
 </section>
 <section id="id8">
-<h3>Example Response<a class="headerlink" href="#id8" title="Permalink to this heading">#</a></h3>
+<h3>Example Response<a class="headerlink" href="#id8" title="Link to this heading">#</a></h3>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
@@ -1019,7 +1037,7 @@ Here we also want to get only those datasets that belong to the <code class="doc
 </div>
 </section>
 <section id="example">
-<h3>Example<a class="headerlink" href="#example" title="Permalink to this heading">#</a></h3>
+<h3>Example<a class="headerlink" href="#example" title="Link to this heading">#</a></h3>
 <p>Below you can find example usages of this request in different scripting and
 programming languages.</p>
 <div class="tabs docutils container" data-tabgroup="">
@@ -1116,11 +1134,10 @@ The actual response will include more datasets in the <cite>catalog_dict</cite> 
               
               
               
-                <footer class="bd-footer-article">
+              
+              
+                <footer class="prev-next-footer">
                   
-<div class="footer-article-items footer-article__inner">
-  
-    <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
     <a class="left-prev"
        href="index.html"
@@ -1131,10 +1148,7 @@ The actual response will include more datasets in the <cite>catalog_dict</cite> 
         <p class="prev-next-title">Welcome to the Freva Databrowser REST API Documentation</p>
       </div>
     </a>
-</div></div>
-  
 </div>
-
                 </footer>
               
             </div>
@@ -1143,11 +1157,14 @@ The actual response will include more datasets in the <cite>catalog_dict</cite> 
               
                 <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
+
   <div class="sidebar-secondary-item">
-  <div class="page-toc tocsection onthispage">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
     <i class="fa-solid fa-list"></i> On this page
   </div>
-  <nav class="bd-toc-nav page-toc">
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#getting-an-overview">Getting an overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#searching-for-datasets-locations">Searching for datasets locations</a></li>
@@ -1169,8 +1186,8 @@ The actual response will include more datasets in the <cite>catalog_dict</cite> 
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
-<script src="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+  <script src="_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1178,6 +1195,7 @@ The actual response will include more datasets in the <cite>catalog_dict</cite> 
     <div class="footer-items__start">
       
         <div class="footer-item">
+
   <p class="copyright">
     
       © Copyright 2024, DKRZ.
@@ -1187,8 +1205,9 @@ The actual response will include more datasets in the <cite>catalog_dict</cite> 
 </div>
       
         <div class="footer-item">
+
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.1.0.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     <br/>
   </p>
 </div>
@@ -1196,10 +1215,12 @@ The actual response will include more datasets in the <cite>catalog_dict</cite> 
     </div>
   
   
+  
     <div class="footer-items__end">
       
-        <div class="footer-item"><p class="theme-version">
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.2.
 </p></div>
       
     </div>
