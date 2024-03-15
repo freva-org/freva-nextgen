@@ -28,6 +28,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 
 from databrowser import __version__
+
 from .config import ServerConfig
 from .logger import logger
 

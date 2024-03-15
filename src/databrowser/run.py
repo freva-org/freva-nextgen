@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 from databrowser import __version__
+
 from .config import ServerConfig, defaults
 from .core import FlavourType, SolrSearch, Translator
 from .logger import logger
