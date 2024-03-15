@@ -7,7 +7,7 @@ from urllib.parse import parse_qs
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel, Required
+from pydantic import BaseModel
 
 from ._version import __version__
 from .config import ServerConfig, defaults
@@ -131,7 +131,7 @@ async def intake_catalogue(
     multi_version: Annotated[bool, SolrConfig.params["multi_version"]] = False,
     translate: Annotated[bool, SolrConfig.params["translate"]] = True,
     max_results: Annotated[int, SolrConfig.params["max_results"]] = -1,
-    request: Request = Required,
+    request: Request = Ellipsis,
 ) -> StreamingResponse:
     """Create an intake catalogue from a freva search."""
     solr_search = await SolrSearch.validate_parameters(
@@ -167,7 +167,7 @@ async def metadata_search(
     facets: Annotated[
         Union[List[str], None], SolrConfig.params["facets"]
     ] = None,
-    request: Request = Required,
+    request: Request = Ellipsis,
 ) -> JSONResponse:
     """Get the search facets."""
     solr_search = await SolrSearch.validate_parameters(
@@ -199,7 +199,7 @@ async def extended_search(
     facets: Annotated[
         Union[List[str], None], SolrConfig.params["facets"]
     ] = None,
-    request: Request = Required,
+    request: Request = Ellipsis,
 ) -> JSONResponse:
     """Get the search facets."""
     solr_search = await SolrSearch.validate_parameters(
@@ -225,7 +225,7 @@ async def data_search(
     start: Annotated[int, SolrConfig.params["start"]] = 0,
     multi_version: Annotated[bool, SolrConfig.params["multi_version"]] = False,
     translate: Annotated[bool, SolrConfig.params["translate"]] = True,
-    request: Request = Required,
+    request: Request = Ellipsis,
 ) -> StreamingResponse:
     """Search for datasets."""
     solr_search = await SolrSearch.validate_parameters(
