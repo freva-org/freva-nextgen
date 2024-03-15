@@ -95,9 +95,9 @@ jobs:
           platforms: linux/amd64
           push: false
           load: true
-          tags: freva-storage-service
+          tags: databrowser
 
-      - name: Check freva-storage-service image
+      - name: Check databrowser image
         run: python3 dev-env/check-container.py
 
 
