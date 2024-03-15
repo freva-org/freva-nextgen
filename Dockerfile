@@ -1,6 +1,7 @@
 FROM python:latest as base
 LABEL maintainer="DRKZ-CLINT"
 LABEL repository="https://github.com/FREVA-CLINT/databrowserAPI"
+LABEL release=<VERSION>
 ENV API_CONFIG=/opt/databrowser/api_config.toml \
     API_PORT=8080\
     API_WORKER=8\
@@ -19,15 +20,11 @@ COPY . /opt/app
 WORKDIR /opt/app
 RUN set -e &&\
     python3 -m ensurepip -U &&\
-    python3 -m pip install -q poetry &&\
-    poetry config virtualenvs.in-project true && \
-    poetry install -q --only main --no-root --no-directory --no-interaction &&\
-    poetry build
+    python3 -m pip install flit && flit build
 FROM base as final
-COPY --from=builder /opt/app/.venv /opt/app/python
 COPY --from=builder /opt/app/dist /opt/app/dist
-RUN /opt/app/python/bin/python3 -m pip install /opt/app/dist/databrowser*.whl
+RUN python3 -m pip install /opt/app/dist/databrowser*.whl
 WORKDIR /opt/databrowser
 EXPOSE $API_PORT
 USER freva
-CMD ["/opt/app/python/bin/python3", "-m", "databrowser.cli"]
+CMD ["python3", "-m", "databrowser.cli"]
