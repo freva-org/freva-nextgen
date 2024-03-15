@@ -4,8 +4,8 @@ run-name: ${{ github.actor }} is building the container
 "on":
   workflow_dispatch:
   push:
-    branches:
-      - main
+    tags:
+      - "v*.*.*"
 
 jobs:
   build-and-push-image:
@@ -25,6 +25,11 @@ jobs:
         id: repository
         run: |
           echo "repo=$(echo ${{ github.repository }}|tr 'A-Z' 'a-z')" >> $GITHUB_OUTPUT
+          echo "tag=$(python src/databrowser/__init__.py)" >> $GITHUB_OUTPUT
+
+      -
+        name: Set docker version label
+        run: sed -i 's/<VERSION>/${{ steps.repository.outputs.tag }}/g' Dockerfile
 
       -
         name: Set up QEMU
@@ -49,4 +54,5 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
+            ghcr.io/${{ steps.repository.outputs.repo }}:${{ steps.repository.outputs.tag }}
             ghcr.io/${{ steps.repository.outputs.repo }}:latest
