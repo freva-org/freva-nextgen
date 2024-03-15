@@ -22,21 +22,9 @@ jobs:
           docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
       - name: Install dependencies
         run: |
-          python3 -m pip install poetry
-          python3 -m poetry install --no-interaction
-      - name: Check code style
-        run: poetry run isort --check --profile black -t py311 -l 79 src
-      - name: Check type annotations
-        run: poetry run mypy --install-types --non-interactive
-      - name: Test code style
-        run: |
-          poetry run flake8 src/databrowser --count --select=E9,F63,F7,F82 --show-source --statistics
-          poetry run flake8 src/databrowser --count --max-complexity=8 --max-line-length=88 --statistics
-
-      - name: Run Tests
-        run: |
-          poetry run python3 -m pytest -vv --cov=$PWD/src --cov-report=html:coverage_report --junitxml report.xml --cov-report xml $PWD/src/databrowser/tests
-          poetry run python3 -m coverage report
+          python3 -m pip install tox
+      - name: Run all tests with tox
+        run: tox -p 3
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
@@ -64,10 +52,9 @@ jobs:
           docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
       - name: Install dependencies
         run: |
-          python3 -m pip install poetry
-          python3 -m poetry install --no-interaction
+          python3 -m pip install tox
       - name: Creating docs
-        run: python3 -m poetry run make -C docs html
+        run: tox docs
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Upload artifact
