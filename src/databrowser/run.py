@@ -9,7 +9,7 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
-from ._version import __version__
+from databrowser import __version__
 from .config import ServerConfig, defaults
 from .core import FlavourType, SolrSearch, Translator
 from .logger import logger

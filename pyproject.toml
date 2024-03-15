@@ -89,7 +89,7 @@ deps = -e .
        pytest-env
 
 commands =
-    pytest --nbval
+    pytest -vv --cov=src --cov-report=html:coverage_report --junitxml report.xml --cov-report xml src/databrowser/tests
     python3 -m coverage report --fail-under=98.5 --precision=2
 [testenv:docs]
 deps = .
