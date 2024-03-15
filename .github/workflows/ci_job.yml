@@ -68,6 +68,39 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs/build/html
 
+  build-docker-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up services
+        run: |
+          docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build freva-storage-service image
+        uses: docker/build-push-action@v4
+        with:
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: freva-storage-service
+
+      - name: Check freva-storage-service image
+        run: python3 dev-env/check-container.py
+
+
   dependabot:
     name: Merge PR by dependabot
     runs-on: ubuntu-latest
