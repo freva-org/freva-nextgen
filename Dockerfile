@@ -1,7 +1,7 @@
 FROM python:latest as base
-LABEL maintainer="DRKZ-CLINT"
-LABEL repository="https://github.com/FREVA-CLINT/databrowserAPI"
-LABEL release=<VERSION>
+LABEL org.opencontainers.image.authors="DRKZ-CLINT"
+LABEL org.opencontainers.image.source="https://github.com/FREVA-CLINT/databrowserAPI"
+LABEL org.opencontainers.image.version=<VERSION>
 ENV API_CONFIG=/opt/databrowser/api_config.toml \
     API_PORT=8080\
     API_WORKER=8\
