@@ -118,5 +118,5 @@ commands = mypy --install-types --non-interactive
 deps = git-python
        packaging
        tomli
-commands = python3 dev-env/release.py tag databrower  -b init
+commands = python3 dev-env/release.py tag databrowser -b main
 """
