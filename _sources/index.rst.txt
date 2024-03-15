@@ -13,11 +13,8 @@ Welcome to the Freva Databrowser REST API Documentation
 .. image:: https://img.shields.io/badge/License-BSD-purple.svg
    :target: LICENSE
 
-.. image:: https://img.shields.io/badge/python-3.11-purple.svg
-   :target: https://www.python.org/downloads/release/python-311/
-
-.. image:: https://img.shields.io/badge/poetry-1.5.1-purple
-   :target: https://python-poetry.org/
+.. image:: https://img.shields.io/badge/python-3.12-red.svg
+   :target: https://www.python.org/downloads/release/python-312/
 
 .. image:: https://img.shields.io/badge/ViewOn-GitHub-purple
    :target: https://github.com/FREVA-CLINT/databrowserAPI
