@@ -20,12 +20,12 @@ from typing import (
     Union,
     cast,
 )
-from typing_extensions import TypedDict
 
 import aiohttp
 from dateutil.parser import ParserError, parse
 from fastapi import HTTPException
 from pydantic import BaseModel
+from typing_extensions import TypedDict
 
 from databrowser import __version__
 
