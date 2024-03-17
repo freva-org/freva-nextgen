@@ -81,6 +81,20 @@ environment use:
 ```console
 pytest
 ```
+### Creating a new release.
+
+Once the development is finished and you decide that it's time for a new
+release of the software use the following command to trigger a release
+procedure:
+
+```console
+tox -e tag
+```
+
+This will check the current version of the `main` branch and created a trigger
+a GitHub continous integration pipeline to create a new release. The procedure
+performs a couple of checks, if theses checks fail please make sure to address
+the issues.
 
 ## Docker production container
 It's best to use the system in production within a dedicated docker container.
