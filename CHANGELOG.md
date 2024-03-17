@@ -1,7 +1,7 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
-## [v2403.0.1]
+## [v2403.0.2]
 
 ### Added
 - Added release procedure.
