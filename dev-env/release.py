@@ -50,12 +50,16 @@ class Release:
 
     version_pattern: str = r'__version__\s*=\s*["\'](\d+\.\d+\.\d+)["\']'
 
-    def __init__(self, package_name: str, repo_dir: str, branch: str = "main") -> None:
+    def __init__(
+        self, package_name: str, repo_dir: str, branch: str = "main"
+    ) -> None:
 
         self.branch = branch
         self.package_name = package_name
         self.repo_dir = Path(repo_dir)
-        logger.info("Searching for packages/config with the name: %s", package_name)
+        logger.info(
+            "Searching for packages/config with the name: %s", package_name
+        )
         logger.debug("Reading current git config")
         self.git_config = (
             Path(git.Repo(search_parent_directories=True).git_dir) / "config"
@@ -78,7 +82,9 @@ class Release:
         try:
             # Get the latest tag on the main branch
             return Version(
-                repo.git.describe("--tags", "--abbrev=0", self.branch).lstrip("v")
+                repo.git.describe("--tags", "--abbrev=0", self.branch).lstrip(
+                    "v"
+                )
             )
         except git.exc.GitCommandError:
             logger.debug("No tag found")
@@ -132,19 +138,26 @@ class Release:
         """Check if the current version was added to the change lock file."""
         logger.debug("Checking for change log file.")
         if not self._change_lock_file.is_file():
-            raise Exit("Could not find change log file. Create one first.")
+            raise Exit(
+                "Could not find change log file. "
+                "Create one first and push it to the {self.branch}"
+            )
         if f"v{self.version}" not in self._change_lock_file.read_text("utf-8"):
             raise Exit(
-                "You need to add the version v{} to the {} change log file".format(
+                "You need to add the version v{} to the {} change log file "
+                "and push the update to the {} branch".format(
                     self.version,
                     self._change_lock_file.relative_to(self.repo_dir),
+                    self.branch,
                 )
             )
 
     @cached_property
     def _change_lock_file(self) -> Path:
         """Find the change lock file."""
-        for prefix, suffix in product(("changelog", "whats-new"), (".rst", ".md")):
+        for prefix, suffix in product(
+            ("changelog", "whats-new"), (".rst", ".md")
+        ):
             for search_pattern in (prefix, prefix.upper()):
                 glob_pattern = f"{search_pattern}{suffix}"
                 logger.debug("Searching for %s", glob_pattern)
@@ -159,9 +172,11 @@ class Release:
         if self.version <= self.git_tag:
             raise Exit(
                 "Tag version: {} is the same as current version {}"
-                ", you need to bump the verion number first.".format(
+                ", you need to bump the verion number first and "
+                "push the changes to the {} branch".format(
                     self.version,
                     self.git_tag,
+                    self.branch,
                 )
             )
         self._check_change_lock_file()
@@ -169,7 +184,9 @@ class Release:
         head = cloned_repo.head.reference
         message = f"Create a release for v{self.version}"
         try:
-            cloned_repo.create_tag(f"v{self.version}", ref=head, message=message)
+            cloned_repo.create_tag(
+                f"v{self.version}", ref=head, message=message
+            )
             cloned_repo.git.push("--tags")
         except git.GitCommandError as error:
             raise Exit("Could not create tag: {}".format(error))
@@ -188,7 +205,9 @@ class Release:
             "deploy", help="Update the version in the deployment repository"
         )
         for _parser in tag_parser, deploy_parser:
-            _parser.add_argument("name", help="The name of the software/package.")
+            _parser.add_argument(
+                "name", help="The name of the software/package."
+            )
             _parser.add_argument(
                 "-v",
                 "--verbose",

@@ -1,8 +1,12 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [v2403.0.1]
 
-## [v2403.0.1] - 2024-03-15
+### Added
+- Added release procedure.
+
+## [v2403.0.1]
 
 ### Added
 - Initial release of the project.
