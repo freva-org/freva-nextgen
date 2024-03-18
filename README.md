@@ -88,7 +88,7 @@ release of the software use the following command to trigger a release
 procedure:
 
 ```console
-tox -e tag
+tox -e release
 ```
 
 This will check the current version of the `main` branch and created a trigger

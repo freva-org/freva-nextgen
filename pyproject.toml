@@ -115,7 +115,7 @@ deps = .
        motor-stubs
        pytest-stub
 commands = mypy --install-types --non-interactive
-[testenv:tag]
+[testenv:release]
 deps = git-python
        packaging
        tomli
