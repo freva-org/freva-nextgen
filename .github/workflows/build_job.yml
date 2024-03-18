@@ -28,10 +28,6 @@ jobs:
           echo "tag=$(python src/databrowser/__init__.py)" >> $GITHUB_OUTPUT
 
       -
-        name: Set docker version label
-        run: sed -i 's/<VERSION>/${{ steps.repository.outputs.tag }}/g' Dockerfile
-
-      -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 
@@ -51,6 +47,7 @@ jobs:
         name: Build and push databrowserAPI image
         uses: docker/build-push-action@v4
         with:
+          build-args: VERSION=${{steps.repository.outputs.tag}}
           platforms: linux/amd64
           push: true
           tags: |
