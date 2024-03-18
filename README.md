@@ -92,7 +92,7 @@ tox -e tag
 ```
 
 This will check the current version of the `main` branch and created a trigger
-a GitHub continous integration pipeline to create a new release. The procedure
+a GitHub continuous integration pipeline to create a new release. The procedure
 performs a couple of checks, if theses checks fail please make sure to address
 the issues.
 
