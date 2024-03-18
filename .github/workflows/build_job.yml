@@ -53,6 +53,4 @@ jobs:
         with:
           platforms: linux/amd64
           push: true
-          tags: |
-            ghcr.io/${{ steps.repository.outputs.repo }}:${{ steps.repository.outputs.tag }}
-            ghcr.io/${{ steps.repository.outputs.repo }}:latest
+          tags: ghcr.io/${{ steps.repository.outputs.repo }}:${{ steps.repository.outputs.tag }}
