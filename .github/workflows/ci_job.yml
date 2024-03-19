@@ -3,7 +3,7 @@ name: CI Tests
 permissions:
   pull-requests: write
 
-on: [push, pull_request]
+on: [push, pull_request, workflow_call]
 
 jobs:
   ci:

@@ -8,9 +8,11 @@ run-name: ${{ github.actor }} is building the container
       - "v*.*.*"
 
 jobs:
+  tests:
+    uses: .github/workflows/ci_job.yml
   build-and-push-image:
     runs-on: ubuntu-latest
-    needs: [ci, docs]
+    needs: tests
     permissions:
       contents: read
       packages: write
