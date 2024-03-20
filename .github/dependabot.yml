@@ -1,6 +1,14 @@
 version: 2
 updates:
-  - package-ecosystem: "poetry"
+  - package-ecosystem: "docker"
     directory: "/"
     schedule:
-      interval: "daily" # You can change the update frequency as needed
+      interval: "daily"
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    groups:
+    python-packages:
+      patterns:
+        - "*"
