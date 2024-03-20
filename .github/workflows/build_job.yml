@@ -87,7 +87,7 @@ jobs:
           echo "tag=$(python src/databrowser/__init__.py)" >> $GITHUB_OUTPUT
 
       - name: Installing dependencies
-        run: pip install git-python packaging tomli
+        run: pip install git-python packaging tomli requests
 
       - name: Getting realease job
         run: curl -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/versions/release.py
