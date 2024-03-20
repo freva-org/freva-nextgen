@@ -115,6 +115,11 @@ jobs:
         with:
           python-version: "3.X"
 
+      - name: Get the latest solr version
+        id: solr
+        run: |
+          docker pull solr:latest
+          echo tag=$(docker inspect solr:latest -f '{{index .Config.Labels "org.opencontainers.image.version"}}') >> GITHUB_OUTPUT
       - name: Get tag
         id: repository
         run: |
@@ -128,7 +133,7 @@ jobs:
         run: curl -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/versions/release.py
 
       - name: Do the release job
-        run: python3 bump.py deploy databrowser -b versions -v
+        run: python3 bump.py deploy databrowser -b versions -v -s solr ${{steps.solr.outputs.tag}}
         env:
           GITHUB_TOKEN: ${{secrets.ACCESS_TOKEN}}
           REPO_VERSION: ${{ steps.repository.outputs.tag }}
