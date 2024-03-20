@@ -60,7 +60,7 @@ jobs:
           platforms: linux/amd64
           push: false
           load: true
-          tags: databrowser
+          tags: databrowser:latest
 
       - name: Check databrowser image
         run: python3 dev-env/check-container.py

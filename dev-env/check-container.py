@@ -38,7 +38,7 @@ def check_container(container_name: str = "databrowser") -> None:
                 container_name,
             ],
         )
-        time.sleep(5)
+        time.sleep(10)
         if process.poll() is not None:
             raise RuntimeError("Container died.")
         res = urllib.request.Request(
