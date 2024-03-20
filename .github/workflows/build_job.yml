@@ -115,11 +115,13 @@ jobs:
         with:
           python-version: "3.X"
 
+      - name: Pull the latest solr image
+        run: docker pull solr:latest
+
       - name: Get the latest solr version
         id: solr
-        run: |
-          docker pull solr:latest
-          echo tag=$(docker inspect solr:latest -f '{{index .Config.Labels "org.opencontainers.image.version"}}') >> GITHUB_OUTPUT
+        run: echo tag=$(docker inspect solr:latest -f '{{index .Config.Labels "org.opencontainers.image.version"}}') >> $GITHUB_OUTPUT
+
       - name: Get tag
         id: repository
         run: |
