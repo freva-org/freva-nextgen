@@ -121,13 +121,17 @@ commands = mypy --install-types --non-interactive
 deps = git-python
        packaging
        tomli
-commands = python3 dev-env/release.py tag databrowser -b docker-improvements
-[testenv:bump]
-commands = python3 bump.py deploy databrowser -b versions -v
-#commands_pre = curl -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/versions/release.py
+commands = python3 dev-env/bump.py tag databrowser -b docker-improvements
 allowlist_externals = rm
                       curl
-#commands_post = rm bump.py
+commands_pre = curl -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/versions/release.py
+commands_post = rm bump.py
+[testenv:bump]
+commands = python3 bump.py deploy databrowser -b versions -v
+commands_pre = curl -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/versions/release.py
+allowlist_externals = rm
+                      curl
+commands_post = rm bump.py
 deps = git-python
        packaging
        tomli
