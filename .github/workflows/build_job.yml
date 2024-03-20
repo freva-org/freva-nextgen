@@ -62,3 +62,35 @@ jobs:
           tags: |
             ghcr.io/${{ steps.repository.outputs.repo }}:${{ steps.repository.outputs.tag }}
             ghcr.io/${{ steps.repository.outputs.repo }}:latest
+
+  bump-databrowser-version:
+    runs-on: ubuntu-latest
+    needs: build-and-push-image
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.X"
+
+      - name: Get tag
+        id: repository
+        run: |
+          echo "repo=$(echo ${{ github.repository }}|tr 'A-Z' 'a-z')" >> $GITHUB_OUTPUT
+          echo "tag=$(python src/databrowser/__init__.py)" >> $GITHUB_OUTPUT
+
+      - name: Installing dependencies
+        run: pip install git-python packaging tomli
+
+      - name: Getting realease job
+        run: curl -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/versions/release.py
+
+      - name: Do the release job
+        run: python3 bump.py deploy databrowser -b versions -v
