@@ -24,7 +24,7 @@ jobs:
         run: |
           python3 -m pip install tox
       - name: Run all tests with tox
-        run: tox -p 3
+        run: tox run-parallel --parallel-no-spinner
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
