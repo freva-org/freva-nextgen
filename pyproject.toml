@@ -80,7 +80,7 @@ passenv = *
 passenv = *
 parallel_show_output = false
 [testenv:test]
-deps = -e .
+deps = -c .github/dependabot/constraints.txt e .
        httpx
        pytest
        pytest-asyncio

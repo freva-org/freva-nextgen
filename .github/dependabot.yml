@@ -5,10 +5,6 @@ updates:
     schedule:
       interval: "daily"
   - package-ecosystem: "pip"
-    directory: "/"
+    directory: "/.github/dependabot/"
     schedule:
       interval: "daily"
-    groups:
-    python-packages:
-      patterns:
-        - "*"
