@@ -123,7 +123,7 @@ deps = git-python
        packaging
        requests
        tomli
-commands = python3 bump.py tag databrowser -b docker-improvements
+commands = python3 bump.py tag databrowser
 allowlist_externals = rm
                       curl
 commands_pre = curl -H 'Cache-Control: no-cache' -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/versions/release.py
