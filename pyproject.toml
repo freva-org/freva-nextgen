@@ -1,23 +1,39 @@
-[tool.poetry]
+[build-system]
+requires = ["flit_core >=3.2"]
+build-backend = "flit_core.buildapi"
+[project]
 name = "databrowser"
-version = "2023.4.1"
-description = ""
-authors = ["DKRZ - CLINIT <freva@dkrz.de>"]
+description = "RestAPI for searching for climate data based on key-value pairs"
+authors = [{name = "DKRZ, Clint", email = "freva@dkrz.de"}]
 readme = "README.md"
-packages = [{include = "databrowser", from = "src"}]
-
-[tool.poetry.dependencies]
-python = "^3.11"
-aiohttp = "^3.8.4"
-fastapi = "^0.95.1"
-typer = "^0.7.0"
-uvicorn = "^0.21.1"
-python-dotenv = "^1.0.0"
-python-dateutil = "^2.8.2"
-tomli = "^2.0.1"
-rich = "^13.5.1"
-motor = "^3.2.0"
-requests = "^2.31.0"
+license = {file = "LICENSE"}
+classifiers = [
+               "Development Status :: 3 - Alpha",
+               "Environment :: Console",
+               "Intended Audience :: Developers",
+               "Intended Audience :: Science/Research",
+               "License :: OSI Approved :: BSD License",
+               "Operating System :: POSIX :: Linux",
+               "Programming Language :: Python :: 3",
+]
+dynamic = ["version"]
+requires-python = ">=3.11"
+dependencies = [
+"aiohttp",
+"fastapi",
+"typer",
+"uvicorn",
+"python-dotenv",
+"python-dateutil",
+"tomli",
+"rich",
+"motor",
+"requests",
+]
+[project.urls]
+Documentation = "https://freva-clint.github.io/databrowserAPI"
+Issues = "https://github.com/FREVA-CLINT/databrowserAPI/issues"
+Source = "https://github.com/FREVA-CLINT/databrowserAPI/"
 
 [tool.pytest.ini_options]
 env = [
@@ -29,28 +45,97 @@ env = [
     "SOLR_CORE=files"
 ]
 
-[tool.poetry.group.dev.dependencies]
-httpx = {version = "^0.24.1", extras = ["tests"]}
-pytest = {version = "^7.4.0", extras = ["tests"]}
-pytest-asyncio = {version = "^0.21.1", extras = ["tests"]}
-pytest-cov = {version = "^4.1.0", extras = ["tests"]}
-mypy = {version = "^1.4.1", extras = ["tests"]}
-black = {version = "^23.7.0", extras = ["tests"]}
-pytest-mypy = {version = "^0.10.3", extras = ["tests"]}
-pytest-mock = {version = "^3.11.1", extras = ["tests"]}
-mock = {version = "^5.1.0", extras = ["tests"]}
-sphinx = {version = "^7.1.0", extras = ["docs"]}
-furo = {version = "^2023.5.20", extras = ["docs"]}
-sphinx-code-tabs = {version = "^0.5.5", extras = ["docs"]}
-flake8 = {version = "^6.0.0", extras = ["tests"]}
-isort = {version = "^5.12.0", extras = ["tests"]}
-sphinx-copybutton = {version = "^0.5.2", extras = ["docs"]}
-sphinxcontrib-httpdomain = {version = "^1.8.1", extras = ["docs"]}
-pydata-sphinx-theme = {version = "^0.13.3", extras = ["docs"]}
-motor-stubs = {version = "^1.7.1", extras = ["tests"]}
-pymongo = {version = "^4.4.1", extras = ["tests"]}
-pytest-env = {version = "^0.8.2", extras = ["tests"]}
+[project.optional-dependencies]
+dev = [ "tox", "flit"]
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.flake8]
+ignore = "F405"
+
+[tool.mypy]
+files = "src/databrowser"
+strict = true
+warn_unused_ignores = true
+warn_unreachable = true
+show_error_codes = true
+install_types = true
+non_interactive = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+warn_redundant_casts = true
+ignore_missing_imports = true
+
+[package-data]
+freva_storage_service = ["py.typed"]
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+min_version = 4.0
+env_list = types, lint, test
+passenv = *
+[testenv]
+passenv = *
+parallel_show_output = false
+[testenv:test]
+deps = -c {toxinidir}/.github/dependabot/constraints.txt
+       -e .
+       httpx
+       pytest
+       pytest-asyncio
+       pytest-cov
+       pytest-mock
+       mock
+       pymongo
+       pytest-env
+
+commands =
+    pytest -vv --cov=src --cov-report=html:coverage_report --junitxml report.xml --cov-report xml src/databrowser/tests
+    python3 -m coverage report --fail-under=98.5 --precision=2
+[testenv:docs]
+deps = .
+       sphinx-code-tabs
+       sphinx-copybutton
+       sphinxcontrib-httpdomain
+       pydata-sphinx-theme
+allowlist_externals = make
+commands = make -C docs clean
+           make -C docs html
+[testenv:lint]
+deps = .
+       black
+       isort
+       flake8
+       pytest-stub
+commands =
+    isort --check --profile black -t py311 -l 79 src
+    flake8 src/databrowser --count --max-complexity=8 --ignore=F405,W503 --max-line-length=88 --statistics --show-source
+[testenv:types]
+deps = .
+       mypy
+       motor-stubs
+       pytest-stub
+commands = mypy --install-types --non-interactive
+[testenv:release]
+deps = git-python
+       packaging
+       requests
+       tomli
+commands = python3 bump.py tag databrowser -b docker-improvements
+allowlist_externals = rm
+                      curl
+commands_pre = curl -H 'Cache-Control: no-cache' -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/versions/release.py
+commands_post = rm bump.py
+[testenv:bump]
+commands = python3 bump.py deploy databrowser -b versions -v
+commands_pre = curl -H 'Cache-Control: no-cache' -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/versions/release.py
+allowlist_externals = rm
+                      curl
+commands_post = rm bump.py
+deps = git-python
+       packaging
+       requests
+       tomli
+"""

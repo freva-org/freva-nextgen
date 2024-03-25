@@ -9,11 +9,12 @@ import os
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import Iterator, List, Tuple, TypedDict
+from typing import Iterator, List, Tuple
 
 import requests
 import tomli
 from motor.motor_asyncio import AsyncIOMotorClient
+from typing_extensions import TypedDict
 
 from .logger import THIS_NAME, logger, logger_file_handle
 

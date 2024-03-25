@@ -1,8 +1,7 @@
 # A REST API for the freva databrowser
 
 [![License](https://img.shields.io/badge/License-BSD-purple.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.11-purple.svg)](https://www.python.org/downloads/release/python-311/)
-[![Poetry](https://img.shields.io/badge/poetry-1.5.1-purple)](https://python-poetry.org/)
+[![Python](https://img.shields.io/badge/python-3.12-red.svg)](https://www.python.org/downloads/release/python-312/)
 [![Docs](https://img.shields.io/badge/API-Doc-green.svg)](https://freva-clint.github.io/databrowserAPI)
 [![Tests](https://github.com/FREVA-CLINT/databrowserAPI/actions/workflows/ci_job.yml/badge.svg)](https://github.com/FREVA-CLINT/databrowserAPI/actions)
 [![Test-Coverage](https://codecov.io/github/FREVA-CLINT/databrowserAPI/branch/init/graph/badge.svg?token=dGhXxh7uP3)](https://codecov.io/github/FREVA-CLINT/databrowserAPI)
@@ -23,22 +22,19 @@ scientists, researchers, and data enthusiasts.
 
 ## Installation
 
-1. Make sure you have Python 3.11 installed.
-2. Install Poetry on your system by following the instructions at [Python Poetry](https://python-poetry.org/).
-3. Clone this repository:
+1. Make sure you have Python 3.11+ installed.
+2. Clone this repository:
 
 ```console
 git clone git@github.com:FREVA-CLINT/databrowserAPI.git
 cd databrowserAPI
 ```
 
-4. Set up the project environment using Poetry:
+4. Install the API:
 
 ```console
-poetry install --all-extras
+python -m pip install -e .[dev]
 ```
-
-Make sure poetry is available in your python environment
 
 ## Development Environment
 Apache solr is needed run the system in a development environment, here we
@@ -55,7 +51,7 @@ environment. You can now develop and test the project within this environment.
 After solr is up and running you can start the REST server the following:
 
 ```console
-poetry run python -m databrowser.cli --config-file api_config.toml --debug --dev --port 7777
+python -m databrowser.cli --config-file api_config.toml --debug --dev --port 7777
 ```
 
 The ``--debug`` and ``--dev`` flag will make sure that any changes are loaded.
@@ -65,12 +61,41 @@ simply do not pass the ``--dev`` flag.
 
 ### Testing
 
-This project uses `pytest` for testing. To run the tests, use the following
-command:
+Unit tests, Example notebook tests, type annotations and code style tests
+are done with [tox](https://tox.wiki/en/latest/). To run all tests, linting
+in parallel simply execute the following command:
 
 ```console
-make test
+tox -p 3
 ```
+You can also run the each part alone, for example to only check the code style:
+
+```console
+tox -e lint
+```
+available options are ``lint``, ``types``, ``test``.
+
+Tox runs in a separate python environment to run the tests in the current
+environment use:
+
+```console
+pytest
+```
+### Creating a new release.
+
+Once the development is finished and you decide that it's time for a new
+release of the software use the following command to trigger a release
+procedure:
+
+```console
+tox -e release
+```
+
+This will check the current version of the `main` branch and trigger
+a GitHub continuous integration pipeline to create a new release. The procedure
+performs a couple of checks, if theses checks fail please make sure to address
+the issues.
+
 ## Docker production container
 It's best to use the system in production within a dedicated docker container.
 You can pull the container from the GitHub container registry:
@@ -86,7 +111,7 @@ There are two fundamental different options to configure the service.
 
 Note, that the order here is important. First, any configuration from the
 config file is loaded, only if the configuration wasn't found in the config
-file then environment variables are evaluated. The following environment
+file environment variables are evaluated. The following environment
 variables can be set:
 
 - ``DEBUG``: Start server in debug mode (1), (default: 0 -> no debug).

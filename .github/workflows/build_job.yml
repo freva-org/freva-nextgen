@@ -1,15 +1,53 @@
 name: Build and publish the container image
-run-name: ${{ github.actor }} is building the container
+run-name: ${{ github.actor }} is preparing the next release
 
 "on":
   workflow_dispatch:
   push:
-    branches:
-      - main
+    tags:
+      - "v*.*.*"
 
 jobs:
+  tests:
+    uses: ./.github/workflows/ci_job.yml
+  docs:
+    runs-on: ubuntu-latest
+    needs: tests
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.11"
+      - name: Set up services
+        run: |
+          docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
+      - name: Install dependencies
+        run: |
+          python3 -m pip install tox
+      - name: Creating docs
+        run: tox -e docs
+      - name: Setup Pages
+        uses: actions/configure-pages@v2
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          # Upload entire repository
+          path: './docs/build/html'
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/build/html
+
   build-and-push-image:
     runs-on: ubuntu-latest
+    needs: tests
     permissions:
       contents: read
       packages: write
@@ -21,10 +59,17 @@ jobs:
           fetch-depth: 0
 
       -
+        name: Set up Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.X"
+
+      -
         name: Get tag
         id: repository
         run: |
           echo "repo=$(echo ${{ github.repository }}|tr 'A-Z' 'a-z')" >> $GITHUB_OUTPUT
+          echo "tag=$(python src/databrowser/__init__.py)" >> $GITHUB_OUTPUT
 
       -
         name: Set up QEMU
@@ -46,7 +91,51 @@ jobs:
         name: Build and push databrowserAPI image
         uses: docker/build-push-action@v4
         with:
+          build-args: VERSION=${{steps.repository.outputs.tag}}
           platforms: linux/amd64
           push: true
           tags: |
+            ghcr.io/${{ steps.repository.outputs.repo }}:${{ steps.repository.outputs.tag }}
             ghcr.io/${{ steps.repository.outputs.repo }}:latest
+
+  bump-databrowser-version:
+    runs-on: ubuntu-latest
+    needs: [build-and-push-image, docs]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.X"
+
+      - name: Pull the latest solr image
+        run: docker pull solr:latest
+
+      - name: Get the latest solr version
+        id: solr
+        run: echo tag=$(docker inspect solr:latest -f '{{index .Config.Labels "org.opencontainers.image.version"}}') >> $GITHUB_OUTPUT
+
+      - name: Get tag
+        id: repository
+        run: |
+          echo "repo=$(echo ${{ github.repository }}|tr 'A-Z' 'a-z')" >> $GITHUB_OUTPUT
+          echo "tag=$(python src/databrowser/__init__.py)" >> $GITHUB_OUTPUT
+
+      - name: Installing dependencies
+        run: pip install git-python packaging tomli requests
+
+      - name: Getting realease job
+        run: curl -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/versions/release.py
+
+      - name: Do the release job
+        run: python3 bump.py deploy databrowser -b versions -v -s solr ${{steps.solr.outputs.tag}}
+        env:
+          GITHUB_TOKEN: ${{secrets.ACCESS_TOKEN}}
+          REPO_VERSION: ${{ steps.repository.outputs.tag }}
