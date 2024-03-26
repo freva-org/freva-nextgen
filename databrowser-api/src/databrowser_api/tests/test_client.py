@@ -1,10 +1,10 @@
 """Unit tests for the freva databrowser module."""
+
 import json
 
+from databrowser_api.config import ServerConfig
 from fastapi.testclient import TestClient
 from pymongo import MongoClient
-
-from databrowser.config import ServerConfig
 
 
 def test_attributes(client: TestClient) -> None:

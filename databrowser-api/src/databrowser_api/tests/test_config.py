@@ -1,11 +1,11 @@
 """Unit tests for the configuration."""
+
 import logging
 from pathlib import Path
 from typing import List
 
+from databrowser_api.config import ServerConfig, defaults
 from pytest import LogCaptureFixture
-
-from databrowser.config import ServerConfig, defaults
 
 
 def test_valid_config() -> None:

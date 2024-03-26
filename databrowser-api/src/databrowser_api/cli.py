@@ -18,10 +18,15 @@ cli = typer.Typer(help="Run the databrowser rest API")
 def start(
     config_file: Optional[Path] = typer.Option(
         os.environ.get("API_CONFIG", defaults["API_CONFIG"]),
+        "-c",
+        "--config-file",
         help="Path to the server configuration file",
     ),
     port: int = typer.Option(
-        os.environ.get("API_PORT", 8080), help="The port the api is running on"
+        os.environ.get("API_PORT", 8080),
+        "-p",
+        "--port",
+        help="The port the api is running on",
     ),
     dev: bool = typer.Option(False, help="Add test data to the dev solr."),
     debug: bool = typer.Option(
@@ -44,7 +49,7 @@ def start(
             encoding="utf-8",
         )
         uvicorn.run(
-            "databrowser.run:app",
+            "databrowser_api.run:app",
             host="0.0.0.0",
             port=port,
             reload=dev,

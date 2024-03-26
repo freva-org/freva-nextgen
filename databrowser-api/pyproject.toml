@@ -1,0 +1,44 @@
+[build-system]
+requires = ["flit_core >=3.2"]
+build-backend = "flit_core.buildapi"
+[project]
+name = "databrowser-api"
+description = "RestAPI for searching for climate data based on key-value pairs"
+authors = [{name = "DKRZ, Clint", email = "freva@dkrz.de"}]
+readme = "README.md"
+license = {file = "LICENSE"}
+classifiers = [
+               "Development Status :: 3 - Alpha",
+               "Environment :: Console",
+               "Intended Audience :: Developers",
+               "Intended Audience :: Science/Research",
+               "License :: OSI Approved :: BSD License",
+               "Operating System :: POSIX :: Linux",
+               "Programming Language :: Python :: 3",
+]
+dynamic = ["version"]
+requires-python = ">=3.11"
+dependencies = [
+"aiohttp",
+"fastapi",
+"typer",
+"uvicorn",
+"python-dotenv",
+"python-dateutil",
+"tomli",
+"rich",
+"motor",
+"requests",
+]
+[project.scripts]
+databrowser-api = "databrowser_api:cli.cli"
+[project.urls]
+Documentation = "https://freva-clint.github.io/databrowserAPI"
+Issues = "https://github.com/FREVA-CLINT/databrowserAPI/issues"
+Source = "https://github.com/FREVA-CLINT/databrowserAPI/"
+
+[project.optional-dependencies]
+dev = [ "tox", "flit"]
+
+[package-data]
+databrowser_api = ["py.typed"]

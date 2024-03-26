@@ -12,7 +12,6 @@ from datetime import date
 sys.path.insert(0, os.path.abspath(os.path.join("..", "..", "src")))
 from databrowser import __version__
 
-
 project = "Databrowser API"
 copyright = f"{date.today().year}, DKRZ"
 author = "DKRZ"

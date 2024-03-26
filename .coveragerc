@@ -1,7 +1,7 @@
 # .coveragerc to control coverage.py
 [run]
 branch = True
-omit = .converage*
+omit = .converage* run_server.py
 [report]
 fail_under = 95
 # Regexes for lines to exclude from consideration

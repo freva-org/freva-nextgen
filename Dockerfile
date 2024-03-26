@@ -24,8 +24,8 @@ RUN set -e &&\
     python3 -m pip install flit && flit build
 FROM base as final
 COPY --from=builder /opt/app/dist /opt/app/dist
-RUN python3 -m pip install /opt/app/dist/databrowser*.whl
+RUN python3 -m pip install /opt/app/dist/databrowser_api*.whl
 WORKDIR /opt/databrowser
 EXPOSE $API_PORT
 USER freva
-CMD ["python3", "-m", "databrowser.cli"]
+CMD ["python3", "-m", "databrowser_api.cli"]

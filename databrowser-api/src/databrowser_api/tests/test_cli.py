@@ -1,13 +1,13 @@
 """Test the command line interface cli."""
+
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import TracebackType
 
 import mock
+from databrowser_api.cli import cli
 from pytest_mock import MockerFixture
 from typer.testing import CliRunner
-
-from databrowser.cli import cli
 
 
 class MockTempfile:
@@ -37,12 +37,12 @@ def test_cli(mocker: MockerFixture) -> None:
     mock_run = mocker.patch("uvicorn.run")
     with TemporaryDirectory() as temp_dir:
         MockTempfile.temp_dir = temp_dir
-        with mock.patch("databrowser.cli.NamedTemporaryFile", MockTempfile):
+        with mock.patch("databrowser_api.cli.NamedTemporaryFile", MockTempfile):
             runner = CliRunner()
             result1 = runner.invoke(cli, ["--dev"])
             assert result1.exit_code == 0
             mock_run.assert_called_once_with(
-                "databrowser.run:app",
+                "databrowser_api.run:app",
                 host="0.0.0.0",
                 port=8080,
                 reload=True,
@@ -53,7 +53,7 @@ def test_cli(mocker: MockerFixture) -> None:
             result2 = runner.invoke(cli, ["--debug"])
             assert result2.exit_code == 0
             mock_run.assert_called_with(
-                "databrowser.run:app",
+                "databrowser_api.run:app",
                 host="0.0.0.0",
                 port=8080,
                 reload=False,
