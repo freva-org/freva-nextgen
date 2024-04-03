@@ -1,0 +1,3 @@
+# Central freva config file
+[freva]
+databrowser_host = "localhost:8080"

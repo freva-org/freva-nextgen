@@ -1,0 +1,1 @@
+conda env config vars set FREVA_CONFIG=$PWD/dev-env/freva.toml

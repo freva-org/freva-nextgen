@@ -5,7 +5,8 @@ env = [
     "MONGO_USER=mongo",
     "MONGO_PASSWORD=secret",
     "SOLR_HOST=localhost:8983",
-    "SOLR_CORE=files"
+    "SOLR_CORE=files",
+    "FREVA_CONFIG=${PWD}/dev-env/freva.toml",
 ]
 [tool.flake8]
 ignore = "F405"
@@ -38,6 +39,7 @@ parallel_show_output = false
 [testenv:test]
 deps = -c {toxinidir}/.github/dependabot/constraints.txt
        -e ./databrowser-api
+       -e ./databrowser-client
        httpx
        pytest
        pytest-asyncio
