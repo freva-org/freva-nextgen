@@ -8,6 +8,7 @@ env = [
     "SOLR_CORE=files",
     "FREVA_CONFIG=${PWD}/dev-env/freva.toml",
 ]
+filterwarnings = ["ignore::UserWarning"]
 [tool.flake8]
 ignore = "F405"
 

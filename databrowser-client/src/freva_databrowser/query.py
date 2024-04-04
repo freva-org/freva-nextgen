@@ -69,7 +69,9 @@ class databrowser:
         self,
         *,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
+        flavour: Literal[
+            "freva", "cmip6", "cmip5", "cordex", "nextgems"
+        ] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -118,7 +120,9 @@ class databrowser:
 
         # Create a table-like structure for available flavors and search facets
         style = 'style="text-align: left"'
-        facet_heading = f"Available search facets for <em>{self._flavour}</em> flavour"
+        facet_heading = (
+            f"Available search facets for <em>{self._flavour}</em> flavour"
+        )
         html_repr = (
             "<table>"
             f"<tr><th colspan='2' {style}>{self.__class__.__name__}"
@@ -157,7 +161,9 @@ class databrowser:
     def count_values(
         cls,
         *facets: str,
-        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
+        flavour: Literal[
+            "freva", "cmip6", "cmip5", "cordex", "nextgems"
+        ] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -236,21 +242,26 @@ class databrowser:
         result = this._facet_search(*facets, extendet_search=extendet_search)
         counts = {}
         for facet, value_counts in result.items():
-            counts[facet] = dict(zip(value_counts[::2], map(int, value_counts[1::2])))
+            counts[facet] = dict(
+                zip(value_counts[::2], map(int, value_counts[1::2]))
+            )
         return counts
 
     @cached_property
     def metadata(self) -> Dict[str, List[str]]:
         """Get the metadata (facets) for the current databrowser query."""
         return {
-            k: v[::2] for (k, v) in self._facet_search(extendet_search=True).items()
+            k: v[::2]
+            for (k, v) in self._facet_search(extendet_search=True).items()
         }
 
     @classmethod
     def metadata_search(
         cls,
         *facets: str,
-        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
+        flavour: Literal[
+            "freva", "cmip6", "cmip5", "cordex", "nextgems"
+        ] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -350,6 +361,11 @@ class databrowser:
                 *facets, extendet_search=extendet_search
             ).items()
         }
+
+    @property
+    def url(self) -> str:
+        """Get the url of the databrowser API."""
+        return self.cfg.databrowser_url
 
     @exception_handler
     def _facet_search(
