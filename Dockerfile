@@ -28,4 +28,4 @@ RUN python3 -m pip install /opt/app/dist/databrowser_api*.whl
 WORKDIR /opt/databrowser
 EXPOSE $API_PORT
 USER freva
-CMD ["python3", "-m", "databrowser_api.cli"]
+CMD ["python3", "-m", "freva_rest.cli"]

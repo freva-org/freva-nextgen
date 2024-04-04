@@ -11,7 +11,7 @@ import uvicorn
 
 from .config import ServerConfig, defaults
 
-cli = typer.Typer(help="Run the databrowser rest API")
+cli = typer.Typer(help="Run the freva rest API")
 
 
 @cli.command()
@@ -38,7 +38,7 @@ def start(
     defaults["DEBUG"] = debug
     cfg = ServerConfig(defaults["API_CONFIG"], debug=debug)
     if dev:
-        from .tests.mock import read_data
+        from databrowser_api.tests.mock import read_data
 
         for core in cfg.solr_cores:
             asyncio.run(read_data(core, cfg.solr_host, cfg.solr_port))
@@ -49,7 +49,7 @@ def start(
             encoding="utf-8",
         )
         uvicorn.run(
-            "databrowser_api.run:app",
+            "freva_rest.api:app",
             host="0.0.0.0",
             port=port,
             reload=dev,

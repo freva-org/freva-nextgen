@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import List
 
-from databrowser_api.config import ServerConfig, defaults
+from freva_rest.config import ServerConfig, defaults
 from pytest import LogCaptureFixture
 
 

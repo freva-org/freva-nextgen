@@ -13,7 +13,7 @@ filterwarnings = ["ignore::UserWarning"]
 ignore = ["F405", "F403"]
 
 [tool.mypy]
-files = "databrowser-*/src"
+files = "freva-*/src"
 strict = true
 warn_unused_ignores = true
 warn_unreachable = true
@@ -51,10 +51,10 @@ deps = -c {toxinidir}/.github/dependabot/constraints.txt
        pytest-env
 
 commands =
-    pytest -vv --cov=databrowser-api --cov=databrowser-client --cov-report=html:coverage_report --junitxml report.xml --cov-report xml .
+    pytest -vv --cov=freva-rest --cov=freva-client --cov-report=html:coverage_report --junitxml report.xml --cov-report xml .
     python3 -m coverage report --fail-under=98.5 --precision=2
 [testenv:docs]
-deps = ./databrowser-api
+deps = ./freva-rest
        sphinx-code-tabs
        sphinx-copybutton
        sphinxcontrib-httpdomain
@@ -63,18 +63,18 @@ allowlist_externals = make
 commands = make -C docs clean
            make -C docs html
 [testenv:lint]
-deps = ./databrowser-api
+deps = ./freva-rest
        black
        isort
        flake8
        pytest-stub
 commands =
-    isort --check --profile black -t py311 -l 79 databrowser-api/src
-    isort --check --profile black -t py311 -l 79 databrowser-client/src
-    flake8 databrowser-client/src --count --max-complexity=8 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
-    flake8 databrowser-api/src --count --max-complexity=8 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
+    isort --check --profile black -t py311 -l 79 freva-rest/src
+    isort --check --profile black -t py311 -l 79 freva-client/src
+    flake8 freva-client/src --count --max-complexity=8 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
+    flake8 freva-rest/src --count --max-complexity=8 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
 [testenv:types]
-deps = ./databrowser-api
+deps = ./freva-rest
        mypy
        motor-stubs
        pytest-stub

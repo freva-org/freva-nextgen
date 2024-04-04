@@ -7,7 +7,7 @@ from pathlib import Path
 
 import rich.logging
 
-THIS_NAME: str = "databrowser-api"
+THIS_NAME: str = "freva-rest"
 LOG_DIR: Path = Path(
     os.environ.get("API_LOGDIR") or Path(f"/tmp/log/{THIS_NAME}")
 )

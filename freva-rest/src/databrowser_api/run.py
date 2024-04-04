@@ -5,35 +5,22 @@ from pathlib import Path
 from typing import Annotated, Any, Dict, List, Literal, Union
 from urllib.parse import parse_qs
 
-from databrowser_api import __version__
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
-from .config import ServerConfig, defaults
+from freva_rest.rest import app, server_config
+from freva_rest.logger import logger
 from .core import FlavourType, SolrSearch, Translator
-from .logger import logger
 
 Required: Any = Ellipsis
-
-app = FastAPI(
-    debug=bool(int(os.environ.get("DEBUG", "0"))),
-    title=defaults["NAME"],
-    description="Key-Value pair data search api",
-    version=__version__,
-)
-
-solr_config = ServerConfig(
-    Path(os.environ.get("API_CONFIG", defaults["API_CONFIG"])),
-    debug=bool(os.environ.get("DEBUG", int(defaults["DEBUG"]))),
-)
 
 
 @app.on_event("shutdown")
 async def shutdown_event() -> None:
     """Close the MongoDB connection on application shutdown."""
     try:
-        solr_config.mongo_client.close()
+        server_config.mongo_client.close()
     except Exception as error:  # pragma: no cover
         logger.warning("Could not shutdown mongodb connection: %s", error)
 
@@ -137,7 +124,7 @@ async def intake_catalogue(
 ) -> StreamingResponse:
     """Create an intake catalogue from a freva search."""
     solr_search = await SolrSearch.validate_parameters(
-        solr_config,
+        server_config,
         flavour=flavour,
         uniq_key=uniq_key,
         start=start,
@@ -173,7 +160,7 @@ async def metadata_search(
 ) -> JSONResponse:
     """Get the search facets."""
     solr_search = await SolrSearch.validate_parameters(
-        solr_config,
+        server_config,
         flavour=flavour,
         uniq_key=uniq_key,
         multi_version=multi_version,
@@ -205,7 +192,7 @@ async def extended_search(
 ) -> JSONResponse:
     """Get the search facets."""
     solr_search = await SolrSearch.validate_parameters(
-        solr_config,
+        server_config,
         flavour=flavour,
         uniq_key=uniq_key,
         start=start,
@@ -231,7 +218,7 @@ async def data_search(
 ) -> StreamingResponse:
     """Search for datasets."""
     solr_search = await SolrSearch.validate_parameters(
-        solr_config,
+        server_config,
         flavour=flavour,
         uniq_key=uniq_key,
         start=start,
