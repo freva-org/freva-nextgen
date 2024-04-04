@@ -114,6 +114,7 @@ class Config:
 
     @cached_property
     def overview(self) -> Dict[str, Any]:
+        """Get an overview of the all databrowser flavours and search keys."""
         try:
             res = requests.get(f"{self.databrowser_url}/overview", timeout=3)
         except requests.exceptions.ConnectionError:

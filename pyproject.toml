@@ -10,7 +10,7 @@ env = [
 ]
 filterwarnings = ["ignore::UserWarning"]
 [tool.flake8]
-ignore = "F405"
+ignore = ["F405", "F403"]
 
 [tool.mypy]
 files = "databrowser-*/src"
@@ -71,8 +71,8 @@ deps = ./databrowser-api
 commands =
     isort --check --profile black -t py311 -l 79 databrowser-api/src
     isort --check --profile black -t py311 -l 79 databrowser-client/src
-    flake8 databrowser-client/src --count --max-complexity=8 --ignore=F405,W503 --max-line-length=88 --statistics --show-source
-    flake8 databrowser-api/src --count --max-complexity=8 --ignore=F405,W503 --max-line-length=88 --statistics --show-source
+    flake8 databrowser-client/src --count --max-complexity=8 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
+    flake8 databrowser-api/src --count --max-complexity=8 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
 [testenv:types]
 deps = ./databrowser-api
        mypy

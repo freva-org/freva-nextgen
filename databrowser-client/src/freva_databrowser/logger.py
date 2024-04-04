@@ -10,8 +10,8 @@ from rich.logging import RichHandler
 
 try:
     from IPython import get_ipython
-except ImportError:  # pragma: no cover
-    get_ipython = lambda: None  # pragma: no cover
+except ImportError:
+    get_ipython = lambda: None  # noqa: E731
 
 
 APP_NAME = "freva-databrowser"

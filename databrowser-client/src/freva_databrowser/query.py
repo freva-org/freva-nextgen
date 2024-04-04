@@ -335,7 +335,7 @@ class databrowser:
         .. execute_code::
 
             import os, freva
-            file = "../.docker/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609020030.nc"
+            file = "myfile.nc"
             res = freva.facet_search(file=str(os.path.abspath(file)))
             print(res)
 

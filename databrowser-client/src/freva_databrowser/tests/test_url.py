@@ -32,7 +32,7 @@ def test_valid_eval_config(valid_eval_conf_file: Path) -> None:
     db = databrowser()
     assert db.url == "https://www.eval.conf:8081/api/databrowser"
     valid_eval_conf_file.write_text(
-        "[evaluation_system]\n" "databrowser.host = http://www.eval.conf/api\n"
+        "[evaluation_system]\ndatabrowser.host = http://www.eval.conf/api\n"
     )
     db = databrowser()
     assert db.url == "http://www.eval.conf/api/databrowser"

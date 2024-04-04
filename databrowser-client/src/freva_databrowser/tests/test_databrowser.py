@@ -1,7 +1,5 @@
 """Tests for the databrowser class."""
 
-from pathlib import Path
-
 import pytest
 from freva_databrowser import databrowser
 from freva_databrowser.logger import DatabrowserWarning
@@ -31,9 +29,7 @@ def test_count_values() -> None:
     counts1 = databrowser.count_values("*", host="localhost:8080")
     assert isinstance(counts1, dict)
     assert "dataset" not in counts1
-    counts2 = databrowser.count_values(
-        "*", host="localhost:8080", extendet_search=True
-    )
+    counts2 = databrowser.count_values("*", host="localhost:8080", extendet_search=True)
     assert isinstance(counts2, dict)
     assert "dataset" in counts2
     assert isinstance(counts2["dataset"], dict)
@@ -48,9 +44,7 @@ def test_metadata_search() -> None:
     metadata = databrowser.metadata_search(host="localhost:8080")
     assert isinstance(metadata, dict)
     assert len(db.metadata) > len(metadata)
-    metadata = databrowser.metadata_search(
-        host="localhost:8080", extendet_search=True
-    )
+    metadata = databrowser.metadata_search(host="localhost:8080", extendet_search=True)
     assert len(db.metadata) == len(metadata)
 
 
@@ -78,9 +72,7 @@ def test_bad_queries() -> None:
     with pytest.raises(ValueError):
         len(db)
     with pytest.raises(ValueError):
-        databrowser.count_values(
-            host="localhost:8080", foo="bar", fail_on_error=True
-        )
+        databrowser.count_values(host="localhost:8080", foo="bar", fail_on_error=True)
     with pytest.raises(ValueError):
         databrowser.metadata_search(
             host="localhost:8080", foo="bar", fail_on_error=True
@@ -93,5 +85,5 @@ def test_bad_queries() -> None:
 def test_repr() -> None:
     """Test the str rep."""
     db = databrowser(host="localhost:8080")
-    assert "localhost" in db.__repr__()
+    assert "localhost" in repr(db)
     assert str(len(db)) in db._repr_html_()

@@ -1,6 +1,8 @@
+"""Search quickly and intuitively for many different climate datasets."""
+
 __version__ = "2404.0.0"
 
 
-from .query import *
+from .query import databrowser
 
-__all__ = query.__all__  # type: ignore
+__all__ = ["databrowser"]

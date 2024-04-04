@@ -4,7 +4,7 @@ import argparse
 import inspect
 from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
-from .cli import app
+from .databrowser_cli import app
 from .query import databrowser
 from .utils import parse_cli_args
 
