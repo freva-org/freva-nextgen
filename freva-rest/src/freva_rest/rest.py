@@ -5,7 +5,8 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from freva_rest import __version__
-from .config import defaults, ServerConfig
+
+from .config import ServerConfig, defaults
 
 app = FastAPI(
     debug=bool(int(os.environ.get("DEBUG", "0"))),

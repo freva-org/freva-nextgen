@@ -6,10 +6,10 @@ from typing import Iterator
 
 import mock
 import pytest
-from freva_rest.config import ServerConfig, defaults
-from freva_rest.rest import app
 from databrowser_api.tests.mock import read_data
 from fastapi.testclient import TestClient
+from freva_rest.config import ServerConfig, defaults
+from freva_rest.rest import app
 
 
 @pytest.fixture(scope="module")

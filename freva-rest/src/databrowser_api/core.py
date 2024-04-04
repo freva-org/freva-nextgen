@@ -22,14 +22,13 @@ from typing import (
 )
 
 import aiohttp
+from databrowser_api import __version__
 from dateutil.parser import ParserError, parse
 from fastapi import HTTPException
-from pydantic import BaseModel
-from typing_extensions import TypedDict
-
-from databrowser_api import __version__
 from freva_rest.config import ServerConfig
 from freva_rest.logger import logger
+from pydantic import BaseModel
+from typing_extensions import TypedDict
 
 FlavourType = Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"]
 IntakeType = TypedDict(

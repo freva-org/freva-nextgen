@@ -5,10 +5,10 @@ from urllib.parse import parse_qs
 
 from fastapi import HTTPException, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
+from freva_rest.logger import logger
+from freva_rest.rest import app, server_config
 from pydantic import BaseModel
 
-from freva_rest.rest import app, server_config
-from freva_rest.logger import logger
 from .core import FlavourType, SolrSearch, Translator
 
 Required: Any = Ellipsis

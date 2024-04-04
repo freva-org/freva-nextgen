@@ -2,8 +2,8 @@
 
 import json
 
-from freva_rest.config import ServerConfig
 from fastapi.testclient import TestClient
+from freva_rest.config import ServerConfig
 from pymongo import MongoClient
 
 
