@@ -39,8 +39,8 @@ passenv = *
 parallel_show_output = false
 [testenv:test]
 deps = -c {toxinidir}/.github/dependabot/constraints.txt
-       -e ./databrowser-api
-       -e ./databrowser-client
+       -e ./freva-rest
+       -e ./freva-client
        httpx
        pytest
        pytest-asyncio

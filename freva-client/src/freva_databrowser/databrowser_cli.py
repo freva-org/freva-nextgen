@@ -137,9 +137,7 @@ def metadata_search(
     parse_json: bool = typer.Option(
         False, "-j", "--json", help="Parse output in json format."
     ),
-    verbose: int = typer.Option(
-        0, "-v", help="Increase verbosity", count=True
-    ),
+    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
     version: Optional[bool] = typer.Option(
         False,
         "-V",
@@ -161,9 +159,7 @@ def metadata_search(
     result = databrowser.metadata_search(
         *(facets or []),
         time=time or "",
-        time_select=cast(
-            Literal["file", "flexible", "strict"], time_select.value
-        ),
+        time_select=cast(Literal["file", "flexible", "strict"], time_select.value),
         flavour=cast(
             Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
             flavour.value,
@@ -240,9 +236,7 @@ def data_search(
             "the hostname is read from a config file"
         ),
     ),
-    verbose: int = typer.Option(
-        0, "-v", help="Increase verbosity", count=True
-    ),
+    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
     multiversion: bool = typer.Option(
         False,
         "--mulit-version",
@@ -353,9 +347,7 @@ def count_values(
     parse_json: bool = typer.Option(
         False, "-j", "--json", help="Parse output in json format."
     ),
-    verbose: int = typer.Option(
-        0, "-v", help="Increase verbosity", count=True
-    ),
+    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
     version: Optional[bool] = typer.Option(
         False,
         "-V",
@@ -379,9 +371,7 @@ def count_values(
         result = databrowser.count_values(
             *facets,
             time=time or "",
-            time_select=cast(
-                Literal["file", "flexible", "strict"], time_select
-            ),
+            time_select=cast(Literal["file", "flexible", "strict"], time_select),
             flavour=cast(
                 Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
                 flavour.value,
@@ -390,16 +380,13 @@ def count_values(
             extendet_search=extendet_search,
             multiversion=multiversion,
             fail_on_error=False,
-            uniq_key="file",
             **(parse_cli_args(search_keys or [])),
         )
     else:
         result = len(
             databrowser(
                 time=time or "",
-                time_select=cast(
-                    Literal["file", "flexible", "strict"], time_select
-                ),
+                time_select=cast(Literal["file", "flexible", "strict"], time_select),
                 flavour=cast(
                     Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
                     flavour.value,

@@ -39,8 +39,9 @@ def test_cli(mocker: MockerFixture) -> None:
         MockTempfile.temp_dir = temp_dir
         with mock.patch("freva_rest.cli.NamedTemporaryFile", MockTempfile):
             runner = CliRunner()
-            result1 = runner.invoke(cli, ["--dev"])
+            result1 = runner.invoke(cli, ["--dev", "--no-debug"])
             assert result1.exit_code == 0
+            print(result1.stdout)
             mock_run.assert_called_once_with(
                 "freva_rest.api:app",
                 host="0.0.0.0",
@@ -50,7 +51,7 @@ def test_cli(mocker: MockerFixture) -> None:
                 workers=None,
                 env_file=str(Path(temp_dir) / "foo.txt"),
             )
-            result2 = runner.invoke(cli, ["--debug"])
+            result2 = runner.invoke(cli, ["--debug", "--no-dev"])
             assert result2.exit_code == 0
             mock_run.assert_called_with(
                 "freva_rest.api:app",

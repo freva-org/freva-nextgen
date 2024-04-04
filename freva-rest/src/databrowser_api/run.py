@@ -1,11 +1,9 @@
 """Main script that runs the rest API."""
 
-import os
-from pathlib import Path
 from typing import Annotated, Any, Dict, List, Literal, Union
 from urllib.parse import parse_qs
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import HTTPException, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
