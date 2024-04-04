@@ -4,8 +4,8 @@ import logging
 from pathlib import Path
 from typing import List
 
-from pytest import LogCaptureFixture
 from databrowser_api.config import ServerConfig, defaults
+from pytest import LogCaptureFixture
 
 
 def test_valid_config() -> None:

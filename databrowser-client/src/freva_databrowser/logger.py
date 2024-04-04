@@ -1,9 +1,9 @@
 """Define the logging utility"""
 
 import logging
+import warnings
 from pathlib import Path
 from typing import Any, Union
-import warnings
 
 from rich.console import Console
 from rich.logging import RichHandler
@@ -77,7 +77,7 @@ class Logger(logging.Logger):
         """Set the verbosity of a logger."""
         self.set_level(max(logging.INFO - 10 * num, logging.DEBUG))
 
-    def warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
+    def warning(self, msg: object, *args: Any, **kwargs: Any) -> None:
         """Override the warning logger warning."""
         if self.is_cli:
             print(
@@ -90,7 +90,7 @@ class Logger(logging.Logger):
             super().warning(msg, *args, **kwargs)
         else:
             warnings.warn(
-                msg,
+                str(msg),
                 DatabrowserWarning,
                 stacklevel=2,
                 skip_file_prefixes=(str(Path(__file__).parent),),

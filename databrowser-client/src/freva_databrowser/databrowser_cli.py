@@ -5,19 +5,18 @@ Search quickly and intuitively for many different climate datasets.
 
 import json
 from enum import Enum
-from typing import Annotated, List, Literal, Optional, cast
+from typing import Dict, List, Literal, Optional, Union, cast
 
-from rich import print as pprint
 import typer
-
 from freva_databrowser import __version__
 from freva_databrowser.query import databrowser
 from freva_databrowser.utils import (
     APP_NAME,
-    parse_cli_args,
-    logger,
     exception_handler,
+    logger,
+    parse_cli_args,
 )
+from rich import print as pprint
 
 
 def version_callback(version: bool) -> None:
@@ -375,6 +374,7 @@ def count_values(
     """
     logger.set_verbosity(verbose)
     logger.debug("Search the databrowser")
+    result: Union[int, Dict[str, Dict[str, int]]] = 0
     if facets:
         result = databrowser.count_values(
             *facets,
@@ -390,6 +390,7 @@ def count_values(
             extendet_search=extendet_search,
             multiversion=multiversion,
             fail_on_error=False,
+            uniq_key="file",
             **(parse_cli_args(search_keys or [])),
         )
     else:
@@ -406,6 +407,7 @@ def count_values(
                 host=host,
                 multiversion=multiversion,
                 fail_on_error=False,
+                uniq_key="file",
                 **(parse_cli_args(search_keys or [])),
             )
         )

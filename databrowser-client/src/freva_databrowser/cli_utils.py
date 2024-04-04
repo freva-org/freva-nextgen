@@ -2,10 +2,10 @@
 
 import argparse
 import inspect
-from typing import cast, Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
-from .query import databrowser
 from .cli import app
+from .query import databrowser
 from .utils import parse_cli_args
 
 
@@ -64,7 +64,6 @@ class Completer:
                 facet_args.append(arg)
         search_keys = parse_cli_args(facet_args)
         search = databrowser.metadata_search(
-            facets=None,
             flavour="freva",
             time=None,
             host=None,

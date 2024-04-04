@@ -1,16 +1,8 @@
 """Query climate data sets by using-key value pair search queries."""
 
-from functools import cached_property
 import sys
-from typing import (
-    cast,
-    Dict,
-    List,
-    Literal,
-    Iterator,
-    Optional,
-    Union,
-)
+from functools import cached_property
+from typing import Dict, Iterator, List, Literal, Optional, Union, cast
 
 import requests
 from rich import print as pprint
@@ -108,7 +100,7 @@ class databrowser:
             f"host={self.cfg.databrowser_url}, {params})"
         )
 
-    def _repr_html_(self):
+    def _repr_html_(self) -> str:
         params = ", ".join(
             [f"{k.replace('-', '_')}={v}" for (k, v) in self._params.items()]
         )

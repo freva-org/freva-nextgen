@@ -1,8 +1,8 @@
 """Tests for the databrowser class."""
 
 from pathlib import Path
-import pytest
 
+import pytest
 from freva_databrowser import databrowser
 from freva_databrowser.logger import DatabrowserWarning
 
@@ -85,7 +85,7 @@ def test_bad_queries() -> None:
         databrowser.metadata_search(
             host="localhost:8080", foo="bar", fail_on_error=True
         )
-    db = databrowser(host="localhost:8080", foo="bar", flavour="foo")
+    db = databrowser(host="localhost:8080", foo="bar", flavour="foo")  # type: ignore
     with pytest.raises(ValueError):
         len(db)
 

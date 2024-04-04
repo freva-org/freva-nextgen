@@ -1,10 +1,10 @@
 """Tests for the commandline interface."""
 
 import json
-from pytest import LogCaptureFixture
-from typer.testing import CliRunner
 
 from freva_databrowser.databrowser_cli import app
+from pytest import LogCaptureFixture
+from typer.testing import CliRunner
 
 
 def test_search_files(cli_runner: CliRunner) -> None:

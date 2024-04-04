@@ -11,8 +11,8 @@ from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, cast
 
 import appdirs
 import requests
-from rich import print as pprint
 import tomli
+from rich import print as pprint
 
 from .logger import Logger
 

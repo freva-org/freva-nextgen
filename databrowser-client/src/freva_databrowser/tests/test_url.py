@@ -1,11 +1,10 @@
 """Test for the configuration utility."""
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
-import pytest
 import mock
-
+import pytest
 from freva_databrowser import databrowser
 
 

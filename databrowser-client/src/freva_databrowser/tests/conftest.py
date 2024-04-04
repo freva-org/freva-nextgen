@@ -5,11 +5,10 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Dict, Iterator
 
-import pytest
 import mock
-from typer.testing import CliRunner
-
+import pytest
 from freva_databrowser.utils import logger
+from typer.testing import CliRunner
 
 
 def _prep_env(**config: str) -> Dict[str, str]:
