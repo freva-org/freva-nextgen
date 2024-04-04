@@ -95,14 +95,20 @@ class Config:
         try:
             config = tomli.loads(path.read_text()).get("freva", {})
         except tomli.TOMLDecodeError as error:
-            raise ValueError(f"Could not parse config file content: {error}") from None
-        scheme, host = self._split_url(cast(str, config.get("databrowser_host", "")))
+            raise ValueError(
+                f"Could not parse config file content: {error}"
+            ) from None
+        scheme, host = self._split_url(
+            cast(str, config.get("databrowser_host", ""))
+        )
         host, _, port = host.partition(":")
         if port:
             host = f"{host}:{port}"
         return f"{scheme}://{host}"
 
-    def _read_config(self, path: Path, file_type: Literal["toml", "ini"]) -> str:
+    def _read_config(
+        self, path: Path, file_type: Literal["toml", "ini"]
+    ) -> str:
         """Read the configuration."""
         data_types = {"toml": self._read_toml, "ini": self._read_ini}
         try:
@@ -116,7 +122,9 @@ class Config:
         try:
             res = requests.get(f"{self.databrowser_url}/overview", timeout=3)
         except requests.exceptions.ConnectionError:
-            raise ValueError(f"Could not connect to {self.databrowser_url}") from None
+            raise ValueError(
+                f"Could not connect to {self.databrowser_url}"
+            ) from None
         return cast(Dict[str, Any], res.json())
 
     def _get_databrowser_host_from_config(self) -> str:
@@ -131,7 +139,9 @@ class Config:
             Path(appdirs.user_config_dir("freva")) / "freva.toml": "toml",
             Path(self.get_dirs(user=True)) / "freva.toml": "toml",
             freva_config: "toml",
-            Path(os.environ.get("EVALUATION_SYSTEM_CONFIG_FILE") or eval_conf): "ini",
+            Path(
+                os.environ.get("EVALUATION_SYSTEM_CONFIG_FILE") or eval_conf
+            ): "ini",
         }
         for config_path, config_type in paths.items():
             if config_path.is_file():
@@ -158,13 +168,17 @@ class Config:
     @property
     def search_url(self) -> str:
         """Define the data search endpoint."""
-        return f"{self.databrowser_url}/data_search/" f"{self.flavour}/{self.uniq_key}"
+        return (
+            f"{self.databrowser_url}/data_search/"
+            f"{self.flavour}/{self.uniq_key}"
+        )
 
     @property
     def metadata_url(self) -> str:
         """Define the endpoint for the metadata search."""
         return (
-            f"{self.databrowser_url}/metadata_search/" f"{self.flavour}/{self.uniq_key}"
+            f"{self.databrowser_url}/metadata_search/"
+            f"{self.flavour}/{self.uniq_key}"
         )
 
     @staticmethod

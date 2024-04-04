@@ -14,7 +14,7 @@ from typing import (
 
 import requests
 
-from .utils import Config, exception_handler, logger
+from .utils import Config, logger
 
 __version__ = "2404.0.0"
 
@@ -64,14 +64,11 @@ class databrowser:
         be established.
     """
 
-    @exception_handler
     def __init__(
         self,
         *,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems"
-        ] = "freva",
+        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -88,7 +85,6 @@ class databrowser:
             self._params["time"] = time
             self._params["time_select"] = time_select
 
-    @exception_handler
     def __iter__(self) -> Iterator[str]:
         result = self._get(self.cfg.search_url)
         if result is not None:
@@ -120,9 +116,7 @@ class databrowser:
 
         # Create a table-like structure for available flavors and search facets
         style = 'style="text-align: left"'
-        facet_heading = (
-            f"Available search facets for <em>{self._flavour}</em> flavour"
-        )
+        facet_heading = f"Available search facets for <em>{self._flavour}</em> flavour"
         html_repr = (
             "<table>"
             f"<tr><th colspan='2' {style}>{self.__class__.__name__}"
@@ -139,7 +133,6 @@ class databrowser:
 
         return html_repr
 
-    @exception_handler
     def __len__(self) -> int:
         """Query the total number of found objects.
 
@@ -161,9 +154,7 @@ class databrowser:
     def count_values(
         cls,
         *facets: str,
-        flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems"
-        ] = "freva",
+        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -242,26 +233,21 @@ class databrowser:
         result = this._facet_search(*facets, extendet_search=extendet_search)
         counts = {}
         for facet, value_counts in result.items():
-            counts[facet] = dict(
-                zip(value_counts[::2], map(int, value_counts[1::2]))
-            )
+            counts[facet] = dict(zip(value_counts[::2], map(int, value_counts[1::2])))
         return counts
 
     @cached_property
     def metadata(self) -> Dict[str, List[str]]:
         """Get the metadata (facets) for the current databrowser query."""
         return {
-            k: v[::2]
-            for (k, v) in self._facet_search(extendet_search=True).items()
+            k: v[::2] for (k, v) in self._facet_search(extendet_search=True).items()
         }
 
     @classmethod
     def metadata_search(
         cls,
         *facets: str,
-        flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems"
-        ] = "freva",
+        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -367,7 +353,6 @@ class databrowser:
         """Get the url of the databrowser API."""
         return self.cfg.databrowser_url
 
-    @exception_handler
     def _facet_search(
         self,
         *facets: str,
@@ -384,7 +369,6 @@ class databrowser:
             contraints = contraints or data["primary_facets"]
         return {f: v for f, v in data["facets"].items() if f in contraints}
 
-    @exception_handler
     def _get(self, url: str) -> Optional[requests.models.Response]:
         """Apply the get method to the databrowser."""
         logger.debug("Searching %s with parameters: %s", url, self._params)

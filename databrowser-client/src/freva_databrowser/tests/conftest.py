@@ -25,7 +25,7 @@ def _prep_env(**config: str) -> Dict[str, str]:
 @pytest.fixture(scope="function")
 def cli_runner() -> Iterator[CliRunner]:
     """Set up a cli mock app."""
-    yield CliRunner()
+    yield CliRunner(mix_stderr=False)
     logger.reset_cli()
 
 

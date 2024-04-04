@@ -68,3 +68,18 @@ def test_count_values(cli_runner: CliRunner) -> None:
     )
     assert res.exit_code == 0
     assert isinstance(json.loads(res.stdout), dict)
+
+
+def test_failed_command(cli_runner: CliRunner) -> None:
+    for cmd in ("count", "data-search", "metadata-search"):
+        res = cli_runner.invoke(
+            app, [cmd, "--host", "localhost:8080", "foo=b"]
+        )
+        assert res.exit_code == 0
+        assert "warning" in res.stderr.lower()
+        res = cli_runner.invoke(
+            app, [cmd, "--host", "localhost:8080", "-f", "foo"]
+        )
+        assert res.exit_code != 0
+        res = cli_runner.invoke(app, [cmd, "--host", "foo"])
+        assert res.exit_code != 0
