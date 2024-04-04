@@ -7,7 +7,6 @@ import sysconfig
 from configparser import ConfigParser, ExtendedInterpolation
 from functools import cached_property, wraps
 from pathlib import Path
-from urllib.parse import urlparse
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, cast
 
 import appdirs
@@ -37,7 +36,7 @@ def parse_cli_args(cli_args: List[str]) -> Dict[str, List[str]]:
 
 
 def exception_handler(func: Callable[..., Any]) -> Callable[..., Any]:
-    """Wrap an exception handler around a function."""
+    """Wrap an exception handler around the cli functions."""
 
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -45,15 +44,11 @@ def exception_handler(func: Callable[..., Any]) -> Callable[..., Any]:
         try:
             return func(*args, **kwargs)
         except KeyboardInterrupt:
-            pprint("[red][b]User interrupt: Exit[/red][/b]")
-            if logger.is_cli is True:
-                raise SystemExit(150) from None
+            pprint("[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr)
+            raise SystemExit(150) from None
         except BaseException as error:
-            if logger.is_cli is True:
-                logger.error(error)
-                raise SystemExit(1) from None
-            raise error from None
-        return None
+            logger.error(error)
+            raise SystemExit(1) from None
 
     return wrapper
 

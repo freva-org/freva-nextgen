@@ -15,7 +15,7 @@ def test_search_files() -> None:
     db = databrowser(host="localhost:8080", foo="bar", fail_on_error=True)
     with pytest.raises(ValueError):
         len(db)
-    db = databrowser(host="localhost:8080", foo="bar")
+    db = databrowser(host="localhost:8080", foo="bar", time="2000 to 2050")
     assert len(db) == 0
     db = databrowser(host="localhost:8080", model="bar")
     assert len(db) == len(list(db)) == 0

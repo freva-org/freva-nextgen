@@ -21,7 +21,9 @@ requires-python = ">=3.8"
 dependencies = [
 "appdirs",
 "requests",
+"rich",
 "tomli",
+"typer",
 ]
 [project.scripts]
 freva-databrowser = "freva_databrowser:databrowser_cli.app"
@@ -32,7 +34,6 @@ Source = "https://github.com/FREVA-CLINT/databrowserAPI/"
 
 [project.optional-dependencies]
 dev = [ "tox", "flit"]
-cli = ["rich", "shellingham", "typer"]
 
 [tool.flit.sdist]
 include = ["assets/*"]

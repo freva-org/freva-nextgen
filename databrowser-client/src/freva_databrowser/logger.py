@@ -50,8 +50,6 @@ class Logger(logging.Logger):
     def setLevel(self, level: Union[int, str]) -> None:
         super().setLevel(level)
         logger_stream_handle.setLevel(level)
-        for handler in self.handlers:
-            handler.setLevel(level)
 
     def set_level(self, level: Union[str, int]) -> None:
         """Set the log level of the logger."""

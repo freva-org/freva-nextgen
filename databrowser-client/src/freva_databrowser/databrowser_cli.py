@@ -8,14 +8,7 @@ from enum import Enum
 from typing import Annotated, List, Literal, Optional, cast
 
 from rich import print as pprint
-
-try:
-    import typer
-except ImportError:
-    raise SystemExit(
-        "To use the command line interface, install the package"
-        " via `pip install freva-databrowser[cli]`"
-    ) from None
+import typer
 
 from freva_databrowser import __version__
 from freva_databrowser.query import databrowser
@@ -27,10 +20,11 @@ from freva_databrowser.utils import (
 )
 
 
-def version_callback() -> None:
+def version_callback(version: bool) -> None:
     """Print the version and exit."""
-    pprint(f"{APP_NAME}: {__version__}")
-    raise SystemExit()
+    if version:
+        pprint(f"{APP_NAME}: {__version__}")
+        raise typer.Exit()
 
 
 app = typer.Typer(
@@ -152,6 +146,7 @@ def metadata_search(
         "-V",
         "--version",
         help="Show verion an exit",
+        callback=version_callback,
     ),
 ) -> None:
     """Search metadata (facets) based on the specified Data Reference Syntax
@@ -162,8 +157,6 @@ def metadata_search(
     available facets and their corresponding counts based on the provided
     search criteria.
     """
-    if version:
-        version_callback()
     logger.set_verbosity(verbose)
     logger.debug("Search the databrowser")
     result = databrowser.metadata_search(
@@ -261,6 +254,7 @@ def data_search(
         "-V",
         "--version",
         help="Show verion an exit",
+        callback=version_callback,
     ),
 ) -> None:
     """Search for climate datasets based on the specified Data Reference Syntax
@@ -269,8 +263,6 @@ def data_search(
     and efficient way to query datasets matching specific search criteria and
     retrieve a list of data files or locations that meet the query parameters.
     """
-    if version:
-        version_callback()
     logger.set_verbosity(verbose)
     logger.debug("Search the databrowser")
     result = databrowser(
@@ -370,6 +362,7 @@ def count_values(
         "-V",
         "--version",
         help="Show verion an exit",
+        callback=version_callback,
     ),
 ) -> None:
     """Search metadata (facets) based on the specified Data Reference Syntax
@@ -380,8 +373,6 @@ def count_values(
     available facets and their corresponding counts based on the provided
     search criteria.
     """
-    if version:
-        version_callback()
     logger.set_verbosity(verbose)
     logger.debug("Search the databrowser")
     if facets:

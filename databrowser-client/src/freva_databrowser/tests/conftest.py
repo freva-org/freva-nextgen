@@ -37,7 +37,7 @@ def valid_freva_config() -> Iterator[Path]:
             freva_config = Path(temp_dir) / "share" / "freva" / "freva.toml"
             freva_config.parent.mkdir(exist_ok=True, parents=True)
             freva_config.write_text(
-                "[freva]\ndatabrowser_host = 'https://www.freva.com/api'"
+                "[freva]\ndatabrowser_host = 'https://www.freva.com:80/api'"
             )
             yield Path(temp_dir)
 

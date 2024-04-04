@@ -1,6 +1,7 @@
 """Query climate data sets by using-key value pair search queries."""
 
 from functools import cached_property
+import sys
 from typing import (
     cast,
     Dict,
@@ -8,11 +9,11 @@ from typing import (
     Literal,
     Iterator,
     Optional,
-    Tuple,
     Union,
 )
 
 import requests
+from rich import print as pprint
 
 from .utils import Config, logger
 
@@ -68,7 +69,9 @@ class databrowser:
         self,
         *,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
+        flavour: Literal[
+            "freva", "cmip6", "cmip5", "cordex", "nextgems"
+        ] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -88,8 +91,13 @@ class databrowser:
     def __iter__(self) -> Iterator[str]:
         result = self._get(self.cfg.search_url)
         if result is not None:
-            for res in result.iter_lines():
-                yield res.decode("utf-8")
+            try:
+                for res in result.iter_lines():
+                    yield res.decode("utf-8")
+            except KeyboardInterrupt:
+                pprint(
+                    "[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr
+                )
 
     def __repr__(self) -> str:
         params = ", ".join(
@@ -116,7 +124,9 @@ class databrowser:
 
         # Create a table-like structure for available flavors and search facets
         style = 'style="text-align: left"'
-        facet_heading = f"Available search facets for <em>{self._flavour}</em> flavour"
+        facet_heading = (
+            f"Available search facets for <em>{self._flavour}</em> flavour"
+        )
         html_repr = (
             "<table>"
             f"<tr><th colspan='2' {style}>{self.__class__.__name__}"
@@ -154,7 +164,9 @@ class databrowser:
     def count_values(
         cls,
         *facets: str,
-        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
+        flavour: Literal[
+            "freva", "cmip6", "cmip5", "cordex", "nextgems"
+        ] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -233,21 +245,26 @@ class databrowser:
         result = this._facet_search(*facets, extendet_search=extendet_search)
         counts = {}
         for facet, value_counts in result.items():
-            counts[facet] = dict(zip(value_counts[::2], map(int, value_counts[1::2])))
+            counts[facet] = dict(
+                zip(value_counts[::2], map(int, value_counts[1::2]))
+            )
         return counts
 
     @cached_property
     def metadata(self) -> Dict[str, List[str]]:
         """Get the metadata (facets) for the current databrowser query."""
         return {
-            k: v[::2] for (k, v) in self._facet_search(extendet_search=True).items()
+            k: v[::2]
+            for (k, v) in self._facet_search(extendet_search=True).items()
         }
 
     @classmethod
     def metadata_search(
         cls,
         *facets: str,
-        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
+        flavour: Literal[
+            "freva", "cmip6", "cmip5", "cordex", "nextgems"
+        ] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -376,6 +393,8 @@ class databrowser:
             res = requests.get(url, params=self._params, timeout=2)
             res.raise_for_status()
             return res
+        except KeyboardInterrupt:
+            pprint("[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr)
         except (
             requests.exceptions.ConnectionError,
             requests.exceptions.HTTPError,
