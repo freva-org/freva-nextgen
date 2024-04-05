@@ -17,25 +17,29 @@ __all__ = ["databrowser"]
 class databrowser:
     """Find data in the system.
 
-    You can either search for files or data facets (variable, model, ...)
-    that are available. The query is of the form key=value. <value> might
-    use *, ? as wildcards or any regular expression.
+    You can either search for files or uri's. Uri's give you an information
+    on the storage system where the files or objects you are looking for are
+    located. The query is of the form `key=value`. For `value` you might
+    use *, ? Wild cards or any regular expression.
 
     Parameters
     ----------
-    **search_keys: Union[str, Path, list[str]]
-        The facets to be applied in the data search. If not given
+    **search_keys: str
+        The search constraints applied in the data search. If not given
         the whole dataset will be queried.
     flavour: str, default: freva
         The Data Reference Syntax (DRS) standard specifying the type of climate
-        datasets to query.
-    time: str
-        Special search facet to refine/subset search results by time.
+        datasets to query. You can get an overview by using the
+        :py:meth:databrowser.overview class method to retrieve information
+        on the available search flavours and their different search keys.
+    time: str, default: ""
+        Special search key to refine/subset search results by time.
         This can be a string representation of a time range or a single
-        time step. The time steps have to follow ISO-8601. Valid strings are
-        ``%Y-%m-%dT%H:%M`` to ``%Y-%m-%dT%H:%M`` for time ranges and
-        ``%Y-%m-%dT%H:%M``. **Note**: You don't have to give the full string
-        format to subset time steps ``%Y``, ``%Y-%m`` etc are also valid.
+        timestamp. The timestamps has to follow ISO-8601. Valid strings are
+        ``%Y-%m-%dT%H:%M to %Y-%m-%dT%H:%M`` for time ranges or
+        ``%Y-%m-%dT%H:%M`` for single time stamps.
+        **Note**: You don't have to give the full string format to subset
+        time steps: `%Y`, `%Y-%m` etc are also valid.
     time_select: str, default: flexible
         Operator that specifies how the time period is selected. Choose from
         flexible (default), strict or file. ``strict`` returns only those files
@@ -48,13 +52,58 @@ class databrowser:
     uniq_key: str, default: file
         Chose if the solr search query should return paths to files or
         uris, uris will have the file path along with protocol of the storage
-        system. Uris can be useful if the the search query result should be
+        system. Uris can be useful if the search query result should be
         used libraries like fsspec.
+    host: str, default: None
+        Override the host name of the databrowser server. This is usually the
+        url where the freva web site can be found. Such as www.freva.dkrz.de.
+        By default no host name is given and the host name will be taken from
+        the freva config file.
     multiversion: bool, default: False
         Select all versions and not just the latest version (default).
     fail_on_error: bool, default: False
         Make the call fail if the connection to the databrowser could not
         be established.
+
+
+    Attributes
+    ----------
+
+    url: str
+        the url of the currently selected databrowser api server
+    metadata: dict[str, str]
+        The available search keys, or metadata, found for the applied search
+        constraints. This can be useful for reverse searches.
+
+
+    Example
+    -------
+    Search for the cmorph datasets. Suppose we know that the experiment name
+    of this dataset is cmorph therefore we can create in instance of the
+    databrowser class using the ``experiment`` search constraint.
+
+    .. execute_code::
+
+        from freva_databrowser import databrowser
+        db = databrowser(experiment="cmorph", uniq_key="uri")
+        # Check how many files were found
+        print(len(db))
+        # Get all the search keys associated with this search
+        print(db.metadata)
+        # Iterate over all files
+        for file in db:
+            pass
+        all_files = sorted(db)
+        print(all_files[0])
+
+    You can also set a different flavour, for example according to cmip6
+    standard:
+
+    .. execute_code::
+
+        from freva_databrowser import databrowser
+        db = databrowser(experiment_id="cmorph")
+        print(db.metadata)
     """
 
     def __init__(
@@ -72,8 +121,8 @@ class databrowser:
         **search_keys: Union[str, List[str]],
     ) -> None:
 
-        self.fail_on_error = fail_on_error
-        self.cfg = Config(host, uniq_key=uniq_key, flavour=flavour)
+        self._fail_on_error = fail_on_error
+        self._cfg = Config(host, uniq_key=uniq_key, flavour=flavour)
         self._flavour = flavour
         self._params = {**{"multi-version": multiversion}, **search_keys}
         if time:
@@ -81,7 +130,7 @@ class databrowser:
             self._params["time_select"] = time_select
 
     def __iter__(self) -> Iterator[str]:
-        result = self._get(self.cfg.search_url)
+        result = self._get(self._cfg.search_url)
         if result is not None:
             try:
                 for res in result.iter_lines():
@@ -97,7 +146,7 @@ class databrowser:
         )
         return (
             f"{self.__class__.__name__}(flavour={self._flavour}, "
-            f"host={self.cfg.databrowser_url}, {params})"
+            f"host={self.url}, {params})"
         )
 
     def _repr_html_(self) -> str:
@@ -108,10 +157,10 @@ class databrowser:
         found_objects_count = len(self)
 
         available_flavours = ", ".join(
-            flavour for flavour in self.cfg.overview["flavours"]
+            flavour for flavour in self._cfg.overview["flavours"]
         )
         available_search_facets = ", ".join(
-            facet for facet in self.cfg.overview["attributes"][self._flavour]
+            facet for facet in self._cfg.overview["attributes"][self._flavour]
         )
 
         # Create a table-like structure for available flavors and search facets
@@ -122,7 +171,7 @@ class databrowser:
         html_repr = (
             "<table>"
             f"<tr><th colspan='2' {style}>{self.__class__.__name__}"
-            f"(flavour={self._flavour}, host={self.cfg.databrowser_url}, "
+            f"(flavour={self._flavour}, host={self.url}, "
             f"{params})</th></tr>"
             f"<tr><td><b># objects</b></td><td {style}>{found_objects_count}"
             "</td></tr>"
@@ -147,7 +196,7 @@ class databrowser:
 
 
         """
-        result = self._get(self.cfg.metadata_url)
+        result = self._get(self._cfg.metadata_url)
         if result:
             return cast(int, result.json().get("total_count", 0))
         return 0
@@ -181,7 +230,7 @@ class databrowser:
         time: str, default: ""
             Special search facet to refine/subset search results by time.
             This can be a string representation of a time range or a single
-            time step. The time steps have to follow ISO-8601. Valid strings are
+            timestamp. The timestamp has to follow ISO-8601. Valid strings are
             ``%Y-%m-%dT%H:%M`` to ``%Y-%m-%dT%H:%M`` for time ranges and
             ``%Y-%m-%dT%H:%M``. **Note**: You don't have to give the full string
             format to subset time steps ``%Y``, ``%Y-%m`` etc are also valid.
@@ -196,6 +245,11 @@ class databrowser:
             period is contained within *one single* file.
         extendet_search: bool, default: False
             Retrieve information on additional search keys.
+        host: str, default: None
+            Override the host name of the databrowser server. This is usually
+            the url where the freva web site can be found. Such as
+            www.freva.dkrz.de. By default no host name is given and the host
+            name will be taken from the freva config file.
         multiversion: bool, default: False
             Select all versions and not just the latest version (default).
         fail_on_error: bool, default: False
@@ -206,13 +260,13 @@ class databrowser:
 
         Returns
         -------
-        int, dict[str, int]:
-            Number of found objects, if the *facet* key is/are given then the
-            a dictionary with the number of objects for each search facet/key
+        dict[str, int]:
+            Dictionary with the number of objects for each search facet/key
             is given.
 
         Example
         -------
+
         .. execute_code::
 
             from freva_databrowser import databrowser
@@ -244,7 +298,26 @@ class databrowser:
 
     @cached_property
     def metadata(self) -> Dict[str, List[str]]:
-        """Get the metadata (facets) for the current databrowser query."""
+        """Get the metadata (facets) for the current databrowser query.
+
+        You can retrieve all information that is associated with your current
+        databrowser search. This can be useful for reverse searches for example
+        for retrieving metadata of object sotres or file/directory names.
+
+        Example
+        -------
+
+        Reverse search: retrieving meta data from a known file
+
+        .. execute_code::
+
+            import os
+            from freva_databrowser import databrowser
+            db = databrowser(uri="slk://arch/*/CPC/*")
+            print(db.metadata)
+
+
+        """
         return {
             k: v[::2]
             for (k, v) in self._facet_search(extendet_search=True).items()
@@ -278,10 +351,10 @@ class databrowser:
         flavour: str, default: freva
             The Data Reference Syntax (DRS) standard specifying the type of climate
             datasets to query.
-        time: str
+        time: str, defautl: ""
             Special search facet to refine/subset search results by time.
             This can be a string representation of a time range or a single
-            time step. The time steps have to follow ISO-8601. Valid strings are
+            timestamp. The timestamp has to follow ISO-8601. Valid strings are
             ``%Y-%m-%dT%H:%M`` to ``%Y-%m-%dT%H:%M`` for time ranges and
             ``%Y-%m-%dT%H:%M``. **Note**: You don't have to give the full string
             format to subset time steps ``%Y``, ``%Y-%m`` etc are also valid.
@@ -298,6 +371,11 @@ class databrowser:
             Retrieve information on additional search keys.
         multiversion: bool, default: False
             Select all versions and not just the latest version (default).
+        host: str, default: None
+            Override the host name of the databrowser server. This is usually
+            the url where the freva web site can be found. Such as
+            www.freva.dkrz.de. By default no host name is given and the host
+            name will be taken from the freva config file.
         fail_on_error: bool, default: False
             Make the call fail if the connection to the databrowser could not
         **search_keys: str, list[str]
@@ -315,28 +393,27 @@ class databrowser:
 
         .. execute_code::
 
-            import freva
-            all_facets = freva.facet_search(project='obs*')
+            from freva_databrowser import databrowser
+            all_facets = databrower.metadata_search(project='obs*')
             print(all_facets)
-            spec_facets = freva.facet_search(project='obs*',
-                                             facet=["time_frequency", "variable"])
+            spec_facets = freva.metadata_search("obs*")
             print(spec_facets)
 
         Get all models that have a given time step:
 
         .. execute_code::
 
-            import freva
-            model = list(freva.facet_search(project="obs*", time="2016-09-02T22:10"))
+            from freva_databrowser import databrowser
+            model = list(databrowser.metadata_search(project="obs*", time="2016-09-02T22:10"))
             print(model)
 
         Reverse search: retrieving meta data from a known file
 
         .. execute_code::
 
-            import os, freva
-            file = "myfile.nc"
-            res = freva.facet_search(file=str(os.path.abspath(file)))
+            import os
+            from freva_databrowser import databrowser
+            res = databrowser.meta_search(file="/arch/*CPC/*")
             print(res)
 
         """
@@ -360,14 +437,14 @@ class databrowser:
     @property
     def url(self) -> str:
         """Get the url of the databrowser API."""
-        return self.cfg.databrowser_url
+        return self._cfg.databrowser_url
 
     def _facet_search(
         self,
         *facets: str,
         extendet_search: bool = False,
     ) -> Dict[str, List[str]]:
-        result = self._get(self.cfg.metadata_url)
+        result = self._get(self._cfg.metadata_url)
         if result is None:
             return {}
         data = result.json()
@@ -382,7 +459,7 @@ class databrowser:
         """Apply the get method to the databrowser."""
         logger.debug("Searching %s with parameters: %s", url, self._params)
         try:
-            res = requests.get(url, params=self._params, timeout=2)
+            res = requests.get(url, params=self._params, timeout=30)
             res.raise_for_status()
             return res
         except KeyboardInterrupt:
@@ -392,7 +469,7 @@ class databrowser:
             requests.exceptions.HTTPError,
         ) as error:
             msg = f"Search request failed with {error}"
-            if self.fail_on_error:
+            if self._fail_on_error:
                 raise ValueError(msg) from None
             logger.warning(msg)
         return None
