@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from functools import cached_property, wraps
 from json import JSONEncoder
+import os
 from typing import (
     Any,
     AsyncIterator,
@@ -367,6 +368,25 @@ class SolrSearch:
     batch_size: int = 150
     """Maximum solr batch query size for one single query result."""
 
+    escape_chars: Tuple[str, ...] = (
+        "+",
+        "-",
+        "&&",
+        "||",
+        "!",
+        "(",
+        ")",
+        "{",
+        "}",
+        "[",
+        "]",
+        "^",
+        "~",
+        ":",
+        "/",
+    )
+    """Lucene (solr) special characters that need escaping."""
+
     def __init__(
         self,
         config: ServerConfig,
@@ -456,8 +476,9 @@ class SolrSearch:
         """
         translator = Translator(flavour, translate)
         for key in query:
-            if key not in translator.valid_facets and key not in (
-                "time_select",
+            if (
+                key not in translator.valid_facets
+                and key not in ("time_select",) + cls.uniq_keys
             ):
                 raise HTTPException(
                     status_code=422, detail="Could not validate input."
@@ -753,7 +774,12 @@ class SolrSearch:
         url = f"{self._config.get_core_url(core)}/select/"
         query = []
         for key, value in self.facets.items():
-            search_value = " OR ".join(map(str.lower, value))
+            if key in self.uniq_keys:
+                search_value = " OR ".join(map(str, value))
+            else:
+                search_value = " OR ".join(map(str.lower, value))
+            for char in self.escape_chars:
+                search_value = search_value.replace(char, "\\" + char)
             query.append(f"{key.lower()}:({search_value})")
         return url, {
             "fq": self.time + ["", " AND ".join(query) or "*:*"],

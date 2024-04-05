@@ -30,7 +30,9 @@ def test_databrowser(client: TestClient) -> None:
     )
     assert len(res1.text.split()) == 0
     assert res2.text == res3.text
-    res4 = client.get("/api/databrowser/data_search/cmip6/uri", params={"foo": "bar"})
+    res4 = client.get(
+        "/api/databrowser/data_search/cmip6/uri", params={"foo": "bar"}
+    )
     assert res4.status_code == 422
     res5 = client.get(
         "/api/databrowser/data_search/cmip6/uri",
@@ -52,6 +54,24 @@ def test_no_solr(client_no_solr: TestClient) -> None:
     assert res.status_code == 503
 
 
+def test_file_select(client: TestClient) -> None:
+    """Test what happens if we search for files/uris."""
+    res = client.get(
+        "/api/databrowser/data_search/cmip6/file",
+        params={"file": "/arch/bb1203/*/CPC/*"},
+    )
+    assert res.status_code == 200
+    assert len(res.text.split()) > 0
+    res = client.get(
+        "/api/databrowser/metadata_search/cmip6/file",
+        params={"uri": "slk:///arch/bb1203/*/CPC/*"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert len(data) > 0
+    assert "cmorph" in data["facets"]["experiment_id"]
+
+
 def test_time_selection(client: TestClient) -> None:
     """Test the time select functionality of the API."""
     res1 = client.get(
@@ -64,7 +84,9 @@ def test_time_selection(client: TestClient) -> None:
         params={"time": "1898 to 1901", "time_select": "foo"},
     )
     assert res2.status_code == 500
-    res3 = client.get("/api/databrowser/data_search/freva/file", params={"time": "fx"})
+    res3 = client.get(
+        "/api/databrowser/data_search/freva/file", params={"time": "fx"}
+    )
     assert res3.status_code == 500
 
 
@@ -226,7 +248,9 @@ def test_no_mongo_parameter_insert(client_no_mongo: TestClient) -> None:
     assert res1 == 200
 
 
-def tests_mongo_parameter_insert(client: TestClient, cfg: ServerConfig) -> None:
+def tests_mongo_parameter_insert(
+    client: TestClient, cfg: ServerConfig
+) -> None:
     """Test the successfull insertion of the search stats."""
     res1 = client.get(
         "api/databrowser/data_search/cordex/uri",
@@ -243,4 +267,7 @@ def tests_mongo_parameter_insert(client: TestClient, cfg: ServerConfig) -> None:
     assert isinstance(stats[0]["query"], dict)
     assert isinstance(stats[0]["metadata"], dict)
     # The search keys should have been converted to strings.
-    assert len([k for k in stats[0]["query"].values() if not isinstance(k, str)]) == 0
+    assert (
+        len([k for k in stats[0]["query"].values() if not isinstance(k, str)])
+        == 0
+    )
