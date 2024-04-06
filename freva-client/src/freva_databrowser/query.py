@@ -88,7 +88,7 @@ class databrowser:
 
     .. execute_code::
 
-        from freva_databrowser import databrowser
+        from freva_client import databrowser
         db = databrowser(experiment="cmorph", uniq_key="uri")
         print(db)
 
@@ -97,7 +97,7 @@ class databrowser:
 
     .. execute_code::
 
-        from freva_databrowser import databrowser
+        from freva_client import databrowser
         db = databrowser(experiment="cmorph", uniq_key="uri")
         print(len(db))
         # Get all the search keys associated with this search
@@ -106,7 +106,7 @@ class databrowser:
 
     .. execute_code::
 
-        from freva_databrowser import databrowser
+        from freva_client import databrowser
         db = databrowser(experiment="cmorph", uniq_key="uri")
         print(db.metadata)
 
@@ -114,7 +114,7 @@ class databrowser:
 
     .. execute_code::
 
-        from freva_databrowser import databrowser
+        from freva_client import databrowser
         db = databrowser(experiment="cmorph", uniq_key="uri")
         for file in db:
             pass
@@ -127,7 +127,7 @@ class databrowser:
 
     .. execute_code::
 
-        from freva_databrowser import databrowser
+        from freva_client import databrowser
         db = databrowser(flavour="cmip6", experiment_id="cmorph")
         print(db.metadata)
     """
@@ -136,9 +136,7 @@ class databrowser:
         self,
         *,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems"
-        ] = "freva",
+        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -162,9 +160,7 @@ class databrowser:
                 for res in result.iter_lines():
                     yield res.decode("utf-8")
             except KeyboardInterrupt:
-                pprint(
-                    "[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr
-                )
+                pprint("[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr)
 
     def __repr__(self) -> str:
         params = ", ".join(
@@ -191,9 +187,7 @@ class databrowser:
 
         # Create a table-like structure for available flavors and search facets
         style = 'style="text-align: left"'
-        facet_heading = (
-            f"Available search facets for <em>{self._flavour}</em> flavour"
-        )
+        facet_heading = f"Available search facets for <em>{self._flavour}</em> flavour"
         html_repr = (
             "<table>"
             f"<tr><th colspan='2' {style}>{self.__class__.__name__}"
@@ -217,7 +211,7 @@ class databrowser:
         ~~~~~~~
         .. execute_code::
 
-            from freva_databrowser import databrowser
+            from freva_client import databrowser
             print(len(databrowser(experiment="cmorph")))
 
 
@@ -231,9 +225,7 @@ class databrowser:
     def count_values(
         cls,
         *facets: str,
-        flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems"
-        ] = "freva",
+        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -295,12 +287,12 @@ class databrowser:
 
         .. execute_code::
 
-            from freva_databrowser import databrowser
+            from freva_client import databrowser
             print(databrowser.count_values(experiment="cmorph"))
 
         .. execute_code::
 
-            from freva_databrowser import databrowser
+            from freva_client import databrowser
             print(databrowser.count_values("model"))
 
         """
@@ -317,9 +309,7 @@ class databrowser:
         result = this._facet_search(*facets, extendet_search=extendet_search)
         counts = {}
         for facet, value_counts in result.items():
-            counts[facet] = dict(
-                zip(value_counts[::2], map(int, value_counts[1::2]))
-            )
+            counts[facet] = dict(zip(value_counts[::2], map(int, value_counts[1::2])))
         return counts
 
     @cached_property
@@ -337,24 +327,21 @@ class databrowser:
 
         .. execute_code::
 
-            from freva_databrowser import databrowser
+            from freva_client import databrowser
             db = databrowser(uri="slk:///arch/*/CPC/*")
             print(db.metadata)
 
 
         """
         return {
-            k: v[::2]
-            for (k, v) in self._facet_search(extendet_search=True).items()
+            k: v[::2] for (k, v) in self._facet_search(extendet_search=True).items()
         }
 
     @classmethod
     def metadata_search(
         cls,
         *facets: str,
-        flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems"
-        ] = "freva",
+        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -419,7 +406,7 @@ class databrowser:
 
         .. execute_code::
 
-            from freva_databrowser import databrowser
+            from freva_client import databrowser
             all_facets = databrowser.metadata_search(project='obs*')
             print(all_facets)
 
@@ -427,7 +414,7 @@ class databrowser:
 
         .. execute_code::
 
-            from freva_databrowser import databrowser
+            from freva_client import databrowser
             spec_facets = databrowser.metadata_search("obs*")
             print(spec_facets)
 
@@ -435,7 +422,7 @@ class databrowser:
 
         .. execute_code::
 
-            from freva_databrowser import databrowser
+            from freva_client import databrowser
             model = databrowser.metadata_search(
                 project="obs*",
                 time="2016-09-02T22:10"
@@ -446,7 +433,7 @@ class databrowser:
 
         .. execute_code::
 
-            from freva_databrowser import databrowser
+            from freva_client import databrowser
             res = databrowser.metadata_search(file="/arch/*CPC/*")
             print(res)
 

@@ -1,8 +1,8 @@
 [build-system]
-requires = ["flit_core >=3.2"]
+requires = ["flit_core >=3.2", "appdirs"]
 build-backend = "flit_core.buildapi"
 [project]
-name = "freva-databrowser"
+name = "freva-client"
 description = "Search for climate data based on key-value pairs"
 authors = [{name = "DKRZ, Clint", email = "freva@dkrz.de"}]
 readme = "README.md"
@@ -20,6 +20,7 @@ dynamic = ["version"]
 requires-python = ">=3.8"
 dependencies = [
 "appdirs",
+"pyyaml",
 "requests",
 "rich",
 "tomli",

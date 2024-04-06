@@ -70,6 +70,7 @@ commands = make -C docs clean
            make -C docs html
 [testenv:lint]
 deps = -e ./freva-rest
+       -e ./freva-client
        black
        isort
        flake8
