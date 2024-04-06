@@ -56,16 +56,20 @@ commands =
     pytest -vv --cov=freva-rest --cov=freva-client --cov-report=html:coverage_report --junitxml report.xml --cov-report xml .
     python3 -m coverage report --fail-under=98.5 --precision=2
 [testenv:docs]
-deps = ./freva-rest
+deps = -e ./freva-rest
+       -e ./freva-client
+       sphinx-execute-code-python3
        sphinx-code-tabs
        sphinx-copybutton
+       sphinx-sitemap
+       sphinx-togglebutton
        sphinxcontrib-httpdomain
        pydata-sphinx-theme
 allowlist_externals = make
 commands = make -C docs clean
            make -C docs html
 [testenv:lint]
-deps = ./freva-rest
+deps = -e ./freva-rest
        black
        isort
        flake8

@@ -3,6 +3,7 @@
 import sys
 from functools import cached_property
 from typing import Dict, Iterator, List, Literal, Optional, Union, cast
+import yaml
 
 import requests
 from rich import print as pprint
@@ -23,7 +24,8 @@ class databrowser:
     use *, ? Wild cards or any regular expression.
 
     Parameters
-    ----------
+    ~~~~~~~~~~
+
     **search_keys: str
         The search constraints applied in the data search. If not given
         the whole dataset will be queried.
@@ -67,7 +69,7 @@ class databrowser:
 
 
     Attributes
-    ----------
+    ~~~~~~~~~~
 
     url: str
         the url of the currently selected databrowser api server
@@ -77,24 +79,48 @@ class databrowser:
 
 
     Example
-    -------
+    ~~~~~~~
+
     Search for the cmorph datasets. Suppose we know that the experiment name
     of this dataset is cmorph therefore we can create in instance of the
     databrowser class using the ``experiment`` search constraint.
+    If you just 'print' the created object you will get a quick overview:
 
     .. execute_code::
 
         from freva_databrowser import databrowser
         db = databrowser(experiment="cmorph", uniq_key="uri")
-        # Check how many files were found
+        print(db)
+
+    After having created the search object you can aquire differnt kinds of
+    information like the number of found objects:
+
+    .. execute_code::
+
+        from freva_databrowser import databrowser
+        db = databrowser(experiment="cmorph", uniq_key="uri")
         print(len(db))
         # Get all the search keys associated with this search
+
+    Or you can retrieve the combined metadata of the search objects.
+
+    .. execute_code::
+
+        from freva_databrowser import databrowser
+        db = databrowser(experiment="cmorph", uniq_key="uri")
         print(db.metadata)
-        # Iterate over all files
+
+    Most importantly you can retrieve the locations of all encountered objects
+
+    .. execute_code::
+
+        from freva_databrowser import databrowser
+        db = databrowser(experiment="cmorph", uniq_key="uri")
         for file in db:
             pass
         all_files = sorted(db)
         print(all_files[0])
+
 
     You can also set a different flavour, for example according to cmip6
     standard:
@@ -102,7 +128,7 @@ class databrowser:
     .. execute_code::
 
         from freva_databrowser import databrowser
-        db = databrowser(experiment_id="cmorph")
+        db = databrowser(flavour="cmip6", experiment_id="cmorph")
         print(db.metadata)
     """
 
@@ -188,7 +214,7 @@ class databrowser:
         """Query the total number of found objects.
 
         Example
-        -------
+        ~~~~~~~
         .. execute_code::
 
             from freva_databrowser import databrowser
@@ -219,7 +245,7 @@ class databrowser:
         """Count the number of objects in the databrowser.
 
         Parameters
-        ----------
+        ~~~~~~~~~~
         *facets: str
             Count these these facets (attributes & values) instead of the number
             of total files. If None (default), the number of total files will
@@ -259,13 +285,13 @@ class databrowser:
             the whole dataset will be queried.
 
         Returns
-        -------
+        ~~~~~~~
         dict[str, int]:
             Dictionary with the number of objects for each search facet/key
             is given.
 
         Example
-        -------
+        ~~~~~~~
 
         .. execute_code::
 
@@ -275,7 +301,7 @@ class databrowser:
         .. execute_code::
 
             from freva_databrowser import databrowser
-            print(freva.count_values("model"))
+            print(databrowser.count_values("model"))
 
         """
         this = cls(
@@ -305,15 +331,14 @@ class databrowser:
         for retrieving metadata of object sotres or file/directory names.
 
         Example
-        -------
+        ~~~~~~~
 
         Reverse search: retrieving meta data from a known file
 
         .. execute_code::
 
-            import os
             from freva_databrowser import databrowser
-            db = databrowser(uri="slk://arch/*/CPC/*")
+            db = databrowser(uri="slk:///arch/*/CPC/*")
             print(db.metadata)
 
 
@@ -344,7 +369,8 @@ class databrowser:
         like model, experiment etc.
 
         Parameters
-        ----------
+        ~~~~~~~~~~
+
         *facets: str,
             Get only information on these selected search keys (facets). By
             default information on all available facets is retrieved.
@@ -383,20 +409,26 @@ class databrowser:
             the whole dataset will be queried.
 
         Returns
-        -------
+        ~~~~~~~
         dict[str, list[str]]:
             Dictionary with a list search facet values for each search facet key
 
 
         Example
-        -------
+        ~~~~~~~
 
         .. execute_code::
 
             from freva_databrowser import databrowser
-            all_facets = databrower.metadata_search(project='obs*')
+            all_facets = databrowser.metadata_search(project='obs*')
             print(all_facets)
-            spec_facets = freva.metadata_search("obs*")
+
+        You can also search for all metadata matching a search string:
+
+        .. execute_code::
+
+            from freva_databrowser import databrowser
+            spec_facets = databrowser.metadata_search("obs*")
             print(spec_facets)
 
         Get all models that have a given time step:
@@ -404,16 +436,18 @@ class databrowser:
         .. execute_code::
 
             from freva_databrowser import databrowser
-            model = list(databrowser.metadata_search(project="obs*", time="2016-09-02T22:10"))
+            model = databrowser.metadata_search(
+                project="obs*",
+                time="2016-09-02T22:10"
+            )
             print(model)
 
         Reverse search: retrieving meta data from a known file
 
         .. execute_code::
 
-            import os
             from freva_databrowser import databrowser
-            res = databrowser.meta_search(file="/arch/*CPC/*")
+            res = databrowser.metadata_search(file="/arch/*CPC/*")
             print(res)
 
         """
@@ -433,6 +467,40 @@ class databrowser:
                 *facets, extendet_search=extendet_search
             ).items()
         }
+
+    @classmethod
+    def overview(cls, host: Optional[str] = None) -> str:
+        """Get an overview over the available search options.
+
+        If you don't know what search flavours or search keys you can use
+        for searching the data you can use this method to get an overview
+        over what is available.
+
+        Parameters
+        ~~~~~~~~~~
+
+        host: str, default None
+            Override the host name of the databrowser server. This is usually
+            the url where the freva web site can be found. Such as
+            www.freva.dkrz.de. By default no host name is given and the host
+            name will be taken from the freva config file.
+
+        Returns
+        ~~~~~~~
+        str: A string representation over what is available.
+
+        Example
+        ~~~~~~~
+
+        :: execute_code::
+
+            from freva_client import databrowser
+            print(databrowser.overview())
+        """
+        overview = Config(host).overview.copy()
+        overview["Available search flavours"] = overview.pop("flavours")
+        overview["Search attributes by flavour"] = overview.pop("attributes")
+        return yaml.safe_dump(overview)
 
     @property
     def url(self) -> str:

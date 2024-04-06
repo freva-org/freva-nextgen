@@ -1,5 +1,6 @@
 Databrowser python module
 -------------------------
+.. _databrowser:
 
 .. toctree::
    :maxdepth: 3
@@ -26,17 +27,6 @@ After successful installation you can import the `databrowser` class from the
 
     from freva_databrowser import databrowser
 
-
-to tell the library how to connect
-to the databrowser server that does the actual search magic. This connection
-is defined the `freva.toml` config file. This file follows
-`toml syntax <https://toml.io/en/>_`. You can either set the environment
-variable `FREVA_CONFIG` to the correct location of the `freva.toml` file
-or use your *user config directory* such as `~/.config/freva/freva.toml`.
-System wide configuration is also possible by the global data location of your
-current python environment. After installation the config file will be installed
-in `<ENV_PATH>/share/freva/freva.toml` where `<ENV_PATH>` is the path to your
-current python environment.
 
 Within the
 
@@ -65,8 +55,20 @@ You can the to following methods
 
 Below you can find a more detailed documentation.
 
-.. automodule:: freva_databroser
+.. automodule:: freva_databrowser
    :members: databrowser
-   :show-inheritance:
 
-.. _databrowser:
+Configuration
+=============
+You can either tell the library to connect to a specifc databrowser server,
+such as www.freva.dkrz.de or use a configuration file to permanently store
+the location of this server. This configuration
+is defined the ``freva.toml`` config file. This file follows
+`toml syntax <https://toml.io/en/>`_. You can either set the environment
+variable ``FREVA_CONFIG`` to the correct location of the ``freva.toml`` file
+or use your *user config directory* such as ``~/.config/freva/freva.toml``.
+System wide configuration is also possible by the global data location of your
+current python environment. After installation the config file will be installed
+in ``<ENV_PATH>/share/freva/freva.toml`` where ``<ENV_PATH>`` is the path to your
+current python environment. All you need to do is setting the ``databrowser_host``
+key in the ``[freva]`` section.

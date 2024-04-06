@@ -51,6 +51,7 @@ languages.
 
 .. toctree::
    :maxdepth: 2
+
    databrowser/index
 
 
