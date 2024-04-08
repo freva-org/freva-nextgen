@@ -16,4 +16,5 @@ need to apply data analysis plugins, please visit the
 
 from freva_databrowser import databrowser
 
-__all__ = ["databrowser"]
+__version__ = "2404.0.0"
+__all__ = ["databrowser", "__version__"]
