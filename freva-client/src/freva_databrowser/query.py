@@ -1,8 +1,10 @@
 """Query climate data sets by using-key value pair search queries."""
 
 import sys
+from collections import defaultdict
+from fnmatch import fnmatch
 from functools import cached_property
-from typing import Dict, Iterator, List, Literal, Optional, Union, cast
+from typing import Dict, Iterator, List, Literal, Optional, Union, Tuple, cast
 import yaml
 
 import requests
@@ -20,12 +22,17 @@ class databrowser:
 
     You can either search for files or uri's. Uri's give you an information
     on the storage system where the files or objects you are looking for are
-    located. The query is of the form `key=value`. For `value` you might
-    use *, ? Wild cards or any regular expression.
+    located. The query is of the form ``key=value``. For ``value`` you might
+    use wild cards such as \\*, ? or any regular expression.
 
     Parameters
     ~~~~~~~~~~
 
+    *facets: str
+        If you are not sure about the correct search key's you can use
+        positional arguments to search of any matching entries. For example
+        'era5' would allow you to search for any entries
+        containing era5, regardless of project, product etc.
     **search_keys: str
         The search constraints applied in the data search. If not given
         the whole dataset will be queried.
@@ -45,12 +52,12 @@ class databrowser:
     time_select: str, default: flexible
         Operator that specifies how the time period is selected. Choose from
         flexible (default), strict or file. ``strict`` returns only those files
-        that have the *entire* time period covered. The time search ``2000 to
+        that have the `entire` time period covered. The time search ``2000 to
         2012`` will not select files containing data from 2010 to 2020 with
         the ``strict`` method. ``flexible`` will select those files as
         ``flexible`` returns those files that have either start or end period
         covered. ``file`` will only return files where the entire time
-        period is contained within *one single* file.
+        period is contained within `one single` file.
     uniq_key: str, default: file
         Chose if the solr search query should return paths to files or
         uris, uris will have the file path along with protocol of the storage
@@ -130,13 +137,28 @@ class databrowser:
         from freva_client import databrowser
         db = databrowser(flavour="cmip6", experiment_id="cmorph")
         print(db.metadata)
+
+
+    Sometimes you don't exactly know the exact names of the search keys and
+    want retrieve all file objects that match a certain category. For example
+    for getting all ocean reanalysis datasets you can apply the 'reana*'
+    search key as a positional argument:
+
+    .. execute_code::
+
+        from freva_client import databrowser
+        db = databrowser("reana*", realm="ocean", flavour="cmip6")
+        for file in db:
+            print(file)
     """
 
     def __init__(
         self,
-        *,
+        *facets: str,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
+        flavour: Literal[
+            "freva", "cmip6", "cmip5", "cordex", "nextgems"
+        ] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -148,10 +170,45 @@ class databrowser:
         self._fail_on_error = fail_on_error
         self._cfg = Config(host, uniq_key=uniq_key, flavour=flavour)
         self._flavour = flavour
-        self._params = {**{"multi-version": multiversion}, **search_keys}
+        facet_search: Dict[str, List[str]] = defaultdict(list)
+        for key, value in search_keys.items():
+            if isinstance(value, str):
+                facet_search[key] = [value]
+            else:
+                facet_search[key] = value
+        self._params: Dict[str, Union[str, bool, List[str]]] = {
+            **{"multi-version": multiversion},
+            **search_keys,
+        }
+
         if time:
             self._params["time"] = time
             self._params["time_select"] = time_select
+        if facets:
+            self._add_search_keyword_args_from_facet(facets, facet_search)
+
+    def _add_search_keyword_args_from_facet(
+        self, facets: Tuple[str, ...], search_kw: Dict[str, List[str]]
+    ) -> None:
+        metadata = {
+            k: v[::2]
+            for (k, v) in self._facet_search(extended_search=True).items()
+        }
+        primary_key = list(metadata.keys() or ["project"])[0]
+        num_facets = 0
+        for facet in facets:
+            for key, values in metadata.items():
+                for value in values:
+                    if fnmatch(value, facet):
+                        num_facets += 1
+                        search_kw[key].append(value)
+
+        if facets and num_facets == 0:
+            # TODO: This isn't pretty, but if a user requested a search
+            # string doesn't exist than we have to somehow make the search
+            # return nothing.
+            search_kw = {primary_key: ["NotAvailable"]}
+        self._params.update(search_kw)
 
     def __iter__(self) -> Iterator[str]:
         result = self._get(self._cfg.search_url)
@@ -160,7 +217,9 @@ class databrowser:
                 for res in result.iter_lines():
                     yield res.decode("utf-8")
             except KeyboardInterrupt:
-                pprint("[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr)
+                pprint(
+                    "[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr
+                )
 
     def __repr__(self) -> str:
         params = ", ".join(
@@ -187,7 +246,9 @@ class databrowser:
 
         # Create a table-like structure for available flavors and search facets
         style = 'style="text-align: left"'
-        facet_heading = f"Available search facets for <em>{self._flavour}</em> flavour"
+        facet_heading = (
+            f"Available search facets for <em>{self._flavour}</em> flavour"
+        )
         html_repr = (
             "<table>"
             f"<tr><th colspan='2' {style}>{self.__class__.__name__}"
@@ -225,23 +286,27 @@ class databrowser:
     def count_values(
         cls,
         *facets: str,
-        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
+        flavour: Literal[
+            "freva", "cmip6", "cmip5", "cordex", "nextgems"
+        ] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
         multiversion: bool = False,
         fail_on_error: bool = False,
-        extendet_search: bool = False,
+        extended_search: bool = False,
         **search_keys: Union[str, List[str]],
     ) -> Dict[str, Dict[str, int]]:
         """Count the number of objects in the databrowser.
 
         Parameters
         ~~~~~~~~~~
+
         *facets: str
-            Count these these facets (attributes & values) instead of the number
-            of total files. If None (default), the number of total files will
-            be returned.
+            If you are not sure about the correct search key's you can use
+            positional arguments to search of any matching entries. For example
+            'era5' would allow you to search for any entries
+            containing era5, regardless of project, product etc.
         flavour: str, default: freva
             The Data Reference Syntax (DRS) standard specifying the type of climate
             datasets to query.
@@ -260,8 +325,8 @@ class databrowser:
             the ``strict`` method. ``flexible`` will select those files as
             ``flexible`` returns those files that have either start or end period
             covered. ``file`` will only return files where the entire time
-            period is contained within *one single* file.
-        extendet_search: bool, default: False
+            period is contained within `one single` file.
+        extended_search: bool, default: False
             Retrieve information on additional search keys.
         host: str, default: None
             Override the host name of the databrowser server. This is usually
@@ -295,8 +360,19 @@ class databrowser:
             from freva_client import databrowser
             print(databrowser.count_values("model"))
 
+        Sometimes you don't exactly know the exact names of the search keys and
+        want retrieve all file objects that match a certain category. For
+        example for getting all ocean reanalysis datasets you can apply the
+        'reana*' search key as a positional argument:
+
+        .. execute_code::
+
+            from freva_client import databrowser
+            print(databrowser.count_values("reana*", realm="ocean", flavour="cmip6"))
+
         """
         this = cls(
+            *facets,
             flavour=flavour,
             time=time,
             time_select=time_select,
@@ -306,10 +382,12 @@ class databrowser:
             uniq_key="file",
             **search_keys,
         )
-        result = this._facet_search(*facets, extendet_search=extendet_search)
+        result = this._facet_search(extended_search=extended_search)
         counts = {}
         for facet, value_counts in result.items():
-            counts[facet] = dict(zip(value_counts[::2], map(int, value_counts[1::2])))
+            counts[facet] = dict(
+                zip(value_counts[::2], map(int, value_counts[1::2]))
+            )
         return counts
 
     @cached_property
@@ -334,20 +412,23 @@ class databrowser:
 
         """
         return {
-            k: v[::2] for (k, v) in self._facet_search(extendet_search=True).items()
+            k: v[::2]
+            for (k, v) in self._facet_search(extended_search=True).items()
         }
 
     @classmethod
     def metadata_search(
         cls,
         *facets: str,
-        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
+        flavour: Literal[
+            "freva", "cmip6", "cmip5", "cordex", "nextgems"
+        ] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
         multiversion: bool = False,
         fail_on_error: bool = False,
-        extendet_search: bool = False,
+        extended_search: bool = False,
         **search_keys: Union[str, List[str]],
     ) -> Dict[str, List[str]]:
         """Search for data attributes (facets) in the databrowser.
@@ -358,9 +439,11 @@ class databrowser:
         Parameters
         ~~~~~~~~~~
 
-        *facets: str,
-            Get only information on these selected search keys (facets). By
-            default information on all available facets is retrieved.
+        *facets: str
+            If you are not sure about the correct search key's you can use
+            positional arguments to search of any matching entries. For example
+            'era5' would allow you to search for any entries
+            containing era5, regardless of project, product etc.
         flavour: str, default: freva
             The Data Reference Syntax (DRS) standard specifying the type of climate
             datasets to query.
@@ -380,7 +463,7 @@ class databrowser:
             ``flexible`` returns those files that have either start or end period
             covered. ``file`` will only return files where the entire time
             period is contained within *one single* file.
-        extendet_search: bool, default: False
+        extended_search: bool, default: False
             Retrieve information on additional search keys.
         multiversion: bool, default: False
             Select all versions and not just the latest version (default).
@@ -437,8 +520,19 @@ class databrowser:
             res = databrowser.metadata_search(file="/arch/*CPC/*")
             print(res)
 
+        Sometimes you don't exactly know the exact names of the search keys and
+        want retrieve all file objects that match a certain category. For
+        example for getting all ocean reanalysis datasets you can apply the
+        'reana*' search key as a positional argument:
+
+        .. execute_code::
+
+            from freva_client import databrowser
+            print(databrowser.metadata_search("reana*", realm="ocean", flavour="cmip6"))
+
         """
         this = cls(
+            *facets,
             flavour=flavour,
             time=time,
             time_select=time_select,
@@ -451,7 +545,7 @@ class databrowser:
         return {
             k: v[::2]
             for (k, v) in this._facet_search(
-                *facets, extendet_search=extendet_search
+                extended_search=extended_search
             ).items()
         }
 
@@ -479,7 +573,7 @@ class databrowser:
         Example
         ~~~~~~~
 
-        :: execute_code::
+        .. execute_code::
 
             from freva_client import databrowser
             print(databrowser.overview())
@@ -491,23 +585,32 @@ class databrowser:
 
     @property
     def url(self) -> str:
-        """Get the url of the databrowser API."""
+        """Get the url of the databrowser API.
+
+        Example
+        ~~~~~~~
+
+        .. execute_code::
+
+            from freva_client import databrowser
+            db = databrowser()
+            print(db.url)
+
+        """
         return self._cfg.databrowser_url
 
     def _facet_search(
         self,
-        *facets: str,
-        extendet_search: bool = False,
+        extended_search: bool = False,
     ) -> Dict[str, List[str]]:
         result = self._get(self._cfg.metadata_url)
         if result is None:
             return {}
         data = result.json()
-        contraints = [f for f in facets if f != "*"]
-        if extendet_search:
-            contraints = contraints or data["facets"].keys()
+        if extended_search:
+            contraints = data["facets"].keys()
         else:
-            contraints = contraints or data["primary_facets"]
+            contraints = data["primary_facets"]
         return {f: v for f, v in data["facets"].items() if f in contraints}
 
     def _get(self, url: str) -> Optional[requests.models.Response]:
