@@ -47,7 +47,10 @@ def exception_handler(func: Callable[..., Any]) -> Callable[..., Any]:
             pprint("[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr)
             raise SystemExit(150) from None
         except BaseException as error:
-            logger.error(error)
+            if logger.getEffectiveLevel() <= logging.DEBUG:
+                logger.exception(error)
+            else:
+                logger.error(error)
             raise SystemExit(1) from None
 
     return wrapper
@@ -89,13 +92,9 @@ class Config:
         """Read a new style toml config file."""
         try:
             config = tomli.loads(path.read_text()).get("freva", {})
-        except tomli.TOMLDecodeError as error:
-            raise ValueError(
-                f"Could not parse config file content: {error}"
-            ) from None
-        scheme, host = self._split_url(
-            cast(str, config.get("databrowser_host", ""))
-        )
+            scheme, host = self._split_url(cast(str, config["host"]))
+        except (tomli.TOMLDecodeError, KeyError):
+            return ""
         host, _, port = host.partition(":")
         if port:
             host = f"{host}:{port}"

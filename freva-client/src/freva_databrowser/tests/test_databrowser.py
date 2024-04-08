@@ -20,6 +20,18 @@ def test_search_files() -> None:
     db = databrowser(host="foo")
     with pytest.raises(ValueError):
         len(db)
+    assert (
+        len(
+            databrowser(
+                "land",
+                realm="ocean",
+                product="reanalysis",
+                host="localhost:8080",
+            )
+        )
+        == 0
+        == 0
+    )
 
 
 def test_count_values() -> None:
@@ -30,7 +42,11 @@ def test_count_values() -> None:
     assert isinstance(counts1, dict)
     assert "dataset" not in counts1
     counts2 = databrowser.count_values(
-        "*", host="localhost:8080", extendet_search=True
+        "ocean",
+        realm="ocean",
+        product="reanalysis",
+        host="localhost:8080",
+        extended_search=True,
     )
     assert isinstance(counts2, dict)
     assert "dataset" in counts2
@@ -47,7 +63,7 @@ def test_metadata_search() -> None:
     assert isinstance(metadata, dict)
     assert len(db.metadata) > len(metadata)
     metadata = databrowser.metadata_search(
-        host="localhost:8080", extendet_search=True
+        host="localhost:8080", extended_search=True
     )
     assert len(db.metadata) == len(metadata)
 

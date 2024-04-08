@@ -35,9 +35,7 @@ def valid_freva_config() -> Iterator[Path]:
         with TemporaryDirectory() as temp_dir:
             freva_config = Path(temp_dir) / "share" / "freva" / "freva.toml"
             freva_config.parent.mkdir(exist_ok=True, parents=True)
-            freva_config.write_text(
-                "[freva]\ndatabrowser_host = 'https://www.freva.com:80/api'"
-            )
+            freva_config.write_text("[freva]\nhost = 'https://www.freva.com:80/api'")
             yield Path(temp_dir)
 
 
@@ -52,9 +50,7 @@ def invalid_freva_conf_file() -> Iterator[Path]:
             _prep_env(FREVA_CONFIG=str(freva_config)),
             clear=True,
         ):
-            freva_config.write_text(
-                "[freva]\ndatabrowser_host = https://freva_conf/api"
-            )
+            freva_config.write_text("[freva]\nhost = https://freva_conf/api")
             yield freva_config
 
 
@@ -73,9 +69,7 @@ def valid_eval_conf_file() -> Iterator[Path]:
             _prep_env(EVALUATION_SYSTEM_CONFIG_FILE=str(eval_file)),
             clear=True,
         ):
-            with mock.patch(
-                "sysconfig.get_path", lambda x, y="foo": str(temp_dir)
-            ):
+            with mock.patch("sysconfig.get_path", lambda x, y="foo": str(temp_dir)):
                 yield eval_file
 
 
@@ -85,16 +79,12 @@ def invalid_eval_conf_file() -> Iterator[Path]:
     with TemporaryDirectory() as temp_dir:
         eval_file = Path(temp_dir) / "eval.conf"
         eval_file.write_text(
-            "[foo]\n"
-            "solr.host = http://localhost\n"
-            "databrowser.port = 8080"
+            "[foo]\n" "solr.host = http://localhost\n" "databrowser.port = 8080"
         )
         with mock.patch.dict(
             os.environ,
             _prep_env(EVALUATION_SYSTEM_CONFIG_FILE=str(eval_file)),
             clear=True,
         ):
-            with mock.patch(
-                "sysconfig.get_path", lambda x, y="foo": str(temp_dir)
-            ):
+            with mock.patch("sysconfig.get_path", lambda x, y="foo": str(temp_dir)):
                 yield eval_file
