@@ -7,6 +7,13 @@ from pytest import LogCaptureFixture
 from typer.testing import CliRunner
 
 
+def test_overview(cli_runner: CliRunner) -> None:
+    """Test the overview sub command."""
+    res = cli_runner.invoke(app, ["overview", "--host", "localhost:8080"])
+    assert res.exit_code == 0
+    assert res.stdout
+
+
 def test_search_files(cli_runner: CliRunner) -> None:
     """Test searching for files."""
     res = cli_runner.invoke(app, ["data-search", "--host", "localhost:8080"])
@@ -73,15 +80,38 @@ def test_count_values(cli_runner: CliRunner) -> None:
     assert res.exit_code == 0
     assert res.stdout
     res = cli_runner.invoke(
-        app, ["count", "--facet", "*", "--host", "localhost:8080", "--json"]
+        app,
+        [
+            "count",
+            "--facet",
+            "ocean",
+            "--host",
+            "localhost:8080",
+            "--json",
+            "-d",
+        ],
     )
     assert res.exit_code == 0
     assert isinstance(json.loads(res.stdout), dict)
     res = cli_runner.invoke(
-        app, ["count", "--facet", "*", "--host", "localhost:8080"]
+        app, ["count", "--facet", "ocean", "--host", "localhost:8080", "-d"]
     )
     assert res.exit_code == 0
     assert res.stdout
+    res = cli_runner.invoke(
+        app,
+        [
+            "count",
+            "--facet",
+            "ocean",
+            "--host",
+            "localhost:8080",
+            "realm=atmos",
+            "--json",
+        ],
+    )
+    assert res.exit_code == 0
+    assert json.loads(res.stdout) == 0
 
 
 def test_failed_command(
@@ -102,6 +132,10 @@ def test_failed_command(
         assert res.exit_code != 0
         caplog.clear()
         res = cli_runner.invoke(app, [cmd, "--host", "foo"])
+        assert res.exit_code != 0
+        assert caplog.records
+        assert caplog.records[-1].levelname == "ERROR"
+        res = cli_runner.invoke(app, [cmd, "--host", "foo", "-vvvvv"])
         assert res.exit_code != 0
         assert caplog.records
         assert caplog.records[-1].levelname == "ERROR"

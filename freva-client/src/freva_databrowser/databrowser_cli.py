@@ -74,7 +74,23 @@ class TimeSelect(str, Enum):
         )
 
 
-@app.command(name="metadata-search", help="Search for metadata (facets)")
+@app.command(name="overview", help="Get an overview over what is available.")
+@exception_handler
+def overview(
+    host: Optional[str] = typer.Option(
+        None,
+        "--host",
+        help=(
+            "Set the hostname of the databrowser, if not set (default) "
+            "the hostname is read from a config file"
+        ),
+    ),
+) -> None:
+    """Get a general overview of the databrowser's search capabilities."""
+    print(databrowser.overview(host=host))
+
+
+@app.command(name="metadata-search", help="Search for metadata (facets).")
 @exception_handler
 def metadata_search(
     search_keys: Optional[List[str]] = typer.Argument(
@@ -84,7 +100,14 @@ def metadata_search(
         "flavour product, project model etc.",
     ),
     facets: Optional[List[str]] = typer.Option(
-        None, "--facet", help="Desplay only these pre selected search keys."
+        None,
+        "--facet",
+        help=(
+            "If you are not sure about the correct search key's you can use"
+            " the ``--facet`` flag to search of any matching entries. For "
+            "example --facet 'era5' would allow you to search for any entries"
+            " containing era5, regardless of project, product etc."
+        ),
     ),
     flavour: Flavours = typer.Option(
         "freva",
@@ -115,15 +138,15 @@ def metadata_search(
             " valid."
         ),
     ),
-    extendet_search: bool = typer.Option(
+    extended_search: bool = typer.Option(
         False,
         "-e",
-        "--extendet-search",
+        "--extended-search",
         help="Retrieve information on additional search keys.",
     ),
     multiversion: bool = typer.Option(
         False,
-        "--mulit-version",
+        "--multi-version",
         help="Select all versions and not just the latest version (default).",
     ),
     host: Optional[str] = typer.Option(
@@ -137,12 +160,14 @@ def metadata_search(
     parse_json: bool = typer.Option(
         False, "-j", "--json", help="Parse output in json format."
     ),
-    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
+    verbose: int = typer.Option(
+        0, "-v", help="Increase verbosity", count=True
+    ),
     version: Optional[bool] = typer.Option(
         False,
         "-V",
         "--version",
-        help="Show verion an exit",
+        help="Show version an exit",
         callback=version_callback,
     ),
 ) -> None:
@@ -159,13 +184,15 @@ def metadata_search(
     result = databrowser.metadata_search(
         *(facets or []),
         time=time or "",
-        time_select=cast(Literal["file", "flexible", "strict"], time_select.value),
+        time_select=cast(
+            Literal["file", "flexible", "strict"], time_select.value
+        ),
         flavour=cast(
             Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
             flavour.value,
         ),
         host=host,
-        extendet_search=extendet_search,
+        extended_search=extended_search,
         multiversion=multiversion,
         fail_on_error=False,
         **(parse_cli_args(search_keys or [])),
@@ -185,6 +212,16 @@ def data_search(
         help="Refine your data search with this `key=value` pair search "
         "parameters. The parameters could be, depending on the DRS standard, "
         "flavour product, project model etc.",
+    ),
+    facets: Optional[List[str]] = typer.Option(
+        None,
+        "--facet",
+        help=(
+            "If you are not sure about the correct search key's you can use"
+            " the ``--facet`` flag to search of any matching entries. For "
+            "example --facet 'era5' would allow you to search for any entries"
+            " containing era5, regardless of project, product etc."
+        ),
     ),
     uniq_key: UniqKeys = typer.Option(
         "file",
@@ -236,7 +273,9 @@ def data_search(
             "the hostname is read from a config file"
         ),
     ),
-    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
+    verbose: int = typer.Option(
+        0, "-v", help="Increase verbosity", count=True
+    ),
     multiversion: bool = typer.Option(
         False,
         "--mulit-version",
@@ -259,6 +298,7 @@ def data_search(
     logger.set_verbosity(verbose)
     logger.debug("Search the databrowser")
     result = databrowser(
+        *(facets or []),
         time=time or "",
         time_select=cast(Literal["file", "flexible", "strict"], time_select),
         flavour=cast(
@@ -291,10 +331,17 @@ def count_values(
         None,
         "--facet",
         help=(
-            "Separate the count by these facets. If None "
-            "given (default) the total number of found "
-            "objects will be diplayed."
+            "If you are not sure about the correct search key's you can use"
+            " the ``--facet`` flag to search of any matching entries. For "
+            "example --facet 'era5' would allow you to search for any entries"
+            " containing era5, regardless of project, product etc."
         ),
+    ),
+    detail: bool = typer.Option(
+        False,
+        "--detail",
+        "-d",
+        help=("Separate the count by search facets."),
     ),
     flavour: Flavours = typer.Option(
         "freva",
@@ -325,15 +372,15 @@ def count_values(
             " valid."
         ),
     ),
-    extendet_search: bool = typer.Option(
+    extended_search: bool = typer.Option(
         False,
         "-e",
-        "--extendet-search",
+        "--extended-search",
         help="Retrieve information on additional search keys.",
     ),
     multiversion: bool = typer.Option(
         False,
-        "--mulit-version",
+        "--multi-version",
         help="Select all versions and not just the latest version (default).",
     ),
     host: Optional[str] = typer.Option(
@@ -347,7 +394,9 @@ def count_values(
     parse_json: bool = typer.Option(
         False, "-j", "--json", help="Parse output in json format."
     ),
-    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
+    verbose: int = typer.Option(
+        0, "-v", help="Increase verbosity", count=True
+    ),
     version: Optional[bool] = typer.Option(
         False,
         "-V",
@@ -367,26 +416,34 @@ def count_values(
     logger.set_verbosity(verbose)
     logger.debug("Search the databrowser")
     result: Union[int, Dict[str, Dict[str, int]]] = 0
-    if facets:
+    search_keys = parse_cli_args(search_keys or [])
+    time = time or search_keys.pop("time", "")
+    facets = facets or []
+    if detail:
         result = databrowser.count_values(
             *facets,
             time=time or "",
-            time_select=cast(Literal["file", "flexible", "strict"], time_select),
+            time_select=cast(
+                Literal["file", "flexible", "strict"], time_select
+            ),
             flavour=cast(
                 Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
                 flavour.value,
             ),
             host=host,
-            extendet_search=extendet_search,
+            extended_search=extended_search,
             multiversion=multiversion,
             fail_on_error=False,
-            **(parse_cli_args(search_keys or [])),
+            **search_keys,
         )
     else:
         result = len(
             databrowser(
+                *facets,
                 time=time or "",
-                time_select=cast(Literal["file", "flexible", "strict"], time_select),
+                time_select=cast(
+                    Literal["file", "flexible", "strict"], time_select
+                ),
                 flavour=cast(
                     Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
                     flavour.value,
@@ -395,7 +452,7 @@ def count_values(
                 multiversion=multiversion,
                 fail_on_error=False,
                 uniq_key="file",
-                **(parse_cli_args(search_keys or [])),
+                **search_keys,
             )
         )
     if parse_json:

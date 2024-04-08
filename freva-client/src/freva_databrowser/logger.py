@@ -80,13 +80,6 @@ class Logger(logging.Logger):
     def warning(self, msg: object, *args: Any, **kwargs: Any) -> None:
         """Override the warning logger warning."""
         if self.is_cli:
-            print(
-                self.is_cli,
-                msg,
-                self.handlers,
-                self.getEffectiveLevel(),
-                self.getChildren(),
-            )
             super().warning(msg, *args, **kwargs)
         else:
             warnings.warn(
