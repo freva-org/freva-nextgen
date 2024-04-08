@@ -1,5 +1,5 @@
 Search for data
-################
+===============
 
 The *freva-databrowser* allows you to perform searches for climate datasets
 in a wide range of programming languages. The databrowser offers a python
@@ -19,17 +19,18 @@ several standards, including ``CMIP5``, ``CMIP6``, ``CORDEX``, ``Freva``, and
 databrowser provides a comprehensive and versatile search entry point.
 
 Authentication
-+++++++++++++++
+--------------
 The Freva Databrowser is open and publicly accessible, and as such,
 it doesn't require authentication. This means you can quickly start exploring
 and accessing climate data without any additional setup.
 
 
-
+Table of Content
+----------------
 
 .. toctree::
    :maxdepth: 2
-   :caption: Content
 
    python-lib
    APIRef
+   cli

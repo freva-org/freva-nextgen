@@ -65,9 +65,13 @@ deps = -e ./freva-rest
        sphinx-togglebutton
        sphinxcontrib-httpdomain
        pydata-sphinx-theme
+setenv =
+    FREVA_CONFIG = {toxinidir}/dev-env/freva.toml
 allowlist_externals = make
 commands = make -C docs clean
            make -C docs html
+commands_pre = - python3 {toxinidir}/run_server.py freva-rest-server -c {toxinidir}/api_config.toml --debug --dev
+commands_post = - python3 {toxinidir}/run_server.py --kill
 [testenv:lint]
 deps = -e ./freva-rest
        -e ./freva-client
