@@ -4,10 +4,10 @@ import sys
 from collections import defaultdict
 from fnmatch import fnmatch
 from functools import cached_property
-from typing import Dict, Iterator, List, Literal, Optional, Union, Tuple, cast
-import yaml
+from typing import Dict, Iterator, List, Literal, Optional, Tuple, Union, cast
 
 import requests
+import yaml
 from rich import print as pprint
 
 from .utils import Config, logger

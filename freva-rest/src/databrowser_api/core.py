@@ -1,12 +1,12 @@
 """The core functionality to interact with the apache solr search system."""
 
 import asyncio
+import os
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from functools import cached_property, wraps
 from json import JSONEncoder
-import os
 from typing import (
     Any,
     AsyncIterator,
