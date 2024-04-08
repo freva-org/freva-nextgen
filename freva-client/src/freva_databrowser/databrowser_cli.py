@@ -416,8 +416,8 @@ def count_values(
     logger.set_verbosity(verbose)
     logger.debug("Search the databrowser")
     result: Union[int, Dict[str, Dict[str, int]]] = 0
-    search_keys = parse_cli_args(search_keys or [])
-    time = time or search_keys.pop("time", "")
+    search_kws = parse_cli_args(search_keys or [])
+    time = cast(str, time or search_kws.pop("time", ""))
     facets = facets or []
     if detail:
         result = databrowser.count_values(
@@ -434,7 +434,7 @@ def count_values(
             extended_search=extended_search,
             multiversion=multiversion,
             fail_on_error=False,
-            **search_keys,
+            **search_kws,
         )
     else:
         result = len(
@@ -452,7 +452,7 @@ def count_values(
                 multiversion=multiversion,
                 fail_on_error=False,
                 uniq_key="file",
-                **search_keys,
+                **search_kws,
             )
         )
     if parse_json:

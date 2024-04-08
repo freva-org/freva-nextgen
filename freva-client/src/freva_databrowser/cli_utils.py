@@ -69,7 +69,7 @@ class Completer:
             host=None,
             time_select="flexible",
             multiversion=False,
-            extendet_search=True,
+            extended_search=True,
             fail_on_error=False,
             **search_keys,
         )
