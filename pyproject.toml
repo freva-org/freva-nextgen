@@ -32,7 +32,7 @@ ignore_missing_imports = true
 legacy_tox_ini = """
 [tox]
 min_version = 4.0
-env_list = types, lint, test
+env_list = types, lint, docs
 passenv = *
 [testenv]
 passenv = *
