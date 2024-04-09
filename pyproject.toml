@@ -50,7 +50,7 @@ deps = -c {toxinidir}/.github/dependabot/constraints.txt
        pymongo
        pytest-env
 
-commands_pre = - python3 {toxinidir}/run_server.py freva-rest-server -c {toxinidir}/api_config.toml --debug --dev
+commands_pre = python3 {toxinidir}/run_server.py freva-rest-server -c {toxinidir}/api_config.toml --debug --dev
 commands_post = - python3 {toxinidir}/run_server.py --kill
 commands =
     pytest -vv --cov=freva-rest --cov=freva-client --cov-report=html:coverage_report --junitxml report.xml --cov-report xml .
@@ -70,7 +70,7 @@ setenv =
 allowlist_externals = make
 commands = make -C docs clean
            make -C docs html
-commands_pre = - python3 {toxinidir}/run_server.py freva-rest-server -c {toxinidir}/api_config.toml --debug --dev
+commands_pre =  python3 {toxinidir}/run_server.py freva-rest-server -c {toxinidir}/api_config.toml --debug --dev
 commands_post = - python3 {toxinidir}/run_server.py --kill
 [testenv:lint]
 deps = -e ./freva-rest
