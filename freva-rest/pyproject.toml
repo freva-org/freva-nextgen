@@ -1,6 +1,6 @@
 [build-system]
-requires = ["flit_core >=3.2"]
-build-backend = "flit_core.buildapi"
+requires = ["setuptools>=61.0", "appdirs"]
+build-backend = "setuptools.build_meta"
 [project]
 name = "freva-rest"
 description = "RestAPI the free evaluation system, freva"
@@ -38,7 +38,11 @@ Issues = "https://github.com/FREVA-CLINT/databrowserAPI/issues"
 Source = "https://github.com/FREVA-CLINT/databrowserAPI/"
 
 [project.optional-dependencies]
-dev = [ "tox", "flit"]
+dev = ["tox"]
 
-[package-data]
-databrowser_api = ["py.typed"]
+[tool.setuptools.package-data]
+freva_rest = ["*.toml"]
+[tool.distutils.bdist_wheel]
+universal = true
+[tool.setuptools.dynamic]
+version = {attr = "freva_rest.__version__"}

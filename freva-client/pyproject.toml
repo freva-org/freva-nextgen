@@ -1,6 +1,6 @@
 [build-system]
-requires = ["flit_core >=3.2", "appdirs"]
-build-backend = "flit_core.buildapi"
+requires = ["setuptools>=61.0", "appdirs", "wheel"]
+build-backend = "setuptools.build_meta"
 [project]
 name = "freva-client"
 description = "Search for climate data based on key-value pairs"
@@ -34,14 +34,10 @@ Issues = "https://github.com/FREVA-CLINT/databrowserAPI/issues"
 Source = "https://github.com/FREVA-CLINT/databrowserAPI/"
 
 [project.optional-dependencies]
-dev = [ "tox", "flit"]
+dev = ["tox"]
 
-[tool.flit.sdist]
-include = ["assets/*"]
+[tool.distutils.bdist_wheel]
+universal = true
 
-[tool.flit.external-data]
-directory = "assets"
-
-
-[package-data]
-freva_databrowser = ["py.typed"]
+[tool.setuptools.dynamic]
+version = {attr = "freva_client.__version__"}
