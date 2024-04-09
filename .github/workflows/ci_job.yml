@@ -28,8 +28,6 @@ jobs:
         run: |
           python3 -m pip install -e .[dev]
         working-directory: ./freva-rest
-      - name: Start test server
-        run: python -m freva_rest.cli -c api_config.toml --debug --dev
       - name: Run all tests with tox
         run: tox run-parallel --parallel-no-spinner
       - name: Test the docs
