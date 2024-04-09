@@ -6,11 +6,9 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 import os
-import sys
 from datetime import date
 
-sys.path.insert(0, os.path.abspath(os.path.join("..", "..", "src")))
-from freva_databrowser import __version__
+from freva_client import __version__
 
 project = "Freva Databrowser"
 copyright = f"{date.today().year}, DKRZ"

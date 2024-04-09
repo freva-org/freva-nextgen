@@ -32,12 +32,13 @@ ignore_missing_imports = true
 legacy_tox_ini = """
 [tox]
 min_version = 4.0
-env_list = types, lint, docs
+env_list = docs, lint, types
 passenv = *
 [testenv]
 passenv = *
 parallel_show_output = false
 [testenv:test]
+description = "Run the unit tests."
 deps = -c {toxinidir}/.github/dependabot/constraints.txt
        -e ./freva-rest
        -e ./freva-client
@@ -50,12 +51,13 @@ deps = -c {toxinidir}/.github/dependabot/constraints.txt
        pymongo
        pytest-env
 
-commands_pre = python3 {toxinidir}/run_server.py freva-rest-server -c {toxinidir}/api_config.toml --debug --dev
+commands_pre = - python3 {toxinidir}/run_server.py freva-rest-server -c {toxinidir}/api_config.toml --debug --dev
 commands_post = - python3 {toxinidir}/run_server.py --kill
 commands =
     pytest -vv --cov=freva-rest --cov=freva-client --cov-report=html:coverage_report --junitxml report.xml --cov-report xml .
     python3 -m coverage report --fail-under=98.5 --precision=2
 [testenv:docs]
+description = "Create the documentation."
 deps = -e ./freva-rest
        -e ./freva-client
        sphinx-execute-code-python3
@@ -73,6 +75,7 @@ commands = make -C docs clean
 commands_pre =  python3 {toxinidir}/run_server.py python -m freva_rest.cli -c {toxinidir}/api_config.toml --debug --dev
 commands_post = - python3 {toxinidir}/run_server.py --kill
 [testenv:lint]
+description = "Check code quality."
 deps = -e ./freva-rest
        -e ./freva-client
        black
@@ -84,11 +87,15 @@ commands =
     python3 -m isort --check --profile black -t py311 -l 79 freva-client/src
     python3 -m flake8 freva-client/src --count --max-complexity=8 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
     python3 -m flake8 freva-rest/src --count --max-complexity=8 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
+commands_post =
 [testenv:types]
+description = "Static type checking."
 deps = ./freva-rest
        mypy
        motor-stubs
        pytest-stub
+       appdirs
+commands_post =
 commands = python3 -m mypy --install-types --non-interactive
 [testenv:release]
 deps = git-python

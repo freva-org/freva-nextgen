@@ -2,7 +2,6 @@
 
 import logging
 import warnings
-from pathlib import Path
 from typing import Any, Union
 
 from rich.console import Console
@@ -86,7 +85,6 @@ class Logger(logging.Logger):
                 str(msg),
                 DatabrowserWarning,
                 stacklevel=2,
-                skip_file_prefixes=(str(Path(__file__).parent),),
             )
 
 
