@@ -28,6 +28,8 @@ jobs:
         run: |
           python3 -m pip install -e .[dev]
         working-directory: ./freva-rest
+      - name: Adjusting PATH variable
+        run: echo "~/.local/bin" >> $GITHUB_PATH
       - name: Run all tests with tox
         run: tox run-parallel --parallel-no-spinner
       - name: Test the docs
