@@ -42,6 +42,7 @@ dev = ["tox"]
 
 [tool.setuptools.package-data]
 freva_rest = ["*.toml"]
+databrowser_api = ["tests/mock/*.json"]
 [tool.distutils.bdist_wheel]
 universal = true
 [tool.setuptools.dynamic]
