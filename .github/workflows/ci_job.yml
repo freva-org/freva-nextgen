@@ -26,9 +26,10 @@ jobs:
           docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
       - name: Install dependencies
         run: |
-          python3 -m pip install tox ./freva-rest
+          python3 -m pip install tox .
+        working-directory: ./freva-rest
       - name: Start test server
-        run: freva-rest-server  -c ../api_config.toml --debug --dev
+        run: python -m freva_rest.cli -c api_config.toml --debug --dev
       - name: Run all tests with tox
         run: tox run-parallel --parallel-no-spinner
       - name: Test the docs
