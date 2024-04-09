@@ -70,7 +70,7 @@ setenv =
 allowlist_externals = make
 commands = make -C docs clean
            make -C docs html
-commands_pre =  python3 {toxinidir}/run_server.py freva-rest-server -c {toxinidir}/api_config.toml --debug --dev
+commands_pre =  python3 {toxinidir}/run_server.py python -m freva_rest.cli -c {toxinidir}/api_config.toml --debug --dev
 commands_post = - python3 {toxinidir}/run_server.py --kill
 [testenv:lint]
 deps = -e ./freva-rest
@@ -80,16 +80,16 @@ deps = -e ./freva-rest
        flake8
        pytest-stub
 commands =
-    isort --check --profile black -t py311 -l 79 freva-rest/src
-    isort --check --profile black -t py311 -l 79 freva-client/src
-    flake8 freva-client/src --count --max-complexity=8 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
-    flake8 freva-rest/src --count --max-complexity=8 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
+    python3 -m isort --check --profile black -t py311 -l 79 freva-rest/src
+    python3 -m isort --check --profile black -t py311 -l 79 freva-client/src
+    python3 -m flake8 freva-client/src --count --max-complexity=8 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
+    python3 -m flake8 freva-rest/src --count --max-complexity=8 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
 [testenv:types]
 deps = ./freva-rest
        mypy
        motor-stubs
        pytest-stub
-commands = mypy --install-types --non-interactive
+commands = python3 -m mypy --install-types --non-interactive
 [testenv:release]
 deps = git-python
        packaging
