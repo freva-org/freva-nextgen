@@ -1,0 +1,2 @@
+graft ./assets/*
+include ./assets/share/freva/freva.conf
