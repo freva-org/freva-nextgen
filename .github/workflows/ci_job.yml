@@ -30,6 +30,11 @@ jobs:
         working-directory: ./freva-rest
       - name: Adjusting PATH variable
         run: echo "~/.local/bin" >> $GITHUB_PATH
+      - name: Starting the local server
+        run: |
+          python -m freva_rest.cli -c api_config.toml --debug --dev &
+      - name: Waiting for 10 sec
+        run: sleep 5
       - name: Run all tests with tox
         run: tox run-parallel --parallel-no-spinner
       - name: Test the docs
