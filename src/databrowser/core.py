@@ -361,8 +361,8 @@ class SolrSearch:
     uniq_keys: Tuple[str, str] = ("file", "uri")
     """The names of all unique keys in the indexing system."""
 
-    timeout: aiohttp.ClientTimeout = aiohttp.ClientTimeout(total=5)
-    """5 seconds for timeout."""
+    timeout: aiohttp.ClientTimeout = aiohttp.ClientTimeout(total=30)
+    """30 seconds for timeout."""
 
     batch_size: int = 150
     """Maximum solr batch query size for one single query result."""
@@ -619,9 +619,11 @@ class SolrSearch:
             _, results = res
             for out in results.get("response", {}).get("docs", [{}]):
                 source = {
-                    k: out[k][0]
-                    if isinstance(out.get(k), list) and len(out.get(k)) == 1
-                    else out.get(k)
+                    k: (
+                        out[k][0]
+                        if isinstance(out.get(k), list) and len(out.get(k)) == 1
+                        else out.get(k)
+                    )
                     for k in [self.uniq_key] + self.translator.facet_hierachy
                     if out.get(k)
                 }
