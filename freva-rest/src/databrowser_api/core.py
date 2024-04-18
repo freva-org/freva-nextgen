@@ -359,8 +359,8 @@ class SolrSearch:
     uniq_keys: Tuple[str, str] = ("file", "uri")
     """The names of all unique keys in the indexing system."""
 
-    timeout: aiohttp.ClientTimeout = aiohttp.ClientTimeout(total=5)
-    """5 seconds for timeout."""
+    timeout: aiohttp.ClientTimeout = aiohttp.ClientTimeout(total=30)
+    """30 seconds for timeout."""
 
     batch_size: int = 150
     """Maximum solr batch query size for one single query result."""
