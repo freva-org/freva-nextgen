@@ -6,9 +6,7 @@ run-name: ${{ github.actor }} is preparing the next release
   push:
     tags:
       - "v*.*.*"
-permissions:
-  workflow-call: write
-  push: write
+permissions: read-all
 
 jobs:
   tests:
