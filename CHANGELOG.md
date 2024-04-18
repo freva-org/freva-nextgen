@@ -1,6 +1,11 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [v2403.0.3]
+
+### Changed
+- Set the solr request timeout to 30 seconds.
+
 ## [v2403.0.2]
 
 ### Added
