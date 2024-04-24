@@ -95,8 +95,8 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            ghcr.io/freva-rest-api:${{ steps.repository.outputs.tag }}
-            ghcr.io/freva-rest-api:latest
+            ghcr.io/freva-clint/freva-rest-api:${{ steps.repository.outputs.tag }}
+            ghcr.io/freva-clint/freva-rest-api:latest
 
   bump-databrowser-version:
     runs-on: ubuntu-latest
