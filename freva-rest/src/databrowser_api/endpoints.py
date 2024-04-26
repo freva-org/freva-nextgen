@@ -1,17 +1,14 @@
 """Main script that runs the rest API."""
 
-from typing import Annotated, Any, Dict, List, Literal, Union
-from urllib.parse import parse_qs
+from typing import Annotated, Any, List, Literal, Union
 
-from fastapi import HTTPException, Query, Request
+from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
-from pydantic import BaseModel
 
 from .core import FlavourType, SolrSearch, Translator
-
-Required: Any = Ellipsis
+from .schema import FacetResults, Required, SearchFlavours, SolrSchema
 
 
 @app.on_event("shutdown")
@@ -21,74 +18,6 @@ async def shutdown_event() -> None:
         server_config.mongo_client.close()
     except Exception as error:  # pragma: no cover
         logger.warning("Could not shutdown mongodb connection: %s", error)
-
-
-class SolrConfig:
-    """Class holding all apache solr config parameters."""
-
-    params: dict[str, Any] = {
-        "batch_size": Query(
-            alias="max-results",
-            title="Max. results",
-            description="Control the number of maximum result items returned.",
-            ge=0,
-            le=1500,
-        ),
-        "start": Query(
-            alias="start",
-            title="Start",
-            description="Specify the starting point for receiving results.",
-            ge=0,
-        ),
-        "multi_version": Query(
-            alias="multi-version",
-            title="Multi Version",
-            description="Use versioned datasets instead of latest versions.",
-        ),
-        "translate": Query(
-            title="Translate",
-            alias="translate",
-            description="Translate the output to the required DRS flavour.",
-        ),
-        "facets": Query(
-            title="Facets",
-            alias="facets",
-            description=(
-                "The facets that should be part of the output, "
-                "by default all facets will be returned."
-            ),
-        ),
-        "max_results": Query(
-            title="Max. Results",
-            alias="max-results",
-            description=(
-                "Raise an Error if more results are found than that"
-                "number, -1 for all results."
-            ),
-        ),
-    }
-
-    @staticmethod
-    def process_parameters(request: Request) -> dict[str, list[str]]:
-        """Convert Starlette Request QueryParams to a dictionary."""
-
-        query = parse_qs(str(request.query_params))
-        for key in ("uniq_key", "flavour"):
-            _ = query.pop("key", [""])
-        for key, param in SolrConfig.params.items():
-            _ = query.pop(key, [""])
-            _ = query.pop(param.alias, [""])
-
-        return query
-
-
-class FacetResults(BaseModel):
-    facets: Dict[str, List[Union[str, int]]]
-
-
-class SearchFlavours(BaseModel):
-    flavours: List[FlavourType]
-    attributes: Dict[FlavourType, List[str]]
 
 
 @app.get("/api/databrowser/overview")
@@ -114,10 +43,10 @@ async def overview() -> SearchFlavours:
 async def intake_catalogue(
     flavour: FlavourType,
     uniq_key: Literal["file", "uri"],
-    start: Annotated[int, SolrConfig.params["start"]] = 0,
-    multi_version: Annotated[bool, SolrConfig.params["multi_version"]] = False,
-    translate: Annotated[bool, SolrConfig.params["translate"]] = True,
-    max_results: Annotated[int, SolrConfig.params["max_results"]] = -1,
+    start: Annotated[int, SolrSchema.params["start"]] = 0,
+    multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
+    translate: Annotated[bool, SolrSchema.params["translate"]] = True,
+    max_results: Annotated[int, SolrSchema.params["max_results"]] = -1,
     request: Request = Required,
 ) -> StreamingResponse:
     """Create an intake catalogue from a freva search."""
@@ -128,7 +57,7 @@ async def intake_catalogue(
         start=start,
         multi_version=multi_version,
         translate=translate,
-        **SolrConfig.process_parameters(request),
+        **SolrSchema.process_parameters(request),
     )
     status_code, result = await solr_search.init_intake_catalogue()
     await solr_search.store_results(result.total_count, status_code)
@@ -149,10 +78,10 @@ async def intake_catalogue(
 async def metadata_search(
     flavour: FlavourType,
     uniq_key: Literal["file", "uri"],
-    multi_version: Annotated[bool, SolrConfig.params["multi_version"]] = False,
-    translate: Annotated[bool, SolrConfig.params["translate"]] = True,
+    multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
+    translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     facets: Annotated[
-        Union[List[str], None], SolrConfig.params["facets"]
+        Union[List[str], None], SolrSchema.params["facets"]
     ] = None,
     request: Request = Required,
 ) -> JSONResponse:
@@ -164,7 +93,7 @@ async def metadata_search(
         multi_version=multi_version,
         translate=translate,
         start=0,
-        **SolrConfig.process_parameters(request),
+        **SolrSchema.process_parameters(request),
     )
     status_code, result = await solr_search.extended_search(
         facets or [], max_results=0
@@ -179,12 +108,12 @@ async def metadata_search(
 async def extended_search(
     flavour: FlavourType,
     uniq_key: Literal["file", "uri"],
-    start: Annotated[int, SolrConfig.params["start"]] = 0,
-    multi_version: Annotated[bool, SolrConfig.params["multi_version"]] = False,
-    translate: Annotated[bool, SolrConfig.params["translate"]] = True,
-    max_results: Annotated[int, SolrConfig.params["batch_size"]] = 150,
+    start: Annotated[int, SolrSchema.params["start"]] = 0,
+    multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
+    translate: Annotated[bool, SolrSchema.params["translate"]] = True,
+    max_results: Annotated[int, SolrSchema.params["batch_size"]] = 150,
     facets: Annotated[
-        Union[List[str], None], SolrConfig.params["facets"]
+        Union[List[str], None], SolrSchema.params["facets"]
     ] = None,
     request: Request = Required,
 ) -> JSONResponse:
@@ -196,7 +125,7 @@ async def extended_search(
         start=start,
         multi_version=multi_version,
         translate=translate,
-        **SolrConfig.process_parameters(request),
+        **SolrSchema.process_parameters(request),
     )
     status_code, result = await solr_search.extended_search(
         facets or [], max_results=max_results
@@ -209,9 +138,9 @@ async def extended_search(
 async def data_search(
     flavour: FlavourType,
     uniq_key: Literal["file", "uri"],
-    start: Annotated[int, SolrConfig.params["start"]] = 0,
-    multi_version: Annotated[bool, SolrConfig.params["multi_version"]] = False,
-    translate: Annotated[bool, SolrConfig.params["translate"]] = True,
+    start: Annotated[int, SolrSchema.params["start"]] = 0,
+    multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
+    translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     request: Request = Required,
 ) -> StreamingResponse:
     """Search for datasets."""
@@ -222,7 +151,7 @@ async def data_search(
         start=start,
         multi_version=multi_version,
         translate=translate,
-        **SolrConfig.process_parameters(request),
+        **SolrSchema.process_parameters(request),
     )
     status_code, result = await solr_search.init_stream()
     await solr_search.store_results(result.total_count, status_code)
