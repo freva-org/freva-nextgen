@@ -1,6 +1,6 @@
 """Main script that runs the rest API."""
 
-from typing import Annotated, Any, List, Literal, Union
+from typing import Annotated, List, Literal, Union
 
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -8,7 +8,7 @@ from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 
 from .core import FlavourType, SolrSearch, Translator
-from .schema import FacetResults, Required, SearchFlavours, SolrSchema
+from .schema import Required, SearchFlavours, SolrSchema
 
 
 @app.on_event("shutdown")
