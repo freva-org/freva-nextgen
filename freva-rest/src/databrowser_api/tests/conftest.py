@@ -25,7 +25,7 @@ def cfg() -> Iterator[ServerConfig]:
 def client(cfg: ServerConfig) -> Iterator[TestClient]:
     """Setup the test client for the unit test."""
 
-    with mock.patch("databrowser_api.run.SolrSearch.batch_size", 3):
+    with mock.patch("databrowser_api.endpoints.SolrSearch.batch_size", 3):
         with TestClient(app) as test_client:
             yield test_client
 
