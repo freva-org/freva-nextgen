@@ -75,7 +75,7 @@ def valid_eval_conf_file() -> Iterator[Path]:
 
 @pytest.fixture(scope="function")
 def invalid_eval_conf_file() -> Iterator[Path]:
-    """Mock a valid evaluation config file."""
+    """Mock an invalid evaluation config file."""
     with TemporaryDirectory() as temp_dir:
         eval_file = Path(temp_dir) / "eval.conf"
         eval_file.write_text(

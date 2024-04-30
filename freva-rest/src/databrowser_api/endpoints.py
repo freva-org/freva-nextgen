@@ -25,7 +25,14 @@ async def shutdown_event() -> None:
 
 @app.get("/api/databrowser/overview", tags=["Data search"])
 async def overview() -> SearchFlavours:
-    """Get all available search flavours and thier attributes."""
+    """Get all available search flavours and thier attributes.
+
+    This endpoint allows you to retrieve an overview of the different
+    Data Reference Syntax (DRS) standards implemented in the Freva Databrowser
+    REST API. The DRS standards define the structure and metadata organisation
+    for climate datasets, and each standard offers specific attributes for
+    searching and filtering datasets.
+    """
     attributes = {}
     for flavour in Translator.flavours:
         translator = Translator(flavour)
@@ -55,7 +62,15 @@ async def intake_catalogue(
     max_results: Annotated[int, SolrSchema.params["max_results"]] = -1,
     request: Request = Required,
 ) -> StreamingResponse:
-    """Create an intake catalogue from a freva search."""
+    """Create an intake catalogue from a freva search.
+
+    This endpoint generates an intake-esm catalogue in JSON format from a
+    `freva` search. The catalogue includes metadata about the datasets found in
+    the search results. Intake-esm is a data cataloging system that allows
+    easy organization, discovery, and access to Earth System Model (ESM) data.
+    The generated catalogue can be used by tools compatible with intake-esm,
+    such as Pangeo.
+    """
     solr_search = await SolrSearch.validate_parameters(
         server_config,
         flavour=flavour,
@@ -94,7 +109,16 @@ async def metadata_search(
     ] = None,
     request: Request = Required,
 ) -> JSONResponse:
-    """Get the search facets."""
+    """Get the search facets.
+
+    This endpoint allows you to search metadata (facets) based on the
+    specified Data Reference Syntax (DRS) standard (`flavour`) and the type of
+    search result (`uniq_key`), which can be either `file` or `uri`.
+    Facets represent the metadata categories associated with the climate
+    datasets, such as experiment, model, institute, and more. This method
+    provides a comprehensive view of the available facets and their
+    corresponding counts based on the provided search criteria.
+    """
     solr_search = await SolrSearch.validate_parameters(
         server_config,
         flavour=flavour,
@@ -157,7 +181,15 @@ async def data_search(
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     request: Request = Required,
 ) -> StreamingResponse:
-    """Search for datasets."""
+    """Search for datasets.
+
+    This endpoint allows you to search for climate datasets based on the
+    specified Data Reference Syntax (DRS) standard (`flavour`) and the type of
+    search result (`uniq_key`), which can be either "file" or "uri". The
+    `databrowser` method provides a flexible and efficient way to query
+    datasets matching specific search criteria and retrieve a list of data
+    files or locations that meet the query parameters.
+    """
     solr_search = await SolrSearch.validate_parameters(
         server_config,
         flavour=flavour,
