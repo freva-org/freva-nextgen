@@ -21,6 +21,9 @@ requires-python = ">=3.9"
 dependencies = [
 "aiohttp",
 "fastapi",
+"dask",
+"xarray",
+"h5netcdf",
 "typer",
 "uvicorn",
 "python-dotenv",
@@ -29,6 +32,9 @@ dependencies = [
 "rich",
 "motor",
 "requests",
+"redis",
+"uuid",
+"typing_extensions",
 ]
 [project.scripts]
 freva-rest-server = "freva_rest.cli:cli"

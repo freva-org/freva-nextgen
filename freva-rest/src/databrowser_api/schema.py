@@ -1,6 +1,6 @@
 """Schema definitions for the FastAPI enpoints."""
 
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
 from urllib.parse import parse_qs
 
 from fastapi import Query, Request
@@ -9,6 +9,16 @@ from pydantic import BaseModel
 from .core import FlavourType
 
 Required: Any = Ellipsis
+
+LoadDict = TypedDict(
+    "LoadDict",
+    {
+        "status": Literal[0, 1, 2],
+        "url": str,
+        "obj": Optional[bytes],
+        "reason": str,
+    },
+)
 
 
 class SolrSchema:
@@ -81,3 +91,33 @@ class SearchFlavours(BaseModel):
 
     flavours: List[FlavourType]
     attributes: Dict[FlavourType, List[str]]
+
+
+class LoadFiles(BaseModel):
+    """Schema for the load file endpoint response."""
+
+    urls: List[str]
+
+
+class LoadStatus(BaseModel):
+    """Schema defining the status of loading dataset."""
+
+    status: Literal[0, 1, 2, 3]
+    """Status of the submitted jobs:
+        0: exit success
+        1: exit failed
+        2: in queue (submitted)
+        3: in progress
+    """
+    url: str
+    """url of the zarr dataset once finished."""
+    obj: Optional[bytes]
+    """pickled memory view of the opened dataset."""
+    reason: str
+    """if status = 1 reasone why opening the dataset failed."""
+
+    @classmethod
+    def from_dict(cls, load_dict: Optional[LoadDict]) -> "LoadStatus":
+        """Create an instance of the class from a normal python dict."""
+        load_dict = load_dict or {"status": 2, "obj": None, "reason": ""}
+        return cls(**load_dict)

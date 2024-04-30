@@ -2,13 +2,16 @@
 
 from typing import Annotated, List, Literal, Union
 
-from fastapi import HTTPException, Request
+from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse, StreamingResponse
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 
 from .core import FlavourType, SolrSearch, Translator
-from .schema import Required, SearchFlavours, SolrSchema
+from .schema import LoadFiles, Required, SearchFlavours, SolrSchema
+from .load_data import ProcessQueue
+
+FileQueue = ProcessQueue()
 
 
 @app.on_event("shutdown")
@@ -20,7 +23,7 @@ async def shutdown_event() -> None:
         logger.warning("Could not shutdown mongodb connection: %s", error)
 
 
-@app.get("/api/databrowser/overview")
+@app.get("/api/databrowser/overview", tags=["Data search"])
 async def overview() -> SearchFlavours:
     """Get all available search flavours and thier attributes."""
     attributes = {}
@@ -39,7 +42,10 @@ async def overview() -> SearchFlavours:
     )
 
 
-@app.get("/api/databrowser/intake_catalogue/{flavour}/{uniq_key}")
+@app.get(
+    "/api/databrowser/intake_catalogue/{flavour}/{uniq_key}",
+    tags=["Data search"],
+)
 async def intake_catalogue(
     flavour: FlavourType,
     uniq_key: Literal["file", "uri"],
@@ -74,7 +80,10 @@ async def intake_catalogue(
     )
 
 
-@app.get("/api/databrowser/metadata_search/{flavour}/{uniq_key}")
+@app.get(
+    "/api/databrowser/metadata_search/{flavour}/{uniq_key}",
+    tags=["Data search"],
+)
 async def metadata_search(
     flavour: FlavourType,
     uniq_key: Literal["file", "uri"],
@@ -104,7 +113,10 @@ async def metadata_search(
     return JSONResponse(content=output, status_code=status_code)
 
 
-@app.get("/api/databrowser/extended_search/{flavour}/{uniq_key}")
+@app.get(
+    "/api/databrowser/extended_search/{flavour}/{uniq_key}",
+    tags=["Data search"],
+)
 async def extended_search(
     flavour: FlavourType,
     uniq_key: Literal["file", "uri"],
@@ -134,7 +146,9 @@ async def extended_search(
     return JSONResponse(content=result.dict(), status_code=status_code)
 
 
-@app.get("/api/databrowser/data_search/{flavour}/{uniq_key}")
+@app.get(
+    "/api/databrowser/data_search/{flavour}/{uniq_key}", tags=["Data search"]
+)
 async def data_search(
     flavour: FlavourType,
     uniq_key: Literal["file", "uri"],
@@ -160,3 +174,34 @@ async def data_search(
         status_code=status_code,
         media_type="text/plain",
     )
+
+
+@app.get(
+    "/api/databrowser/load/{flavour}",
+    status_code=status.HTTP_201_CREATED,
+    response_model=LoadFiles,
+    tags=["Load data"],
+)
+async def load_data(
+    flavour: FlavourType,
+    start: Annotated[int, SolrSchema.params["start"]] = 0,
+    multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
+    translate: Annotated[bool, SolrSchema.params["translate"]] = True,
+    request: Request = Required,
+) -> LoadFiles:
+    """Search for datasets and stream the results as zarr."""
+    solr_search = await SolrSearch.validate_parameters(
+        server_config,
+        flavour=flavour,
+        uniq_key="uri",
+        start=start,
+        multi_version=multi_version,
+        translate=translate,
+        **SolrSchema.process_parameters(request),
+    )
+    status_code, result = await solr_search.init_stream()
+    await solr_search.store_results(result.total_count, status_code)
+    files: List[str] = []
+    async for uri_str in solr_search.stream_response(result):
+        files.append(await FileQueue.spawn(uri_str.strip()))
+    return LoadFiles(urls=files)

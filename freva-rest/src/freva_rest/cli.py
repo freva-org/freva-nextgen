@@ -45,7 +45,11 @@ def start(
     workers = {False: int(os.environ.get("API_WORKER", 8)), True: None}
     with NamedTemporaryFile(suffix=".conf", prefix="env") as temp_f:
         Path(temp_f.name).write_text(
-            (f"DEBUG={int(debug)}\n" f"API_CONFIG={defaults['API_CONFIG']}"),
+            (
+                f"DEBUG={int(debug)}\n"
+                f"API_CONFIG={defaults['API_CONFIG']}\n"
+                f"API_PORT={port}"
+            ),
             encoding="utf-8",
         )
         uvicorn.run(
