@@ -1,6 +1,4 @@
-"""Rest API for the freva framework."""
-
-__version__ = "2403.0.2"
+__version__ = "2403.0.3"
 __all__ = ["__version__"]
 
 
