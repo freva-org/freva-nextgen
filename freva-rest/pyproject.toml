@@ -33,6 +33,8 @@ dependencies = [
 "motor",
 "requests",
 "redis",
+"pika",
+"paramiko",
 "uuid",
 "typing_extensions",
 ]

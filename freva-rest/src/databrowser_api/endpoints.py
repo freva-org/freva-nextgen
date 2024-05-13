@@ -1,17 +1,18 @@
 """Main script that runs the rest API."""
 
+import os
+import json
 from typing import Annotated, List, Literal, Union
+import uuid
 
 from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse, StreamingResponse
 from freva_rest.logger import logger
+from freva_rest.utils import send_borker_message
 from freva_rest.rest import app, server_config
 
 from .core import FlavourType, SolrSearch, Translator
 from .schema import LoadFiles, Required, SearchFlavours, SolrSchema
-from .load_data import ProcessQueue
-
-FileQueue = ProcessQueue()
 
 
 @app.on_event("shutdown")
@@ -234,6 +235,10 @@ async def load_data(
     status_code, result = await solr_search.init_stream()
     await solr_search.store_results(result.total_count, status_code)
     files: List[str] = []
+    api_path = f"{os.environ['API_URL']}/api/freva-data-portal/zarr"
     async for uri_str in solr_search.stream_response(result):
-        files.append(await FileQueue.spawn(uri_str.strip()))
+        uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, uri_str.strip()))
+        out = {"uri": {"path": uri_str.strip(), "uuid": uuid5}}
+        await send_borker_message(json.dumps(out).encode())
+        files.append(f"{api_path}/{uuid5}")
     return LoadFiles(urls=files)

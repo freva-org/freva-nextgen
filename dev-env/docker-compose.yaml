@@ -22,3 +22,12 @@ services:
       MONGO_INITDB_DATABASE: search_stats
     ports:
       - "27017:27017"
+  broker:
+    image: rabbitmq
+    environment:
+      RABBITMQ_NODE_PORT: 5672
+      RABBITMQ_DEFAULT_USER: rabbit
+      RABBITMQ_DEFAULT_PASS: secret
+    ports:
+      - "5672:5672"
+      - "15672:15672"

@@ -21,7 +21,7 @@ rest service counterparts.
 
 ## Installation
 
-1. Make sure you have Python 3.11+ installed.
+1. Make sure you have Python 3.8+ installed.
 2. Clone this repository:
 
 ```console
@@ -29,21 +29,13 @@ git clone git@github.com:FREVA-CLINT/databrowserAPI.git
 cd databrowserAPI
 ```
 
-3. Install flit:
-Flit is used as the build system for development purpose. Install flit
-into your current python environment:
-
-```console
-python3 -m pip install flit
-```
-
-4. Install the rest-api:
+3. Install the rest-api:
 
 ```console
 pip install -e freva-rest
 ```
 
-5. Install the client library
+4. Install the client library
 
 ```console
 pip install -e freva-client
