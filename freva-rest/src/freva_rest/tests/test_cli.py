@@ -1,13 +1,13 @@
 """Test the command line interface cli."""
+
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import TracebackType
 
 import mock
+from freva_rest.cli import cli
 from pytest_mock import MockerFixture
 from typer.testing import CliRunner
-
-from databrowser.cli import cli
 
 
 class MockTempfile:
@@ -37,12 +37,13 @@ def test_cli(mocker: MockerFixture) -> None:
     mock_run = mocker.patch("uvicorn.run")
     with TemporaryDirectory() as temp_dir:
         MockTempfile.temp_dir = temp_dir
-        with mock.patch("databrowser.cli.NamedTemporaryFile", MockTempfile):
+        with mock.patch("freva_rest.cli.NamedTemporaryFile", MockTempfile):
             runner = CliRunner()
-            result1 = runner.invoke(cli, ["--dev"])
+            result1 = runner.invoke(cli, ["--dev", "--no-debug"])
             assert result1.exit_code == 0
+            print(result1.stdout)
             mock_run.assert_called_once_with(
-                "databrowser.run:app",
+                "freva_rest.api:app",
                 host="0.0.0.0",
                 port=8080,
                 reload=True,
@@ -50,10 +51,10 @@ def test_cli(mocker: MockerFixture) -> None:
                 workers=None,
                 env_file=str(Path(temp_dir) / "foo.txt"),
             )
-            result2 = runner.invoke(cli, ["--debug"])
+            result2 = runner.invoke(cli, ["--debug", "--no-dev"])
             assert result2.exit_code == 0
             mock_run.assert_called_with(
-                "databrowser.run:app",
+                "freva_rest.api:app",
                 host="0.0.0.0",
                 port=8080,
                 reload=False,

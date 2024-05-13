@@ -1,40 +1,3 @@
-[build-system]
-requires = ["flit_core >=3.2"]
-build-backend = "flit_core.buildapi"
-[project]
-name = "databrowser"
-description = "RestAPI for searching for climate data based on key-value pairs"
-authors = [{name = "DKRZ, Clint", email = "freva@dkrz.de"}]
-readme = "README.md"
-license = {file = "LICENSE"}
-classifiers = [
-               "Development Status :: 3 - Alpha",
-               "Environment :: Console",
-               "Intended Audience :: Developers",
-               "Intended Audience :: Science/Research",
-               "License :: OSI Approved :: BSD License",
-               "Operating System :: POSIX :: Linux",
-               "Programming Language :: Python :: 3",
-]
-dynamic = ["version"]
-requires-python = ">=3.11"
-dependencies = [
-"aiohttp",
-"fastapi",
-"typer",
-"uvicorn",
-"python-dotenv",
-"python-dateutil",
-"tomli",
-"rich",
-"motor",
-"requests",
-]
-[project.urls]
-Documentation = "https://freva-clint.github.io/databrowserAPI"
-Issues = "https://github.com/FREVA-CLINT/databrowserAPI/issues"
-Source = "https://github.com/FREVA-CLINT/databrowserAPI/"
-
 [tool.pytest.ini_options]
 env = [
     "MONGO_HOST=localhost:27017",
@@ -42,17 +5,15 @@ env = [
     "MONGO_USER=mongo",
     "MONGO_PASSWORD=secret",
     "SOLR_HOST=localhost:8983",
-    "SOLR_CORE=files"
+    "SOLR_CORE=files",
+    "FREVA_CONFIG=${PWD}/dev-env/freva.toml",
 ]
-
-[project.optional-dependencies]
-dev = [ "tox", "flit"]
-
+filterwarnings = ["ignore::UserWarning"]
 [tool.flake8]
-ignore = "F405"
+ignore = ["F405", "F403"]
 
 [tool.mypy]
-files = "src/databrowser"
+files = "freva-*/src"
 strict = true
 warn_unused_ignores = true
 warn_unreachable = true
@@ -67,21 +28,20 @@ disallow_untyped_decorators = true
 warn_redundant_casts = true
 ignore_missing_imports = true
 
-[package-data]
-freva_storage_service = ["py.typed"]
-
 [tool.tox]
 legacy_tox_ini = """
 [tox]
 min_version = 4.0
-env_list = types, lint, test
+env_list = docs, lint, types
 passenv = *
 [testenv]
 passenv = *
 parallel_show_output = false
 [testenv:test]
+description = "Run the unit tests."
 deps = -c {toxinidir}/.github/dependabot/constraints.txt
-       -e .
+       -e ./freva-rest
+       -e ./freva-client
        httpx
        pytest
        pytest-asyncio
@@ -91,46 +51,65 @@ deps = -c {toxinidir}/.github/dependabot/constraints.txt
        pymongo
        pytest-env
 
+commands_pre = - python3 {toxinidir}/run_server.py freva-rest-server -c {toxinidir}/api_config.toml --debug --dev
+commands_post = - python3 {toxinidir}/run_server.py --kill
 commands =
-    pytest -vv --cov=src --cov-report=html:coverage_report --junitxml report.xml --cov-report xml src/databrowser/tests
+    pytest -vv --cov=freva-rest --cov=freva-client --cov-report=html:coverage_report --junitxml report.xml --cov-report xml .
     python3 -m coverage report --fail-under=98.5 --precision=2
 [testenv:docs]
-deps = .
+description = "Create the documentation."
+deps = -e ./freva-rest
+       -e ./freva-client
+       sphinx-execute-code-python3
        sphinx-code-tabs
        sphinx-copybutton
+       sphinx-sitemap
+       sphinx-togglebutton
        sphinxcontrib-httpdomain
        pydata-sphinx-theme
+setenv =
+    FREVA_CONFIG = {toxinidir}/dev-env/freva.toml
 allowlist_externals = make
 commands = make -C docs clean
            make -C docs html
+commands_pre =  python3 {toxinidir}/run_server.py python -m freva_rest.cli -c {toxinidir}/api_config.toml --debug --dev
+commands_post = - python3 {toxinidir}/run_server.py --kill
 [testenv:lint]
-deps = .
+description = "Check code quality."
+deps = -e ./freva-rest
+       -e ./freva-client
        black
        isort
        flake8
        pytest-stub
 commands =
-    isort --check --profile black -t py311 -l 79 src
-    flake8 src/databrowser --count --max-complexity=8 --ignore=F405,W503 --max-line-length=88 --statistics --show-source
+    python3 -m isort --check --profile black -t py311 -l 79 freva-rest/src
+    python3 -m isort --check --profile black -t py311 -l 79 freva-client/src
+    python3 -m flake8 freva-client/src --count --max-complexity=8 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
+    python3 -m flake8 freva-rest/src --count --max-complexity=8 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
+commands_post =
 [testenv:types]
-deps = .
+description = "Static type checking."
+deps = ./freva-rest
        mypy
        motor-stubs
        pytest-stub
-commands = mypy --install-types --non-interactive
+       appdirs
+commands_post =
+commands = python3 -m mypy --install-types --non-interactive
 [testenv:release]
 deps = git-python
        packaging
        requests
        tomli
-commands = python3 bump.py tag databrowser
+commands = python3 bump.py tag freva_rest -p freva-rest
 allowlist_externals = rm
                       curl
 commands_pre = curl -H 'Cache-Control: no-cache' -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/main/release.py
 commands_post = rm bump.py
 [testenv:bump]
-commands = python3 bump.py deploy databrowser -v
-commands_pre = curl -H 'Cache-Control: no-cache' -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/main/release.py
+commands = python3 bump.py deploy databrowser -b versions -v
+commands_pre = curl -H 'Cache-Control: no-cache' -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/versions/release.py
 allowlist_externals = rm
                       curl
 commands_post = rm bump.py

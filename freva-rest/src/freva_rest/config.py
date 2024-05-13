@@ -45,62 +45,51 @@ class ServerConfig:
         Set the logging level to DEBUG
     """
 
-    config_file: Path = Path(
-        os.environ.get("API_CONFIG") or defaults["API_CONFIG"]
-    )
+    config_file: Path = Path(os.environ.get("API_CONFIG") or defaults["API_CONFIG"])
     debug: bool = False
 
     def __post_init__(self) -> None:
+        self.set_debug(self.debug)
         try:
             self._config = tomli.loads(self.config_file.read_text("utf-8"))
         except Exception as error:
-            logger.warning("Failed to load %s", error)
-            self._config = tomli.loads(
-                defaults["API_CONFIG"].read_text("utf-8")
-            )
-        if self.debug:
-            self.set_debug()
+            logger.critical("Failed to load %s", error)
+            self._config = tomli.loads(defaults["API_CONFIG"].read_text("utf-8"))
         self.mongo_client = AsyncIOMotorClient(
             self.mongo_url, serverSelectionTimeoutMS=5000
         )
-        self.mongo_collection = self.mongo_client[self.mongo_db][
-            "search_queries"
-        ]
+        self.mongo_collection = self.mongo_client[self.mongo_db]["search_queries"]
         self._solr_fields = self._get_solr_fields()
 
     def reload(self) -> None:
         """Reload the configuration."""
-        self.config_file = Path(
-            os.environ.get("API_CONFIG") or defaults["API_CONFIG"]
-        )
+        self.config_file = Path(os.environ.get("API_CONFIG") or defaults["API_CONFIG"])
         self.debug = defaults["DEBUG"]
         self.__post_init__()
 
     @property
     def mongo_url(self) -> str:
         """Get the url to the mongodb."""
-        host = self._config.get("mongo_db", {}).get(
-            "hostname", ""
-        ) or os.environ.get("MONGO_HOST", "localhost")
-        host, _, m_port = host.partition(":")
-        port = m_port or str(
-            self._config.get("mongo_db", {}).get("port", 27017)
+        host = self._config.get("mongo_db", {}).get("hostname", "") or os.environ.get(
+            "MONGO_HOST", "localhost"
         )
-        user = self._config.get("mongo_db", {}).get(
-            "user", ""
-        ) or os.environ.get("MONGO_USER", "mongo")
-        passwd = self._config.get("mongo_db", {}).get(
-            "password", ""
-        ) or os.environ.get("MONGO_PASSWORD", "secret")
+        host, _, m_port = host.partition(":")
+        port = m_port or str(self._config.get("mongo_db", {}).get("port", 27017))
+        user = self._config.get("mongo_db", {}).get("user", "") or os.environ.get(
+            "MONGO_USER", "mongo"
+        )
+        passwd = self._config.get("mongo_db", {}).get("password", "") or os.environ.get(
+            "MONGO_PASSWORD", "secret"
+        )
 
         return f"mongodb://{user}:{passwd}@{host}:{port}"
 
     @property
     def mongo_db(self) -> str:
         """Get the database name where the stats is stored."""
-        return self._config.get("mongo_db", {}).get(
-            "name", ""
-        ) or os.environ.get("MONGO_DB", "search_stats")
+        return self._config.get("mongo_db", {}).get("name", "") or os.environ.get(
+            "MONGO_DB", "search_stats"
+        )
 
     @cached_property
     def solr_fields(self) -> List[str]:
@@ -110,13 +99,17 @@ class ServerConfig:
     @property
     def log_level(self) -> int:
         """Get the name of the current logger level."""
-        return defaults["LOGGER"].level
+        return logger.getEffectiveLevel()
 
     @staticmethod
-    def set_debug() -> None:
+    def set_debug(debug: bool) -> None:
         """Set the logger levels to debug."""
-        logger.setLevel(logging.DEBUG)
-        logger_file_handle.setLevel(logging.DEBUG)
+        if debug:
+            level = logging.DEBUG
+        else:
+            level = logging.INFO
+        logger.setLevel(level)
+        logger_file_handle.setLevel(level)
 
     @property
     def solr_cores(self) -> Tuple[str, str]:
@@ -155,10 +148,6 @@ class ServerConfig:
                     "name"
                 ] not in ("file_name", "file", "file_no_version"):
                     yield entry["name"]
-        except (
-            requests.exceptions.ConnectionError
-        ) as error:  # pragma: no cover
-            logger.error(
-                "Connection to %s failed: %s", url, error
-            )  # pragma: no cover
+        except requests.exceptions.ConnectionError as error:  # pragma: no cover
+            logger.error("Connection to %s failed: %s", url, error)  # pragma: no cover
             yield ""  # pragma: no cover

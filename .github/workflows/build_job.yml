@@ -69,7 +69,7 @@ jobs:
         id: repository
         run: |
           echo "repo=$(echo ${{ github.repository }}|tr 'A-Z' 'a-z')" >> $GITHUB_OUTPUT
-          echo "tag=$(python src/databrowser/__init__.py)" >> $GITHUB_OUTPUT
+          echo "tag=$(python freva-rest/src/freva_rest/__init__.py)" >> $GITHUB_OUTPUT
 
       -
         name: Set up QEMU
@@ -88,15 +88,15 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       -
-        name: Build and push databrowserAPI image
+        name: Build and push freva-rest API image
         uses: docker/build-push-action@v4
         with:
           build-args: VERSION=${{steps.repository.outputs.tag}}
           platforms: linux/amd64
           push: true
           tags: |
-            ghcr.io/${{ steps.repository.outputs.repo }}:${{ steps.repository.outputs.tag }}
-            ghcr.io/${{ steps.repository.outputs.repo }}:latest
+            ghcr.io/freva-clint/freva-rest-api:${{ steps.repository.outputs.tag }}
+            ghcr.io/freva-clint/freva-rest-api:latest
 
   bump-databrowser-version:
     runs-on: ubuntu-latest
@@ -126,7 +126,7 @@ jobs:
         id: repository
         run: |
           echo "repo=$(echo ${{ github.repository }}|tr 'A-Z' 'a-z')" >> $GITHUB_OUTPUT
-          echo "tag=$(python src/databrowser/__init__.py)" >> $GITHUB_OUTPUT
+          echo "tag=$(python freva-rest/src/freva_rest/__init__.py)" >> $GITHUB_OUTPUT
 
       - name: Installing dependencies
         run: pip install git-python packaging tomli requests
@@ -135,7 +135,7 @@ jobs:
         run: curl -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/versions/release.py
 
       - name: Do the release job
-        run: python3 bump.py deploy databrowser -b versions -v -s solr ${{steps.solr.outputs.tag}}
+        run: python3 bump.py deploy freva_rest -p freva-rest -v -s solr ${{steps.solr.outputs.tag}}
         env:
           GITHUB_TOKEN: ${{secrets.ACCESS_TOKEN}}
           REPO_VERSION: ${{ steps.repository.outputs.tag }}

@@ -1,5 +1,5 @@
-API Reference
-=============
+Databrowser Rest API
+====================
 The Freva Databrowser REST API is a powerful tool that enables you to search
 for climate and environmental datasets seamlessly in various programming
 languages. By generating RESTful requests, you can effortlessly access
@@ -14,7 +14,7 @@ request capabilities, the Freva Databrowser REST API accommodates your needs.
 
 
 
-.. _overview:
+.. _databrowser-api-overview:
 
 Getting an overview
 -------------------
@@ -144,7 +144,7 @@ Getting an overview
 
 ---
 
-.. _databrowser:
+.. _databrowser-api-search:
 
 Searching for datasets locations
 ---------------------------------
@@ -319,7 +319,7 @@ Make the most of the `databrowser` endpoint to access valuable climate data
 effortlessly in the Freva Databrowser REST API!
 
 
-.. _search_facets:
+.. _databrowser-api-search_facets:
 
 Searching for metadata
 ----------------------
@@ -540,7 +540,7 @@ Searching for metadata
 
 ---
 
-.. _intake:
+.. _databrowser-api-intake:
 
 Generating an intake-esm catalogue
 ----------------------------------

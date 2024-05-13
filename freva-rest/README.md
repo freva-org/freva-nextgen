@@ -40,13 +40,15 @@ python3 -m pip install flit
 4. Install the rest-api:
 
 ```console
-pip install -e freva-rest
+cd freva-rest
+flit install -s --deps=all
 ```
 
 5. Install the client library
 
 ```console
-pip install -e freva-client
+cd freva-client
+flit install -s --deps=all
 ```
 
 ## Development Environment

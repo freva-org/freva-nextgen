@@ -15,7 +15,7 @@ logging.basicConfig(
 logger = logging.getLogger("container-check")
 
 
-def check_container(container_name: str = "databrowser") -> None:
+def check_container(container_name: str = "freva-rest") -> None:
     """Check if the contianer starts up."""
     try:
         process = subprocess.Popen(

@@ -1,0 +1,19 @@
+## The new freva configuration file.
+## This configuration files follows toml (https://toml.io) syntax and replaces
+## the old evaluation_system.conf file.
+#
+[freva]
+## This section configures the freva client. All settings related to freva
+## are set here.
+##
+## The name of the specific freva instance. If you use multiple configurations
+## for different freva instances the `project_name` entry allows you to
+## later identify which configuration you were using.
+# project_name = "freva"
+
+##
+## The host that runs the freva api system. In most cases this is just the
+## url of the freva webpage, such as https://www.freva.dkrz.de.
+## You can set a port by separating <hostname:port>
+## for example freva.example.org:7777
+# host = ""
