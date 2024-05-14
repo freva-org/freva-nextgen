@@ -8,30 +8,10 @@ from enum import Enum
 from typing import Dict, List, Literal, Optional, Union, cast
 
 import typer
-from freva_client import __version__
-from freva_databrowser.query import databrowser
-from freva_databrowser.utils import (
-    APP_NAME,
-    exception_handler,
-    logger,
-    parse_cli_args,
-)
-from rich import print as pprint
-
-
-def version_callback(version: bool) -> None:
-    """Print the version and exit."""
-    if version:
-        pprint(f"{APP_NAME}: {__version__}")
-        raise typer.Exit()
-
-
-app = typer.Typer(
-    name=APP_NAME,
-    help=__doc__,
-    add_completion=False,
-    callback=logger.set_cli,
-)
+from freva_client import __version__, databrowser
+from freva_client.utils import logger, exception_handler
+from .cli_app import app, version_callback
+from .cli_utils import parse_cli_args
 
 
 class UniqKeys(str, Enum):
@@ -74,7 +54,10 @@ class TimeSelect(str, Enum):
         )
 
 
-@app.command(name="overview", help="Get an overview over what is available.")
+@app.command(
+    name="data-overview",
+    help="Get an overview over what is available in the databrowser.",
+)
 @exception_handler
 def overview(
     host: Optional[str] = typer.Option(
@@ -90,7 +73,9 @@ def overview(
     print(databrowser.overview(host=host))
 
 
-@app.command(name="metadata-search", help="Search for metadata (facets).")
+@app.command(
+    name="metadata-search", help="Search databrowser for metadata (facets)."
+)
 @exception_handler
 def metadata_search(
     search_keys: Optional[List[str]] = typer.Argument(
@@ -160,7 +145,9 @@ def metadata_search(
     parse_json: bool = typer.Option(
         False, "-j", "--json", help="Parse output in json format."
     ),
-    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
+    verbose: int = typer.Option(
+        0, "-v", help="Increase verbosity", count=True
+    ),
     version: Optional[bool] = typer.Option(
         False,
         "-V",
@@ -182,7 +169,9 @@ def metadata_search(
     result = databrowser.metadata_search(
         *(facets or []),
         time=time or "",
-        time_select=cast(Literal["file", "flexible", "strict"], time_select.value),
+        time_select=cast(
+            Literal["file", "flexible", "strict"], time_select.value
+        ),
         flavour=cast(
             Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
             flavour.value,
@@ -200,7 +189,7 @@ def metadata_search(
         print(f"{key}: {', '.join(values)}")
 
 
-@app.command(name="data-search", help="Search for datasets.")
+@app.command(name="data-search", help="Search the databrowser for datasets.")
 @exception_handler
 def data_search(
     search_keys: Optional[List[str]] = typer.Argument(
@@ -269,7 +258,9 @@ def data_search(
             "the hostname is read from a config file"
         ),
     ),
-    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
+    verbose: int = typer.Option(
+        0, "-v", help="Increase verbosity", count=True
+    ),
     multiversion: bool = typer.Option(
         False,
         "--mulit-version",
@@ -312,7 +303,7 @@ def data_search(
             print(res)
 
 
-@app.command(name="count", help="Count the search results")
+@app.command(name="data-count", help="Count the databrowser search results")
 @exception_handler
 def count_values(
     search_keys: Optional[List[str]] = typer.Argument(
@@ -388,7 +379,9 @@ def count_values(
     parse_json: bool = typer.Option(
         False, "-j", "--json", help="Parse output in json format."
     ),
-    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
+    verbose: int = typer.Option(
+        0, "-v", help="Increase verbosity", count=True
+    ),
     version: Optional[bool] = typer.Option(
         False,
         "-V",
@@ -415,7 +408,9 @@ def count_values(
         result = databrowser.count_values(
             *facets,
             time=time or "",
-            time_select=cast(Literal["file", "flexible", "strict"], time_select),
+            time_select=cast(
+                Literal["file", "flexible", "strict"], time_select
+            ),
             flavour=cast(
                 Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
                 flavour.value,
@@ -431,7 +426,9 @@ def count_values(
             databrowser(
                 *facets,
                 time=time or "",
-                time_select=cast(Literal["file", "flexible", "strict"], time_select),
+                time_select=cast(
+                    Literal["file", "flexible", "strict"], time_select
+                ),
                 flavour=cast(
                     Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
                     flavour.value,

@@ -1,59 +1,18 @@
 """Various utilities for getting the databrowser working."""
 
-import logging
 import os
 import sys
 import sysconfig
 from configparser import ConfigParser, ExtendedInterpolation
-from functools import cached_property, wraps
+from functools import cached_property
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, cast
+from typing import Any, Dict, Literal, Optional, Tuple, cast
 
 import appdirs
 import requests
 import tomli
-from rich import print as pprint
 
-from .logger import Logger
-
-APP_NAME: str = "freva-databrowser"
-
-logger: Logger = cast(Logger, logging.getLogger(APP_NAME))
-
-
-def parse_cli_args(cli_args: List[str]) -> Dict[str, List[str]]:
-    """Convert the cli arguments to a dictionary."""
-    logger.debug("parsing command line arguments.")
-    kwargs = {}
-    for entry in cli_args:
-        key, _, value = entry.partition("=")
-        if value and key not in kwargs:
-            kwargs[key] = [value]
-        elif value:
-            kwargs[key].append(value)
-    logger.debug(kwargs)
-    return kwargs
-
-
-def exception_handler(func: Callable[..., Any]) -> Callable[..., Any]:
-    """Wrap an exception handler around the cli functions."""
-
-    @wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
-        """Wrapper function that handles the exeption."""
-        try:
-            return func(*args, **kwargs)
-        except KeyboardInterrupt:
-            pprint("[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr)
-            raise SystemExit(150) from None
-        except BaseException as error:
-            if logger.getEffectiveLevel() <= logging.DEBUG:
-                logger.exception(error)
-            else:
-                logger.error(error)
-            raise SystemExit(1) from None
-
-    return wrapper
+from freva_client.utils import logger
 
 
 class Config:
