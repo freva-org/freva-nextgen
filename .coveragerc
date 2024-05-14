@@ -21,6 +21,9 @@ exclude_lines =
     except ImportError:
     raise SystemExit
 
+    # Don't complain about the Completer class
+    class Completer
+
     # Don't complain if non-runnable code isn't run:
     if 0:
     if perf_file *:
