@@ -14,8 +14,8 @@ TLDR: Too long didn't read
 To query data databrowser and search for data you have three different options.
 You can the to following methods
 
-- :py:class:`databrowser`: The main class for searching data is the
-  :py:class:`freva.databrowser` class. After creating in instance of the
+- :py:class:`freva_client.databrowser`: The main class for searching data is the
+  :py:class:`freva_client.databrowser` class. After creating in instance of the
   databrowser class with your specific search constraints you can get retrieve
   all *files* or *uris* that matching your search constraints. You can also
   retrieve a count of the number objects matching the search, as well as
@@ -24,11 +24,11 @@ You can the to following methods
   can be useful to get information on the storage system where the *files*
   or object stores are located.
 
-- :py:meth:`databrowser.metadata_search`: This class method lists all search
-  categories (facets) and their values.
+- :py:meth:`freva_client.databrowser.metadata_search`: This class method lists
+  all search categories (facets) and their values.
 
-- :py:meth:`freva.count_values`: You can count the occurrences of
-  search results with this method.
+- :py:meth:`freva_client.databrowser.count_values`: You can count the 
+  occurrences of search results with this method.
 
 
 Library Reference

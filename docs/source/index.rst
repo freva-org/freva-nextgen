@@ -52,12 +52,22 @@ Installation of the client library is straight forward and can be achieved via:
 
 .. code:: console
 
-    python3 -m pip install freva-databrowser
+    python3 -m pip install freva-client
 
 After successful installation you will also have to following command line
 interfaces (cli) available:
 
-- ``freva-databrowser``: cli to search for data.
+.. code:: console
+
+    freva-client --help
+
+.. execute_code::
+   :hide_code:
+
+   from subprocess import run, PIPE
+   res = run(["freva-client", "--help"], check=True, stdout=PIPE, stderr=PIPE)
+   print(res.stdout.decode())
+
 
 Configuration
 +++++++++++++
