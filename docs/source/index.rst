@@ -13,8 +13,8 @@ Freva: The free evaluation system
 .. image:: https://img.shields.io/badge/License-BSD-purple.svg
    :target: LICENSE
 
-.. image:: https://img.shields.io/badge/python-3.12-red.svg
-   :target: https://www.python.org/downloads/release/python-312/
+.. image:: https://img.shields.io/pypi/pyversions/freva-client.svg
+   :target: https://pypi.org/project/freva-client
 
 .. image:: https://img.shields.io/badge/ViewOn-GitHub-purple
    :target: https://github.com/FREVA-CLINT/freva-nextgen

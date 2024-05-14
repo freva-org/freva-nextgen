@@ -170,7 +170,7 @@ jobs:
         run: pip install git-python packaging tomli requests
 
       - name: Getting realease job
-        run: curl -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/versions/release.py
+        run: curl -H 'Cache-Control: no-cache' -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/main/release.py
 
       - name: Do the release job
         run: python3 bump.py deploy freva_rest -p freva-rest -v -s solr ${{steps.solr.outputs.tag}}
