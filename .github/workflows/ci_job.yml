@@ -39,7 +39,7 @@ jobs:
     strategy:
       max-parallel: 5
       matrix:
-        python-version: [3.9, "3.10", "3.11", "3.12"]
+        python-version: [3.8, 3.9, "3.10", "3.11", "3.12"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -61,7 +61,7 @@ jobs:
       - name: Starting the local server
         run: |
           python -m freva_rest.cli -c api_config.toml --debug --dev &
-      - name: Waiting for 10 sec
+      - name: Waiting for 5 sec
         run: sleep 5
       - name: Run tests
         run: tox -e test

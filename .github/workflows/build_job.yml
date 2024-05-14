@@ -27,9 +27,17 @@ jobs:
       - name: Set up services
         run: |
           docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
-      - name: Install dependencies
+      - name: Install freva rest dependencies
         run: |
-          python3 -m pip install tox
+          python3 -m pip install -e .[dev] tox
+        working-directory: ./freva-rest
+      - name: Adjusting PATH variable
+        run: echo "~/.local/bin" >> $GITHUB_PATH
+      - name: Starting the local server
+        run: |
+          python -m freva_rest.cli -c api_config.toml --debug --dev &
+      - name: Waiting for 5 sec
+        run: sleep 5
       - name: Creating docs
         run: tox -e docs
       - name: Setup Pages

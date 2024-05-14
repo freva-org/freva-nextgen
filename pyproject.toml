@@ -72,7 +72,7 @@ setenv =
 allowlist_externals = make
 commands = make -C docs clean
            make -C docs html
-commands_pre =  python3 {toxinidir}/run_server.py python -m freva_rest.cli -c {toxinidir}/api_config.toml --debug --dev
+commands_pre = - python3 {toxinidir}/run_server.py python -m freva_rest.cli -c {toxinidir}/api_config.toml --debug --dev
 commands_post = - python3 {toxinidir}/run_server.py --kill
 [testenv:lint]
 description = "Check code quality."
