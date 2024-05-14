@@ -16,5 +16,5 @@ need to apply data analysis plugins, please visit the
 
 from .query import databrowser
 
-__version__ = "2404.0.0"
+__version__ = "2404.0.1"
 __all__ = ["databrowser", "__version__"]
