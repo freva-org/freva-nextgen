@@ -17,13 +17,13 @@ Freva: The free evaluation system
    :target: https://www.python.org/downloads/release/python-312/
 
 .. image:: https://img.shields.io/badge/ViewOn-GitHub-purple
-   :target: https://github.com/FREVA-CLINT/databrowserAPI
+   :target: https://github.com/FREVA-CLINT/freva-nextgen
 
-.. image:: https://github.com/FREVA-CLINT/databrowserAPI/actions/workflows/ci_job.yml/badge.svg
-   :target: https://github.com/FREVA-CLINT/databrowserAPI/actions
+.. image:: https://github.com/FREVA-CLINT/freva-nextgen/actions/workflows/ci_job.yml/badge.svg
+   :target: https://github.com/FREVA-CLINT/freva-nextgen/actions
 
-.. image:: https://codecov.io/github/FREVA-CLINT/databrowserAPI/branch/init/graph/badge.svg?token=dGhXxh7uP3
-   :target: https://codecov.io/github/FREVA-CLINT/databrowserAPI
+.. image:: https://codecov.io/github/FREVA-CLINT/freva-nextgen/branch/init/graph/badge.svg?token=dGhXxh7uP3
+   :target: https://codecov.io/github/FREVA-CLINT/freva-nextgen
 
 
 Freva, the free evaluation system framework, is a data search and analysis
@@ -52,12 +52,22 @@ Installation of the client library is straight forward and can be achieved via:
 
 .. code:: console
 
-    python3 -m pip install freva-databrowser
+    python3 -m pip install freva-client
 
 After successful installation you will also have to following command line
 interfaces (cli) available:
 
-- ``freva-databrowser``: cli to search for data.
+.. code:: console
+
+    freva-client --help
+
+.. execute_code::
+   :hide_code:
+
+   from subprocess import run, PIPE
+   res = run(["freva-client", "--help"], check=True, stdout=PIPE, stderr=PIPE)
+   print(res.stdout.decode())
+
 
 Configuration
 +++++++++++++

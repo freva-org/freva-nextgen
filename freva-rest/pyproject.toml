@@ -33,9 +33,9 @@ dependencies = [
 [project.scripts]
 freva-rest-server = "freva_rest.cli:cli"
 [project.urls]
-Documentation = "https://freva-clint.github.io/databrowserAPI"
-Issues = "https://github.com/FREVA-CLINT/databrowserAPI/issues"
-Source = "https://github.com/FREVA-CLINT/databrowserAPI/"
+Documentation = "https://freva-clint.github.io/freva-nextgen"
+Issues = "https://github.com/FREVA-CLINT/freva-nextgen/issues"
+Source = "https://github.com/FREVA-CLINT/freva-nextgen/"
 
 [project.optional-dependencies]
 dev = ["tox"]

@@ -10,9 +10,8 @@ import requests
 import yaml
 from rich import print as pprint
 
-from .utils import Config, logger
-
-__version__ = "2404.0.0"
+from .utils import logger
+from .utils.databrowser_utils import Config
 
 __all__ = ["databrowser"]
 
@@ -156,9 +155,7 @@ class databrowser:
         self,
         *facets: str,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems"
-        ] = "freva",
+        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -191,8 +188,7 @@ class databrowser:
         self, facets: Tuple[str, ...], search_kw: Dict[str, List[str]]
     ) -> None:
         metadata = {
-            k: v[::2]
-            for (k, v) in self._facet_search(extended_search=True).items()
+            k: v[::2] for (k, v) in self._facet_search(extended_search=True).items()
         }
         primary_key = list(metadata.keys() or ["project"])[0]
         num_facets = 0
@@ -217,9 +213,7 @@ class databrowser:
                 for res in result.iter_lines():
                     yield res.decode("utf-8")
             except KeyboardInterrupt:
-                pprint(
-                    "[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr
-                )
+                pprint("[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr)
 
     def __repr__(self) -> str:
         params = ", ".join(
@@ -246,9 +240,7 @@ class databrowser:
 
         # Create a table-like structure for available flavors and search facets
         style = 'style="text-align: left"'
-        facet_heading = (
-            f"Available search facets for <em>{self._flavour}</em> flavour"
-        )
+        facet_heading = f"Available search facets for <em>{self._flavour}</em> flavour"
         html_repr = (
             "<table>"
             f"<tr><th colspan='2' {style}>{self.__class__.__name__}"
@@ -286,9 +278,7 @@ class databrowser:
     def count_values(
         cls,
         *facets: str,
-        flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems"
-        ] = "freva",
+        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -385,9 +375,7 @@ class databrowser:
         result = this._facet_search(extended_search=extended_search)
         counts = {}
         for facet, value_counts in result.items():
-            counts[facet] = dict(
-                zip(value_counts[::2], map(int, value_counts[1::2]))
-            )
+            counts[facet] = dict(zip(value_counts[::2], map(int, value_counts[1::2])))
         return counts
 
     @cached_property
@@ -412,17 +400,14 @@ class databrowser:
 
         """
         return {
-            k: v[::2]
-            for (k, v) in self._facet_search(extended_search=True).items()
+            k: v[::2] for (k, v) in self._facet_search(extended_search=True).items()
         }
 
     @classmethod
     def metadata_search(
         cls,
         *facets: str,
-        flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems"
-        ] = "freva",
+        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -544,9 +529,7 @@ class databrowser:
         )
         return {
             k: v[::2]
-            for (k, v) in this._facet_search(
-                extended_search=extended_search
-            ).items()
+            for (k, v) in this._facet_search(extended_search=extended_search).items()
         }
 
     @classmethod

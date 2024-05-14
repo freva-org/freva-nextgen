@@ -7,7 +7,7 @@ from typing import Dict, Iterator
 
 import mock
 import pytest
-from freva_databrowser.utils import logger
+from freva_client.utils import logger
 from typer.testing import CliRunner
 
 

@@ -97,6 +97,36 @@ jobs:
           tags: |
             ghcr.io/freva-clint/freva-rest-api:${{ steps.repository.outputs.tag }}
             ghcr.io/freva-clint/freva-rest-api:latest
+  pypi:
+    name: Create Pip package
+    permissions:
+      id-token: write
+    needs: [tests, build-and-push-vault-image]
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+      -
+        name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+      -
+        name: Install flit
+        run: python -m pip install flit
+      -
+        name: Building freva-deployment 📦 with flit
+        run: flit build
+        working-directory: freva-client
+      -
+        name: publish distribution 📦 to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true
+          verbose: true
+          packages-dir: freva-client/dist
 
   bump-databrowser-version:
     runs-on: ubuntu-latest

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import mock
 import pytest
-from freva_databrowser import databrowser
+from freva_client import databrowser
 
 
 def test_invalid_eval_config(invalid_eval_conf_file: Path) -> None:

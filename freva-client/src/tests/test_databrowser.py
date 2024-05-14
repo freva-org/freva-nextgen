@@ -1,8 +1,8 @@
 """Tests for the databrowser class."""
 
 import pytest
-from freva_databrowser import databrowser
-from freva_databrowser.logger import DatabrowserWarning
+from freva_client import databrowser
+from freva_client.utils.logger import DatabrowserWarning
 
 
 def test_search_files() -> None:
