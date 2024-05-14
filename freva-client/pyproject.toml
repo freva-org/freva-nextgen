@@ -7,7 +7,6 @@ dynamic = ["version"]
 description = "Search for climate data based on key-value pairs"
 authors = [{name = "DKRZ, Clint", email = "freva@dkrz.de"}]
 readme = "README.md"
-license = {file = "LICENSE"}
 classifiers = [
                "Development Status :: 3 - Alpha",
                "Environment :: Console",

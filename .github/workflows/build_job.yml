@@ -116,9 +116,6 @@ jobs:
         name: Install flit
         run: python -m pip install flit
       -
-        name: Copy LICENSE file
-        run: cp LICENSE freva-client
-      -
         name: Building freva-deployment 📦 with flit
         run: flit build
         working-directory: freva-client
@@ -129,6 +126,7 @@ jobs:
           password: ${{ secrets.PYPI_API_TOKEN }}
           skip-existing: true
           verbose: true
+          packages-dir: freva-client/dist
 
   bump-databrowser-version:
     runs-on: ubuntu-latest
