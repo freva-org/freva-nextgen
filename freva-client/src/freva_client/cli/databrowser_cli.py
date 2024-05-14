@@ -8,8 +8,9 @@ from enum import Enum
 from typing import Dict, List, Literal, Optional, Union, cast
 
 import typer
-from freva_client import __version__, databrowser
-from freva_client.utils import logger, exception_handler
+from freva_client import databrowser
+from freva_client.utils import exception_handler, logger
+
 from .cli_app import app, version_callback
 from .cli_utils import parse_cli_args
 

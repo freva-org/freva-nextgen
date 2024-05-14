@@ -1,10 +1,9 @@
 """Freva the Free Evaluation System command line interface."""
 
-from rich import print as pprint
 import typer
-
 from freva_client import __version__
 from freva_client.utils import logger
+from rich import print as pprint
 
 APP_NAME: str = "freva-client"
 

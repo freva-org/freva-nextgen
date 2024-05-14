@@ -4,11 +4,9 @@ import argparse
 import inspect
 from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
-import typer
-
-from freva_client.utils import logger
-from freva_client.cli.cli_app import app
 from freva_client import databrowser
+from freva_client.cli.cli_app import app
+from freva_client.utils import logger
 
 
 def parse_cli_args(cli_args: List[str]) -> Dict[str, List[str]]:
