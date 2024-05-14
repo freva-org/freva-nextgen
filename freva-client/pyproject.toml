@@ -1,8 +1,9 @@
 [build-system]
-requires = ["setuptools>=61.0", "appdirs", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["flit_core >=3.2", "appdirs"]
+build-backend = "flit_core.buildapi"
 [project]
 name = "freva-client"
+dynamic = ["version"]
 description = "Search for climate data based on key-value pairs"
 authors = [{name = "DKRZ, Clint", email = "freva@dkrz.de"}]
 readme = "README.md"
@@ -16,7 +17,6 @@ classifiers = [
                "Operating System :: POSIX :: Linux",
                "Programming Language :: Python :: 3",
 ]
-dynamic = ["version"]
 requires-python = ">=3.8"
 dependencies = [
 "appdirs",
@@ -27,7 +27,7 @@ dependencies = [
 "typer",
 ]
 [project.scripts]
-freva-databrowser = "freva_databrowser:databrowser_cli.app"
+freva-client = "freva_client:cli.app"
 [project.urls]
 Documentation = "https://freva-clint.github.io/databrowserAPI"
 Issues = "https://github.com/FREVA-CLINT/databrowserAPI/issues"
@@ -36,8 +36,10 @@ Source = "https://github.com/FREVA-CLINT/databrowserAPI/"
 [project.optional-dependencies]
 dev = ["tox"]
 
-[tool.distutils.bdist_wheel]
-universal = true
+[tool.flit.sdist]
+include = ["assets/*"]
 
-[tool.setuptools.dynamic]
-version = {attr = "freva_client.__version__"}
+[tool.flit.external-data]
+directory = "assets"
+[package-data]
+freva_deployment = ["py.typed"]
