@@ -17,13 +17,13 @@ Freva: The free evaluation system
    :target: https://www.python.org/downloads/release/python-312/
 
 .. image:: https://img.shields.io/badge/ViewOn-GitHub-purple
-   :target: https://github.com/FREVA-CLINT/databrowserAPI
+   :target: https://github.com/FREVA-CLINT/freva-nextgen
 
-.. image:: https://github.com/FREVA-CLINT/databrowserAPI/actions/workflows/ci_job.yml/badge.svg
-   :target: https://github.com/FREVA-CLINT/databrowserAPI/actions
+.. image:: https://github.com/FREVA-CLINT/freva-nextgen/actions/workflows/ci_job.yml/badge.svg
+   :target: https://github.com/FREVA-CLINT/freva-nextgen/actions
 
-.. image:: https://codecov.io/github/FREVA-CLINT/databrowserAPI/branch/init/graph/badge.svg?token=dGhXxh7uP3
-   :target: https://codecov.io/github/FREVA-CLINT/databrowserAPI
+.. image:: https://codecov.io/github/FREVA-CLINT/freva-nextgen/branch/init/graph/badge.svg?token=dGhXxh7uP3
+   :target: https://codecov.io/github/FREVA-CLINT/freva-nextgen
 
 
 Freva, the free evaluation system framework, is a data search and analysis
