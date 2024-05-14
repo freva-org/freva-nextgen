@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Welcome to the Freva Databrowser REST API Documentation &#8212; Databrowser API 2403.0.3 documentation</title>
+    <title>Freva: The free evaluation system &#8212; Freva Databrowser 2404.0.0 documentation</title>
   
   
   
@@ -30,6 +30,7 @@
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=13237357" />
     <link rel="stylesheet" type="text/css" href="_static/code-tabs.css?v=1bc26e2f" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
@@ -37,17 +38,24 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
   <script src="_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script src="_static/documentation_options.js?v=e58952ed"></script>
+    <script src="_static/documentation_options.js?v=4db26e96"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="_static/copybutton.js?v=f281be69"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js?v=4a39c7ea"></script>
     <script src="_static/code-tabs.js?v=c983d12e"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'index';</script>
+    <link rel="canonical" href="http://127.0.0.1:8000/index.html" />
     <link rel="icon" href="_static/logo.png"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="API Reference" href="APIRef.html" />
+    <link rel="next" title="Search for data" href="databrowser/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -124,8 +132,8 @@
       
     
     
-    <img src="_static/logo.png" class="logo__image only-light" alt="Databrowser API 2403.0.3 documentation - Home"/>
-    <script>document.write(`<img src="_static/logo.png" class="logo__image only-dark" alt="Databrowser API 2403.0.3 documentation - Home"/>`);</script>
+    <img src="_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2404.0.0 documentation - Home"/>
+    <script>document.write(`<img src="_static/logo.png" class="logo__image only-dark" alt="Freva Databrowser 2404.0.0 documentation - Home"/>`);</script>
   
   
 </a></div>
@@ -141,8 +149,8 @@
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="APIRef.html">
-                        API Reference
+                      <a class="nav-link nav-internal" href="databrowser/index.html">
+                        Search for data
                       </a>
                     </li>
                 
@@ -247,8 +255,8 @@ document.write(`
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="APIRef.html">
-                        API Reference
+                      <a class="nav-link nav-internal" href="databrowser/index.html">
+                        Search for data
                       </a>
                     </li>
                 
@@ -336,110 +344,126 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="welcome-to-the-freva-databrowser-rest-api-documentation">
-<h1>Welcome to the Freva Databrowser REST API Documentation<a class="headerlink" href="#welcome-to-the-freva-databrowser-rest-api-documentation" title="Link to this heading">#</a></h1>
+  <section id="freva-the-free-evaluation-system">
+<h1>Freva: The free evaluation system<a class="headerlink" href="#freva-the-free-evaluation-system" title="Link to this heading">#</a></h1>
 <div class="toctree-wrapper compound">
 </div>
 <a class="reference external image-reference" href="LICENSE"><img alt="https://img.shields.io/badge/License-BSD-purple.svg" src="https://img.shields.io/badge/License-BSD-purple.svg" /></a>
 <a class="reference external image-reference" href="https://www.python.org/downloads/release/python-312/"><img alt="https://img.shields.io/badge/python-3.12-red.svg" src="https://img.shields.io/badge/python-3.12-red.svg" /></a>
-<a class="reference external image-reference" href="https://github.com/FREVA-CLINT/databrowserAPI"><img alt="https://img.shields.io/badge/ViewOn-GitHub-purple" src="https://img.shields.io/badge/ViewOn-GitHub-purple" />
+<a class="reference external image-reference" href="https://github.com/FREVA-CLINT/freva-nextgen"><img alt="https://img.shields.io/badge/ViewOn-GitHub-purple" src="https://img.shields.io/badge/ViewOn-GitHub-purple" />
 </a>
-<a class="reference external image-reference" href="https://github.com/FREVA-CLINT/databrowserAPI/actions"><img alt="https://github.com/FREVA-CLINT/databrowserAPI/actions/workflows/ci_job.yml/badge.svg" src="https://github.com/FREVA-CLINT/databrowserAPI/actions/workflows/ci_job.yml/badge.svg" /></a>
-<a class="reference external image-reference" href="https://codecov.io/github/FREVA-CLINT/databrowserAPI"><img alt="https://codecov.io/github/FREVA-CLINT/databrowserAPI/branch/init/graph/badge.svg?token=dGhXxh7uP3" src="https://codecov.io/github/FREVA-CLINT/databrowserAPI/branch/init/graph/badge.svg?token=dGhXxh7uP3" />
+<a class="reference external image-reference" href="https://github.com/FREVA-CLINT/freva-nextgen/actions"><img alt="https://github.com/FREVA-CLINT/freva-nextgen/actions/workflows/ci_job.yml/badge.svg" src="https://github.com/FREVA-CLINT/freva-nextgen/actions/workflows/ci_job.yml/badge.svg" /></a>
+<a class="reference external image-reference" href="https://codecov.io/github/FREVA-CLINT/freva-nextgen"><img alt="https://codecov.io/github/FREVA-CLINT/freva-nextgen/branch/init/graph/badge.svg?token=dGhXxh7uP3" src="https://codecov.io/github/FREVA-CLINT/freva-nextgen/branch/init/graph/badge.svg?token=dGhXxh7uP3" />
 </a>
-<p>The Freva Databrowser REST API is a powerful tool that enables you to search
-for climate and environmental datasets seamlessly in various programming
-languages. By generating RESTful requests, you can effortlessly access
-collections of various datasets, making it an ideal resource for
-climate scientists, researchers, and data enthusiasts.</p>
-<section id="getting-started">
-<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">#</a></h2>
-<p>To begin using the Freva Databrowser REST API, you can make key-value
-paired queries to search for specific datasets based on different
-Data Reference Syntax (DRS) standards. The API currently supports
-several standards, including <code class="docutils literal notranslate"><span class="pre">CMIP5</span></code>, <code class="docutils literal notranslate"><span class="pre">CMIP6</span></code>, <code class="docutils literal notranslate"><span class="pre">CORDEX</span></code>, <code class="docutils literal notranslate"><span class="pre">Freva</span></code>, and
-<code class="docutils literal notranslate"><span class="pre">NextGEMS</span></code>. With the ability to combine these standards intelligently, the
-API provides a comprehensive and versatile search entry point.</p>
-</section>
-<section id="searching-for-climate-datasets">
-<h2>Searching for Climate Datasets<a class="headerlink" href="#searching-for-climate-datasets" title="Link to this heading">#</a></h2>
-<p>The API’s flexible design allows you to perform searches for climate datasets
-in a wide range of programming languages. By generating RESTful requests,
-you can easily integrate the API into your preferred language and environment.
-Whether you use Python, JavaScript, R, Julia, or any other language with HTTP
-request capabilities, the Freva Databrowser REST API accommodates your needs.</p>
-</section>
-<section id="specific-get-methods">
-<h2>Specific <code class="docutils literal notranslate"><span class="pre">GET</span></code> Methods<a class="headerlink" href="#specific-get-methods" title="Link to this heading">#</a></h2>
-<p>The Freva Databrowser REST API offers specific <code class="docutils literal notranslate"><span class="pre">GET</span></code> methods that allow you
-to fine-tune your searches and retrieve tailored results. These methods include:</p>
+<p>Freva, the free evaluation system framework, is a data search and analysis
+platform developed by the atmospheric science community for the atmospheric
+science community. With help of Freva researchers can:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="APIRef.html#databrowser"><span class="std std-ref">Searching for datasets locations</span></a>: Use the <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/api/databrowser/data_search</span></code> endpoint to
-make key-value paired queries and find climate datasets that match your
-specific criteria. This method enables you to target datasets based on
-parameters such as <cite>variables</cite>, <cite>models</cite>, <cite>time ranges</cite>, and <cite>experiments</cite>.</p></li>
-<li><p><a class="reference internal" href="APIRef.html#search-facets"><span class="std std-ref">Searching for metadata</span></a>: The <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/api/databrowser/metadata_search</span></code> endpoint
-allows you to query all available facets of the indexed data. By exploring
-facets like <cite>models</cite>, <cite>experiments</cite>, and <cite>institutions</cite>, you can gain
-valuable insights into the dataset’s metadata, assisting you in refining
-your search effectively. You can also count the number of datasets available
-within each facet. This feature provides an overview of the dataset
-distribution across various metadata categories, aiding you in identifying
-the most relevant data for your research.</p></li>
-<li><p><a class="reference internal" href="APIRef.html#overview"><span class="std std-ref">Getting an overview</span></a>: With help of the <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/api/databrowser/overview</span></code> method
-you can check which Data Reference Syntax and how the search facets in each
-standard are defined.</p></li>
-<li><p><a class="reference internal" href="APIRef.html#intake"><span class="std std-ref">Generating an intake-esm catalogue</span></a>: The <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/ap/databrowser/intake_catalogue</span></code> lets you seamlessly
-generate Intake-ESM catalogues from your search queries.
-Intake-ESM is a powerful data cataloging tool widely used in Earth System
-Model (ESM) analysis. This integration allows you to create curated
-catalogues, streamlining your data analysis workflow.</p></li>
+<li><p>quickly and intuitively search for data stored at typical data centers that
+host many datasets.</p></li>
+<li><p>create a common interface for user defined data analysis tools.</p></li>
+<li><p>apply data analysis tools in a reproducible manner.</p></li>
 </ul>
-<section id="how-to-use-the-documentation">
-<h3>How to Use the Documentation<a class="headerlink" href="#how-to-use-the-documentation" title="Link to this heading">#</a></h3>
-<p>This user documentation serves as a comprehensive guide to effectively using
-the Freva Databrowser REST API in various programming languages. It provides
-detailed explanations of available endpoints, query parameters,
-and response formats. Whether you’re an experienced developer or a novice user,
-you’ll find step-by-step instructions and examples to leverage the API’s full
-potential.</p>
+<section id="about-this-documentation">
+<h2>About this Documentation<a class="headerlink" href="#about-this-documentation" title="Link to this heading">#</a></h2>
+<p>This documentation describes the <em>freva-client</em> library, its
+command line interface (cli) and the REST API. The <em>freva-client</em> library
+described in this documentation only support searching for data. If you
+need to apply data analysis plugins, please visit the
+<a class="reference external" href="https://freva-clint.github.io/freva">official documentation</a></p>
 </section>
-<section id="authentication">
-<h3>Authentication<a class="headerlink" href="#authentication" title="Link to this heading">#</a></h3>
-<p>The Freva Databrowser REST API is open and publicly accessible, and as such,
-it doesn’t require authentication. This means you can quickly start exploring
-and accessing climate data without any additional setup.</p>
+<section id="installation-and-configuration">
+<span id="install-configure"></span><h2>Installation and configuration<a class="headerlink" href="#installation-and-configuration" title="Link to this heading">#</a></h2>
+<p>Installation of the client library is straight forward and can be achieved via:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python3 -m pip install freva-client</span>
+</pre></div>
+</div>
+<p>After successful installation you will also have to following command line
+interfaces (cli) available:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client --help</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[1m                                                                                [0m
+[1m [0m[1;33mUsage: [0m[1mfreva-client [OPTIONS] COMMAND [ARGS]...[0m[1m                               [0m[1m [0m
+[1m                                                                                [0m
+ Freva the Free Evaluation System command line interface.                       
+                                                                                
+[2m╭─[0m[2m Options [0m[2m───────────────────────────────────────────────────────────────────[0m[2m─╮[0m
+[2m│[0m [1;36m-[0m[1;36m-help[0m          Show this message and exit.                                  [2m│[0m
+[2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
+[2m╭─[0m[2m Commands [0m[2m──────────────────────────────────────────────────────────────────[0m[2m─╮[0m
+[2m│[0m [1;36mdata-count      [0m[1;36m [0m Count the databrowser search results                       [2m│[0m
+[2m│[0m [1;36mdata-overview   [0m[1;36m [0m Get an overview over what is available in the databrowser. [2m│[0m
+[2m│[0m [1;36mdata-search     [0m[1;36m [0m Search the databrowser for datasets.                       [2m│[0m
+[2m│[0m [1;36mmetadata-search [0m[1;36m [0m Search databrowser for metadata (facets).                  [2m│[0m
+[2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
+
+
+</pre></div>
+</div>
+<section id="configuration">
+<h3>Configuration<a class="headerlink" href="#configuration" title="Link to this heading">#</a></h3>
+<p>The client library needs to make connections to the freva server. You can either
+set the server host names by using the <code class="docutils literal notranslate"><span class="pre">host</span></code> arguments (or <code class="docutils literal notranslate"><span class="pre">--host</span></code> flags
+in the cli) to make connections or permanently set the freva server host name.
+To do so you have several options:</p>
+<ul class="simple">
+<li><p>If you are using the centrally administered freva instance you don’t have to
+do anything.</p></li>
+<li><p>If on the other hand you have installed the client library yourself you can
+use the <code class="docutils literal notranslate"><span class="pre">freva.toml</span></code> configuration located in the user config directory
+(<code class="docutils literal notranslate"><span class="pre">.config/freva/freva.toml</span></code>)</p></li>
+<li><p>You can also set the <code class="docutils literal notranslate"><span class="pre">FREVA_CONFIG</span></code> environment variable to point to
+any location of the <code class="docutils literal notranslate"><span class="pre">freva.toml</span></code> file</p></li>
+</ul>
+<p>The configuration file itself follows <a class="reference external" href="https://toml.io">toml syntax</a>. After
+installation you will have freva config file with the following content
+placed in the user configuration directory of your OS (e.g <code class="docutils literal notranslate"><span class="pre">~/.config/freva</span></code>
+on Linux):</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="c1">## The new freva configuration file.</span>
+<span class="c1">## This configuration files follows toml (https://toml.io) syntax and replaces</span>
+<span class="c1">## the old evaluation_system.conf file.</span>
+<span class="c1">#</span>
+<span class="k">[freva]</span>
+<span class="c1">## This section configures the freva client. All settings related to freva</span>
+<span class="c1">## are set here.</span>
+<span class="c1">##</span>
+<span class="c1">## The name of the specific freva instance. If you use multiple configurations</span>
+<span class="c1">## for different freva instances the `project_name` entry allows you to</span>
+<span class="c1">## later identify which configuration you were using.</span>
+<span class="c1"># project_name = &quot;freva&quot;</span>
+
+<span class="c1">##</span>
+<span class="c1">## The host that runs the freva api system. In most cases this is just the</span>
+<span class="c1">## url of the freva webpage, such as https://www.freva.dkrz.de.</span>
+<span class="c1">## You can set a port by separating &lt;hostname:port&gt;</span>
+<span class="c1">## for example freva.example.org:7777</span>
+<span class="c1"># host = &quot;&quot;</span>
+</pre></div>
+</div>
+<p>To permanently set or override the freva server host name you have to set
+the <code class="docutils literal notranslate"><span class="pre">host</span></code> variable in that file. In most cases this variable can be
+set to the url of the freva web site you are using, for example
+https//www.freva.dkrz.de.</p>
+</section>
+</section>
+</section>
+<section id="table-of-content">
+<h1>Table of Content<a class="headerlink" href="#table-of-content" title="Link to this heading">#</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="databrowser/index.html">Search for data</a></li>
+</ul>
+</div>
 </section>
 <section id="feedback-and-support">
-<h3>Feedback and Support<a class="headerlink" href="#feedback-and-support" title="Link to this heading">#</a></h3>
+<h1>Feedback and Support<a class="headerlink" href="#feedback-and-support" title="Link to this heading">#</a></h1>
 <p>We value your feedback and are committed to improving the API continuously.
 If you encounter any issues, have questions, or wish to suggest improvements,
 please don’t hesitate to reach out to our support team. Your input is
 invaluable in enhancing the Freva Databrowser REST API to better suit your
 needs.</p>
-</section>
-<section id="conclusion">
-<h3>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h3>
-<p>The Freva Databrowser REST API opens up a world of possibilities for
-effortlessly searching and accessing climate datasets in various
-programming languages. With its RESTful nature and support for
-different DRS standards, specific GET methods, querying facets and generating
-Intake-ESM catalogues, you can efficiently navigate and analyse the vast
-climate data landscape.</p>
-<div class="toctree-wrapper compound">
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Content</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="APIRef.html">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="APIRef.html#getting-an-overview">Getting an overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="APIRef.html#searching-for-datasets-locations">Searching for datasets locations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="APIRef.html#searching-for-metadata">Searching for metadata</a></li>
-<li class="toctree-l2"><a class="reference internal" href="APIRef.html#generating-an-intake-esm-catalogue">Generating an intake-esm catalogue</a></li>
-</ul>
-</li>
-</ul>
-</div>
-</section>
-</section>
 </section>
 <section id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading">#</a></h1>
@@ -461,11 +485,11 @@ climate data landscape.</p>
                   
 <div class="prev-next-area">
     <a class="right-next"
-       href="APIRef.html"
+       href="databrowser/index.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">API Reference</p>
+        <p class="prev-next-title">Search for data</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -487,18 +511,16 @@ climate data landscape.</p>
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Welcome to the Freva Databrowser REST API Documentation</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#getting-started">Getting Started</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#searching-for-climate-datasets">Searching for Climate Datasets</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#specific-get-methods">Specific <code class="docutils literal notranslate"><span class="pre">GET</span></code> Methods</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-use-the-documentation">How to Use the Documentation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#authentication">Authentication</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#feedback-and-support">Feedback and Support</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Freva: The free evaluation system</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#about-this-documentation">About this Documentation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-and-configuration">Installation and configuration</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration">Configuration</a></li>
 </ul>
 </li>
 </ul>
 </li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#table-of-content">Table of Content</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#feedback-and-support">Feedback and Support</a></li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 
@@ -538,7 +560,7 @@ climate data landscape.</p>
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.3.6.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.3.7.
     <br/>
   </p>
 </div>

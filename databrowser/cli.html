@@ -1,0 +1,1221 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>The databrowser command line interface &#8212; Freva Databrowser 2404.0.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/code-tabs.css?v=1bc26e2f" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
+
+    <script src="../_static/documentation_options.js?v=4db26e96"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script src="../_static/code-tabs.js?v=c983d12e"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'databrowser/cli';</script>
+    <link rel="canonical" href="http://127.0.0.1:8000/databrowser/cli.html" />
+    <link rel="icon" href="../_static/logo.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Databrowser Rest API" href="APIRef.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2404.0.0 documentation - Home"/>
+    <script>document.write(`<img src="../_static/logo.png" class="logo__image only-dark" alt="Freva Databrowser 2404.0.0 documentation - Home"/>`);</script>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav class="navbar-nav">
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="index.html">
+                        Search for data
+                      </a>
+                    </li>
+                
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/FREVA-CLINT/databrowserAPI" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary" tabindex="0">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item">
+<nav class="navbar-nav">
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="index.html">
+                        Search for data
+                      </a>
+                    </li>
+                
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/FREVA-CLINT/databrowserAPI" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="python-lib.html">Databrowser python module</a><input checked class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="APIRef.html">Databrowser Rest API</a></li>
+<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">The databrowser command line interface</a><input checked class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="simple">
+</ul>
+</li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumb">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Search for data</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">The...</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="the-databrowser-command-line-interface">
+<h1>The databrowser command line interface<a class="headerlink" href="#the-databrowser-command-line-interface" title="Link to this heading">#</a></h1>
+<div class="toctree-wrapper compound" id="databrowser-cli">
+</div>
+<p>This section introduces the usage of the <code class="docutils literal notranslate"><span class="pre">freva-client</span></code> command.
+Please see the <a class="reference internal" href="../index.html#install-configure"><span class="std std-ref">Installation and configuration</span></a> section on how to install and
+configure the command line interface.</p>
+<p>After successful installation you will have the <code class="docutils literal notranslate"><span class="pre">freva-client</span></code> command</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client --help</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[1m                                                                                [0m
+[1m [0m[1;33mUsage: [0m[1mfreva-client [OPTIONS] COMMAND [ARGS]...[0m[1m                               [0m[1m [0m
+[1m                                                                                [0m
+ Freva the Free Evaluation System command line interface.                       
+                                                                                
+[2m╭─[0m[2m Options [0m[2m───────────────────────────────────────────────────────────────────[0m[2m─╮[0m
+[2m│[0m [1;36m-[0m[1;36m-help[0m          Show this message and exit.                                  [2m│[0m
+[2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
+[2m╭─[0m[2m Commands [0m[2m──────────────────────────────────────────────────────────────────[0m[2m─╮[0m
+[2m│[0m [1;36mdata-count      [0m[1;36m [0m Count the databrowser search results                       [2m│[0m
+[2m│[0m [1;36mdata-overview   [0m[1;36m [0m Get an overview over what is available in the databrowser. [2m│[0m
+[2m│[0m [1;36mdata-search     [0m[1;36m [0m Search the databrowser for datasets.                       [2m│[0m
+[2m│[0m [1;36mmetadata-search [0m[1;36m [0m Search databrowser for metadata (facets).                  [2m│[0m
+[2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
+
+
+</pre></div>
+</div>
+<section id="searching-for-data-locations">
+<h2>Searching for data locations<a class="headerlink" href="#searching-for-data-locations" title="Link to this heading">#</a></h2>
+<p>Getting the locations of the data is probably the most common use case of the
+databrowser application. You can search for data locations by applying the
+<code class="docutils literal notranslate"><span class="pre">data-search</span></code> sub-command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client data-search --help</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[1m                                                                                [0m
+[1m [0m[1;33mUsage: [0m[1mfreva-client data-search [OPTIONS] [SEARCH_KEYS]...[0m[1m                    [0m[1m [0m
+[1m                                                                                [0m
+ Search the databrowser for datasets.                                           
+                                                                                
+[2m╭─[0m[2m Arguments [0m[2m─────────────────────────────────────────────────────────────────[0m[2m─╮[0m
+[2m│[0m   search_keys      [1;2;33m[[0m[1;33mSEARCH_KEYS]...[0m  Refine your data search with this       [2m│[0m
+[2m│[0m                                      `key=value` pair search parameters. The [2m│[0m
+[2m│[0m                                      parameters could be, depending on the   [2m│[0m
+[2m│[0m                                      DRS standard, flavour product, project  [2m│[0m
+[2m│[0m                                      model etc.                              [2m│[0m
+[2m│[0m                                      [2m[default: None]                        [0m [2m│[0m
+[2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
+[2m╭─[0m[2m Options [0m[2m───────────────────────────────────────────────────────────────────[0m[2m─╮[0m
+[2m│[0m [1;36m-[0m[1;36m-facet[0m                   [1;33mTEXT                   [0m  If you are not sure about [2m│[0m
+[2m│[0m                                                    the correct search key&#39;s  [2m│[0m
+[2m│[0m                                                    you can use the           [2m│[0m
+[2m│[0m                                                    ``[1;36m-[0m[1;36m-facet[0m`` flag to       [2m│[0m
+[2m│[0m                                                    search of any matching    [2m│[0m
+[2m│[0m                                                    entries. For example      [2m│[0m
+[2m│[0m                                                    [1;36m-[0m[1;36m-facet[0m &#39;era5&#39; would      [2m│[0m
+[2m│[0m                                                    allow you to search for   [2m│[0m
+[2m│[0m                                                    any entries containing    [2m│[0m
+[2m│[0m                                                    era5, regardless of       [2m│[0m
+[2m│[0m                                                    project, product etc.     [2m│[0m
+[2m│[0m                                                    [2m[default: None]          [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-uniq[0m[1;36m-key[0m       [1;32m-u[0m       [1;2;33m[[0m[1;33mfile[0m[1;2;33m|[0m[1;33muri[0m[1;2;33m][0m[1;33m             [0m  The type of search        [2m│[0m
+[2m│[0m                                                    result, which can be      [2m│[0m
+[2m│[0m                                                    either “file” or “uri”.   [2m│[0m
+[2m│[0m                                                    This parameter determines [2m│[0m
+[2m│[0m                                                    whether the search will   [2m│[0m
+[2m│[0m                                                    be based on file paths or [2m│[0m
+[2m│[0m                                                    Uniform Resource          [2m│[0m
+[2m│[0m                                                    Identifiers               [2m│[0m
+[2m│[0m                                                    [2m[default: file]          [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-flavour[0m        [1;32m-f[0m       [1;2;33m[[0m[1;33mfreva[0m[1;2;33m|[0m[1;33mcmip6[0m[1;2;33m|[0m[1;33mcmip5[0m[1;2;33m|[0m[1;33mcord[0m  The Data Reference Syntax [2m│[0m
+[2m│[0m                           [1;33mex[0m[1;2;33m|[0m[1;33mnextgems[0m[1;2;33m][0m[1;33m           [0m  (DRS) standard specifying [2m│[0m
+[2m│[0m                                                    the type of climate       [2m│[0m
+[2m│[0m                                                    datasets to query.        [2m│[0m
+[2m│[0m                                                    [2m[default: freva]         [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-time[0m[1;36m-select[0m    [1;32m-ts[0m      [1;2;33m[[0m[1;33mstrict[0m[1;2;33m|[0m[1;33mflexible[0m[1;2;33m|[0m[1;33mfile[0m[1;2;33m][0m[1;33m [0m  Operator that specifies   [2m│[0m
+[2m│[0m                                                    how the time period is    [2m│[0m
+[2m│[0m                                                    selected. Choose from     [2m│[0m
+[2m│[0m                                                    flexible (default),       [2m│[0m
+[2m│[0m                                                    strict or file.           [2m│[0m
+[2m│[0m                                                    ``strict`` returns only   [2m│[0m
+[2m│[0m                                                    those files that have the [2m│[0m
+[2m│[0m                                                    *entire* time period      [2m│[0m
+[2m│[0m                                                    covered. The time search  [2m│[0m
+[2m│[0m                                                    ``2000 to 2012`` will not [2m│[0m
+[2m│[0m                                                    select files containing   [2m│[0m
+[2m│[0m                                                    data from 2010 to 2020    [2m│[0m
+[2m│[0m                                                    with the ``strict``       [2m│[0m
+[2m│[0m                                                    method. ``flexible`` will [2m│[0m
+[2m│[0m                                                    select those files as     [2m│[0m
+[2m│[0m                                                    ``flexible`` returns      [2m│[0m
+[2m│[0m                                                    those files that have     [2m│[0m
+[2m│[0m                                                    either start or end       [2m│[0m
+[2m│[0m                                                    period covered. ``file``  [2m│[0m
+[2m│[0m                                                    will only return files    [2m│[0m
+[2m│[0m                                                    where the entire time     [2m│[0m
+[2m│[0m                                                    period is contained       [2m│[0m
+[2m│[0m                                                    within *one single* file. [2m│[0m
+[2m│[0m                                                    [2m[default: flexible]      [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-time[0m           [1;32m-t[0m       [1;33mTEXT                   [0m  Special search facet to   [2m│[0m
+[2m│[0m                                                    refine/subset search      [2m│[0m
+[2m│[0m                                                    results by time. This can [2m│[0m
+[2m│[0m                                                    be a string               [2m│[0m
+[2m│[0m                                                    representation of a time  [2m│[0m
+[2m│[0m                                                    range or a single time    [2m│[0m
+[2m│[0m                                                    step. The time steps have [2m│[0m
+[2m│[0m                                                    to follow ISO-8601. Valid [2m│[0m
+[2m│[0m                                                    strings are               [2m│[0m
+[2m│[0m                                                    ``%Y-%m-%dT%H:%M`` to     [2m│[0m
+[2m│[0m                                                    ``%Y-%m-%dT%H:%M`` for    [2m│[0m
+[2m│[0m                                                    time ranges and           [2m│[0m
+[2m│[0m                                                    ``%Y-%m-%dT%H:%M``.       [2m│[0m
+[2m│[0m                                                    **Note**: You don&#39;t have  [2m│[0m
+[2m│[0m                                                    to give the full string   [2m│[0m
+[2m│[0m                                                    format to subset time     [2m│[0m
+[2m│[0m                                                    steps ``%Y``, ``%Y-%m``   [2m│[0m
+[2m│[0m                                                    etc are also valid.       [2m│[0m
+[2m│[0m                                                    [2m[default: None]          [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-json[0m           [1;32m-j[0m       [1;33m                       [0m  Parse output in json      [2m│[0m
+[2m│[0m                                                    format.                   [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-host[0m                    [1;33mTEXT                   [0m  Set the hostname of the   [2m│[0m
+[2m│[0m                                                    databrowser, if not set   [2m│[0m
+[2m│[0m                                                    (default) the hostname is [2m│[0m
+[2m│[0m                                                    read from a config file   [2m│[0m
+[2m│[0m                                                    [2m[default: None]          [0m [2m│[0m
+[2m│[0m                  [1;32m-v[0m       [1;33mINTEGER                [0m  Increase verbosity        [2m│[0m
+[2m│[0m                                                    [2m[default: 0]      [0m        [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-mulit[0m[1;36m-version[0m           [1;33m                       [0m  Select all versions and   [2m│[0m
+[2m│[0m                                                    not just the latest       [2m│[0m
+[2m│[0m                                                    version (default).        [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-version[0m        [1;32m-V[0m       [1;33m                       [0m  Show verion an exit       [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-help[0m                    [1;33m                       [0m  Show this message and     [2m│[0m
+[2m│[0m                                                    exit.                     [2m│[0m
+[2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
+
+
+</pre></div>
+</div>
+<p>The command expects a list of key=value pairs. The order of the
+pairs doesn’t really matter. Most important is that you don’t need to
+split the search according to the type of data you are searching for.
+You can search for files within observations, reanalysis and
+model data at the same time. Also important is that all queries are
+case <em>insensitive</em>. You can also search for attributes themselves
+instead of file paths. For example you can search for the list of
+variables available that satisfies a certain constraint (e.g. sampled
+6hr, from a certain model, etc).</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client project=observations variable=pr model=cp*</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>https://swift.dkrz.de/v1/dkrz_a32dc0e8-2299-4239-a47d-6bf45c8b0160/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609022330.zarr
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022100-201609022130.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022000-201609022030.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021900-201609021930.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021800-201609021830.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021700-201609021730.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021600-201609021630.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021500-201609021530.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021400-201609021430.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021300-201609021330.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021200-201609021230.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021100-201609021130.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021000-201609021030.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020900-201609020930.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020800-201609020830.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020700-201609020730.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020600-201609020630.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020500-201609020530.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020400-201609020430.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020300-201609020330.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020200-201609020230.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020100-201609020130.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609020030.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022100-201609022130.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022000-201609022030.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021900-201609021930.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021800-201609021830.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021700-201609021730.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021600-201609021630.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021500-201609021530.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021400-201609021430.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021300-201609021330.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021200-201609021230.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021100-201609021130.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021000-201609021030.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020900-201609020930.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020800-201609020830.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020700-201609020730.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020600-201609020630.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020500-201609020530.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020400-201609020430.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020300-201609020330.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020200-201609020230.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020100-201609020130.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609020030.nc
+
+</pre></div>
+</div>
+<p>There are many more options for defining a value for a given key:</p>
+<table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Attribute syntax</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">attribute=value</span></code></p></td>
+<td><p>Search for files
+containing exactly
+that attribute</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">attribute='val\*'</span></code></p></td>
+<td><p>Search for files
+containing a value for
+attribute that starts
+with the prefix val</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">attribute='*lue'</span></code></p></td>
+<td><p>Search for files
+containing a value for
+attribute that ends
+with the suffix lue</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">attribute='*alu\*'</span></code></p></td>
+<td><p>Search for files
+containing a value for
+attribute that has alu
+somewhere</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">attribute='/.*alu.*/'</span></code></p></td>
+<td><p>Search for files
+containing a value for
+attribute that matches
+the given regular
+expression (yes! you
+might use any regular
+expression to find
+what you want.)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">attribute=value1</span> <span class="pre">attribute=value2</span></code></p>
+<p>OR:</p>
+<p><code class="docutils literal notranslate"><span class="pre">attribute={value1,value2}</span></code></p>
+</td>
+<td><p>Search for files
+containing either
+value1 OR value2 for
+the given attribute
+(note that’s the same
+attribute twice!)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">attribute1=value1</span> <span class="pre">attribute2=value2</span></code></p></td>
+<td><p>Search for files
+containing value1 for
+attribute1 AND value2
+for attribute2</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">attribute_not_=value</span></code></p></td>
+<td><p>Search for files NOT
+containing value</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">attribute_not_=value1</span> <span class="pre">attribute_not_=value2</span></code></p></td>
+<td><p>Search for files
+containing neither
+value1 nor value2</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When using * remember that your shell might give it a
+different meaning (normally it will try to match files with that name)
+to turn that off you can use backslash (key=*) or use quotes (key=’*’).</p>
+</div>
+<section id="special-cases-searching-for-times">
+<h3>Special cases: Searching for times<a class="headerlink" href="#special-cases-searching-for-times" title="Link to this heading">#</a></h3>
+<p>For example you want to know how many files we have between a certain time range
+To do so you can use the <cite>time</cite> search key to subset time steps and whole time
+ranges:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client data-search project=observations -t &#39;2016-09-02T22:15 to 2016-10&#39;</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>https://swift.dkrz.de/v1/dkrz_a32dc0e8-2299-4239-a47d-6bf45c8b0160/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609022330.zarr
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
+/home/wilfred/workspace/solr-data-crawler/data/model/regional/cordex/output/EUR-11/CLMcom/MPI-M-MPI-ESM-LR/historical/r0i0p0/CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_fx.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
+
+</pre></div>
+</div>
+<p>The default method for selecting time periods is <code class="docutils literal notranslate"><span class="pre">flexible</span></code>, which means
+all files are selected that cover at least start or end date. The
+<code class="docutils literal notranslate"><span class="pre">strict</span></code> method implies that the <em>entire</em> search time period has to be
+covered by the files. Using the <code class="docutils literal notranslate"><span class="pre">strict</span></code> method in the example above would
+only yield on file because the first file contains time steps prior to the
+start of the time period:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client data-search project=observations -t &#39;2016-09-02T22:15 to 2016-10&#39; -ts strict</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
+
+</pre></div>
+</div>
+<p>Giving single time steps is also possible:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client data-search project=observations -t 2016-09-02T22:10</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>https://swift.dkrz.de/v1/dkrz_a32dc0e8-2299-4239-a47d-6bf45c8b0160/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609022330.zarr
+/home/wilfred/workspace/solr-data-crawler/data/random/test.json
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
+/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
+/home/wilfred/workspace/solr-data-crawler/data/model/regional/cordex/output/EUR-11/CLMcom/MPI-M-MPI-ESM-LR/historical/r0i0p0/CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_fx.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
+/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
+/arch/bb1203/freva_test/model/global/cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/r2i1p1f1/Amon/ua/gn/v20190815/ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_197901-199812.nc
+
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The time format has to follow the
+<a class="reference external" href="https://en.wikipedia.og/wiki/ISO_8601">ISO-8601</a> standard. Time <em>ranges</em>
+are indicated by the <code class="docutils literal notranslate"><span class="pre">to</span></code> keyword such as <code class="docutils literal notranslate"><span class="pre">2000</span> <span class="pre">to</span> <span class="pre">2100</span></code> or
+<code class="docutils literal notranslate"><span class="pre">2000-01</span> <span class="pre">to</span> <span class="pre">2100-12</span></code> and alike. Single time steps are given without the
+<code class="docutils literal notranslate"><span class="pre">to</span></code> keyword.</p>
+</div>
+</section>
+</section>
+<section id="query-the-number-of-occurrences">
+<h2>Query the number of occurrences<a class="headerlink" href="#query-the-number-of-occurrences" title="Link to this heading">#</a></h2>
+<p>In some cases it might be useful to know how many files are found in the
+databrowser for certain search constraints. In such cases you can use the
+<code class="docutils literal notranslate"><span class="pre">data-count</span></code> sub command to count the number of <em>found</em> files instead of getting
+the files themselves.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client data-count --help</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[1m                                                                                [0m
+[1m [0m[1;33mUsage: [0m[1mfreva-client data-count [OPTIONS] [SEARCH_KEYS]...[0m[1m                     [0m[1m [0m
+[1m                                                                                [0m
+ Count the databrowser search results                                           
+                                                                                
+[2m╭─[0m[2m Arguments [0m[2m─────────────────────────────────────────────────────────────────[0m[2m─╮[0m
+[2m│[0m   search_keys      [1;2;33m[[0m[1;33mSEARCH_KEYS]...[0m  Refine your data search with this       [2m│[0m
+[2m│[0m                                      `key=value` pair search parameters. The [2m│[0m
+[2m│[0m                                      parameters could be, depending on the   [2m│[0m
+[2m│[0m                                      DRS standard, flavour product, project  [2m│[0m
+[2m│[0m                                      model etc.                              [2m│[0m
+[2m│[0m                                      [2m[default: None]                        [0m [2m│[0m
+[2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
+[2m╭─[0m[2m Options [0m[2m───────────────────────────────────────────────────────────────────[0m[2m─╮[0m
+[2m│[0m [1;36m-[0m[1;36m-facet[0m                     [1;33mTEXT                   [0m  If you are not sure     [2m│[0m
+[2m│[0m                                                      about the correct       [2m│[0m
+[2m│[0m                                                      search key&#39;s you can    [2m│[0m
+[2m│[0m                                                      use the ``[1;36m-[0m[1;36m-facet[0m``     [2m│[0m
+[2m│[0m                                                      flag to search of any   [2m│[0m
+[2m│[0m                                                      matching entries. For   [2m│[0m
+[2m│[0m                                                      example [1;36m-[0m[1;36m-facet[0m &#39;era5&#39;  [2m│[0m
+[2m│[0m                                                      would allow you to      [2m│[0m
+[2m│[0m                                                      search for any entries  [2m│[0m
+[2m│[0m                                                      containing era5,        [2m│[0m
+[2m│[0m                                                      regardless of project,  [2m│[0m
+[2m│[0m                                                      product etc.            [2m│[0m
+[2m│[0m                                                      [2m[default: None]        [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-detail[0m           [1;32m-d[0m       [1;33m                       [0m  Separate the count by   [2m│[0m
+[2m│[0m                                                      search facets.          [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-flavour[0m          [1;32m-f[0m       [1;2;33m[[0m[1;33mfreva[0m[1;2;33m|[0m[1;33mcmip6[0m[1;2;33m|[0m[1;33mcmip5[0m[1;2;33m|[0m[1;33mcord[0m  The Data Reference      [2m│[0m
+[2m│[0m                             [1;33mex[0m[1;2;33m|[0m[1;33mnextgems[0m[1;2;33m][0m[1;33m           [0m  Syntax (DRS) standard   [2m│[0m
+[2m│[0m                                                      specifying the type of  [2m│[0m
+[2m│[0m                                                      climate datasets to     [2m│[0m
+[2m│[0m                                                      query.                  [2m│[0m
+[2m│[0m                                                      [2m[default: freva]       [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-time[0m[1;36m-select[0m      [1;32m-ts[0m      [1;2;33m[[0m[1;33mstrict[0m[1;2;33m|[0m[1;33mflexible[0m[1;2;33m|[0m[1;33mfile[0m[1;2;33m][0m[1;33m [0m  Operator that specifies [2m│[0m
+[2m│[0m                                                      how the time period is  [2m│[0m
+[2m│[0m                                                      selected. Choose from   [2m│[0m
+[2m│[0m                                                      flexible (default),     [2m│[0m
+[2m│[0m                                                      strict or file.         [2m│[0m
+[2m│[0m                                                      ``strict`` returns only [2m│[0m
+[2m│[0m                                                      those files that have   [2m│[0m
+[2m│[0m                                                      the *entire* time       [2m│[0m
+[2m│[0m                                                      period covered. The     [2m│[0m
+[2m│[0m                                                      time search ``2000 to   [2m│[0m
+[2m│[0m                                                      2012`` will not select  [2m│[0m
+[2m│[0m                                                      files containing data   [2m│[0m
+[2m│[0m                                                      from 2010 to 2020 with  [2m│[0m
+[2m│[0m                                                      the ``strict`` method.  [2m│[0m
+[2m│[0m                                                      ``flexible`` will       [2m│[0m
+[2m│[0m                                                      select those files as   [2m│[0m
+[2m│[0m                                                      ``flexible`` returns    [2m│[0m
+[2m│[0m                                                      those files that have   [2m│[0m
+[2m│[0m                                                      either start or end     [2m│[0m
+[2m│[0m                                                      period covered.         [2m│[0m
+[2m│[0m                                                      ``file`` will only      [2m│[0m
+[2m│[0m                                                      return files where the  [2m│[0m
+[2m│[0m                                                      entire time period is   [2m│[0m
+[2m│[0m                                                      contained within *one   [2m│[0m
+[2m│[0m                                                      single* file.           [2m│[0m
+[2m│[0m                                                      [2m[default: flexible]    [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-time[0m             [1;32m-t[0m       [1;33mTEXT                   [0m  Special search facet to [2m│[0m
+[2m│[0m                                                      refine/subset search    [2m│[0m
+[2m│[0m                                                      results by time. This   [2m│[0m
+[2m│[0m                                                      can be a string         [2m│[0m
+[2m│[0m                                                      representation of a     [2m│[0m
+[2m│[0m                                                      time range or a single  [2m│[0m
+[2m│[0m                                                      time step. The time     [2m│[0m
+[2m│[0m                                                      steps have to follow    [2m│[0m
+[2m│[0m                                                      ISO-8601. Valid strings [2m│[0m
+[2m│[0m                                                      are ``%Y-%m-%dT%H:%M``  [2m│[0m
+[2m│[0m                                                      to ``%Y-%m-%dT%H:%M``   [2m│[0m
+[2m│[0m                                                      for time ranges and     [2m│[0m
+[2m│[0m                                                      ``%Y-%m-%dT%H:%M``.     [2m│[0m
+[2m│[0m                                                      **Note**: You don&#39;t     [2m│[0m
+[2m│[0m                                                      have to give the full   [2m│[0m
+[2m│[0m                                                      string format to subset [2m│[0m
+[2m│[0m                                                      time steps ``%Y``,      [2m│[0m
+[2m│[0m                                                      ``%Y-%m`` etc are also  [2m│[0m
+[2m│[0m                                                      valid.                  [2m│[0m
+[2m│[0m                                                      [2m[default: None]        [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-extended[0m[1;36m-search[0m  [1;32m-e[0m       [1;33m                       [0m  Retrieve information on [2m│[0m
+[2m│[0m                                                      additional search keys. [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-multi[0m[1;36m-version[0m             [1;33m                       [0m  Select all versions and [2m│[0m
+[2m│[0m                                                      not just the latest     [2m│[0m
+[2m│[0m                                                      version (default).      [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-host[0m                      [1;33mTEXT                   [0m  Set the hostname of the [2m│[0m
+[2m│[0m                                                      databrowser, if not set [2m│[0m
+[2m│[0m                                                      (default) the hostname  [2m│[0m
+[2m│[0m                                                      is read from a config   [2m│[0m
+[2m│[0m                                                      file                    [2m│[0m
+[2m│[0m                                                      [2m[default: None]        [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-json[0m             [1;32m-j[0m       [1;33m                       [0m  Parse output in json    [2m│[0m
+[2m│[0m                                                      format.                 [2m│[0m
+[2m│[0m                    [1;32m-v[0m       [1;33mINTEGER                [0m  Increase verbosity      [2m│[0m
+[2m│[0m                                                      [2m[default: 0]      [0m      [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-version[0m          [1;32m-V[0m       [1;33m                       [0m  Show verion an exit     [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-help[0m                      [1;33m                       [0m  Show this message and   [2m│[0m
+[2m│[0m                                                      exit.                   [2m│[0m
+[2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
+
+
+</pre></div>
+</div>
+<p>By default the <code class="docutils literal notranslate"><span class="pre">data-count</span></code> sub command will display the total number of items
+matching your search query. For example:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client data-count project=observations</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>52
+
+</pre></div>
+</div>
+<p>If you want to group the number of occurrences by search categories (facets)
+use the <code class="docutils literal notranslate"><span class="pre">-d</span></code> or <code class="docutils literal notranslate"><span class="pre">--detail</span></code> flag:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client data-count -d project=observations</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>ensemble: r1i1p1[52]
+experiment: cmorph[49], oc5[3]
+institute: cpc[49], noaa[3]
+model: cpc[25], cpc-cmorph[24], nodc[3]
+product: grid[49], reanalysis[3]
+project: observations[52]
+realm: atmos[49], ocean[3]
+time_aggregation: mean[52]
+time_frequency: 1min[49], mon[3]
+variable: hc700[3], pr[49]
+
+</pre></div>
+</div>
+</section>
+<section id="retrieving-the-available-metadata">
+<h2>Retrieving the available metadata<a class="headerlink" href="#retrieving-the-available-metadata" title="Link to this heading">#</a></h2>
+<p>Sometime it might be useful to know about possible values that search attributes.
+For this you use the <code class="docutils literal notranslate"><span class="pre">metadata-search</span></code> sub command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client metadata-search --help</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[1m                                                                                [0m
+[1m [0m[1;33mUsage: [0m[1mfreva-client metadata-search [OPTIONS] [SEARCH_KEYS]...[0m[1m                [0m[1m [0m
+[1m                                                                                [0m
+ Search databrowser for metadata (facets).                                      
+                                                                                
+[2m╭─[0m[2m Arguments [0m[2m─────────────────────────────────────────────────────────────────[0m[2m─╮[0m
+[2m│[0m   search_keys      [1;2;33m[[0m[1;33mSEARCH_KEYS]...[0m  Refine your data search with this       [2m│[0m
+[2m│[0m                                      `key=value` pair search parameters. The [2m│[0m
+[2m│[0m                                      parameters could be, depending on the   [2m│[0m
+[2m│[0m                                      DRS standard, flavour product, project  [2m│[0m
+[2m│[0m                                      model etc.                              [2m│[0m
+[2m│[0m                                      [2m[default: None]                        [0m [2m│[0m
+[2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
+[2m╭─[0m[2m Options [0m[2m───────────────────────────────────────────────────────────────────[0m[2m─╮[0m
+[2m│[0m [1;36m-[0m[1;36m-facet[0m                     [1;33mTEXT                   [0m  If you are not sure     [2m│[0m
+[2m│[0m                                                      about the correct       [2m│[0m
+[2m│[0m                                                      search key&#39;s you can    [2m│[0m
+[2m│[0m                                                      use the ``[1;36m-[0m[1;36m-facet[0m``     [2m│[0m
+[2m│[0m                                                      flag to search of any   [2m│[0m
+[2m│[0m                                                      matching entries. For   [2m│[0m
+[2m│[0m                                                      example [1;36m-[0m[1;36m-facet[0m &#39;era5&#39;  [2m│[0m
+[2m│[0m                                                      would allow you to      [2m│[0m
+[2m│[0m                                                      search for any entries  [2m│[0m
+[2m│[0m                                                      containing era5,        [2m│[0m
+[2m│[0m                                                      regardless of project,  [2m│[0m
+[2m│[0m                                                      product etc.            [2m│[0m
+[2m│[0m                                                      [2m[default: None]        [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-flavour[0m          [1;32m-f[0m       [1;2;33m[[0m[1;33mfreva[0m[1;2;33m|[0m[1;33mcmip6[0m[1;2;33m|[0m[1;33mcmip5[0m[1;2;33m|[0m[1;33mcord[0m  The Data Reference      [2m│[0m
+[2m│[0m                             [1;33mex[0m[1;2;33m|[0m[1;33mnextgems[0m[1;2;33m][0m[1;33m           [0m  Syntax (DRS) standard   [2m│[0m
+[2m│[0m                                                      specifying the type of  [2m│[0m
+[2m│[0m                                                      climate datasets to     [2m│[0m
+[2m│[0m                                                      query.                  [2m│[0m
+[2m│[0m                                                      [2m[default: freva]       [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-time[0m[1;36m-select[0m      [1;32m-ts[0m      [1;2;33m[[0m[1;33mstrict[0m[1;2;33m|[0m[1;33mflexible[0m[1;2;33m|[0m[1;33mfile[0m[1;2;33m][0m[1;33m [0m  Operator that specifies [2m│[0m
+[2m│[0m                                                      how the time period is  [2m│[0m
+[2m│[0m                                                      selected. Choose from   [2m│[0m
+[2m│[0m                                                      flexible (default),     [2m│[0m
+[2m│[0m                                                      strict or file.         [2m│[0m
+[2m│[0m                                                      ``strict`` returns only [2m│[0m
+[2m│[0m                                                      those files that have   [2m│[0m
+[2m│[0m                                                      the *entire* time       [2m│[0m
+[2m│[0m                                                      period covered. The     [2m│[0m
+[2m│[0m                                                      time search ``2000 to   [2m│[0m
+[2m│[0m                                                      2012`` will not select  [2m│[0m
+[2m│[0m                                                      files containing data   [2m│[0m
+[2m│[0m                                                      from 2010 to 2020 with  [2m│[0m
+[2m│[0m                                                      the ``strict`` method.  [2m│[0m
+[2m│[0m                                                      ``flexible`` will       [2m│[0m
+[2m│[0m                                                      select those files as   [2m│[0m
+[2m│[0m                                                      ``flexible`` returns    [2m│[0m
+[2m│[0m                                                      those files that have   [2m│[0m
+[2m│[0m                                                      either start or end     [2m│[0m
+[2m│[0m                                                      period covered.         [2m│[0m
+[2m│[0m                                                      ``file`` will only      [2m│[0m
+[2m│[0m                                                      return files where the  [2m│[0m
+[2m│[0m                                                      entire time period is   [2m│[0m
+[2m│[0m                                                      contained within *one   [2m│[0m
+[2m│[0m                                                      single* file.           [2m│[0m
+[2m│[0m                                                      [2m[default: flexible]    [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-time[0m             [1;32m-t[0m       [1;33mTEXT                   [0m  Special search facet to [2m│[0m
+[2m│[0m                                                      refine/subset search    [2m│[0m
+[2m│[0m                                                      results by time. This   [2m│[0m
+[2m│[0m                                                      can be a string         [2m│[0m
+[2m│[0m                                                      representation of a     [2m│[0m
+[2m│[0m                                                      time range or a single  [2m│[0m
+[2m│[0m                                                      time step. The time     [2m│[0m
+[2m│[0m                                                      steps have to follow    [2m│[0m
+[2m│[0m                                                      ISO-8601. Valid strings [2m│[0m
+[2m│[0m                                                      are ``%Y-%m-%dT%H:%M``  [2m│[0m
+[2m│[0m                                                      to ``%Y-%m-%dT%H:%M``   [2m│[0m
+[2m│[0m                                                      for time ranges and     [2m│[0m
+[2m│[0m                                                      ``%Y-%m-%dT%H:%M``.     [2m│[0m
+[2m│[0m                                                      **Note**: You don&#39;t     [2m│[0m
+[2m│[0m                                                      have to give the full   [2m│[0m
+[2m│[0m                                                      string format to subset [2m│[0m
+[2m│[0m                                                      time steps ``%Y``,      [2m│[0m
+[2m│[0m                                                      ``%Y-%m`` etc are also  [2m│[0m
+[2m│[0m                                                      valid.                  [2m│[0m
+[2m│[0m                                                      [2m[default: None]        [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-extended[0m[1;36m-search[0m  [1;32m-e[0m       [1;33m                       [0m  Retrieve information on [2m│[0m
+[2m│[0m                                                      additional search keys. [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-multi[0m[1;36m-version[0m             [1;33m                       [0m  Select all versions and [2m│[0m
+[2m│[0m                                                      not just the latest     [2m│[0m
+[2m│[0m                                                      version (default).      [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-host[0m                      [1;33mTEXT                   [0m  Set the hostname of the [2m│[0m
+[2m│[0m                                                      databrowser, if not set [2m│[0m
+[2m│[0m                                                      (default) the hostname  [2m│[0m
+[2m│[0m                                                      is read from a config   [2m│[0m
+[2m│[0m                                                      file                    [2m│[0m
+[2m│[0m                                                      [2m[default: None]        [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-json[0m             [1;32m-j[0m       [1;33m                       [0m  Parse output in json    [2m│[0m
+[2m│[0m                                                      format.                 [2m│[0m
+[2m│[0m                    [1;32m-v[0m       [1;33mINTEGER                [0m  Increase verbosity      [2m│[0m
+[2m│[0m                                                      [2m[default: 0]      [0m      [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-version[0m          [1;32m-V[0m       [1;33m                       [0m  Show version an exit    [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-help[0m                      [1;33m                       [0m  Show this message and   [2m│[0m
+[2m│[0m                                                      exit.                   [2m│[0m
+[2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
+
+
+</pre></div>
+</div>
+<p>Just like with any other databrowser command you can apply different search
+constraints when acquiring metadata</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client metadata-search project=observations</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>ensemble: r1i1p1
+experiment: cmorph, oc5
+institute: cpc, noaa
+model: cpc, cpc-cmorph, nodc
+product: grid, reanalysis
+project: observations
+realm: atmos, ocean
+time_aggregation: mean
+time_frequency: 1min, mon
+variable: hc700, pr
+
+</pre></div>
+</div>
+<p>By default the command will display only the most commonly used metadata
+keys. To retrieve all metadata you can use the <code class="docutils literal notranslate"><span class="pre">-e</span></code> or <code class="docutils literal notranslate"><span class="pre">--extended-search</span></code>
+flag.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client metadata-search -e project=observations</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>cmor_table: 30min, omon
+dataset: obs-fs, obs-hsm, obs-swfit, reana-fs, reana-hsm, reana-swfit
+driving_model: 
+ensemble: r1i1p1
+experiment: cmorph, oc5
+format: nc, zarr
+fs_type: posix
+grid_id: 
+grid_label: gn
+institute: cpc, noaa
+level_type: 2d
+model: cpc, cpc-cmorph, nodc
+product: grid, reanalysis
+project: observations
+rcm_name: 
+rcm_version: 
+realm: atmos, ocean
+time_aggregation: mean
+time_frequency: 1min, mon
+variable: hc700, pr
+
+</pre></div>
+</div>
+<p>Sometimes you don’t exactly know the exact names of the search keys and
+want retrieve all file objects that match a certain category. For example
+for getting all ocean reanalysis datasets you can apply the <code class="docutils literal notranslate"><span class="pre">--facet</span></code> flag:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client metadata-search -e realm=ocean --facet &#39;rean*&#39;</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>ensemble: r1i1p1
+experiment: oc5
+institute: noaa
+model: nodc
+product: reanalysis
+project: observations
+realm: ocean
+time_aggregation: mean
+time_frequency: mon
+variable: hc700
+
+</pre></div>
+</div>
+<section id="expert-tip-getting-metadata-for-certain-files">
+<h3>Expert tip: Getting metadata for certain files<a class="headerlink" href="#expert-tip-getting-metadata-for-certain-files" title="Link to this heading">#</a></h3>
+<p>In some cases it might be useful to retrieve metadata for certain
+file or object store locations. For example if we wanted to retrieve the
+metadata of those files on tape:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client metadata-search -e file=&quot;/arch/*&quot;</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>cmor_table: 1day, 30min, 3hr, amon, inst-or-acc, omon
+dataset: cmip6-hsm, cordex-hsm, nextgems, obs-hsm, reana-hsm
+driving_model: mpi-m-mpi-esm-lr, ncc-noresm1-m
+ensemble: r1i1p1, r1i1p1f1
+experiment: amip, cmorph, historical, hqys, oc5, rcp85
+format: nc
+fs_type: posix
+grid_id: tco2559
+grid_label: gn
+institute: clmcom, cpc, csiro-arccss, ecmwf-awi, gerics, noaa
+level_type: 2d
+model: access-cm2, cpc, ifs-fesom, mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1, ncc-noresm1-m-gerics-remo2015-v1, nodc
+product: cmip, eur-11, grid, nextgems_cycle2, reanalysis
+project: cmip6, cordex, nextgems, observations
+rcm_name: clmcom-cclm4-8-17, gerics-remo2015
+rcm_version: v1
+realm: atm, atmos, ocean
+time_aggregation: mean
+time_frequency: 1day, 1hr, 1min, 3hr, mon
+variable: 100si, 100u, 100v, 10u, 10v, 2d, 2t, asn, blh, cape, cdir, chnk, ci, cin, cp, dsrp, e, es, ewss, fal, fdir, fsr, hc700, hcc, lcc, litota1, litoti, lsm, lsp, lwcs, mcc, msl, nsss, par, pev, pr, ro, rsn, sd, sf, skt, slhf, smlt, sp, sro, sshf, ssr, ssrc, ssrd, ssro, sst, stl1, stl2, stl3, stl4, str, strc, strd, swvl1, swvl2, swvl3, swvl4, tas, tcc, tciw, tclw, tcrw, tcslw, tcsw, tcw, tcwv, tisr, tp, tsn, tsr, tsrc, ttr, ttrc, ua, uvb, vike, vipie, vipile, vithe, z
+
+</pre></div>
+</div>
+</section>
+</section>
+<section id="parsing-the-command-output">
+<h2>Parsing the command output<a class="headerlink" href="#parsing-the-command-output" title="Link to this heading">#</a></h2>
+<p>You might have already noticed that each command has a <code class="docutils literal notranslate"><span class="pre">--json</span></code> flag.
+Enabling this flag lets you parse the output of each command to JSON.</p>
+<p>Following on from the example above we can parse the output of the reverse
+search to the <a class="reference external" href="https://jqlang.github.io/jq/">command line json processor jq</a>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client metadata-search -e file=&quot;/arch/*&quot; --json</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{&quot;cmor_table&quot;: [&quot;1day&quot;, &quot;30min&quot;, &quot;3hr&quot;, &quot;amon&quot;, &quot;inst-or-acc&quot;, &quot;omon&quot;], &quot;dataset&quot;: [&quot;cmip6-hsm&quot;, &quot;cordex-hsm&quot;, &quot;nextgems&quot;, &quot;obs-hsm&quot;, &quot;reana-hsm&quot;], &quot;driving_model&quot;: [&quot;mpi-m-mpi-esm-lr&quot;, &quot;ncc-noresm1-m&quot;], &quot;ensemble&quot;: [&quot;r1i1p1&quot;, &quot;r1i1p1f1&quot;], &quot;experiment&quot;: [&quot;amip&quot;, &quot;cmorph&quot;, &quot;historical&quot;, &quot;hqys&quot;, &quot;oc5&quot;, &quot;rcp85&quot;], &quot;format&quot;: [&quot;nc&quot;], &quot;fs_type&quot;: [&quot;posix&quot;], &quot;grid_id&quot;: [&quot;tco2559&quot;], &quot;grid_label&quot;: [&quot;gn&quot;], &quot;institute&quot;: [&quot;clmcom&quot;, &quot;cpc&quot;, &quot;csiro-arccss&quot;, &quot;ecmwf-awi&quot;, &quot;gerics&quot;, &quot;noaa&quot;], &quot;level_type&quot;: [&quot;2d&quot;], &quot;model&quot;: [&quot;access-cm2&quot;, &quot;cpc&quot;, &quot;ifs-fesom&quot;, &quot;mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1&quot;, &quot;ncc-noresm1-m-gerics-remo2015-v1&quot;, &quot;nodc&quot;], &quot;product&quot;: [&quot;cmip&quot;, &quot;eur-11&quot;, &quot;grid&quot;, &quot;nextgems_cycle2&quot;, &quot;reanalysis&quot;], &quot;project&quot;: [&quot;cmip6&quot;, &quot;cordex&quot;, &quot;nextgems&quot;, &quot;observations&quot;], &quot;rcm_name&quot;: [&quot;clmcom-cclm4-8-17&quot;, &quot;gerics-remo2015&quot;], &quot;rcm_version&quot;: [&quot;v1&quot;], &quot;realm&quot;: [&quot;atm&quot;, &quot;atmos&quot;, &quot;ocean&quot;], &quot;time_aggregation&quot;: [&quot;mean&quot;], &quot;time_frequency&quot;: [&quot;1day&quot;, &quot;1hr&quot;, &quot;1min&quot;, &quot;3hr&quot;, &quot;mon&quot;], &quot;variable&quot;: [&quot;100si&quot;, &quot;100u&quot;, &quot;100v&quot;, &quot;10u&quot;, &quot;10v&quot;, &quot;2d&quot;, &quot;2t&quot;, &quot;asn&quot;, &quot;blh&quot;, &quot;cape&quot;, &quot;cdir&quot;, &quot;chnk&quot;, &quot;ci&quot;, &quot;cin&quot;, &quot;cp&quot;, &quot;dsrp&quot;, &quot;e&quot;, &quot;es&quot;, &quot;ewss&quot;, &quot;fal&quot;, &quot;fdir&quot;, &quot;fsr&quot;, &quot;hc700&quot;, &quot;hcc&quot;, &quot;lcc&quot;, &quot;litota1&quot;, &quot;litoti&quot;, &quot;lsm&quot;, &quot;lsp&quot;, &quot;lwcs&quot;, &quot;mcc&quot;, &quot;msl&quot;, &quot;nsss&quot;, &quot;par&quot;, &quot;pev&quot;, &quot;pr&quot;, &quot;ro&quot;, &quot;rsn&quot;, &quot;sd&quot;, &quot;sf&quot;, &quot;skt&quot;, &quot;slhf&quot;, &quot;smlt&quot;, &quot;sp&quot;, &quot;sro&quot;, &quot;sshf&quot;, &quot;ssr&quot;, &quot;ssrc&quot;, &quot;ssrd&quot;, &quot;ssro&quot;, &quot;sst&quot;, &quot;stl1&quot;, &quot;stl2&quot;, &quot;stl3&quot;, &quot;stl4&quot;, &quot;str&quot;, &quot;strc&quot;, &quot;strd&quot;, &quot;swvl1&quot;, &quot;swvl2&quot;, &quot;swvl3&quot;, &quot;swvl4&quot;, &quot;tas&quot;, &quot;tcc&quot;, &quot;tciw&quot;, &quot;tclw&quot;, &quot;tcrw&quot;, &quot;tcslw&quot;, &quot;tcsw&quot;, &quot;tcw&quot;, &quot;tcwv&quot;, &quot;tisr&quot;, &quot;tp&quot;, &quot;tsn&quot;, &quot;tsr&quot;, &quot;tsrc&quot;, &quot;ttr&quot;, &quot;ttrc&quot;, &quot;ua&quot;, &quot;uvb&quot;, &quot;vike&quot;, &quot;vipie&quot;, &quot;vipile&quot;, &quot;vithe&quot;, &quot;z&quot;]}
+
+</pre></div>
+</div>
+<p>By using the pipe operator <code class="docutils literal notranslate"><span class="pre">|</span></code> the JSON output of the <cite>freva-client</cite>
+commands can be piped and processed by <code class="docutils literal notranslate"><span class="pre">jq</span></code>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client metadata-search -e file=&quot;/arch/*&quot; --json | jq -r .ensemble[0]</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>r1i1p1
+</pre></div>
+</div>
+<p>The above example will select only the first entry of the ensembles that
+are associated with files on the tape archive.</p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="APIRef.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Databrowser Rest API</p>
+      </div>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#searching-for-data-locations">Searching for data locations</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#special-cases-searching-for-times">Special cases: Searching for times</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#query-the-number-of-occurrences">Query the number of occurrences</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#retrieving-the-available-metadata">Retrieving the available metadata</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#expert-tip-getting-metadata-for-certain-files">Expert tip: Getting metadata for certain files</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parsing-the-command-output">Parsing the command output</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024, DKRZ.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.3.7.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.2.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
