@@ -101,7 +101,7 @@ jobs:
     name: Create Pip package
     permissions:
       id-token: write
-    needs: [tests, build-and-push-vault-image]
+    needs: [tests, build-and-push-image, docs]
     runs-on: ubuntu-latest
     steps:
       -
