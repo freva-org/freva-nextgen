@@ -61,7 +61,7 @@ jobs:
       - name: Starting the local server
         run: |
           python -m freva_rest.cli -c api_config.toml --debug --dev &
-      - name: Waiting for 10 sec
+      - name: Waiting for 5 sec
         run: sleep 5
       - name: Run tests
         run: tox -e test
@@ -69,9 +69,7 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
           verbose: true
-          flags: unittests
 
   build-docker-image:
     runs-on: ubuntu-latest

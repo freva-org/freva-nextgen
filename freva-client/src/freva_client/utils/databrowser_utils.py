@@ -1,59 +1,16 @@
 """Various utilities for getting the databrowser working."""
 
-import logging
 import os
 import sys
 import sysconfig
 from configparser import ConfigParser, ExtendedInterpolation
-from functools import cached_property, wraps
+from functools import cached_property
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, cast
+from typing import Any, Dict, Literal, Optional, Tuple, cast
 
 import appdirs
 import requests
 import tomli
-from rich import print as pprint
-
-from .logger import Logger
-
-APP_NAME: str = "freva-databrowser"
-
-logger: Logger = cast(Logger, logging.getLogger(APP_NAME))
-
-
-def parse_cli_args(cli_args: List[str]) -> Dict[str, List[str]]:
-    """Convert the cli arguments to a dictionary."""
-    logger.debug("parsing command line arguments.")
-    kwargs = {}
-    for entry in cli_args:
-        key, _, value = entry.partition("=")
-        if value and key not in kwargs:
-            kwargs[key] = [value]
-        elif value:
-            kwargs[key].append(value)
-    logger.debug(kwargs)
-    return kwargs
-
-
-def exception_handler(func: Callable[..., Any]) -> Callable[..., Any]:
-    """Wrap an exception handler around the cli functions."""
-
-    @wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
-        """Wrapper function that handles the exeption."""
-        try:
-            return func(*args, **kwargs)
-        except KeyboardInterrupt:
-            pprint("[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr)
-            raise SystemExit(150) from None
-        except BaseException as error:
-            if logger.getEffectiveLevel() <= logging.DEBUG:
-                logger.exception(error)
-            else:
-                logger.error(error)
-            raise SystemExit(1) from None
-
-    return wrapper
 
 
 class Config:
@@ -100,9 +57,7 @@ class Config:
             host = f"{host}:{port}"
         return f"{scheme}://{host}"
 
-    def _read_config(
-        self, path: Path, file_type: Literal["toml", "ini"]
-    ) -> str:
+    def _read_config(self, path: Path, file_type: Literal["toml", "ini"]) -> str:
         """Read the configuration."""
         data_types = {"toml": self._read_toml, "ini": self._read_ini}
         try:
@@ -117,9 +72,7 @@ class Config:
         try:
             res = requests.get(f"{self.databrowser_url}/overview", timeout=3)
         except requests.exceptions.ConnectionError:
-            raise ValueError(
-                f"Could not connect to {self.databrowser_url}"
-            ) from None
+            raise ValueError(f"Could not connect to {self.databrowser_url}") from None
         return cast(Dict[str, Any], res.json())
 
     def _get_databrowser_host_from_config(self) -> str:
@@ -134,9 +87,7 @@ class Config:
             Path(appdirs.user_config_dir("freva")) / "freva.toml": "toml",
             Path(self.get_dirs(user=True)) / "freva.toml": "toml",
             freva_config: "toml",
-            Path(
-                os.environ.get("EVALUATION_SYSTEM_CONFIG_FILE") or eval_conf
-            ): "ini",
+            Path(os.environ.get("EVALUATION_SYSTEM_CONFIG_FILE") or eval_conf): "ini",
         }
         for config_path, config_type in paths.items():
             if config_path.is_file():
@@ -163,17 +114,13 @@ class Config:
     @property
     def search_url(self) -> str:
         """Define the data search endpoint."""
-        return (
-            f"{self.databrowser_url}/data_search/"
-            f"{self.flavour}/{self.uniq_key}"
-        )
+        return f"{self.databrowser_url}/data_search/" f"{self.flavour}/{self.uniq_key}"
 
     @property
     def metadata_url(self) -> str:
         """Define the endpoint for the metadata search."""
         return (
-            f"{self.databrowser_url}/metadata_search/"
-            f"{self.flavour}/{self.uniq_key}"
+            f"{self.databrowser_url}/metadata_search/" f"{self.flavour}/{self.uniq_key}"
         )
 
     @staticmethod

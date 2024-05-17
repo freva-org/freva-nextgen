@@ -4,9 +4,23 @@ import argparse
 import inspect
 from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
-from .databrowser_cli import app
-from .query import databrowser
-from .utils import parse_cli_args
+from freva_client import databrowser
+from freva_client.cli.cli_app import app
+from freva_client.utils import logger
+
+
+def parse_cli_args(cli_args: List[str]) -> Dict[str, List[str]]:
+    """Convert the cli arguments to a dictionary."""
+    logger.debug("parsing command line arguments.")
+    kwargs = {}
+    for entry in cli_args:
+        key, _, value = entry.partition("=")
+        if value and key not in kwargs:
+            kwargs[key] = [value]
+        elif value:
+            kwargs[key].append(value)
+    logger.debug(kwargs)
+    return kwargs
 
 
 class Completer:

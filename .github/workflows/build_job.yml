@@ -27,9 +27,17 @@ jobs:
       - name: Set up services
         run: |
           docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
-      - name: Install dependencies
+      - name: Install freva rest dependencies
         run: |
-          python3 -m pip install tox
+          python3 -m pip install -e .[dev] tox
+        working-directory: ./freva-rest
+      - name: Adjusting PATH variable
+        run: echo "~/.local/bin" >> $GITHUB_PATH
+      - name: Starting the local server
+        run: |
+          python -m freva_rest.cli -c api_config.toml --debug --dev &
+      - name: Waiting for 5 sec
+        run: sleep 5
       - name: Creating docs
         run: tox -e docs
       - name: Setup Pages
@@ -85,7 +93,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.ACCESS_TOKEN }}
 
       -
         name: Build and push freva-rest API image
@@ -97,6 +105,36 @@ jobs:
           tags: |
             ghcr.io/freva-clint/freva-rest-api:${{ steps.repository.outputs.tag }}
             ghcr.io/freva-clint/freva-rest-api:latest
+  pypi:
+    name: Create Pip package
+    permissions:
+      id-token: write
+    needs: [tests, build-and-push-image, docs]
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+      -
+        name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+      -
+        name: Install flit
+        run: python -m pip install flit
+      -
+        name: Building freva-deployment 📦 with flit
+        run: flit build
+        working-directory: freva-client
+      -
+        name: publish distribution 📦 to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true
+          verbose: true
+          packages-dir: freva-client/dist
 
   bump-databrowser-version:
     runs-on: ubuntu-latest
@@ -132,7 +170,7 @@ jobs:
         run: pip install git-python packaging tomli requests
 
       - name: Getting realease job
-        run: curl -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/versions/release.py
+        run: curl -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/main/release.py
 
       - name: Do the release job
         run: python3 bump.py deploy freva_rest -p freva-rest -v -s solr ${{steps.solr.outputs.tag}}

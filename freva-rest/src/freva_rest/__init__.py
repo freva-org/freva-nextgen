@@ -1,9 +1,4 @@
-"""Rest API for the freva framework."""
-
-import os
-from pathlib import Path
-
-__version__ = "2403.0.2"
+__version__ = "2403.0.3"
 __all__ = ["__version__"]
 
 REST_URL = (
