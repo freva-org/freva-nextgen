@@ -5,7 +5,6 @@ import multiprocessing as mp
 import json
 import os
 from pathlib import Path
-from urllib.parse import urlparse
 from typing import Any, Dict, List, Literal, Optional, TypedDict, Union, cast
 
 import cloudpickle  # fades cloudpickle
@@ -26,6 +25,7 @@ from zarr.meta import encode_array_metadata, encode_group_metadata
 from zarr.storage import array_meta_key
 
 from .utils import data_logger, str_to_int, CLIENT
+from .backends import load_data
 
 ZARR_CONSOLIDATED_FORMAT = 1
 ZARR_FORMAT = 2
@@ -50,7 +50,9 @@ ClusterKw = TypedDict(
         "connect_options": List[Dict[str, str]],
     },
 )
-BrokerKw = TypedDict("BrokerKw", {"user": str, "passwd": str, "host": str, "port": int})
+BrokerKw = TypedDict(
+    "BrokerKw", {"user": str, "passwd": str, "host": str, "port": int}
+)
 
 DataLoaderConfig = TypedDict(
     "DataLoaderConfig", {"ssh_config": ClusterKw, "broker_config": BrokerKw}
@@ -132,7 +134,9 @@ class LoadStatus:
         return cls(**_dict)
 
 
-def get_dask_client(cluster_kw: ClusterKw, client: Optional[Client] = CLIENT) -> Client:
+def get_dask_client(
+    cluster_kw: ClusterKw, client: Optional[Client] = CLIENT
+) -> Client:
     """Get or create a cached dask cluster."""
     if client is None:
         print_kw = cluster_kw.copy()
@@ -164,17 +168,17 @@ class DataLoadFactory:
     A posix file system if assumed if scheme is empty, e.g /home/bar/foo.nc
     """
 
-    def __init__(self, scheme: str, cache: Optional[redis.Redis] = None) -> None:
+    def __init__(self, cache: Optional[redis.Redis] = None) -> None:
         self.cache = cache or RedisCacheFactory(0)
-        implemented_methods = {"file": self.from_posix, "": self.from_posix}
-        try:
-            self.read = implemented_methods[scheme.lower()]
-        except KeyError:
-            raise NotImplementedError(f"datasets on {scheme} can't be loaded") from None
+
+    def read(self, input_path: str) -> xr.Dataset:
+        """Open the dataset."""
+        return load_data(inp_data)
 
     @staticmethod
-    def from_posix(input_path: str) -> zarr.storage.BaseStore:
+    def from_posix(input_path: str) -> xr.Dataset:
         """Open a dataset with xarray."""
+
         return xr.open_dataset(
             input_path,
             decode_cf=False,
@@ -190,7 +194,6 @@ class DataLoadFactory:
     ) -> None:
         """Create a zarr object from an input path."""
         cache = cache or RedisCacheFactory(0)
-        parsed_url = urlparse(input_path)
         status_dict = LoadStatus.from_dict(
             cast(
                 Optional[LoadDict],
@@ -202,9 +205,8 @@ class DataLoadFactory:
         cache.setex(path_id, expires_in, cloudpickle.dumps(status_dict))
         data_logger.debug("Reading %s", input_path)
         try:
-            read_instance = cls(parsed_url.scheme, cache=cache)
-            data_logger.error(input_path)
-            dset = read_instance.read(input_path)
+            data_logger.info(input_path)
+            dset = load_data(input_path)
             metadata = create_zmetadata(dset)
             status_dict["json_meta"] = jsonify_zmetadata(dset, metadata)
             status_dict["obj"] = dset
@@ -236,7 +238,9 @@ class DataLoadFactory:
         arr_meta = meta["metadata"][f"{variable}/{array_meta_key}"]
         data = encode_chunk(
             get_data_chunk(
-                encode_zarr_variable(dset.variables[variable], name=variable).data,
+                encode_zarr_variable(
+                    dset.variables[variable], name=variable
+                ).data,
                 chunk,
                 out_shape=arr_meta["chunks"],
             ).tobytes(),
@@ -346,7 +350,9 @@ class ProcessQueue:
 
     def spawn(self, inp_obj: str, uuid5: str) -> str:
         """Subumit a new data loading task to the process pool."""
-        data_logger.debug("Assigning %s to %s for future processing", inp_obj, uuid5)
+        data_logger.debug(
+            "Assigning %s to %s for future processing", inp_obj, uuid5
+        )
         cache: Optional[bytes] = self.redis_cache.get(uuid5)
         status_dict: LoadDict = {
             "status": 2,
@@ -369,7 +375,9 @@ class ProcessQueue:
             if status_dict["status"] in (1, 2):
                 # Failed job, let's retry
                 # self.client.submit(
-                DataLoadFactory.from_object_path(inp_obj, uuid5, self.redis_cache)
+                DataLoadFactory.from_object_path(
+                    inp_obj, uuid5, self.redis_cache
+                )
                 # )
 
         return status_dict["obj_path"]

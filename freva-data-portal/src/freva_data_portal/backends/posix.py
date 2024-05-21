@@ -1,41 +1,60 @@
 """Load data from a posix file system."""
 
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
+
+import cfgrib
+import rasterio
+import netCDF4
+import h5netcdf
+import zarr
+
 import xarray as xr
 
 
-def get_file_type(file_path):
+def get_xr_engine(file_path: str) -> Optional[str]:
+    """Get the engine, to open the xarray dataset."""
     try:
-        netCDF4.Dataset(file_path)
-        return 'netcdf4'
+        with netCDF4.Dataset(file_path):
+            return "netcdf4"
     except:
         pass
 
     try:
-        grbs = pygrib.open(file_path)
-        grbs.close()
-        return 'cfgrip'
+        with cfgrib.open_file(file_path):
+            return "cfgrib"
     except:
         pass
 
     try:
-        with rasterio.open(file_path) as src:
-            if src.driver == 'GTiff':
-                return 'GeoTIFF'
+        with rasterio.open(file_path):
+            return "rasterio"
     except:
         pass
 
     try:
-        with h5py.File(file_path, 'r') as file:
-            return 'HDF5'
+
+        with h5netcdf.File(file_path, "r"):
+            return "h5netcdf"
     except:
         pass
+    try:
+        with zarr.open(file_path):
+            return "zarr"
+    except:
+        pass
+    return None
 
-    return 'Unknown file type'
 
-def load_data(inp_file: Union[str, Path]) -> xr.Dataset:
+def load_posix(inp_file: Union[str, Path]) -> xr.Dataset:
     """Open a dataset with xarray."""
     inp_file = Path(inp_file)
-    file_type = inp_file.suffix.strip(".").lower()
-    if file_type in ["netcdf",
+    return xr.open_dataset(
+        inp_file,
+        decode_cf=False,
+        use_cftime=False,
+        chunks="auto",
+        cache=False,
+        decode_coords=False,
+        engine=get_xr_engine(str(inp_file)),
+    )

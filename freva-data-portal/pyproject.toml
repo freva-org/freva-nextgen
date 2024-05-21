@@ -24,17 +24,22 @@ requires-python = ">=3.8"
 dependencies = [
 "appdirs",
 "cloudpickle",
+"cfgrib",
 "dask-distributed",
+"rasterio",
+"rioxarray",
 "redis",
 "pika",
 "xarray",
+"netcdf4",
+"h5netcdf",
 "zarr",
 "xpublish",
 "requests",
 "typer",
 ]
 [project.scripts]
-freva-client = "freva_data_portal:data_loader"
+data-loader = "freva_data_portal:data_loader"
 [project.urls]
 Documentation = "https://freva-clint.github.io/freva-nextgen"
 Issues = "https://github.com/FREVA-CLINT/freva-nextgen/issues"
