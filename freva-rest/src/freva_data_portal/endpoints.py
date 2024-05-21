@@ -1,6 +1,7 @@
 """Definition of endpoints for loading/streaming and manipulating data."""
 
 import asyncio
+import json
 import os
 from typing import Annotated, Optional
 
@@ -9,9 +10,10 @@ from fastapi import Path, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse, Response
 import redis.asyncio as redis
-
+from zarr.storage import array_meta_key, attrs_key, group_meta_key
 from freva_rest.rest import app
 from freva_rest.utils import send_borker_message
+
 
 REDIS_HOST, _, REDIS_PORT = (
     (os.environ.get("REDIS_HOST") or "localhost")
@@ -100,11 +102,8 @@ async def zemtadata(
     This endpoint returns the metadata about the structure and organization of
     data within the particular zarr store in question.
     """
-    import json
 
-    meta = cloudpickle.loads(await read_redis_data(uuid5, "json_meta"))
-    print(json.dumps(meta).encode("utf-8"))
-    print(type(meta))
+    meta = await read_redis_data(uuid5, "json_meta")
     return JSONResponse(
         content=meta,
         status_code=status.HTTP_200_OK,
@@ -138,7 +137,7 @@ async def zgroup(
     organizing and managing the structure of data within a Zarr group,
     allowing users to access and manipulate arrays and subgroups efficiently.
     """
-    meta = cloudpickle.loads(await read_redis_data(uuid5, "json_meta"))
+    meta = await read_redis_data(uuid5, "json_meta")
     return JSONResponse(
         content=meta["metadata"][".zgroup"],
         status_code=status.HTTP_200_OK,
@@ -170,7 +169,7 @@ async def zattrs(
     or arrays, such as descriptions, units, creation dates, or any other
     custom metadata relevant to the data.
     """
-    meta = cloudpickle.loads(await read_redis_data(uuid5, "json_meta"))
+    meta = await read_redis_data(uuid5, "json_meta")
     return JSONResponse(
         content=meta["metadata"][".zattrs"], status_code=status.HTTP_200_OK
     )
@@ -212,13 +211,13 @@ async def chunk_data(
     This method reads the zarr data."""
 
     if array_meta_key in chunk or attrs_key in chunk:
-        meta = cloudpickle.loads(await read_redis_data(uuid5, "json_meta"))
+        json_meta = await read_redis_data(uuid5, "json_meta")
         if attrs_key in chunk:
             key = f"{variable}/{attrs_key}"
         else:
             key = f"{variable}/{array_meta_key}"
         return JSONResponse(
-            content=meta[key],
+            content=json_meta[key],
             status_code=status.HTTP_200_OK,
         )
     if group_meta_key in chunk:
@@ -229,15 +228,5 @@ async def chunk_data(
     chunk_key = f"{uuid5}-{variable}-{chunk}"
     detail = {"chunk": {"uuid": uuid5, "variable": variable, "chunk": chunk}}
     await send_borker_message(json.dumps(detail).encode("utf-8"))
-    try:
-        meta = await DataLoadFactory.get_zarr_metadata(
-            uuid5, jsonfify=False, cache=RedisCache
-        )
-    except RuntimeError as error:
-        raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error)
-        )
-    except KeyError as error:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(error))
-    dset = await DataLoadFactory.load_dataset(uuid5, RedisCache)
+    data = await read_redis_data(chunk_key)
     return Response(data, media_type="application/octet-stream")

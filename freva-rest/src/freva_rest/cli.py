@@ -185,7 +185,7 @@ class DataPortalWorker:
             )
             if v
         ]
-        deps = "-d xpublish -d asyncssh -d h5netcdf"
+        deps = "-d xpublish -d asyncssh -d netcdf4"
         cmd = " ".join([f"{python_binary} -m fades {deps} {cli_file}"] + flags)
         if self._worker_proc is None:
             self._worker_proc = multiprocessing.Process(
@@ -206,6 +206,10 @@ class DataPortalWorker:
         try:
             ssh_client.connect(**kwargs)
             sftp = ssh_client.open_sftp()
+            try:
+                sftp.remove(target)
+            except FileNotFoundError:
+                pass
             sftp.put(source, target)
             sftp.chmod(target, mode)
             sftp.close()
