@@ -3,7 +3,7 @@
 import asyncio
 import json
 import os
-from typing import Annotated, Optional
+from typing import Annotated, Dict, Optional
 
 import cloudpickle
 from fastapi import Path, status
@@ -12,18 +12,13 @@ from fastapi.responses import JSONResponse, Response
 import redis.asyncio as redis
 from zarr.storage import array_meta_key, attrs_key, group_meta_key
 from freva_rest.rest import app
-from freva_rest.utils import send_borker_message
-
-
-REDIS_HOST, _, REDIS_PORT = (
-    (os.environ.get("REDIS_HOST") or "localhost")
-    .removeprefix("redis://")
-    .partition(":")
-)
+from freva_rest.utils import create_redis_connection
 
 
 async def read_redis_data(
-    key: str, subkey: Optional[str] = None, timeout: int = 1
+    key: str,
+    subkey: Optional[str] = None,
+    timeout: int = 1,
 ) -> bytes:
     """Read the cache data given by a key.
 
@@ -37,20 +32,16 @@ async def read_redis_data(
     timeout: int
         Wait for timeout seconds until a not found error is risen.
     """
-    try:
-        client = redis.Redis(
-            host=REDIS_HOST, port=int(REDIS_PORT or "6379"), db=0
-        )
-        data: Optional[bytes] = await client.get(key)
-        npolls = 0
-        while data is None:
-            npolls += 1
-            await asyncio.sleep(1)
-            data = await client.get(key)
-            if npolls >= timeout:
-                break
-    finally:
-        await client.aclose()
+
+    cache = await create_redis_connection()
+    data: Optional[bytes] = await cache.get(key)
+    npolls = 0
+    while data is None:
+        npolls += 1
+        await asyncio.sleep(1)
+        data = await cache.get(key)
+        if npolls >= timeout:
+            break
     if data is None:
         raise HTTPException(
             status.HTTP_404_NOT_FOUND,
@@ -80,7 +71,7 @@ async def read_redis_data(
 
 
 @app.get(
-    "/api/freva-data-portal/zarr/{uuid5}/.zmetadata",
+    "/api/freva-data-portal/zarr/{uuid5}.zarr/.zmetadata",
     tags=["Load data"],
 )
 async def zemtadata(
@@ -111,7 +102,7 @@ async def zemtadata(
 
 
 @app.get(
-    "/api/freva-data-portal/zarr/{uuid5}/.zgroup",
+    "/api/freva-data-portal/zarr/{uuid5}.zarr/.zgroup",
     tags=["Load data"],
     status_code=status.HTTP_200_OK,
 )
@@ -145,7 +136,7 @@ async def zgroup(
 
 
 @app.get(
-    "/api/freva-data-portal/zarr/{uuid5}/.zattrs",
+    "/api/freva-data-portal/zarr/{uuid5}.zarr/.zattrs",
     tags=["Load data"],
 )
 async def zattrs(
@@ -176,7 +167,7 @@ async def zattrs(
 
 
 @app.get(
-    "/api/freva-data-portal/zarr/{uuid5}/{variable}/{chunk}",
+    "/api/freva-data-portal/zarr/{uuid5}.zarr/{variable}/{chunk}",
     tags=["Load data"],
 )
 async def chunk_data(
@@ -211,7 +202,7 @@ async def chunk_data(
     This method reads the zarr data."""
 
     if array_meta_key in chunk or attrs_key in chunk:
-        json_meta = await read_redis_data(uuid5, "json_meta")
+        json_meta: Dict[str, Any] = await read_redis_data(uuid5, "json_meta")
         if attrs_key in chunk:
             key = f"{variable}/{attrs_key}"
         else:
@@ -227,6 +218,7 @@ async def chunk_data(
         )
     chunk_key = f"{uuid5}-{variable}-{chunk}"
     detail = {"chunk": {"uuid": uuid5, "variable": variable, "chunk": chunk}}
-    await send_borker_message(json.dumps(detail).encode("utf-8"))
+    cache = await create_redis_connection()
+    await cache.publish("data-portal", json.dumps(detail).encode("utf-8"))
     data = await read_redis_data(chunk_key)
     return Response(data, media_type="application/octet-stream")

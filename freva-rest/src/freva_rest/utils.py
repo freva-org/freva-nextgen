@@ -3,8 +3,34 @@
 import os
 from typing import Optional
 
-import pika
 import redis.asyncio as redis
+
+REDIS_CACHE: Optional[redis.Redis] = None
+REDIS_HOST, _, REDIS_PORT = (
+    (os.environ.get("REDIS_HOST") or "localhost")
+    .removeprefix("redis://")
+    .partition(":")
+)
+REDIS_SSL_CERTFILE = os.getenv("REDIS_SSL_CERTFILE") or None
+REDIS_SSL_KEYFILE = os.getenv("REDIS_SSL_KEYFILE") or None
+
+
+async def create_redis_connection(
+    cache: Optional[redis.Redis] = REDIS_CACHE,
+) -> redis.Redis:
+    """Reuse a potentially created redis connection."""
+    cache = cache or redis.Redis(
+        host=REDIS_HOST,
+        username=os.getenv("REDIS_USER"),
+        password=os.getenv("REDIS_PASS"),
+        port=int(REDIS_PORT or "6379"),
+        ssl=REDIS_SSL_CERTFILE is not None,
+        ssl_certfile=REDIS_SSL_CERTFILE,
+        ssl_keyfile=REDIS_SSL_KEYFILE,
+        ssl_ca_certs=REDIS_SSL_CERTFILE,
+        db=0,
+    )
+    return cache
 
 
 def str_to_int(inp_str: Optional[str], default: int) -> int:
@@ -13,23 +39,3 @@ def str_to_int(inp_str: Optional[str], default: int) -> int:
         return int(inp_str)
     except (ValueError, TypeError):
         return default
-
-
-async def send_borker_message(
-    message: bytes, queue: str = "data-portal"
-) -> None:
-    """Send an alreday encoded message to the message borker."""
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters(
-            host=os.environ.get("API_BROKER_HOST", "localhost"),
-            port=int(os.environ.get("API_BROKER_PORT", "5672")),
-            credentials=pika.PlainCredentials(
-                username=os.environ.get("API_BROKER_USER", "rabbit"),
-                password=os.environ.get("API_BROKER_PASS", "secret"),
-            ),
-        )
-    )
-    channel = connection.channel()
-    channel.queue_declare(queue=queue)
-    channel.basic_publish(exchange="", routing_key=queue, body=message)
-    connection.close()

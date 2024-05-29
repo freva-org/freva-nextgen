@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Optional, Union
 
-import cfgrib
+# import cfgrib
 import rasterio
 import netCDF4
 import h5netcdf
@@ -20,11 +20,11 @@ def get_xr_engine(file_path: str) -> Optional[str]:
     except:
         pass
 
-    try:
-        with cfgrib.open_file(file_path):
-            return "cfgrib"
-    except:
-        pass
+    # try:
+    #    with cfgrib.open_file(file_path):
+    #        return "cfgrib"
+    # except:
+    #    pass
 
     try:
         with rasterio.open(file_path):

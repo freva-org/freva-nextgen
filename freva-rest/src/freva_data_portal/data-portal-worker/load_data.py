@@ -5,13 +5,13 @@ import multiprocessing as mp
 import json
 import os
 from pathlib import Path
+import time
 from typing import Any, Dict, List, Literal, Optional, TypedDict, Union, cast
 
 import cloudpickle  # fades cloudpickle
 from dask.distributed import SSHCluster  # fades distributed
 from dask.distributed import Client
 from dask.distributed.deploy.cluster import Cluster
-import pika  # fades pika
 import redis  # fades redis
 import xarray as xr  # fades xarray
 from xarray.backends.zarr import encode_zarr_variable
@@ -24,7 +24,7 @@ import zarr  # fades zarr
 from zarr.meta import encode_array_metadata, encode_group_metadata
 from zarr.storage import array_meta_key
 
-from .utils import data_logger, str_to_int, CLIENT
+from .utils import data_logger, str_to_int
 from .backends import load_data
 
 ZARR_CONSOLIDATED_FORMAT = 1
@@ -50,12 +50,10 @@ ClusterKw = TypedDict(
         "connect_options": List[Dict[str, str]],
     },
 )
-BrokerKw = TypedDict(
-    "BrokerKw", {"user": str, "passwd": str, "host": str, "port": int}
-)
+RedisKw = TypedDict("RedisKw", {"user": str, "passwd": str, "host": str, "port": int})
 
 DataLoaderConfig = TypedDict(
-    "DataLoaderConfig", {"ssh_config": ClusterKw, "broker_config": BrokerKw}
+    "DataLoaderConfig", {"ssh_config": ClusterKw, "redis_config": RedisKw}
 )
 
 
@@ -69,7 +67,17 @@ class RedisCacheFactory(redis.Redis):
             .partition(":")
         )
         port_i = int(port or "6379")
-        super().__init__(host=host, port=port_i, db=db)
+        super().__init__(
+            host=host,
+            port=port_i,
+            db=db,
+            username=os.getenv("REDIS_USER"),
+            password=os.getenv("REDIS_PASS"),
+            ssl=bool(len(os.getenv("REDIS_SSL_CERTFILE", ""))),
+            ssl_certfile=os.getenv("REDIS_SSL_CERTFILE") or None,
+            ssl_keyfile=os.getenv("REDIS_SSL_KEYFILE") or None,
+            ssl_ca_certs=os.getenv("REDIS_SSL_CERTFILE") or None,
+        )
 
 
 @dataclass
@@ -134,9 +142,7 @@ class LoadStatus:
         return cls(**_dict)
 
 
-def get_dask_client(
-    cluster_kw: ClusterKw, client: Optional[Client] = CLIENT
-) -> Client:
+def get_dask_client(cluster_kw: ClusterKw, client: Optional[Client] = CLIENT) -> Client:
     """Get or create a cached dask cluster."""
     if client is None:
         print_kw = cluster_kw.copy()
@@ -238,9 +244,7 @@ class DataLoadFactory:
         arr_meta = meta["metadata"][f"{variable}/{array_meta_key}"]
         data = encode_chunk(
             get_data_chunk(
-                encode_zarr_variable(
-                    dset.variables[variable], name=variable
-                ).data,
+                encode_zarr_variable(dset.variables[variable], name=variable).data,
                 chunk,
                 out_shape=arr_meta["chunks"],
             ).tobytes(),
@@ -273,7 +277,7 @@ class DataLoadFactory:
         data_cache = cache.get(key)
         if data_cache is None:
             raise KeyError(f"{key} uuid does not exist (anymore).")
-        pickle_data: LoadDict = cloudpickle.loads(cache)
+        pickle_data: LoadDict = cloudpickle.loads(data_cache)
         task_status = pickle_data.get("status", 1)
         if task_status != 0:
             raise RuntimeError(LoadStatus.lookup(task_status))
@@ -296,40 +300,22 @@ class ProcessQueue:
 
     def run_for_ever(
         self,
-        queue: str,
-        config: BrokerKw,
+        channel: str,
     ) -> None:
         """Start the listner deamon."""
         data_logger.info("Starting data-loading deamon")
-        data_logger.debug(
-            "Connecting to broker on host %s via port %i",
-            config["host"],
-            config["port"],
-        )
-        connection = pika.BlockingConnection(
-            pika.ConnectionParameters(
-                host=config["host"],
-                port=config["port"],
-                credentials=pika.PlainCredentials(
-                    username=config["user"], password=config["passwd"]
-                ),
-            )
-        )
-        self.channel = connection.channel()
-        self.channel.queue_declare(queue=queue)
-        self.channel.basic_consume(
-            queue=queue,
-            on_message_callback=self.rabbit_mq_callback,
-            auto_ack=True,
-        )
+        pubsub = self.redis_cache.pubsub()
+        pubsub.subscribe(channel)
         data_logger.info("Broker will listen for messages now")
-        self.channel.start_consuming()
+        while True:
+            message = pubsub.get_message()
+            if message and message["type"] == "message":
+                self.redis_callback(message["data"])
+            else:
+                time.sleep(0.1)
 
-    def rabbit_mq_callback(
+    def redis_callback(
         self,
-        ch: pika.channel.Channel,
-        method: pika.spec.Basic.Deliver,
-        properties: pika.spec.BasicProperties,
         body: bytes,
     ) -> None:
         """Callback method to recieve rabbit mq messages."""
@@ -346,13 +332,10 @@ class ProcessQueue:
                 )
         except json.JSONDecodeError:
             data_logger.warning("could not decode message")
-            pass
 
     def spawn(self, inp_obj: str, uuid5: str) -> str:
         """Subumit a new data loading task to the process pool."""
-        data_logger.debug(
-            "Assigning %s to %s for future processing", inp_obj, uuid5
-        )
+        data_logger.debug("Assigning %s to %s for future processing", inp_obj, uuid5)
         cache: Optional[bytes] = self.redis_cache.get(uuid5)
         status_dict: LoadDict = {
             "status": 2,
@@ -375,9 +358,7 @@ class ProcessQueue:
             if status_dict["status"] in (1, 2):
                 # Failed job, let's retry
                 # self.client.submit(
-                DataLoadFactory.from_object_path(
-                    inp_obj, uuid5, self.redis_cache
-                )
+                DataLoadFactory.from_object_path(inp_obj, uuid5, self.redis_cache)
                 # )
 
         return status_dict["obj_path"]

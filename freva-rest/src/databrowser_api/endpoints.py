@@ -1,18 +1,14 @@
 """Main script that runs the rest API."""
 
-import os
-import json
 from typing import Annotated, List, Literal, Union
-import uuid
 
 from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse, StreamingResponse
 from freva_rest.logger import logger
-from freva_rest.utils import send_borker_message
 from freva_rest.rest import app, server_config
 
 from .core import FlavourType, SolrSearch, Translator
-from .schema import LoadFiles, Required, SearchFlavours, SolrSchema
+from .schema import Required, SearchFlavours, SolrSchema
 
 
 @app.on_event("shutdown")
@@ -212,7 +208,6 @@ async def data_search(
 @app.get(
     "/api/databrowser/load/{flavour}",
     status_code=status.HTTP_201_CREATED,
-    response_model=LoadFiles,
     tags=["Load data"],
 )
 async def load_data(
@@ -221,7 +216,7 @@ async def load_data(
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     request: Request = Required,
-) -> LoadFiles:
+) -> StreamingResponse:
     """Search for datasets and stream the results as zarr."""
     solr_search = await SolrSearch.validate_parameters(
         server_config,
@@ -233,12 +228,11 @@ async def load_data(
         **SolrSchema.process_parameters(request),
     )
     status_code, result = await solr_search.init_stream()
+    if status_code == status.HTTP_200_OK:
+        status_code = status.HTTP_201_CREATED
     await solr_search.store_results(result.total_count, status_code)
-    files: List[str] = []
-    api_path = f"{os.environ['API_URL']}/api/freva-data-portal/zarr"
-    async for uri_str in solr_search.stream_response(result):
-        uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, uri_str.strip()))
-        out = {"uri": {"path": uri_str.strip(), "uuid": uuid5}}
-        await send_borker_message(json.dumps(out).encode())
-        files.append(f"{api_path}/{uuid5}")
-    return LoadFiles(urls=files)
+    return StreamingResponse(
+        solr_search.zarr_response(result),
+        status_code=status_code,
+        media_type="text/plain",
+    )

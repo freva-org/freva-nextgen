@@ -5,7 +5,8 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from functools import cached_property, wraps
-from json import JSONEncoder
+import os
+import json
 from typing import (
     Any,
     AsyncIterator,
@@ -20,6 +21,7 @@ from typing import (
     Union,
     cast,
 )
+import uuid
 
 import aiohttp
 from databrowser_api import __version__
@@ -27,6 +29,7 @@ from dateutil.parser import ParserError, parse
 from fastapi import HTTPException
 from freva_rest.config import ServerConfig
 from freva_rest.logger import logger
+from freva_rest.utils import create_redis_connection
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
@@ -293,7 +296,9 @@ class Translator:
                 if v == "primary"
             ]
         else:
-            _keys = [k for (k, v) in self._freva_facets.items() if v == "primary"]
+            _keys = [
+                k for (k, v) in self._freva_facets.items() if v == "primary"
+            ]
         if self.flavour in ("cordex",):
             for key in self.cordex_keys:
                 _keys.append(key)
@@ -477,7 +482,9 @@ class SolrSearch:
                 key not in translator.valid_facets
                 and key not in ("time_select",) + cls.uniq_keys
             ):
-                raise HTTPException(status_code=422, detail="Could not validate input.")
+                raise HTTPException(
+                    status_code=422, detail="Could not validate input."
+                )
         return SolrSearch(
             config,
             flavour=flavour,
@@ -535,7 +542,9 @@ class SolrSearch:
             raise ValueError(f"Choose `time_select` from {methods}") from exc
         start, _, end = time.lower().partition("to")
         try:
-            start = parse(start or "1", default=datetime(1, 1, 1, 0, 0, 0)).isoformat()
+            start = parse(
+                start or "1", default=datetime(1, 1, 1, 0, 0, 0)
+            ).isoformat()
             end = parse(
                 end or "9999", default=datetime(9999, 12, 31, 23, 59, 59)
             ).isoformat()
@@ -598,7 +607,9 @@ class SolrSearch:
                     source[k] = result[k][0]
                 elif result.get(k):
                     source[k] = result[k]
-            catalogue["catalog_dict"].append(self.translator.translate_query(source))
+            catalogue["catalog_dict"].append(
+                self.translator.translate_query(source)
+            )
 
         return search_status, IntakeCatalogue(
             catalogue=catalogue, total_count=total_count
@@ -633,7 +644,7 @@ class SolrSearch:
             logger.warning("Could not add stats to mongodb: %s", error)
 
     async def _iterintake(self) -> AsyncIterator[str]:
-        encoder = JSONEncoder(indent=3)
+        encoder = json.JSONEncoder(indent=3)
 
         async with self._session_get() as res:
             _, results = res
@@ -641,7 +652,8 @@ class SolrSearch:
                 source = {
                     k: (
                         out[k][0]
-                        if isinstance(out.get(k), list) and len(out.get(k)) == 1
+                        if isinstance(out.get(k), list)
+                        and len(out.get(k)) == 1
                         else out.get(k)
                     )
                     for k in [self.uniq_key] + self.translator.facet_hierachy
@@ -652,12 +664,14 @@ class SolrSearch:
                 for line in list(encoder.iterencode(entry)):
                     yield line
 
-    async def intake_catalogue(self, search: IntakeCatalogue) -> AsyncIterator[str]:
+    async def intake_catalogue(
+        self, search: IntakeCatalogue
+    ) -> AsyncIterator[str]:
         """Create an intake catalogue from the solr search."""
         iteritems = tuple(
             range(self.batch_size + 1, search.total_count, self.batch_size)
         )
-        encoder = JSONEncoder(indent=3)
+        encoder = json.JSONEncoder(indent=3)
         for line in list(encoder.iterencode(search.catalogue))[:-4]:
             yield line
         for i in iteritems:
@@ -810,14 +824,12 @@ class SolrSearch:
 
         Parameters
         ----------
-        uniq_key: str, default: file
-            The name of the unique key that is should be search for
-        **facets: str,
-            Search facets to refine the solr query.
+        search: SearchResult
+            The search result object of the search query.
 
         Returns
         -------
-        UniqKeys: An instance of the pydantic UniqKey base model.
+        AsyncIterator: Stream of search results.
         """
         iteritems = tuple(
             range(self.batch_size + 1, search.total_count, self.batch_size)
@@ -838,3 +850,25 @@ class SolrSearch:
             self.query["rows"] = search.total_count - iteritems[-1]
             async for uri in self._make_iterable():
                 yield uri
+
+    async def zarr_response(
+        self,
+        search: SearchResult,
+    ) -> AsyncIterator[str]:
+        """Create a zarr endpoint from a given search.
+        Parameters
+        ----------
+        search: SearchResult
+            The search result object of the search query.
+
+        Returns
+        -------
+        AsyncIterator: Stream of search results.
+        """
+        api_path = f"{os.environ['API_URL']}/api/freva-data-portal/zarr"
+        async for uri_str in self.stream_response(search):
+            uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, uri_str.strip()))
+            out = {"uri": {"path": uri_str.strip(), "uuid": uuid5}}
+            cache = await create_redis_connection()
+            await cache.publish("data-portal", json.dumps(out).encode("utf-8"))
+            yield f"{api_path}/{uuid5}.zarr\n"

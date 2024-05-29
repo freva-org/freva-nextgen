@@ -6,6 +6,7 @@ import json
 import logging
 import os
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import appdirs
 
@@ -72,23 +73,40 @@ def data_loader() -> None:
         data_logger.setLevel(logging.DEBUG)
     data_logger.debug("Loading cluster config from %s", config_file)
     config: DataLoaderConfig = json.loads(b64decode(config_file.read_bytes()))
+    cache_config = config["redis_config"]
     data_logger.debug("Deleting cluster config file %s", config_file)
     env = os.environ.copy()
     try:
         os.environ["API_CACHE_EXP"] = str(args.exp)
         os.environ["REDIS_HOST"] = args.redis_host
-        data_logger.debug("Starting data-loader process")
-        broker = ProcessQueue(
-            args.api_url or f"http://localhost:{args.port}",
-            config["ssh_config"],
-        )
-        broker.run_for_ever(
-            "data-portal",
-            config["broker_config"],
-        )
+        os.environ["REDIS_USER"] = cache_config["user"]
+        os.environ["REDIS_PASS"] = cache_config["passwd"]
+        with TemporaryDirectory() as temp:
+            if cache_config["ssl_cert"] and cache_config["ssl_key"]:
+                cert_file = Path(temp) / "client-cert.pem"
+                key_file = Path(temp) / "client-key.pem"
+                cert_file.write_text(cache_config["ssl_cert"])
+                key_file.write_text(cache_config["ssl_key"])
+                key_file.chmod(0o600)
+                cert_file.chmod(0o600)
+                os.environ["REDIS_SSL_CERTFILE"] = str(cert_file)
+                os.environ["REDIS_SSL_KEYFILE"] = str(key_file)
+
+            data_logger.debug("Starting data-loader process")
+            queue = ProcessQueue(
+                args.api_url or f"http://localhost:{args.port}",
+                config["ssh_config"],
+            )
+            queue.run_for_ever(
+                "data-portal",
+            )
     except KeyboardInterrupt:
         pass
     finally:
         if CLIENT is not None:
             CLIENT.shutdown()
         os.environ = env
+
+
+if __name__ == "__main__":
+    data_loader()

@@ -14,6 +14,31 @@ services:
     image: redis:latest
     ports:
       - "6379:6379"
+    environment:
+      REDIS_USERNAME: redis
+      REDIS_PASSWORD: secret
+      REDIS_LOGLEVEL: debug
+      REDIS_SSL_CERTFILE: /certs/client-cert.pem
+      REDIS_SSL_KEYFILE: /certs/client-key.pem
+    volumes:
+      - ./redis-cmd.sh:/usr/local/bin/redis-cmd
+      - ./certs:/certs
+    command: /usr/local/bin/redis-cmd
+  keycloak:
+    image: quay.io/keycloak/keycloak
+    environment:
+      KEYCLOAK_ADMIN: keycloak
+      KEYCLOAK_ADMIN_PASSWORD: secret
+      KC_HEALTH_ENABLED: true
+      KC_METRICS_ENABLED: true
+      JAVA_OPTS_APPEND: "-Djava.net.preferIPv4Stack=true"
+    volumes:
+      - ./certs:/certs
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    command: start --features=token-exchange
+
   mongodb:
     image: mongo:latest
     environment:
@@ -22,12 +47,3 @@ services:
       MONGO_INITDB_DATABASE: search_stats
     ports:
       - "27017:27017"
-  broker:
-    image: rabbitmq
-    environment:
-      RABBITMQ_NODE_PORT: 5672
-      RABBITMQ_DEFAULT_USER: rabbit
-      RABBITMQ_DEFAULT_PASS: secret
-    ports:
-      - "5672:5672"
-      - "15672:15672"

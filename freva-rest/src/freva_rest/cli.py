@@ -28,12 +28,13 @@ variables can be set:
 - ``MONGO_DB``: database name of the mongodb instance.
 - ``API_URL``: url of the machine that runs of the rest api
 - ``API_CACHE_EXP``: expiry time in seconds of the cached data
-- ``API_BROKER_HOST``: Host and port of the message broker url.
-                       Host name and port should separated by a ``:``, for
-                       example ``localhost:6379``
 - ``REDIS_HOST``: Host and port of the redis cache
                   Host name and port should separated by a ``:``, for
                   example ``localhost:5672``
+- ``REDIS_SSL_CERTFILE``: Path to the TSL certificate file used to encrypt
+                          the redis connection.
+- ``REDIS_SSL_KEYFILE``: Path to the TSL key file used to encrypt the redis
+                         connection.
 - ``DATA_PORTAL_HOST``: Host name(s) of the data portal worker, use multiple
                         hosts by ',' separation. For example
                         `hostname1,hostname2,hostenam3` will create a cluster
@@ -51,7 +52,6 @@ variables can be set:
                               running the data loader process. To assign
                               multiple paths you can use ',' separators for 
                               example: `/path/1,/path/2,/path/3`
-
 - ``DATA_PORTAL_PASSWD``: Password(s) for the user/host name pairs to log on
                           to the data loader remote machine(s). To assign
                           multiple passwords you can use ',' separators for 
@@ -69,17 +69,16 @@ import asyncio
 import base64
 from getpass import getuser
 import json
+import logging
 import multiprocessing
 import os
 from pathlib import Path
-from socket import gethostname
 import sys
 from tempfile import NamedTemporaryFile
 from typing import Any, Optional, Tuple
 
 import appdirs
-import dask
-from paramiko import AutoAddPolicy, SSHClient
+from paramiko import AutoAddPolicy, SSHClient, SFTPClient
 from paramiko.ssh_exception import (
     SSHException,
 )
@@ -95,7 +94,7 @@ from .config import ServerConfig, defaults
 cli = typer.Typer(name="freva-rest-server", help=__doc__, epilog=__doc__)
 
 
-def get_passwd(ask_for_password: bool) -> None:
+def get_passwd(ask_for_password: bool) -> Optional[str]:
     """Get the password for the ssh clients."""
     msg = (
         "[bold]Type the SSH pasword(s) now\nmultiple passwords "
@@ -103,7 +102,27 @@ def get_passwd(ask_for_password: bool) -> None:
     )
     if ask_for_password is False:
         return os.environ.get("DATA_PORTAL_PASSWD")
-    return os.environ.get("DATA_PORTAL_PASSWD") or Prompt(msg, password=True)
+    return os.environ.get("DATA_PORTAL_PASSWD") or Prompt.ask(
+        msg, password=True
+    )
+
+
+def recursive_upload(
+    sftp: SFTPClient, local_path: str, remote_path: str, mode
+) -> None:
+    """Recursively upload files and directories from local_path to remote_path."""
+    if os.path.isfile(local_path):
+        sftp.put(local_path, remote_path)
+        sftp.chmod(remote_path, mode)
+    else:
+        try:
+            sftp.mkdir(remote_path)
+        except IOError:  # Directory already exists
+            pass
+        for item in os.listdir(local_path):
+            local_item = os.path.join(local_path, item)
+            remote_item = os.path.join(remote_path, item)
+            recursive_upload(sftp, local_item, remote_item, mode)
 
 
 class DataPortalWorker:
@@ -111,7 +130,7 @@ class DataPortalWorker:
 
     proc_stop = multiprocessing.Event()
 
-    def __init__(self, **kwargs: str) -> None:
+    def __init__(self, debug: bool = False, **kwargs: str) -> None:
         worker_urls = (kwargs.get("DATA_PORTAL_HOST") or "localhost").split(
             ","
         )
@@ -125,15 +144,16 @@ class DataPortalWorker:
             for p in (kwargs.get("DATA_PORTAL_PASSWD") or "").split(",")
         ]
         passwords.insert(0, passwords[0])
+        cert_dir = Path(".") / "dev-env" / "certs"
         self.redis_host = kwargs.get("REDIS_HOST") or "localhost"
         self.api_url = kwargs.get("API_URL") or "localhost"
         self.api_cache_exp = kwargs.get("API_CACHE_EXP") or "3600"
-        broker_host = kwargs.get("API_BROKER_HOST") or "localhost"
         self.ssh_connection_args = {
             "hostname": worker_urls[0].strip(),
             "username": usernames[0].strip(),
             "password": passwords[0].strip() or None,
         }
+        self.debug = debug
         self._worker_proc = None
         ssh_workers = [h.strip() for h in worker_urls if h.strip()]
         ssh_workers.insert(0, ssh_workers[0])
@@ -152,20 +172,28 @@ class DataPortalWorker:
             / "data-portal-cluster-config.json"
         )
         self.ssh_cluster_config_file.parent.mkdir(exist_ok=True, parents=True)
-        for prefix in ("http", "https", "tcp"):
-            broker_host = broker_host.removeprefix(f"{prefix}://")
-        broker_host, _, broker_port = broker_host.partition(":")
-        broker_port = broker_port or "5672"
+        ssl_cert = ssl_key = None
+        ssl_cert_file, ssl_key_file = self.get_cert_file(
+            kwargs.get("REDIS_SSL_DIR"),
+            kwargs.get("REDIS_SSL_CERTFILE"),
+            kwargs.get("REDIS_SSL_KEYFILE"),
+        )
+        if ssl_cert_file:
+            ssl_cert = Path(ssl_cert_file).read_text("utf-8")
+        if ssl_key_file:
+            ssl_key = Path(ssl_key_file).read_text("utf-8")
+
         self.cluster_config = {
             "ssh_config": {
                 "hosts": ssh_workers,
                 "connect_options": ssh_cluster_config,
             },
-            "broker_config": {
-                "user": os.environ.get("BROKER_USER", "rabbit"),
-                "passwd": os.environ.get("BROKER_PASS", "secret"),
-                "host": broker_host,
-                "port": int(broker_port),
+            "redis_config": {
+                "ssl_cert": ssl_cert,
+                "ssl_key": ssl_key,
+                "user": os.environ.get("REDIS_USER", "redis"),
+                "passwd": os.environ.get("REDIS_PASS", "secret"),
+                "host": os.environ.get("REDIS_HOST", "redis://localhost:6379"),
             },
         }
         self.ssh_cluster_config_file.write_bytes(
@@ -173,9 +201,22 @@ class DataPortalWorker:
         )
         self.ssh_cluster_config_file.chmod(0o600)
 
+    @staticmethod
+    def get_cert_file(
+        cert_dir: Optional[str],
+        cert_file: Optional[str],
+        key_file: Optional[str],
+    ) -> Tuple[Optional[str], Optional[str]]:
+        """Get the certificate (key and cert) if they are configured."""
+        default_cert = default_key = None
+        if cert_dir:
+            default_cert = str(Path(cert_dir) / "client-cert.pem")
+            default_key = str(Path(cert_dir) / "client-key.pem")
+        return cert_file or default_cert, key_file or default_key
+
     def start(self, python_binary: str = sys.executable) -> None:
         """Start the worker process."""
-        cli_file = self._remote_setup(python_binary)
+        cli_dir = self._remote_setup(python_binary)
         flags = [
             f"{f}={v}"
             for f, v in (
@@ -185,16 +226,41 @@ class DataPortalWorker:
             )
             if v
         ]
-        deps = "-d xpublish -d asyncssh -d netcdf4"
-        cmd = " ".join([f"{python_binary} -m fades {deps} {cli_file}"] + flags)
+        if self.debug:
+            flags.append("-v")
+        deps = f"-r {cli_dir}/requirements.txt"
+        cmd = " ".join(
+            [f"{python_binary} -m fades {deps} -m {cli_dir.name}"] + flags
+        )
         if self._worker_proc is None:
             self._worker_proc = multiprocessing.Process(
                 target=self._start,
-                args=(cmd, self.proc_stop),
+                args=(f"cd {cli_dir.parent} && {cmd}", self.proc_stop),
                 kwargs=self.ssh_connection_args,
             )
             self._worker_proc.daemon = True
             self._worker_proc.start()
+
+    @staticmethod
+    def _copy_dir(
+        source: str, target: str, mode: int = 0o755, **kwargs: Optional[str]
+    ) -> None:
+        ssh_client = SSHClient()
+        ssh_client.set_missing_host_key_policy(AutoAddPolicy())
+        ssh_client.load_system_host_keys()
+        try:
+            ssh_client.connect(**kwargs)
+            sftp = ssh_client.open_sftp()
+            try:
+                sftp.mkdir(target)
+            except OSError:
+                pass
+            recursive_upload(sftp, source, target, mode)
+            sftp.close()
+        except SSHException as error:
+            logger.error("SSH failure: %s", error)
+        finally:
+            ssh_client.close()
 
     @staticmethod
     def _copy_file(
@@ -210,6 +276,7 @@ class DataPortalWorker:
                 sftp.remove(target)
             except FileNotFoundError:
                 pass
+
             sftp.put(source, target)
             sftp.chmod(target, mode)
             sftp.close()
@@ -258,9 +325,9 @@ class DataPortalWorker:
             ssh_client.close()
         return output
 
-    def _remote_setup(self, python_binary: str) -> str:
+    def _remote_setup(self, python_binary: str) -> Path:
         """Copy the cli script and setup all dependencies."""
-        cli_file = Path(freva_data_portal.__file__).parent / "load_data.py"
+        src = Path(freva_data_portal.__file__).parent / "data-portal-worker"
         _ = self._exec_ssh_command(
             f"{python_binary} -m pip install --user fades appdirs",
             **self.ssh_connection_args,
@@ -273,22 +340,23 @@ class DataPortalWorker:
                 **self.ssh_connection_args,
             ).splitlines()
         cache_dir = Path(stdout[-1].strip())
-        target_file = str(cache_dir / cli_file.name)
+        target_dir = cache_dir / src.name
         ssh_config = str(cache_dir / self.ssh_cluster_config_file.name)
-        self._copy_file(str(cli_file), target_file, **self.ssh_connection_args)
+        self._copy_dir(str(src), str(target_dir), **self.ssh_connection_args)
         self._copy_file(
             str(self.ssh_cluster_config_file),
             ssh_config,
             **self.ssh_connection_args,
         )
         self.ssh_cluster_config_file.unlink()
-        return target_file
+        return target_dir
 
     @classmethod
     def _start(
         cls,
         command: str,
         event: multiprocessing.Event,
+        work_dir: Optional[str] = None,
         **connection_kwargs: Optional[str],
     ) -> None:
         num_times = 0
@@ -346,6 +414,33 @@ def start(
             " then all host names will be assigned to that single user name."
         ),
     ),
+    ssl_cert_dir: Optional[str] = typer.Option(
+        None,
+        "--cert-dir",
+        help=(
+            "Set the path to the directory contaning the tls cert and key files"
+            " that are used to establish a secure connection, if you set the"
+            " it will be assumed that cert file is saved as client-cert.pem"
+            " and the key file client-key.pem. This flag can be used as a"
+            " short cut instead of using the `--tls-cert` and `--tls-key` flats"
+        ),
+    ),
+    ssl_cert: Optional[str] = typer.Option(
+        os.environ.get("REDIS_SSL_CERTFILE"),
+        "--tls-cert",
+        help=(
+            "Set the path to the tls certificate file that is used to establish"
+            " a secure connection to the data portal cache."
+        ),
+    ),
+    ssl_key: Optional[str] = typer.Option(
+        os.environ.get("REDIS_SSL_KEYFILE"),
+        "--tls-key",
+        help=(
+            "Set the path to the tls key file that is used to establish"
+            " a secure connection to the data portal cache."
+        ),
+    ),
     ask_passwd: bool = typer.Option(
         False,
         "--password",
@@ -375,11 +470,10 @@ def start(
     ),
 ) -> None:
     """Start the freva rest API."""
+    if debug:
+        logger.setLevel(logging.DEBUG)
     defaults["API_CONFIG"] = (config_file or defaults["API_CONFIG"]).absolute()
     defaults["DEBUG"] = debug
-    defaults["API_BROKER_HOST"] = (
-        os.environ.get("API_BROKER_HOST") or "localhost:5672"
-    )
     defaults["API_CACHE_EXP"] = os.environ.get("API_CACHE_EXP") or "3600"
     defaults["REDIS_HOST"] = (
         os.environ.get("REDIS_HOST") or "redis://localhost:6379"
@@ -392,6 +486,11 @@ def start(
     defaults["DATA_PORTAL_USER"] = data_portal_user or getuser()
     defaults["DATA_PORTAL_PASSWD"] = get_passwd(ask_passwd)
     defaults["DATA_PORTAL_TMP_DIR"] = scratch_dir
+    defaults["REDIS_SSL_CERTFILE"] = ssl_cert
+    defaults["REDIS_SSL_KEYFILE"] = ssl_key
+    defaults["REDIS_SSL_DIR"] = ssl_cert_dir
+    if ssl_cert:
+        ssl_cert = str(Path(ssl_cert).absolute())
     cfg = ServerConfig(defaults["API_CONFIG"], debug=debug)
     if dev:
         from databrowser_api.tests.mock import read_data
@@ -399,7 +498,8 @@ def start(
         for core in cfg.solr_cores:
             asyncio.run(read_data(core, cfg.solr_host, cfg.solr_port))
     workers = {False: int(os.environ.get("API_WORKER", 8)), True: None}
-    with DataPortalWorker(**defaults) as dpw:
+    with DataPortalWorker(debug=debug, **defaults) as dpw:
+        ssl_cert, ssl_key = dpw.get_cert_file(ssl_cert_dir, ssl_cert, ssl_key)
         dpw.start(python_binary)
         with NamedTemporaryFile(suffix=".conf", prefix="env") as temp_f:
             Path(temp_f.name).write_text(
@@ -408,12 +508,12 @@ def start(
                     f"API_CONFIG={defaults['API_CONFIG']}\n"
                     f"API_PORT={port}\n"
                     f"API_CACHE_EXP={defaults['API_CACHE_EXP']}\n"
-                    f"REDIS_HOST={defaults['REDIS_HOST']}\n"
+                    f"REDIS_HOST={dpw.cluster_config['redis_config']['host']}\n"
+                    f"REDIS_PASS={dpw.cluster_config['redis_config']['passwd']}\n"
+                    f"REDIS_USER={dpw.cluster_config['redis_config']['user']}\n"
+                    f"REDIS_SSL_CERTFILE={ssl_cert or ''}\n"
+                    f"REDIS_SSL_KEYFILE={ssl_key or ''}\n"
                     f"API_URL={defaults['API_URL']}\n"
-                    f"API_BROKER_HOST={dpw.cluster_config['broker_config']['host']}\n"
-                    f"API_BROKER_PORT={dpw.cluster_config['broker_config']['port']}\n"
-                    f"API_BROKER_USER={dpw.cluster_config['broker_config']['user']}\n"
-                    f"API_BROKER_PASS={dpw.cluster_config['broker_config']['passwd']}\n"
                 ),
                 encoding="utf-8",
             )
