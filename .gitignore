@@ -133,3 +133,4 @@ dmypy.json
 
 # Other
 dev-env/mongodb
+dev-env/certs
