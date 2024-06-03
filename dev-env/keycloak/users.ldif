@@ -1,0 +1,38 @@
+dn: ou=users,dc=example,dc=com
+objectClass: organizationalUnit
+ou: users
+
+dn: uid=johndoe,ou=users,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: John Doe
+sn: Doe
+uid: johndoe
+userPassword: johndoe123
+
+dn: uid=janedoe,ou=users,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Jane Doe
+sn: Doe
+uid: janedoe
+userPassword: janedoe123
+
+dn: uid=alicebrown,ou=users,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Alice Brown
+sn: Brown
+uid: alicebrown
+userPassword: alicebrown123
+
+dn: uid=bobsmith,ou=users,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Bob Smith
+sn: Smith
+uid: bobsmith
+userPassword: bobsmith123
+
+dn: uid=lisajones,ou=users,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Lisa Jones
+sn: Jones
+uid: lisajones
+userPassword: lisajones123
