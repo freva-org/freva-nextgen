@@ -11,15 +11,15 @@ from tempfile import TemporaryDirectory
 import appdirs
 
 from .utils import data_logger
-from .load_data import CLIENT, DataLoaderConfig, ProcessQueue
+from .load_data import CLIENT, RedisKw, ProcessQueue
 
 __version__ = "2405.0.0"
 
 
-def data_loader() -> None:
+def run_data_loader() -> None:
     """Daemon that waits for messages to load the data."""
     config_file = (
-        Path(appdirs.user_cache_dir()) / "data-portal-cluster-config.json"
+        Path(appdirs.user_cache_dir("freva")) / "data-portal-cluster-config.json"
     )
 
     redis_host, _, redis_port = (
@@ -47,19 +47,12 @@ def data_loader() -> None:
         help="Host:Port of the redis cache.",
         default=f"redis://{redis_host}:{redis_port}",
     )
-    parser.add_argument(
-        "-a",
-        "--api-url",
-        type=str,
-        help="Host:Port for the databrowser api",
-        default=os.environ.get("API_URL"),
-    )
-    parser.add_argument(
+     parser.add_argument(
         "-p",
         "--port",
         type=int,
-        help="API port, only used if --api-host not set.",
-        default=8080,
+        help="Dask scheduler port for loading data.",
+        default=40000,
     )
     parser.add_argument(
         "-v",
@@ -72,11 +65,11 @@ def data_loader() -> None:
     if args.verbose is True:
         data_logger.setLevel(logging.DEBUG)
     data_logger.debug("Loading cluster config from %s", config_file)
-    config: DataLoaderConfig = json.loads(b64decode(config_file.read_bytes()))
-    cache_config = config["redis_config"]
+    cache_config: RedisKw = json.loads(b64decode(config_file.read_bytes()))
     data_logger.debug("Deleting cluster config file %s", config_file)
     env = os.environ.copy()
     try:
+        os.environ["DASK_PORT"] = str(args.port)
         os.environ["API_CACHE_EXP"] = str(args.exp)
         os.environ["REDIS_HOST"] = args.redis_host
         os.environ["REDIS_USER"] = cache_config["user"]
@@ -93,10 +86,7 @@ def data_loader() -> None:
                 os.environ["REDIS_SSL_KEYFILE"] = str(key_file)
 
             data_logger.debug("Starting data-loader process")
-            queue = ProcessQueue(
-                args.api_url or f"http://localhost:{args.port}",
-                config["ssh_config"],
-            )
+            queue = ProcessQueue()
             queue.run_for_ever(
                 "data-portal",
             )
@@ -106,7 +96,3 @@ def data_loader() -> None:
         if CLIENT is not None:
             CLIENT.shutdown()
         os.environ = env
-
-
-if __name__ == "__main__":
-    data_loader()

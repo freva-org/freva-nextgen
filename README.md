@@ -19,7 +19,7 @@ rest service counterparts.
 - [Testing](#testing)
 - [License](#license)
 
-## Installation
+## Installation for development
 
 1. Make sure you have Python 3.8+ installed.
 2. Clone this repository:
@@ -29,19 +29,19 @@ git clone git@github.com:FREVA-CLINT/freva-nextgen.git
 cd freva-nextgen
 ```
 
-3. Install the rest-api:
+3. Install all components:
 
 ```console
-pip install -e freva-rest
+python -m pip install -e cryptography tox freva-rest freva-client freva-data-portal-worker
 ```
 
-4. Install the client library
+4. Generate a new pair of self signed certificates
 
 ```console
-pip install -e freva-client
+python run_server.py --gen-certs
 ```
 
-## Development Environment
+### Development Environment
 Various services, such as apache solr are needed to run the rest services system
 in a development environment. Here we set up these services in a containers
 using the `docker-compose` or `podman-compose` command, ensure
@@ -64,7 +64,7 @@ environment. You can now develop and test the project within this environment.
 After the containers are up and running you can start the REST server the following:
 
 ```console
-freva-rest-server -c api_config.toml --debug --dev
+python run_server.py -c api_config.toml --debug --dev
 ```
 
 The ``--debug`` and ``--dev`` flag will make sure that any changes are loaded.
@@ -141,7 +141,17 @@ variables can be set:
 - ``MONGO_USER``: user name for the mongodb.
 - ``MONGO_PASSWORD``: password to log on to the mongodb.
 - ``MONGO_DB``: database name of the mongodb instance.
-
+- ``API_URL``: url of the machine that runs of the rest api
+- ``API_CACHE_EXP``: expiry time in seconds of the cached data
+- ``REDIS_HOST``: Host and port of the redis cache
+                  Host name and port should separated by a ``:``, for
+                  example ``localhost:5672``
+- ``REDIS_PASS``: Password for the redis connection.
+- ``REDIS_USER``: Username for the redis connection.
+- ``REDIS_SSL_CERTFILE``: Path to the TSL certificate file used to encrypt
+                          the redis connection.
+- ``REDIS_SSL_KEYFILE``: Path to the TSL key file used to encrypt the redis
+                         connection.
 > ``📝`` You can override the path to the default config file using the ``API_CONFIG``
          environment variable. The default location of this config file is
          ``/opt/databrowser/api_config.toml``.

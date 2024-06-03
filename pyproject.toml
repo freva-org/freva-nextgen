@@ -42,6 +42,7 @@ description = "Run the unit tests."
 deps = -c {toxinidir}/.github/dependabot/constraints.txt
        -e ./freva-rest
        -e ./freva-client
+       -e ./freva-data-portal
        httpx
        pytest
        pytest-asyncio
@@ -78,6 +79,7 @@ commands_post = - python3 {toxinidir}/run_server.py --kill
 description = "Check code quality."
 deps = -e ./freva-rest
        -e ./freva-client
+       - ./freva-data-portal
        black
        isort
        flake8
@@ -85,12 +87,15 @@ deps = -e ./freva-rest
 commands =
     python3 -m isort --check --profile black -t py311 -l 79 freva-rest/src
     python3 -m isort --check --profile black -t py311 -l 79 freva-client/src
+    python3 -m isort --check --profile black -t py311 -l 79 freva-data-portal/src
     python3 -m flake8 freva-client/src --count --max-complexity=8 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
     python3 -m flake8 freva-rest/src --count --max-complexity=8 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
+    python3 -m flake8 freva-data-portal/src --count --max-complexity=8 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
 commands_post =
 [testenv:types]
 description = "Static type checking."
 deps = ./freva-rest
+       ./freva-data-portal
        mypy
        motor-stubs
        pytest-stub
@@ -117,4 +122,8 @@ deps = git-python
        packaging
        requests
        tomli
+[testenv:build]
+commands = pyinstaller --onefile --name data-loader-worker freva-data-portal/pyinstaller.py
+deps = ./freva-data-portal
+       pyinstaller
 """

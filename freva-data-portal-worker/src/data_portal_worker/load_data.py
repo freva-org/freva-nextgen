@@ -9,7 +9,7 @@ import time
 from typing import Any, Dict, List, Literal, Optional, TypedDict, Union, cast
 
 import cloudpickle  # fades cloudpickle
-from dask.distributed import SSHCluster  # fades distributed
+from dask.distributed import LocalCluster  # fades distributed
 from dask.distributed import Client
 from dask.distributed.deploy.cluster import Cluster
 import redis  # fades redis
@@ -43,17 +43,8 @@ LoadDict = TypedDict(
         "json_meta": Optional[Dict[str, Any]],
     },
 )
-ClusterKw = TypedDict(
-    "ClusterKw",
-    {
-        "hosts": List[str],
-        "connect_options": List[Dict[str, str]],
-    },
-)
-RedisKw = TypedDict("RedisKw", {"user": str, "passwd": str, "host": str, "port": int})
-
-DataLoaderConfig = TypedDict(
-    "DataLoaderConfig", {"ssh_config": ClusterKw, "redis_config": RedisKw}
+RedisKw = TypedDict(
+    "RedisKw", {"user": str, "passwd": str, "host": str, "port": int}
 )
 
 
@@ -142,14 +133,12 @@ class LoadStatus:
         return cls(**_dict)
 
 
-def get_dask_client(cluster_kw: ClusterKw, client: Optional[Client] = CLIENT) -> Client:
+def get_dask_client(client: Optional[Client] = CLIENT) -> Client:
     """Get or create a cached dask cluster."""
     if client is None:
-        print_kw = cluster_kw.copy()
-        for num, _ in enumerate(cluster_kw["connect_options"]):
-            print_kw["connect_options"][num]["password"] = "***"
-        data_logger.debug("setting up ssh cluster with %s", print_kw)
-        client = Client(SSHCluster(**cluster_kw))
+        client = Client(
+            LocalCluster(scheduler_port=int(os.getenv("DASK_PORT", "40000")))
+        )
         data_logger.info("Created new cluster: %s", client.dashboard_link)
     else:
         data_logger.debug("recycling dask cluster.")
@@ -244,7 +233,9 @@ class DataLoadFactory:
         arr_meta = meta["metadata"][f"{variable}/{array_meta_key}"]
         data = encode_chunk(
             get_data_chunk(
-                encode_zarr_variable(dset.variables[variable], name=variable).data,
+                encode_zarr_variable(
+                    dset.variables[variable], name=variable
+                ).data,
                 chunk,
                 out_shape=arr_meta["chunks"],
             ).tobytes(),
@@ -289,14 +280,10 @@ class ProcessQueue:
 
     def __init__(
         self,
-        rest_url: str,
-        cluster_kw: ClusterKw,
         redis_cache: Optional[redis.Redis] = None,
     ) -> None:
         self.redis_cache = redis_cache or RedisCacheFactory(0)
-        self.client = get_dask_client(cluster_kw)
-        self.rest_url = rest_url
-        self.cluster_kw = cluster_kw
+        self.client = get_dask_client()
 
     def run_for_ever(
         self,
@@ -335,11 +322,13 @@ class ProcessQueue:
 
     def spawn(self, inp_obj: str, uuid5: str) -> str:
         """Subumit a new data loading task to the process pool."""
-        data_logger.debug("Assigning %s to %s for future processing", inp_obj, uuid5)
+        data_logger.debug(
+            "Assigning %s to %s for future processing", inp_obj, uuid5
+        )
         cache: Optional[bytes] = self.redis_cache.get(uuid5)
         status_dict: LoadDict = {
             "status": 2,
-            "obj_path": f"{self.rest_url}/api/freva-data-portal/zarr/{uuid5}",
+            "obj_path": f"/api/freva-data-portal/zarr/{uuid5}.zarr",
             "obj": None,
             "reason": "",
             "url": "",
@@ -358,7 +347,9 @@ class ProcessQueue:
             if status_dict["status"] in (1, 2):
                 # Failed job, let's retry
                 # self.client.submit(
-                DataLoadFactory.from_object_path(inp_obj, uuid5, self.redis_cache)
+                DataLoadFactory.from_object_path(
+                    inp_obj, uuid5, self.redis_cache
+                )
                 # )
 
         return status_dict["obj_path"]

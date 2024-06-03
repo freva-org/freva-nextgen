@@ -1,0 +1,62 @@
+[Unit]
+Description=Start the dask-worker / dask-scheduler service.
+After=network.target
+
+Type=oneshot
+ExecStartPre=/bin/bash -c '
+if [ -w /opt/mamba ];then
+    MAMBA_DIR=/opt/mamba
+else
+    MAMBA_DIR=~/.mamba
+fi
+
+PKGS="\
+cfgrib \
+cloudpickle \
+dask[distributed,diagnostics] \
+h5netcdf \
+netcdf4 \
+rasterio \
+xarray \
+mamba \
+zarr"
+MD5SUM=$(echo $PKGS| md5sum | awk '{print $1}')
+if [ ! -f ${MAMBA_DIR}/environment.txt ];then
+    create=true
+elif [ "$(cat ${MAMBA_DIR}/environment.txt)" != "$MD5SUM" ];then
+    create=true
+else
+    create=false
+fi
+echo "MAMBA_DIR=$MAMBA_DIR" > ~/.config/dask-worker-env
+if [ "$create" = true ];then
+    rm -rf ${MAMBA_DIR}
+    ARCH=$(uname -m)
+    TEMP_DIR=$(mktemp -d)
+    cd "$TEMP_DIR" || { echo "Failed to create temporary directory"; exit 1; }
+    case "$ARCH" in
+        x86_64)
+            curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
+            ;;
+        aarch64)
+            curl -Ls https://micro.mamba.pm/api/micromamba/linux-aarch64/latest | tar -xvj bin/micromamba
+            ;;
+        ppc64le)
+            curl -Ls https://micro.mamba.pm/api/micromamba/linux-ppc64le/latest | tar -xvj bin/micromamba
+            ;;
+        *)
+            echo "Unsupported architecture: $ARCH"
+            exit 1
+            ;;
+    esac
+    bin/micromamba create -p ${MAMBA_DIR} -c conda-forge -y $PKGS
+    rm -r $TEMP_DIR
+    echo $MD5SUM > ${MAMBA_DIR}/environment.txt
+fi
+'
+EnvironmentFile=%h/.config/dask-worker-env
+ExecStart=${INSTALL_DIR}/bin/dask-worker %I --nanny --nworkers auto --nthreads 2
+Restart=always
+
+[Install]
+WantedBy=default.target
