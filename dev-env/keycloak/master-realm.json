@@ -7,8 +7,8 @@
   "defaultSignatureAlgorithm" : "RS256",
   "revokeRefreshToken" : false,
   "refreshTokenMaxReuse" : 0,
-  "accessTokenLifespan" : 60,
-  "accessTokenLifespanForImplicitFlow" : 900,
+  "accessTokenLifespan" : 2592000,
+  "accessTokenLifespanForImplicitFlow" : 2592000,
   "ssoSessionIdleTimeout" : 1800,
   "ssoSessionMaxLifespan" : 36000,
   "ssoSessionIdleTimeoutRememberMe" : 0,
@@ -25,7 +25,7 @@
   "accessCodeLifespanLogin" : 1800,
   "actionTokenGeneratedByAdminLifespan" : 43200,
   "actionTokenGeneratedByUserLifespan" : 300,
-  "oauth2DeviceCodeLifespan" : 600,
+  "oauth2DeviceCodeLifespan" : 2592000,
   "oauth2DevicePollingInterval" : 5,
   "enabled" : true,
   "sslRequired" : "external",
@@ -101,6 +101,22 @@
       "attributes" : { }
     } ],
     "client" : {
+      "freva-rest" : [ {
+        "id" : "0151b1a3-c95c-4bd8-920e-c373ceb67c4a",
+        "name" : "uma_protection",
+        "composite" : false,
+        "clientRole" : true,
+        "containerId" : "ee51b91d-15a2-4caf-b17f-ae3933da4f60",
+        "attributes" : { }
+      }, {
+        "id" : "424a0d54-ed3d-4c7c-900f-20e30d56016e",
+        "name" : "view-profile",
+        "description" : "${view-profile}",
+        "composite" : false,
+        "clientRole" : true,
+        "containerId" : "ee51b91d-15a2-4caf-b17f-ae3933da4f60",
+        "attributes" : { }
+      } ],
       "security-admin-console" : [ ],
       "admin-cli" : [ ],
       "account-console" : [ ],
@@ -387,6 +403,94 @@
   "webAuthnPolicyPasswordlessAcceptableAaguids" : [ ],
   "webAuthnPolicyPasswordlessExtraOrigins" : [ ],
   "users" : [ {
+    "id" : "8811dd8e-7e80-4876-8f2e-e1f4aaf500b8",
+    "username" : "alicebrown",
+    "firstName" : "Alice Brown",
+    "lastName" : "Brown",
+    "emailVerified" : false,
+    "attributes" : {
+      "LDAP_ENTRY_DN" : [ "uid=alicebrown,ou=users,dc=example,dc=com" ],
+      "createTimestamp" : [ "20240603232534Z" ],
+      "modifyTimestamp" : [ "20240603232534Z" ],
+      "LDAP_ID" : [ "5283c6b8-b64c-103e-88bb-b7cf24ca72ee" ]
+    },
+    "createdTimestamp" : 1717532630964,
+    "enabled" : true,
+    "totp" : false,
+    "federationLink" : "0869d7ec-d951-4c5b-b1ba-8f2f6f8113c6",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-master" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "f7cccbde-be66-4a39-ac42-6101401fed42",
+    "username" : "bobsmith",
+    "firstName" : "Bob Smith",
+    "lastName" : "Smith",
+    "emailVerified" : false,
+    "attributes" : {
+      "LDAP_ENTRY_DN" : [ "uid=bobsmith,ou=users,dc=example,dc=com" ],
+      "createTimestamp" : [ "20240603232534Z" ],
+      "modifyTimestamp" : [ "20240603232534Z" ],
+      "LDAP_ID" : [ "528500e6-b64c-103e-88bc-b7cf24ca72ee" ]
+    },
+    "createdTimestamp" : 1717532630993,
+    "enabled" : true,
+    "totp" : false,
+    "federationLink" : "0869d7ec-d951-4c5b-b1ba-8f2f6f8113c6",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-master" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "02c7afde-eb6f-4e30-bdb2-218a773b7c2c",
+    "username" : "janedoe",
+    "firstName" : "Jane Doe",
+    "lastName" : "Doe",
+    "emailVerified" : false,
+    "attributes" : {
+      "LDAP_ENTRY_DN" : [ "uid=janedoe,ou=users,dc=example,dc=com" ],
+      "createTimestamp" : [ "20240603232534Z" ],
+      "modifyTimestamp" : [ "20240603232534Z" ],
+      "LDAP_ID" : [ "52833608-b64c-103e-88ba-b7cf24ca72ee" ]
+    },
+    "createdTimestamp" : 1717532630938,
+    "enabled" : true,
+    "totp" : false,
+    "federationLink" : "0869d7ec-d951-4c5b-b1ba-8f2f6f8113c6",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-master" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "77c73253-e811-449b-8d22-483100e1e3c3",
+    "username" : "johndoe",
+    "firstName" : "John Doe",
+    "lastName" : "Doe",
+    "emailVerified" : false,
+    "attributes" : {
+      "LDAP_ENTRY_DN" : [ "uid=johndoe,ou=users,dc=example,dc=com" ],
+      "createTimestamp" : [ "20240603232534Z" ],
+      "modifyTimestamp" : [ "20240603232534Z" ],
+      "LDAP_ID" : [ "52814e9c-b64c-103e-88b9-b7cf24ca72ee" ]
+    },
+    "createdTimestamp" : 1717532630903,
+    "enabled" : true,
+    "totp" : false,
+    "federationLink" : "0869d7ec-d951-4c5b-b1ba-8f2f6f8113c6",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-master" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
     "id" : "8b61de5e-9cf7-4fea-bcb6-89c5e8998e9c",
     "username" : "keycloak",
     "emailVerified" : false,
@@ -406,106 +510,18 @@
     "notBefore" : 0,
     "groups" : [ ]
   }, {
-    "id" : "2fb9b6d6-9fba-4552-9ccd-08fcf9f5f4c2",
-    "username" : "johndoe",
-    "firstName" : "John Doe",
-    "lastName" : "Doe",
-    "emailVerified" : false,
-    "attributes" : {
-      "LDAP_ENTRY_DN" : [ "uid=johndoe,ou=users,dc=example,dc=com" ],
-      "createTimestamp" : [ "20240603224948Z" ],
-      "modifyTimestamp" : [ "20240603224948Z" ],
-      "LDAP_ID" : [ "52daccec-b647-103e-92ef-25db973b611b" ]
-    },
-    "createdTimestamp" : 1717455899792,
-    "enabled" : true,
-    "totp" : false,
-    "federationLink" : "0869d7ec-d951-4c5b-b1ba-8f2f6f8113c6",
-    "credentials" : [ ],
-    "disableableCredentialTypes" : [ ],
-    "requiredActions" : [ ],
-    "realmRoles" : [ "default-roles-master" ],
-    "notBefore" : 0,
-    "groups" : [ ]
-  }, {
-    "id" : "d12f7464-7e99-461e-b59f-473dc34f4f34",
-    "username" : "janedoe",
-    "firstName" : "Jane Doe",
-    "lastName" : "Doe",
-    "emailVerified" : false,
-    "attributes" : {
-      "LDAP_ENTRY_DN" : [ "uid=janedoe,ou=users,dc=example,dc=com" ],
-      "createTimestamp" : [ "20240603224948Z" ],
-      "modifyTimestamp" : [ "20240603224948Z" ],
-      "LDAP_ID" : [ "52dc4d7e-b647-103e-92f0-25db973b611b" ]
-    },
-    "createdTimestamp" : 1717455899979,
-    "enabled" : true,
-    "totp" : false,
-    "federationLink" : "0869d7ec-d951-4c5b-b1ba-8f2f6f8113c6",
-    "credentials" : [ ],
-    "disableableCredentialTypes" : [ ],
-    "requiredActions" : [ ],
-    "realmRoles" : [ "default-roles-master" ],
-    "notBefore" : 0,
-    "groups" : [ ]
-  }, {
-    "id" : "ed6f06da-65b2-4f7b-9f1d-fc4e97e89c11",
-    "username" : "alicebrown",
-    "firstName" : "Alice Brown",
-    "lastName" : "Brown",
-    "emailVerified" : false,
-    "attributes" : {
-      "LDAP_ENTRY_DN" : [ "uid=alicebrown,ou=users,dc=example,dc=com" ],
-      "createTimestamp" : [ "20240603224948Z" ],
-      "modifyTimestamp" : [ "20240603224948Z" ],
-      "LDAP_ID" : [ "52dccace-b647-103e-92f1-25db973b611b" ]
-    },
-    "createdTimestamp" : 1717455900066,
-    "enabled" : true,
-    "totp" : false,
-    "federationLink" : "0869d7ec-d951-4c5b-b1ba-8f2f6f8113c6",
-    "credentials" : [ ],
-    "disableableCredentialTypes" : [ ],
-    "requiredActions" : [ ],
-    "realmRoles" : [ "default-roles-master" ],
-    "notBefore" : 0,
-    "groups" : [ ]
-  }, {
-    "id" : "71234757-ed5d-416e-a201-c01971ccb003",
-    "username" : "bobsmith",
-    "firstName" : "Bob Smith",
-    "lastName" : "Smith",
-    "emailVerified" : false,
-    "attributes" : {
-      "LDAP_ENTRY_DN" : [ "uid=bobsmith,ou=users,dc=example,dc=com" ],
-      "createTimestamp" : [ "20240603224948Z" ],
-      "modifyTimestamp" : [ "20240603224948Z" ],
-      "LDAP_ID" : [ "52dd3b76-b647-103e-92f2-25db973b611b" ]
-    },
-    "createdTimestamp" : 1717455900158,
-    "enabled" : true,
-    "totp" : false,
-    "federationLink" : "0869d7ec-d951-4c5b-b1ba-8f2f6f8113c6",
-    "credentials" : [ ],
-    "disableableCredentialTypes" : [ ],
-    "requiredActions" : [ ],
-    "realmRoles" : [ "default-roles-master" ],
-    "notBefore" : 0,
-    "groups" : [ ]
-  }, {
-    "id" : "6ceba8a7-8d19-48fd-8a2a-430644c0e39d",
+    "id" : "495636c3-6d6d-4191-8045-86303996d291",
     "username" : "lisajones",
     "firstName" : "Lisa Jones",
     "lastName" : "Jones",
     "emailVerified" : false,
     "attributes" : {
       "LDAP_ENTRY_DN" : [ "uid=lisajones,ou=users,dc=example,dc=com" ],
-      "createTimestamp" : [ "20240603224948Z" ],
-      "modifyTimestamp" : [ "20240603224948Z" ],
-      "LDAP_ID" : [ "52ddd338-b647-103e-92f3-25db973b611b" ]
+      "createTimestamp" : [ "20240603232534Z" ],
+      "modifyTimestamp" : [ "20240603232534Z" ],
+      "LDAP_ID" : [ "5285c314-b64c-103e-88bd-b7cf24ca72ee" ]
     },
-    "createdTimestamp" : 1717455900238,
+    "createdTimestamp" : 1717532631020,
     "enabled" : true,
     "totp" : false,
     "federationLink" : "0869d7ec-d951-4c5b-b1ba-8f2f6f8113c6",
@@ -513,6 +529,23 @@
     "disableableCredentialTypes" : [ ],
     "requiredActions" : [ ],
     "realmRoles" : [ "default-roles-master" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "d2f49d66-6d9c-443e-a0d4-bee33f2dc5e5",
+    "username" : "service-account-freva-rest",
+    "emailVerified" : false,
+    "createdTimestamp" : 1717537789351,
+    "enabled" : true,
+    "totp" : false,
+    "serviceAccountClientId" : "freva-rest",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-master" ],
+    "clientRoles" : {
+      "freva-rest" : [ "uma_protection" ]
+    },
     "notBefore" : 0,
     "groups" : [ ]
   } ],
@@ -630,7 +663,9 @@
     "publicClient" : true,
     "frontchannelLogout" : false,
     "protocol" : "openid-connect",
-    "attributes" : { },
+    "attributes" : {
+      "post.logout.redirect.uris" : "+"
+    },
     "authenticationFlowBindingOverrides" : { },
     "fullScopeAllowed" : false,
     "nodeReRegistrationTimeout" : 0,
@@ -664,7 +699,9 @@
     "publicClient" : false,
     "frontchannelLogout" : false,
     "protocol" : "openid-connect",
-    "attributes" : { },
+    "attributes" : {
+      "post.logout.redirect.uris" : "+"
+    },
     "authenticationFlowBindingOverrides" : { },
     "fullScopeAllowed" : false,
     "nodeReRegistrationTimeout" : 0,
@@ -679,9 +716,128 @@
     "defaultClientScopes" : [ "web-origins", "acr", "profile", "roles", "email" ],
     "optionalClientScopes" : [ "address", "phone", "offline_access", "microprofile-jwt" ]
   }, {
+    "id" : "ee51b91d-15a2-4caf-b17f-ae3933da4f60",
+    "clientId" : "freva-rest",
+    "name" : "freva restAPI client",
+    "description" : "Client for the freva restAPI",
+    "rootUrl" : "",
+    "adminUrl" : "",
+    "baseUrl" : "",
+    "surrogateAuthRequired" : false,
+    "enabled" : true,
+    "alwaysDisplayInConsole" : true,
+    "clientAuthenticatorType" : "client-secret",
+    "secret" : "bCV2Omiv4ltSQ0KXUSnU8ua8M9ul60HY",
+    "redirectUris" : [ "/*" ],
+    "webOrigins" : [ "/*" ],
+    "notBefore" : 0,
+    "bearerOnly" : false,
+    "consentRequired" : false,
+    "standardFlowEnabled" : true,
+    "implicitFlowEnabled" : true,
+    "directAccessGrantsEnabled" : true,
+    "serviceAccountsEnabled" : true,
+    "authorizationServicesEnabled" : true,
+    "publicClient" : false,
+    "frontchannelLogout" : true,
+    "protocol" : "openid-connect",
+    "attributes" : {
+      "oidc.ciba.grant.enabled" : "true",
+      "oauth2.device.authorization.grant.enabled" : "true",
+      "client.secret.creation.time" : "1717537789",
+      "backchannel.logout.session.required" : "true",
+      "backchannel.logout.revoke.offline.tokens" : "false"
+    },
+    "authenticationFlowBindingOverrides" : { },
+    "fullScopeAllowed" : true,
+    "nodeReRegistrationTimeout" : -1,
+    "protocolMappers" : [ {
+      "id" : "a9beb46e-50c8-49ba-858c-46262e0c3de8",
+      "name" : "Client Host",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "clientHost",
+        "introspection.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "clientHost",
+        "jsonType.label" : "String"
+      }
+    }, {
+      "id" : "3a345f00-b334-4e01-b9b3-b9a878ea9b4c",
+      "name" : "Client ID",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "client_id",
+        "introspection.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "client_id",
+        "jsonType.label" : "String"
+      }
+    }, {
+      "id" : "fe4ac92f-14b1-4f05-8863-08ef883040e1",
+      "name" : "Client IP Address",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "clientAddress",
+        "introspection.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "clientAddress",
+        "jsonType.label" : "String"
+      }
+    } ],
+    "defaultClientScopes" : [ "web-origins", "acr", "profile", "roles", "email" ],
+    "optionalClientScopes" : [ "address", "phone", "offline_access", "microprofile-jwt" ],
+    "authorizationSettings" : {
+      "allowRemoteResourceManagement" : true,
+      "policyEnforcementMode" : "ENFORCING",
+      "resources" : [ {
+        "name" : "Default Resource",
+        "type" : "urn:freva-rest:resources:default",
+        "ownerManagedAccess" : false,
+        "attributes" : { },
+        "_id" : "c099e6e8-541f-43cb-8c30-bde9fdcd6dc4",
+        "uris" : [ "/*" ]
+      } ],
+      "policies" : [ {
+        "id" : "08bc7607-fd13-44d7-baec-54f66265b433",
+        "name" : "Default Policy",
+        "description" : "A policy that grants access only for users within this realm",
+        "type" : "js",
+        "logic" : "POSITIVE",
+        "decisionStrategy" : "AFFIRMATIVE",
+        "config" : {
+          "code" : "// by default, grants any permission associated with this policy\n$evaluation.grant();\n"
+        }
+      }, {
+        "id" : "101da28b-2fd1-4acd-aac2-a1ece47062b5",
+        "name" : "Default Permission",
+        "description" : "A permission that applies to the default resource type",
+        "type" : "resource",
+        "logic" : "POSITIVE",
+        "decisionStrategy" : "UNANIMOUS",
+        "config" : {
+          "defaultResourceType" : "urn:freva-rest:resources:default",
+          "applyPolicies" : "[\"Default Policy\"]"
+        }
+      } ],
+      "scopes" : [ ],
+      "decisionStrategy" : "UNANIMOUS"
+    }
+  }, {
     "id" : "e69819a9-574d-494b-a828-90514fbf5e72",
     "clientId" : "master-realm",
     "name" : "master Realm",
+    "description" : "",
+    "adminUrl" : "",
     "surrogateAuthRequired" : false,
     "enabled" : true,
     "alwaysDisplayInConsole" : false,
@@ -697,7 +853,18 @@
     "serviceAccountsEnabled" : false,
     "publicClient" : false,
     "frontchannelLogout" : false,
-    "attributes" : { },
+    "protocol" : "openid-connect",
+    "attributes" : {
+      "client.use.lightweight.access.token.enabled" : "false",
+      "client.secret.creation.time" : "1717535795",
+      "client_credentials.use_refresh_token" : "false",
+      "tls.client.certificate.bound.access.tokens" : "false",
+      "require.pushed.authorization.requests" : "false",
+      "acr.loa.map" : "{}",
+      "post.logout.redirect.uris" : "+",
+      "token.response.type.bearer.lower-case" : "false",
+      "use.refresh.tokens" : "true"
+    },
     "authenticationFlowBindingOverrides" : { },
     "fullScopeAllowed" : false,
     "nodeReRegistrationTimeout" : 0,
@@ -1155,7 +1322,8 @@
       "config" : {
         "id.token.claim" : "true",
         "introspection.token.claim" : "true",
-        "access.token.claim" : "true"
+        "access.token.claim" : "true",
+        "userinfo.token.claim" : "true"
       }
     } ]
   }, {
@@ -1241,6 +1409,7 @@
       "config" : {
         "introspection.token.claim" : "true",
         "multivalued" : "true",
+        "userinfo.token.claim" : "true",
         "user.attribute" : "foo",
         "id.token.claim" : "true",
         "access.token.claim" : "true",
@@ -1257,11 +1426,15 @@
     "referrerPolicy" : "no-referrer",
     "xRobotsTag" : "none",
     "xFrameOptions" : "SAMEORIGIN",
-    "xXSSProtection" : "1; mode=block",
     "contentSecurityPolicy" : "frame-src 'self'; frame-ancestors 'self'; object-src 'none';",
+    "xXSSProtection" : "1; mode=block",
     "strictTransportSecurity" : "max-age=31536000; includeSubDomains"
   },
   "smtpServer" : { },
+  "loginTheme" : "base",
+  "accountTheme" : "keycloak.v3",
+  "adminTheme" : "keycloak.v2",
+  "emailTheme" : "base",
   "eventsEnabled" : false,
   "eventsListeners" : [ "jboss-logging" ],
   "enabledEventTypes" : [ ],
@@ -1321,7 +1494,7 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "saml-role-list-mapper", "oidc-usermodel-property-mapper", "saml-user-attribute-mapper", "oidc-address-mapper", "oidc-usermodel-attribute-mapper", "oidc-full-name-mapper", "saml-user-property-mapper", "oidc-sha256-pairwise-sub-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-sha256-pairwise-sub-mapper", "oidc-address-mapper", "saml-role-list-mapper", "oidc-usermodel-property-mapper", "saml-user-attribute-mapper", "oidc-usermodel-attribute-mapper", "saml-user-property-mapper", "oidc-full-name-mapper" ]
       }
     }, {
       "id" : "23673b81-229e-4504-b10d-8fc590eb22a5",
@@ -1337,7 +1510,7 @@
       "subType" : "authenticated",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-full-name-mapper", "oidc-usermodel-property-mapper", "saml-user-attribute-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-role-list-mapper", "oidc-address-mapper", "saml-user-property-mapper", "oidc-usermodel-attribute-mapper" ]
+        "allowed-protocol-mapper-types" : [ "saml-user-attribute-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-full-name-mapper", "saml-user-property-mapper", "oidc-usermodel-attribute-mapper", "oidc-usermodel-property-mapper", "saml-role-list-mapper", "oidc-address-mapper" ]
       }
     } ],
     "org.keycloak.storage.UserStorageProvider" : [ {
@@ -1389,8 +1562,8 @@
           "config" : {
             "ldap.attribute" : [ "uid" ],
             "is.mandatory.in.ldap" : [ "true" ],
-            "read.only" : [ "true" ],
             "always.read.value.from.ldap" : [ "false" ],
+            "read.only" : [ "true" ],
             "user.model.attribute" : [ "username" ]
           }
         }, {
@@ -1413,26 +1586,26 @@
           "config" : {
             "ldap.attribute" : [ "sn" ],
             "is.mandatory.in.ldap" : [ "true" ],
-            "always.read.value.from.ldap" : [ "true" ],
             "read.only" : [ "true" ],
+            "always.read.value.from.ldap" : [ "true" ],
             "user.model.attribute" : [ "lastName" ]
           }
         } ]
       },
       "config" : {
-        "fullSyncPeriod" : [ "-1" ],
         "pagination" : [ "false" ],
+        "fullSyncPeriod" : [ "-1" ],
         "startTls" : [ "false" ],
-        "connectionPooling" : [ "false" ],
         "usersDn" : [ "ou=users,dc=example,dc=com" ],
+        "connectionPooling" : [ "false" ],
         "cachePolicy" : [ "DEFAULT" ],
         "useKerberosForPasswordAuthentication" : [ "false" ],
         "importEnabled" : [ "true" ],
         "enabled" : [ "true" ],
-        "bindCredential" : [ "admin_password" ],
         "bindDn" : [ "cn=admin,dc=example,dc=com" ],
-        "usernameLDAPAttribute" : [ "uid" ],
         "changedSyncPeriod" : [ "-1" ],
+        "usernameLDAPAttribute" : [ "uid" ],
+        "bindCredential" : [ "admin_password" ],
         "vendor" : [ "other" ],
         "uuidLDAPAttribute" : [ "entryUUID" ],
         "connectionUrl" : [ "ldap://ldap" ],
@@ -2059,11 +2232,22 @@
   "firstBrokerLoginFlow" : "first broker login",
   "attributes" : {
     "cibaBackchannelTokenDeliveryMode" : "poll",
-    "cibaExpiresIn" : "120",
     "cibaAuthRequestedUserHint" : "login_hint",
-    "parRequestUriLifespan" : "60",
+    "clientOfflineSessionMaxLifespan" : "0",
+    "oauth2DevicePollingInterval" : "5",
+    "clientSessionIdleTimeout" : "0",
+    "actionTokenGeneratedByUserLifespan.verify-email" : "",
+    "actionTokenGeneratedByUserLifespan.idp-verify-account-via-email" : "",
+    "clientOfflineSessionIdleTimeout" : "0",
+    "actionTokenGeneratedByUserLifespan.execute-actions" : "",
     "cibaInterval" : "5",
-    "realmReusableOtpCode" : "false"
+    "realmReusableOtpCode" : "false",
+    "cibaExpiresIn" : "120",
+    "oauth2DeviceCodeLifespan" : "2592000",
+    "parRequestUriLifespan" : "60",
+    "clientSessionMaxLifespan" : "0",
+    "shortVerificationUri" : "",
+    "actionTokenGeneratedByUserLifespan.reset-credentials" : ""
   },
   "keycloakVersion" : "24.0.4",
   "userManagedAccessAllowed" : false,

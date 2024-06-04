@@ -122,7 +122,7 @@ def start(
         logger.setLevel(logging.DEBUG)
     defaults["API_CONFIG"] = (config_file or defaults["API_CONFIG"]).absolute()
     defaults["DEBUG"] = debug
-    defaults["API_CACHE_EXP"] = os.environ.get("API_CACHE_EXP") or "3600"
+    defaults["API_CACHE_EXP"] = int(os.environ.get("API_CACHE_EXP") or "3600")
     defaults["REDIS_HOST"] = (
         os.environ.get("REDIS_HOST") or "redis://localhost:6379"
     )
@@ -131,7 +131,6 @@ def start(
     )
     defaults["REDIS_SSL_CERTFILE"] = ssl_cert
     defaults["REDIS_SSL_KEYFILE"] = ssl_key
-    defaults["REDIS_SSL_DIR"] = ssl_cert_dir
     if ssl_cert:
         ssl_cert = str(Path(ssl_cert).absolute())
     cfg = ServerConfig(defaults["API_CONFIG"], debug=debug)
@@ -142,6 +141,10 @@ def start(
             asyncio.run(read_data(core, cfg.solr_host, cfg.solr_port))
     workers = {False: int(os.environ.get("API_WORKER", 8)), True: None}
     ssl_cert, ssl_key = get_cert_file(ssl_cert_dir, ssl_cert, ssl_key)
+    keycloak_client_id = os.getenv("KEYCLOAK_CLIENT_ID", "freva-rest")
+    keycloak_client_secret = os.getenv(
+        "KEYCLOAK_CLIENT_SECRET", "bCV2Omiv4ltSQ0KXUSnU8ua8M9ul60HY"
+    )
     with NamedTemporaryFile(suffix=".conf", prefix="env") as temp_f:
         Path(temp_f.name).write_text(
             (
@@ -154,6 +157,10 @@ def start(
                 f"REDIS_USER={os.getenv('REDIS_USER', 'redis')}\n"
                 f"REDIS_SSL_CERTFILE={ssl_cert or ''}\n"
                 f"REDIS_SSL_KEYFILE={ssl_key or ''}\n"
+                f"KEYCLOAK_HOST={os.getenv('KEYCLOAK_HOST', 'http://localhost:8080')}\n"
+                f"KEYCLOAK_REALM={os.getenv('KEYCLOAK_REALM', 'master')}\n"
+                f"KEYCLOAK_CLIENT_ID={keycloak_client_id}\n"
+                f"KEYCLOAK_CLIENT_SECRET={keycloak_client_secret}\n"
                 f"API_URL={defaults['API_URL']}\n"
             ),
             encoding="utf-8",

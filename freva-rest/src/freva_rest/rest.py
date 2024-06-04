@@ -10,6 +10,12 @@ science community. With help of Freva researchers can:
 - create a common interface for user defined data analysis tools.
 - apply data analysis tools in a reproducible manner.
 
+Authentication
+--------------
+The API supports token-based authentication using OAuth2. To obtain an access
+token, clients can use the `/api/freva/auth/v2/token` endpoint by providing valid
+username and password credentials. The access token should then be included in
+the Authorization header for secured endpoints.
 
 """
 
@@ -27,14 +33,16 @@ metadata_tags = [
         "description": "Search for data based on `key=value` search queries.",
     },
     {"name": "Load data", "description": "Load the data via `zarr` files."},
+    {"name": "Authentication", "description": "Create access tokens."},
 ]
+
 
 app = FastAPI(
     debug=bool(int(os.environ.get("DEBUG", "0"))),
     title="Freva RestAPI",
     version=__version__,
     description=__doc__,
-    openapi_url="/api/storage/docs/openapi.json",
+    openapi_url="/api/freva/docs/openapi.json",
     docs_url="/api/freva/docs",
     redoc_url=None,
     contact={"name": "DKRZ, Clint", "email": "freva@dkrz.de"},

@@ -19,7 +19,8 @@ __version__ = "2405.0.0"
 def run_data_loader() -> None:
     """Daemon that waits for messages to load the data."""
     config_file = (
-        Path(appdirs.user_cache_dir("freva")) / "data-portal-cluster-config.json"
+        Path(appdirs.user_cache_dir("freva"))
+        / "data-portal-cluster-config.json"
     )
 
     redis_host, _, redis_port = (
@@ -47,7 +48,7 @@ def run_data_loader() -> None:
         help="Host:Port of the redis cache.",
         default=f"redis://{redis_host}:{redis_port}",
     )
-     parser.add_argument(
+    parser.add_argument(
         "-p",
         "--port",
         type=int,

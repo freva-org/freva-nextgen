@@ -20,14 +20,15 @@ dynamic = ["version"]
 requires-python = ">=3.9"
 dependencies = [
 "aiohttp",
+"email-validator",
 "fastapi",
 "dask",
-"xarray",
-"h5netcdf",
+"pyjwt",
 "typer",
 "uvicorn",
 "python-dotenv",
 "python-dateutil",
+"python-multipart",
 "tomli",
 "rich",
 "motor",

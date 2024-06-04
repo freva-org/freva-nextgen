@@ -9,7 +9,7 @@ import os
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Optional, Tuple
 
 import requests
 import tomli
@@ -20,13 +20,35 @@ from .logger import THIS_NAME, logger, logger_file_handle
 
 CONFIG_TYPE = TypedDict(
     "CONFIG_TYPE",
-    {"API_CONFIG": Path, "LOGGER": logging.Logger, "NAME": str, "DEBUG": bool},
+    {
+        "API_CONFIG": Path,
+        "LOGGER": logging.Logger,
+        "NAME": str,
+        "DEBUG": bool,
+        "API_CACHE_EXP": int,
+        "API_URL": str,
+        "REDIS_HOST": Optional[str],
+        "REDIS_SSL_CERTFILE": Optional[str],
+        "REDIS_SSL_KEYFILE": Optional[str],
+        "REDIS_PASS": Optional[str],
+        "REDIS_USER": Optional[str],
+        "KEYCLOAK_HOST": str,
+        "KEYCLOAK_REALM": str,
+    },
 )
 defaults: CONFIG_TYPE = {
     "API_CONFIG": Path(__file__).parent / "api_config.toml",
     "LOGGER": logger,
     "NAME": THIS_NAME,
     "DEBUG": False,
+    "API_CACHE_EXP": 3600,
+    "REDIS_SSL_CERTFILE": None,
+    "REDIS_SSL_KEYFILE": None,
+    "REDIS_HOST": None,
+    "REDIS_USER": None,
+    "REDIS_PASS": None,
+    "KEYCLOAK_HOST": "http://localhost:8080",
+    "KEYCLOAK_REALM": "master",
 }
 
 
@@ -45,7 +67,9 @@ class ServerConfig:
         Set the logging level to DEBUG
     """
 
-    config_file: Path = Path(os.environ.get("API_CONFIG") or defaults["API_CONFIG"])
+    config_file: Path = Path(
+        os.environ.get("API_CONFIG") or defaults["API_CONFIG"]
+    )
     debug: bool = False
 
     def __post_init__(self) -> None:
@@ -54,42 +78,78 @@ class ServerConfig:
             self._config = tomli.loads(self.config_file.read_text("utf-8"))
         except Exception as error:
             logger.critical("Failed to load %s", error)
-            self._config = tomli.loads(defaults["API_CONFIG"].read_text("utf-8"))
+            self._config = tomli.loads(
+                defaults["API_CONFIG"].read_text("utf-8")
+            )
         self.mongo_client = AsyncIOMotorClient(
             self.mongo_url, serverSelectionTimeoutMS=5000
         )
-        self.mongo_collection = self.mongo_client[self.mongo_db]["search_queries"]
+        self.mongo_collection = self.mongo_client[self.mongo_db][
+            "search_queries"
+        ]
         self._solr_fields = self._get_solr_fields()
+        self._keycloak_url: Optional[str] = None
 
     def reload(self) -> None:
         """Reload the configuration."""
-        self.config_file = Path(os.environ.get("API_CONFIG") or defaults["API_CONFIG"])
+        self.config_file = Path(
+            os.environ.get("API_CONFIG") or defaults["API_CONFIG"]
+        )
         self.debug = defaults["DEBUG"]
         self.__post_init__()
 
     @property
+    def keycloak_url(self) -> str:
+        """Construct the keycloak realm url."""
+        if self._keycloak_url is not None:
+            return self._keycloak_url
+
+        keycloak_host = os.getenv("KEYCLOAK_HOST", defaults["KEYCLOAK_HOST"])
+        keycloak_realm = os.getenv(
+            "KEYCLOAK_REALM", defaults["KEYCLOAK_REALM"]
+        )
+        scheme, split, host = keycloak_host.partition("://")
+        if split:
+            host = keycloak_host
+        else:
+            host = f"https://{keycloak_host}"
+        return f"{host}/realms/{keycloak_realm}"
+
+    @property
+    def keycloak_discovery_url(self) -> str:
+        """Construct the discovery url."""
+        return f"{self.keycloak_url}/.well-known/openid-configuration"
+
+    @property
+    def keycloak_auth_url(self) -> str:
+        """Construct the keycloak auth token url."""
+        return f"{self.keycloak_url}/protocol/openid-connect"
+
+    @property
     def mongo_url(self) -> str:
         """Get the url to the mongodb."""
-        host = self._config.get("mongo_db", {}).get("hostname", "") or os.environ.get(
-            "MONGO_HOST", "localhost"
-        )
+        host = self._config.get("mongo_db", {}).get(
+            "hostname", ""
+        ) or os.environ.get("MONGO_HOST", "localhost")
         host, _, m_port = host.partition(":")
-        port = m_port or str(self._config.get("mongo_db", {}).get("port", 27017))
-        user = self._config.get("mongo_db", {}).get("user", "") or os.environ.get(
-            "MONGO_USER", "mongo"
+        port = m_port or str(
+            self._config.get("mongo_db", {}).get("port", 27017)
         )
-        passwd = self._config.get("mongo_db", {}).get("password", "") or os.environ.get(
-            "MONGO_PASSWORD", "secret"
-        )
+        user = self._config.get("mongo_db", {}).get(
+            "user", ""
+        ) or os.environ.get("MONGO_USER", "mongo")
+        passwd = self._config.get("mongo_db", {}).get(
+            "password", ""
+        ) or os.environ.get("MONGO_PASSWORD", "secret")
 
         return f"mongodb://{user}:{passwd}@{host}:{port}"
 
     @property
     def mongo_db(self) -> str:
         """Get the database name where the stats is stored."""
-        return self._config.get("mongo_db", {}).get("name", "") or os.environ.get(
-            "MONGO_DB", "search_stats"
-        )
+        return self._config.get("mongo_db", {}).get(
+            "name", ""
+        ) or os.environ.get("MONGO_DB", "search_stats")
 
     @cached_property
     def solr_fields(self) -> List[str]:
@@ -148,6 +208,10 @@ class ServerConfig:
                     "name"
                 ] not in ("file_name", "file", "file_no_version"):
                     yield entry["name"]
-        except requests.exceptions.ConnectionError as error:  # pragma: no cover
-            logger.error("Connection to %s failed: %s", url, error)  # pragma: no cover
+        except (
+            requests.exceptions.ConnectionError
+        ) as error:  # pragma: no cover
+            logger.error(
+                "Connection to %s failed: %s", url, error
+            )  # pragma: no cover
             yield ""  # pragma: no cover
