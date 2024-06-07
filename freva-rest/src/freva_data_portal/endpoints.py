@@ -6,13 +6,14 @@ import os
 from typing import Annotated, Dict, Optional
 
 import cloudpickle
-from fastapi import Path, status
+from fastapi import Depends, Path, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse, Response
 import redis.asyncio as redis
 from zarr.storage import array_meta_key, attrs_key, group_meta_key
 from freva_rest.rest import app
 from freva_rest.utils import create_redis_connection
+from freva_rest.auth import get_current_user, TokenPayload
 
 
 async def read_redis_data(
@@ -86,7 +87,8 @@ async def zemtadata(
                 )
             ),
         ),
-    ]
+    ],
+    current_user: TokenPayload = Depends(get_current_user),
 ) -> JSONResponse:
     """Consolidate zarr metadata
 
@@ -118,7 +120,8 @@ async def zgroup(
                 )
             ),
         ),
-    ]
+    ],
+    current_user: TokenPayload = Depends(get_current_user),
 ) -> JSONResponse:
     """Zarr group data.
 
@@ -151,7 +154,8 @@ async def zattrs(
                 )
             ),
         ),
-    ]
+    ],
+    current_user: TokenPayload = Depends(get_current_user),
 ) -> JSONResponse:
     """Get zarr Attributes.
 
@@ -196,6 +200,7 @@ async def chunk_data(
             title="chunk", description="The chnuk number that should be read."
         ),
     ],
+    current_user: TokenPayload = Depends(get_current_user),
 ) -> Response:
     """Get a zarr array chunk.
 

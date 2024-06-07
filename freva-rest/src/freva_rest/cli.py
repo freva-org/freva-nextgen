@@ -141,10 +141,8 @@ def start(
             asyncio.run(read_data(core, cfg.solr_host, cfg.solr_port))
     workers = {False: int(os.environ.get("API_WORKER", 8)), True: None}
     ssl_cert, ssl_key = get_cert_file(ssl_cert_dir, ssl_cert, ssl_key)
-    keycloak_client_id = os.getenv("KEYCLOAK_CLIENT_ID", "freva-rest")
-    keycloak_client_secret = os.getenv(
-        "KEYCLOAK_CLIENT_SECRET", "bCV2Omiv4ltSQ0KXUSnU8ua8M9ul60HY"
-    )
+    keycloak_client_id = os.getenv("KEYCLOAK_CLIENT_ID", "freva")
+    keycloak_client_secret = os.getenv("KEYCLOAK_CLIENT_SECRET", "")
     with NamedTemporaryFile(suffix=".conf", prefix="env") as temp_f:
         Path(temp_f.name).write_text(
             (

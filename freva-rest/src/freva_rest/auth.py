@@ -1,21 +1,31 @@
 """Definition of routes for authentication."""
 
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional, cast
 
 import aiohttp
 import jwt
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2AuthorizationCodeBearer
+from fastapi import Depends, HTTPException, Form, status
+from fastapi.security import (
+    OAuth2AuthorizationCodeBearer,
+    OAuth2PasswordBearer,
+)
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
-from freva_rest.rest import app, server_config
+from .rest import app, server_config
+from .logger import logger
 
-"__all__" == ["login_for_access_token"]
+"__all__" == ["login_for_access_token", "get_current_user"]
 
 TIMEOUT: aiohttp.ClientTimeout = aiohttp.ClientTimeout(total=5)
 """5 seconds for timeout for key cloak interaction."""
+
+
+class KeycloakOAuth2RequestForm(OAuth2PasswordRequestForm):
+    """A password request form for keycloak with a client_id."""
+
+    client_id: str
 
 
 class Token(BaseModel):
@@ -28,7 +38,7 @@ class Token(BaseModel):
     refresh_expires_in: int
 
 
-async def get_token(username: str, password: str) -> Token:
+async def get_token(username: str, password: str, client_id: str) -> Token:
     """
     Retrieve an OAuth2 token from Keycloak using the Resource Owner Password Credentials grant type.
 
@@ -39,6 +49,9 @@ async def get_token(username: str, password: str) -> Token:
         The username of the user.
     password (str):
         The password of the user.
+    client_id (str):
+        Name of the specific application.
+
 
     Returns:
         Token: An object containing the access token and related information.
@@ -46,30 +59,30 @@ async def get_token(username: str, password: str) -> Token:
     Raises:
         HTTPException: If the response from Keycloak is not successful.
     """
+
     data = {
-        "client_id": os.getenv("KEYCLOAK_CLIENT_ID"),
-        "client_secret": os.getenv("KEYCLOAK_CLIENT_SECRET"),
+        "client_id": client_id or os.getenv("KEYCLOAK_CLIENT_ID", "freva"),
         "grant_type": "password",
         "username": username,
         "password": password,
     }
-
+    if os.getenv("KEYCLOAK_CLIENT_SECRET"):
+        data["client_secret"] = os.getenv("KEYCLOAK_CLIENT_SECRET", "")
     async with aiohttp.ClientSession(timeout=TIMEOUT) as client:
         response = await client.post(
-            f"{server_config.keycloak_auth_url}/token", data=data
+            server_config.keycloak_overview["token_endpoint"], data=data
         )
-        if response.status_code != 200:
+        if response.status != 200:
             raise HTTPException(
-                status_code=response.status_code,
+                status_code=response.status,
                 detail="Invalid username or password",
             )
-        return Token(**response.json())
+        return Token(**(await response.json()))
 
 
 oauth2_scheme = OAuth2AuthorizationCodeBearer(
-    authorizationUrl=f"{server_config.keycloak_auth_url}/auth",
-    tokenUrl=f"{server_config.keycloak_auth_url}/token",
-    refreshUrl=f"{server_config.keycloak_auth_url}/token",
+    authorizationUrl=server_config.keycloak_overview["authorization_endpoint"],
+    tokenUrl=server_config.keycloak_overview["token_endpoint"],
 )
 
 
@@ -81,50 +94,16 @@ class TokenPayload(BaseModel):
     email: Optional[str] = None
 
 
-async def get_jwks() -> List[Dict[str, Any]]:
-    """Retrieve the JSON Web Key Set (JWKS) from Keycloak.
-
-    Returns
-    -------
-    List[Dict[str, Any]]: The list of public keys.
-
-    Raises
-    ------
-    HTTPException: If the request to Keycloak fails.
-    """
-    async with aiohttp.ClientSession(timeout=TIMEOUT) as client:
-        response = await client.get(server_config.keycloak_discovery_url)
-        response.raise_for_status()
-        jwks_uri = response.json()["jwks_uri"]
-
-        response = await client.get(jwks_uri)
-        response.raise_for_status()
-        return response.json()["keys"]
-
-
-def get_public_key(jwks: List[Dict[str, Any]], kid: str) -> str:
-    """Extract the public key from the JWKS that matches the key ID (kid).
-
-    Parameters
-    ---------
-    jwks (List[Dict[str, Any]]):
-        The list of public keys.
-    kid (str):
-        The key ID to match.
-
-    Returns
-    -------
-    str: The public key as a PEM-formatted string.
-
-    Raises
-    ------
-    HTTPException:
-        If no matching key is found.
-    """
-
-    for key in jwks:
+async def get_public_key(kid: str) -> str:
+    """Get the public cert from keycloak."""
+    for key in server_config.keycloak_jwk_keys:
         if key["kid"] == kid:
-            return f"-----BEGIN PUBLIC KEY-----\n{key['n']}\n-----END PUBLIC KEY-----"
+            print(kid, key)
+            return (
+                "-----BEGIN PUBLIC KEY-----"
+                f"\n{key['n']}\n"
+                "-----END PUBLIC KEY-----"
+            )
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Public key not found",
@@ -156,18 +135,21 @@ async def get_current_user(
     )
 
     try:
-        jwks = await get_jwks()
-        unverified_header = jwt.get_unverified_header(token)
-        kid = unverified_header["kid"]
-        public_key = get_public_key(jwks, kid)
+        jwks_client = jwt.PyJWKClient(
+            server_config.keycloak_overview["jwks_uri"],
+            headers={"User-agent": "custom-user-agent"},
+        )
+        signing_key = jwks_client.get_signing_key_from_jwt(token)
         payload = jwt.decode(
             token,
-            public_key,
+            signing_key.key,
             algorithms=["RS256"],
-            audience=os.getenv("KEYCLOAK_CLIENT_ID", ""),
+            audience="account",
+            options={"verify_exp": True, "verify_aud": True},
         )
         token_data = TokenPayload(**payload)
-    except jwt.exceptions.PyJWTError:
+    except jwt.exceptions.PyJWTError as error:
+        logger.critical(error)
         raise credentials_exception from None
 
     return token_data
@@ -175,7 +157,16 @@ async def get_current_user(
 
 @app.post("/api/auth/v2/token/", response_model=Token, tags=["Authentication"])
 async def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
+    form_data: KeycloakOAuth2RequestForm = Depends(),
 ) -> Token:
-    """Create an new login token."""
-    return await get_token(form_data.username, form_data.password)
+    """Create an new login token.
+
+    You should set at least your username and your password.
+    You can also set the client_id. Client id's are configured to gain access,
+    specific access for certain users. If you don't set the client_id, the
+    default id will be chosen.
+
+    """
+    return await get_token(
+        form_data.username, form_data.password, form_data.client_id or "freva"
+    )

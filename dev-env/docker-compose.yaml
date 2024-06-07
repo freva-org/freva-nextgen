@@ -43,7 +43,7 @@ services:
     hostname: keycloak
     volumes:
       - ./certs:/certs
-      - ./keycloak:/opt/keycloak/data/import
+      - ./keycloak:/opt/keycloak/data:z
     ports:
       - "8080:8080"
       - "8443:8443"
@@ -51,10 +51,10 @@ services:
       start-dev
       --hostname-strict=false
       --import-realm
-      -Dkeycloak.migration.action=import
-      -Dkeycloak.migration.provider=singleFile
-      -Dkeycloak.migration.file=/opt/keycloak/data/import/master-realm.json
-      -Dkeycloak.migration.strategy=OVERWRITE_EXISTING
+# -Dkeycloak.migration.action=import
+# -Dkeycloak.migration.provider=singleFile
+# -Dkeycloak.migration.file=/opt/keycloak/data/import/master-realm.json
+# -Dkeycloak.migration.strategy=OVERWRITE_EXISTING
   ldap:
     image: osixia/openldap:latest
     environment:

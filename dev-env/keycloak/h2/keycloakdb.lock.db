@@ -1,0 +1,6 @@
+#FileLock
+#Thu Jun 06 23:57:57 GMT 2024
+server=172.19.0.2\:38159
+hostName=keycloak
+method=file
+id=18feffcde992c1f7a86b9dd4ff76e091d74852af884

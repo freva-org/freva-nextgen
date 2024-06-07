@@ -2,11 +2,11 @@
 
 from typing import Annotated, List, Literal, Union
 
-from fastapi import HTTPException, Request, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse, StreamingResponse
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
-
+from freva_rest.auth import get_current_user, TokenPayload
 from .core import FlavourType, SolrSearch, Translator
 from .schema import Required, SearchFlavours, SolrSchema
 
@@ -216,6 +216,7 @@ async def load_data(
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     request: Request = Required,
+    current_user: TokenPayload = Depends(get_current_user),
 ) -> StreamingResponse:
     """Search for datasets and stream the results as zarr."""
     solr_search = await SolrSearch.validate_parameters(
