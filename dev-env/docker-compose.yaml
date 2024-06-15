@@ -37,8 +37,8 @@ services:
     environment:
       KEYCLOAK_ADMIN: keycloak
       KEYCLOAK_ADMIN_PASSWORD: secret
-      KC_HEALTH_ENABLED: true
-      KC_METRICS_ENABLED: true
+      KC_HEALTH_ENABLED: 1
+      KC_METRICS_ENABLED: 1
       JAVA_OPTS_APPEND: "-Djava.net.preferIPv4Stack=true"
     hostname: keycloak
     volumes:
