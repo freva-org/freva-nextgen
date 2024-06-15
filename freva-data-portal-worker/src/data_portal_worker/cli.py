@@ -7,7 +7,7 @@ import os
 from base64 import b64decode
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 
 import appdirs
 
