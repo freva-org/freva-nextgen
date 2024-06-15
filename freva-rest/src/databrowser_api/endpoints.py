@@ -4,20 +4,11 @@ from typing import Annotated, List, Literal, Union
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse, StreamingResponse
-from freva_rest.logger import logger
+from freva_rest.auth import TokenPayload, get_current_user
 from freva_rest.rest import app, server_config
-from freva_rest.auth import get_current_user, TokenPayload
+
 from .core import FlavourType, SolrSearch, Translator
 from .schema import Required, SearchFlavours, SolrSchema
-
-
-@app.on_event("shutdown")
-async def shutdown_event() -> None:
-    """Close the MongoDB connection on application shutdown."""
-    try:
-        server_config.mongo_client.close()
-    except Exception as error:  # pragma: no cover
-        logger.warning("Could not shutdown mongodb connection: %s", error)
 
 
 @app.get("/api/databrowser/overview", tags=["Data search"])
@@ -228,9 +219,10 @@ async def load_data(
         translate=translate,
         **SolrSchema.process_parameters(request),
     )
-    status_code, result = await solr_search.init_stream()
-    if status_code == status.HTTP_200_OK:
-        status_code = status.HTTP_201_CREATED
+    _, result = await solr_search.init_stream()
+    status_code = status.HTTP_201_CREATED
+    if result.total_count < 1:
+        status_code = status.HTTP_400_BAD_REQUEST
     await solr_search.store_results(result.total_count, status_code)
     return StreamingResponse(
         solr_search.zarr_response(result),

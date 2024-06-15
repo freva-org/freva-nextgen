@@ -1,16 +1,15 @@
 """Script that runs the API server."""
 
 import argparse
-from base64 import b64encode
 import json
 import os
-from pathlib import Path
-import time
-from subprocess import Popen
 import sys
+import time
+from base64 import b64encode
+from pathlib import Path
+from subprocess import Popen
 
 import appdirs
-
 
 REDIS_CONFIG = {
     "user": "redis",
@@ -39,7 +38,9 @@ def start_server(foreground: bool = False, *args: str) -> None:
     """Set up the server"""
     for proc in ("rest-server", "data-portal"):
         kill_proc(proc)
-    REDIS_CONFIG["ssl_key"] = (Path("dev-env") / "certs" / "client-key.pem").read_text()
+    REDIS_CONFIG["ssl_key"] = (
+        Path("dev-env") / "certs" / "client-key.pem"
+    ).read_text()
     REDIS_CONFIG["ssl_cert"] = (
         Path("dev-env") / "certs" / "client-cert.pem"
     ).read_text()
@@ -53,7 +54,9 @@ def start_server(foreground: bool = False, *args: str) -> None:
     portal_pid = cache_dir / "data-portal.pid"
     rest_pid = cache_dir / "rest-server.pid"
     try:
-        portal_proc = Popen([python_exe, "-m", "data_portal_worker", "-v"])
+        portal_proc = Popen(
+            [python_exe, "-m", "data_portal_worker", "-v", "--dev"]
+        )
         rest_proc = Popen([python_exe, "-m", "freva_rest.cli"] + list(args))
         portal_pid.write_text(str(portal_proc.pid))
         rest_pid.write_text(str(rest_proc.pid))
@@ -92,7 +95,9 @@ def cli() -> None:
     )
     args, server_args = parser.parse_known_args()
     if args.gen_certs:
-        with Popen([sys.executable, str(Path("dev-env").absolute() / "keys.py")]):
+        with Popen(
+            [sys.executable, str(Path("dev-env").absolute() / "keys.py")]
+        ):
             return
     if args.kill:
         for proc in ("rest-server", "data-portal"):

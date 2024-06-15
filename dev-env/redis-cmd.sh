@@ -3,7 +3,7 @@
 # Set the ACL of the redis instance
 echo "user default off -@all" > /tmp/redis.conf
 REDIS_PASSWORD="${REDIS_PASSWORD:+>$REDIS_PASSWORD}"
-echo "user ${REDIS_USERNAME:-default} on +@all -@admin -@dangerous ~* &* ${REDIS_PASSWORD:-nopass}" >> /tmp/redis.conf
+echo "user ${REDIS_USERNAME:-default} on +@all -@admin -@dangerous +flushdb ~* &* ${REDIS_PASSWORD:-nopass}" >> /tmp/redis.conf
 
 # Enable sys logging
 echo "loglevel ${REDIS_LOGLEVEL:-notice}" >> /tmp/redis.conf

@@ -92,8 +92,10 @@ available options are ``lint``, ``types``, ``test``.
 Tox runs in a separate python environment to run the tests in the current
 environment use:
 
+
 ```console
-pytest
+python -m pip install -e freva-rest[tests] freva-client freva-data-portal-worker
+pytest -vv ./tests
 ```
 ### Creating a new release.
 
@@ -110,12 +112,19 @@ a GitHub continuous integration pipeline to create a new release. The procedure
 performs a couple of checks, if theses checks fail please make sure to address
 the issues.
 
-## Docker production container
+## Freva-client production installation
+Installing the freva-client library is easy:
+
+```console
+python -m pip install freva-client
+```
+
+## Freva-rest production docker container
 It's best to use the system in production within a dedicated docker container.
 You can pull the container from the GitHub container registry:
 
 ```console
-docker pull ghcr.io/freva-clint/databrowserapi:latest
+docker pull ghcr.io/freva-clint/freva-rest:latest
 ```
 
 There are two fundamental different options to configure the service.

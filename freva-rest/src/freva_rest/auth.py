@@ -1,22 +1,19 @@
 """Definition of routes for authentication."""
 
 import os
-from typing import Any, Optional, cast
+from typing import Optional
 
 import aiohttp
 import jwt
-from fastapi import Depends, HTTPException, Form, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import (
     OAuth2AuthorizationCodeBearer,
-    OAuth2PasswordBearer,
+    OAuth2PasswordRequestForm,
 )
-from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
-from .rest import app, server_config
 from .logger import logger
-
-"__all__" == ["login_for_access_token", "get_current_user"]
+from .rest import app, server_config
 
 TIMEOUT: aiohttp.ClientTimeout = aiohttp.ClientTimeout(total=5)
 """5 seconds for timeout for key cloak interaction."""
@@ -40,7 +37,8 @@ class Token(BaseModel):
 
 async def get_token(username: str, password: str, client_id: str) -> Token:
     """
-    Retrieve an OAuth2 token from Keycloak using the Resource Owner Password Credentials grant type.
+    Retrieve an OAuth2 token from Keycloak using the Resource Owner Password
+    Credentials grant type.
 
     Parameters
     -----------
@@ -67,7 +65,9 @@ async def get_token(username: str, password: str, client_id: str) -> Token:
         "password": password,
     }
     if os.getenv("KEYCLOAK_CLIENT_SECRET"):
-        data["client_secret"] = os.getenv("KEYCLOAK_CLIENT_SECRET", "")
+        data["client_secret"] = os.getenv(
+            "KEYCLOAK_CLIENT_SECRET", ""
+        )  # pragma: no cover
     async with aiohttp.ClientSession(timeout=TIMEOUT) as client:
         response = await client.post(
             server_config.keycloak_overview["token_endpoint"], data=data
@@ -92,22 +92,6 @@ class TokenPayload(BaseModel):
     sub: str
     exp: int
     email: Optional[str] = None
-
-
-async def get_public_key(kid: str) -> str:
-    """Get the public cert from keycloak."""
-    for key in server_config.keycloak_jwk_keys:
-        if key["kid"] == kid:
-            print(kid, key)
-            return (
-                "-----BEGIN PUBLIC KEY-----"
-                f"\n{key['n']}\n"
-                "-----END PUBLIC KEY-----"
-            )
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Public key not found",
-    )
 
 
 async def get_current_user(

@@ -49,6 +49,7 @@ defaults: CONFIG_TYPE = {
     "REDIS_PASS": None,
     "KEYCLOAK_HOST": "http://localhost:8080",
     "KEYCLOAK_REALM": "master",
+    "API_URL": "http://localhost:7777",
 }
 
 
@@ -82,9 +83,7 @@ class ServerConfig:
         )
         self.mongo_collection = self.mongo_client[self.mongo_db]["search_queries"]
         self._solr_fields = self._get_solr_fields()
-        self._keycloak_url: Optional[str] = None
         self._keycloak_overview: Optional[Dict[str, Any]] = None
-        self._keycloak_jwk_keys: Optional[List[Dict[str, Any]]] = None
 
     def reload(self) -> None:
         """Reload the configuration."""
@@ -92,37 +91,12 @@ class ServerConfig:
         self.debug = defaults["DEBUG"]
         self.__post_init__()
 
-    @property
-    def keycloak_jwk_keys(self) -> List[Dict[str, Any]]:
-        """Retrieve the JSON Web Key Set (JWKS) from Keycloak.
-
-        Returns
-        -------
-        List[Dict[str, Any]]: The list of public keys.
-
-        Raises
-        ------
-        HTTPException: If the request to Keycloak fails.
-        """
-        if self._keycloak_jwk_keys is not None:
-            return self._keycloak_jwk_keys
-        response = requests.get(
-            self.keycloak_overview["jwks_uri"], verify=True, timeout=3
-        )
-        response.raise_for_status()
-
-        self._keycloak_jwk_keys = response.json().get("keys", [])
-        return self._keycloak_jwk_keys
-
-    @property
-    def keycloak_url(self) -> str:
+    @staticmethod
+    def get_keycloak_url() -> str:
         """Construct the keycloak realm url."""
-        if self._keycloak_url is not None:
-            return self._keycloak_url
-
         keycloak_host = os.getenv("KEYCLOAK_HOST", defaults["KEYCLOAK_HOST"])
         keycloak_realm = os.getenv("KEYCLOAK_REALM", defaults["KEYCLOAK_REALM"])
-        scheme, split, host = keycloak_host.partition("://")
+        _, split, host = keycloak_host.partition("://")
         if split:
             host = keycloak_host
         else:
@@ -132,7 +106,7 @@ class ServerConfig:
     @property
     def keycloak_discovery_url(self) -> str:
         """Construct the discovery url."""
-        return f"{self.keycloak_url}/.well-known/openid-configuration"
+        return f"{self.get_keycloak_url()}/.well-known/openid-configuration"
 
     @property
     def keycloak_overview(self) -> Dict[str, Any]:

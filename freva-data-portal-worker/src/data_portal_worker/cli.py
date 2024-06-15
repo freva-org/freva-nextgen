@@ -1,22 +1,23 @@
 """The freva data loading portal."""
 
 import argparse
-from base64 import b64decode
 import json
 import logging
 import os
+from base64 import b64decode
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import List, Dict, Optional
 
 import appdirs
 
+from .load_data import CLIENT, ProcessQueue, RedisKw
 from .utils import data_logger
-from .load_data import CLIENT, RedisKw, ProcessQueue
 
 __version__ = "2405.0.0"
 
 
-def run_data_loader() -> None:
+def run_data_loader(argv: Optional[List[str]] = None) -> None:
     """Daemon that waits for messages to load the data."""
     config_file = (
         Path(appdirs.user_cache_dir("freva"))
@@ -33,6 +34,13 @@ def run_data_loader() -> None:
         prog="Data Loder",
         description=("Starts the data loading service."),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "-c",
+        "--config-file",
+        help="Path to the config file.",
+        type=Path,
+        default=config_file,
     )
     parser.add_argument(
         "-e",
@@ -56,17 +64,24 @@ def run_data_loader() -> None:
         default=40000,
     )
     parser.add_argument(
+        "--dev",
+        action="store_true",
+        help="Development mode",
+    )
+    parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
         help="Display debug messages.",
         default=False,
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if args.verbose is True:
         data_logger.setLevel(logging.DEBUG)
     data_logger.debug("Loading cluster config from %s", config_file)
-    cache_config: RedisKw = json.loads(b64decode(config_file.read_bytes()))
+    cache_config: RedisKw = json.loads(
+        b64decode(args.config_file.read_bytes())
+    )
     data_logger.debug("Deleting cluster config file %s", config_file)
     env = os.environ.copy()
     try:
@@ -87,13 +102,15 @@ def run_data_loader() -> None:
                 os.environ["REDIS_SSL_KEYFILE"] = str(key_file)
 
             data_logger.debug("Starting data-loader process")
-            queue = ProcessQueue()
-            queue.run_for_ever(
-                "data-portal",
-            )
+            queue = ProcessQueue(dev_mode=args.dev)
+            queue.run_for_ever("data-portal")
     except KeyboardInterrupt:
         pass
     finally:
         if CLIENT is not None:
-            CLIENT.shutdown()
-        os.environ = env
+            CLIENT.shutdown()  # pragma: no cover
+        for handler in logging.root.handlers:
+            handler.flush()
+            handler.close()
+            logging.root.removeHandler(handler)
+        os.environ = env  # type: ignore

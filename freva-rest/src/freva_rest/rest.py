@@ -20,12 +20,15 @@ the Authorization header for secured endpoints.
 """
 
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import AsyncIterator
 
 from fastapi import FastAPI
 from freva_rest import __version__
 
 from .config import ServerConfig, defaults
+from .logger import logger
 
 metadata_tags = [
     {
@@ -36,6 +39,26 @@ metadata_tags = [
     {"name": "Authentication", "description": "Create access tokens."},
 ]
 
+server_config = ServerConfig(
+    Path(os.environ.get("API_CONFIG", defaults["API_CONFIG"])),
+    debug=bool(os.environ.get("DEBUG", int(defaults["DEBUG"]))),
+)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Start and end things before and after shutdown.
+
+    Things before yield are executed on startup. Things after on teardown.
+    """
+    try:
+        yield
+    finally:
+        try:
+            server_config.mongo_client.close()
+        except Exception as error:  # pragma: no cover
+            logger.warning("Could not shutdown mongodb connection: %s", error)
+
 
 app = FastAPI(
     debug=bool(int(os.environ.get("DEBUG", "0"))),
@@ -45,14 +68,10 @@ app = FastAPI(
     openapi_url="/api/freva/docs/openapi.json",
     docs_url="/api/freva/docs",
     redoc_url=None,
+    lifespan=lifespan,
     contact={"name": "DKRZ, Clint", "email": "freva@dkrz.de"},
     license_info={
         "name": "BSD 2-Clause License",
         "url": "https://opensource.org/license/bsd-2-clause",
     },
-)
-
-server_config = ServerConfig(
-    Path(os.environ.get("API_CONFIG", defaults["API_CONFIG"])),
-    debug=bool(os.environ.get("DEBUG", int(defaults["DEBUG"]))),
 )

@@ -1,12 +1,13 @@
 """The core functionality to interact with the apache solr search system."""
 
 import asyncio
+import json
+import os
+import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from functools import cached_property, wraps
-import os
-import json
 from typing import (
     Any,
     AsyncIterator,
@@ -21,7 +22,6 @@ from typing import (
     Union,
     cast,
 )
-import uuid
 
 import aiohttp
 from databrowser_api import __version__
@@ -128,7 +128,7 @@ class Translator:
         ]
 
     @property
-    def _freva_facets(self) -> dict[str, str]:
+    def _freva_facets(self) -> Dict[str, str]:
         """Define the freva search facets and their relevance"""
         return {
             "project": "primary",
@@ -155,7 +155,7 @@ class Translator:
         }
 
     @property
-    def _cmip5_lookup(self) -> dict[str, str]:
+    def _cmip5_lookup(self) -> Dict[str, str]:
         """Define the search facets for the cmip5 standard."""
         return {
             "experiment": "experiment",
@@ -182,7 +182,7 @@ class Translator:
         }
 
     @property
-    def _cmip6_lookup(self) -> dict[str, str]:
+    def _cmip6_lookup(self) -> Dict[str, str]:
         """Define the search facets for the cmip6 standard."""
         return {
             "experiment": "experiment_id",
@@ -209,7 +209,7 @@ class Translator:
         }
 
     @property
-    def _cordex_lookup(self) -> dict[str, str]:
+    def _cordex_lookup(self) -> Dict[str, str]:
         """Define the search facets for the cordex5 standard."""
         return {
             "experiment": "experiment",
@@ -236,7 +236,7 @@ class Translator:
         }
 
     @property
-    def _nextgems_lookup(self) -> dict[str, str]:
+    def _nextgems_lookup(self) -> Dict[str, str]:
         """Define the search facets for the cmip5 standard."""
         return {
             "experiment": "experiment",
@@ -263,7 +263,7 @@ class Translator:
         }
 
     @cached_property
-    def foreward_lookup(self) -> dict[str, str]:
+    def foreward_lookup(self) -> Dict[str, str]:
         """Define how things get translated from the freva standard"""
 
         return {
@@ -296,16 +296,14 @@ class Translator:
                 if v == "primary"
             ]
         else:
-            _keys = [
-                k for (k, v) in self._freva_facets.items() if v == "primary"
-            ]
+            _keys = [k for (k, v) in self._freva_facets.items() if v == "primary"]
         if self.flavour in ("cordex",):
             for key in self.cordex_keys:
                 _keys.append(key)
         return _keys
 
     @cached_property
-    def backward_lookup(self) -> dict[str, str]:
+    def backward_lookup(self) -> Dict[str, str]:
         """Translate the schema to the freva standard."""
         return {v: k for (k, v) in self.foreward_lookup.items()}
 
@@ -482,9 +480,7 @@ class SolrSearch:
                 key not in translator.valid_facets
                 and key not in ("time_select",) + cls.uniq_keys
             ):
-                raise HTTPException(
-                    status_code=422, detail="Could not validate input."
-                )
+                raise HTTPException(status_code=422, detail="Could not validate input.")
         return SolrSearch(
             config,
             flavour=flavour,
@@ -542,9 +538,7 @@ class SolrSearch:
             raise ValueError(f"Choose `time_select` from {methods}") from exc
         start, _, end = time.lower().partition("to")
         try:
-            start = parse(
-                start or "1", default=datetime(1, 1, 1, 0, 0, 0)
-            ).isoformat()
+            start = parse(start or "1", default=datetime(1, 1, 1, 0, 0, 0)).isoformat()
             end = parse(
                 end or "9999", default=datetime(9999, 12, 31, 23, 59, 59)
             ).isoformat()
@@ -607,9 +601,7 @@ class SolrSearch:
                     source[k] = result[k][0]
                 elif result.get(k):
                     source[k] = result[k]
-            catalogue["catalog_dict"].append(
-                self.translator.translate_query(source)
-            )
+            catalogue["catalog_dict"].append(self.translator.translate_query(source))
 
         return search_status, IntakeCatalogue(
             catalogue=catalogue, total_count=total_count
@@ -652,8 +644,7 @@ class SolrSearch:
                 source = {
                     k: (
                         out[k][0]
-                        if isinstance(out.get(k), list)
-                        and len(out.get(k)) == 1
+                        if isinstance(out.get(k), list) and len(out.get(k)) == 1
                         else out.get(k)
                     )
                     for k in [self.uniq_key] + self.translator.facet_hierachy
@@ -664,9 +655,7 @@ class SolrSearch:
                 for line in list(encoder.iterencode(entry)):
                     yield line
 
-    async def intake_catalogue(
-        self, search: IntakeCatalogue
-    ) -> AsyncIterator[str]:
+    async def intake_catalogue(self, search: IntakeCatalogue) -> AsyncIterator[str]:
         """Create an intake catalogue from the solr search."""
         iteritems = tuple(
             range(self.batch_size + 1, search.total_count, self.batch_size)
@@ -865,10 +854,16 @@ class SolrSearch:
         -------
         AsyncIterator: Stream of search results.
         """
-        api_path = f"{os.environ['API_URL']}/api/freva-data-portal/zarr"
+        api_path = f"{os.environ.get('API_URL', '')}/api/freva-data-portal/zarr"
         async for uri_str in self.stream_response(search):
             uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, uri_str.strip()))
             out = {"uri": {"path": uri_str.strip(), "uuid": uuid5}}
             cache = await create_redis_connection()
-            await cache.publish("data-portal", json.dumps(out).encode("utf-8"))
+            try:
+                await cache.publish("data-portal", json.dumps(out).encode("utf-8"))
+            except Exception as error:
+                logger.error("Cloud not connect to reddis: %s", error)
+                yield "Internal error, service not available\n"
+                continue
+
             yield f"{api_path}/{uuid5}.zarr\n"

@@ -1,31 +1,27 @@
 """Load backend for reading different datasets."""
 
-from dataclasses import dataclass
-import multiprocessing as mp
 import json
 import os
-from pathlib import Path
 import time
-from typing import Any, Dict, List, Literal, Optional, TypedDict, Union, cast
+from dataclasses import dataclass
+from typing import Any, Dict, Literal, Optional, TypedDict, cast
 
 import cloudpickle  # fades cloudpickle
-from dask.distributed import LocalCluster  # fades distributed
-from dask.distributed import Client
-from dask.distributed.deploy.cluster import Cluster
 import redis  # fades redis
 import xarray as xr  # fades xarray
+from dask.distributed import LocalCluster  # fades distributed
+from dask.distributed import Client
 from xarray.backends.zarr import encode_zarr_variable
-from xpublish.utils.zarr import (
+from xpublish.utils.zarr import (  # fades xpublish
     create_zmetadata,
+    encode_chunk,
+    get_data_chunk,
     jsonify_zmetadata,
-)  # fades xpublish
-from xpublish.utils.zarr import get_data_chunk, encode_chunk
-import zarr  # fades zarr
-from zarr.meta import encode_array_metadata, encode_group_metadata
+)
 from zarr.storage import array_meta_key
 
-from .utils import data_logger, str_to_int
 from .backends import load_data
+from .utils import data_logger, str_to_int
 
 ZARR_CONSOLIDATED_FORMAT = 1
 ZARR_FORMAT = 2
@@ -44,7 +40,15 @@ LoadDict = TypedDict(
     },
 )
 RedisKw = TypedDict(
-    "RedisKw", {"user": str, "passwd": str, "host": str, "port": int}
+    "RedisKw",
+    {
+        "user": str,
+        "passwd": str,
+        "host": str,
+        "port": int,
+        "ssl_cert": str,
+        "ssl_key": str,
+    },
 )
 
 
@@ -95,17 +99,6 @@ class LoadStatus:
     json_meta: Optional[Dict[str, Any]] = None
     """Json representation of the zarr metadata."""
 
-    @staticmethod
-    def lookup(status: int) -> str:
-        """Translate a status integer to a human readable status."""
-        _lookup = {
-            0: "finished, ok",
-            1: "finished, failed",
-            2: "waiting",
-            3: "processing",
-        }
-        return _lookup.get(status, "unkown")
-
     def dict(self) -> LoadDict:
         """Convert object to dict."""
         return {
@@ -133,9 +126,11 @@ class LoadStatus:
         return cls(**_dict)
 
 
-def get_dask_client(client: Optional[Client] = CLIENT) -> Client:
+def get_dask_client(
+    client: Optional[Client] = CLIENT, dev_mode: bool = False
+) -> Optional[Client]:
     """Get or create a cached dask cluster."""
-    if client is None:
+    if client is None and dev_mode is False:
         client = Client(
             LocalCluster(scheduler_port=int(os.getenv("DASK_PORT", "40000")))
         )
@@ -163,41 +158,31 @@ class DataLoadFactory:
     A posix file system if assumed if scheme is empty, e.g /home/bar/foo.nc
     """
 
-    def __init__(self, cache: Optional[redis.Redis] = None) -> None:
-        self.cache = cache or RedisCacheFactory(0)
+    def __init__(self) -> None:
+        self._cache: Optional[RedisCacheFactory] = None
 
-    def read(self, input_path: str) -> xr.Dataset:
-        """Open the dataset."""
-        return load_data(inp_data)
+    @property
+    def cache(self) -> RedisCacheFactory:
+        """Get or create the cache."""
+        if self._cache is None:
+            self._cache = RedisCacheFactory()
+        return self._cache
 
-    @staticmethod
-    def from_posix(input_path: str) -> xr.Dataset:
-        """Open a dataset with xarray."""
-
-        return xr.open_dataset(
-            input_path,
-            decode_cf=False,
-            use_cftime=False,
-            chunks="auto",
-            cache=False,
-            decode_coords=False,
-        )
-
-    @classmethod
     def from_object_path(
-        cls, input_path: str, path_id: str, cache: Optional[redis.Redis] = None
+        self,
+        input_path: str,
+        path_id: str,
     ) -> None:
         """Create a zarr object from an input path."""
-        cache = cache or RedisCacheFactory(0)
         status_dict = LoadStatus.from_dict(
             cast(
                 Optional[LoadDict],
-                cloudpickle.loads(cache.get(path_id)),
+                cloudpickle.loads(self.cache.get(path_id)),
             )
         ).dict()
         expires_in = str_to_int(os.environ.get("API_CACHE_EXP"), 3600)
         status_dict["status"] = 3
-        cache.setex(path_id, expires_in, cloudpickle.dumps(status_dict))
+        self.cache.setex(path_id, expires_in, cloudpickle.dumps(status_dict))
         data_logger.debug("Reading %s", input_path)
         try:
             data_logger.info(input_path)
@@ -211,48 +196,40 @@ class DataLoadFactory:
             data_logger.exception("Could not process %s: %s", path_id, error)
             status_dict["status"] = 1
             status_dict["reason"] = str(error)
-        cache.setex(
+        self.cache.setex(
             path_id,
             expires_in,
             cloudpickle.dumps(status_dict),
         )
 
-    @classmethod
     def get_zarr_chunk(
-        cls,
+        self,
         key: str,
         chunk: str,
         variable: str,
-        cache: Optional[redis.Redis] = None,
     ) -> None:
         """Read the zarr metadata from the cache."""
-        cache = cache or RedisCacheFactory(0)
-        pickle_data = cls.load_object(key, cache)
+        pickle_data = self.load_object(key)
         dset = cast(xr.Dataset, pickle_data["obj"])
         meta = cast(Dict[str, Any], pickle_data["meta"])
         arr_meta = meta["metadata"][f"{variable}/{array_meta_key}"]
         data = encode_chunk(
             get_data_chunk(
-                encode_zarr_variable(
-                    dset.variables[variable], name=variable
-                ).data,
+                encode_zarr_variable(dset.variables[variable], name=variable).data,
                 chunk,
                 out_shape=arr_meta["chunks"],
             ).tobytes(),
             filters=arr_meta["filters"],
             compressor=arr_meta["compressor"],
         )
-        cache.setex(f"{key}-{variable}-{chunk}", 360, data)
+        self.cache.setex(f"{key}-{variable}-{chunk}", 360, data)
 
-    @staticmethod
-    def load_object(key: str, cache: Optional[redis.Redis] = None) -> LoadDict:
+    def load_object(self, key: str) -> LoadDict:
         """Load a cached dataset.
 
         Parameters
         ----------
         key: str, The cache key.
-        cache: The redis cache object, if None (default) a new redis isntance
-               is created.
 
         Returns
         -------
@@ -264,40 +241,35 @@ class DataLoadFactory:
                       which means that there is a load status != 0
         KeyError: If the key doesn't exist in the cache (anymore).
         """
-        cache = cache or RedisCacheFactory(0)
-        data_cache = cache.get(key)
+        data_cache = self.cache.get(key)
         if data_cache is None:
             raise KeyError(f"{key} uuid does not exist (anymore).")
-        pickle_data: LoadDict = cloudpickle.loads(data_cache)
-        task_status = pickle_data.get("status", 1)
-        if task_status != 0:
-            raise RuntimeError(LoadStatus.lookup(task_status))
-        return pickle_data
+        return cast(LoadDict, cloudpickle.loads(data_cache))
 
 
-class ProcessQueue:
+class ProcessQueue(DataLoadFactory):
     """Class that can load datasets on different object stores."""
 
-    def __init__(
-        self,
-        redis_cache: Optional[redis.Redis] = None,
-    ) -> None:
-        self.redis_cache = redis_cache or RedisCacheFactory(0)
-        self.client = get_dask_client()
+    def __init__(self, dev_mode: bool = False) -> None:
+        super().__init__()
+        self.client = get_dask_client(dev_mode=dev_mode)
+        self.dev_mode = dev_mode
 
-    def run_for_ever(
-        self,
-        channel: str,
-    ) -> None:
+    def run_for_ever(self, channel: str) -> None:
         """Start the listner deamon."""
         data_logger.info("Starting data-loading deamon")
-        pubsub = self.redis_cache.pubsub()
+        pubsub = self.cache.pubsub()
         pubsub.subscribe(channel)
         data_logger.info("Broker will listen for messages now")
         while True:
             message = pubsub.get_message()
             if message and message["type"] == "message":
-                self.redis_callback(message["data"])
+                try:
+                    self.redis_callback(message["data"])
+                except KeyboardInterrupt:
+                    raise
+                except Exception as error:
+                    data_logger.exception(error)
             else:
                 time.sleep(0.1)
 
@@ -308,24 +280,25 @@ class ProcessQueue:
         """Callback method to recieve rabbit mq messages."""
         try:
             message = json.loads(body)
-            if "uri" in message:
-                self.spawn(message["uri"]["path"], message["uri"]["uuid"])
-            elif "chunk" in message:
-                DataLoadFactory.get_zarr_chunk(
-                    message["chunk"]["uuid"],
-                    message["chunk"]["chunk"],
-                    message["chunk"]["variable"],
-                    self.redis_cache,
-                )
         except json.JSONDecodeError:
             data_logger.warning("could not decode message")
+            return
+        if "uri" in message:
+            self.spawn(message["uri"]["path"], message["uri"]["uuid"])
+        elif "chunk" in message:
+            self.get_zarr_chunk(
+                message["chunk"]["uuid"],
+                message["chunk"]["chunk"],
+                message["chunk"]["variable"],
+            )
+        elif "shutdown" in message:
+            if message["shutdown"] is True and self.dev_mode is True:
+                raise KeyboardInterrupt("Shutdown client")
 
     def spawn(self, inp_obj: str, uuid5: str) -> str:
         """Subumit a new data loading task to the process pool."""
-        data_logger.debug(
-            "Assigning %s to %s for future processing", inp_obj, uuid5
-        )
-        cache: Optional[bytes] = self.redis_cache.get(uuid5)
+        data_logger.debug("Assigning %s to %s for future processing", inp_obj, uuid5)
+        data_cache: Optional[bytes] = cast(Optional[bytes], self.cache.get(uuid5))
         status_dict: LoadDict = {
             "status": 2,
             "obj_path": f"/api/freva-data-portal/zarr/{uuid5}.zarr",
@@ -335,21 +308,17 @@ class ProcessQueue:
             "meta": None,
             "json_meta": None,
         }
-        if cache is None:
-            self.redis_cache.setex(
+        if data_cache is None:
+            self.cache.setex(
                 uuid5,
                 str_to_int(os.environ.get("API_CACHE_EXP"), 3600),
                 cloudpickle.dumps(status_dict),
             )
-            DataLoadFactory.from_object_path(inp_obj, uuid5, self.redis_cache)
+            self.from_object_path(inp_obj, uuid5)
         else:
-            status_dict = cast(LoadDict, cloudpickle.loads(cache))
+            status_dict = cast(LoadDict, cloudpickle.loads(data_cache))
             if status_dict["status"] in (1, 2):
                 # Failed job, let's retry
-                # self.client.submit(
-                DataLoadFactory.from_object_path(
-                    inp_obj, uuid5, self.redis_cache
-                )
-                # )
+                self.from_object_path(inp_obj, uuid5)
 
         return status_dict["obj_path"]

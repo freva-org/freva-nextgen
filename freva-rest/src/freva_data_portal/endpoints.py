@@ -2,25 +2,23 @@
 
 import asyncio
 import json
-import os
-from typing import Annotated, Dict, Optional
+from typing import Annotated, Any, Dict, Optional
 
 import cloudpickle
-from fastapi import Depends, Path, status
+from fastapi import Depends, Path, Query, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse, Response
-import redis.asyncio as redis
-from zarr.storage import array_meta_key, attrs_key, group_meta_key
+from freva_rest.auth import TokenPayload, get_current_user
 from freva_rest.rest import app
 from freva_rest.utils import create_redis_connection
-from freva_rest.auth import get_current_user, TokenPayload
+from zarr.storage import array_meta_key, attrs_key, group_meta_key
 
 
 async def read_redis_data(
     key: str,
     subkey: Optional[str] = None,
     timeout: int = 1,
-) -> bytes:
+) -> Any:
     """Read the cache data given by a key.
 
     Parameters
@@ -63,12 +61,45 @@ async def read_redis_data(
             status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=lookup.get(task_status, "unkown"),
         )
-    try:
-        return p_data[subkey]
-    except KeyError:
-        raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE, detail="key Error"
-        )
+    return p_data[subkey]
+
+
+@app.get(
+    "/api/freva-data-portal/zarr/{uuid5}.zarr/status",
+    tags=["Load data"],
+)
+async def get_status(
+    uuid5: Annotated[
+        str,
+        Path(
+            title="uuid",
+            description=(
+                (
+                    "The uuid that was generated, when task to stream data was "
+                    "created."
+                )
+            ),
+        ),
+    ],
+    timeout: Annotated[
+        int,
+        Query(
+            alias="timeout",
+            title="Cache timeout for getting results.",
+            description="Set a timout to wait for results.",
+            ge=0,
+            le=1500,
+        ),
+    ] = 1,
+    current_user: TokenPayload = Depends(get_current_user),
+) -> JSONResponse:
+    """Get the status of a loading process."""
+    meta: Dict[str, Any] = await read_redis_data(
+        uuid5, "status", timeout=timeout
+    )
+    return JSONResponse(
+        content={"status": meta}, status_code=status.HTTP_200_OK
+    )
 
 
 @app.get(
@@ -88,6 +119,16 @@ async def zemtadata(
             ),
         ),
     ],
+    timeout: Annotated[
+        int,
+        Query(
+            alias="timeout",
+            title="Cache timeout for getting results.",
+            description="Set a timout to wait for results.",
+            ge=0,
+            le=1500,
+        ),
+    ] = 1,
     current_user: TokenPayload = Depends(get_current_user),
 ) -> JSONResponse:
     """Consolidate zarr metadata
@@ -96,7 +137,9 @@ async def zemtadata(
     data within the particular zarr store in question.
     """
 
-    meta = await read_redis_data(uuid5, "json_meta")
+    meta: Dict[str, Any] = await read_redis_data(
+        uuid5, "json_meta", timeout=timeout
+    )
     return JSONResponse(
         content=meta,
         status_code=status.HTTP_200_OK,
@@ -121,6 +164,16 @@ async def zgroup(
             ),
         ),
     ],
+    timeout: Annotated[
+        int,
+        Query(
+            alias="timeout",
+            title="Cache timeout for getting results.",
+            description="Set a timout to wait for results.",
+            ge=0,
+            le=1500,
+        ),
+    ] = 1,
     current_user: TokenPayload = Depends(get_current_user),
 ) -> JSONResponse:
     """Zarr group data.
@@ -131,7 +184,9 @@ async def zgroup(
     organizing and managing the structure of data within a Zarr group,
     allowing users to access and manipulate arrays and subgroups efficiently.
     """
-    meta = await read_redis_data(uuid5, "json_meta")
+    meta: Dict[str, Any] = await read_redis_data(
+        uuid5, "json_meta", timeout=timeout
+    )
     return JSONResponse(
         content=meta["metadata"][".zgroup"],
         status_code=status.HTTP_200_OK,
@@ -155,6 +210,16 @@ async def zattrs(
             ),
         ),
     ],
+    timeout: Annotated[
+        int,
+        Query(
+            alias="timeout",
+            title="Cache timeout for getting results.",
+            description="Set a timout to wait for results.",
+            ge=0,
+            le=1500,
+        ),
+    ] = 1,
     current_user: TokenPayload = Depends(get_current_user),
 ) -> JSONResponse:
     """Get zarr Attributes.
@@ -164,7 +229,9 @@ async def zattrs(
     or arrays, such as descriptions, units, creation dates, or any other
     custom metadata relevant to the data.
     """
-    meta = await read_redis_data(uuid5, "json_meta")
+    meta: Dict[str, Any] = await read_redis_data(
+        uuid5, "json_meta", timeout=timeout
+    )
     return JSONResponse(
         content=meta["metadata"][".zattrs"], status_code=status.HTTP_200_OK
     )
@@ -200,6 +267,16 @@ async def chunk_data(
             title="chunk", description="The chnuk number that should be read."
         ),
     ],
+    timeout: Annotated[
+        int,
+        Query(
+            alias="timeout",
+            title="Cache timeout for getting results.",
+            description="Set a timout to wait for results.",
+            ge=0,
+            le=1500,
+        ),
+    ] = 1,
     current_user: TokenPayload = Depends(get_current_user),
 ) -> Response:
     """Get a zarr array chunk.
@@ -207,13 +284,19 @@ async def chunk_data(
     This method reads the zarr data."""
 
     if array_meta_key in chunk or attrs_key in chunk:
-        json_meta: Dict[str, Any] = await read_redis_data(uuid5, "json_meta")
+        json_meta: Dict[str, Any] = await read_redis_data(
+            uuid5, "json_meta", timeout=timeout
+        )
         if attrs_key in chunk:
             key = f"{variable}/{attrs_key}"
         else:
             key = f"{variable}/{array_meta_key}"
+        try:
+            content = json_meta["metadata"][key]
+        except KeyError as error:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(error))
         return JSONResponse(
-            content=json_meta[key],
+            content=content,
             status_code=status.HTTP_200_OK,
         )
     if group_meta_key in chunk:
@@ -225,5 +308,5 @@ async def chunk_data(
     detail = {"chunk": {"uuid": uuid5, "variable": variable, "chunk": chunk}}
     cache = await create_redis_connection()
     await cache.publish("data-portal", json.dumps(detail).encode("utf-8"))
-    data = await read_redis_data(chunk_key)
+    data: bytes = await read_redis_data(chunk_key, timeout=timeout)
     return Response(data, media_type="application/octet-stream")

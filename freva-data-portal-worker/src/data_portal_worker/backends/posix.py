@@ -3,13 +3,12 @@
 from pathlib import Path
 from typing import Optional, Union
 
+import netCDF4
+
 # import cfgrib
 import rasterio
-import netCDF4
-import h5netcdf
-import zarr
-
 import xarray as xr
+import zarr
 
 
 def get_xr_engine(file_path: str) -> Optional[str]:
@@ -17,7 +16,7 @@ def get_xr_engine(file_path: str) -> Optional[str]:
     try:
         with netCDF4.Dataset(file_path):
             return "netcdf4"
-    except:
+    except Exception:
         pass
 
     # try:
@@ -29,19 +28,13 @@ def get_xr_engine(file_path: str) -> Optional[str]:
     try:
         with rasterio.open(file_path):
             return "rasterio"
-    except:
+    except Exception:
         pass
 
-    try:
-
-        with h5netcdf.File(file_path, "r"):
-            return "h5netcdf"
-    except:
-        pass
     try:
         with zarr.open(file_path):
             return "zarr"
-    except:
+    except Exception:
         pass
     return None
 

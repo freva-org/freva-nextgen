@@ -38,7 +38,7 @@ variables can be set:
 - ``REDIS_SSL_KEYFILE``: Path to the TSL key file used to encrypt the redis
                          connection.
 📝  You can override the path to the default config file using the
-    ``API_CONFIG`` environment variable. The default location of this config 
+    ``API_CONFIG`` environment variable. The default location of this config
     file is ``/opt/databrowser/api_config.toml``.
 """
 
@@ -52,8 +52,8 @@ from typing import Optional, Tuple
 import typer
 import uvicorn
 
-from .logger import logger
 from .config import ServerConfig, defaults
+from .logger import logger
 
 cli = typer.Typer(name="freva-rest-server", help=__doc__, epilog=__doc__)
 
@@ -62,13 +62,13 @@ def get_cert_file(
     cert_dir: Optional[str],
     cert_file: Optional[str],
     key_file: Optional[str],
-) -> Tuple[Optional[str], Optional[str]]:
+) -> Tuple[str, str]:
     """Get the certificate (key and cert) if they are configured."""
-    default_cert = default_key = None
+    default_cert = default_key = ""
     if cert_dir:
         default_cert = str(Path(cert_dir) / "client-cert.pem")
         default_key = str(Path(cert_dir) / "client-key.pem")
-        return cert_file or default_cert, key_file or default_key
+    return cert_file or default_cert, key_file or default_key
 
 
 @cli.command(name="freva-rest-api")
@@ -135,7 +135,7 @@ def start(
         ssl_cert = str(Path(ssl_cert).absolute())
     cfg = ServerConfig(defaults["API_CONFIG"], debug=debug)
     if dev:
-        from databrowser_api.tests.mock import read_data
+        from databrowser_api.mock import read_data
 
         for core in cfg.solr_cores:
             asyncio.run(read_data(core, cfg.solr_host, cfg.solr_port))
@@ -151,7 +151,7 @@ def start(
                 f"API_PORT={port}\n"
                 f"API_CACHE_EXP={defaults['API_CACHE_EXP']}\n"
                 f"REDIS_HOST={defaults['REDIS_HOST']}\n"
-                f"REDIS_PASS={os.getenv('REDIS_PASS', 'secret')}\n"
+                f"REDIS_PASS={os.getenv('REDIS_PASS', 'foo')}\n"
                 f"REDIS_USER={os.getenv('REDIS_USER', 'redis')}\n"
                 f"REDIS_SSL_CERTFILE={ssl_cert or ''}\n"
                 f"REDIS_SSL_KEYFILE={ssl_key or ''}\n"

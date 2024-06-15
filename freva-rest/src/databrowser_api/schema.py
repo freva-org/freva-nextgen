@@ -20,7 +20,7 @@ class LoadFiles(BaseModel):
 class SolrSchema:
     """Class holding all apache solr config parameters."""
 
-    params: dict[str, Any] = {
+    params: Dict[str, Any] = {
         "batch_size": Query(
             alias="max-results",
             title="Max. results",
@@ -63,7 +63,7 @@ class SolrSchema:
     }
 
     @classmethod
-    def process_parameters(cls, request: Request) -> dict[str, list[str]]:
+    def process_parameters(cls, request: Request) -> Dict[str, list[str]]:
         """Convert Starlette Request QueryParams to a dictionary."""
 
         query = parse_qs(str(request.query_params))

@@ -5,17 +5,17 @@ from freva_client import databrowser
 from freva_client.utils.logger import DatabrowserWarning
 
 
-def test_search_files() -> None:
+def test_search_files(test_server: str) -> None:
     """Test searching for files."""
-    db = databrowser(host="localhost:8080")
+    db = databrowser(host=test_server)
     assert len(list(db)) > 0
     assert len(list(db)) == len(db)
-    db = databrowser(host="localhost:8080", foo="bar", fail_on_error=True)
+    db = databrowser(host=test_server, foo="bar", fail_on_error=True)
     with pytest.raises(ValueError):
         len(db)
-    db = databrowser(host="localhost:8080", foo="bar", time="2000 to 2050")
+    db = databrowser(host=test_server, foo="bar", time="2000 to 2050")
     assert len(db) == 0
-    db = databrowser(host="localhost:8080", model="bar")
+    db = databrowser(host=test_server, model="bar")
     assert len(db) == len(list(db)) == 0
     db = databrowser(host="foo")
     with pytest.raises(ValueError):
@@ -26,7 +26,7 @@ def test_search_files() -> None:
                 "land",
                 realm="ocean",
                 product="reanalysis",
-                host="localhost:8080",
+                host=test_server,
             )
         )
         == 0
@@ -34,18 +34,18 @@ def test_search_files() -> None:
     )
 
 
-def test_count_values() -> None:
+def test_count_values(test_server: str) -> None:
     """Test counting the facets."""
-    db = databrowser(host="localhost:8080")
+    db = databrowser(host=test_server)
     assert isinstance(len(db), int)
-    counts1 = databrowser.count_values("*", host="localhost:8080")
+    counts1 = databrowser.count_values("*", host=test_server)
     assert isinstance(counts1, dict)
     assert "dataset" not in counts1
     counts2 = databrowser.count_values(
         "ocean",
         realm="ocean",
         product="reanalysis",
-        host="localhost:8080",
+        host=test_server,
         extended_search=True,
     )
     assert isinstance(counts2, dict)
@@ -55,15 +55,15 @@ def test_count_values() -> None:
     assert isinstance(counts2["dataset"][entry], int)
 
 
-def test_metadata_search() -> None:
+def test_metadata_search(test_server: str) -> None:
     """Test the metadata search."""
-    db = databrowser(host="localhost:8080")
+    db = databrowser(host=test_server)
     assert isinstance(db.metadata, dict)
-    metadata = databrowser.metadata_search(host="localhost:8080")
+    metadata = databrowser.metadata_search(host=test_server)
     assert isinstance(metadata, dict)
     assert len(db.metadata) > len(metadata)
     metadata = databrowser.metadata_search(
-        host="localhost:8080", extended_search=True
+        host=test_server, extended_search=True
     )
     assert len(db.metadata) == len(metadata)
 
@@ -79,37 +79,37 @@ def test_bad_hostnames() -> None:
         databrowser.count_values(host="foo")
 
 
-def test_bad_queries() -> None:
+def test_bad_queries(test_server: str) -> None:
     """Test the behaviour of bad queries."""
-    db = databrowser(host="localhost:8080", foo="bar")
+    db = databrowser(host=test_server, foo="bar")
     with pytest.warns(DatabrowserWarning):
         len(db)
     with pytest.warns(DatabrowserWarning):
-        databrowser.count_values(host="localhost:8080", foo="bar")
+        databrowser.count_values(host=test_server, foo="bar")
     with pytest.warns(DatabrowserWarning):
-        databrowser.metadata_search(host="localhost:8080", foo="bar")
-    db = databrowser(host="localhost:8080", foo="bar", fail_on_error=True)
+        databrowser.metadata_search(host=test_server, foo="bar")
+    db = databrowser(host=test_server, foo="bar", fail_on_error=True)
     with pytest.raises(ValueError):
         len(db)
     with pytest.raises(ValueError):
         databrowser.count_values(
-            host="localhost:8080", foo="bar", fail_on_error=True
+            host=test_server, foo="bar", fail_on_error=True
         )
     with pytest.raises(ValueError):
         databrowser.metadata_search(
-            host="localhost:8080", foo="bar", fail_on_error=True
+            host=test_server, foo="bar", fail_on_error=True
         )
-    db = databrowser(host="localhost:8080", foo="bar", flavour="foo")  # type: ignore
+    db = databrowser(host=test_server, foo="bar", flavour="foo")  # type: ignore
     with pytest.raises(ValueError):
         len(db)
 
 
-def test_repr() -> None:
+def test_repr(test_server: str) -> None:
     """Test the str rep."""
-    db = databrowser(host="localhost:8080")
-    assert "localhost" in repr(db)
+    db = databrowser(host=test_server)
+    assert test_server in repr(db)
     assert str(len(db)) in db._repr_html_()
-    overview = db.overview(host="localhost:8080")
+    overview = db.overview(host=test_server)
     assert isinstance(overview, str)
     assert "flavour" in overview
     assert "cmip6" in overview

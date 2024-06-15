@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 from types import TracebackType
 
 import mock
-from freva_rest.cli import cli
+from freva_rest.cli import cli, get_cert_file
 from pytest_mock import MockerFixture
 from typer.testing import CliRunner
 
@@ -32,6 +32,21 @@ class MockTempfile:
         return str(Path(self.temp_dir) / "foo.txt")
 
 
+def test_get_cert_file() -> None:
+    """Test getting the cerfiles."""
+    out1, out2 = get_cert_file(None, None, None)
+    assert out1 == out2 == ""
+    out1, out2 = get_cert_file("foo", None, None)
+    assert out1.startswith("foo")
+    assert out2.startswith("foo")
+    out1, out2 = get_cert_file("foo", None, "bar")
+    assert out1.startswith("foo")
+    assert out2.startswith("bar")
+    out1, out2 = get_cert_file("foo", "bar", "baz")
+    assert out1.startswith("bar")
+    assert out2.startswith("baz")
+
+
 def test_cli(mocker: MockerFixture) -> None:
     """Test the command line interface."""
     mock_run = mocker.patch("uvicorn.run")
@@ -41,7 +56,6 @@ def test_cli(mocker: MockerFixture) -> None:
             runner = CliRunner()
             result1 = runner.invoke(cli, ["--dev", "--no-debug"])
             assert result1.exit_code == 0
-            print(result1.stdout)
             mock_run.assert_called_once_with(
                 "freva_rest.api:app",
                 host="0.0.0.0",
