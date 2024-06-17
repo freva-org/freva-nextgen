@@ -37,13 +37,18 @@ services:
     environment:
       KEYCLOAK_ADMIN: keycloak
       KEYCLOAK_ADMIN_PASSWORD: secret
-      KC_HEALTH_ENABLED: 1
-      KC_METRICS_ENABLED: 1
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
       JAVA_OPTS_APPEND: "-Djava.net.preferIPv4Stack=true"
     hostname: keycloak
     volumes:
       - ./certs:/certs
       - ./keycloak:/opt/keycloak/data:z
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/auth/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     ports:
       - "8080:8080"
       - "8443:8443"

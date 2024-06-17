@@ -8,9 +8,8 @@ import time
 from base64 import b64encode
 from pathlib import Path
 from subprocess import Popen, run
-import sys
 import tempfile
-
+import urllib.request
 
 REDIS_CONFIG = {
     "user": "redis",
@@ -22,6 +21,26 @@ REDIS_CONFIG = {
 
 TEMP_DIR = Path(tempfile.gettempdir()) / "freva-nextgen"
 TEMP_DIR.mkdir(exist_ok=True, parents=True)
+KEYCLOAK_URL = os.getenv("KEYCLOAK_HOST", "http://localhost:8080")
+KEYCLOAK_REALM = os.getenv("KEYCLOAK_REALM", "master")
+
+
+def wait_for_keycloak(timeout: int = 500, time_increment: int = 10) -> None:
+    """Wait for keycloak server an exit."""
+    time_passed = 0
+    url = f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/.well-known/openid-configuration"
+    while time_passed < timeout:
+        try:
+            print(f"Trying {url}...", end="")
+            conn = urllib.request.urlopen(url)
+            print(f"{conn.status}")
+            if conn.status == 200:
+                return
+        except Exception as error:
+            print(error)
+        time.sleep(time_increment)
+        time_passed += time_increment
+    raise SystemExit("Keycloak is not up.")
 
 
 def kill_proc(proc: str) -> None:
@@ -58,7 +77,9 @@ def start_server(foreground: bool = False, *args: str) -> None:
     cert_file.parent.mkdir(exist_ok=True, parents=True)
     if not key_file.is_file() or not cert_file.is_file():
         prep_server()
-    REDIS_CONFIG["ssl_key"] = (Path("dev-env") / "certs" / "client-key.pem").read_text()
+    REDIS_CONFIG["ssl_key"] = (
+        Path("dev-env") / "certs" / "client-key.pem"
+    ).read_text()
     REDIS_CONFIG["ssl_cert"] = (
         Path("dev-env") / "certs" / "client-cert.pem"
     ).read_text()
@@ -70,7 +91,9 @@ def start_server(foreground: bool = False, *args: str) -> None:
     portal_pid = TEMP_DIR / "data-portal.pid"
     rest_pid = TEMP_DIR / "rest-server.pid"
     try:
-        portal_proc = Popen([python_exe, "-m", "data_portal_worker", "-v", "--dev"])
+        portal_proc = Popen(
+            [python_exe, "-m", "data_portal_worker", "-v", "--dev"]
+        )
         rest_proc = Popen([python_exe, "-m", "freva_rest.cli"] + list(args))
         portal_pid.write_text(str(portal_proc.pid))
         rest_pid.write_text(str(rest_proc.pid))
@@ -107,10 +130,21 @@ def cli() -> None:
         help="Start service in the foreground",
         action="store_true",
     )
+    parser.add_argument(
+        "-w",
+        "--wait-for-keycloak",
+        help="Wait for keycloak and exit.",
+        action="store_true",
+    )
     args, server_args = parser.parse_known_args()
     if args.gen_certs:
-        with Popen([sys.executable, str(Path("dev-env").absolute() / "keys.py")]):
+        with Popen(
+            [sys.executable, str(Path("dev-env").absolute() / "keys.py")]
+        ):
             return
+    if args.wait_for_keycloak:
+        wait_for_keycloak()
+        return
     if args.kill:
         for proc in ("rest-server", "data-portal"):
             kill_proc(proc)
