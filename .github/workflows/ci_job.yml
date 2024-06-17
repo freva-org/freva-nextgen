@@ -26,6 +26,8 @@ jobs:
         working-directory: ./freva-rest
       - name: Adjusting PATH variable
         run: echo "~/.local/bin" >> $GITHUB_PATH
+      - name: Preparing the startup
+        run: make prepare
       - name: Starting the local server
         run: |
           python run_server.py -c api_config.toml --debug --dev -p 7777
@@ -55,6 +57,8 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install -e .[dev]
+      - name: Preparing the startup
+        run: make prepare
         working-directory: ./freva-rest
       - name: Adjusting PATH variable
         run: echo "~/.local/bin" >> $GITHUB_PATH
