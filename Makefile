@@ -7,6 +7,7 @@ install: prepare
 
 prepare:
 	python3 -m pip install cryptography tox
+	mkdir -p dev-env/certs
 	python3 dev-env/keys.py
 
 lint:
