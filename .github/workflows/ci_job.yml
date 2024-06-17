@@ -61,7 +61,7 @@ jobs:
           docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
       - name: Check keycloak
         run: |
-          docker logs -f dev-env-keycloak-1
+          docker logs -f dev-env_keycloak_1
       - name: Waiting for keycloak
         run: |
           python run_server.py -w
