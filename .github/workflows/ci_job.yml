@@ -29,8 +29,8 @@ jobs:
       - name: Starting the local server
         run: |
           python run_server.py -c api_config.toml --debug --dev -p 7777
-      - name: Waiting for 120 sec
-        run: sleep 120
+      - name: Waiting for 5 min
+        run: sleep 300
       - name: Linting, type checking and docs with tox
         run: tox run-parallel --parallel-no-spinner
 
@@ -58,8 +58,8 @@ jobs:
         working-directory: ./freva-rest
       - name: Adjusting PATH variable
         run: echo "~/.local/bin" >> $GITHUB_PATH
-      - name: Waiting for 120 sec
-        run: sleep 120
+      - name: Waiting for 5 min
+        run: sleep 300
       - name: Run tests
         run: tox -e test
       - name: Upload coverage to Codecov
