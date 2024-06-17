@@ -8,8 +8,8 @@ import time
 from base64 import b64encode
 from pathlib import Path
 from subprocess import Popen
+import tempfile
 
-import appdirs
 
 REDIS_CONFIG = {
     "user": "redis",
@@ -19,10 +19,13 @@ REDIS_CONFIG = {
     "ssl_key": "",
 }
 
+TEMP_DIR = Path(tempfile.gettempdir()) / "freva-nextgen"
+TEMP_DIR.mkdir(exist_ok=True, parents=True)
+
 
 def kill_proc(proc: str) -> None:
     """Kill a potentially running process."""
-    pid_file = Path(appdirs.user_cache_dir("freva")) / f"{proc}.pid"
+    pid_file = TEMP_DIR / f"{proc}.pid"
     if pid_file.is_file():
         try:
             pid = int(pid_file.read_text())
@@ -38,25 +41,19 @@ def start_server(foreground: bool = False, *args: str) -> None:
     """Set up the server"""
     for proc in ("rest-server", "data-portal"):
         kill_proc(proc)
-    REDIS_CONFIG["ssl_key"] = (
-        Path("dev-env") / "certs" / "client-key.pem"
-    ).read_text()
+    REDIS_CONFIG["ssl_key"] = (Path("dev-env") / "certs" / "client-key.pem").read_text()
     REDIS_CONFIG["ssl_cert"] = (
         Path("dev-env") / "certs" / "client-cert.pem"
     ).read_text()
-    cache_dir = Path(appdirs.user_cache_dir("freva"))
-    cache_dir.mkdir(exist_ok=True, parents=True)
-    (cache_dir / "data-portal-cluster-config.json").write_bytes(
+    (TEMP_DIR / "data-portal-cluster-config.json").write_bytes(
         b64encode(json.dumps(REDIS_CONFIG).encode("utf-8"))
     )
     args += ("--cert-dir", str(Path("dev-env").absolute() / "certs"))
     python_exe = sys.executable
-    portal_pid = cache_dir / "data-portal.pid"
-    rest_pid = cache_dir / "rest-server.pid"
+    portal_pid = TEMP_DIR / "data-portal.pid"
+    rest_pid = TEMP_DIR / "rest-server.pid"
     try:
-        portal_proc = Popen(
-            [python_exe, "-m", "data_portal_worker", "-v", "--dev"]
-        )
+        portal_proc = Popen([python_exe, "-m", "data_portal_worker", "-v", "--dev"])
         rest_proc = Popen([python_exe, "-m", "freva_rest.cli"] + list(args))
         portal_pid.write_text(str(portal_proc.pid))
         rest_pid.write_text(str(rest_proc.pid))
@@ -95,9 +92,7 @@ def cli() -> None:
     )
     args, server_args = parser.parse_known_args()
     if args.gen_certs:
-        with Popen(
-            [sys.executable, str(Path("dev-env").absolute() / "keys.py")]
-        ):
+        with Popen([sys.executable, str(Path("dev-env").absolute() / "keys.py")]):
             return
     if args.kill:
         for proc in ("rest-server", "data-portal"):
