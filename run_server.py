@@ -44,7 +44,7 @@ def prep_server() -> None:
         [sys.executable, "-m", "pip", "install", "tox", "cryptography"],
         check=True,
     )
-    run([sys.executable, "-m", str(Path("dev-env") / "keys.py")], check=True)
+    run([sys.executable, str(Path("dev-env") / "keys.py")], check=True)
 
 
 def start_server(foreground: bool = False, *args: str) -> None:
@@ -56,7 +56,9 @@ def start_server(foreground: bool = False, *args: str) -> None:
     cert_file.parent.mkdir(exist_ok=True, parents=True)
     if not key_file.is_file() or not cert_file.is_file():
         prep_server()
-    REDIS_CONFIG["ssl_key"] = (Path("dev-env") / "certs" / "client-key.pem").read_text()
+    REDIS_CONFIG["ssl_key"] = (
+        Path("dev-env") / "certs" / "client-key.pem"
+    ).read_text()
     REDIS_CONFIG["ssl_cert"] = (
         Path("dev-env") / "certs" / "client-cert.pem"
     ).read_text()
@@ -68,7 +70,9 @@ def start_server(foreground: bool = False, *args: str) -> None:
     portal_pid = TEMP_DIR / "data-portal.pid"
     rest_pid = TEMP_DIR / "rest-server.pid"
     try:
-        portal_proc = Popen([python_exe, "-m", "data_portal_worker", "-v", "--dev"])
+        portal_proc = Popen(
+            [python_exe, "-m", "data_portal_worker", "-v", "--dev"]
+        )
         rest_proc = Popen([python_exe, "-m", "freva_rest.cli"] + list(args))
         portal_pid.write_text(str(portal_proc.pid))
         rest_pid.write_text(str(rest_proc.pid))
@@ -107,7 +111,9 @@ def cli() -> None:
     )
     args, server_args = parser.parse_known_args()
     if args.gen_certs:
-        with Popen([sys.executable, str(Path("dev-env").absolute() / "keys.py")]):
+        with Popen(
+            [sys.executable, str(Path("dev-env").absolute() / "keys.py")]
+        ):
             return
     if args.kill:
         for proc in ("rest-server", "data-portal"):
