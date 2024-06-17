@@ -7,7 +7,8 @@ import sys
 import time
 from base64 import b64encode
 from pathlib import Path
-from subprocess import Popen
+from subprocess import Popen, call
+import sys
 import tempfile
 
 
@@ -37,10 +38,24 @@ def kill_proc(proc: str) -> None:
             pass
 
 
+def prep_server() -> None:
+    """Prepare the first server startup."""
+    call(
+        [sys.executable, "-m", "pip", "install", "tox", "cryptography"],
+        check=True,
+    )
+    call([sys.executable, "-m", str(Path("dev-env") / "keys.py")], check=True)
+
+
 def start_server(foreground: bool = False, *args: str) -> None:
     """Set up the server"""
     for proc in ("rest-server", "data-portal"):
         kill_proc(proc)
+    key_file = Path("dev-env") / "certs" / "client-key.pem"
+    cert_file = Path("dev-env") / "certs" / "client-cert.pem"
+    cert_file.parent.mkdir(exist_ok=True, parents=True)
+    if not key_file.is_file() or not cert_file.is_file():
+        prep_server()
     REDIS_CONFIG["ssl_key"] = (Path("dev-env") / "certs" / "client-key.pem").read_text()
     REDIS_CONFIG["ssl_cert"] = (
         Path("dev-env") / "certs" / "client-cert.pem"
