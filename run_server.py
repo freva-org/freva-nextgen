@@ -7,7 +7,7 @@ import sys
 import time
 from base64 import b64encode
 from pathlib import Path
-from subprocess import Popen, call
+from subprocess import Popen, run
 import sys
 import tempfile
 
@@ -40,11 +40,11 @@ def kill_proc(proc: str) -> None:
 
 def prep_server() -> None:
     """Prepare the first server startup."""
-    call(
+    run(
         [sys.executable, "-m", "pip", "install", "tox", "cryptography"],
         check=True,
     )
-    call([sys.executable, "-m", str(Path("dev-env") / "keys.py")], check=True)
+    run([sys.executable, "-m", str(Path("dev-env") / "keys.py")], check=True)
 
 
 def start_server(foreground: bool = False, *args: str) -> None:
