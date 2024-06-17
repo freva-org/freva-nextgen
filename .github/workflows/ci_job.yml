@@ -19,7 +19,7 @@ jobs:
           python-version: "3.X"
       - name: Install dependencies
         run: |
-          python3 -m pip install -e ./freva-rest[dev]
+          python3 -m pip install -e ./freva-rest[dev] ./freva-data-portal-worker
       - name: Generate self signed keys
         run: |
           python3 run_server.py --gen-certs
@@ -52,7 +52,7 @@ jobs:
           python-version: ${{matrix.python-version}}
       - name: Install dependencies
         run: |
-          python3 -m pip install -e ./freva-rest[dev]
+          python3 -m pip install -e ./freva-rest[dev] ./freva-data-portal-worker
       - name: Generate self signed keys
         run: |
           python3 run_server.py --gen-certs
