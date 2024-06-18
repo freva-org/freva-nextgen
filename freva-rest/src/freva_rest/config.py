@@ -48,7 +48,7 @@ defaults: CONFIG_TYPE = {
     "REDIS_USER": None,
     "REDIS_PASS": None,
     "KEYCLOAK_HOST": "http://localhost:8080",
-    "KEYCLOAK_REALM": "master",
+    "KEYCLOAK_REALM": "freva",
     "API_URL": "http://localhost:7777",
 }
 
