@@ -84,6 +84,10 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 
+      - name: Generate self signed keys
+        run: |
+          python3 run_server.py --gen-certs
+
       - name: Set up services
         run: |
           docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
@@ -98,6 +102,10 @@ jobs:
           push: false
           load: true
           tags: freva-rest:latest
+
+      - name: Waiting for keycloak
+        run: |
+          python run_server.py -w
 
       - name: Check databrowser image
         run: python3 dev-env/check-container.py

@@ -30,7 +30,7 @@ def check_container(container_name: str = "freva-rest") -> None:
                 "-e",
                 "MONGO_HOST=localhost:27017",
                 "-e",
-                "API_PORT=8080",
+                "API_PORT=7777",
                 "-e",
                 "API_WORKER=8",
                 "-e",
@@ -42,7 +42,7 @@ def check_container(container_name: str = "freva-rest") -> None:
         if process.poll() is not None:
             raise RuntimeError("Container died.")
         res = urllib.request.Request(
-            "http://localhost:8080/api/databrowser/overview",
+            "http://localhost:7777/api/databrowser/overview",
         )
         with urllib.request.urlopen(res) as response:
             if response.getcode() != 200:
