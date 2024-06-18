@@ -7,21 +7,20 @@ import os
 from base64 import b64decode
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import appdirs
 
 from .load_data import CLIENT, ProcessQueue, RedisKw
 from .utils import data_logger
 
-__version__ = "2405.0.0"
+__version__ = "2406.0.0"
 
 
 def run_data_loader(argv: Optional[List[str]] = None) -> None:
     """Daemon that waits for messages to load the data."""
     config_file = (
-        Path(appdirs.user_cache_dir("freva"))
-        / "data-portal-cluster-config.json"
+        Path(appdirs.user_cache_dir("freva")) / "data-portal-cluster-config.json"
     )
 
     redis_host, _, redis_port = (
@@ -79,9 +78,7 @@ def run_data_loader(argv: Optional[List[str]] = None) -> None:
     if args.verbose is True:
         data_logger.setLevel(logging.DEBUG)
     data_logger.debug("Loading cluster config from %s", config_file)
-    cache_config: RedisKw = json.loads(
-        b64decode(args.config_file.read_bytes())
-    )
+    cache_config: RedisKw = json.loads(b64decode(args.config_file.read_bytes()))
     data_logger.debug("Deleting cluster config file %s", config_file)
     env = os.environ.copy()
     try:
