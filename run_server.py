@@ -22,7 +22,7 @@ REDIS_CONFIG = {
 TEMP_DIR = Path(tempfile.gettempdir()) / "freva-nextgen"
 TEMP_DIR.mkdir(exist_ok=True, parents=True)
 KEYCLOAK_URL = os.getenv("KEYCLOAK_HOST", "http://localhost:8080")
-KEYCLOAK_REALM = os.getenv("KEYCLOAK_REALM", "master")
+KEYCLOAK_REALM = os.getenv("KEYCLOAK_REALM", "freva")
 
 
 def wait_for_keycloak(timeout: int = 500, time_increment: int = 10) -> None:
@@ -83,7 +83,8 @@ def start_server(foreground: bool = False, *args: str) -> None:
     REDIS_CONFIG["ssl_cert"] = (
         Path("dev-env") / "certs" / "client-cert.pem"
     ).read_text()
-    (TEMP_DIR / "data-portal-cluster-config.json").write_bytes(
+    config_file = TEMP_DIR / "data-portal-cluster-config.json"
+    config_file.write_bytes(
         b64encode(json.dumps(REDIS_CONFIG).encode("utf-8"))
     )
     args += ("--cert-dir", str(Path("dev-env").absolute() / "certs"))
@@ -92,7 +93,15 @@ def start_server(foreground: bool = False, *args: str) -> None:
     rest_pid = TEMP_DIR / "rest-server.pid"
     try:
         portal_proc = Popen(
-            [python_exe, "-m", "data_portal_worker", "-v", "--dev"]
+            [
+                python_exe,
+                "-m",
+                "data_portal_worker",
+                "-v",
+                "--dev",
+                "-c",
+                f"{config_file}",
+            ]
         )
         rest_proc = Popen([python_exe, "-m", "freva_rest.cli"] + list(args))
         portal_pid.write_text(str(portal_proc.pid))
