@@ -14,7 +14,7 @@ import zarr
 def get_xr_engine(file_path: str) -> Optional[str]:
     """Get the engine, to open the xarray dataset."""
     try:
-        with netCDF4.Dataset(file_path):
+        with netCDF4.Dataset(file_path, mode="r"):
             return "netcdf4"
     except Exception:
         pass
@@ -26,14 +26,14 @@ def get_xr_engine(file_path: str) -> Optional[str]:
     #    pass
 
     try:
-        with rasterio.open(file_path):
+        with rasterio.open(file_path, mode="r"):
             return "rasterio"
     except Exception:
         pass
 
     try:
-        with zarr.open(file_path):
-            return "zarr"
+        _ = zarr.open(file_path, mode="r")
+        return "zarr"
     except Exception:
         pass
     return None

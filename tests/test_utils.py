@@ -42,7 +42,7 @@ def create_rasterio_file(temp_dir: str) -> str:
 def create_zarr_file(temp_dir: str) -> str:
     """Create a zarr dataset."""
     temp = os.path.join(temp_dir, "out.zarr")
-    zarr.convenience.save_array(os.path.join(temp, "array"), [1, 2, 3, 4])
+    zarr.convenience.save(temp, [1, 2, 3, 4])
     return temp
 
 
@@ -60,4 +60,5 @@ def test_get_xr_posix_engine() -> None:
         assert get_xr_engine(create_netcdf4_file(temp_dir)) == "netcdf4"
         assert get_xr_engine(create_rasterio_file(temp_dir)) == "rasterio"
         assert get_xr_engine(create_zarr_file(temp_dir)) == "zarr"
-        assert get_xr_engine("foo") is None
+    with TemporaryDirectory() as temp_dir:
+        assert get_xr_engine(temp_dir) is None
