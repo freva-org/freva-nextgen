@@ -38,6 +38,7 @@ dependencies = [
 "paramiko",
 "uuid",
 "typing_extensions",
+"zarr",
 ]
 [project.scripts]
 freva-rest-server = "freva_rest.cli:cli"

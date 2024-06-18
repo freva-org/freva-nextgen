@@ -105,7 +105,7 @@ jobs:
 
       - name: Waiting for keycloak
         run: |
-          python run_server.py -w
+          python3 run_server.py -w
 
       - name: Check databrowser image
         run: python3 dev-env/check-container.py

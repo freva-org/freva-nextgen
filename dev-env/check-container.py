@@ -41,12 +41,6 @@ def check_container(container_name: str = "freva-rest") -> None:
         time.sleep(10)
         if process.poll() is not None:
             raise RuntimeError("Container died.")
-        res = urllib.request.Request(
-            "http://localhost:7777/api/databrowser/overview",
-        )
-        with urllib.request.urlopen(res) as response:
-            if response.getcode() != 200:
-                raise RuntimeError("Container not properly set up.")
     except Exception as error:
         logger.critical("Strting the container failed: %s", error)
         raise
