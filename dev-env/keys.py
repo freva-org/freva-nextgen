@@ -133,9 +133,9 @@ class RandomKeys:
 if __name__ == "__main__":
     # Create an instance of RandomKeys
     keys = RandomKeys()
-    (Path(__file__).parent / "certs").mkdir(exist_ok=True, parents=True)
     private_key_file = Path(__file__).parent / "certs" / "client-key.pem"
     public_cert_file = Path(__file__).parent / "certs" / "client-cert.pem"
+    public_cert_file.parent.mkdir(exist_ok=True, parents=True)
     private_key_file.write_bytes(keys.private_key_pem)
     private_key_file.chmod(0o600)
     public_cert_file.write_bytes(keys.certificate_chain)
