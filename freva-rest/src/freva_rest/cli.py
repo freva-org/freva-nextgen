@@ -123,12 +123,8 @@ def start(
     defaults["API_CONFIG"] = (config_file or defaults["API_CONFIG"]).absolute()
     defaults["DEBUG"] = debug
     defaults["API_CACHE_EXP"] = int(os.environ.get("API_CACHE_EXP") or "3600")
-    defaults["REDIS_HOST"] = (
-        os.environ.get("REDIS_HOST") or "redis://localhost:6379"
-    )
-    defaults["API_URL"] = (
-        os.environ.get("API_URL") or f"http://localhost:{port}"
-    )
+    defaults["REDIS_HOST"] = os.environ.get("REDIS_HOST") or "redis://localhost:6379"
+    defaults["API_URL"] = os.environ.get("API_URL") or f"http://localhost:{port}"
     defaults["REDIS_SSL_CERTFILE"] = ssl_cert
     defaults["REDIS_SSL_KEYFILE"] = ssl_key
     if ssl_cert:
@@ -156,7 +152,7 @@ def start(
                 f"REDIS_SSL_CERTFILE={ssl_cert or ''}\n"
                 f"REDIS_SSL_KEYFILE={ssl_key or ''}\n"
                 f"KEYCLOAK_HOST={os.getenv('KEYCLOAK_HOST', 'http://localhost:8080')}\n"
-                f"KEYCLOAK_REALM={os.getenv('KEYCLOAK_REALM', 'master')}\n"
+                f"KEYCLOAK_REALM={os.getenv('KEYCLOAK_REALM', 'freva')}\n"
                 f"KEYCLOAK_CLIENT_ID={keycloak_client_id}\n"
                 f"KEYCLOAK_CLIENT_SECRET={keycloak_client_secret}\n"
                 f"API_URL={defaults['API_URL']}\n"
