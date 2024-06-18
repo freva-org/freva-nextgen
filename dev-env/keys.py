@@ -75,24 +75,26 @@ class RandomKeys:
         certificate = (
             x509.CertificateBuilder()
             .subject_name(
-                x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, self.common_name)])
+                x509.Name(
+                    [x509.NameAttribute(NameOID.COMMON_NAME, self.common_name)]
+                )
             )
             .issuer_name(
-                x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, self.common_name)])
+                x509.Name(
+                    [x509.NameAttribute(NameOID.COMMON_NAME, self.common_name)]
+                )
             )
             .public_key(self.private_key.public_key())
             .serial_number(x509.random_serial_number())
             .not_valid_before(datetime.datetime.now(datetime.timezone.utc))
             .not_valid_after(
-                datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=365)
+                datetime.datetime.now(datetime.timezone.utc)
+                + datetime.timedelta(days=365)
             )
             .sign(self.private_key, hashes.SHA256(), default_backend())
         )
 
         return certificate
-
-    @property
-    def utc(self) -> 
 
     def create_self_signed_cert_old(self) -> "x509.Certificate":
         """
@@ -105,7 +107,9 @@ class RandomKeys:
         csr = (
             x509.CertificateSigningRequestBuilder()
             .subject_name(
-                x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, self.common_name)])
+                x509.Name(
+                    [x509.NameAttribute(NameOID.COMMON_NAME, self.common_name)]
+                )
             )
             .sign(self.private_key, hashes.SHA256(), default_backend())
         )
@@ -118,7 +122,8 @@ class RandomKeys:
             .serial_number(x509.random_serial_number())
             .not_valid_before(datetime.datetime.now(datetime.timezone.utc))
             .not_valid_after(
-                datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=365)
+                datetime.datetime.now(datetime.timezone.utc)
+                + datetime.timedelta(days=365)
             )
             .sign(self.private_key, hashes.SHA256(), default_backend())
         )

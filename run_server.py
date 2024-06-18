@@ -147,10 +147,11 @@ def cli() -> None:
     )
     args, server_args = parser.parse_known_args()
     if args.gen_certs:
-        with Popen(
-            [sys.executable, str(Path("dev-env").absolute() / "keys.py")]
-        ):
-            return
+        run(
+            [sys.executable, str(Path("dev-env").absolute() / "keys.py")],
+            check=True,
+        )
+        return
     if args.wait_for_keycloak:
         wait_for_keycloak()
         return
