@@ -37,7 +37,7 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "GitHub",
-            "url": "https://github.com/FREVA-CLINT/databrowserAPI",
+            "url": "https://github.com/FREVA-CLINT/freva-nextgen/freva-client",
             "icon": "fa-brands fa-github",
         }
     ],
@@ -54,7 +54,7 @@ html_theme_options = {
 
 html_context = {
     "github_user": "FREVA-CLINT",
-    "github_repo": "databrowserAPI",
+    "github_repo": "freva-nextgen",
     "github_version": "main",
     "doc_path": "docs",
 }
