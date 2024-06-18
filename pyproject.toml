@@ -46,8 +46,7 @@ passenv = *
 parallel_show_output = false
 [testenv:test]
 description = "Run the unit tests."
-deps = -c {toxinidir}/.github/dependabot/constraints.txt
-       -e ./freva-rest
+deps = -e ./freva-rest
        -e ./freva-client
        -e ./freva-data-portal-worker
        httpx
