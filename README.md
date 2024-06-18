@@ -11,28 +11,20 @@ that make up the freva server services as well as the client
 services that provide command line interfaces and python libraries for their
 rest service counterparts.
 
-## Table of Contents
-
-- [Installation](#installation)
-- [Usage](#usage)
-- [Development Environment](#development-environment)
-- [Testing](#testing)
-- [License](#license)
-
 ## Installation for development
 
 1. Make sure you have Python 3.8+ installed.
 2. Clone this repository:
 
 ```console
-git clone git@github.com:FREVA-CLINT/freva-nextgen.git
+git clone --recursive git@github.com:FREVA-CLINT/freva-nextgen.git
 cd freva-nextgen
 ```
 
 3. Install all components:
 
 ```console
-python -m pip install -e cryptography tox freva-rest freva-client freva-data-portal-worker
+python -m pip install -e ./freva-rest[dev] ./freva-client ./freva-data-portal-worker
 ```
 
 4. Generate a new pair of self signed certificates
@@ -64,7 +56,8 @@ environment. You can now develop and test the project within this environment.
 After the containers are up and running you can start the REST server the following:
 
 ```console
-python run_server.py -c api_config.toml --debug --dev
+python run_server.py -w
+python run_server.py -c api_config.toml --debug --dev -p 7777 -f
 ```
 
 The ``--debug`` and ``--dev`` flag will make sure that any changes are loaded.
