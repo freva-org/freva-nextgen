@@ -77,7 +77,7 @@ def run_data_loader(argv: Optional[List[str]] = None) -> None:
     args = parser.parse_args(argv)
     if args.verbose is True:
         data_logger.setLevel(logging.DEBUG)
-    data_logger.debug("Loading cluster config from %s", config_file)
+    data_logger.debug("Loading cluster config from %s", args.config_file)
     cache_config: RedisKw = json.loads(b64decode(args.config_file.read_bytes()))
     data_logger.debug("Deleting cluster config file %s", config_file)
     env = os.environ.copy()
