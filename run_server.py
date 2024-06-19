@@ -77,16 +77,12 @@ def start_server(foreground: bool = False, *args: str) -> None:
     cert_file.parent.mkdir(exist_ok=True, parents=True)
     if not key_file.is_file() or not cert_file.is_file():
         prep_server()
-    REDIS_CONFIG["ssl_key"] = (
-        Path("dev-env") / "certs" / "client-key.pem"
-    ).read_text()
+    REDIS_CONFIG["ssl_key"] = (Path("dev-env") / "certs" / "client-key.pem").read_text()
     REDIS_CONFIG["ssl_cert"] = (
         Path("dev-env") / "certs" / "client-cert.pem"
     ).read_text()
     config_file = TEMP_DIR / "data-portal-cluster-config.json"
-    config_file.write_bytes(
-        b64encode(json.dumps(REDIS_CONFIG).encode("utf-8"))
-    )
+    config_file.write_bytes(b64encode(json.dumps(REDIS_CONFIG).encode("utf-8")))
     args += ("--cert-dir", str(Path("dev-env").absolute() / "certs"))
     python_exe = sys.executable
     portal_pid = TEMP_DIR / "data-portal.pid"
@@ -159,6 +155,7 @@ def cli() -> None:
         for proc in ("rest-server", "data-portal"):
             kill_proc(proc)
         return
+    wait_for_keycloak()
     start_server(args.foreground, *server_args)
 
 
