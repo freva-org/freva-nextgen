@@ -147,7 +147,7 @@ def start(
                 f"API_PORT={port}\n"
                 f"API_CACHE_EXP={defaults['API_CACHE_EXP']}\n"
                 f"REDIS_HOST={defaults['REDIS_HOST']}\n"
-                f"REDIS_PASS={os.getenv('REDIS_PASS', 'foo')}\n"
+                f"REDIS_PASS={os.getenv('REDIS_PASS', 'secret')}\n"
                 f"REDIS_USER={os.getenv('REDIS_USER', 'redis')}\n"
                 f"REDIS_SSL_CERTFILE={ssl_cert or ''}\n"
                 f"REDIS_SSL_KEYFILE={ssl_key or ''}\n"

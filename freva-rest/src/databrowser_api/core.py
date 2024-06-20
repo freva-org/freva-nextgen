@@ -18,6 +18,7 @@ from typing import (
     Iterable,
     List,
     Literal,
+    Sized,
     Tuple,
     Union,
     cast,
@@ -45,7 +46,6 @@ IntakeType = TypedDict(
         "title": str,
         "last_updated": str,
         "aggregation_control": Dict[str, Any],
-        "catalog_dict": List[Dict[str, Any]],
     },
 )
 
@@ -296,7 +296,9 @@ class Translator:
                 if v == "primary"
             ]
         else:
-            _keys = [k for (k, v) in self._freva_facets.items() if v == "primary"]
+            _keys = [
+                k for (k, v) in self._freva_facets.items() if v == "primary"
+            ]
         if self.flavour in ("cordex",):
             for key in self.cordex_keys:
                 _keys.append(key)
@@ -413,7 +415,7 @@ class SolrSearch:
         self.facets = self.translator.translate_query(query, backwards=True)
         self.url, self.query = self._get_url()
         self.query["start"] = start
-        self.query["sort"] = f"{self.uniq_key} desc"
+        self.query["sort"] = "file desc"
 
     @asynccontextmanager
     async def _session_get(self) -> AsyncIterator[Tuple[int, Dict[str, Any]]]:
@@ -480,7 +482,9 @@ class SolrSearch:
                 key not in translator.valid_facets
                 and key not in ("time_select",) + cls.uniq_keys
             ):
-                raise HTTPException(status_code=422, detail="Could not validate input.")
+                raise HTTPException(
+                    status_code=422, detail="Could not validate input."
+                )
         return SolrSearch(
             config,
             flavour=flavour,
@@ -538,7 +542,9 @@ class SolrSearch:
             raise ValueError(f"Choose `time_select` from {methods}") from exc
         start, _, end = time.lower().partition("to")
         try:
-            start = parse(start or "1", default=datetime(1, 1, 1, 0, 0, 0)).isoformat()
+            start = parse(
+                start or "1", default=datetime(1, 1, 1, 0, 0, 0)
+            ).isoformat()
             end = parse(
                 end or "9999", default=datetime(9999, 12, 31, 23, 59, 59)
             ).isoformat()
@@ -546,26 +552,8 @@ class SolrSearch:
             raise ValueError(exc) from exc
         return [f"{{!field f=time op={solr_select}}}[{start} TO {end}]"]
 
-    async def init_intake_catalogue(self) -> Tuple[int, IntakeCatalogue]:
-        """Create an intake catalogue from the solr search."""
-        self.query["start"] = 0
-        self.query["facet"] = "true"
-        self.query["facet.mincount"] = "1"
-        self.query["facet.limit"] = "-1"
-        self.query["rows"] = self.batch_size
-        self.query["facet.field"] = self._config.solr_fields
-        self.query["fl"] = [self.uniq_key] + self._config.solr_fields
-        self.query["wt"] = "json"
-        async with self._session_get() as res:
-            search_status, search = res
-        total_count = cast(int, search.get("response", {}).get("numFound", 0))
-        facets = search.get("facet_counts", {}).get("facet_fields", {})
+    async def _create_intake_catalogue(self, *facets: str) -> IntakeType:
         var_name = self.translator.foreward_lookup["variable"]
-        facets = [
-            self.translator.foreward_lookup.get(v, v)
-            for v in self.translator.facet_hierachy
-            if facets.get(v)
-        ]
         catalogue: IntakeType = {
             "esmcat_version": "0.1.0",
             "attributes": [
@@ -592,17 +580,32 @@ class SolrSearch:
                     for f in facets
                 ],
             },
-            "catalog_dict": [],
         }
-        for result in search.get("response", {}).get("docs", []):
-            source = {}
-            for k in [self.uniq_key] + self.translator.facet_hierachy:
-                if isinstance(result.get(k), list) and len(result.get(k)) == 1:
-                    source[k] = result[k][0]
-                elif result.get(k):
-                    source[k] = result[k]
-            catalogue["catalog_dict"].append(self.translator.translate_query(source))
+        return catalogue
 
+    def _set_catalogue_queries(self) -> None:
+        """Set the query parameters for an catalogue search."""
+        self.query["facet"] = "true"
+        self.query["facet.mincount"] = "1"
+        self.query["facet.limit"] = "-1"
+        self.query["rows"] = self.batch_size
+        self.query["facet.field"] = self._config.solr_fields
+        self.query["fl"] = [self.uniq_key] + self._config.solr_fields
+        self.query["wt"] = "json"
+
+    async def init_intake_catalogue(self) -> Tuple[int, IntakeCatalogue]:
+        """Create an intake catalogue from the solr search."""
+        self._set_catalogue_queries()
+        async with self._session_get() as res:
+            search_status, search = res
+        total_count = cast(int, search.get("response", {}).get("numFound", 0))
+        facets = search.get("facet_counts", {}).get("facet_fields", {})
+        facets = [
+            self.translator.foreward_lookup.get(v, v)
+            for v in self.translator.facet_hierachy
+            if facets.get(v)
+        ]
+        catalogue = await self._create_intake_catalogue(*facets)
         return search_status, IntakeCatalogue(
             catalogue=catalogue, total_count=total_count
         )
@@ -635,49 +638,54 @@ class SolrSearch:
         except Exception as error:
             logger.warning("Could not add stats to mongodb: %s", error)
 
+    def _process_catalogue_result(
+        self, out: Dict[str, List[Sized]]
+    ) -> Dict[str, Any]:
+        return {
+            k: (
+                out[k][0]
+                if isinstance(out.get(k), list) and len(out[k]) == 1
+                else out.get(k)
+            )
+            for k in [self.uniq_key] + self.translator.facet_hierachy
+            if out.get(k)
+        }
+
     async def _iterintake(self) -> AsyncIterator[str]:
         encoder = json.JSONEncoder(indent=3)
+        self.query["cursorMark"] = "*"
+        init = True
+        yield ',\n   "catalog_dict": '
+        while True:
+            async with self._session_get() as res:
+                _, results = res
 
-        async with self._session_get() as res:
-            _, results = res
-            for out in results.get("response", {}).get("docs", [{}]):
-                source = {
-                    k: (
-                        out[k][0]
-                        if isinstance(out.get(k), list) and len(out.get(k)) == 1
-                        else out.get(k)
-                    )
-                    for k in [self.uniq_key] + self.translator.facet_hierachy
-                    if out.get(k)
-                }
-                entry = self.translator.translate_query(source)
-                yield ",\n   "
+            for result in results.get("response", {}).get("docs", [{}]):
+                entry = self._process_catalogue_result(result)
+                if init is True:
+                    sep = "["
+                else:
+                    sep = ","
+                yield f"{sep}\n   "
+                init = False
                 for line in list(encoder.iterencode(entry)):
                     yield line
+            next_cursor_mark = results.get("nextCursorMark", None)
+            if next_cursor_mark == self.query["cursorMark"] or not results:
+                break
+            self.query["cursorMark"] = next_cursor_mark
 
-    async def intake_catalogue(self, search: IntakeCatalogue) -> AsyncIterator[str]:
+    async def intake_catalogue(
+        self, catalogue: IntakeType, header_only: bool = False
+    ) -> AsyncIterator[str]:
         """Create an intake catalogue from the solr search."""
-        iteritems = tuple(
-            range(self.batch_size + 1, search.total_count, self.batch_size)
-        )
         encoder = json.JSONEncoder(indent=3)
-        for line in list(encoder.iterencode(search.catalogue))[:-4]:
+        for line in list(encoder.iterencode(catalogue))[:-1]:
             yield line
-        for i in iteritems:
-            self.query["start"] = i
-            self.query["rows"] = self.batch_size
+        if header_only is False:
             async for line in self._iterintake():
                 yield line
-        if (
-            iteritems
-            and iteritems[-1] < search.total_count
-            and search.total_count > self.batch_size
-        ):
-            self.query["start"] = iteritems[-1]
-            self.query["rows"] = search.total_count - iteritems[-1]
-            async for line in self._iterintake():
-                yield line
-        yield "\n]\n}"
+            yield "\n   ]\n}"
 
     async def extended_search(
         self,
@@ -730,31 +738,23 @@ class SolrSearch:
             primary_facets=self.translator.primary_keys,
         )
 
-    async def init_stream(self) -> Tuple[int, SearchResult]:
+    async def init_stream(self) -> Tuple[int, int]:
         """Initialise the apache solr search.
 
         Returns
         -------
         int: status code of the apache solr query.
         """
-        self.query["fl"] = [self.uniq_key]
+        self.query["fl"] = ["file", "uri"]
         logger.info(
             "Query %s for uniq_key: %s with %s",
             self.url,
             self.uniq_key,
             self.query,
         )
-        self.query["start"] = 0
-        self.query["rows"] = self.batch_size
         async with self._session_get() as res:
             search_status, search = res
-        return search_status, SearchResult(
-            total_count=search.get("response", {}).get("numFound", 0),
-            facets={},
-            search_results=search.get("response", {}).get("docs", []),
-            facet_mapping=self.translator.foreward_lookup,
-            primary_facets=[],
-        )
+        return search_status, search.get("response", {}).get("numFound", 0)
 
     def _get_url(self) -> tuple[str, Dict[str, Any]]:
         """Get the url for the solr query."""
@@ -799,50 +799,33 @@ class SolrSearch:
                 status_code=response.status, detail=response.text
             )  # pragma: no cover
 
-    async def _make_iterable(self) -> AsyncIterator[str]:
-        async with self._session_get() as res:
-            _, results = res
-        for out in results.get("response", {}).get("docs", []):
-            yield f"{out[self.uniq_key]}\n"
+    async def _solr_page_response(self) -> AsyncIterator[Dict[str, Any]]:
+        self.query["cursorMark"] = "*"
+        self.query["rows"] = self.batch_size
+        while True:
+            async with self._session_get() as res:
+                _, results = res
+            for content in results.get("response", {}).get("docs", []):
+                yield content
+            next_cursor_mark = results.get("nextCursorMark", None)
+            if next_cursor_mark == self.query["cursorMark"] or not results:
+                break
+            self.query["cursorMark"] = next_cursor_mark
 
-    async def stream_response(
-        self,
-        search: SearchResult,
-    ) -> AsyncIterator[str]:
+    async def stream_response(self) -> AsyncIterator[str]:
         """Search for uniq keys matching given search facets.
-
-        Parameters
-        ----------
-        search: SearchResult
-            The search result object of the search query.
 
         Returns
         -------
         AsyncIterator: Stream of search results.
         """
-        iteritems = tuple(
-            range(self.batch_size + 1, search.total_count, self.batch_size)
-        )
-        for content in search.search_results:
-            yield f"{content[self.uniq_key]}\n"
-        for i in iteritems:
-            self.query["start"] = i
-            self.query["rows"] = self.batch_size
-            async for uri in self._make_iterable():
-                yield uri
-        if (
-            iteritems
-            and iteritems[-1] < search.total_count
-            and search.total_count > self.batch_size
-        ):
-            self.query["start"] = iteritems[-1]
-            self.query["rows"] = search.total_count - iteritems[-1]
-            async for uri in self._make_iterable():
-                yield uri
+        async for result in self._solr_page_response():
+            yield f"{result[self.uniq_key]}\n"
 
     async def zarr_response(
         self,
-        search: SearchResult,
+        catalogue_type: Literal["intake", None],
+        num_results: int,
     ) -> AsyncIterator[str]:
         """Create a zarr endpoint from a given search.
         Parameters
@@ -854,16 +837,44 @@ class SolrSearch:
         -------
         AsyncIterator: Stream of search results.
         """
-        api_path = f"{os.environ.get('API_URL', '')}/api/freva-data-portal/zarr"
-        async for uri_str in self.stream_response(search):
-            uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, uri_str.strip()))
-            out = {"uri": {"path": uri_str.strip(), "uuid": uuid5}}
+        api_path = (
+            f"{os.environ.get('API_URL', '')}/api/freva-data-portal/zarr"
+        )
+        if catalogue_type == "intake":
+            _, intake = await self.init_intake_catalogue()
+            async for string in self.intake_catalogue(intake.catalogue, True):
+                yield string
+            yield ',\n   "catalog_dict": ['
+        num = 1
+        async for result in self._solr_page_response():
+            prefix = suffix = ""
+            uri = result[self.uniq_key]
+            uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, uri))
             cache = await create_redis_connection()
             try:
-                await cache.publish("data-portal", json.dumps(out).encode("utf-8"))
+                await cache.publish(
+                    "data-portal",
+                    json.dumps({"uri": {"path": uri, "uuid": uuid5}}).encode(
+                        "utf-8"
+                    ),
+                )
             except Exception as error:
                 logger.error("Cloud not connect to reddis: %s", error)
                 yield "Internal error, service not available\n"
                 continue
+            output = f"{api_path}/{uuid5}.zarr"
+            if catalogue_type == "intake":
+                result[self.uniq_key] = output
+                if num < num_results:
+                    suffix = ","
+                else:
+                    suffix = ""
+                output = json.dumps(
+                    self._process_catalogue_result(result), indent=3
+                )
+                prefix = "   "
+            num += 1
+            yield f"{prefix}{output}{suffix}\n"
 
-            yield f"{api_path}/{uuid5}.zarr\n"
+        if catalogue_type == "intake":
+            yield "\n   ]\n}"

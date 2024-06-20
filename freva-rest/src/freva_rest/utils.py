@@ -32,7 +32,7 @@ async def create_redis_connection(
         db=0,
     )
     if cache is None:
-        logger.debug("Creating redis connection using: %s", kwargs)
+        logger.info("Creating redis connection using: %s", kwargs)
     cache = cache or redis.Redis(
         host=REDIS_HOST,
         username=os.getenv("REDIS_USER"),

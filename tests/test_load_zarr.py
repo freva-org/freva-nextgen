@@ -2,8 +2,10 @@
 
 import os
 import time
+from tempfile import NamedTemporaryFile
 from typing import Dict
 
+import intake
 import mock
 import pytest
 import requests
@@ -79,6 +81,21 @@ def test_load_files_success(test_server: str, auth: Dict[str, str]) -> None:
         timeout=3,
     )
     assert data.status_code == 200
+    res3 = requests.get(
+        f"{test_server}/api/databrowser/load/freva/",
+        params={"dataset": "cmip6-fs", "catalogue-type": "intake"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=3,
+        stream=True,
+    )
+    assert res3.status_code == 201
+    with NamedTemporaryFile(suffix=".json") as temp_f:
+        with open(temp_f.name, "w", encoding="utf-8") as stream:
+            stream.write(res3.text)
+        cat = intake.open_esm_datastore(temp_f.name)
+    # Smoke test for intake, I don't really know what else todo.
+    assert hasattr(cat, "df")
+
     for attr in (".zarray", ".zattrs"):
         data = requests.get(
             f"{files[0]}/lon/{attr}",

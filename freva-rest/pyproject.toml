@@ -48,8 +48,9 @@ Issues = "https://github.com/FREVA-CLINT/freva-nextgen/issues"
 Source = "https://github.com/FREVA-CLINT/freva-nextgen/"
 
 [project.optional-dependencies]
-dev = ["tox", "cryptography"]
+dev = ["tox", "cryptography", "intake-esm"]
 tests = ["xarray",
+         "intake-esm",
          "pytest",
          "pytest-env",
          "httpx",

@@ -1,8 +1,8 @@
 """Main script that runs the rest API."""
 
-from typing import Annotated, List, Literal, Union
+from typing import Annotated, List, Literal, Optional, Union
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse, StreamingResponse
 from freva_rest.auth import TokenPayload, get_current_user
 from freva_rest.rest import app, server_config
@@ -76,7 +76,7 @@ async def intake_catalogue(
         raise HTTPException(status_code=413, detail="Result stream too big.")
     file_name = f"IntakeEsmCatalogue_{flavour}_{uniq_key}.json"
     return StreamingResponse(
-        solr_search.intake_catalogue(result),
+        solr_search.intake_catalogue(result.catalogue),
         status_code=status_code,
         media_type="application/x-ndjson",
         headers={"Content-Disposition": f'attachment; filename="{file_name}"'},
@@ -187,10 +187,10 @@ async def data_search(
         translate=translate,
         **SolrSchema.process_parameters(request),
     )
-    status_code, result = await solr_search.init_stream()
-    await solr_search.store_results(result.total_count, status_code)
+    status_code, total_count = await solr_search.init_stream()
+    await solr_search.store_results(total_count, status_code)
     return StreamingResponse(
-        solr_search.stream_response(result),
+        solr_search.stream_response(),
         status_code=status_code,
         media_type="text/plain",
     )
@@ -206,6 +206,17 @@ async def load_data(
     start: Annotated[int, SolrSchema.params["start"]] = 0,
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
+    catalogue_type: Annotated[
+        Literal["intake", None],
+        Query(
+            title="Catalogue type",
+            alias="catalogue-type",
+            description=(
+                "Set the type of catalogue you want to create from this"
+                "query"
+            ),
+        ),
+    ] = None,
     request: Request = Required,
     current_user: TokenPayload = Depends(get_current_user),
 ) -> StreamingResponse:
@@ -217,15 +228,15 @@ async def load_data(
         start=start,
         multi_version=multi_version,
         translate=translate,
-        **SolrSchema.process_parameters(request),
+        **SolrSchema.process_parameters(request, "catalogue-type"),
     )
-    _, result = await solr_search.init_stream()
+    _, total_count = await solr_search.init_stream()
     status_code = status.HTTP_201_CREATED
-    if result.total_count < 1:
+    if total_count < 1:
         status_code = status.HTTP_400_BAD_REQUEST
-    await solr_search.store_results(result.total_count, status_code)
+    await solr_search.store_results(total_count, status_code)
     return StreamingResponse(
-        solr_search.zarr_response(result),
+        solr_search.zarr_response(catalogue_type, total_count),
         status_code=status_code,
         media_type="text/plain",
     )
