@@ -7,13 +7,21 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 import os
 from datetime import date
-
 from freva_client import __version__
+from freva_client.auth import getpass
+import freva_client
 
 project = "Freva Databrowser"
 copyright = f"{date.today().year}, DKRZ"
 author = "DKRZ"
 release = __version__
+
+
+def getpass_mock(msg: str, result: str = "janedoe123") -> str:
+    """Mock the getpass method."""
+    print(msg)
+    return result
+
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -94,3 +102,5 @@ if not os.environ.get("READTHEDOCS"):
 
 # specifying the natural language populates some key tags
 language = "en"
+freva_client.auth.getpass = getpass_mock
+getpass = getpass_mock

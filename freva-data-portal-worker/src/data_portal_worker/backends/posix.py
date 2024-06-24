@@ -24,6 +24,11 @@ def get_xr_engine(file_path: str) -> Optional[str]:
     #        return "cfgrib"
     # except:
     #    pass
+    try:
+        _ = zarr.open(file_path, mode="r")
+        return "zarr"
+    except Exception:
+        pass
 
     try:
         with rasterio.open(file_path, mode="r"):
@@ -31,11 +36,6 @@ def get_xr_engine(file_path: str) -> Optional[str]:
     except Exception:
         pass
 
-    try:
-        _ = zarr.open(file_path, mode="r")
-        return "zarr"
-    except Exception:
-        pass
     return None
 
 

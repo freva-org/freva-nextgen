@@ -1,6 +1,6 @@
 """Main script that runs the rest API."""
 
-from typing import Annotated, List, Literal, Optional, Union
+from typing import Annotated, List, Literal, Union
 
 from fastapi import Depends, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -32,9 +32,7 @@ async def overview() -> SearchFlavours:
                 for f in translator.foreward_lookup.values()
                 if f not in translator.cordex_keys
             ]
-    return SearchFlavours(
-        flavours=list(Translator.flavours), attributes=attributes
-    )
+    return SearchFlavours(flavours=list(Translator.flavours), attributes=attributes)
 
 
 @app.get(
@@ -92,9 +90,7 @@ async def metadata_search(
     uniq_key: Literal["file", "uri"],
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
-    facets: Annotated[
-        Union[List[str], None], SolrSchema.params["facets"]
-    ] = None,
+    facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
     request: Request = Required,
 ) -> JSONResponse:
     """Get the search facets.
@@ -116,9 +112,7 @@ async def metadata_search(
         start=0,
         **SolrSchema.process_parameters(request),
     )
-    status_code, result = await solr_search.extended_search(
-        facets or [], max_results=0
-    )
+    status_code, result = await solr_search.extended_search(facets or [], max_results=0)
     await solr_search.store_results(result.total_count, status_code)
     output = result.dict()
     del output["search_results"]
@@ -136,9 +130,7 @@ async def extended_search(
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     max_results: Annotated[int, SolrSchema.params["batch_size"]] = 150,
-    facets: Annotated[
-        Union[List[str], None], SolrSchema.params["facets"]
-    ] = None,
+    facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
     request: Request = Required,
 ) -> JSONResponse:
     """Get the search facets."""
@@ -158,9 +150,7 @@ async def extended_search(
     return JSONResponse(content=result.dict(), status_code=status_code)
 
 
-@app.get(
-    "/api/databrowser/data_search/{flavour}/{uniq_key}", tags=["Data search"]
-)
+@app.get("/api/databrowser/data_search/{flavour}/{uniq_key}", tags=["Data search"])
 async def data_search(
     flavour: FlavourType,
     uniq_key: Literal["file", "uri"],
@@ -212,8 +202,7 @@ async def load_data(
             title="Catalogue type",
             alias="catalogue-type",
             description=(
-                "Set the type of catalogue you want to create from this"
-                "query"
+                "Set the type of catalogue you want to create from this" "query"
             ),
         ),
     ] = None,
