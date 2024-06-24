@@ -19,7 +19,7 @@ release = __version__
 
 def getpass_mock(msg: str, result: str = "janedoe123") -> str:
     """Mock the getpass method."""
-    print(msg)
+    print(f"{msg} *****")
     return result
 
 

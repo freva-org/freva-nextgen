@@ -6,10 +6,15 @@
 [![Tests](https://github.com/FREVA-CLINT/freva-nextgen/actions/workflows/ci_job.yml/badge.svg)](https://github.com/FREVA-CLINT/freva-nextgen/actions)
 [![Test-Coverage](https://codecov.io/github/FREVA-CLINT/freva-nextgen/branch/init/graph/badge.svg?token=dGhXxh7uP3)](https://codecov.io/github/FREVA-CLINT/freva-nextgen)
 
-This repository contains the *freva-rest services* defining rest endpoints
-that make up the freva server services as well as the client
-services that provide command line interfaces and python libraries for their
-rest service counterparts.
+
+This is a multi-part repository it contains code for:
+
+- The *freva-rest service* defining rest endpoints
+  that make up the freva server services
+- The *freva-client* library that provide command line interfaces and python
+  libraries for their rest service counterparts.
+- The *freva-data-loader-portal* that implements rules of how to open different
+  data sources and stream them via zarr.
 
 ## Installation for development
 
@@ -24,7 +29,7 @@ cd freva-nextgen
 3. Install all components:
 
 ```console
-python -m pip install -e ./freva-rest[dev] ./freva-client ./freva-data-portal-worker
+python -m pip install -e ./freva-rest[dev] -e ./freva-client -e ./freva-data-portal-worker
 ```
 
 4. Generate a new pair of self signed certificates
@@ -104,59 +109,6 @@ This will check the current version of the `main` branch and trigger
 a GitHub continuous integration pipeline to create a new release. The procedure
 performs a couple of checks, if theses checks fail please make sure to address
 the issues.
-
-## Freva-client production installation
-Installing the freva-client library is easy:
-
-```console
-python -m pip install freva-client
-```
-
-## Freva-rest production docker container
-It's best to use the system in production within a dedicated docker container.
-You can pull the container from the GitHub container registry:
-
-```console
-docker pull ghcr.io/freva-clint/freva-rest:latest
-```
-
-There are two fundamental different options to configure the service.
-
-1. via the `config` ``.toml`` file.
-2. via environment variables.
-
-Note, that the order here is important. First, any configuration from the
-config file is loaded, only if the configuration wasn't found in the config
-file environment variables are evaluated. The following environment
-variables can be set:
-
-- ``DEBUG``: Start server in debug mode (1), (default: 0 -> no debug).
-- ``API_PORT``: the port the rest service should be running on (default 8080).
-- ``API_WORKER``: the number of multi-process work serving the API (default: 8).
-- ``SOLR_HOST``: host name of the solr server, host name and port should be
-                 separated by a ``:``, for example ``localhost:8983``
-- ``SOLR_CORE`` : name of the solr core that contains datasets with multiple
-                  versions
-- ``MONGO_HOST``: host name of the mongodb server, where query statistics are
-                 stored. Host name and port should separated by a ``:``, for
-                 example ``localhost:27017``
-- ``MONGO_USER``: user name for the mongodb.
-- ``MONGO_PASSWORD``: password to log on to the mongodb.
-- ``MONGO_DB``: database name of the mongodb instance.
-- ``API_URL``: url of the machine that runs of the rest api
-- ``API_CACHE_EXP``: expiry time in seconds of the cached data
-- ``REDIS_HOST``: Host and port of the redis cache
-                  Host name and port should separated by a ``:``, for
-                  example ``localhost:5672``
-- ``REDIS_PASS``: Password for the redis connection.
-- ``REDIS_USER``: Username for the redis connection.
-- ``REDIS_SSL_CERTFILE``: Path to the TSL certificate file used to encrypt
-                          the redis connection.
-- ``REDIS_SSL_KEYFILE``: Path to the TSL key file used to encrypt the redis
-                         connection.
-> ``📝`` You can override the path to the default config file using the ``API_CONFIG``
-         environment variable. The default location of this config file is
-         ``/opt/databrowser/api_config.toml``.
 
 ## License
 

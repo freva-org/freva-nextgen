@@ -1,6 +1,5 @@
 """Query climate data sets by using-key value pair search queries."""
 
-import os
 import sys
 from collections import defaultdict
 from fnmatch import fnmatch
@@ -176,7 +175,7 @@ class databrowser:
     mind that zarr streams if not accessed in time will expire. Since the
     data can be accessed from anywhere you will also have to authenticate
     before you are able to access the data. Refer also to the
-    :py:function:`freva_client.authenticate.` method.
+    :py:meth:`freva_client.authenticate` method.
 
     .. execute_code::
 
@@ -371,8 +370,20 @@ class databrowser:
         intake_esm.core.esm_datastore: intake-esm catalogue.
 
         Raises
-        ~~~~~
+        ~~~~~~
         ValueError: If user is not authenticated or catalogue creation failed.
+
+        Example
+        ~~~~~~~
+        Let's create an intake-esm catalogue that points points allows for
+        streaming the target data as zarr:
+
+        .. execute_code::
+
+            from freva_client import databrowser
+            db = databrowser(dataset="cmip6-fs", stream_zarr=True)
+            cat = db.intake_catalogue()
+            print(cat.df)
         """
         with NamedTemporaryFile(suffix=".json") as temp_f:
             self._create_intake_catalogue_file(temp_f.name)
