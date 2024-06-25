@@ -7,9 +7,10 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 import os
 from datetime import date
+
+import freva_client
 from freva_client import __version__
 from freva_client.auth import getpass
-import freva_client
 
 project = "Freva Databrowser"
 copyright = f"{date.today().year}, DKRZ"

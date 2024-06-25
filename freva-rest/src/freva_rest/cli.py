@@ -45,9 +45,10 @@ variables can be set:
 import asyncio
 import logging
 import os
+from enum import Enum
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 import typer
 import uvicorn
@@ -56,6 +57,16 @@ from .config import ServerConfig, defaults
 from .logger import logger
 
 cli = typer.Typer(name="freva-rest-server", help=__doc__, epilog=__doc__)
+
+
+class Services(str, Enum):
+    """Literal implementation for the cli."""
+
+    zarr_stream: str = "zarr-stream"
+    stream: str = "zarr-stream"
+    data_portal: str = "zarr-stream"
+    databrowser: str = "databrowser"
+    search: str = "databrowser"
 
 
 def get_cert_file(
@@ -84,6 +95,12 @@ def start(
         "-p",
         "--port",
         help="The port the api is running on",
+    ),
+    services: List[Services] = typer.Option(
+        ("zarr-stream", "databrowser"),
+        "-s",
+        "--services",
+        help="Set additional services this rest API should serve.",
     ),
     ssl_cert_dir: Optional[str] = typer.Option(
         None,
@@ -123,8 +140,12 @@ def start(
     defaults["API_CONFIG"] = (config_file or defaults["API_CONFIG"]).absolute()
     defaults["DEBUG"] = debug
     defaults["API_CACHE_EXP"] = int(os.environ.get("API_CACHE_EXP") or "3600")
-    defaults["REDIS_HOST"] = os.environ.get("REDIS_HOST") or "redis://localhost:6379"
-    defaults["API_URL"] = os.environ.get("API_URL") or f"http://localhost:{port}"
+    defaults["REDIS_HOST"] = (
+        os.environ.get("REDIS_HOST") or "redis://localhost:6379"
+    )
+    defaults["API_URL"] = (
+        os.environ.get("API_URL") or f"http://localhost:{port}"
+    )
     defaults["REDIS_SSL_CERTFILE"] = ssl_cert
     defaults["REDIS_SSL_KEYFILE"] = ssl_key
     if ssl_cert:
@@ -139,6 +160,7 @@ def start(
     ssl_cert, ssl_key = get_cert_file(ssl_cert_dir, ssl_cert, ssl_key)
     keycloak_client_id = os.getenv("KEYCLOAK_CLIENT_ID", "freva")
     keycloak_client_secret = os.getenv("KEYCLOAK_CLIENT_SECRET", "")
+    api_services = ",".join(services).replace("_", "-")
     with NamedTemporaryFile(suffix=".conf", prefix="env") as temp_f:
         Path(temp_f.name).write_text(
             (
@@ -156,6 +178,7 @@ def start(
                 f"KEYCLOAK_CLIENT_ID={keycloak_client_id}\n"
                 f"KEYCLOAK_CLIENT_SECRET={keycloak_client_secret}\n"
                 f"API_URL={defaults['API_URL']}\n"
+                f"API_SERVICES={api_services}\n"
             ),
             encoding="utf-8",
         )

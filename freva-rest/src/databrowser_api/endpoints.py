@@ -1,5 +1,6 @@
 """Main script that runs the rest API."""
 
+import os
 from typing import Annotated, List, Literal, Union
 
 from fastapi import Depends, HTTPException, Query, Request, status
@@ -210,6 +211,11 @@ async def load_data(
     current_user: TokenPayload = Depends(get_current_user),
 ) -> StreamingResponse:
     """Search for datasets and stream the results as zarr."""
+    if "zarr-stream" not in os.getenv("API_SERVICES", ""):
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Service not enabled.",
+        )
     solr_search = await SolrSearch.validate_parameters(
         server_config,
         flavour=flavour,

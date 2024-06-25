@@ -40,15 +40,44 @@ You can pull the container from the GitHub container registry:
 docker pull ghcr.io/freva-clint/freva-rest:latest
 ```
 
-There are two fundamental different options to configure the service.
+By default the container starts with the ``freva-rest-service`` command.
+The following default values are available on start up:
 
-1. via the `config` ``.toml`` file.
-2. via environment variables.
+```console
+reva-rest-server --help                                                                                                                                     (python3_12)
 
-Note, that the order here is important. First, any configuration from the
-config file is loaded, only if the configuration wasn't found in the config
-file environment variables are evaluated. The following environment
-variables can be set:
+ Usage: freva-rest-server [OPTIONS]
+
+ Start the freva rest API.
+
+╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --config-file         -c                PATH                       Path to the server configuration file                                                                 │
+│                                                                    [default: /home/wilfred/workspace/freva-nextgen/freva-rest/src/freva_rest/api_config.toml]            │
+│ --port                -p                INTEGER                    The port the api is running on [default: 8080]                                                        │
+│ --services            -s                [zarr-stream|databrowser]  Set additional services this rest API should serve. [default: zarr-stream, databrowser]               │
+│ --cert-dir                              TEXT                       Set the path to the directory contaning the tls cert and key files that are used to establish a       │
+│                                                                    secure connection, if you set the it will be assumed that cert file is saved as client-cert.pem and   │
+│                                                                    the key file client-key.pem. This flag can be used as a short cut instead of using the `--tls-cert`   │
+│                                                                    and `--tls-key` flats                                                                                 │
+│                                                                    [default: None]                                                                                       │
+│ --tls-cert                              TEXT                       Set the path to the tls certificate file that is used to establish a secure connection to the data    │
+│                                                                    portal cache.                                                                                         │
+│                                                                    [default: None]                                                                                       │
+│ --tls-key                               TEXT                       Set the path to the tls key file that is used to establish a secure connection to the data portal     │
+│                                                                    cache.                                                                                                │
+│                                                                    [default: None]                                                                                       │
+│ --dev                     --no-dev                                 Add test data to the dev solr. [default: no-dev]                                                      │
+│ --debug                   --no-debug                               Turn on debug mode. [default: no-debug]                                                               │
+│ --install-completion                                               Install completion for the current shell.                                                             │
+│ --show-completion                                                  Show completion for the current shell, to copy it or customize the installation.                      │
+│ --help                                                             Show this message and exit.                                                                           │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+```
+
+You can either adjust the server settings by overriding the default flags
+listed above or setting environment variables in the container.
+
+The following environment variables can be set:
 
 - ``DEBUG``: Start server in debug mode (1), (default: 0 -> no debug).
 - ``API_PORT``: the port the rest service should be running on (default 8080).
