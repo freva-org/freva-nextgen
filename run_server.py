@@ -17,6 +17,8 @@ REDIS_CONFIG = {
     "host": "redis://localhost:6379",
     "ssl_cert": "",
     "ssl_key": "",
+    "scheduler_host": "localhost:4000",
+    "cache_exp": 86000,
 }
 
 TEMP_DIR = Path(
@@ -55,7 +57,7 @@ def kill_proc(proc: str) -> None:
             time.sleep(2)
             if os.waitpid(pid, os.WNOHANG) == (0, 0):  # check running
                 os.kill(pid, 9)
-        except (ProcessLookupError, ValueError):
+        except (ProcessLookupError, ValueError, ChildProcessError):
             pass
 
 
@@ -63,33 +65,26 @@ def prep_server(inp_dir: Path, install: bool = False) -> None:
     """Prepare the first server startup."""
     cert_dir = inp_dir / "certs"
     cert_dir.mkdir(exist_ok=True, parents=True)
-    if install:
-        run(
-            [sys.executable, "-m", "pip", "install", "cryptography"],
-            check=True,
-        )
-    run([sys.executable, str(inp_dir / "keys.py")], check=True)
-    REDIS_CONFIG["ssl_key"] = (
-        inp_dir / "certs" / "client-key.pem"
-    ).read_text()
-    REDIS_CONFIG["ssl_cert"] = (
-        inp_dir / "certs" / "client-cert.pem"
-    ).read_text()
+    key_file = cert_dir / "client-key.pem"
+    cert_file = cert_dir / "client-cert.pem"
+    if not key_file.is_file() or not cert_file.is_file():
+        if install:
+            run(
+                [sys.executable, "-m", "pip", "install", "cryptography"],
+                check=True,
+            )
+        run([sys.executable, str(inp_dir / "keys.py")], check=True)
+    REDIS_CONFIG["ssl_key"] = key_file.read_text()
+    REDIS_CONFIG["ssl_cert"] = cert_file.read_text()
     config_file = TEMP_DIR / "data-portal-cluster-config.json"
-    config_file.write_bytes(
-        b64encode(json.dumps(REDIS_CONFIG).encode("utf-8"))
-    )
+    config_file.write_bytes(b64encode(json.dumps(REDIS_CONFIG).encode("utf-8")))
 
 
 def start_server(inp_dir: Path, foreground: bool = False, *args: str) -> None:
     """Set up the server"""
     for proc in ("rest-server", "data-portal"):
         kill_proc(proc)
-    key_file = inp_dir / "certs" / "client-key.pem"
-    cert_file = inp_dir / "certs" / "client-cert.pem"
-    cert_file.parent.mkdir(exist_ok=True, parents=True)
-    if not key_file.is_file() or not cert_file.is_file():
-        prep_server(inp_dir, install=True)
+    prep_server(inp_dir, install=True)
     config_file = TEMP_DIR / "data-portal-cluster-config.json"
     args += ("--cert-dir", str(inp_dir.absolute() / "certs"))
     python_exe = sys.executable
