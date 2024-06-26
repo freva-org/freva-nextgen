@@ -19,7 +19,9 @@ REDIS_CONFIG = {
     "ssl_key": "",
 }
 
-TEMP_DIR = Path(tempfile.gettempdir()) / "freva-nextgen"
+TEMP_DIR = Path(
+    os.getenv("TEMP_DIR", os.path.join(tempfile.gettempdir(), "freva-nextgen"))
+)
 TEMP_DIR.mkdir(exist_ok=True, parents=True)
 KEYCLOAK_URL = os.getenv("KEYCLOAK_HOST", "http://localhost:8080")
 KEYCLOAK_REALM = os.getenv("KEYCLOAK_REALM", "freva")
@@ -57,33 +59,39 @@ def kill_proc(proc: str) -> None:
             pass
 
 
-def prep_server() -> None:
+def prep_server(inp_dir: Path, install: bool = False) -> None:
     """Prepare the first server startup."""
-    cert_dir = Path("dev-env") / "certs"
+    cert_dir = inp_dir / "certs"
     cert_dir.mkdir(exist_ok=True, parents=True)
-    run(
-        [sys.executable, "-m", "pip", "install", "tox", "cryptography"],
-        check=True,
+    if install:
+        run(
+            [sys.executable, "-m", "pip", "install", "cryptography"],
+            check=True,
+        )
+    run([sys.executable, str(inp_dir / "keys.py")], check=True)
+    REDIS_CONFIG["ssl_key"] = (
+        inp_dir / "certs" / "client-key.pem"
+    ).read_text()
+    REDIS_CONFIG["ssl_cert"] = (
+        inp_dir / "certs" / "client-cert.pem"
+    ).read_text()
+    config_file = TEMP_DIR / "data-portal-cluster-config.json"
+    config_file.write_bytes(
+        b64encode(json.dumps(REDIS_CONFIG).encode("utf-8"))
     )
-    run([sys.executable, str(Path("dev-env") / "keys.py")], check=True)
 
 
-def start_server(foreground: bool = False, *args: str) -> None:
+def start_server(inp_dir: Path, foreground: bool = False, *args: str) -> None:
     """Set up the server"""
     for proc in ("rest-server", "data-portal"):
         kill_proc(proc)
-    key_file = Path("dev-env") / "certs" / "client-key.pem"
-    cert_file = Path("dev-env") / "certs" / "client-cert.pem"
+    key_file = inp_dir / "certs" / "client-key.pem"
+    cert_file = inp_dir / "certs" / "client-cert.pem"
     cert_file.parent.mkdir(exist_ok=True, parents=True)
     if not key_file.is_file() or not cert_file.is_file():
-        prep_server()
-    REDIS_CONFIG["ssl_key"] = (Path("dev-env") / "certs" / "client-key.pem").read_text()
-    REDIS_CONFIG["ssl_cert"] = (
-        Path("dev-env") / "certs" / "client-cert.pem"
-    ).read_text()
+        prep_server(inp_dir, install=True)
     config_file = TEMP_DIR / "data-portal-cluster-config.json"
-    config_file.write_bytes(b64encode(json.dumps(REDIS_CONFIG).encode("utf-8")))
-    args += ("--cert-dir", str(Path("dev-env").absolute() / "certs"))
+    args += ("--cert-dir", str(inp_dir.absolute() / "certs"))
     python_exe = sys.executable
     portal_pid = TEMP_DIR / "data-portal.pid"
     rest_pid = TEMP_DIR / "rest-server.pid"
@@ -119,6 +127,12 @@ def cli() -> None:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
+        "--script-dir",
+        type=Path,
+        help="The the input directory all scripts are located.",
+        default=Path(__file__).parent / "dev-env",
+    )
+    parser.add_argument(
         "--gen-certs",
         action="store_true",
         help="Generate a pair of self-signed certificats.",
@@ -143,10 +157,7 @@ def cli() -> None:
     )
     args, server_args = parser.parse_known_args()
     if args.gen_certs:
-        run(
-            [sys.executable, str(Path("dev-env").absolute() / "keys.py")],
-            check=True,
-        )
+        prep_server(args.script_dir, False)
         return
     if args.wait_for_keycloak:
         wait_for_keycloak()
@@ -156,7 +167,7 @@ def cli() -> None:
             kill_proc(proc)
         return
     wait_for_keycloak()
-    start_server(args.foreground, *server_args)
+    start_server(args.script_dir, args.foreground, *server_args)
 
 
 if __name__ == "__main__":
