@@ -79,7 +79,6 @@ def run_data_loader(argv: Optional[List[str]] = None) -> None:
         data_logger.setLevel(logging.DEBUG)
     data_logger.debug("Loading cluster config from %s", args.config_file)
     cache_config: RedisKw = json.loads(b64decode(args.config_file.read_bytes()))
-    data_logger.debug("Deleting cluster config file %s", config_file)
     env = os.environ.copy()
     try:
         os.environ["DASK_PORT"] = str(args.port)
