@@ -52,10 +52,6 @@ services:
       --hostname-strict=false
       --import-realm
       -Dkeycloak.migration.strategy=OVERWRITE_EXISTING
-#-Dkeycloak.migration.action=import
-#-Dkeycloak.migration.provider=singleFile
-#-Dkeycloak.migration.file=/tmp/realm-export.json
-#-Dkeycloak.migration.file=/opt/keycloak/data/import/master-realm.json
   ldap:
     image: osixia/openldap:latest
     environment:
