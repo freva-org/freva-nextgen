@@ -70,6 +70,16 @@ load any existing test data. If you don't like that simply do not pass the
 ``--dev`` flag.
 
 
+### Test ldap instance
+The dev system sets up a small LDAP server for testing. The following users
+in this ldap server are available:
+
+- uid: ``johndoe``, password: ``johndoe123``
+- uid: ``janedoe``, password: ``janedoe123``
+- uid: ``alicebrown``, password: ``alicebrown123``
+- uid: ``bobsmith``, password: ``bobsmith123``
+- uid: ``lisajones``, password: ``lisajones123``
+
 ## Testing
 
 Unit tests, Example notebook tests, type annotations and code style tests
