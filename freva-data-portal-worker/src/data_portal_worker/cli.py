@@ -11,9 +11,9 @@ from typing import List, Optional
 
 import appdirs
 
+from ._version import __version__
 from .load_data import CLIENT, ProcessQueue, RedisKw
 from .utils import data_logger
-from ._version import __version__
 
 
 def run_data_loader(argv: Optional[List[str]] = None) -> None:
@@ -72,6 +72,12 @@ def run_data_loader(argv: Optional[List[str]] = None) -> None:
         action="store_true",
         help="Display debug messages.",
         default=False,
+    )
+    parser.add_argument(
+        "-V",
+        "--version",
+        action="version",
+        version="%(prog)s {version}".format(version=__version__),
     )
     args = parser.parse_args(argv)
     if args.verbose is True:
