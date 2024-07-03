@@ -14,7 +14,7 @@ from typing import Dict, Iterator
 import mock
 import pytest
 import uvicorn
-from data_portal_worker import run_data_loader
+from data_portal_worker.cli import run_data_loader
 from databrowser_api.mock import read_data
 from fastapi.testclient import TestClient
 from freva_client.auth import Auth

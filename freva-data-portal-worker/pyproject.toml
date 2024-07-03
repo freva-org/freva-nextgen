@@ -47,6 +47,5 @@ full = [
 "xpublish",
 "zarr",
 ]
-
 [package-data]
 freva_deployment = ["py.typed"]
