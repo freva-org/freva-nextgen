@@ -18,22 +18,7 @@ export IS_WORKER
 
 # Define the packages to be installed
 PKGS="\
-asyncssh \
-bokeh \
 cfgrib \
-cryptography \
-cloudpickle \
-dask[distributed,diagnostics] \
-h5netcdf \
-jupyter-server-proxy \
-libgdal \
-netcdf4 \
-rasterio \
-redis-py \
-rioxarray \
-xarray \
-xpublish \
-zarr \
 mamba \
 git \
 jq \
@@ -122,7 +107,7 @@ if [ ! -f ${MAMBA_DIR}/bin/data-loader-worker ]; then
     cp -r freva-nextgen/dev-env ${MAMBA_DIR}/freva-data-portal-worker/setup
     cp freva-nextgen/run_server.py ${MAMBA_DIR}/freva-data-portal-worker/
     cd ${MAMBA_DIR}/freva-data-portal-worker/
-    ${MAMBA_DIR}/bin/python -m pip install .
+    ${MAMBA_DIR}/bin/python -m pip install
     rm -fr $TEMP_DIR
 fi
 
@@ -153,4 +138,3 @@ fi
 
 echo $CMD
 $CMD
-
