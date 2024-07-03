@@ -21,8 +21,17 @@ classifiers = [
                "Programming Language :: Python :: 3.12",
 ]
 requires-python = ">=3.9"
-dependencies = [
-"appdirs",
+dependencies = ["appdirs", "requests"]
+[project.scripts]
+data-loader-worker = "data_loader_worker:cli.run_data_loader"
+[project.urls]
+Documentation = "https://freva-clint.github.io/freva-nextgen"
+Issues = "https://github.com/FREVA-CLINT/freva-nextgen/issues"
+Source = "https://github.com/FREVA-CLINT/freva-nextgen/"
+
+[project.optional-dependencies]
+dev = ["tox"]
+full = [
 "asyncssh",
 "bokeh",
 "cfgrib",
@@ -33,23 +42,11 @@ dependencies = [
 "netcdf4",
 "rasterio",
 "redis",
-"requests",
 "rioxarray",
-"typer",
 "xarray",
 "xpublish",
 "zarr",
 ]
-[project.scripts]
-data-loader-worker = "data_loader_worker:cli.run_data_loader"
-[project.urls]
-Documentation = "https://freva-clint.github.io/freva-nextgen"
-Issues = "https://github.com/FREVA-CLINT/freva-nextgen/issues"
-Source = "https://github.com/FREVA-CLINT/freva-nextgen/"
-
-[project.optional-dependencies]
-dev = ["tox"]
-
 
 [package-data]
 freva_deployment = ["py.typed"]

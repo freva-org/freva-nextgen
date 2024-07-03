@@ -29,7 +29,7 @@ cd freva-nextgen
 3. Install all components:
 
 ```console
-python -m pip install -e ./freva-rest[dev] -e ./freva-client -e ./freva-data-portal-worker
+python -m pip install -e ./freva-rest[dev] -e ./freva-client -e ./freva-data-portal-worker[full]
 ```
 
 4. Generate a new pair of self signed certificates

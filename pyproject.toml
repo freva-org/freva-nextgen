@@ -49,7 +49,7 @@ parallel_show_output = false
 description = "Run the unit tests."
 deps = -e ./freva-rest
        -e ./freva-client
-       -e ./freva-data-portal-worker
+       -e ./freva-data-portal-worker[full]
        httpx
        pytest
        pytest-asyncio
@@ -60,13 +60,13 @@ deps = -e ./freva-rest
        pytest-env
 
 commands =
-    pytest -vv --cov=freva-rest --cov=freva-client --cov=freva-data-portal-worker --cov-report=html:coverage_report --junitxml report.xml --cov-report xml tests
+    pytest -vv --cov=freva-rest --cov=freva-client --cov=freva-data-portal-worker[full] --cov-report=html:coverage_report --junitxml report.xml --cov-report xml tests
     python3 -m coverage report --fail-under=98.5 --precision=2
 [testenv:docs]
 description = "Create the documentation."
 deps = -e ./freva-rest
        -e ./freva-client
-       -e ./freva-data-portal-worker
+       -e ./freva-data-portal-worker[full]
        sphinx-execute-code-python3
        sphinx-code-tabs
        sphinx-copybutton
@@ -83,7 +83,7 @@ commands = make -C docs clean
 description = "Check code quality."
 deps = -e ./freva-rest
        -e ./freva-client
-       -e ./freva-data-portal-worker
+       -e ./freva-data-portal-worker[full]
        black
        isort
        flake8
@@ -99,7 +99,7 @@ commands =
 description = "Static type checking."
 deps = ./freva-rest
        ./freva-client
-       ./freva-data-portal-worker
+       ./freva-data-portal-worker[full]
        mypy
        motor-stubs
        pytest-stub
