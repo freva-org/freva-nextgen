@@ -4,11 +4,15 @@ from pathlib import Path
 from typing import Optional, Union
 
 import netCDF4
-
-# import cfgrib
+from data_portal_worker.utils import logger
 import rasterio
 import xarray as xr
 import zarr
+
+try:
+    import cfgrib
+except ImportError:
+    logger.warning("Could not import cfgrib, loading GRB files is disabled")
 
 
 def get_xr_engine(file_path: str) -> Optional[str]:
@@ -19,11 +23,11 @@ def get_xr_engine(file_path: str) -> Optional[str]:
     except Exception:
         pass
 
-    # try:
-    #    with cfgrib.open_file(file_path):
-    #        return "cfgrib"
-    # except:
-    #    pass
+    try:
+        with cfgrib.open_file(file_path):
+            return "cfgrib"
+    except Exception:
+        pass
     try:
         _ = zarr.open(file_path, mode="r")
         return "zarr"
