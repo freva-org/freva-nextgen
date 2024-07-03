@@ -7,9 +7,7 @@ else
 fi
 # Determine if this is a worker or scheduler based on the argument
 if [ "$1" = "worker" ]; then
-    IS_WORKER=true
-else
-    IS_WORKER=false
+    IS_WORKER="worker"
 fi
 # Export the environment variable
 export IS_WORKER
