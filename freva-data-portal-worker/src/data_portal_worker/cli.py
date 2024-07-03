@@ -13,8 +13,7 @@ import appdirs
 
 from .load_data import CLIENT, ProcessQueue, RedisKw
 from .utils import data_logger
-
-__version__ = "2406.0.0"
+from ._version import __version__
 
 
 def run_data_loader(argv: Optional[List[str]] = None) -> None:
