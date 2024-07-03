@@ -4,10 +4,10 @@ from pathlib import Path
 from typing import Optional, Union
 
 import netCDF4
-from data_portal_worker.utils import logger
 import rasterio
 import xarray as xr
 import zarr
+from data_portal_worker.utils import logger
 
 try:
     import cfgrib
