@@ -107,7 +107,7 @@ if [ ! -f ${MAMBA_DIR}/bin/data-loader-worker ]; then
     cp -r freva-nextgen/dev-env ${MAMBA_DIR}/freva-data-portal-worker/setup
     cp freva-nextgen/run_server.py ${MAMBA_DIR}/freva-data-portal-worker/
     cd ${MAMBA_DIR}/freva-data-portal-worker/
-    ${MAMBA_DIR}/bin/python -m pip install
+    ${MAMBA_DIR}/bin/python -m pip install .
     rm -fr $TEMP_DIR
 fi
 
