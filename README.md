@@ -21,22 +21,24 @@ This is a multi-part repository it contains code for:
 1. Make sure you have Python 3.8+ installed.
 2. Clone this repository:
 
-```console
-git clone --recursive git@github.com:FREVA-CLINT/freva-nextgen.git
-cd freva-nextgen
-```
+    ```console
+    git clone --recursive git@github.com:FREVA-CLINT/freva-nextgen.git
+    cd freva-nextgen
+    ```
 
 3. Install all components:
 
-```console
-python -m pip install -e ./freva-rest[dev] -e ./freva-client -e ./freva-data-portal-worker[full]
-```
+    ```console
+        make install
+    ```
 
-4. Generate a new pair of self signed certificates
+    Alternatively you can create an encapsulated conda enviroment:
+    ```console
+        conda create -n freva-nextgen cfgrib
+        conda run -n freva-nextgen make install
+    ```
 
-```console
-python run_server.py --gen-certs
-```
+
 
 ### Development Environment
 Various services, such as apache solr are needed to run the rest services system
@@ -49,9 +51,10 @@ Then, run the following command:
 docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
 ```
 
-if you use `podman-compose`:
+if you use `podman`:
 
 ```console
+python -m pip install podman-compose
 podman-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
 ```
 
