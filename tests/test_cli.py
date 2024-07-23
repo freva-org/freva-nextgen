@@ -83,11 +83,9 @@ def test_cli(mocker: MockerFixture) -> None:
             )
 
 
-def test_auth(
-    test_server: str, cli_runner: CliRunner, auth_instance: Auth
-) -> None:
+def test_auth(test_server: str, cli_runner: CliRunner, auth_instance: Auth) -> None:
     """Test authentication."""
-    old_token = deepcopy(auth_instance.auth_token)
+    old_token = deepcopy(auth_instance._auth_token)
     try:
 
         res = cli_runner.invoke(
@@ -97,7 +95,7 @@ def test_auth(
         assert res.stdout
         assert "access_token" in json.loads(res.stdout)
     finally:
-        auth_instance.auth_token = old_token
+        auth_instance._auth_token = old_token
 
 
 def test_main(cli_runner: CliRunner) -> None:

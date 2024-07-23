@@ -15,11 +15,9 @@ def raise_for_status() -> None:
     raise requests.HTTPError("Invalid")
 
 
-def test_authenticate_with_password(
-    mocker: MockFixture, auth_instance: Auth
-) -> None:
+def test_authenticate_with_password(mocker: MockFixture, auth_instance: Auth) -> None:
     """Test authentication using username and password."""
-    old_token_data = deepcopy(auth_instance.auth_token)
+    old_token_data = deepcopy(auth_instance._auth_token)
     try:
         token_data = {
             "access_token": "test_access_token",
@@ -35,20 +33,18 @@ def test_authenticate_with_password(
             return_value=Mock(status_code=200, json=lambda: token_data),
         ):
             auth_instance.authenticate(host="https://example.com")
-        assert isinstance(auth_instance.auth_token, dict)
-        assert auth_instance.auth_token["access_token"] == "test_access_token"
-        assert (
-            auth_instance.auth_token["refresh_token"] == "test_refresh_token"
-        )
+        assert isinstance(auth_instance._auth_token, dict)
+        assert auth_instance._auth_token["access_token"] == "test_access_token"
+        assert auth_instance._auth_token["refresh_token"] == "test_refresh_token"
     finally:
-        auth_instance.auth_token = old_token_data
+        auth_instance._auth_token = old_token_data
 
 
 def test_authenticate_with_refresh_token(
     mocker: MockFixture, auth_instance: Auth
 ) -> None:
     """Test authentication using a refresh token."""
-    old_token_data = deepcopy(auth_instance.auth_token)
+    old_token_data = deepcopy(auth_instance._auth_token)
     token_data = {
         "access_token": "test_access_token",
         "token_type": "Bearer",
@@ -67,18 +63,16 @@ def test_authenticate_with_refresh_token(
                 host="https://example.com", refresh_token="test_refresh_token"
             )
 
-        assert isinstance(auth_instance.auth_token, dict)
-        assert auth_instance.auth_token["access_token"] == "test_access_token"
-        assert (
-            auth_instance.auth_token["refresh_token"] == "test_refresh_token"
-        )
+        assert isinstance(auth_instance._auth_token, dict)
+        assert auth_instance._auth_token["access_token"] == "test_access_token"
+        assert auth_instance._auth_token["refresh_token"] == "test_refresh_token"
     finally:
-        auth_instance.auth_token = old_token_data
+        auth_instance._auth_token = old_token_data
 
 
 def test_token_is_expired(mocker: MockFixture, auth_instance: Auth) -> None:
     """Test the token expiration check."""
-    old_token_data = deepcopy(auth_instance.auth_token)
+    old_token_data = deepcopy(auth_instance._auth_token)
     exp_time = (datetime.now() + timedelta(seconds=3600)).timestamp()
     try:
         with mocker.patch(
@@ -91,12 +85,12 @@ def test_token_is_expired(mocker: MockFixture, auth_instance: Auth) -> None:
 
         assert not is_expired
     finally:
-        auth_instance.auth_token = old_token_data
+        auth_instance._auth_token = old_token_data
 
 
 def test_refresh_token(mocker: MockFixture, auth_instance: Auth) -> None:
     """Test the token refresh functionality."""
-    old_token_data = deepcopy(auth_instance.auth_token)
+    old_token_data = deepcopy(auth_instance._auth_token)
     token_data = {
         "access_token": "new_access_token",
         "token_type": "Bearer",
@@ -111,7 +105,7 @@ def test_refresh_token(mocker: MockFixture, auth_instance: Auth) -> None:
             "freva_client.auth.requests.post",
             return_value=Mock(status_code=200, json=lambda: token_data),
         ):
-            auth_instance.auth_token = {
+            auth_instance._auth_token = {
                 "access_token": "test_access_token",
                 "token_type": "Bearer",
                 "expires_in": 3600,
@@ -123,18 +117,16 @@ def test_refresh_token(mocker: MockFixture, auth_instance: Auth) -> None:
 
             auth_instance.check_authentication(auth_url="https://example.com")
 
-        assert isinstance(auth_instance.auth_token, dict)
-        assert auth_instance.auth_token["access_token"] == "new_access_token"
-        assert auth_instance.auth_token["refresh_token"] == "new_refresh_token"
+        assert isinstance(auth_instance._auth_token, dict)
+        assert auth_instance._auth_token["access_token"] == "new_access_token"
+        assert auth_instance._auth_token["refresh_token"] == "new_refresh_token"
     finally:
-        auth_instance.auth_token = old_token_data
+        auth_instance._auth_token = old_token_data
 
 
-def test_authenticate_function(
-    mocker: MockFixture, auth_instance: Auth
-) -> None:
+def test_authenticate_function(mocker: MockFixture, auth_instance: Auth) -> None:
     """Test the authenticate function with username and password."""
-    old_token_data = deepcopy(auth_instance.auth_token)
+    old_token_data = deepcopy(auth_instance._auth_token)
     token_data = {
         "access_token": "test_access_token",
         "token_type": "Bearer",
@@ -154,14 +146,14 @@ def test_authenticate_function(
         assert token["access_token"] == "test_access_token"
         assert token["refresh_token"] == "test_refresh_token"
     finally:
-        auth_instance.auth_token = old_token_data
+        auth_instance._auth_token = old_token_data
 
 
 def test_authenticate_function_with_refresh_token(
     mocker: MockFixture, auth_instance: Auth
 ) -> None:
     """Test the authenticate function using a refresh token."""
-    old_token_data = deepcopy(auth_instance.auth_token)
+    old_token_data = deepcopy(auth_instance._auth_token)
     token_data = {
         "access_token": "test_access_token",
         "token_type": "Bearer",
@@ -183,12 +175,12 @@ def test_authenticate_function_with_refresh_token(
         assert token["access_token"] == "test_access_token"
         assert token["refresh_token"] == "test_refresh_token"
     finally:
-        auth_instance.auth_token = old_token_data
+        auth_instance._auth_token = old_token_data
 
 
 def test_authentication_fail(mocker: MockFixture, auth_instance: Auth) -> None:
     """Test the behviour if the authentications fails."""
-    old_token_data = deepcopy(auth_instance.auth_token)
+    old_token_data = deepcopy(auth_instance._auth_token)
     mock_token_data: Token = {
         "access_token": "test_access_token",
         "token_type": "Bearer",
@@ -207,7 +199,7 @@ def test_authentication_fail(mocker: MockFixture, auth_instance: Auth) -> None:
         ),
     ):
         try:
-            auth_instance.auth_token = None
+            auth_instance._auth_token = None
             with pytest.raises(ValueError):
                 authenticate(host="https://example.com")
             with pytest.raises(ValueError):
@@ -216,21 +208,17 @@ def test_authentication_fail(mocker: MockFixture, auth_instance: Auth) -> None:
                     refresh_token="test_refresh_token",
                 )
             with pytest.raises(ValueError):
-                auth_instance.check_authentication(
-                    auth_url="https://example.com"
-                )
-            auth_instance.auth_token = mock_token_data
+                auth_instance.check_authentication(auth_url="https://example.com")
+            auth_instance._auth_token = mock_token_data
             with pytest.raises(ValueError):
-                auth_instance.check_authentication(
-                    auth_url="https://example.com"
-                )
+                auth_instance.check_authentication(auth_url="https://example.com")
         finally:
-            auth_instance.auth_token = old_token_data
+            auth_instance._auth_token = old_token_data
 
 
 def test_real_auth(test_server: str, auth_instance: Auth) -> None:
     """Test authentication at the keycloak instance."""
-    old_token_data = deepcopy(auth_instance.auth_token)
+    old_token_data = deepcopy(auth_instance._auth_token)
     mock_token_data: Token = {
         "access_token": "test_access_token",
         "token_type": "Bearer",
@@ -242,7 +230,7 @@ def test_real_auth(test_server: str, auth_instance: Auth) -> None:
     }
 
     try:
-        auth_instance.auth_token = mock_token_data
+        auth_instance._auth_token = mock_token_data
         token_data = authenticate(host=test_server)
         assert token_data["access_token"] != mock_token_data["access_token"]
         token_data = authenticate(host=test_server, force=True)
@@ -252,4 +240,4 @@ def test_real_auth(test_server: str, auth_instance: Auth) -> None:
         token_data2 = authenticate(host=test_server)
         assert token_data2["access_token"] == token
     finally:
-        auth_instance.auth_token = old_token_data
+        auth_instance._auth_token = old_token_data

@@ -26,7 +26,6 @@ class Config:
         uniq_key: Literal["file", "uri"] = "file",
         flavour: str = "freva",
     ) -> None:
-
         self.databrowser_url = f"{self.get_api_url(host)}/databrowser"
         self.auth_url = f"{self.get_api_url(host)}/auth/v2"
         self.uniq_key = uniq_key

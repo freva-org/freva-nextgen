@@ -129,7 +129,7 @@ def test_intake_without_zarr(test_server: str) -> None:
 
 def test_intake_with_zarr(test_server: str, auth_instance: Auth) -> None:
     """Test the intake zarr catalogue creation."""
-    token = deepcopy(auth_instance.auth_token)
+    token = deepcopy(auth_instance._auth_token)
     try:
         auth_instance.auth_instance = None
         db = databrowser(host=test_server, dataset="cmip6-fs", stream_zarr=True)
@@ -139,12 +139,12 @@ def test_intake_with_zarr(test_server: str, auth_instance: Auth) -> None:
         cat = db.intake_catalogue()
         assert hasattr(cat, "df")
     finally:
-        auth_instance.auth_token = token
+        auth_instance._auth_token = token
 
 
 def test_zarr_stream(test_server: str, auth_instance: Auth) -> None:
     """Test creating zarr endpoints for loading."""
-    token = deepcopy(auth_instance.auth_token)
+    token = deepcopy(auth_instance._auth_token)
     try:
         auth_instance.auth_instance = None
         db = databrowser(host=test_server, dataset="cmip6-fs", stream_zarr=True)
@@ -154,4 +154,4 @@ def test_zarr_stream(test_server: str, auth_instance: Auth) -> None:
         files = list(db)
         assert len(files) == 2
     finally:
-        auth_instance.auth_token = token
+        auth_instance._auth_token = token

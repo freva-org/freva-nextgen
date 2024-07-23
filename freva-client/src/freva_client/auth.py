@@ -19,16 +19,6 @@ Token = TypedDict(
         "refresh_expires": float,
     },
 )
-JsonPayload = TypedDict(
-    "JsonPayload",
-    {
-        "access_token": str,
-        "token_type": str,
-        "expires_in": int,
-        "refresh_token": str,
-        "refresh_expires_in": int,
-    },
-)
 
 
 class Auth:
@@ -62,14 +52,25 @@ class Auth:
         exp = datetime.fromtimestamp(self.token_expiration_time(url, token))
         return datetime.now() > exp
 
-    def _set_token(self, json_load: JsonPayload) -> Token:
+    def set_token(
+        self,
+        access_token: str,
+        refresh_token: Optional[str] = None,
+        expires_in: int = 0,
+        refresh_expires_in: int = 10,
+        expires: Optional[float] = None,
+        refresh_expires: Optional[float] = None,
+        token_type: str = "Bearer",
+    ) -> Token:
+        """Override the existing auth token."""
         now = datetime.now().timestamp()
+
         self._auth_token = Token(
-            access_token=json_load["access_token"],
-            refresh_token=json_load["refresh_token"],
-            token_type=json_load["token_type"],
-            expires=now + json_load["expires_in"],
-            refresh_expires=now + json_load["refresh_expires_in"],
+            access_token=access_token or "",
+            refresh_token=refresh_token or "",
+            token_type=token_type,
+            expires=expires or now + expires_in,
+            refresh_expires=refresh_expires or now + refresh_expires_in,
         )
         return self._auth_token
 
@@ -90,14 +91,12 @@ class Auth:
                 return self._login_with_password(url, username)
             raise ValueError("Could not use refresh token") from None
         auth = res.json()
-        return self._set_token(
-            JsonPayload(
-                access_token=auth["access_token"],
-                token_type=auth["token_type"],
-                expires_in=auth["expires_in"],
-                refresh_token=auth["refresh_token"],
-                refresh_expires_in=auth["refresh_expires_in"],
-            )
+        return self.set_token(
+            access_token=auth["access_token"],
+            token_type=auth["token_type"],
+            expires_in=auth["expires_in"],
+            refresh_token=auth["refresh_token"],
+            refresh_expires_in=auth["refresh_expires_in"],
         )
 
     def check_authentication(self, auth_url: Optional[str] = None) -> Token:
@@ -133,14 +132,12 @@ class Auth:
             logger.error("Failed to authenticate: %s", error)
             raise ValueError("Token creation failed") from error
         auth = res.json()
-        return self._set_token(
-            JsonPayload(
-                access_token=auth["access_token"],
-                token_type=auth["token_type"],
-                expires_in=auth["expires_in"],
-                refresh_token=auth["refresh_token"],
-                refresh_expires_in=auth["refresh_expires_in"],
-            )
+        return self.set_token(
+            access_token=auth["access_token"],
+            token_type=auth["token_type"],
+            expires_in=auth["expires_in"],
+            refresh_token=auth["refresh_token"],
+            refresh_expires_in=auth["refresh_expires_in"],
         )
 
     def authenticate(

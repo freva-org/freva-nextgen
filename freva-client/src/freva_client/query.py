@@ -24,7 +24,7 @@ import requests
 import yaml
 from rich import print as pprint
 
-from .auth import Auth, Token
+from .auth import Auth
 from .utils import logger
 from .utils.databrowser_utils import Config
 
@@ -206,7 +206,9 @@ class databrowser:
         self,
         *facets: str,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
+        flavour: Literal[
+            "freva", "cmip6", "cmip5", "cordex", "nextgems"
+        ] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -215,7 +217,7 @@ class databrowser:
         fail_on_error: bool = False,
         **search_keys: Union[str, List[str]],
     ) -> None:
-
+        self._auth = Auth()
         self._fail_on_error = fail_on_error
         self._cfg = Config(host, uniq_key=uniq_key, flavour=flavour)
         self._flavour = flavour
@@ -241,7 +243,8 @@ class databrowser:
         self, facets: Tuple[str, ...], search_kw: Dict[str, List[str]]
     ) -> None:
         metadata = {
-            k: v[::2] for (k, v) in self._facet_search(extended_search=True).items()
+            k: v[::2]
+            for (k, v) in self._facet_search(extended_search=True).items()
         }
         primary_key = list(metadata.keys() or ["project"])[0]
         num_facets = 0
@@ -264,9 +267,9 @@ class databrowser:
         headers = {}
         if self._stream_zarr:
             query_url = self._cfg.zarr_loader_url
-            auth = Auth()
-            auth.check_authentication(auth_url=self._cfg.auth_url)
-            token = cast(Token, auth.auth_token)
+            token = self._auth.check_authentication(
+                auth_url=self._cfg.auth_url
+            )
             headers = {"Authorization": f"Bearer {token['access_token']}"}
         result = self._get(query_url, headers=headers, stream=True)
         if result is not None:
@@ -274,7 +277,9 @@ class databrowser:
                 for res in result.iter_lines():
                     yield res.decode("utf-8")
             except KeyboardInterrupt:
-                pprint("[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr)
+                pprint(
+                    "[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr
+                )
 
     def __repr__(self) -> str:
         params = ", ".join(
@@ -301,7 +306,9 @@ class databrowser:
 
         # Create a table-like structure for available flavors and search facets
         style = 'style="text-align: left"'
-        facet_heading = f"Available search facets for <em>{self._flavour}</em> flavour"
+        facet_heading = (
+            f"Available search facets for <em>{self._flavour}</em> flavour"
+        )
         html_repr = (
             "<table>"
             f"<tr><th colspan='2' {style}>{self.__class__.__name__}"
@@ -340,11 +347,13 @@ class databrowser:
         kwargs: Dict[str, Any] = {"stream": True}
         url = self._cfg.intake_url
         if self._stream_zarr:
-            auth = Auth()
-            auth.check_authentication(auth_url=self._cfg.auth_url)
-            token = cast(Token, auth.auth_token)
+            token = self._auth.check_authentication(
+                auth_url=self._cfg.auth_url
+            )
             url = self._cfg.zarr_loader_url
-            kwargs["headers"] = {"Authorization": f"Bearer {token['access_token']}"}
+            kwargs["headers"] = {
+                "Authorization": f"Bearer {token['access_token']}"
+            }
             kwargs["params"] = {"catalogue-type": "intake"}
         result = self._get(url, **kwargs)
         if result is None:
@@ -356,7 +365,9 @@ class databrowser:
                 for content in result.iter_content(decode_unicode=False):
                     stream.write(content)
         except Exception as error:
-            raise ValueError(f"Couldn't write catalogue content: {error}") from None
+            raise ValueError(
+                f"Couldn't write catalogue content: {error}"
+            ) from None
 
     def intake_catalogue(self) -> intake_esm.core.esm_datastore:
         """Create an intake esm catalogue object from the search.
@@ -393,7 +404,9 @@ class databrowser:
     def count_values(
         cls,
         *facets: str,
-        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
+        flavour: Literal[
+            "freva", "cmip6", "cmip5", "cordex", "nextgems"
+        ] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -491,7 +504,9 @@ class databrowser:
         result = this._facet_search(extended_search=extended_search)
         counts = {}
         for facet, value_counts in result.items():
-            counts[facet] = dict(zip(value_counts[::2], map(int, value_counts[1::2])))
+            counts[facet] = dict(
+                zip(value_counts[::2], map(int, value_counts[1::2]))
+            )
         return counts
 
     @cached_property
@@ -516,14 +531,17 @@ class databrowser:
 
         """
         return {
-            k: v[::2] for (k, v) in self._facet_search(extended_search=True).items()
+            k: v[::2]
+            for (k, v) in self._facet_search(extended_search=True).items()
         }
 
     @classmethod
     def metadata_search(
         cls,
         *facets: str,
-        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
+        flavour: Literal[
+            "freva", "cmip6", "cmip5", "cordex", "nextgems"
+        ] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -646,7 +664,9 @@ class databrowser:
         )
         return {
             k: v[::2]
-            for (k, v) in this._facet_search(extended_search=extended_search).items()
+            for (k, v) in this._facet_search(
+                extended_search=extended_search
+            ).items()
         }
 
     @classmethod
@@ -713,13 +733,17 @@ class databrowser:
             contraints = data["primary_facets"]
         return {f: v for f, v in data["facets"].items() if f in contraints}
 
-    def _get(self, url: str, **kwargs: Any) -> Optional[requests.models.Response]:
+    def _get(
+        self, url: str, **kwargs: Any
+    ) -> Optional[requests.models.Response]:
         """Apply the get method to the databrowser."""
         logger.debug("Searching %s with parameters: %s", url, self._params)
         params = kwargs.pop("params", {})
         kwargs.setdefault("timeout", 30)
         try:
-            res = requests.get(url, params={**self._params, **params}, **kwargs)
+            res = requests.get(
+                url, params={**self._params, **params}, **kwargs
+            )
             res.raise_for_status()
             return res
         except KeyboardInterrupt:
