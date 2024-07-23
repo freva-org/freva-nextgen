@@ -46,15 +46,15 @@ def test_search_files_zarr(
     cli_runner: CliRunner, test_server: str, auth_instance: Auth
 ) -> None:
     """Test searching for files (with zarr)."""
-    token = deepcopy(auth_instance.auth_token)
+    token = deepcopy(auth_instance._auth_token)
     try:
-        auth_instance.auth_token = None
+        auth_instance._auth_token = None
         res = cli_runner.invoke(
             app, ["data-search", "--host", test_server, "--zar"]
         )
         assert res.exit_code > 0
         token_data = authenticate(username="janedoe", host=test_server)
-        auth_instance.auth_token = None
+        auth_instance._auth_token = None
         res = cli_runner.invoke(
             app,
             [
@@ -71,8 +71,21 @@ def test_search_files_zarr(
         assert res.exit_code == 0
         assert res.stdout
         assert isinstance(json.loads(res.stdout), list)
+        auth_instance._auth_token = None
+        res = cli_runner.invoke(
+            app,
+            [
+                "data-search",
+                "--host",
+                test_server,
+                "--zarr",
+                "dataset=cmip6-fs",
+                "--json",
+            ],
+        )
+        assert res.exit_code != 0
     finally:
-        auth_instance.auth_token = token
+        auth_instance._auth_token = token
 
 
 def test_intake_catalogue_no_zarr(
@@ -98,15 +111,15 @@ def test_intake_files_zarr(
     cli_runner: CliRunner, test_server: str, auth_instance: Auth
 ) -> None:
     """Test searching for files (with zarr)."""
-    token = deepcopy(auth_instance.auth_token)
+    token = deepcopy(auth_instance._auth_token)
     try:
-        auth_instance.auth_token = None
+        auth_instance._auth_token = None
         res = cli_runner.invoke(
             app, ["inktake-catalogue", "--host", test_server, "--zar"]
         )
         assert res.exit_code > 0
         token_data = authenticate(username="janedoe", host=test_server)
-        auth_instance.auth_token = None
+        auth_instance._auth_token = None
         res = cli_runner.invoke(
             app,
             [
@@ -123,7 +136,7 @@ def test_intake_files_zarr(
         assert res.stdout
         assert isinstance(json.loads(res.stdout), dict)
     finally:
-        auth_instance.auth_token = token
+        auth_instance._auth_token = token
 
 
 def test_metadata_search(cli_runner: CliRunner, test_server: str) -> None:
