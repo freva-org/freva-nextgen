@@ -1,14 +1,13 @@
-.PHONY: install prepare lint docs
+.PHONY: all release
 all: install
 
 install: prepare
-	python3 -m pip -e install freva-client freva-rest
-	flit install --deps=all
+	python3 -m pip install -e ./freva-rest[dev] -e ./freva-client -e ./freva-data-portal-worker[full]
 
 prepare:
 	python3 -m pip install cryptography tox
 	mkdir -p dev-env/certs
-	python3 dev-env/keys.py
+	python3 run_server.py --gen-certs
 
 lint:
 	tox -e lint types
