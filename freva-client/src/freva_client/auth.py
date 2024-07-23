@@ -100,7 +100,7 @@ class Auth:
             )
         )
 
-    def check_authentication(self, auth_url: Optional[str] = None) -> None:
+    def check_authentication(self, auth_url: Optional[str] = None) -> Token:
         """Check the status of the authentication.
 
         Raises
@@ -114,6 +114,7 @@ class Auth:
             raise ValueError("Refresh token has expired.")
         if now > self._auth_token["expires"] and auth_url:
             self._refresh(auth_url, self._auth_token["refresh_token"])
+        return self._auth_token
 
     def _login_with_password(self, auth_url: str, username: str) -> Token:
         """Create a new token."""
