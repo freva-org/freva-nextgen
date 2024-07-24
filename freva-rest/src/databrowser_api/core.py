@@ -293,7 +293,9 @@ class Translator:
                 if v == "primary"
             ]
         else:
-            _keys = [k for (k, v) in self._freva_facets.items() if v == "primary"]
+            _keys = [
+                k for (k, v) in self._freva_facets.items() if v == "primary"
+            ]
         if self.flavour in ("cordex",):
             for key in self.cordex_keys:
                 _keys.append(key)
@@ -477,7 +479,9 @@ class SolrSearch:
                 key not in translator.valid_facets
                 and key not in ("time_select",) + cls.uniq_keys
             ):
-                raise HTTPException(status_code=422, detail="Could not validate input.")
+                raise HTTPException(
+                    status_code=422, detail="Could not validate input."
+                )
         return SolrSearch(
             config,
             flavour=flavour,
@@ -535,7 +539,9 @@ class SolrSearch:
             raise ValueError(f"Choose `time_select` from {methods}") from exc
         start, _, end = time.lower().partition("to")
         try:
-            start = parse(start or "1", default=datetime(1, 1, 1, 0, 0, 0)).isoformat()
+            start = parse(
+                start or "1", default=datetime(1, 1, 1, 0, 0, 0)
+            ).isoformat()
             end = parse(
                 end or "9999", default=datetime(9999, 12, 31, 23, 59, 59)
             ).isoformat()
@@ -598,7 +604,9 @@ class SolrSearch:
                     source[k] = result[k][0]
                 elif result.get(k):
                     source[k] = result[k]
-            catalogue["catalog_dict"].append(self.translator.translate_query(source))
+            catalogue["catalog_dict"].append(
+                self.translator.translate_query(source)
+            )
 
         return search_status, IntakeCatalogue(
             catalogue=catalogue, total_count=total_count
@@ -641,7 +649,8 @@ class SolrSearch:
                 source = {
                     k: (
                         out[k][0]
-                        if isinstance(out.get(k), list) and len(out.get(k)) == 1
+                        if isinstance(out.get(k), list)
+                        and len(out.get(k)) == 1
                         else out.get(k)
                     )
                     for k in [self.uniq_key] + self.translator.facet_hierachy
@@ -652,7 +661,9 @@ class SolrSearch:
                 for line in list(encoder.iterencode(entry)):
                     yield line
 
-    async def intake_catalogue(self, search: IntakeCatalogue) -> AsyncIterator[str]:
+    async def intake_catalogue(
+        self, search: IntakeCatalogue
+    ) -> AsyncIterator[str]:
         """Create an intake catalogue from the solr search."""
         iteritems = tuple(
             range(self.batch_size + 1, search.total_count, self.batch_size)
@@ -753,6 +764,28 @@ class SolrSearch:
             primary_facets=[],
         )
 
+    def _join_facet_queries(
+        self, key: str, facets: List[str]
+    ) -> Tuple[str, str]:
+        """Create lucene search contain and NOT contain search queries"""
+
+        negative, positive = [], []
+        for search_value in facets:
+            if key not in self.uniq_keys:
+                search_value = search_value.lower()
+            if search_value.lower().startswith("not "):
+                search_value = "-" + search_value.lstrip("NOT ").lstrip("not ")
+            if search_value[0] in ("!", "-"):
+                negative.append(search_value.lstrip("!").lstrip("-"))
+            else:
+                positive.append(search_value)
+        search_value_pos = " OR ".join(positive)
+        search_value_neg = " OR ".join(negative)
+        for char in self.escape_chars:
+            search_value_pos = search_value_pos.replace(char, "\\" + char)
+            search_value_neg = search_value_neg.replace(char, "\\" + char)
+        return search_value_pos, search_value_neg
+
     def _get_url(self) -> tuple[str, Dict[str, Any]]:
         """Get the url for the solr query."""
         core = {
@@ -762,13 +795,11 @@ class SolrSearch:
         url = f"{self._config.get_core_url(core)}/select/"
         query = []
         for key, value in self.facets.items():
-            if key in self.uniq_keys:
-                search_value = " OR ".join(map(str, value))
-            else:
-                search_value = " OR ".join(map(str.lower, value))
-            for char in self.escape_chars:
-                search_value = search_value.replace(char, "\\" + char)
-            query.append(f"{key.lower()}:({search_value})")
+            query_pos, query_neg = self._join_facet_queries(key, value)
+            if query_pos:
+                query.append(f"{key.lower()}:({query_pos})")
+            if query_neg:
+                query.append(f"-{key.lower()}:({query_neg})")
         return url, {
             "fq": self.time + ["", " AND ".join(query) or "*:*"],
             "q": "*:*",

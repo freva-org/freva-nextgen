@@ -183,6 +183,17 @@ def test_metadata_search(client: TestClient) -> None:
     ).json()
     assert len(res6["facets"].keys()) == 1
 
+    res7 = client.get(
+        "api/databrowser/metadata_search/freva/file",
+        params={
+            "dataset": ["-cmip6-swift", "not cmip6-fs"],
+            "project": "cmip6",
+        },
+    ).json()
+    assert "cmip6-swift" not in res7["facets"]["dataset"]
+    assert "cmip6-fs" not in res7["facets"]["dataset"]
+    assert "cmip6-hsm" in res7["facets"]["dataset"]
+
 
 def test_intake_search(client: TestClient) -> None:
     """Test the creation of intake catalogues."""

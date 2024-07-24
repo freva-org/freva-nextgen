@@ -108,10 +108,10 @@ There are many more options for defining a value for a given key:
 |                                                 | attribute1 AND value2  |
 |                                                 | for attribute2         |
 +-------------------------------------------------+------------------------+
-| ``attribute_not_=value``                        | Search for files NOT   |
+| ``attribute=-value`` ``attribute=not value``    | Search for files NOT   |
 |                                                 | containing value       |
 +-------------------------------------------------+------------------------+
-| ``attribute_not_=value1 attribute_not_=value2`` | Search for files       |
+| ``attribute=-value1 attribute=not value2``      | Search for files       |
 |                                                 | containing neither     |
 |                                                 | value1 nor value2      |
 +-------------------------------------------------+------------------------+
