@@ -96,12 +96,12 @@ There are many more options for defining a value for a given key:
 |                                                 | expression to find     |
 |                                                 | what you want.)        |
 +-------------------------------------------------+------------------------+
-| ``attribute=value1 attribute=value2``           | Search for files       |
-|                                                 | containing either      |
-| OR:                                             | value1 OR value2 for   |
-|                                                 | the given attribute    |
-| ``attribute={value1,value2}``                   | (note that's the same  |
-|                                                 | attribute twice!)      |
+| ``attribute=value1 [...] attribute=valueN``     | Search for files       |
+|                                                 | containing *any* of N  |
+| OR:                                             | given values of same   |
+|                                                 | attribute.             |
+| ``attribute={value1,..,valueN}``                |                        |
+|                                                 |                        |
 +-------------------------------------------------+------------------------+
 | ``attribute1=value1 attribute2=value2``         | Search for files       |
 |                                                 | containing value1 for  |
@@ -112,8 +112,10 @@ There are many more options for defining a value for a given key:
 |                                                 | containing value       |
 +-------------------------------------------------+------------------------+
 | ``attribute=-value1 attribute=not value2``      | Search for files       |
-|                                                 | containing neither     |
-|                                                 | value1 nor value2      |
+|                                                 | *not* caintaning given |
+|  OR                                             | values. You can also   |
+|                                                 | combine search         |
+| ``attribute1_not_=value _not_attribute2=value`` | attributes             |
 +-------------------------------------------------+------------------------+
 
 .. note::
