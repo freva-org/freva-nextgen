@@ -193,6 +193,13 @@ def test_metadata_search(client: TestClient) -> None:
     assert "cmip6-swift" not in res7["facets"]["dataset"]
     assert "cmip6-fs" not in res7["facets"]["dataset"]
     assert "cmip6-hsm" in res7["facets"]["dataset"]
+    res8 = client.get(
+        "api/databrowser/metadata_search/freva/file",
+        params={
+            "project_not_": "cmip6",
+        },
+    ).json()
+    assert "cmip6" not in res8["facets"]["project"]
 
 
 def test_intake_search(client: TestClient) -> None:

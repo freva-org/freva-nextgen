@@ -475,6 +475,7 @@ class SolrSearch:
         """
         translator = Translator(flavour, translate)
         for key in query:
+            key = key.lower().replace("_not_", "")
             if (
                 key not in translator.valid_facets
                 and key not in ("time_select",) + cls.uniq_keys
@@ -774,9 +775,12 @@ class SolrSearch:
             if key not in self.uniq_keys:
                 search_value = search_value.lower()
             if search_value.lower().startswith("not "):
-                search_value = "-" + search_value.lstrip("NOT ").lstrip("not ")
-            if search_value[0] in ("!", "-"):
-                negative.append(search_value.lstrip("!").lstrip("-"))
+                "len('not ') = 4"
+                negative.append(search_value[4:])
+            elif search_value[0] in ("!", "-"):
+                negative.append(search_value[1:])
+            elif "_not_" in key:
+                negative.append(search_value)
             else:
                 positive.append(search_value)
         search_value_pos = " OR ".join(positive)
@@ -796,10 +800,11 @@ class SolrSearch:
         query = []
         for key, value in self.facets.items():
             query_pos, query_neg = self._join_facet_queries(key, value)
+            key = key.lower().replace("_not_", "")
             if query_pos:
-                query.append(f"{key.lower()}:({query_pos})")
+                query.append(f"{key}:({query_pos})")
             if query_neg:
-                query.append(f"-{key.lower()}:({query_neg})")
+                query.append(f"-{key}:({query_neg})")
         return url, {
             "fq": self.time + ["", " AND ".join(query) or "*:*"],
             "q": "*:*",
