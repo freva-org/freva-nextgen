@@ -1,11 +1,6 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
-## [v2407.0.0]
-
-### Changed
-- Add ability to perform search that should *not* contain certain values
-
 ## [v2403.0.3]
 
 ### Changed
