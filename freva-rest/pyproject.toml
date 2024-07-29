@@ -36,6 +36,7 @@ dependencies = [
 "redis",
 "pika",
 "paramiko",
+"watchfiles",
 "uuid",
 "typing_extensions",
 "zarr",
