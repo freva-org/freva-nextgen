@@ -90,7 +90,7 @@ class Completer:
         choices = self._get_choices()
         return {**self.choices, **choices}
 
-    def formated_print(self) -> None:
+    def formatted_print(self) -> None:
         """Print all choices to be processed by the shell completion function."""
 
         out = self.get_print(self.command_choices)

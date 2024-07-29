@@ -109,8 +109,8 @@ class Translator:
     )
 
     @property
-    def facet_hierachy(self) -> list[str]:
-        """Define the hierachy of facets that define a dataset."""
+    def facet_hierarchy(self) -> list[str]:
+        """Define the hierarchy of facets that define a dataset."""
         return [
             "project",
             "product",
@@ -263,7 +263,7 @@ class Translator:
         }
 
     @cached_property
-    def foreward_lookup(self) -> Dict[str, str]:
+    def forward_lookup(self) -> Dict[str, str]:
         """Define how things get translated from the freva standard"""
 
         return {
@@ -278,8 +278,8 @@ class Translator:
     def valid_facets(self) -> list[str]:
         """Get all valid facets for a flavour."""
         if self.translate:
-            return list(self.foreward_lookup.values())
-        return list(self.foreward_lookup.keys())
+            return list(self.forward_lookup.values())
+        return list(self.forward_lookup.keys())
 
     @property
     def cordex_keys(self) -> Tuple[str, ...]:
@@ -291,14 +291,12 @@ class Translator:
         """Define which search facets are primary for which standard."""
         if self.translate:
             _keys = [
-                self.foreward_lookup[k]
+                self.forward_lookup[k]
                 for (k, v) in self._freva_facets.items()
                 if v == "primary"
             ]
         else:
-            _keys = [
-                k for (k, v) in self._freva_facets.items() if v == "primary"
-            ]
+            _keys = [k for (k, v) in self._freva_facets.items() if v == "primary"]
         if self.flavour in ("cordex",):
             for key in self.cordex_keys:
                 _keys.append(key)
@@ -307,7 +305,7 @@ class Translator:
     @cached_property
     def backward_lookup(self) -> Dict[str, str]:
         """Translate the schema to the freva standard."""
-        return {v: k for (k, v) in self.foreward_lookup.items()}
+        return {v: k for (k, v) in self.forward_lookup.items()}
 
     def translate_facets(
         self,
@@ -318,7 +316,7 @@ class Translator:
         if self.translate:
             if backwards:
                 return [self.backward_lookup.get(f, f) for f in facets]
-            return [self.foreward_lookup.get(f, f) for f in facets]
+            return [self.forward_lookup.get(f, f) for f in facets]
         return list(facets)
 
     def translate_query(
@@ -336,7 +334,7 @@ class Translator:
 
 
 class SolrSearch:
-    """Definitions for makeing search queries on apache solr.
+    """Definitions for making search queries on apache solr.
 
     Parameters
     ----------
@@ -483,9 +481,7 @@ class SolrSearch:
                 key not in translator.valid_facets
                 and key not in ("time_select",) + cls.uniq_keys
             ):
-                raise HTTPException(
-                    status_code=422, detail="Could not validate input."
-                )
+                raise HTTPException(status_code=422, detail="Could not validate input.")
         return SolrSearch(
             config,
             flavour=flavour,
@@ -543,9 +539,7 @@ class SolrSearch:
             raise ValueError(f"Choose `time_select` from {methods}") from exc
         start, _, end = time.lower().partition("to")
         try:
-            start = parse(
-                start or "1", default=datetime(1, 1, 1, 0, 0, 0)
-            ).isoformat()
+            start = parse(start or "1", default=datetime(1, 1, 1, 0, 0, 0)).isoformat()
             end = parse(
                 end or "9999", default=datetime(9999, 12, 31, 23, 59, 59)
             ).isoformat()
@@ -554,7 +548,7 @@ class SolrSearch:
         return [f"{{!field f=time op={solr_select}}}[{start} TO {end}]"]
 
     async def _create_intake_catalogue(self, *facets: str) -> IntakeType:
-        var_name = self.translator.foreward_lookup["variable"]
+        var_name = self.translator.forward_lookup["variable"]
         catalogue: IntakeType = {
             "esmcat_version": "0.1.0",
             "attributes": [
@@ -602,8 +596,8 @@ class SolrSearch:
         total_count = cast(int, search.get("response", {}).get("numFound", 0))
         facets = search.get("facet_counts", {}).get("facet_fields", {})
         facets = [
-            self.translator.foreward_lookup.get(v, v)
-            for v in self.translator.facet_hierachy
+            self.translator.forward_lookup.get(v, v)
+            for v in self.translator.facet_hierarchy
             if facets.get(v)
         ]
         catalogue = await self._create_intake_catalogue(*facets)
@@ -639,16 +633,14 @@ class SolrSearch:
         except Exception as error:
             logger.warning("Could not add stats to mongodb: %s", error)
 
-    def _process_catalogue_result(
-        self, out: Dict[str, List[Sized]]
-    ) -> Dict[str, Any]:
+    def _process_catalogue_result(self, out: Dict[str, List[Sized]]) -> Dict[str, Any]:
         return {
             k: (
                 out[k][0]
                 if isinstance(out.get(k), list) and len(out[k]) == 1
                 else out.get(k)
             )
-            for k in [self.uniq_key] + self.translator.facet_hierachy
+            for k in [self.uniq_key] + self.translator.facet_hierarchy
             if out.get(k)
         }
 
@@ -732,9 +724,9 @@ class SolrSearch:
                 for k in search.get("response", {}).get("docs", [])
             ],
             facet_mapping={
-                k: self.translator.foreward_lookup[k]
+                k: self.translator.forward_lookup[k]
                 for k in self.query["facet.field"]
-                if k in self.translator.foreward_lookup
+                if k in self.translator.forward_lookup
             },
             primary_facets=self.translator.primary_keys,
         )
@@ -757,9 +749,7 @@ class SolrSearch:
             search_status, search = res
         return search_status, search.get("response", {}).get("numFound", 0)
 
-    def _join_facet_queries(
-        self, key: str, facets: List[str]
-    ) -> Tuple[str, str]:
+    def _join_facet_queries(self, key: str, facets: List[str]) -> Tuple[str, str]:
         """Create lucene search contain and NOT contain search queries"""
 
         negative, positive = [], []
@@ -808,7 +798,7 @@ class SolrSearch:
     async def check_for_status(
         self, response: aiohttp.client_reqrep.ClientResponse
     ) -> None:
-        """Ceck if a query was successful
+        """Check if a query was successful
 
         Parameters
         ----------
@@ -862,9 +852,7 @@ class SolrSearch:
         -------
         AsyncIterator: Stream of search results.
         """
-        api_path = (
-            f"{os.environ.get('API_URL', '')}/api/freva-data-portal/zarr"
-        )
+        api_path = f"{os.environ.get('API_URL', '')}/api/freva-data-portal/zarr"
         if catalogue_type == "intake":
             _, intake = await self.init_intake_catalogue()
             async for string in self.intake_catalogue(intake.catalogue, True):
@@ -879,9 +867,7 @@ class SolrSearch:
             try:
                 await cache.publish(
                     "data-portal",
-                    json.dumps({"uri": {"path": uri, "uuid": uuid5}}).encode(
-                        "utf-8"
-                    ),
+                    json.dumps({"uri": {"path": uri, "uuid": uuid5}}).encode("utf-8"),
                 )
             except Exception as error:
                 logger.error("Cloud not connect to reddis: %s", error)
@@ -894,9 +880,7 @@ class SolrSearch:
                     suffix = ","
                 else:
                     suffix = ""
-                output = json.dumps(
-                    self._process_catalogue_result(result), indent=3
-                )
+                output = json.dumps(self._process_catalogue_result(result), indent=3)
                 prefix = "   "
             num += 1
             yield f"{prefix}{output}{suffix}\n"

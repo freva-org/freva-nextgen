@@ -292,7 +292,7 @@ def data_search(
         False,
         "-V",
         "--version",
-        help="Show verion an exit",
+        help="Show version an exit",
         callback=version_callback,
     ),
 ) -> None:
@@ -426,7 +426,7 @@ def intake_catalogue(
         False,
         "-V",
         "--version",
-        help="Show verion an exit",
+        help="Show version an exit",
         callback=version_callback,
     ),
 ) -> None:
@@ -539,7 +539,7 @@ def count_values(
         False,
         "-V",
         "--version",
-        help="Show verion an exit",
+        help="Show version an exit",
         callback=version_callback,
     ),
 ) -> None:

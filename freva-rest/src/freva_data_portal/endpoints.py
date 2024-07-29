@@ -59,7 +59,7 @@ async def read_redis_data(
     if task_status != 0:
         raise HTTPException(
             status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=lookup.get(task_status, "unkown"),
+            detail=lookup.get(task_status, "unknown"),
         )
     return p_data[subkey]
 
@@ -86,7 +86,7 @@ async def get_status(
         Query(
             alias="timeout",
             title="Cache timeout for getting results.",
-            description="Set a timout to wait for results.",
+            description="Set a timeout to wait for results.",
             ge=0,
             le=1500,
         ),
@@ -124,7 +124,7 @@ async def zemtadata(
         Query(
             alias="timeout",
             title="Cache timeout for getting results.",
-            description="Set a timout to wait for results.",
+            description="Set a timeout to wait for results.",
             ge=0,
             le=1500,
         ),
@@ -169,7 +169,7 @@ async def zgroup(
         Query(
             alias="timeout",
             title="Cache timeout for getting results.",
-            description="Set a timout to wait for results.",
+            description="Set a timeout to wait for results.",
             ge=0,
             le=1500,
         ),
@@ -215,7 +215,7 @@ async def zattrs(
         Query(
             alias="timeout",
             title="Cache timeout for getting results.",
-            description="Set a timout to wait for results.",
+            description="Set a timeout to wait for results.",
             ge=0,
             le=1500,
         ),
@@ -272,7 +272,7 @@ async def chunk_data(
         Query(
             alias="timeout",
             title="Cache timeout for getting results.",
-            description="Set a timout to wait for results.",
+            description="Set a timeout to wait for results.",
             ge=0,
             le=1500,
         ),

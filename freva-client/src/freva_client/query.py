@@ -84,7 +84,7 @@ class databrowser:
         the freva config file.
     stream_zarr: bool, default: False
         Create a zarr stream for all search results. When set to true the
-        files are served in zarr foramt and can be opened from anywhere.
+        files are served in zarr format and can be opened from anywhere.
     multiversion: bool, default: False
         Select all versions and not just the latest version (default).
     fail_on_error: bool, default: False
@@ -116,7 +116,7 @@ class databrowser:
         db = databrowser(experiment="cmorph", uniq_key="uri")
         print(db)
 
-    After having created the search object you can aquire differnt kinds of
+    After having created the search object you can acquire different kinds of
     information like the number of found objects:
 
     .. execute_code::
@@ -456,7 +456,7 @@ class databrowser:
         fail_on_error: bool, default: False
             Make the call fail if the connection to the databrowser could not
         **search_keys: str
-            The search contraints to be applied in the data search. If not given
+            The search constraints to be applied in the data search. If not given
             the whole dataset will be queried.
 
         Returns
@@ -515,7 +515,7 @@ class databrowser:
 
         You can retrieve all information that is associated with your current
         databrowser search. This can be useful for reverse searches for example
-        for retrieving metadata of object sotres or file/directory names.
+        for retrieving metadata of object stores or file/directory names.
 
         Example
         ~~~~~~~
@@ -566,7 +566,7 @@ class databrowser:
         flavour: str, default: freva
             The Data Reference Syntax (DRS) standard specifying the type of climate
             datasets to query.
-        time: str, defautl: ""
+        time: str, default: ""
             Special search facet to refine/subset search results by time.
             This can be a string representation of a time range or a single
             timestamp. The timestamp has to follow ISO-8601. Valid strings are
@@ -728,10 +728,10 @@ class databrowser:
             return {}
         data = result.json()
         if extended_search:
-            contraints = data["facets"].keys()
+            constraints = data["facets"].keys()
         else:
-            contraints = data["primary_facets"]
-        return {f: v for f, v in data["facets"].items() if f in contraints}
+            constraints = data["primary_facets"]
+        return {f: v for f, v in data["facets"].items() if f in constraints}
 
     def _get(
         self, url: str, **kwargs: Any

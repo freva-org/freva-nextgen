@@ -256,8 +256,8 @@ class ProcessQueue(DataLoadFactory):
         self.dev_mode = dev_mode
 
     def run_for_ever(self, channel: str) -> None:
-        """Start the listner deamon."""
-        data_logger.info("Starting data-loading deamon")
+        """Start the listener daemon."""
+        data_logger.info("Starting data-loading daemon")
         pubsub = self.cache.pubsub()
         pubsub.subscribe(channel)
         data_logger.info("Broker will listen for messages now")
@@ -277,7 +277,7 @@ class ProcessQueue(DataLoadFactory):
         self,
         body: bytes,
     ) -> None:
-        """Callback method to recieve rabbit mq messages."""
+        """Callback method to receive rabbit mq messages."""
         try:
             message = json.loads(body)
         except json.JSONDecodeError:

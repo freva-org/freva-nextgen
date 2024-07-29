@@ -106,7 +106,7 @@ def start(
         None,
         "--cert-dir",
         help=(
-            "Set the path to the directory contaning the tls cert and key files"
+            "Set the path to the directory containing the tls cert and key files"
             " that are used to establish a secure connection, if you set the"
             " it will be assumed that cert file is saved as client-cert.pem"
             " and the key file client-key.pem. This flag can be used as a"

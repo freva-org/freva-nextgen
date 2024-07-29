@@ -14,7 +14,7 @@ from .schema import Required, SearchFlavours, SolrSchema
 
 @app.get("/api/databrowser/overview", tags=["Data search"])
 async def overview() -> SearchFlavours:
-    """Get all available search flavours and thier attributes.
+    """Get all available search flavours and their attributes.
 
     This endpoint allows you to retrieve an overview of the different
     Data Reference Syntax (DRS) standards implemented in the Freva Databrowser
@@ -26,11 +26,11 @@ async def overview() -> SearchFlavours:
     for flavour in Translator.flavours:
         translator = Translator(flavour)
         if flavour in ("cordex",):
-            attributes[flavour] = list(translator.foreward_lookup.values())
+            attributes[flavour] = list(translator.forward_lookup.values())
         else:
             attributes[flavour] = [
                 f
-                for f in translator.foreward_lookup.values()
+                for f in translator.forward_lookup.values()
                 if f not in translator.cordex_keys
             ]
     return SearchFlavours(flavours=list(Translator.flavours), attributes=attributes)

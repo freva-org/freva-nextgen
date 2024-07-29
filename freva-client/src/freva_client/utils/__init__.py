@@ -17,7 +17,7 @@ def exception_handler(func: Callable[..., Any]) -> Callable[..., Any]:
 
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        """Wrapper function that handles the exeption."""
+        """Wrapper function that handles the exception."""
         try:
             return func(*args, **kwargs)
         except KeyboardInterrupt:

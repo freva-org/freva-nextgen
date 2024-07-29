@@ -24,7 +24,7 @@ def _main(
     redis_host: str = "redis://localhost:6379",
     dev: bool = False,
 ) -> None:
-    """Run the loader porcess."""
+    """Run the loader process."""
     data_logger.debug("Loading cluster config from %s", config_file)
     cache_config: RedisKw = json.loads(b64decode(config_file.read_bytes()))
     env = os.environ.copy()
@@ -74,7 +74,7 @@ def run_data_loader(argv: Optional[List[str]] = None) -> None:
     )
     redis_port = redis_port or "6379"
     parser = argparse.ArgumentParser(
-        prog="Data Loder",
+        prog="Data Loader",
         description=("Starts the data loading service."),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )

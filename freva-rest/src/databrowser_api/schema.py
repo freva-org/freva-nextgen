@@ -1,4 +1,4 @@
-"""Schema definitions for the FastAPI enpoints."""
+"""Schema definitions for the FastAPI endpoints."""
 
 from typing import Any, Dict, List, Union
 from urllib.parse import parse_qs

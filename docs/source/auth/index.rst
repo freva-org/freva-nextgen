@@ -413,7 +413,7 @@ sub command of the command line interface
    print(res.stdout.decode())
 
 You can create a token using your user name and password. For security reasons
-you can not pass your password as an arguemnt to the command line interface.
+you can not pass your password as an argument to the command line interface.
 This means that you can only create a new token with help of a valid refresh
 token in a non-interactive session. Such as a batch job.
 
