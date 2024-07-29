@@ -5,7 +5,6 @@ from copy import deepcopy
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from types import TracebackType
-from watchfiles import DefaultFilter
 
 import mock
 from freva_client import __version__
@@ -124,7 +123,6 @@ def test_rest_cli(mocker: MockerFixture) -> None:
                 log_level=20,
                 workers=None,
                 env_file=str(Path(temp_dir) / "foo.txt"),
-                reload_excludes=DefaultFilter.ignore_dirs,
             )
             result2 = runner.invoke(cli, ["--debug", "--no-dev"])
             assert result2.exit_code == 0
@@ -136,13 +134,10 @@ def test_rest_cli(mocker: MockerFixture) -> None:
                 log_level=10,
                 workers=8,
                 env_file=str(Path(temp_dir) / "foo.txt"),
-                reload_excludes=DefaultFilter.ignore_dirs,
             )
 
 
-def test_auth(
-    test_server: str, cli_runner: CliRunner, auth_instance: Auth
-) -> None:
+def test_auth(test_server: str, cli_runner: CliRunner, auth_instance: Auth) -> None:
     """Test authentication."""
     old_token = deepcopy(auth_instance._auth_token)
     try:

@@ -52,7 +52,6 @@ from typing import List, Optional, Tuple
 
 import typer
 import uvicorn
-from watchfiles import DefaultFilter
 
 from .config import ServerConfig, defaults
 from .logger import logger
@@ -187,7 +186,6 @@ def start(
             log_level=cfg.log_level,
             workers=workers[dev],
             env_file=temp_f.name,
-            reload_excludes=list(DefaultFilter.ignore_dirs),
         )
 
 
