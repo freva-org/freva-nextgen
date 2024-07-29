@@ -141,12 +141,8 @@ def start(
     defaults["API_CONFIG"] = (config_file or defaults["API_CONFIG"]).absolute()
     defaults["DEBUG"] = debug
     defaults["API_CACHE_EXP"] = int(os.environ.get("API_CACHE_EXP") or "3600")
-    defaults["REDIS_HOST"] = (
-        os.environ.get("REDIS_HOST") or "redis://localhost:6379"
-    )
-    defaults["API_URL"] = (
-        os.environ.get("API_URL") or f"http://localhost:{port}"
-    )
+    defaults["REDIS_HOST"] = os.environ.get("REDIS_HOST") or "redis://localhost:6379"
+    defaults["API_URL"] = os.environ.get("API_URL") or f"http://localhost:{port}"
     defaults["REDIS_SSL_CERTFILE"] = ssl_cert
     defaults["REDIS_SSL_KEYFILE"] = ssl_key
     if ssl_cert:
@@ -191,7 +187,7 @@ def start(
             log_level=cfg.log_level,
             workers=workers[dev],
             env_file=temp_f.name,
-            reload_excludes=DefaultFilter.ignore_dirs,
+            reload_excludes=list(DefaultFilter.ignore_dirs),
         )
 
 

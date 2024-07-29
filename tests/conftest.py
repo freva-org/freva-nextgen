@@ -14,7 +14,7 @@ from typing import Dict, Iterator
 import mock
 import pytest
 import uvicorn
-from data_portal_worker.cli import run_data_loader
+from data_portal_worker.cli import _main as run_data_loader
 from databrowser_api.mock import read_data
 from fastapi.testclient import TestClient
 from freva_client.auth import Auth
@@ -38,32 +38,27 @@ def find_free_port() -> int:
         return s.getsockname()[1]
 
 
+def get_data_loader_config() -> bytes:
+    """Create the config for the data-loader process."""
+    redis_host = os.getenv("REDIS_HOST")
+    return b64encode(
+        json.dumps(
+            {
+                "user": os.getenv("REDIS_USER"),
+                "passwd": os.getenv("REDIS_PASS"),
+                "host": redis_host,
+                "ssl_cert": Path(os.getenv("REDIS_SSL_CERTFILE")).read_text(),
+                "ssl_key": Path(os.getenv("REDIS_SSL_KEYFILE")).read_text(),
+            }
+        ).encode("utf-8")
+    )
+
+
 def run_loader_process(port: int) -> None:
     """Start the data loader process."""
-    redis_host = os.getenv("REDIS_HOST")
     with NamedTemporaryFile(suffix=".json") as temp_f:
-        Path(temp_f.name).write_bytes(
-            b64encode(
-                json.dumps(
-                    {
-                        "user": os.getenv("REDIS_USER"),
-                        "passwd": os.getenv("REDIS_PASS"),
-                        "host": redis_host,
-                        "ssl_cert": Path(os.getenv("REDIS_SSL_CERTFILE")).read_text(),
-                        "ssl_key": Path(os.getenv("REDIS_SSL_KEYFILE")).read_text(),
-                    }
-                ).encode("utf-8")
-            )
-        )
-        args = [
-            "-p",
-            str(port),
-            "-v",
-            "--dev",
-            "-c",
-            temp_f.name,
-        ]
-        run_data_loader(args)
+        Path(temp_f.name).write_bytes(get_data_loader_config())
+        run_data_loader(Path(temp_f.name), port=port, dev=True)
 
 
 async def flush_cache() -> None:
@@ -92,6 +87,12 @@ def _prep_env(**config: str) -> Dict[str, str]:
     return env
 
 
+@pytest.fixture(scope="session")
+def loader_config() -> Iterator[bytes]:
+    """Fixture to provide the data-loader config."""
+    yield get_data_loader_config()
+
+
 @pytest.fixture(scope="function")
 def auth_instance() -> Iterator[Auth]:
     """Fixture to provide a fresh Auth instance for each test."""
@@ -114,7 +115,9 @@ def valid_freva_config() -> Iterator[Path]:
         with TemporaryDirectory() as temp_dir:
             freva_config = Path(temp_dir) / "share" / "freva" / "freva.toml"
             freva_config.parent.mkdir(exist_ok=True, parents=True)
-            freva_config.write_text("[freva]\nhost = 'https://www.freva.com:80/api'")
+            freva_config.write_text(
+                "[freva]\nhost = 'https://www.freva.com:80/api'"
+            )
             yield Path(temp_dir)
 
 
@@ -154,7 +157,9 @@ def valid_eval_conf_file() -> Iterator[Path]:
             _prep_env(EVALUATION_SYSTEM_CONFIG_FILE=str(eval_file)),
             clear=True,
         ):
-            with mock.patch("sysconfig.get_path", lambda x, y="foo": str(temp_dir)):
+            with mock.patch(
+                "sysconfig.get_path", lambda x, y="foo": str(temp_dir)
+            ):
                 yield eval_file
 
 
@@ -164,14 +169,18 @@ def invalid_eval_conf_file() -> Iterator[Path]:
     with TemporaryDirectory() as temp_dir:
         eval_file = Path(temp_dir) / "eval.conf"
         eval_file.write_text(
-            "[foo]\n" "solr.host = http://localhost\n" "databrowser.port = 8080"
+            "[foo]\n"
+            "solr.host = http://localhost\n"
+            "databrowser.port = 8080"
         )
         with mock.patch.dict(
             os.environ,
             _prep_env(EVALUATION_SYSTEM_CONFIG_FILE=str(eval_file)),
             clear=True,
         ):
-            with mock.patch("sysconfig.get_path", lambda x, y="foo": str(temp_dir)):
+            with mock.patch(
+                "sysconfig.get_path", lambda x, y="foo": str(temp_dir)
+            ):
                 yield eval_file
 
 
@@ -187,7 +196,9 @@ def test_server() -> Iterator[str]:
         thread1.daemon = True
         thread1.start()
         time.sleep(1)
-        thread2 = threading.Thread(target=run_loader_process, args=(find_free_port(),))
+        thread2 = threading.Thread(
+            target=run_loader_process, args=(find_free_port(),)
+        )
         thread2.daemon = True
         thread2.start()
         time.sleep(5)
@@ -222,7 +233,9 @@ def client_no_mongo(cfg: ServerConfig) -> Iterator[TestClient]:
         cfg = ServerConfig(defaults["API_CONFIG"], debug=True)
         for core in cfg.solr_cores:
             asyncio.run(read_data(core, cfg.solr_host, cfg.solr_port))
-        with mock.patch("freva_rest.rest.server_config.mongo_collection", None):
+        with mock.patch(
+            "freva_rest.rest.server_config.mongo_collection", None
+        ):
             with TestClient(app) as test_client:
                 yield test_client
 

@@ -478,6 +478,7 @@ class SolrSearch:
         """
         translator = Translator(flavour, translate)
         for key in query:
+            key = key.lower().replace("_not_", "")
             if (
                 key not in translator.valid_facets
                 and key not in ("time_select",) + cls.uniq_keys
@@ -756,6 +757,31 @@ class SolrSearch:
             search_status, search = res
         return search_status, search.get("response", {}).get("numFound", 0)
 
+    def _join_facet_queries(
+        self, key: str, facets: List[str]
+    ) -> Tuple[str, str]:
+        """Create lucene search contain and NOT contain search queries"""
+
+        negative, positive = [], []
+        for search_value in facets:
+            if key not in self.uniq_keys:
+                search_value = search_value.lower()
+            if search_value.lower().startswith("not "):
+                "len('not ') = 4"
+                negative.append(search_value[4:])
+            elif search_value[0] in ("!", "-"):
+                negative.append(search_value[1:])
+            elif "_not_" in key:
+                negative.append(search_value)
+            else:
+                positive.append(search_value)
+        search_value_pos = " OR ".join(positive)
+        search_value_neg = " OR ".join(negative)
+        for char in self.escape_chars:
+            search_value_pos = search_value_pos.replace(char, "\\" + char)
+            search_value_neg = search_value_neg.replace(char, "\\" + char)
+        return search_value_pos, search_value_neg
+
     def _get_url(self) -> tuple[str, Dict[str, Any]]:
         """Get the url for the solr query."""
         core = {
@@ -765,13 +791,12 @@ class SolrSearch:
         url = f"{self._config.get_core_url(core)}/select/"
         query = []
         for key, value in self.facets.items():
-            if key in self.uniq_keys:
-                search_value = " OR ".join(map(str, value))
-            else:
-                search_value = " OR ".join(map(str.lower, value))
-            for char in self.escape_chars:
-                search_value = search_value.replace(char, "\\" + char)
-            query.append(f"{key.lower()}:({search_value})")
+            query_pos, query_neg = self._join_facet_queries(key, value)
+            key = key.lower().replace("_not_", "")
+            if query_pos:
+                query.append(f"{key}:({query_pos})")
+            if query_neg:
+                query.append(f"-{key}:({query_neg})")
         return url, {
             "fq": self.time + ["", " AND ".join(query) or "*:*"],
             "q": "*:*",
