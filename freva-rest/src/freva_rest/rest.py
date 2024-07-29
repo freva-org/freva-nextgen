@@ -28,7 +28,7 @@ from fastapi import FastAPI
 from freva_rest import __version__
 
 from .config import ServerConfig, defaults
-from .logger import logger
+from .logger import logger, reset_loggers
 
 metadata_tags = [
     {
@@ -59,6 +59,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         except Exception as error:  # pragma: no cover
             logger.warning("Could not shutdown mongodb connection: %s", error)
 
+
+reset_loggers()
 
 app = FastAPI(
     debug=bool(int(os.environ.get("DEBUG", "0"))),

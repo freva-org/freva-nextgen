@@ -8,6 +8,11 @@ from typing import Optional
 
 import appdirs
 
+try:
+    from freva_rest.logger import logger  # noqa: F401
+except ImportError:
+    pass
+
 BASE_NAME = f"data-loader @ {gethostname()}"
 logging.basicConfig(
     level="ERROR",
