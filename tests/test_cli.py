@@ -3,8 +3,9 @@
 import json
 from copy import deepcopy
 from pathlib import Path
-from tempfile import TemporaryDirectory
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from types import TracebackType
+from watchfiles import DefaultFilter
 
 import mock
 from freva_client import __version__
@@ -52,8 +53,62 @@ def test_get_cert_file() -> None:
     assert out2.startswith("baz")
 
 
-def test_cli(mocker: MockerFixture) -> None:
-    """Test the command line interface."""
+def test_data_loader_cli(mocker: MockerFixture, loader_config: bytes) -> None:
+    """Test the data-loader command line interface."""
+    mock_run = mocker.patch("data_portal_worker.cli._main")
+    mock_reload = mocker.patch("data_portal_worker.cli.run_process")
+    with NamedTemporaryFile(suffix=".json") as temp_f:
+        Path(temp_f.name).write_bytes(loader_config)
+        from data_portal_worker.cli import run_data_loader
+
+        run_data_loader(
+            [
+                "-c",
+                temp_f.name,
+                "-r",
+                "redis://example.com:1234",
+                "-p",
+                "1234",
+                "-e",
+                "20",
+                "-v",
+                "--dev",
+            ]
+        )
+        mock_reload.assert_called_once_with(
+            Path.cwd(),
+            target=mock_run,
+            args=(Path(temp_f.name),),
+            kwargs=dict(
+                port=1234,
+                exp=20,
+                redis_host="redis://example.com:1234",
+                dev=True,
+            ),
+        )
+        run_data_loader(
+            [
+                "-c",
+                temp_f.name,
+                "-r",
+                "redis://example.com:1234",
+                "-p",
+                "4321",
+                "-e",
+                "10",
+            ]
+        )
+        mock_run.assert_called_once_with(
+            Path(temp_f.name),
+            port=4321,
+            exp=10,
+            redis_host="redis://example.com:1234",
+            dev=False,
+        )
+
+
+def test_rest_cli(mocker: MockerFixture) -> None:
+    """Test the rest api command line interface."""
     mock_run = mocker.patch("uvicorn.run")
     with TemporaryDirectory() as temp_dir:
         MockTempfile.temp_dir = temp_dir
@@ -69,6 +124,7 @@ def test_cli(mocker: MockerFixture) -> None:
                 log_level=20,
                 workers=None,
                 env_file=str(Path(temp_dir) / "foo.txt"),
+                reload_excludes=DefaultFilter.ignore_dirs,
             )
             result2 = runner.invoke(cli, ["--debug", "--no-dev"])
             assert result2.exit_code == 0
@@ -80,14 +136,16 @@ def test_cli(mocker: MockerFixture) -> None:
                 log_level=10,
                 workers=8,
                 env_file=str(Path(temp_dir) / "foo.txt"),
+                reload_excludes=DefaultFilter.ignore_dirs,
             )
 
 
-def test_auth(test_server: str, cli_runner: CliRunner, auth_instance: Auth) -> None:
+def test_auth(
+    test_server: str, cli_runner: CliRunner, auth_instance: Auth
+) -> None:
     """Test authentication."""
     old_token = deepcopy(auth_instance._auth_token)
     try:
-
         res = cli_runner.invoke(
             cli_app, ["auth", "--host", test_server, "-u", "janedoe"]
         )
