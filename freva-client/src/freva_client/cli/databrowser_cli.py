@@ -20,8 +20,9 @@ from .cli_utils import parse_cli_args, version_callback
 def _auth(url: str, token: Optional[str]) -> None:
     if token:
         auth = Auth()
-        exp = auth.token_expiration_time(url, token)
-        auth.set_token(access_token=token, expires=exp)
+        auth.set_token(
+            access_token=token, expires=auth.token_expiration_time.timestamp()
+        )
     else:
         raise ValueError("`--access-token` is required for authentication.")
 
@@ -162,7 +163,9 @@ def metadata_search(
     parse_json: bool = typer.Option(
         False, "-j", "--json", help="Parse output in json format."
     ),
-    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
+    verbose: int = typer.Option(
+        0, "-v", help="Increase verbosity", count=True
+    ),
     version: Optional[bool] = typer.Option(
         False,
         "-V",
@@ -184,7 +187,9 @@ def metadata_search(
     result = databrowser.metadata_search(
         *(facets or []),
         time=time or "",
-        time_select=cast(Literal["file", "flexible", "strict"], time_select.value),
+        time_select=cast(
+            Literal["file", "flexible", "strict"], time_select.value
+        ),
         flavour=cast(
             Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
             flavour.value,
@@ -248,7 +253,9 @@ def data_search(
         "--time-select",
         help=TimeSelect.get_help(),
     ),
-    zarr: bool = typer.Option(False, "--zarr", help="Create zarr stream files."),
+    zarr: bool = typer.Option(
+        False, "--zarr", help="Create zarr stream files."
+    ),
     access_token: Optional[str] = typer.Option(
         None,
         "--access-token",
@@ -282,7 +289,9 @@ def data_search(
             "the hostname is read from a config file"
         ),
     ),
-    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
+    verbose: int = typer.Option(
+        0, "-v", help="Increase verbosity", count=True
+    ),
     multiversion: bool = typer.Option(
         False,
         "--multi-version",
@@ -416,7 +425,9 @@ def intake_catalogue(
             "the hostname is read from a config file"
         ),
     ),
-    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
+    verbose: int = typer.Option(
+        0, "-v", help="Increase verbosity", count=True
+    ),
     multiversion: bool = typer.Option(
         False,
         "--multi-version",
@@ -458,7 +469,9 @@ def intake_catalogue(
             print(Path(temp_f.name).read_text())
 
 
-@databrowser_app.command(name="data-count", help="Count the databrowser search results")
+@databrowser_app.command(
+    name="data-count", help="Count the databrowser search results"
+)
 @exception_handler
 def count_values(
     search_keys: Optional[List[str]] = typer.Argument(
@@ -534,7 +547,9 @@ def count_values(
     parse_json: bool = typer.Option(
         False, "-j", "--json", help="Parse output in json format."
     ),
-    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
+    verbose: int = typer.Option(
+        0, "-v", help="Increase verbosity", count=True
+    ),
     version: Optional[bool] = typer.Option(
         False,
         "-V",
@@ -561,7 +576,9 @@ def count_values(
         result = databrowser.count_values(
             *facets,
             time=time or "",
-            time_select=cast(Literal["file", "flexible", "strict"], time_select),
+            time_select=cast(
+                Literal["file", "flexible", "strict"], time_select
+            ),
             flavour=cast(
                 Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
                 flavour.value,
@@ -577,7 +594,9 @@ def count_values(
             databrowser(
                 *facets,
                 time=time or "",
-                time_select=cast(Literal["file", "flexible", "strict"], time_select),
+                time_select=cast(
+                    Literal["file", "flexible", "strict"], time_select
+                ),
                 flavour=cast(
                     Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
                     flavour.value,

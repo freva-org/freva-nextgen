@@ -8,7 +8,7 @@ import cloudpickle
 from fastapi import Depends, Path, Query, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse, Response
-from freva_rest.auth import TokenPayload, get_current_user
+from freva_rest.auth import TokenPayload, auth
 from freva_rest.rest import app
 from freva_rest.utils import create_redis_connection
 from zarr.storage import array_meta_key, attrs_key, group_meta_key
@@ -91,7 +91,7 @@ async def get_status(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Depends(get_current_user),
+    current_user: TokenPayload = Depends(auth.required),
 ) -> JSONResponse:
     """Get the status of a loading process."""
     meta: Dict[str, Any] = await read_redis_data(
@@ -129,7 +129,7 @@ async def zemtadata(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Depends(get_current_user),
+    current_user: TokenPayload = Depends(auth.required),
 ) -> JSONResponse:
     """Consolidate zarr metadata
 
@@ -174,7 +174,7 @@ async def zgroup(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Depends(get_current_user),
+    current_user: TokenPayload = Depends(auth.required),
 ) -> JSONResponse:
     """Zarr group data.
 
@@ -220,7 +220,7 @@ async def zattrs(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Depends(get_current_user),
+    current_user: TokenPayload = Depends(auth.required),
 ) -> JSONResponse:
     """Get zarr Attributes.
 
@@ -277,7 +277,7 @@ async def chunk_data(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Depends(get_current_user),
+    current_user: TokenPayload = Depends(auth.required),
 ) -> Response:
     """Get a zarr array chunk.
 

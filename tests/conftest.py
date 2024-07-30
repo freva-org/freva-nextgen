@@ -256,6 +256,10 @@ def auth(client) -> Iterator[Dict[str, str]]:
     """Create a valid acccess token."""
     res = client.post(
         "/api/auth/v2/token",
-        data={"username": "janedoe", "password": "janedoe123"},
+        data={
+            "username": "janedoe",
+            "password": "janedoe123",
+            "grant_type": "password",
+        },
     )
     yield res.json()

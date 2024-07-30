@@ -29,14 +29,3 @@ def test_invalid_config(caplog: LogCaptureFixture) -> None:
     records: List[logging.LogRecord] = caplog.records
     assert any([record.levelname == "CRITICAL" for record in records])
     assert any(["Failed to load" in record.message for record in records])
-
-
-def test_keycloak_url() -> None:
-    """Test if the correct keycload url."""
-    env = os.environ.copy()
-    env["KEYCLOAK_HOST"] = "localhost"
-    with mock.patch.dict(os.environ, env, clear=True):
-        assert ServerConfig.get_keycloak_url().startswith("https://")
-    env["KEYCLOAK_HOST"] = "http://localhost"
-    with mock.patch.dict(os.environ, env, clear=True):
-        assert ServerConfig.get_keycloak_url().startswith("http://")

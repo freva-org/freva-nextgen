@@ -103,12 +103,11 @@ The following environment variables can be set:
                           the redis connection.
 - ``REDIS_SSL_KEYFILE``: Path to the TSL key file used to encrypt the redis
                          connection.
-- ``KEYCLOAK_HOST``: Host name where the keycloak instance is running.
-- ``KEYCLOAK_REALM``: Name of the keycloak realm, defaults to freva.
-- ``KEYCLOAK_CLIENT_ID``: Name of the client (app) that is used to create
+- ``OIDC_URL``: Discovery of the open connect id service.
+- ``OIDC_CLIENT_ID``: Name of the client (app) that is used to create
                           the access tokens, defaults to freva
-- ``KEYCLOAK_CLIENT_SECRET``: You can set a client secret, if you have
-                              configured your keycloak to use a client secret.
+- ``OIDC_CLIENT_SECRET``: You can set a client secret, if you have
+                           configured your oidc instance to use a client secret.
 
 > ``📝`` You can override the path to the default config file using the ``API_CONFIG``
          environment variable. The default location of this config file is

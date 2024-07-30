@@ -19,10 +19,14 @@ def test_auth(client: TestClient) -> None:
         "/api/auth/v2/token",
         data={"username": "foo", "password": "bar"},
     )
-    assert res1.status_code == 401
+    assert res1.status_code == 404
     res2 = client.post(
         "/api/auth/v2/token",
-        data={"username": "janedoe", "password": "janedoe123"},
+        data={
+            "username": "janedoe",
+            "password": "janedoe123",
+            "grant_type": "password",
+        },
     )
     assert res2.status_code == 200
 
@@ -177,6 +181,25 @@ def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
         timeout=3,
     )
     assert data.status_code >= 500
+    for _ in range(2):
+        res3 = requests.get(
+            f"{test_server}/api/databrowser/load/freva/",
+            params={"file": "*.json"},
+            headers={"Authorization": f"Bearer {token}"},
+            stream=True,
+            timeout=3,
+        )
+        assert res3.status_code == 201
+        files = list(res3.iter_lines(decode_unicode=True))
+        assert files
+        time.sleep(4)
+        res = requests.get(
+            f"{files[0]}/status",
+            params={"timeout": 3},
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=3,
+        )
+        assert res.status_code >= 500
 
 
 def test_no_broker(test_server: str, auth: Dict[str, str]) -> None:

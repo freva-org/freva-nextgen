@@ -37,11 +37,17 @@ included in the authorization header for secured endpoints.
     :type username: str
     :form password: The password for the login
     :type password: str
-    :form client-id: The unique identifier for your application used to
+    :form refresh_token: The refresh token that is used to create a new token
+                         the refresh token can be used instead of authorizing
+                         via user creentials.
+    :type refresh_token: str
+    :form client_id: The unique identifier for your application used to
                      request an OAuth2 access token from the authentication
                      server, this form parameter is optional.
-    :type client-id: str
-
+    :type client_id: str
+    :form client_secret: An optional client secret used for authentication
+                         this parameters is optional an in most cases not neeede
+    :type client_secret: str
     :statuscode 200: no error
     :statuscode 401: unauthorized
     :resheader Content-Type: ``application/json``: access and refresh token.
@@ -73,7 +79,9 @@ included in the authorization header for secured endpoints.
             "token_type": "Bearer",
             "expires_in": 300,
             "refresh_token": "eyJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia2lkIi.."
-            "refresh_expires_in": 1800
+            "refresh_expires_in": 1800,
+            "scope": "email",
+            "not-before-policy": 0
         }
 
     Code examples
@@ -144,129 +152,6 @@ included in the authorization header for secured endpoints.
                     curl_easy_setopt(curl, CURLOPT_URL, "https://www.freva.dkrz.de/api/auth/v2/token");
                     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
                     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "username=janedoe&password=janedoe123");
-
-                    res = curl_easy_perform(curl);
-                    curl_easy_cleanup(curl);
-                }
-                curl_global_cleanup();
-                return 0;
-            }
-
----
-
-
-.. http:post:: /api/auth/v2/refresh
-
-    Renew the access token with help of a refresh token.
-
-    :form refresh-token: The refresh token used to refresh the access token
-    :type refresh-token: str
-    :form client-id: The unique identifier for your application used to
-                     request an OAuth2 access token from the authentication
-                     server. This form parameter is optional
-    :type client-id: str
-
-    :statuscode 200: no error
-    :statuscode 401: unauthorized
-    :resheader Content-Type: ``application/json``: access and refresh token.
-
-
-    Example Request
-    ~~~~~~~~~~~~~~~
-
-    .. sourcecode:: http
-
-        POST /api/auth/v2/refresh HTTP/1.1
-        host: www.freva.dkrz.de
-        Content-Type: application/json
-
-        {
-            "refresh_token": "your_refresh_token"
-        }
-
-
-    Example Request
-    ~~~~~~~~~~~~~~~
-
-    .. sourcecode:: http
-
-        HTTP/1.1 200 OK
-        Content-Type: application/json
-
-        {
-            "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6.."
-            "token_type": "Bearer",
-            "expires_in": 300,
-            "refresh_token": "eyJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia2lkIi.."
-            "refresh_expires_in": 1800
-        }
-
-    Code examples
-    ~~~~~~~~~~~~~
-    Below you can find example usages of this request in different scripting and
-    programming languages
-
-    .. tabs::
-
-        .. code-tab:: bash
-            :caption: Shell
-
-            curl -X POST https://www.freva.dkrz.de/api/auth/v2/refresh \
-             -d "refresh-token=eyJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia..."
-
-        .. code-tab:: python
-            :caption: Python
-
-            import requests
-            response = requests.post(
-              "https://www.freva.dkrz.de/api/auth/v2/refresh",
-              data={"refresh-token": "yJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia..."}
-            )
-            token_data = response.json()
-
-        .. code-tab:: r
-            :caption: gnuR
-
-            library(httr)
-
-            response <- POST(
-               "https://www.freva.dkrz.de/api/auth/v2/refresh",
-               body = list(refresh-token = "yJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia."),
-               encode = "form"
-            )
-            token_data <- content(response, "parsed")
-
-        .. code-tab:: julia
-            :caption: Julia
-
-            using HTTP
-            using JSON
-
-            response = HTTP.POST(
-              "https://www.freva.dkrz.de/api/auth/v2/refresh",
-              body = Dict("refresh-token" => "yJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia.")
-            )
-            token_data = JSON.parse(String(response.body))
-
-        .. code-tab:: c
-            :caption: C/C++
-
-            #include <stdio.h>
-            #include <curl/curl.h>
-
-            int main() {
-                CURL *curl;
-                CURLcode res;
-
-                curl_global_init(CURL_GLOBAL_DEFAULT);
-                curl = curl_easy_init();
-                if(curl) {
-                    struct curl_slist *headers = NULL;
-                    headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
-
-                    curl_easy_setopt(curl, CURLOPT_URL, "https://www.freva.dkrz.de/api/auth/v2/refresh");
-                    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-                    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "refresh-token=yJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia...");
 
                     res = curl_easy_perform(curl);
                     curl_easy_cleanup(curl);

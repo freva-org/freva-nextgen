@@ -4,7 +4,7 @@ from datetime import datetime
 from getpass import getpass, getuser
 from typing import Optional, TypedDict
 
-import requests
+from authlib.integrations.requests_client import OAuth2Session
 
 from .utils import logger
 from .utils.databrowser_utils import Config
@@ -32,31 +32,23 @@ class Auth:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def token_expiration_time(self, url: str, token: str) -> float:
-        """Get the expiration time of an access token."""
-        try:
-            res = requests.get(
-                f"{url}/status",
-                headers={"Authorization": f"Bearer {token}"},
-                timeout=5,
-            )
-            res.raise_for_status()
-            exp: float = res.json()["exp"]
-            return exp
-        except requests.HTTPError as error:
-            logger.error("Error checking token expiration: %s", error)
-            return 0.0
+    def __init__(self) -> None:
+        self._auth_cls = OAuth2Session()
 
-    def _token_is_expired(self, url: str, token: str) -> bool:
-        """Check if the token has already expired."""
-        exp = datetime.fromtimestamp(self.token_expiration_time(url, token))
-        return datetime.now() > exp
+    @property
+    def token_expiration_time(self) -> datetime:
+        """Get the expiration time of an access token."""
+        if self._auth_token is None:
+            exp = 0.0
+        else:
+            exp = self._auth_token["expires"]
+        return datetime.fromtimestamp(exp)
 
     def set_token(
         self,
         access_token: str,
         refresh_token: Optional[str] = None,
-        expires_in: int = 0,
+        expires_in: int = 10,
         refresh_expires_in: int = 10,
         expires: Optional[float] = None,
         refresh_expires: Optional[float] = None,
@@ -78,26 +70,20 @@ class Auth:
         self, url: str, refresh_token: str, username: Optional[str] = None
     ) -> Token:
         """Refresh the access_token with a refresh token."""
+        auth = self._auth_cls.refresh_token(f"{url}/token", refresh_token or " ")
         try:
-            res = requests.post(
-                f"{url}/refresh",
-                data={"refresh-token": refresh_token},
-                timeout=5,
+            return self.set_token(
+                access_token=auth["access_token"],
+                token_type=auth["token_type"],
+                expires_in=auth["expires_in"],
+                refresh_token=auth["refresh_token"],
+                refresh_expires_in=auth["refresh_expires_in"],
             )
-            res.raise_for_status()
-        except requests.RequestException as error:
-            logger.warning("Failed to refresh token: %s", error)
+        except KeyError:
+            logger.warning("Failed to refresh token: %s", auth.get("detail", ""))
             if username:
                 return self._login_with_password(url, username)
             raise ValueError("Could not use refresh token") from None
-        auth = res.json()
-        return self.set_token(
-            access_token=auth["access_token"],
-            token_type=auth["token_type"],
-            expires_in=auth["expires_in"],
-            refresh_token=auth["refresh_token"],
-            refresh_expires_in=auth["refresh_expires_in"],
-        )
 
     def check_authentication(self, auth_url: Optional[str] = None) -> Token:
         """Check the status of the authentication.
@@ -118,27 +104,20 @@ class Auth:
     def _login_with_password(self, auth_url: str, username: str) -> Token:
         """Create a new token."""
         pw_msg = "Give password for server authentication: "
-        try:
-            res = requests.post(
-                f"{auth_url}/token",
-                data={
-                    "username": username,
-                    "password": getpass(pw_msg),
-                },
-                timeout=5,
-            )
-            res.raise_for_status()
-        except requests.HTTPError as error:
-            logger.error("Failed to authenticate: %s", error)
-            raise ValueError("Token creation failed") from error
-        auth = res.json()
-        return self.set_token(
-            access_token=auth["access_token"],
-            token_type=auth["token_type"],
-            expires_in=auth["expires_in"],
-            refresh_token=auth["refresh_token"],
-            refresh_expires_in=auth["refresh_expires_in"],
+        auth = self._auth_cls.fetch_token(
+            f"{auth_url}/token", username=username, password=getpass(pw_msg)
         )
+        try:
+            return self.set_token(
+                access_token=auth["access_token"],
+                token_type=auth["token_type"],
+                expires_in=auth["expires_in"],
+                refresh_token=auth["refresh_token"],
+                refresh_expires_in=auth["refresh_expires_in"],
+            )
+        except KeyError:
+            logger.error("Failed to authenticate: %s", auth.get("detail", ""))
+            raise ValueError("Token creation failed") from None
 
     def authenticate(
         self,
@@ -162,12 +141,8 @@ class Auth:
         username = username or getuser()
         if self._auth_token is None or force:
             return self._login_with_password(cfg.auth_url, username)
-        if self._token_is_expired(
-            cfg.auth_url, self._auth_token["access_token"]
-        ):
-            self._refresh(
-                cfg.auth_url, self._auth_token["refresh_token"], username
-            )
+        if self.token_expiration_time < datetime.now():
+            self._refresh(cfg.auth_url, self._auth_token["refresh_token"], username)
         return self._auth_token
 
 

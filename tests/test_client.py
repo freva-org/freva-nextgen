@@ -5,6 +5,7 @@ import os
 from typing import Dict
 
 import mock
+import requests
 from fastapi.testclient import TestClient
 from freva_rest.config import ServerConfig
 from pymongo import MongoClient
@@ -311,3 +312,26 @@ def tests_mongo_parameter_insert(
         len([k for k in stats[0]["query"].values() if not isinstance(k, str)])
         == 0
     )
+
+
+def test_token_status(client: TestClient, auth: Dict[str, str]) -> None:
+    """Check the token status methods."""
+    res1 = client.get(
+        "api/auth/v2/status",
+        headers={"Authorization": f"Bearer {auth['access_token']}"},
+    )
+    assert res1.status_code == 200
+    assert "exp" in res1.json()
+    res2 = client.get(
+        "api/auth/v2/status",
+        headers={"Authorization": f"Bearer foo"},
+    )
+    assert res2.status_code != 200
+
+
+def test_get_overview(test_server: str) -> None:
+    """Test the open id connect discovery endpoint."""
+    res = requests.get(
+        f"{test_server}/api/auth/v2/.well-known/openid-configuration"
+    )
+    assert res.status_code == 200
