@@ -1,0 +1,69 @@
+[build-system]
+requires = ["setuptools>=61.0", "appdirs"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "freva-rest"
+description = "RestAPI the free evaluation system, freva"
+authors = [{name = "DKRZ, Clint", email = "freva@dkrz.de"}]
+readme = "README.md"
+license = {file = "LICENSE"}
+classifiers = [
+               "Development Status :: 3 - Alpha",
+               "Environment :: Console",
+               "Intended Audience :: Developers",
+               "Intended Audience :: Science/Research",
+               "License :: OSI Approved :: BSD License",
+               "Operating System :: POSIX :: Linux",
+               "Programming Language :: Python :: 3",
+]
+dynamic = ["version"]
+requires-python = ">=3.9"
+dependencies = [
+"aiohttp",
+"email-validator",
+"fastapi",
+"dask",
+"pyjwt",
+"typer",
+"uvicorn",
+"python-dotenv",
+"python-dateutil",
+"python-multipart",
+"tomli",
+"rich",
+"motor",
+"requests",
+"redis",
+"pika",
+"paramiko",
+"watchfiles",
+"uuid",
+"typing_extensions",
+"zarr",
+]
+[project.scripts]
+freva-rest-server = "freva_rest.cli:cli"
+[project.urls]
+Documentation = "https://freva-clint.github.io/freva-nextgen"
+Issues = "https://github.com/FREVA-CLINT/freva-nextgen/issues"
+Source = "https://github.com/FREVA-CLINT/freva-nextgen/"
+
+[project.optional-dependencies]
+dev = ["tox", "cryptography", "intake-esm"]
+tests = ["xarray",
+         "intake-esm",
+         "pytest",
+         "pytest-env",
+         "httpx",
+         "mock",
+         "pytest-mock",
+         "pytest-cov",
+         ]
+
+[tool.setuptools.package-data]
+freva_rest = ["*.toml"]
+databrowser_api = ["mock/*.json"]
+[tool.distutils.bdist_wheel]
+universal = true
+[tool.setuptools.dynamic]
+version = {attr = "freva_rest.__version__"}

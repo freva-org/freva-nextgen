@@ -6,7 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+
 # Distribution / packaging
+freva-client/LICENSE
 .Python
 build/
 develop-eggs/
@@ -131,3 +133,6 @@ dmypy.json
 
 # Other
 dev-env/mongodb
+dev-env/certs
+*keycloakdb.lock.db
+*keycloakdb.*

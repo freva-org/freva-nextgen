@@ -6,32 +6,69 @@ permissions:
 on: [push, pull_request, workflow_call]
 
 jobs:
-  ci:
+  lint-and-docs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Set up Python
-        uses: actions/setup-python@v2
+      - name: Set up Python "3.X"
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.X"
+      - name: Install dependencies
+        run: |
+          python3 -m pip install -e ./freva-rest[dev] -e ./freva-data-portal-worker[full]
+      - name: Generate self signed keys
+        run: |
+          python3 run_server.py --gen-certs
       - name: Set up services
         run: |
           docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
+      - name: Waiting for keycloak
+        run: |
+          python run_server.py -w
+      - name: Starting the local server
+        run: |
+          python run_server.py -c api_config.toml --debug --dev -p 7777
+      - name: Linting, type checking and docs with tox
+        run: tox run-parallel --parallel-no-spinner
+
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 5
+      matrix:
+        python-version: [3.9, "3.10", "3.11", "3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{matrix.python-version}}
       - name: Install dependencies
         run: |
-          python3 -m pip install tox
-      - name: Run all tests with tox
-        run: tox run-parallel --parallel-no-spinner
+          python3 -m pip install -e ./freva-rest[dev] -e ./freva-data-portal-worker[full]
+      - name: Generate self signed keys
+        run: |
+          python3 run_server.py --gen-certs
+      - name: Set up services
+        run: |
+          docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
+      - name: Waiting for keycloak
+        run: |
+          python run_server.py -w
+      - name: Run tests
+        run: tox -e test
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
           verbose: true
-          flags: unittests
 
   build-docker-image:
     runs-on: ubuntu-latest
@@ -47,6 +84,10 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 
+      - name: Generate self signed keys
+        run: |
+          python3 run_server.py --gen-certs
+
       - name: Set up services
         run: |
           docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
@@ -60,7 +101,11 @@ jobs:
           platforms: linux/amd64
           push: false
           load: true
-          tags: databrowser:latest
+          tags: freva-rest:latest
+
+      - name: Waiting for keycloak
+        run: |
+          python3 run_server.py -w
 
       - name: Check databrowser image
         run: python3 dev-env/check-container.py
@@ -69,7 +114,7 @@ jobs:
   dependabot:
     name: Merge PR by dependabot
     runs-on: ubuntu-latest
-    needs: [ci, build-docker-image]
+    needs: [tests, lint-and-docs, build-docker-image]
     if: github.event.pull_request.user.login == 'dependabot[bot]'
     steps:
       - name: Dependabot metadata
