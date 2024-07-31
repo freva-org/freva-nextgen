@@ -88,10 +88,10 @@ jobs:
           TAG=${{ steps.repository.outputs.tag }}
           if [[ "$TAG" == *"-dev"* || "$TAG" == *"-beta"* || "$TAG" == *"-alpha"* ]]; then
             echo "This is a pre-release tag."
-            echo "IS_PRERELEASE=true" >> $GITHUB_ENV
+            echo "LATEST_TAG=${{ steps.repository.outputs.tag }}" >> $GITHUB_ENV
           else
             echo "This is not a pre-release tag."
-            echo "IS_PRERELEASE=false" >> $GITHUB_ENV
+            echo "LATEST_TAG=latest" >> $GITHUB_ENV
           fi
 
       -
@@ -119,7 +119,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/freva-clint/freva-rest-api:${{ steps.repository.outputs.tag }}
-            ${{ if eq(env.IS_PRERELEASE, 'false') }}ghcr.io/freva-clint/freva-rest-api:latest
+            ghcr.io/freva-clint/freva-rest-api:${{ env.LATEST_TAG }}
   pypi:
     name: Create Pip package
     permissions:
