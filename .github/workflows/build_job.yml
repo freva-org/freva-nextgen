@@ -80,6 +80,20 @@ jobs:
           echo "repo=$(echo ${{ github.repository }}|tr 'A-Z' 'a-z')" >> $GITHUB_OUTPUT
           echo "tag=$(python freva-rest/src/freva_rest/__init__.py)" >> $GITHUB_OUTPUT
 
+
+      -
+        name: Check if tag is a pre-release
+        id: check-prerelease
+        run: |
+          TAG=${{ steps.repository.outputs.tag }}
+          if [[ "$TAG" == *"-dev"* || "$TAG" == *"-beta"* || "$TAG" == *"-alpha"* ]]; then
+            echo "This is a pre-release tag."
+            echo "IS_PRERELEASE=true" >> $GITHUB_ENV
+          else
+            echo "This is not a pre-release tag."
+            echo "IS_PRERELEASE=false" >> $GITHUB_ENV
+          fi
+
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -105,7 +119,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/freva-clint/freva-rest-api:${{ steps.repository.outputs.tag }}
-            ghcr.io/freva-clint/freva-rest-api:latest
+            ${{ if eq(env.IS_PRERELEASE, 'false') }}ghcr.io/freva-clint/freva-rest-api:latest
   pypi:
     name: Create Pip package
     permissions:
