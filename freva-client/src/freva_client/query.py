@@ -4,12 +4,27 @@ import sys
 from collections import defaultdict
 from fnmatch import fnmatch
 from functools import cached_property
-from typing import Dict, Iterator, List, Literal, Optional, Tuple, Union, cast
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+from typing import (
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
+import intake
+import intake_esm
 import requests
 import yaml
 from rich import print as pprint
 
+from .auth import Auth
 from .utils import logger
 from .utils.databrowser_utils import Config
 
@@ -67,6 +82,9 @@ class databrowser:
         url where the freva web site can be found. Such as www.freva.dkrz.de.
         By default no host name is given and the host name will be taken from
         the freva config file.
+    stream_zarr: bool, default: False
+        Create a zarr stream for all search results. When set to true the
+        files are served in zarr format and can be opened from anywhere.
     multiversion: bool, default: False
         Select all versions and not just the latest version (default).
     fail_on_error: bool, default: False
@@ -98,7 +116,7 @@ class databrowser:
         db = databrowser(experiment="cmorph", uniq_key="uri")
         print(db)
 
-    After having created the search object you can aquire differnt kinds of
+    After having created the search object you can acquire different kinds of
     information like the number of found objects:
 
     .. execute_code::
@@ -149,24 +167,61 @@ class databrowser:
         db = databrowser("reana*", realm="ocean", flavour="cmip6")
         for file in db:
             print(file)
+
+    If you don't have direct access to the data, for example because you are
+    not directly logged in to the computer where the data is stored you can
+    set ``stream_zarr=True``. The data will then be
+    provisioned in zarr format and can be opened from anywhere. But bear in
+    mind that zarr streams if not accessed in time will expire. Since the
+    data can be accessed from anywhere you will also have to authenticate
+    before you are able to access the data. Refer also to the
+    :py:meth:`freva_client.authenticate` method.
+
+    .. execute_code::
+
+        from freva_client import authenticate, databrowser
+        token_info = authenticate(username="janedoe")
+        db = databrowser(dataset="cmip6-fs", stream_zarr=True)
+        zarr_files = list(db)
+        print(zarr_files)
+
+    After you have created the paths to the zarr files you can open them
+
+    ::
+
+        import xarray as xr
+        dset = xr.open_dataset(
+           zarr_files[0],
+           chunks="auto",
+           engine="zarr",
+           storage_options={"header":
+                {"Authorization": f"Bearer {token_info['access_token']}"}
+           }
+        )
+
+
     """
 
     def __init__(
         self,
         *facets: str,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
+        flavour: Literal[
+            "freva", "cmip6", "cmip5", "cordex", "nextgems"
+        ] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
+        stream_zarr: bool = False,
         multiversion: bool = False,
         fail_on_error: bool = False,
         **search_keys: Union[str, List[str]],
     ) -> None:
-
+        self._auth = Auth()
         self._fail_on_error = fail_on_error
         self._cfg = Config(host, uniq_key=uniq_key, flavour=flavour)
         self._flavour = flavour
+        self._stream_zarr = stream_zarr
         facet_search: Dict[str, List[str]] = defaultdict(list)
         for key, value in search_keys.items():
             if isinstance(value, str):
@@ -188,7 +243,8 @@ class databrowser:
         self, facets: Tuple[str, ...], search_kw: Dict[str, List[str]]
     ) -> None:
         metadata = {
-            k: v[::2] for (k, v) in self._facet_search(extended_search=True).items()
+            k: v[::2]
+            for (k, v) in self._facet_search(extended_search=True).items()
         }
         primary_key = list(metadata.keys() or ["project"])[0]
         num_facets = 0
@@ -201,19 +257,29 @@ class databrowser:
 
         if facets and num_facets == 0:
             # TODO: This isn't pretty, but if a user requested a search
-            # string doesn't exist than we have to somehow make the search
+            # string that doesn't exist than we have to somehow make the search
             # return nothing.
             search_kw = {primary_key: ["NotAvailable"]}
         self._params.update(search_kw)
 
     def __iter__(self) -> Iterator[str]:
-        result = self._get(self._cfg.search_url)
+        query_url = self._cfg.search_url
+        headers = {}
+        if self._stream_zarr:
+            query_url = self._cfg.zarr_loader_url
+            token = self._auth.check_authentication(
+                auth_url=self._cfg.auth_url
+            )
+            headers = {"Authorization": f"Bearer {token['access_token']}"}
+        result = self._get(query_url, headers=headers, stream=True)
         if result is not None:
             try:
                 for res in result.iter_lines():
                     yield res.decode("utf-8")
             except KeyboardInterrupt:
-                pprint("[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr)
+                pprint(
+                    "[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr
+                )
 
     def __repr__(self) -> str:
         params = ", ".join(
@@ -240,7 +306,9 @@ class databrowser:
 
         # Create a table-like structure for available flavors and search facets
         style = 'style="text-align: left"'
-        facet_heading = f"Available search facets for <em>{self._flavour}</em> flavour"
+        facet_heading = (
+            f"Available search facets for <em>{self._flavour}</em> flavour"
+        )
         html_repr = (
             "<table>"
             f"<tr><th colspan='2' {style}>{self.__class__.__name__}"
@@ -274,11 +342,71 @@ class databrowser:
             return cast(int, result.json().get("total_count", 0))
         return 0
 
+    def _create_intake_catalogue_file(self, filename: str) -> None:
+        """Create an intake catalogue file."""
+        kwargs: Dict[str, Any] = {"stream": True}
+        url = self._cfg.intake_url
+        if self._stream_zarr:
+            token = self._auth.check_authentication(
+                auth_url=self._cfg.auth_url
+            )
+            url = self._cfg.zarr_loader_url
+            kwargs["headers"] = {
+                "Authorization": f"Bearer {token['access_token']}"
+            }
+            kwargs["params"] = {"catalogue-type": "intake"}
+        result = self._get(url, **kwargs)
+        if result is None:
+            raise ValueError("No results found")
+
+        try:
+            Path(filename).parent.mkdir(exist_ok=True, parents=True)
+            with open(filename, "bw") as stream:
+                for content in result.iter_content(decode_unicode=False):
+                    stream.write(content)
+        except Exception as error:
+            raise ValueError(
+                f"Couldn't write catalogue content: {error}"
+            ) from None
+
+    def intake_catalogue(self) -> intake_esm.core.esm_datastore:
+        """Create an intake esm catalogue object from the search.
+
+        This method creates a intake-esm catalogue from the current object
+        search. Instead of having the original files as target objects you can
+        also choose to stream the files via zarr.
+
+        Returns
+        ~~~~~~~
+        intake_esm.core.esm_datastore: intake-esm catalogue.
+
+        Raises
+        ~~~~~~
+        ValueError: If user is not authenticated or catalogue creation failed.
+
+        Example
+        ~~~~~~~
+        Let's create an intake-esm catalogue that points points allows for
+        streaming the target data as zarr:
+
+        .. execute_code::
+
+            from freva_client import databrowser
+            db = databrowser(dataset="cmip6-fs", stream_zarr=True)
+            cat = db.intake_catalogue()
+            print(cat.df)
+        """
+        with NamedTemporaryFile(suffix=".json") as temp_f:
+            self._create_intake_catalogue_file(temp_f.name)
+            return intake.open_esm_datastore(temp_f.name)
+
     @classmethod
     def count_values(
         cls,
         *facets: str,
-        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
+        flavour: Literal[
+            "freva", "cmip6", "cmip5", "cordex", "nextgems"
+        ] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -328,7 +456,7 @@ class databrowser:
         fail_on_error: bool, default: False
             Make the call fail if the connection to the databrowser could not
         **search_keys: str
-            The search contraints to be applied in the data search. If not given
+            The search constraints to be applied in the data search. If not given
             the whole dataset will be queried.
 
         Returns
@@ -370,12 +498,15 @@ class databrowser:
             multiversion=multiversion,
             fail_on_error=fail_on_error,
             uniq_key="file",
+            stream_zarr=False,
             **search_keys,
         )
         result = this._facet_search(extended_search=extended_search)
         counts = {}
         for facet, value_counts in result.items():
-            counts[facet] = dict(zip(value_counts[::2], map(int, value_counts[1::2])))
+            counts[facet] = dict(
+                zip(value_counts[::2], map(int, value_counts[1::2]))
+            )
         return counts
 
     @cached_property
@@ -384,7 +515,7 @@ class databrowser:
 
         You can retrieve all information that is associated with your current
         databrowser search. This can be useful for reverse searches for example
-        for retrieving metadata of object sotres or file/directory names.
+        for retrieving metadata of object stores or file/directory names.
 
         Example
         ~~~~~~~
@@ -400,14 +531,17 @@ class databrowser:
 
         """
         return {
-            k: v[::2] for (k, v) in self._facet_search(extended_search=True).items()
+            k: v[::2]
+            for (k, v) in self._facet_search(extended_search=True).items()
         }
 
     @classmethod
     def metadata_search(
         cls,
         *facets: str,
-        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
+        flavour: Literal[
+            "freva", "cmip6", "cmip5", "cordex", "nextgems"
+        ] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -432,7 +566,7 @@ class databrowser:
         flavour: str, default: freva
             The Data Reference Syntax (DRS) standard specifying the type of climate
             datasets to query.
-        time: str, defautl: ""
+        time: str, default: ""
             Special search facet to refine/subset search results by time.
             This can be a string representation of a time range or a single
             timestamp. The timestamp has to follow ISO-8601. Valid strings are
@@ -525,11 +659,14 @@ class databrowser:
             multiversion=multiversion,
             fail_on_error=fail_on_error,
             uniq_key="file",
+            stream_zarr=False,
             **search_keys,
         )
         return {
             k: v[::2]
-            for (k, v) in this._facet_search(extended_search=extended_search).items()
+            for (k, v) in this._facet_search(
+                extended_search=extended_search
+            ).items()
         }
 
     @classmethod
@@ -591,16 +728,22 @@ class databrowser:
             return {}
         data = result.json()
         if extended_search:
-            contraints = data["facets"].keys()
+            constraints = data["facets"].keys()
         else:
-            contraints = data["primary_facets"]
-        return {f: v for f, v in data["facets"].items() if f in contraints}
+            constraints = data["primary_facets"]
+        return {f: v for f, v in data["facets"].items() if f in constraints}
 
-    def _get(self, url: str) -> Optional[requests.models.Response]:
+    def _get(
+        self, url: str, **kwargs: Any
+    ) -> Optional[requests.models.Response]:
         """Apply the get method to the databrowser."""
         logger.debug("Searching %s with parameters: %s", url, self._params)
+        params = kwargs.pop("params", {})
+        kwargs.setdefault("timeout", 30)
         try:
-            res = requests.get(url, params=self._params, timeout=30)
+            res = requests.get(
+                url, params={**self._params, **params}, **kwargs
+            )
             res.raise_for_status()
             return res
         except KeyboardInterrupt:
