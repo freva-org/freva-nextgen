@@ -5,22 +5,23 @@ The databrowser command line interface
 .. toctree::
    :maxdepth: 3
 
-This section introduces the usage of the ``freva-client`` command.
+This section introduces the usage of the ``freva-client databrowser`` sub command.
 Please see the :ref:`install+configure` section on how to install and
 configure the command line interface.
 
 
-After successful installation you will have the ``freva-client`` command
+After successful installation you can use the ``freva-client databrowser`` sub
+command
 
 .. code:: console
 
-    freva-client --help
+    freva-client databrowser --help
 
 .. execute_code::
    :hide_code:
 
    from subprocess import run, PIPE
-   res = run(["freva-client", "--help"], check=True, stdout=PIPE, stderr=PIPE)
+   res = run(["freva-client", "databrowser", "--help"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
 
@@ -32,13 +33,13 @@ databrowser application. You can search for data locations by applying the
 
 .. code:: console
 
-    freva-client data-search --help
+    freva-client databrowser data-search --help
 
 .. execute_code::
    :hide_code:
 
    from subprocess import run, PIPE
-   res = run(["freva-client", "data-search", "--help"], check=True, stdout=PIPE, stderr=PIPE)
+   res = run(["freva-client", "databrowser", "data-search", "--help"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
 
@@ -54,13 +55,13 @@ variables available that satisfies a certain constraint (e.g. sampled
 
 .. code:: console
 
-    freva-client project=observations variable=pr model=cp*
+    freva-client databrowser data-search project=observations variable=pr model=cp*
 
 .. execute_code::
    :hide_code:
 
    from subprocess import run, PIPE
-   res = run(["freva-client", "data-search", "experiment=cmorph"], check=True, stdout=PIPE, stderr=PIPE)
+   res = run(["freva-client", "databrowser", "data-search", "experiment=cmorph"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
 There are many more options for defining a value for a given key:
@@ -96,26 +97,24 @@ There are many more options for defining a value for a given key:
 |                                                 | expression to find     |
 |                                                 | what you want.)        |
 +-------------------------------------------------+------------------------+
-| ``attribute=value1 [...] attribute=valueN``     | Search for files       |
-|                                                 | containing *any* of N  |
-| OR:                                             | given values of same   |
-|                                                 | attribute.             |
-| ``attribute={value1,..,valueN}``                |                        |
-|                                                 |                        |
+| ``attribute=value1 attribute=value2``           | Search for files       |
+|                                                 | containing either      |
+| OR:                                             | value1 OR value2 for   |
+|                                                 | the given attribute    |
+| ``attribute={value1,value2}``                   | (note that's the same  |
+|                                                 | attribute twice!)      |
 +-------------------------------------------------+------------------------+
 | ``attribute1=value1 attribute2=value2``         | Search for files       |
 |                                                 | containing value1 for  |
 |                                                 | attribute1 AND value2  |
 |                                                 | for attribute2         |
 +-------------------------------------------------+------------------------+
-| ``attribute=-value`` ``attribute=not value``    | Search for files NOT   |
+| ``attribute_not_=value``                        | Search for files NOT   |
 |                                                 | containing value       |
 +-------------------------------------------------+------------------------+
-| ``attribute=-value1 attribute=not value2``      | Search for files       |
-|                                                 | *not* caintaning given |
-|  OR                                             | values. You can also   |
-|                                                 | combine search         |
-| ``attribute1_not_=value _not_attribute2=value`` | attributes             |
+| ``attribute_not_=value1 attribute_not_=value2`` | Search for files       |
+|                                                 | containing neither     |
+|                                                 | value1 nor value2      |
 +-------------------------------------------------+------------------------+
 
 .. note::
@@ -123,6 +122,38 @@ There are many more options for defining a value for a given key:
     When using \* remember that your shell might give it a
     different meaning (normally it will try to match files with that name)
     to turn that off you can use backslash \ (key=\*) or use quotes (key='*').
+
+Streaming files via zarr
+~~~~~~~~~~~~~~~~~~~~~~~~
+Instead of getting the file locations on disk or tape, you can instruct the
+system to register zarr streams. Which means that instead of opening the
+data directly you can open it via zarr from anywhere. To do so simply add
+the ``--zarr`` flag.
+
+.. note::
+
+    Before you can use the ``--zarr`` flag you will have
+    to create an access token and use that token to log on to the system
+    see also the :ref:`auth` chapter for more details on token creation.
+
+.. code:: console
+
+    token=$(freva-client auth -u janedoe|jq -r .access_token)
+    freva-client databrowser data-search dataset=cmip6-fs --zarr --access-token $token
+
+.. execute_code::
+   :hide_code:
+
+   from subprocess import run, PIPE
+   from freva_client import authenticate
+   token = authenticate(username="janedoe")
+   res = run(["freva-client", "databrowser", "data-search",
+              "--zarr", "dataset=cmip6-fs",
+              "--access-token", token["access_token"],
+             ], check=True, stdout=PIPE, stderr=PIPE)
+   print(res.stdout.decode())
+
+
 
 Special cases: Searching for times
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -133,13 +164,13 @@ ranges:
 
 .. code:: console
 
-    freva-client data-search project=observations -t '2016-09-02T22:15 to 2016-10'
+    freva-client databrowser data-search project=observations -t '2016-09-02T22:15 to 2016-10'
 
 .. execute_code::
    :hide_code:
 
    from subprocess import run, PIPE
-   res = run(["freva-client", "data-search",
+   res = run(["freva-client", "databrowser", "data-search",
               "-t", "2016-09-02T22:15 to 2016-10",
              ], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
@@ -153,26 +184,26 @@ start of the time period:
 
 .. code:: console
 
-    freva-client data-search project=observations -t '2016-09-02T22:15 to 2016-10' -ts strict
+    freva-client databrowser data-search project=observations -t '2016-09-02T22:15 to 2016-10' -ts strict
 
 .. execute_code::
    :hide_code:
 
    from subprocess import run, PIPE
-   res = run(["freva-client", "data-search", "-t", "2016-09-02T22:15 to 2016-10", "-ts", "strict"], check=True, stdout=PIPE, stderr=PIPE)
+   res = run(["freva-client", "databrowser", "data-search", "-t", "2016-09-02T22:15 to 2016-10", "-ts", "strict"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
 Giving single time steps is also possible:
 
 .. code:: console
 
-    freva-client data-search project=observations -t 2016-09-02T22:10
+    freva-client databrowser data-search project=observations -t 2016-09-02T22:10
 
 .. execute_code::
    :hide_code:
 
    from subprocess import run, PIPE
-   res = run(["freva-client", "data-search", "-t", "2016-09-02T22:00"], check=True, stdout=PIPE, stderr=PIPE)
+   res = run(["freva-client", "databrowser", "data-search", "-t", "2016-09-02T22:00"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
 .. note::
@@ -183,6 +214,29 @@ Giving single time steps is also possible:
     ``2000-01 to 2100-12`` and alike. Single time steps are given without the
     ``to`` keyword.
 
+Creating intake-esm catalouges
+-------------------------------
+The ``intake-catalogue`` sub command allows you to create an
+`intake-esm catalogue <https://intake-esm.readthedocs.io/en/stable/>_` from
+the current search. This can be useful to share the catalogue with others
+or merge datasets.
+
+.. code:: console
+
+    freva-client databrowser intake-catalogue --help
+
+.. execute_code::
+   :hide_code:
+
+   from subprocess import run, PIPE
+   res = run(["freva-client", "databrowser", "intake-catalogue", "--help"], check=True, stdout=PIPE, stderr=PIPE)
+   print(res.stdout.decode())
+
+
+You can either set the ``--filename`` flag to save the catalogue to a ``.json``
+file or pipe the catalogue to stdout (default). Just like for the ``data-search``
+sub command you can instruct the system to create zarr file streams to access
+the data via zarr.
 
 Query the number of occurrences
 -------------------------------
@@ -193,13 +247,13 @@ the files themselves.
 
 .. code:: console
 
-    freva-client data-count --help
+    freva-client databrowser data-count --help
 
 .. execute_code::
    :hide_code:
 
    from subprocess import run, PIPE
-   res = run(["freva-client", "data-count", "--help"], check=True, stdout=PIPE, stderr=PIPE)
+   res = run(["freva-client", "databrowser", "data-count", "--help"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
 By default the ``data-count`` sub command will display the total number of items
@@ -207,13 +261,13 @@ matching your search query. For example:
 
 .. code:: console
 
-    freva-client data-count project=observations
+    freva-client databrowser data-count project=observations
 
 .. execute_code::
    :hide_code:
 
    from subprocess import run, PIPE
-   res = run(["freva-client", "data-count", "project=observations"], check=True, stdout=PIPE, stderr=PIPE)
+   res = run(["freva-client", "databrowser", "data-count", "project=observations"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
 If you want to group the number of occurrences by search categories (facets)
@@ -221,13 +275,13 @@ use the ``-d`` or ``--detail`` flag:
 
 .. code:: console
 
-    freva-client data-count -d project=observations
+    freva-client databrowser data-count -d project=observations
 
 .. execute_code::
    :hide_code:
 
    from subprocess import run, PIPE
-   res = run(["freva-client", "data-count", "-d", "project=observations"], check=True, stdout=PIPE, stderr=PIPE)
+   res = run(["freva-client", "databrowser", "data-count", "-d", "project=observations"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
 
@@ -239,13 +293,13 @@ For this you use the ``metadata-search`` sub command:
 
 .. code:: console
 
-    freva-client metadata-search --help
+    freva-client databrowser metadata-search --help
 
 .. execute_code::
    :hide_code:
 
    from subprocess import run, PIPE
-   res = run(["freva-client", "metadata-search", "--help"], check=True, stdout=PIPE, stderr=PIPE)
+   res = run(["freva-client", "databrowser", "metadata-search", "--help"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
 Just like with any other databrowser command you can apply different search
@@ -253,13 +307,13 @@ constraints when acquiring metadata
 
 .. code:: console
 
-    freva-client metadata-search project=observations
+    freva-client databrowser metadata-search project=observations
 
 .. execute_code::
    :hide_code:
 
    from subprocess import run, PIPE
-   res = run(["freva-client", "metadata-search", "project=observations"], check=True, stdout=PIPE, stderr=PIPE)
+   res = run(["freva-client", "databrowser", "metadata-search", "project=observations"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
 
@@ -269,13 +323,13 @@ flag.
 
 .. code:: console
 
-    freva-client metadata-search -e project=observations
+    freva-client databrowser metadata-search -e project=observations
 
 .. execute_code::
    :hide_code:
 
    from subprocess import run, PIPE
-   res = run(["freva-client", "metadata-search", "-e", "project=observations"], check=True, stdout=PIPE, stderr=PIPE)
+   res = run(["freva-client", "databrowser", "metadata-search", "-e", "project=observations"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
 Sometimes you don't exactly know the exact names of the search keys and
@@ -284,13 +338,13 @@ for getting all ocean reanalysis datasets you can apply the ``--facet`` flag:
 
 .. code:: console
 
-    freva-client metadata-search -e realm=ocean --facet 'rean*'
+    freva-client databrowser metadata-search -e realm=ocean --facet 'rean*'
 
 .. execute_code::
    :hide_code:
 
    from subprocess import run, PIPE
-   res = run(["freva-client", "metadata-search","--facet", "rean*", "realm=ocean"], check=True, stdout=PIPE, stderr=PIPE)
+   res = run(["freva-client", "databrowser", "metadata-search","--facet", "rean*", "realm=ocean"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
 
@@ -304,13 +358,13 @@ metadata of those files on tape:
 
 .. code:: console
 
-    freva-client metadata-search -e file="/arch/*"
+    freva-client databrowser metadata-search -e file="/arch/*"
 
 .. execute_code::
    :hide_code:
 
    from subprocess import run, PIPE
-   res = run(["freva-client", "metadata-search", "-e", "file=/arch*"], check=True, stdout=PIPE, stderr=PIPE)
+   res = run(["freva-client","databrowser", "metadata-search", "-e", "file=/arch*"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
 Parsing the command output
@@ -324,13 +378,13 @@ search to the `command line json processor jq <https://jqlang.github.io/jq/>`_:
 
 .. code:: console
 
-    freva-client metadata-search -e file="/arch/*" --json
+    freva-client databrowser metadata-search -e file="/arch/*" --json
 
 .. execute_code::
    :hide_code:
 
    from subprocess import run, PIPE
-   res = run(["freva-client", "metadata-search", "-e", "file=/arch*", "--json"], check=True, stdout=PIPE, stderr=PIPE)
+   res = run(["freva-client", "databrowser", "metadata-search", "-e", "file=/arch*", "--json"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
 By using the pipe operator ``|`` the JSON output of the `freva-client`
@@ -338,7 +392,7 @@ commands can be piped and processed by ``jq``:
 
 .. code:: console
 
-    freva-client metadata-search -e file="/arch/*" --json | jq -r .ensemble[0]
+    freva-client databrowser metadata-search -e file="/arch/*" --json | jq -r .ensemble[0]
 
 .. execute_code::
    :hide_code:

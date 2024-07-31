@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Databrowser python module &#8212; Freva Databrowser 2404.0.1 documentation</title>
+    <title>Databrowser python module &#8212; Freva Databrowser 2408.0.0.dev1 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=e9caea8f"></script>
+    <script src="../_static/documentation_options.js?v=16e2beb8"></script>
     <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -136,8 +136,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2404.0.1 documentation - Home"/>
-    <script>document.write(`<img src="../_static/logo.png" class="logo__image only-dark" alt="Freva Databrowser 2404.0.1 documentation - Home"/>`);</script>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2408.0.0.dev1 documentation - Home"/>
+    <script>document.write(`<img src="../_static/logo.png" class="logo__image only-dark" alt="Freva Databrowser 2408.0.0.dev1 documentation - Home"/>`);</script>
   
   
 </a></div>
@@ -152,6 +152,13 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auth/index.html">
+    Authentication
+  </a>
+</li>
+
+
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
     Search for data
@@ -204,7 +211,7 @@ document.write(`
           
           
           
-          <a href="https://github.com/FREVA-CLINT/databrowserAPI" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+          <a href="https://github.com/FREVA-CLINT/freva-nextgen/freva-client" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
             <span class="sr-only">GitHub</span></a>
         </li>
 </ul></div>
@@ -258,6 +265,13 @@ document.write(`
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auth/index.html">
+    Authentication
+  </a>
+</li>
+
+
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
     Search for data
@@ -297,7 +311,7 @@ document.write(`
           
           
           
-          <a href="https://github.com/FREVA-CLINT/databrowserAPI" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+          <a href="https://github.com/FREVA-CLINT/freva-nextgen/freva-client" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
             <span class="sr-only">GitHub</span></a>
         </li>
 </ul></div>
@@ -438,7 +452,7 @@ library described in the documentation only support searching for data. If you
 need to apply data analysis plugins, please visit the</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="freva_client.databrowser">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">freva_client.</span></span><span class="sig-name descname"><span class="pre">databrowser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">facets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uniq_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'uri'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'file'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flavour</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'freva'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip6'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip5'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cordex'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nextgems'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'freva'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fail_on_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">search_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#freva_client.databrowser" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">freva_client.</span></span><span class="sig-name descname"><span class="pre">databrowser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">facets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uniq_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'uri'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'file'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flavour</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'freva'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip6'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip5'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cordex'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nextgems'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'freva'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream_zarr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fail_on_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">search_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#freva_client.databrowser" title="Link to this definition">#</a></dt>
 <dd><p>Find data in the system.</p>
 <p>You can either search for files or uri’s. Uri’s give you an information
 on the storage system where the files or objects you are looking for are
@@ -487,6 +501,9 @@ url where the freva web site can be found. Such as www.freva.dkrz.de.
 By default no host name is given and the host name will be taken from
 the freva config file.</p>
 </dd>
+<dt>stream_zarr: bool, default: False</dt><dd><p>Create a zarr stream for all search results. When set to true the
+files are served in zarr format and can be opened from anywhere.</p>
+</dd>
 <dt>multiversion: bool, default: False</dt><dd><p>Select all versions and not just the latest version (default).</p>
 </dd>
 <dt>fail_on_error: bool, default: False</dt><dd><p>Make the call fail if the connection to the databrowser could not
@@ -517,10 +534,10 @@ If you just ‘print’ the created object you will get a quick overview:</p>
 </pre></div>
 </div>
 <p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>databrowser(flavour=freva, host=http://localhost:8080/api/databrowser, multi_version=False, experiment=cmorph)
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>databrowser(flavour=freva, host=http://localhost:7777/api/databrowser, multi_version=False, experiment=cmorph)
 </pre></div>
 </div>
-<p>After having created the search object you can aquire differnt kinds of
+<p>After having created the search object you can acquire different kinds of
 information like the number of found objects:</p>
 <p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">freva_client</span> <span class="kn">import</span> <span class="n">databrowser</span>
@@ -555,7 +572,7 @@ information like the number of found objects:</p>
 </pre></div>
 </div>
 <p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/home/wilfred/workspace/solr-data-crawler/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609020030.nc
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609020030.nc
 </pre></div>
 </div>
 <p>You can also set a different flavour, for example according to cmip6
@@ -583,8 +600,40 @@ search key as a positional argument:</p>
 </div>
 <p><span class="caption-text">Results</span></p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>https://swift.dkrz.de/v1/dkrz_a32dc0e8-2299-4239-a47d-6bf45c8b0160/freva_test/model/obs/reanalysis/reanalysis/NOAA/NODC/OC5/mon/ocean/Omon/r1i1p1/v20200101/hc700/hc700_mon_NODC_OC5_r1i1p1_201201-201212.zarr
-/home/wilfred/workspace/solr-data-crawler/data/model/obs/reanalysis/reanalysis/NOAA/NODC/OC5/mon/ocean/Omon/r1i1p1/v20200101/hc700/hc700_mon_NODC_OC5_r1i1p1_201201-201212.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/model/obs/reanalysis/reanalysis/NOAA/NODC/OC5/mon/ocean/Omon/r1i1p1/v20200101/hc700/hc700_mon_NODC_OC5_r1i1p1_201201-201212.nc
 /arch/bb1203/freva_test/model/obs/reanalysis/reanalysis/NOAA/NODC/OC5/mon/ocean/Omon/r1i1p1/v20200101/hc700/hc700_mon_NODC_OC5_r1i1p1_201201-201212.nc
+</pre></div>
+</div>
+<p>If you don’t have direct access to the data, for example because you are
+not directly logged in to the computer where the data is stored you can
+set <code class="docutils literal notranslate"><span class="pre">stream_zarr=True</span></code>. The data will then be
+provisioned in zarr format and can be opened from anywhere. But bear in
+mind that zarr streams if not accessed in time will expire. Since the
+data can be accessed from anywhere you will also have to authenticate
+before you are able to access the data. Refer also to the
+<a class="reference internal" href="../auth/index.html#freva_client.authenticate" title="freva_client.authenticate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">freva_client.authenticate()</span></code></a> method.</p>
+<p><span class="caption-text">Code </span></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">freva_client</span> <span class="kn">import</span> <span class="n">authenticate</span><span class="p">,</span> <span class="n">databrowser</span>
+<span class="n">token_info</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">&quot;janedoe&quot;</span><span class="p">)</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;cmip6-fs&quot;</span><span class="p">,</span> <span class="n">stream_zarr</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">zarr_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">zarr_files</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[&#39;http://localhost:7777/api/freva-data-portal/zarr/c48f9024-f61e-5682-9651-7b9a21d81048.zarr&#39;, &#39;http://localhost:7777/api/freva-data-portal/zarr/ff8b9acf-b652-5ce3-a26c-58f9bc4884a3.zarr&#39;]
+</pre></div>
+</div>
+<p>After you have created the paths to the zarr files you can open them</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
+<span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span>
+   <span class="n">zarr_files</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+   <span class="n">chunks</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+   <span class="n">engine</span><span class="o">=</span><span class="s2">&quot;zarr&quot;</span><span class="p">,</span>
+   <span class="n">storage_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;header&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Bearer </span><span class="si">{</span><span class="n">token_info</span><span class="p">[</span><span class="s1">&#39;access_token&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}</span>
+   <span class="p">}</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 <dl class="py method">
@@ -629,7 +678,7 @@ name will be taken from the freva config file.</p>
 </dd>
 <dt>fail_on_error: bool, default: False</dt><dd><p>Make the call fail if the connection to the databrowser could not</p>
 </dd>
-<dt><a href="#id8"><span class="problematic" id="id9">**</span></a>search_keys: str</dt><dd><p>The search contraints to be applied in the data search. If not given
+<dt><a href="#id8"><span class="problematic" id="id9">**</span></a>search_keys: str</dt><dd><p>The search constraints to be applied in the data search. If not given
 the whole dataset will be queried.</p>
 </dd>
 </dl>
@@ -678,15 +727,52 @@ example for getting all ocean reanalysis datasets you can apply the
 </section>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="freva_client.databrowser.intake_catalogue">
+<span class="sig-name descname"><span class="pre">intake_catalogue</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">esm_datastore</span></span></span><a class="headerlink" href="#freva_client.databrowser.intake_catalogue" title="Link to this definition">#</a></dt>
+<dd><p>Create an intake esm catalogue object from the search.</p>
+<p>This method creates a intake-esm catalogue from the current object
+search. Instead of having the original files as target objects you can
+also choose to stream the files via zarr.</p>
+<section id="id11">
+<h4>Returns<a class="headerlink" href="#id11" title="Link to this heading">#</a></h4>
+<p>intake_esm.core.esm_datastore: intake-esm catalogue.</p>
+</section>
+<section id="raises">
+<h4>Raises<a class="headerlink" href="#raises" title="Link to this heading">#</a></h4>
+<p>ValueError: If user is not authenticated or catalogue creation failed.</p>
+</section>
+<section id="id12">
+<h4>Example<a class="headerlink" href="#id12" title="Link to this heading">#</a></h4>
+<p>Let’s create an intake-esm catalogue that points points allows for
+streaming the target data as zarr:</p>
+<p><span class="caption-text">Code </span></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">freva_client</span> <span class="kn">import</span> <span class="n">databrowser</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;cmip6-fs&quot;</span><span class="p">,</span> <span class="n">stream_zarr</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">cat</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">intake_catalogue</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">cat</span><span class="o">.</span><span class="n">df</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>                                                 uri project  ... fs_type grid_label
+0  http://localhost:7777/api/freva-data-portal/za...   CMIP6  ...   posix         gn
+1  http://localhost:7777/api/freva-data-portal/za...   CMIP6  ...   posix         gn
+
+[2 rows x 13 columns]
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="freva_client.databrowser.metadata">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">metadata</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#freva_client.databrowser.metadata" title="Link to this definition">#</a></dt>
 <dd><p>Get the metadata (facets) for the current databrowser query.</p>
 <p>You can retrieve all information that is associated with your current
 databrowser search. This can be useful for reverse searches for example
-for retrieving metadata of object sotres or file/directory names.</p>
-<section id="id11">
-<h4>Example<a class="headerlink" href="#id11" title="Link to this heading">#</a></h4>
+for retrieving metadata of object stores or file/directory names.</p>
+<section id="id13">
+<h4>Example<a class="headerlink" href="#id13" title="Link to this heading">#</a></h4>
 <p>Reverse search: retrieving meta data from a known file</p>
 <p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">freva_client</span> <span class="kn">import</span> <span class="n">databrowser</span>
@@ -707,10 +793,10 @@ for retrieving metadata of object sotres or file/directory names.</p>
 <dd><p>Search for data attributes (facets) in the databrowser.</p>
 <p>The method queries the databrowser for available search facets (keys)
 like model, experiment etc.</p>
-<section id="id12">
-<h4>Parameters<a class="headerlink" href="#id12" title="Link to this heading">#</a></h4>
+<section id="id14">
+<h4>Parameters<a class="headerlink" href="#id14" title="Link to this heading">#</a></h4>
 <dl class="simple">
-<dt><a href="#id13"><span class="problematic" id="id14">*</span></a>facets: str</dt><dd><p>If you are not sure about the correct search key’s you can use
+<dt><a href="#id15"><span class="problematic" id="id16">*</span></a>facets: str</dt><dd><p>If you are not sure about the correct search key’s you can use
 positional arguments to search of any matching entries. For example
 ‘era5’ would allow you to search for any entries
 containing era5, regardless of project, product etc.</p>
@@ -718,7 +804,7 @@ containing era5, regardless of project, product etc.</p>
 <dt>flavour: str, default: freva</dt><dd><p>The Data Reference Syntax (DRS) standard specifying the type of climate
 datasets to query.</p>
 </dd>
-<dt>time: str, defautl: “”</dt><dd><p>Special search facet to refine/subset search results by time.
+<dt>time: str, default: “”</dt><dd><p>Special search facet to refine/subset search results by time.
 This can be a string representation of a time range or a single
 timestamp. The timestamp has to follow ISO-8601. Valid strings are
 <code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M</span></code> to <code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M</span></code> for time ranges and
@@ -745,20 +831,20 @@ name will be taken from the freva config file.</p>
 </dd>
 <dt>fail_on_error: bool, default: False</dt><dd><p>Make the call fail if the connection to the databrowser could not</p>
 </dd>
-<dt><a href="#id15"><span class="problematic" id="id16">**</span></a>search_keys: str, list[str]</dt><dd><p>The facets to be applied in the data search. If not given
+<dt><a href="#id17"><span class="problematic" id="id18">**</span></a>search_keys: str, list[str]</dt><dd><p>The facets to be applied in the data search. If not given
 the whole dataset will be queried.</p>
 </dd>
 </dl>
 </section>
-<section id="id17">
-<h4>Returns<a class="headerlink" href="#id17" title="Link to this heading">#</a></h4>
+<section id="id19">
+<h4>Returns<a class="headerlink" href="#id19" title="Link to this heading">#</a></h4>
 <dl class="simple">
 <dt>dict[str, list[str]]:</dt><dd><p>Dictionary with a list search facet values for each search facet key</p>
 </dd>
 </dl>
 </section>
-<section id="id18">
-<h4>Example<a class="headerlink" href="#id18" title="Link to this heading">#</a></h4>
+<section id="id20">
+<h4>Example<a class="headerlink" href="#id20" title="Link to this heading">#</a></h4>
 <p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">freva_client</span> <span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">all_facets</span> <span class="o">=</span> <span class="n">databrowser</span><span class="o">.</span><span class="n">metadata_search</span><span class="p">(</span><span class="n">project</span><span class="o">=</span><span class="s1">&#39;obs*&#39;</span><span class="p">)</span>
@@ -828,8 +914,8 @@ example for getting all ocean reanalysis datasets you can apply the
 <p>If you don’t know what search flavours or search keys you can use
 for searching the data you can use this method to get an overview
 over what is available.</p>
-<section id="id19">
-<h4>Parameters<a class="headerlink" href="#id19" title="Link to this heading">#</a></h4>
+<section id="id21">
+<h4>Parameters<a class="headerlink" href="#id21" title="Link to this heading">#</a></h4>
 <dl class="simple">
 <dt>host: str, default None</dt><dd><p>Override the host name of the databrowser server. This is usually
 the url where the freva web site can be found. Such as
@@ -838,12 +924,12 @@ name will be taken from the freva config file.</p>
 </dd>
 </dl>
 </section>
-<section id="id20">
-<h4>Returns<a class="headerlink" href="#id20" title="Link to this heading">#</a></h4>
+<section id="id22">
+<h4>Returns<a class="headerlink" href="#id22" title="Link to this heading">#</a></h4>
 <p>str: A string representation over what is available.</p>
 </section>
-<section id="id21">
-<h4>Example<a class="headerlink" href="#id21" title="Link to this heading">#</a></h4>
+<section id="id23">
+<h4>Example<a class="headerlink" href="#id23" title="Link to this heading">#</a></h4>
 <p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">freva_client</span> <span class="kn">import</span> <span class="n">databrowser</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">databrowser</span><span class="o">.</span><span class="n">overview</span><span class="p">())</span>
@@ -965,8 +1051,8 @@ Search attributes by flavour:
 <dt class="sig sig-object py" id="freva_client.databrowser.url">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#freva_client.databrowser.url" title="Link to this definition">#</a></dt>
 <dd><p>Get the url of the databrowser API.</p>
-<section id="id22">
-<h4>Example<a class="headerlink" href="#id22" title="Link to this heading">#</a></h4>
+<section id="id24">
+<h4>Example<a class="headerlink" href="#id24" title="Link to this heading">#</a></h4>
 <p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">freva_client</span> <span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">()</span>
@@ -974,7 +1060,7 @@ Search attributes by flavour:
 </pre></div>
 </div>
 <p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>http://localhost:8080/api/databrowser
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>http://localhost:7777/api/databrowser
 </pre></div>
 </div>
 </section>
@@ -1036,6 +1122,7 @@ Search attributes by flavour:
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#library-reference">Library Reference</a><ul class="visible nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser"><code class="docutils literal notranslate"><span class="pre">databrowser</span></code></a><ul class="visible nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.count_values"><code class="docutils literal notranslate"><span class="pre">databrowser.count_values()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.intake_catalogue"><code class="docutils literal notranslate"><span class="pre">databrowser.intake_catalogue()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.metadata"><code class="docutils literal notranslate"><span class="pre">databrowser.metadata</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.metadata_search"><code class="docutils literal notranslate"><span class="pre">databrowser.metadata_search()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.overview"><code class="docutils literal notranslate"><span class="pre">databrowser.overview()</span></code></a></li>
@@ -1081,7 +1168,7 @@ Search attributes by flavour:
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.4.7.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.0.2.
     <br/>
   </p>
 </div>
