@@ -101,7 +101,7 @@ if [ ! -f ${MAMBA_DIR}/bin/data-loader-worker ]; then
     echo "Setting up the dataportal:"
     TEMP_DIR=$(mktemp -d)
     cd "$TEMP_DIR" || { echo "Failed to create temporary directory"; exit 1; }
-    ${MAMBA_DIR}/bin/git clone --recursive -b stream-data https://github.com/FREVA-CLINT/freva-nextgen.git
+    ${MAMBA_DIR}/bin/git clone --recursive https://github.com/FREVA-CLINT/freva-nextgen.git
     rm -rf ${MAMBA_DIR}/freva-data-portal-worker
     cp -r freva-nextgen/freva-data-portal-worker ${MAMBA_DIR}/
     cp -r freva-nextgen/dev-env ${MAMBA_DIR}/freva-data-portal-worker/setup
