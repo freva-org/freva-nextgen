@@ -129,7 +129,7 @@ if [ "x$IS_WORKER" = x ]; then
     cache_exp=$(base64 -d ~/.data-portal-cluster-config.json | jq -r .cache_exp)
     CMD="${MAMBA_DIR}/bin/python -m data_portal_worker \
         -c ~/.data-portal-cluster-config.json -e \
-        $cache_exp -r redis://localhost:$redis_port -p \
+        $cache_exp -r $redis_host -p \
         $scheduler_port"
 else
     CMD="${MAMBA_DIR}/bin/python -m distributed.cli.dask_worker \
