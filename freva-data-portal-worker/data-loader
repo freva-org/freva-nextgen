@@ -62,6 +62,7 @@ done
 # Create the lock file
 touch "$lock_file"
 
+mkdir -p ~/.config
 echo "MAMBA_DIR=$MAMBA_DIR" > ~/.config/dask-worker-env
 
 if [ "$create" = true ]; then
