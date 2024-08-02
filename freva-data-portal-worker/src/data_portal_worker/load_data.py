@@ -132,7 +132,10 @@ def get_dask_client(
     """Get or create a cached dask cluster."""
     if client is None and dev_mode is False:
         client = Client(
-            LocalCluster(scheduler_port=int(os.getenv("DASK_PORT", "40000")))
+            LocalCluster(
+                host="0.0.0.0",
+                scheduler_port=int(os.getenv("DASK_PORT", "40000")),
+            )
         )
         data_logger.info("Created new cluster: %s", client.dashboard_link)
     else:
@@ -215,7 +218,9 @@ class DataLoadFactory:
         arr_meta = meta["metadata"][f"{variable}/{array_meta_key}"]
         data = encode_chunk(
             get_data_chunk(
-                encode_zarr_variable(dset.variables[variable], name=variable).data,
+                encode_zarr_variable(
+                    dset.variables[variable], name=variable
+                ).data,
                 chunk,
                 out_shape=arr_meta["chunks"],
             ).tobytes(),
@@ -297,8 +302,12 @@ class ProcessQueue(DataLoadFactory):
 
     def spawn(self, inp_obj: str, uuid5: str) -> str:
         """Subumit a new data loading task to the process pool."""
-        data_logger.debug("Assigning %s to %s for future processing", inp_obj, uuid5)
-        data_cache: Optional[bytes] = cast(Optional[bytes], self.cache.get(uuid5))
+        data_logger.debug(
+            "Assigning %s to %s for future processing", inp_obj, uuid5
+        )
+        data_cache: Optional[bytes] = cast(
+            Optional[bytes], self.cache.get(uuid5)
+        )
         status_dict: LoadDict = {
             "status": 2,
             "obj_path": f"/api/freva-data-portal/zarr/{uuid5}.zarr",
