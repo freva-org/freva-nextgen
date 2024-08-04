@@ -62,6 +62,7 @@ done
 # Create the lock file
 touch "$lock_file"
 
+mkdir -p ~/.config
 echo "MAMBA_DIR=$MAMBA_DIR" > ~/.config/dask-worker-env
 
 if [ "$create" = true ]; then
@@ -101,7 +102,7 @@ if [ ! -f ${MAMBA_DIR}/bin/data-loader-worker ]; then
     echo "Setting up the dataportal:"
     TEMP_DIR=$(mktemp -d)
     cd "$TEMP_DIR" || { echo "Failed to create temporary directory"; exit 1; }
-    ${MAMBA_DIR}/bin/git clone --recursive -b stream-data https://github.com/FREVA-CLINT/freva-nextgen.git
+    ${MAMBA_DIR}/bin/git clone --recursive https://github.com/FREVA-CLINT/freva-nextgen.git
     rm -rf ${MAMBA_DIR}/freva-data-portal-worker
     cp -r freva-nextgen/freva-data-portal-worker ${MAMBA_DIR}/
     cp -r freva-nextgen/dev-env ${MAMBA_DIR}/freva-data-portal-worker/setup
@@ -129,7 +130,7 @@ if [ "x$IS_WORKER" = x ]; then
     cache_exp=$(base64 -d ~/.data-portal-cluster-config.json | jq -r .cache_exp)
     CMD="${MAMBA_DIR}/bin/python -m data_portal_worker \
         -c ~/.data-portal-cluster-config.json -e \
-        $cache_exp -r redis://localhost:$redis_port -p \
+        $cache_exp -r $redis_host -p \
         $scheduler_port"
 else
     CMD="${MAMBA_DIR}/bin/python -m distributed.cli.dask_worker \
