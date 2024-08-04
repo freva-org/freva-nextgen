@@ -213,7 +213,7 @@ async def load_data(
     """Search for datasets and stream the results as zarr."""
     if "zarr-stream" not in os.getenv("API_SERVICES", ""):
         raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Service not enabled.",
         )
     solr_search = await SolrSearch.validate_parameters(
