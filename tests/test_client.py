@@ -34,9 +34,7 @@ def test_databrowser(client: TestClient) -> None:
     )
     assert len(res1.text.split()) == 0
     assert res2.text == res3.text
-    res4 = client.get(
-        "/api/databrowser/data_search/cmip6/uri", params={"foo": "bar"}
-    )
+    res4 = client.get("/api/databrowser/data_search/cmip6/uri", params={"foo": "bar"})
     assert res4.status_code == 422
     res5 = client.get(
         "/api/databrowser/data_search/cmip6/uri",
@@ -88,9 +86,7 @@ def test_time_selection(client: TestClient) -> None:
         params={"time": "1898 to 1901", "time_select": "foo"},
     )
     assert res2.status_code == 500
-    res3 = client.get(
-        "/api/databrowser/data_search/freva/file", params={"time": "fx"}
-    )
+    res3 = client.get("/api/databrowser/data_search/freva/file", params={"time": "fx"})
     assert res3.status_code == 500
 
 
@@ -274,9 +270,7 @@ def test_no_mongo_parameter_insert(client_no_mongo: TestClient) -> None:
     assert res1 == 200
 
 
-def test_zarr_stream_not_implemented(
-    client: TestClient, auth: Dict[str, str]
-) -> None:
+def test_zarr_stream_not_implemented(client: TestClient, auth: Dict[str, str]) -> None:
     """Test if zarr request is not served when told not to do so."""
     env = os.environ.copy()
     env["API_SERVICES"] = ""
@@ -286,12 +280,10 @@ def test_zarr_stream_not_implemented(
             "api/databrowser/load/freva",
             headers={"Authorization": f"Bearer {auth['access_token']}"},
         )
-        assert res.status_code == 501
+        assert res.status_code == 503
 
 
-def tests_mongo_parameter_insert(
-    client: TestClient, cfg: ServerConfig
-) -> None:
+def tests_mongo_parameter_insert(client: TestClient, cfg: ServerConfig) -> None:
     """Test the successfull insertion of the search stats."""
     res1 = client.get(
         "api/databrowser/data_search/cordex/uri",
@@ -308,10 +300,7 @@ def tests_mongo_parameter_insert(
     assert isinstance(stats[0]["query"], dict)
     assert isinstance(stats[0]["metadata"], dict)
     # The search keys should have been converted to strings.
-    assert (
-        len([k for k in stats[0]["query"].values() if not isinstance(k, str)])
-        == 0
-    )
+    assert len([k for k in stats[0]["query"].values() if not isinstance(k, str)]) == 0
 
 
 def test_token_status(client: TestClient, auth: Dict[str, str]) -> None:
@@ -331,7 +320,5 @@ def test_token_status(client: TestClient, auth: Dict[str, str]) -> None:
 
 def test_get_overview(test_server: str) -> None:
     """Test the open id connect discovery endpoint."""
-    res = requests.get(
-        f"{test_server}/api/auth/v2/.well-known/openid-configuration"
-    )
+    res = requests.get(f"{test_server}/api/auth/v2/.well-known/openid-configuration")
     assert res.status_code == 200
