@@ -4,6 +4,7 @@ import os
 from typing import Optional
 
 import redis.asyncio as redis
+from fastapi import HTTPException, status
 from freva_rest.logger import logger
 
 REDIS_CACHE: Optional[redis.Redis] = None
@@ -14,6 +15,8 @@ REDIS_HOST, _, REDIS_PORT = (
 )
 REDIS_SSL_CERTFILE = os.getenv("REDIS_SSL_CERTFILE") or None
 REDIS_SSL_KEYFILE = os.getenv("REDIS_SSL_KEYFILE") or None
+CACHING_SERVICES = set(("zarr-stream",))
+"""All the services that need the redis cache."""
 
 
 async def create_redis_connection(
@@ -31,6 +34,21 @@ async def create_redis_connection(
         ssl_ca_certs=REDIS_SSL_CERTFILE,
         db=0,
     )
+    services = set(
+        [
+            s.strip()
+            for s in os.getenv("API_SERVICES", "").split(",")
+            if s.strip()
+        ]
+    )
+    if CACHING_SERVICES - services == CACHING_SERVICES:
+        # All services that would need caching are disabled.
+        # If this is the case and we ended up here, we shouldn't be here.
+        # tell the users.
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service not enabled.",
+        )
     if cache is None:
         logger.info("Creating redis connection using: %s", kwargs)
     cache = cache or redis.Redis(
@@ -44,6 +62,14 @@ async def create_redis_connection(
         ssl_ca_certs=REDIS_SSL_CERTFILE,
         db=0,
     )
+    try:
+        await cache.ping()
+    except Exception as error:
+        logger.error("Cloud not connect to redis cache: %s", error)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Cache gone.",
+        ) from None
     return cache
 
 
