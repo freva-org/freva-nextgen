@@ -45,8 +45,8 @@ included in the authorization header for secured endpoints.
                      request an OAuth2 access token from the authentication
                      server, this form parameter is optional.
     :type client_id: str
-    :form client_secret: An optional client secret used for authentication
-                         this parameters is optional an in most cases not neeede
+    :form client_secret: An optional client secret used for authentication.
+                         This param. is optional and in most cases not needed
     :type client_secret: str
     :statuscode 200: no error
     :statuscode 401: unauthorized
