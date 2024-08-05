@@ -77,11 +77,10 @@ included in the authorization header for secured endpoints.
         {
             "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6.."
             "token_type": "Bearer",
-            "expires_in": 300,
+            "expires": 1722874908,
             "refresh_token": "eyJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia2lkIi.."
-            "refresh_expires_in": 1800,
-            "scope": "email",
-            "not-before-policy": 0
+            "refresh_expires": 1722876408,
+            "scope": "profile email address",
         }
 
     Code examples
