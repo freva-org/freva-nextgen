@@ -1,5 +1,6 @@
 """Definition of routes for authentication."""
 
+import datetime
 import os
 from typing import Annotated, Dict, Literal, Optional, cast
 
@@ -7,7 +8,7 @@ import aiohttp
 from fastapi import Form, HTTPException, Security
 from fastapi.responses import RedirectResponse
 from fastapi_third_party_auth import Auth, IDToken
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from .logger import logger
 from .rest import app, server_config
@@ -31,11 +32,10 @@ class Token(BaseModel):
 
     access_token: str
     token_type: str
-    expires_in: int
+    expires: int
     refresh_token: str
-    refresh_expires_in: int
+    refresh_expires: int
     scope: str
-    not_before_policy: Annotated[int, Field(alias="not-before-policy")]
 
 
 @app.get("/api/auth/v2/status", tags=["Authentication"])
@@ -127,4 +127,26 @@ async def fetch_or_refresh_token(
             logger.error(error)
             raise HTTPException(status_code=404)
         token_data = await response.json()
-    return Token(**token_data)
+        expires_at = (
+            token_data.get("exp")
+            or token_data.get("expires")
+            or token_data.get("expires_at")
+        )
+        now = datetime.datetime.now(datetime.timezone.utc).timestamp()
+        refresh_expires_at = (
+            token_data.get("refresh_exp")
+            or token_data.get("refresh_expires")
+            or token_data.get("refresh_expires_at")
+        )
+        expires_at = expires_at or now + token_data.get("expires_in", 180)
+        refresh_expires_at = refresh_expires_at or now + token_data.get(
+            "refresh_expires_in", 180
+        )
+    return Token(
+        access_token=token_data["access_token"],
+        token_type=token_data["token_type"],
+        expires=int(expires_at),
+        refresh_token=token_data["refresh_token"],
+        refresh_expires=int(refresh_expires_at),
+        scope=token_data["scope"],
+    )

@@ -1,7 +1,7 @@
 """Test for the authorisation utilities."""
 
 from copy import deepcopy
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 from unittest.mock import Mock
 
 import pytest
@@ -24,11 +24,12 @@ def test_authenticate_with_password(
         token_data = {
             "access_token": "test_access_token",
             "token_type": "Bearer",
-            "expires_in": 3600,
-            "expires": datetime.now().timestamp() + 3600,
+            "expires": int(datetime.now(timezone.utc).timestamp() + 3600),
             "refresh_token": "test_refresh_token",
-            "refresh_expires_in": 7200,
-            "refresh_expires": datetime.now().timestamp() + 7200,
+            "refresh_expires": int(
+                datetime.now(timezone.utc).timestamp() + 7200
+            ),
+            "scope": "profile email address",
         }
         with mocker.patch(
             "freva_client.auth.OAuth2Session.fetch_token",
@@ -52,15 +53,14 @@ def test_authenticate_with_refresh_token(
     token_data = {
         "access_token": "test_access_token",
         "token_type": "Bearer",
-        "expires_in": 3600,
-        "expires": datetime.now().timestamp() + 3600,
+        "expires": int(datetime.now(timezone.utc).timestamp() + 3600),
         "refresh_token": "test_refresh_token",
-        "refresh_expires_in": 7200,
-        "refresh_expires": datetime.now().timestamp() + 7200,
+        "refresh_expires": int(datetime.now(timezone.utc).timestamp() + 7200),
+        "scope": "profile email address",
     }
     try:
         with mocker.patch(
-            "freva_client.auth.OAuth2Session.refresh_token",
+            "freva_client.auth.OAuth2Session.fetch_token",
             return_value=token_data,
         ):
             auth_instance.authenticate(
@@ -82,11 +82,10 @@ def test_refresh_token(mocker: MockFixture, auth_instance: Auth) -> None:
     token_data = {
         "access_token": "new_access_token",
         "token_type": "Bearer",
-        "expires_in": 3600,
-        "expires": datetime.now().timestamp() + 3600,
+        "expires": int(datetime.now(timezone.utc).timestamp() + 3600),
         "refresh_token": "new_refresh_token",
-        "refresh_expires_in": 7200,
-        "refresh_expires": datetime.now().timestamp() + 7200,
+        "refresh_expires": int(datetime.now(timezone.utc).timestamp() + 7200),
+        "scope": "profile email address",
     }
     try:
         with mocker.patch(
@@ -96,11 +95,10 @@ def test_refresh_token(mocker: MockFixture, auth_instance: Auth) -> None:
             auth_instance._auth_token = {
                 "access_token": "test_access_token",
                 "token_type": "Bearer",
-                "expires_in": 3600,
-                "expires": datetime.now().timestamp() - 3600,
+                "expires": int(datetime.now().timestamp() - 3600),
                 "refresh_token": "test_refresh_token",
-                "refresh_expires_in": 7200,
-                "refresh_expires": datetime.now().timestamp() + 7200,
+                "refresh_expires": int(datetime.now().timestamp() + 7200),
+                "scope": "profile email address",
             }
 
             auth_instance.check_authentication(auth_url="https://example.com")
@@ -122,11 +120,10 @@ def test_authenticate_function(
     token_data = {
         "access_token": "test_access_token",
         "token_type": "Bearer",
-        "expires_in": 3600,
-        "expires": datetime.now().timestamp() + 3600,
+        "expires": int(datetime.now(timezone.utc).timestamp() + 3600),
         "refresh_token": "test_refresh_token",
-        "refresh_expires_in": 7200,
-        "refresh_expires": datetime.now().timestamp() + 7200,
+        "refresh_expires": int(datetime.now(timezone.utc).timestamp() + 7200),
+        "scope": "profile email address",
     }
     try:
         with mocker.patch(
@@ -149,11 +146,10 @@ def test_authenticate_function_with_refresh_token(
     token_data = {
         "access_token": "test_access_token",
         "token_type": "Bearer",
-        "expires_in": 3600,
-        "expires": datetime.now().timestamp() + 3600,
+        "expires": int(datetime.now(timezone.utc).timestamp() + 3600),
         "refresh_token": "test_refresh_token",
-        "refresh_expires_in": 7200,
-        "refresh_expires": datetime.now().timestamp() + 7200,
+        "refresh_expires": int(datetime.now(timezone.utc).timestamp() + 7200),
+        "scope": "profile email address",
     }
     try:
         with mocker.patch(
@@ -173,14 +169,13 @@ def test_authenticate_function_with_refresh_token(
 def test_authentication_fail(mocker: MockFixture, auth_instance: Auth) -> None:
     """Test the behviour if the authentications fails."""
     old_token_data = deepcopy(auth_instance._auth_token)
-    mock_token_data: Token = {
+    mock_token_data = {
         "access_token": "test_access_token",
         "token_type": "Bearer",
-        "expires_in": 3600,
-        "expires": datetime.now().timestamp() - 3600,
+        "expires": int(datetime.now(timezone.utc).timestamp() - 3600),
         "refresh_token": "test_refresh_token",
-        "refresh_expires_in": 7200,
-        "refresh_expires": datetime.now().timestamp() - 7200,
+        "refresh_expires": int(datetime.now(timezone.utc).timestamp() - 7200),
+        "scope": "profile email address",
     }
     with mocker.patch(
         "freva_client.auth.OAuth2Session.refresh_token",
@@ -215,14 +210,13 @@ def test_authentication_fail(mocker: MockFixture, auth_instance: Auth) -> None:
 def test_real_auth(test_server: str, auth_instance: Auth) -> None:
     """Test authentication at the keycloak instance."""
     old_token_data = deepcopy(auth_instance._auth_token)
-    mock_token_data: Token = {
+    mock_token_data = {
         "access_token": "test_access_token",
         "token_type": "Bearer",
-        "expires_in": 3600,
-        "expires": datetime.now().timestamp() - 3600,
+        "expires": int(datetime.now(timezone.utc).timestamp() - 3600),
         "refresh_token": "test_refresh_token",
-        "refresh_expires_in": 7200,
-        "refresh_expires": datetime.now().timestamp() - 7200,
+        "refresh_expires": int(datetime.now(timezone.utc).timestamp() - 7200),
+        "scope": "profile email address",
     }
 
     try:

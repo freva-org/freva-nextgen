@@ -1,8 +1,8 @@
 """Module that handles the authentication at the rest service."""
 
-from datetime import datetime
+import datetime
 from getpass import getpass, getuser
-from typing import Optional, TypedDict
+from typing import Optional, TypedDict, Union
 
 from authlib.integrations.requests_client import OAuth2Session
 
@@ -14,9 +14,10 @@ Token = TypedDict(
     {
         "access_token": str,
         "token_type": str,
-        "expires": float,
+        "expires": int,
         "refresh_token": str,
-        "refresh_expires": float,
+        "refresh_expires": int,
+        "scope": str,
     },
 )
 
@@ -36,13 +37,13 @@ class Auth:
         self._auth_cls = OAuth2Session()
 
     @property
-    def token_expiration_time(self) -> datetime:
+    def token_expiration_time(self) -> datetime.datetime:
         """Get the expiration time of an access token."""
         if self._auth_token is None:
             exp = 0.0
         else:
             exp = self._auth_token["expires"]
-        return datetime.fromtimestamp(exp)
+        return datetime.datetime.fromtimestamp(exp, datetime.timezone.utc)
 
     def set_token(
         self,
@@ -50,19 +51,21 @@ class Auth:
         refresh_token: Optional[str] = None,
         expires_in: int = 10,
         refresh_expires_in: int = 10,
-        expires: Optional[float] = None,
-        refresh_expires: Optional[float] = None,
+        expires: Optional[Union[float, int]] = None,
+        refresh_expires: Optional[Union[float, int]] = None,
         token_type: str = "Bearer",
+        scope: str = "profile email address",
     ) -> Token:
         """Override the existing auth token."""
-        now = datetime.now().timestamp()
+        now = datetime.datetime.now(datetime.timezone.utc).timestamp()
 
         self._auth_token = Token(
             access_token=access_token or "",
             refresh_token=refresh_token or "",
             token_type=token_type,
-            expires=expires or now + expires_in,
-            refresh_expires=refresh_expires or now + refresh_expires_in,
+            expires=int(expires or now + expires_in),
+            refresh_expires=int(refresh_expires or now + refresh_expires_in),
+            scope=scope,
         )
         return self._auth_token
 
@@ -75,9 +78,10 @@ class Auth:
             return self.set_token(
                 access_token=auth["access_token"],
                 token_type=auth["token_type"],
-                expires_in=auth["expires_in"],
+                expires=auth["expires"],
                 refresh_token=auth["refresh_token"],
-                refresh_expires_in=auth["refresh_expires_in"],
+                refresh_expires=auth["refresh_expires"],
+                scope=auth["scope"],
             )
         except KeyError:
             logger.warning("Failed to refresh token: %s", auth.get("detail", ""))
@@ -94,7 +98,7 @@ class Auth:
         """
         if not self._auth_token:
             raise ValueError("You must authenticate first.")
-        now = datetime.now().timestamp()
+        now = datetime.datetime.now(datetime.timezone.utc).timestamp()
         if now > self._auth_token["refresh_expires"]:
             raise ValueError("Refresh token has expired.")
         if now > self._auth_token["expires"] and auth_url:
@@ -111,9 +115,10 @@ class Auth:
             return self.set_token(
                 access_token=auth["access_token"],
                 token_type=auth["token_type"],
-                expires_in=auth["expires_in"],
+                expires=auth["expires"],
                 refresh_token=auth["refresh_token"],
-                refresh_expires_in=auth["refresh_expires_in"],
+                refresh_expires=auth["refresh_expires"],
+                scope=auth["scope"],
             )
         except KeyError:
             logger.error("Failed to authenticate: %s", auth.get("detail", ""))
@@ -141,7 +146,7 @@ class Auth:
         username = username or getuser()
         if self._auth_token is None or force:
             return self._login_with_password(cfg.auth_url, username)
-        if self.token_expiration_time < datetime.now():
+        if self.token_expiration_time < datetime.datetime.now(datetime.timezone.utc):
             self._refresh(cfg.auth_url, self._auth_token["refresh_token"], username)
         return self._auth_token
 
