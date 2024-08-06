@@ -6,7 +6,7 @@ from typing import Optional
 
 import typer
 from freva_client import authenticate
-from freva_client.utils import exception_handler
+from freva_client.utils import exception_handler, logger
 
 from .cli_utils import version_callback
 
@@ -49,6 +49,9 @@ def authenticate_cli(
         "-f",
         help="Force token recreation, even if current token is still valid.",
     ),
+    verbose: int = typer.Option(
+        0, "-v", help="Increase verbosity", count=True
+    ),
     version: Optional[bool] = typer.Option(
         False,
         "-V",
@@ -58,6 +61,7 @@ def authenticate_cli(
     ),
 ) -> None:
     """Create OAuth2 access and refresh token."""
+    logger.set_verbosity(verbose)
     token_data = authenticate(
         host=host,
         username=username,

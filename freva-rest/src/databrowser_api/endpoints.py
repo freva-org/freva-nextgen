@@ -5,7 +5,7 @@ from typing import Annotated, List, Literal, Union
 
 from fastapi import Depends, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse, StreamingResponse
-from freva_rest.auth import TokenPayload, get_current_user
+from freva_rest.auth import TokenPayload, auth
 from freva_rest.rest import app, server_config
 
 from .core import FlavourType, SolrSearch, Translator
@@ -208,12 +208,12 @@ async def load_data(
         ),
     ] = None,
     request: Request = Required,
-    current_user: TokenPayload = Depends(get_current_user),
+    current_user: TokenPayload = Depends(auth.required),
 ) -> StreamingResponse:
     """Search for datasets and stream the results as zarr."""
     if "zarr-stream" not in os.getenv("API_SERVICES", ""):
         raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Service not enabled.",
         )
     solr_search = await SolrSearch.validate_parameters(

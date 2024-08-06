@@ -1,6 +1,10 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [v2408.0.0]
+### Changed
+- Only use open id connect discovery url for authentication.
+
 ## [v2403.0.3]
 
 ### Changed

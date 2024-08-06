@@ -863,14 +863,14 @@ class SolrSearch:
             prefix = suffix = ""
             uri = result[self.uniq_key]
             uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, uri))
-            cache = await create_redis_connection()
             try:
+                cache = await create_redis_connection()
                 await cache.publish(
                     "data-portal",
                     json.dumps({"uri": {"path": uri, "uuid": uuid5}}).encode("utf-8"),
                 )
             except Exception as error:
-                logger.error("Cloud not connect to reddis: %s", error)
+                logger.error("Cloud not connect to redis: %s", error)
                 yield "Internal error, service not available\n"
                 continue
             output = f"{api_path}/{uuid5}.zarr"

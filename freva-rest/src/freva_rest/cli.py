@@ -37,6 +37,11 @@ variables can be set:
                           the redis connection.
 - ``REDIS_SSL_KEYFILE``: Path to the TSL key file used to encrypt the redis
                          connection.
+- ``OIDC_URL``: Discovery of the open connect id service.
+- ``OIDC_CLIENT_ID``: Name of the client (app) that is used to create
+                          the access tokens, defaults to freva
+- ``OIDC_CLIENT_SECRET``: You can set a client secret, if you have
+
 📝  You can override the path to the default config file using the
     ``API_CONFIG`` environment variable. The default location of this config
     file is ``/opt/databrowser/api_config.toml``.
@@ -154,9 +159,10 @@ def start(
             asyncio.run(read_data(core, cfg.solr_host, cfg.solr_port))
     workers = {False: int(os.environ.get("API_WORKER", 8)), True: None}
     ssl_cert, ssl_key = get_cert_file(ssl_cert_dir, ssl_cert, ssl_key)
-    keycloak_client_id = os.getenv("KEYCLOAK_CLIENT_ID", "freva")
-    keycloak_client_secret = os.getenv("KEYCLOAK_CLIENT_SECRET", "")
+    oidc_client_id = os.getenv("OIDC_CLIENT_ID", "freva")
+    oidc_client_secret = os.getenv("OIDC_CLIENT_SECRET", "")
     api_services = ",".join(services).replace("_", "-")
+    oidc_url = "http://localhost:8080/realms/freva/.well-known/openid-configuration"
     with NamedTemporaryFile(suffix=".conf", prefix="env") as temp_f:
         Path(temp_f.name).write_text(
             (
@@ -169,10 +175,9 @@ def start(
                 f"REDIS_USER={os.getenv('REDIS_USER', 'redis')}\n"
                 f"REDIS_SSL_CERTFILE={ssl_cert or ''}\n"
                 f"REDIS_SSL_KEYFILE={ssl_key or ''}\n"
-                f"KEYCLOAK_HOST={os.getenv('KEYCLOAK_HOST', 'http://localhost:8080')}\n"
-                f"KEYCLOAK_REALM={os.getenv('KEYCLOAK_REALM', 'freva')}\n"
-                f"KEYCLOAK_CLIENT_ID={keycloak_client_id}\n"
-                f"KEYCLOAK_CLIENT_SECRET={keycloak_client_secret}\n"
+                f"OICD_URL={os.getenv('OIDC_URL', oidc_url)}\n"
+                f"OICD_CLIENT_ID={oidc_client_id}\n"
+                f"OICD_CLIENT_SECRET={oidc_client_secret}\n"
                 f"API_URL={defaults['API_URL']}\n"
                 f"API_SERVICES={api_services}\n"
             ),
