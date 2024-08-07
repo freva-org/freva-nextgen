@@ -27,8 +27,8 @@ services:
       REDIS_SSL_KEYFILE: /certs/client-key.pem
     hostname: redis
     volumes:
-      - ./redis-cmd.sh:/usr/local/bin/redis-cmd
-      - ./certs:/certs
+      - ./config/redis/redis-cmd.sh:/usr/local/bin/redis-cmd
+      - ./config/certs:/certs
     command: /usr/local/bin/redis-cmd
   keycloak:
     networks:
@@ -42,8 +42,8 @@ services:
       JAVA_OPTS_APPEND: "-Djava.net.preferIPv4Stack=true"
     hostname: keycloak
     volumes:
-      - ./certs:/certs
-      - ./keycloak/import:/opt/keycloak/data/import:z
+      - ./config/certs:/certs
+      - ./config/keycloak/import:/opt/keycloak/data/import:z
     ports:
       - "8080:8080"
       - "8443:8443"
@@ -67,7 +67,7 @@ services:
     networks:
       - freva-rest
     volumes:
-      - ./keycloak/users.ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom/users.ldif
+      - ./config/keycloak/users.ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom/users.ldif
   mongodb:
     networks:
       - freva-rest

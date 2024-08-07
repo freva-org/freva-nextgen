@@ -21,14 +21,14 @@ jobs:
         run: |
           python3 -m pip install -e ./freva-rest[dev] -e ./freva-data-portal-worker[full]
       - name: Generate self signed keys
-        run: |
-          python3 run_server.py --gen-certs
+        run: python dev-env/config/dev-utils.py gen-certs
       - name: Set up services
         run: |
           docker compose -f dev-env/docker-compose.yaml up -d --remove-orphans
       - name: Waiting for keycloak
-        run: |
-          python run_server.py -w
+        run: >
+          python dev-env/config/dev-utils.py oidc
+          http://localhost:8080/realms/freva/.well-known/openid-configuration
       - name: Starting the local server
         run: |
           python run_server.py -c api_config.toml --debug --dev -p 7777
@@ -54,14 +54,14 @@ jobs:
         run: |
           python3 -m pip install -e ./freva-rest[dev] -e ./freva-data-portal-worker[full]
       - name: Generate self signed keys
-        run: |
-          python3 run_server.py --gen-certs
+        run: python dev-env/config/dev-utils.py gen-certs
       - name: Set up services
         run: |
           docker compose -f dev-env/docker-compose.yaml up -d --remove-orphans
       - name: Waiting for keycloak
-        run: |
-          python run_server.py -w
+        run: >
+          python dev-env/config/dev-utils.py oidc
+          http://localhost:8080/realms/freva/.well-known/openid-configuration
       - name: Run tests
         run: tox -e test
       - name: Upload coverage to Codecov
@@ -79,14 +79,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          submodules: recursive
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 
       - name: Generate self signed keys
-        run: |
-          python3 run_server.py --gen-certs
+        run: python dev-env/config/dev-utils.py gen-certs
 
       - name: Set up services
         run: |
@@ -104,8 +103,9 @@ jobs:
           tags: freva-rest:latest
 
       - name: Waiting for keycloak
-        run: |
-          python3 run_server.py -w
+        run: >
+          python dev-env/config/dev-utils.py oidc
+          http://localhost:8080/realms/freva/.well-known/openid-configuration
 
       - name: Check databrowser image
         run: python3 dev-env/check-container.py
