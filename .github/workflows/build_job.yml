@@ -28,14 +28,14 @@ jobs:
         run: |
           python3 -m pip install -e ./freva-rest[dev] ./freva-data-portal-worker
       - name: Generate self signed keys
-        run: |
-          python3 run_server.py --gen-certs
+        run: python dev-env/config/dev-utils.py gen-certs
       - name: Set up services
         run: |
           docker compose -f dev-env/docker-compose.yaml up -d --remove-orphans
       - name: Waiting for keycloak
-        run: |
-          python run_server.py -w
+        run: >
+          python dev-env/config/dev-utils.py oidc
+          http://localhost:8080/realms/freva/.well-known/openid-configuration
       - name: Starting the local server
         run: |
           python run_server.py -c api_config.toml --debug --dev -p 7777
