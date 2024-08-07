@@ -103,7 +103,7 @@ jobs:
           tags: freva-rest:latest
 
       - name: Waiting for keycloak
-        run: |
+        run: >
           python dev-env/config/dev-utils.py oidc
           http://localhost:8080/realms/freva/.well-known/openid-configuration
 
