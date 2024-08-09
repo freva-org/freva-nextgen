@@ -56,7 +56,7 @@ def test_str_to_int() -> None:
 
 def test_get_auth_userinfo() -> None:
     """Test getting the authenticated user information."""
-    out = get_userinfo({"e-mail": "foo@bar", "lastname": "Doe", "given_name": "Jane"})
+    out = get_userinfo({"email": "foo@bar", "lastname": "Doe", "given_name": "Jane"})
     assert out["email"] == "foo@bar"
     assert out["last_name"] == "Doe"
     assert out["first_name"] == "Jane"
