@@ -2,7 +2,7 @@
 
 from copy import deepcopy
 from datetime import datetime, timezone
-from unittest.mock import Mock
+from typing import Dict
 
 import pytest
 import requests
@@ -15,9 +15,7 @@ def raise_for_status() -> None:
     raise requests.HTTPError("Invalid")
 
 
-def test_authenticate_with_password(
-    mocker: MockFixture, auth_instance: Auth
-) -> None:
+def test_authenticate_with_password(mocker: MockFixture, auth_instance: Auth) -> None:
     """Test authentication using username and password."""
     old_token_data = deepcopy(auth_instance._auth_token)
     try:
@@ -26,9 +24,7 @@ def test_authenticate_with_password(
             "token_type": "Bearer",
             "expires": int(datetime.now(timezone.utc).timestamp() + 3600),
             "refresh_token": "test_refresh_token",
-            "refresh_expires": int(
-                datetime.now(timezone.utc).timestamp() + 7200
-            ),
+            "refresh_expires": int(datetime.now(timezone.utc).timestamp() + 7200),
             "scope": "profile email address",
         }
         with mocker.patch(
@@ -38,9 +34,7 @@ def test_authenticate_with_password(
             auth_instance.authenticate(host="https://example.com")
         assert isinstance(auth_instance._auth_token, dict)
         assert auth_instance._auth_token["access_token"] == "test_access_token"
-        assert (
-            auth_instance._auth_token["refresh_token"] == "test_refresh_token"
-        )
+        assert auth_instance._auth_token["refresh_token"] == "test_refresh_token"
     finally:
         auth_instance._auth_token = old_token_data
 
@@ -69,9 +63,7 @@ def test_authenticate_with_refresh_token(
 
         assert isinstance(auth_instance._auth_token, dict)
         assert auth_instance._auth_token["access_token"] == "test_access_token"
-        assert (
-            auth_instance._auth_token["refresh_token"] == "test_refresh_token"
-        )
+        assert auth_instance._auth_token["refresh_token"] == "test_refresh_token"
     finally:
         auth_instance._auth_token = old_token_data
 
@@ -105,16 +97,12 @@ def test_refresh_token(mocker: MockFixture, auth_instance: Auth) -> None:
 
         assert isinstance(auth_instance._auth_token, dict)
         assert auth_instance._auth_token["access_token"] == "new_access_token"
-        assert (
-            auth_instance._auth_token["refresh_token"] == "new_refresh_token"
-        )
+        assert auth_instance._auth_token["refresh_token"] == "new_refresh_token"
     finally:
         auth_instance._auth_token = old_token_data
 
 
-def test_authenticate_function(
-    mocker: MockFixture, auth_instance: Auth
-) -> None:
+def test_authenticate_function(mocker: MockFixture, auth_instance: Auth) -> None:
     """Test the authenticate function with username and password."""
     old_token_data = deepcopy(auth_instance._auth_token)
     token_data = {
@@ -195,14 +183,10 @@ def test_authentication_fail(mocker: MockFixture, auth_instance: Auth) -> None:
                         refresh_token="test_refresh_token",
                     )
                 with pytest.raises(ValueError):
-                    auth_instance.check_authentication(
-                        auth_url="https://example.com"
-                    )
+                    auth_instance.check_authentication(auth_url="https://example.com")
                 auth_instance._auth_token = mock_token_data
                 with pytest.raises(ValueError):
-                    auth_instance.check_authentication(
-                        auth_url="https://example.com"
-                    )
+                    auth_instance.check_authentication(auth_url="https://example.com")
             finally:
                 auth_instance._auth_token = old_token_data
 
@@ -231,3 +215,27 @@ def test_real_auth(test_server: str, auth_instance: Auth) -> None:
         assert token_data2["access_token"] == token
     finally:
         auth_instance._auth_token = old_token_data
+
+
+def test_userinfo(mocker: MockFixture, test_server: str, auth: Dict[str, str]) -> None:
+    """Test getting the user info."""
+    from freva_rest.auth import get_userinfo
+
+    res = requests.get(
+        f"{test_server}//api/auth/v2/userinfo",
+        headers={"Authorization": f"Bearer {auth['access_token']}"},
+        timeout=3,
+    )
+    assert res.status_code == 200
+    assert "last_name" in res.json()
+    with mocker.patch("freva_rest.auth.get_userinfo", return_value={}):
+        res = requests.get(
+            f"{test_server}//api/auth/v2/userinfo",
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+            timeout=3,
+        )
+        assert res.status_code == 404
+    out = get_userinfo({"e-mail": "foo@bar", "lastname": "Doe", "given_name": "Jane"})
+    assert out["email"] == "foo@bar"
+    assert out["last_name"] == "Doe"
+    assert out["first_name"] == "Jane"
