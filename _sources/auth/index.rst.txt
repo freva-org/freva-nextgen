@@ -45,8 +45,8 @@ included in the authorization header for secured endpoints.
                      request an OAuth2 access token from the authentication
                      server, this form parameter is optional.
     :type client_id: str
-    :form client_secret: An optional client secret used for authentication
-                         this parameters is optional an in most cases not neeede
+    :form client_secret: An optional client secret used for authentication.
+                         This param. is optional and in most cases not needed
     :type client_secret: str
     :statuscode 200: no error
     :statuscode 401: unauthorized
@@ -77,11 +77,10 @@ included in the authorization header for secured endpoints.
         {
             "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6.."
             "token_type": "Bearer",
-            "expires_in": 300,
+            "expires": 1722874908,
             "refresh_token": "eyJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia2lkIi.."
-            "refresh_expires_in": 1800,
-            "scope": "email",
-            "not-before-policy": 0
+            "refresh_expires": 1722876408,
+            "scope": "profile email address",
         }
 
     Code examples
