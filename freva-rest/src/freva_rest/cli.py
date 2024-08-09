@@ -107,6 +107,26 @@ def start(
         "--services",
         help="Set additional services this rest API should serve.",
     ),
+    oidc_url: str = typer.Option(
+        os.environ.get(
+            "OIDC_URL",
+            "http://localhost:8080/realms/freva/.well-known/openid-configuration",
+        ),
+        "--oidc-url",
+        "--openid-connect-url",
+        help="The url to openid configuration",
+    ),
+    oidc_client_id: str = typer.Option(
+        os.environ.get("OIDC_CLIENT_ID", "freva"),
+        "--oidc-client-id",
+        "--oidc-client",
+        help="Name of the openid client.",
+    ),
+    oidc_client_secret: Optional[str] = typer.Option(
+        os.environ.get("OIDC_CLIENT_SECRET", ""),
+        "--oidc-client-secret",
+        help="Name of the openid client secret.",
+    ),
     ssl_cert_dir: Optional[str] = typer.Option(
         None,
         "--cert-dir",
@@ -159,10 +179,7 @@ def start(
             asyncio.run(read_data(core, cfg.solr_host, cfg.solr_port))
     workers = {False: int(os.environ.get("API_WORKER", 8)), True: None}
     ssl_cert, ssl_key = get_cert_file(ssl_cert_dir, ssl_cert, ssl_key)
-    oidc_client_id = os.getenv("OIDC_CLIENT_ID", "freva")
-    oidc_client_secret = os.getenv("OIDC_CLIENT_SECRET", "")
     api_services = ",".join(services).replace("_", "-")
-    oidc_url = "http://localhost:8080/realms/freva/.well-known/openid-configuration"
     with NamedTemporaryFile(suffix=".conf", prefix="env") as temp_f:
         Path(temp_f.name).write_text(
             (
@@ -175,9 +192,9 @@ def start(
                 f"REDIS_USER={os.getenv('REDIS_USER', 'redis')}\n"
                 f"REDIS_SSL_CERTFILE={ssl_cert or ''}\n"
                 f"REDIS_SSL_KEYFILE={ssl_key or ''}\n"
-                f"OICD_URL={os.getenv('OIDC_URL', oidc_url)}\n"
+                f"OICD_URL={oidc_url}\n"
                 f"OICD_CLIENT_ID={oidc_client_id}\n"
-                f"OICD_CLIENT_SECRET={oidc_client_secret}\n"
+                f"OICD_CLIENT_SECRET={oidc_client_secret or ''}\n"
                 f"API_URL={defaults['API_URL']}\n"
                 f"API_SERVICES={api_services}\n"
             ),

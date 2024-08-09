@@ -9,7 +9,7 @@ import rasterio
 import zarr
 from data_portal_worker.backends.posix import get_xr_engine
 from data_portal_worker.utils import str_to_int as str_to_int2
-from freva_rest.utils import str_to_int
+from freva_rest.utils import get_userinfo, str_to_int
 
 
 def create_netcdf4_file(temp_dir: str) -> str:
@@ -52,6 +52,14 @@ def test_str_to_int() -> None:
         assert func(None, 3) == 3
         assert func("a", 3) == 3
         assert func("4", 3) == 4
+
+
+def test_get_auth_userinfo() -> None:
+    """Test getting the authenticated user information."""
+    out = get_userinfo({"email": "foo@bar", "lastname": "Doe", "given_name": "Jane"})
+    assert out["email"] == "foo@bar"
+    assert out["last_name"] == "Doe"
+    assert out["first_name"] == "Jane"
 
 
 def test_get_xr_posix_engine() -> None:

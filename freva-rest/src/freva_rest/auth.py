@@ -2,21 +2,33 @@
 
 import datetime
 import os
-from typing import Annotated, Dict, Literal, Optional, cast
+from typing import Annotated, Any, Dict, Literal, Optional, cast
 
 import aiohttp
-from fastapi import Form, HTTPException, Security
+from fastapi import Form, HTTPException, Request, Security
 from fastapi.responses import RedirectResponse
 from fastapi_third_party_auth import Auth, IDToken
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ValidationError
 
 from .logger import logger
 from .rest import app, server_config
+from .utils import get_userinfo
 
 auth = Auth(openid_connect_url=server_config.oidc_discovery_url)
 
+Required: Any = Ellipsis
+
 TIMEOUT: aiohttp.ClientTimeout = aiohttp.ClientTimeout(total=5)
 """5 seconds for timeout for key cloak interaction."""
+
+
+class UserInfo(BaseModel):
+    """Basic user info."""
+
+    username: Annotated[str, Field(min_length=1)]
+    last_name: Annotated[str, Field(min_length=1)]
+    first_name: Annotated[str, Field(min_length=1)]
+    email: str
 
 
 class TokenPayload(BaseModel):
@@ -39,11 +51,35 @@ class Token(BaseModel):
 
 
 @app.get("/api/auth/v2/status", tags=["Authentication"])
-async def get_token_status(
-    id_token: IDToken = Security(auth.required),
-) -> TokenPayload:
+async def get_token_status(id_token: IDToken = Security(auth.required)) -> TokenPayload:
     """Check the status of an access token."""
     return cast(TokenPayload, id_token)
+
+
+@app.get("/api/auth/v2/userinfo", tags=["Authentication"])
+async def userinfo(
+    id_token: IDToken = Security(auth.required), request: Request = Required
+) -> UserInfo:
+    """Get userinfo for the current token."""
+    token_data = {k.lower(): str(v) for (k, v) in dict(id_token).items()}
+    try:
+        return UserInfo(**get_userinfo(token_data))
+    except ValidationError:
+        authorization = dict(request.headers)["authorization"]
+        try:
+            async with aiohttp.ClientSession(timeout=TIMEOUT) as client:
+                response = await client.get(
+                    server_config.oidc_overview["userinfo_endpoint"],
+                    headers={"Authorization": authorization},
+                )
+                response.raise_for_status()
+                token_data = await response.json()
+                return UserInfo(
+                    **get_userinfo({k.lower(): str(v) for (k, v) in token_data.items()})
+                )
+        except Exception as error:
+            logger.error(error)
+            raise HTTPException(status_code=404) from error
 
 
 @app.get(
