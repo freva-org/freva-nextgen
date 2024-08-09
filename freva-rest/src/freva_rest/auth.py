@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from .logger import logger
 from .rest import app, server_config
+from .utils import get_userinfo
 
 auth = Auth(openid_connect_url=server_config.oidc_discovery_url)
 
@@ -49,33 +50,6 @@ class Token(BaseModel):
     scope: str
 
 
-def get_userinfo(user_info: Dict[str, str]) -> Dict[str, str]:
-    """Convert a user_info dictionary to the UserInfo Model."""
-    output = {}
-    keys = {
-        "email": ("mail", "email"),
-        "username": ("preferred-username", "user-name", "uid"),
-        "last_name": ("last-name", "family-name", "name", "surname"),
-        "first_name": ("first-name", "given-name"),
-    }
-    for key, entries in keys.items():
-        for entry in entries:
-            if user_info.get(entry):
-                output[key] = user_info[entry]
-                break
-            if user_info.get(entry.replace("-", "_")):
-                output[key] = user_info[entry.replace("-", "_")]
-                break
-            if user_info.get(entry.replace("-", "")):
-                output[key] = user_info[entry.replace("-", "")]
-                break
-    # Strip all the middle names
-    name = output.get("first_name", "") + " " + output.get("last_name", "")
-    output["first_name"] = name.partition(" ")[0]
-    output["last_name"] = name.rpartition(" ")[-1]
-    return output
-
-
 @app.get("/api/auth/v2/status", tags=["Authentication"])
 async def get_token_status(id_token: IDToken = Security(auth.required)) -> TokenPayload:
     """Check the status of an access token."""
@@ -91,7 +65,7 @@ async def userinfo(
     try:
         return UserInfo(**get_userinfo(token_data))
     except ValidationError:
-        authorization = request.headers.get("authorization")
+        authorization = dict(request.headers)["authorization"]
         try:
             async with aiohttp.ClientSession(timeout=TIMEOUT) as client:
                 response = await client.get(

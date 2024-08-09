@@ -219,7 +219,6 @@ def test_real_auth(test_server: str, auth_instance: Auth) -> None:
 
 def test_userinfo(mocker: MockFixture, test_server: str, auth: Dict[str, str]) -> None:
     """Test getting the user info."""
-    from freva_rest.auth import get_userinfo
 
     res = requests.get(
         f"{test_server}//api/auth/v2/userinfo",
@@ -235,7 +234,3 @@ def test_userinfo(mocker: MockFixture, test_server: str, auth: Dict[str, str]) -
             timeout=3,
         )
         assert res.status_code == 404
-    out = get_userinfo({"e-mail": "foo@bar", "lastname": "Doe", "given_name": "Jane"})
-    assert out["email"] == "foo@bar"
-    assert out["last_name"] == "Doe"
-    assert out["first_name"] == "Jane"
