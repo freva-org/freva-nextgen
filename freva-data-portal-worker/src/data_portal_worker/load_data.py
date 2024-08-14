@@ -4,7 +4,7 @@ import json
 import os
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, Literal, Optional, TypedDict, cast
+from typing import Any, Dict, Literal, Optional, Tuple, TypedDict, cast
 
 import cloudpickle  # fades cloudpickle
 import redis  # fades redis
@@ -12,12 +12,8 @@ import xarray as xr  # fades xarray
 from dask.distributed import LocalCluster  # fades distributed
 from dask.distributed import Client
 from xarray.backends.zarr import encode_zarr_variable
-from xpublish.utils.zarr import (  # fades xpublish
-    create_zmetadata,
-    encode_chunk,
-    get_data_chunk,
-    jsonify_zmetadata,
-)
+from xpublish.utils.zarr import create_zmetadata  # fades xpublish
+from xpublish.utils.zarr import encode_chunk, get_data_chunk, jsonify_zmetadata
 from zarr.storage import array_meta_key
 
 from .backends import load_data
@@ -32,7 +28,6 @@ LoadDict = TypedDict(
     {
         "status": Literal[0, 1, 2, 3],
         "url": str,
-        "obj": Optional[xr.Dataset],
         "obj_path": str,
         "reason": str,
         "meta": Optional[Dict[str, Any]],
@@ -88,8 +83,6 @@ class LoadStatus:
     """
     obj_path: str
     """url of the zarr dataset once finished."""
-    obj: Optional[xr.Dataset]
-    """pickled memory view of the opened dataset."""
     reason: str
     """if status = 1 reasone why opening the dataset failed."""
     meta: Optional[Dict[str, Any]] = None
@@ -103,7 +96,6 @@ class LoadStatus:
         """Convert object to dict."""
         return {
             "status": self.status,
-            "obj": self.obj,
             "obj_path": self.obj_path,
             "reason": self.reason,
             "meta": self.meta,
@@ -116,7 +108,6 @@ class LoadStatus:
         """Create an instance of the class from a normal python dict."""
         _dict = load_dict or {
             "status": 2,
-            "obj": None,
             "reason": "",
             "url": "",
             "obj_path": "",
@@ -185,6 +176,7 @@ class DataLoadFactory:
         ).dict()
         expires_in = str_to_int(os.environ.get("API_CACHE_EXP"), 3600)
         status_dict["status"] = 3
+        dset: Optional[xr.Dataset] = None
         self.cache.setex(path_id, expires_in, cloudpickle.dumps(status_dict))
         data_logger.debug("Reading %s", input_path)
         try:
@@ -192,9 +184,16 @@ class DataLoadFactory:
             dset = load_data(input_path)
             metadata = create_zmetadata(dset)
             status_dict["json_meta"] = jsonify_zmetadata(dset, metadata)
-            status_dict["obj"] = dset
             status_dict["meta"] = metadata
             status_dict["status"] = 0
+            # We need to add the xarray to an extra cache entry because the
+            # status_dict will be loaded by the rest-api, if the xarray dataset
+            # is present the rest-api code will attempt to instanciate the
+            # pickled dataset object and that might fail because we might or
+            # might not have xarray and all the backends instanciated.
+            # Since the xarray dataset object isn't needed anyway byt the
+            # rest-api we simply add it to a cache entry of its own.
+            self.cache.setex(f"{path_id}-dset", expires_in, cloudpickle.dumps(dset))
         except Exception as error:
             data_logger.exception("Could not process %s: %s", path_id, error)
             status_dict["status"] = 1
@@ -212,15 +211,12 @@ class DataLoadFactory:
         variable: str,
     ) -> None:
         """Read the zarr metadata from the cache."""
-        pickle_data = self.load_object(key)
-        dset = cast(xr.Dataset, pickle_data["obj"])
+        pickle_data, dset = self.load_object(key)
         meta = cast(Dict[str, Any], pickle_data["meta"])
         arr_meta = meta["metadata"][f"{variable}/{array_meta_key}"]
         data = encode_chunk(
             get_data_chunk(
-                encode_zarr_variable(
-                    dset.variables[variable], name=variable
-                ).data,
+                encode_zarr_variable(dset.variables[variable], name=variable).data,
                 chunk,
                 out_shape=arr_meta["chunks"],
             ).tobytes(),
@@ -229,7 +225,7 @@ class DataLoadFactory:
         )
         self.cache.setex(f"{key}-{variable}-{chunk}", 360, data)
 
-    def load_object(self, key: str) -> LoadDict:
+    def load_object(self, key: str) -> Tuple[LoadDict, xr.Dataset]:
         """Load a cached dataset.
 
         Parameters
@@ -247,9 +243,12 @@ class DataLoadFactory:
         KeyError: If the key doesn't exist in the cache (anymore).
         """
         data_cache = self.cache.get(key)
-        if data_cache is None:
+        dset_bin = self.cache.get(f"{key}-dset")
+        if data_cache is None or dset_bin is None:
             raise KeyError(f"{key} uuid does not exist (anymore).")
-        return cast(LoadDict, cloudpickle.loads(data_cache))
+        load_dict = cast(LoadDict, cloudpickle.loads(data_cache))
+        dset = cast(xr.Dataset, cloudpickle.loads(dset_bin))
+        return load_dict, dset
 
 
 class ProcessQueue(DataLoadFactory):
@@ -302,16 +301,11 @@ class ProcessQueue(DataLoadFactory):
 
     def spawn(self, inp_obj: str, uuid5: str) -> str:
         """Subumit a new data loading task to the process pool."""
-        data_logger.debug(
-            "Assigning %s to %s for future processing", inp_obj, uuid5
-        )
-        data_cache: Optional[bytes] = cast(
-            Optional[bytes], self.cache.get(uuid5)
-        )
+        data_logger.debug("Assigning %s to %s for future processing", inp_obj, uuid5)
+        data_cache: Optional[bytes] = cast(Optional[bytes], self.cache.get(uuid5))
         status_dict: LoadDict = {
             "status": 2,
             "obj_path": f"/api/freva-data-portal/zarr/{uuid5}.zarr",
-            "obj": None,
             "reason": "",
             "url": "",
             "meta": None,
