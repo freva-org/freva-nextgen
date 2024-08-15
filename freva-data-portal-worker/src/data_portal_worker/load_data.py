@@ -176,7 +176,6 @@ class DataLoadFactory:
         ).dict()
         expires_in = str_to_int(os.environ.get("API_CACHE_EXP"), 3600)
         status_dict["status"] = 3
-        dset: Optional[xr.Dataset] = None
         self.cache.setex(path_id, expires_in, cloudpickle.dumps(status_dict))
         data_logger.debug("Reading %s", input_path)
         try:
@@ -242,12 +241,12 @@ class DataLoadFactory:
                       which means that there is a load status != 0
         KeyError: If the key doesn't exist in the cache (anymore).
         """
-        data_cache = self.cache.get(key)
-        dset_bin = self.cache.get(f"{key}-dset")
-        if data_cache is None or dset_bin is None:
+        metadata_cache = self.cache.get(key)
+        dset_cache = self.cache.get(f"{key}-dset")
+        if metadata_cache is None or dset_cache is None:
             raise KeyError(f"{key} uuid does not exist (anymore).")
-        load_dict = cast(LoadDict, cloudpickle.loads(data_cache))
-        dset = cast(xr.Dataset, cloudpickle.loads(dset_bin))
+        load_dict = cast(LoadDict, cloudpickle.loads(metadata_cache))
+        dset = cast(xr.Dataset, cloudpickle.loads(dset_cache))
         return load_dict, dset
 
 
