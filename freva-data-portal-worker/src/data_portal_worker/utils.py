@@ -1,6 +1,7 @@
 """Utility functions for loading data."""
 
 import logging
+import os
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from socket import gethostname
@@ -21,8 +22,10 @@ logging.basicConfig(
 )
 
 data_logger = logging.getLogger(BASE_NAME)
+
 data_logger.setLevel(logging.INFO)
-log_dir = Path(appdirs.user_log_dir("data-loader"))
+log_dir = Path("/var/log" if os.access("/var/log", os.W_OK) else appdirs.user_log_dir())
+log_dir /= "data-loader"
 log_dir.mkdir(exist_ok=True, parents=True)
 logger_file_handle = RotatingFileHandler(
     log_dir / "data-loader.log",

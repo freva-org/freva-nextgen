@@ -129,7 +129,7 @@ if [ "x$IS_WORKER" = x ]; then
     passwd=$(base64 -d ~/.data-portal-cluster-config.json | jq -r .passwd)
     cache_exp=$(base64 -d ~/.data-portal-cluster-config.json | jq -r .cache_exp)
     CMD="${MAMBA_DIR}/bin/python -m data_portal_worker \
-        -c ~/.data-portal-cluster-config.json -e \
+        -c ~/.data-portal-cluster-config.json -vv -e \
         $cache_exp -r $redis_host -p \
         $scheduler_port"
 else
