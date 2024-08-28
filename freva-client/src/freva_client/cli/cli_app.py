@@ -10,7 +10,7 @@ from .auth_cli import authenticate_cli
 from .cli_utils import APP_NAME, version_callback
 from .databrowser_cli import databrowser_app
 
-if os.getenv("FREVA_NO_RICH_PANELS", "1"):
+if os.getenv("FREVA_NO_RICH_PANELS", "0") == "1":
     typer.core.rich = None
 
 app = typer.Typer(
