@@ -6,6 +6,7 @@ env = [
     "MONGO_PASSWORD=secret",
     "SOLR_HOST=localhost:8983",
     "SOLR_CORE=files",
+    "FREVA_NO_RICH_PANELS=1",
     "FREVA_CONFIG={PWD}/dev-env/freva.toml",
     "REDIS_SSL_CERTFILE={PWD}/dev-env/config/certs/client-cert.pem",
     "REDIS_SSL_KEYFILE={PWD}/dev-env/config/certs/client-key.pem",
@@ -76,6 +77,7 @@ deps = -e ./freva-rest
        pydata-sphinx-theme
 setenv =
     FREVA_CONFIG = {toxinidir}/dev-env/freva.toml
+    FREVA_NO_RICH_PANELS = 1
 allowlist_externals = make
 commands = make -C docs clean
            make -C docs html

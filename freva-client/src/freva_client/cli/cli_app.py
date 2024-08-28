@@ -1,5 +1,6 @@
 """Freva the Free Evaluation System command line interface."""
 
+import os
 from typing import Optional
 
 import typer
@@ -8,6 +9,9 @@ from freva_client.utils import logger
 from .auth_cli import authenticate_cli
 from .cli_utils import APP_NAME, version_callback
 from .databrowser_cli import databrowser_app
+
+if os.getenv("FREVA_NO_RICH_PANELS", "0") == "1":
+    typer.core.rich = None  # type: ignore
 
 app = typer.Typer(
     name=APP_NAME,
