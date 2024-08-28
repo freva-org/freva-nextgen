@@ -11,7 +11,7 @@ from .cli_utils import APP_NAME, version_callback
 from .databrowser_cli import databrowser_app
 
 if os.getenv("FREVA_NO_RICH_PANELS", "0") == "1":
-    typer.core.rich = None
+    typer.core.rich = None  # type: ignore
 
 app = typer.Typer(
     name=APP_NAME,
