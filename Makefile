@@ -7,7 +7,7 @@ install: prepare
 prepare:
 	python3 -m pip install cryptography tox
 	mkdir -p dev-env/certs
-	python3 run_server.py --gen-certs
+	python3 dev-env/config/dev-utils.py gen-certs
 
 lint:
 	tox -e lint types
