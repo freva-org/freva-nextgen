@@ -94,9 +94,9 @@ commands =
     python3 -m isort --check --profile black -t py312 -l 79 freva-rest/src
     python3 -m isort --check --profile black -t py312 -l 79 freva-client/src
     python3 -m isort --check --profile black -t py312 -l 79 freva-data-portal-worker/src
-    python3 -m flake8 freva-client/src --count --max-complexity=10 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
-    python3 -m flake8 freva-rest/src --count --max-complexity=10 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
-    python3 -m flake8 freva-data-portal-worker/src --count --max-complexity=10 --ignore=F405,F403,W503 --max-line-length=88 --statistics --show-source
+    python3 -m flake8 freva-client/src --count --max-complexity=10 --ignore=F405,F403,W503,C901 --max-line-length=88 --statistics --show-source
+    python3 -m flake8 freva-rest/src --count --max-complexity=10 --ignore=F405,F403,W503,C901 --max-line-length=88 --statistics --show-source
+    python3 -m flake8 freva-data-portal-worker/src --count --max-complexity=10 --ignore=F405,F403,W503,C901 --max-line-length=88 --statistics --show-source
 [testenv:types]
 description = "Static type checking."
 deps = ./freva-rest

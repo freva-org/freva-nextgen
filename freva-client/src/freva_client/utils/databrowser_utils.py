@@ -57,9 +57,7 @@ class Config:
             host = f"{host}:{port}"
         return f"{scheme}://{host}"
 
-    def _read_config(
-        self, path: Path, file_type: Literal["toml", "ini"]
-    ) -> str:
+    def _read_config(self, path: Path, file_type: Literal["toml", "ini"]) -> str:
         """Read the configuration."""
         data_types = {"toml": self._read_toml, "ini": self._read_ini}
         try:
@@ -74,9 +72,7 @@ class Config:
         try:
             res = requests.get(f"{self.databrowser_url}/overview", timeout=3)
         except requests.exceptions.ConnectionError:
-            raise ValueError(
-                f"Could not connect to {self.databrowser_url}"
-            ) from None
+            raise ValueError(f"Could not connect to {self.databrowser_url}") from None
         return cast(Dict[str, Any], res.json())
 
     def _get_databrowser_host_from_config(self) -> str:
@@ -91,9 +87,7 @@ class Config:
             Path(appdirs.user_config_dir("freva")) / "freva.toml": "toml",
             Path(self.get_dirs(user=True)) / "freva.toml": "toml",
             freva_config: "toml",
-            Path(
-                os.environ.get("EVALUATION_SYSTEM_CONFIG_FILE") or eval_conf
-            ): "ini",
+            Path(os.environ.get("EVALUATION_SYSTEM_CONFIG_FILE") or eval_conf): "ini",
         }
         for config_path, config_type in paths.items():
             if config_path.is_file():
@@ -136,8 +130,7 @@ class Config:
     def metadata_url(self) -> str:
         """Define the endpoint for the metadata search."""
         return (
-            f"{self.databrowser_url}/metadata_search/"
-            f"{self.flavour}/{self.uniq_key}"
+            f"{self.databrowser_url}/metadata_search/" f"{self.flavour}/{self.uniq_key}"
         )
 
     @staticmethod
@@ -177,3 +170,8 @@ class Config:
         # The default scheme is 'posix_prefix' or 'nt', and should work for e.g.
         # installing into a virtualenv
         return Path(sysconfig.get_path("data")) / "share" / "freva"
+
+    @property
+    def userdata_url(self) -> str:
+        """Define the url for adding and deleting user-data."""
+        return f"{self.databrowser_url}/userdata"

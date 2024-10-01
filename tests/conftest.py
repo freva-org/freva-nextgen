@@ -209,7 +209,7 @@ def cfg() -> Iterator[ServerConfig]:
 @pytest.fixture(scope="module")
 def client(cfg: ServerConfig) -> Iterator[TestClient]:
     """Setup the test client for the unit test."""
-    with mock.patch("databrowser_api.endpoints.SolrSearch.batch_size", 3):
+    with mock.patch("databrowser_api.endpoints.Solr.batch_size", 3):
         with TestClient(app) as test_client:
             yield test_client
 
@@ -223,14 +223,14 @@ def client_no_mongo(cfg: ServerConfig) -> Iterator[TestClient]:
         cfg = ServerConfig(defaults["API_CONFIG"], debug=True)
         for core in cfg.solr_cores:
             asyncio.run(read_data(core, cfg.solr_host, cfg.solr_port))
-        with mock.patch("freva_rest.rest.server_config.mongo_collection", None):
+        with mock.patch("freva_rest.rest.server_config.mongo_collection_search", None):
             with TestClient(app) as test_client:
                 yield test_client
 
 
 @pytest.fixture(scope="function")
 def client_no_solr(cfg: ServerConfig) -> Iterator[TestClient]:
-    """Setup a client with an invalid mongodb."""
+    """Setup a client with an invalid solr."""
     env = os.environ.copy()
     env["SOLR_HOST"] = "foo.bar.de"
     with mock.patch.dict(os.environ, env, clear=True):

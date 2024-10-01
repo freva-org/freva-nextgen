@@ -4,6 +4,8 @@ import json
 from copy import deepcopy
 from tempfile import NamedTemporaryFile
 
+import pytest
+from fastapi import HTTPException
 from freva_client.auth import Auth, authenticate
 from freva_client.cli.databrowser_cli import databrowser_app as app
 from pytest import LogCaptureFixture
@@ -35,9 +37,7 @@ def test_search_files_normal(cli_runner: CliRunner, test_server: str) -> None:
     )
     assert res.exit_code == 0
     assert not res.stdout
-    res = cli_runner.invoke(
-        app, ["data-search", "--host", test_server, "--json"]
-    )
+    res = cli_runner.invoke(app, ["data-search", "--host", test_server, "--json"])
     assert res.exit_code == 0
     assert isinstance(json.loads(res.stdout), list)
 
@@ -49,9 +49,7 @@ def test_search_files_zarr(
     token = deepcopy(auth_instance._auth_token)
     try:
         auth_instance._auth_token = None
-        res = cli_runner.invoke(
-            app, ["data-search", "--host", test_server, "--zar"]
-        )
+        res = cli_runner.invoke(app, ["data-search", "--host", test_server, "--zar"])
         assert res.exit_code > 0
         token_data = authenticate(username="janedoe", host=test_server)
         auth_instance._auth_token = None
@@ -88,9 +86,7 @@ def test_search_files_zarr(
         auth_instance._auth_token = token
 
 
-def test_intake_catalogue_no_zarr(
-    cli_runner: CliRunner, test_server: str
-) -> None:
+def test_intake_catalogue_no_zarr(cli_runner: CliRunner, test_server: str) -> None:
     """Test intake catalgoue creation without zarr."""
 
     res = cli_runner.invoke(app, ["intake-catalogue", "--host", test_server])
@@ -149,9 +145,7 @@ def test_metadata_search(cli_runner: CliRunner, test_server: str) -> None:
     )
     assert res.exit_code == 0
     assert res.stdout
-    res = cli_runner.invoke(
-        app, ["metadata-search", "--host", test_server, "--json"]
-    )
+    res = cli_runner.invoke(app, ["metadata-search", "--host", test_server, "--json"])
     assert res.exit_code == 0
     output = json.loads(res.stdout)
     assert isinstance(output, dict)
@@ -168,9 +162,7 @@ def test_count_values(cli_runner: CliRunner, test_server: str) -> None:
     res = cli_runner.invoke(app, ["data-count", "--host", test_server])
     assert res.exit_code == 0
     assert res.stdout
-    res = cli_runner.invoke(
-        app, ["data-count", "--host", test_server, "--json"]
-    )
+    res = cli_runner.invoke(app, ["data-count", "--host", test_server, "--json"])
     assert res.exit_code == 0
     assert isinstance(json.loads(res.stdout), int)
 
@@ -240,3 +232,200 @@ def test_check_versions(cli_runner: CliRunner) -> None:
     for cmd in ("data-count", "data-search", "metadata-search"):
         res = cli_runner.invoke(app, [cmd, "-V"])
         assert res.exit_code == 0
+
+
+def test_add_userdata(
+    cli_runner: CliRunner, test_server: str, auth_instance: Auth
+) -> None:
+    """Test adding user data through the CLI."""
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance._auth_token = None
+
+        res = cli_runner.invoke(app, ["--host", test_server])
+        assert res.exit_code > 0
+
+        token_data = authenticate(username="janedoe", host=test_server)
+        auth_instance._auth_token = None
+
+        res = cli_runner.invoke(
+            app,
+            [
+                "user-data",
+                "add",
+                "janedoe",
+                "--path",
+                ".",
+                "--facet",
+                {"product": "johndoe"},
+                "--host",
+                test_server,
+                "--access-token",
+                token_data["access_token"],
+            ],
+        )
+        assert res.exit_code == 1
+        res = cli_runner.invoke(
+            app,
+            [
+                "user-data",
+                "add",
+                "janedoe",
+                "--path",
+                ".",
+                "--facet",
+                "product=johndoe",
+                "--host",
+                test_server,
+                "--access-token",
+                token_data["access_token"],
+            ],
+        )
+        assert res.exit_code == 0
+    finally:
+        auth_instance._auth_token = token
+
+
+def test_add_userdata_file(
+    cli_runner: CliRunner, test_server: str, auth_instance: Auth
+) -> None:
+    """Test adding user data through the CLI."""
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance._auth_token = None
+
+        res = cli_runner.invoke(app, ["--host", test_server])
+        assert res.exit_code > 0
+
+        token_data = authenticate(username="janedoe", host=test_server)
+        auth_instance._auth_token = None
+
+        res = cli_runner.invoke(
+            app,
+            [
+                "user-data",
+                "add",
+                "janedoe",
+                "--path",
+                "./freva-rest/src/databrowser_api/mock/data/model/global/cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/r2i1p1f1/Amon/ua/gn/v20190815/ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_gn_197901-199812.nc",
+                "--facet",
+                "product=johndoe",
+                "--host",
+                test_server,
+                "--access-token",
+                token_data["access_token"],
+            ],
+        )
+        assert res.exit_code == 0
+    finally:
+        auth_instance._auth_token = token
+
+
+def test_delete_userdata(
+    cli_runner: CliRunner, test_server: str, auth_instance: Auth
+) -> None:
+    """Test removing user data through the CLI."""
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance._auth_token = None
+
+        res = cli_runner.invoke(app, ["--host", test_server])
+        assert res.exit_code > 0
+
+        token_data = authenticate(username="janedoe", host=test_server)
+        auth_instance._auth_token = None
+        import os
+
+        cli_runner.invoke(
+            app,
+            [
+                "user-data",
+                "add",
+                "janedoe",
+                "--path",
+                "./freva-rest/src/databrowser_api/mock/data/",
+                "--host",
+                test_server,
+                "--access-token",
+                token_data["access_token"],
+            ],
+        )
+        res = cli_runner.invoke(
+            app,
+            [
+                "user-data",
+                "delete",
+                "janedoe",
+                "-s",
+                {},
+                "--host",
+                test_server,
+                "--access-token",
+                token_data["access_token"],
+            ],
+        )
+        assert res.exit_code == 1
+        res = cli_runner.invoke(
+            app,
+            [
+                "user-data",
+                "delete",
+                "janedoe",
+                "-s",
+                "product=johndoe",
+                "--host",
+                test_server,
+                "--access-token",
+                token_data["access_token"],
+            ],
+        )
+        assert res.exit_code == 0
+    finally:
+        auth_instance._auth_token = token
+
+
+def test_userdata_permission_denied(
+    cli_runner: CliRunner, test_server: str, auth_instance: Auth
+) -> None:
+    """Test permission denied user data through the CLI."""
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance._auth_token = None
+
+        res = cli_runner.invoke(app, ["--host", test_server])
+        assert res.exit_code > 0
+
+        token_data = authenticate(username="janedoe", host=test_server)
+        auth_instance._auth_token = None
+        add = cli_runner.invoke(
+            app,
+            [
+                "user-data",
+                "add",
+                "johndoe",
+                "--path",
+                "./freva-rest/src/databrowser_api/mock/data/",
+                "--host",
+                test_server,
+                "--access-token",
+                token_data["access_token"],
+            ],
+        )
+        assert add.exit_code == 1
+        delete = cli_runner.invoke(
+            app,
+            [
+                "user-data",
+                "delete",
+                "johndoe",
+                "-s",
+                "product=johndoe",
+                "--host",
+                test_server,
+                "--access-token",
+                token_data["access_token"],
+            ],
+        )
+        assert delete.exit_code == 1
+    finally:
+        auth_instance._auth_token = token

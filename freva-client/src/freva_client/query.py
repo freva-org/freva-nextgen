@@ -206,9 +206,7 @@ class databrowser:
         self,
         *facets: str,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems"
-        ] = "freva",
+        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -243,8 +241,7 @@ class databrowser:
         self, facets: Tuple[str, ...], search_kw: Dict[str, List[str]]
     ) -> None:
         metadata = {
-            k: v[::2]
-            for (k, v) in self._facet_search(extended_search=True).items()
+            k: v[::2] for (k, v) in self._facet_search(extended_search=True).items()
         }
         primary_key = list(metadata.keys() or ["project"])[0]
         num_facets = 0
@@ -267,9 +264,7 @@ class databrowser:
         headers = {}
         if self._stream_zarr:
             query_url = self._cfg.zarr_loader_url
-            token = self._auth.check_authentication(
-                auth_url=self._cfg.auth_url
-            )
+            token = self._auth.check_authentication(auth_url=self._cfg.auth_url)
             headers = {"Authorization": f"Bearer {token['access_token']}"}
         result = self._get(query_url, headers=headers, stream=True)
         if result is not None:
@@ -277,9 +272,7 @@ class databrowser:
                 for res in result.iter_lines():
                     yield res.decode("utf-8")
             except KeyboardInterrupt:
-                pprint(
-                    "[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr
-                )
+                pprint("[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr)
 
     def __repr__(self) -> str:
         params = ", ".join(
@@ -306,9 +299,7 @@ class databrowser:
 
         # Create a table-like structure for available flavors and search facets
         style = 'style="text-align: left"'
-        facet_heading = (
-            f"Available search facets for <em>{self._flavour}</em> flavour"
-        )
+        facet_heading = f"Available search facets for <em>{self._flavour}</em> flavour"
         html_repr = (
             "<table>"
             f"<tr><th colspan='2' {style}>{self.__class__.__name__}"
@@ -347,13 +338,9 @@ class databrowser:
         kwargs: Dict[str, Any] = {"stream": True}
         url = self._cfg.intake_url
         if self._stream_zarr:
-            token = self._auth.check_authentication(
-                auth_url=self._cfg.auth_url
-            )
+            token = self._auth.check_authentication(auth_url=self._cfg.auth_url)
             url = self._cfg.zarr_loader_url
-            kwargs["headers"] = {
-                "Authorization": f"Bearer {token['access_token']}"
-            }
+            kwargs["headers"] = {"Authorization": f"Bearer {token['access_token']}"}
             kwargs["params"] = {"catalogue-type": "intake"}
         result = self._get(url, **kwargs)
         if result is None:
@@ -365,9 +352,7 @@ class databrowser:
                 for content in result.iter_content(decode_unicode=False):
                     stream.write(content)
         except Exception as error:
-            raise ValueError(
-                f"Couldn't write catalogue content: {error}"
-            ) from None
+            raise ValueError(f"Couldn't write catalogue content: {error}") from None
 
     def intake_catalogue(self) -> intake_esm.core.esm_datastore:
         """Create an intake esm catalogue object from the search.
@@ -404,9 +389,7 @@ class databrowser:
     def count_values(
         cls,
         *facets: str,
-        flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems"
-        ] = "freva",
+        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -504,9 +487,7 @@ class databrowser:
         result = this._facet_search(extended_search=extended_search)
         counts = {}
         for facet, value_counts in result.items():
-            counts[facet] = dict(
-                zip(value_counts[::2], map(int, value_counts[1::2]))
-            )
+            counts[facet] = dict(zip(value_counts[::2], map(int, value_counts[1::2])))
         return counts
 
     @cached_property
@@ -531,17 +512,14 @@ class databrowser:
 
         """
         return {
-            k: v[::2]
-            for (k, v) in self._facet_search(extended_search=True).items()
+            k: v[::2] for (k, v) in self._facet_search(extended_search=True).items()
         }
 
     @classmethod
     def metadata_search(
         cls,
         *facets: str,
-        flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems"
-        ] = "freva",
+        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -664,9 +642,7 @@ class databrowser:
         )
         return {
             k: v[::2]
-            for (k, v) in this._facet_search(
-                extended_search=extended_search
-            ).items()
+            for (k, v) in this._facet_search(extended_search=extended_search).items()
         }
 
     @classmethod
@@ -733,17 +709,111 @@ class databrowser:
             constraints = data["primary_facets"]
         return {f: v for f, v in data["facets"].items() if f in constraints}
 
-    def _get(
-        self, url: str, **kwargs: Any
-    ) -> Optional[requests.models.Response]:
+    def add_user_data(
+        self, username: str, paths: List[str], facets: Dict[str, str]
+    ) -> None:
+        """Add user data to the databrowser.
+
+        Via this functionality, user would be able to add data to the databrowser.
+        It accepts file paths and metadata facets to categorize and store the user's
+        data.
+
+        Parameters
+        ~~~~~~~~~~
+        username: str
+            The username of user.
+        paths: list[str]
+            A list of paths to the data files that should be uploaded or cataloged.
+        facets: dict[str, str]
+            A dictionary containing metadata facets (key-value pairs) to describe the
+            data.
+
+        Returns
+        ~~~~~~~~
+        None
+            If the operation is successful, no return value is provided.
+
+        Raises
+        ~~~~~~~
+        ValueError
+            If the operation fails to add the user data.
+
+        Example
+        ~~~~~~~
+        .. execute_code::
+
+            from freva_client import authenticate, databrowser
+            token_info = authenticate(username="janedoe")
+            db = databrowser()
+            db.add_user_data(
+                "janedoe",
+                ["."],
+                {"project": "cmip5", "experiment": "something"}
+            )
+        """
+        url = f"{self._cfg.userdata_url}/{username}"
+        token = self._auth.check_authentication(auth_url=self._cfg.auth_url)
+        headers = {"Authorization": f"Bearer {token['access_token']}"}
+        params = {"paths": paths}
+        if "username" in facets:
+            del facets["username"]
+        data = facets
+        result = self._put(url, data=data, headers=headers, params=params)
+
+        if result is None:
+            raise ValueError("Failed to add user data")
+
+    def delete_user_data(self, username: str, search_keys: Dict[str, str]) -> None:
+        """
+        Delete user data from the databrowser.
+
+        Uing this, user would be able to delete the user's data from the databrowser
+        based on the provided search keys.
+
+        Parameters
+        ~~~~~~~~~~
+        username: str
+            The username associated with the data to be deleted.
+        search_keys: dict[str, str]
+            A dictionary containing the search keys to identify the data to be deleted.
+
+        Returns
+        ~~~~~~~~
+        None
+            If the operation is successful, no return value is provided.
+
+        Raises
+        ~~~~~~~
+        ValueError
+            If the operation fails to delete the user data.
+
+        Example
+        ~~~~~~~
+        .. execute_code::
+
+            from freva_client import databrowser, authenticate
+            token_info = authenticate(username="janedoe")
+            db = databrowser()
+            db.delete_user_data(
+                "janedoe",
+                {"project": "cmip5", "experiment": "something"}
+            )
+        """
+        url = f"{self._cfg.userdata_url}/{username}"
+        token = self._auth.check_authentication(auth_url=self._cfg.auth_url)
+        headers = {"Authorization": f"Bearer {token['access_token']}"}
+        data = search_keys
+        result = self._delete(url, headers=headers, json=data)
+        if result is None:
+            raise ValueError("Failed to delete user data")
+
+    def _get(self, url: str, **kwargs: Any) -> Optional[requests.models.Response]:
         """Apply the get method to the databrowser."""
         logger.debug("Searching %s with parameters: %s", url, self._params)
         params = kwargs.pop("params", {})
         kwargs.setdefault("timeout", 30)
         try:
-            res = requests.get(
-                url, params={**self._params, **params}, **kwargs
-            )
+            res = requests.get(url, params={**self._params, **params}, **kwargs)
             res.raise_for_status()
             return res
         except KeyboardInterrupt:
@@ -753,6 +823,58 @@ class databrowser:
             requests.exceptions.HTTPError,
         ) as error:
             msg = f"Search request failed with {error}"
+            if self._fail_on_error:
+                raise ValueError(msg) from None
+            logger.warning(msg)
+        return None
+
+    def _put(
+        self, url: str, data: Dict[str, Any], **kwargs: Any
+    ) -> Optional[requests.models.Response]:
+        """Apply the PUT method to the databrowser."""
+        logger.debug(
+            "PUT request to %s with data: %s and parameters: %s",
+            url,
+            data,
+            self._params,
+        )
+        kwargs.setdefault("timeout", 30)
+        params = kwargs.pop("params", {})
+        try:
+            res = requests.put(
+                url, json=data, params={**self._params, **params}, **kwargs
+            )
+            res.raise_for_status()
+            return res
+        except KeyboardInterrupt:
+            pprint("[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr)
+
+        except (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.HTTPError,
+        ) as error:
+            msg = f"adding user data request failed with {error}"
+            if self._fail_on_error:
+                raise ValueError(msg) from None
+            logger.warning(msg)
+        return None
+
+    def _delete(self, url: str, **kwargs: Any) -> Optional[requests.models.Response]:
+        """Apply the DELETE method to the databrowser."""
+        logger.debug("DELETE request to %s with parameters: %s", url, self._params)
+        params = kwargs.pop("params", {})
+        kwargs.setdefault("timeout", 30)
+        try:
+            res = requests.delete(url, params={**self._params, **params}, **kwargs)
+            res.raise_for_status()
+            return res
+        except KeyboardInterrupt:
+            pprint("[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr)
+        except (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.HTTPError,
+        ) as error:
+            msg = f"DELETE request failed with {error}"
             if self._fail_on_error:
                 raise ValueError(msg) from None
             logger.warning(msg)

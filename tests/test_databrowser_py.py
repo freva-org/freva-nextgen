@@ -155,3 +155,50 @@ def test_zarr_stream(test_server: str, auth_instance: Auth) -> None:
         assert len(files) == 2
     finally:
         auth_instance._auth_token = token
+
+
+def test_userdata_filenotfound(test_server: str, auth_instance: Auth) -> None:
+    """Test user data wrong paths."""
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance.auth_instance = None
+        db = databrowser(host=test_server)
+        _ = authenticate(username="janedoe", host=test_server)
+        length = len(db)
+        db.add_user_data(
+            username="janedoe", paths="/somewhere/wrong", facets={"username": "johndoe"}
+        )
+        assert len(db) == length
+    finally:
+        auth_instance._auth_token = token
+
+
+def test_userdata_fixed_facets(test_server: str, auth_instance: Auth) -> None:
+    """Test user data wrong paths."""
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance.auth_instance = None
+        db = databrowser(host=test_server)
+        _ = authenticate(username="janedoe", host=test_server)
+        length = len(db)
+        db.add_user_data(username="janedoe", paths="./", facets={"fs_type": "hsm"})
+        db.add_user_data(username="janedoe", paths="./", facets={"fs_type": "swift"})
+
+        assert len(db) == length
+    finally:
+        auth_instance._auth_token = token
+
+
+def test_userdata_put_delete_failure(test_server: str, auth_instance: Auth) -> None:
+
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance.auth_instance = None
+        db = databrowser(host=test_server, fail_on_error=True)
+        _ = authenticate(username="janedoe", host=test_server)
+        length = len(db)
+        db.add_user_data(username="janedoe", paths="./", facets={"username": "janedoe"})
+        db.delete_user_data(username="janedoe", search_keys={"username": "janedoe"})
+        assert len(db) == length
+    finally:
+        auth_instance._auth_token = token

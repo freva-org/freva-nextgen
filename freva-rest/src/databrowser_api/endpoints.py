@@ -1,14 +1,22 @@
 """Main script that runs the rest API."""
 
 import os
-from typing import Annotated, List, Literal, Union
+from typing import Annotated, Dict, List, Literal, Union
 
-from fastapi import Depends, HTTPException, Query, Request, status
+from fastapi import (
+    BackgroundTasks,
+    Body,
+    Depends,
+    HTTPException,
+    Query,
+    Request,
+    status,
+)
 from fastapi.responses import JSONResponse, StreamingResponse
 from freva_rest.auth import TokenPayload, auth
 from freva_rest.rest import app, server_config
 
-from .core import FlavourType, SolrSearch, Translator
+from .core import FlavourType, Solr, Translator
 from .schema import Required, SearchFlavours, SolrSchema
 
 
@@ -58,7 +66,7 @@ async def intake_catalogue(
     The generated catalogue can be used by tools compatible with intake-esm,
     such as Pangeo.
     """
-    solr_search = await SolrSearch.validate_parameters(
+    solr_search = await Solr.validate_parameters(
         server_config,
         flavour=flavour,
         uniq_key=uniq_key,
@@ -104,7 +112,7 @@ async def metadata_search(
     provides a comprehensive view of the available facets and their
     corresponding counts based on the provided search criteria.
     """
-    solr_search = await SolrSearch.validate_parameters(
+    solr_search = await Solr.validate_parameters(
         server_config,
         flavour=flavour,
         uniq_key=uniq_key,
@@ -135,7 +143,7 @@ async def extended_search(
     request: Request = Required,
 ) -> JSONResponse:
     """Get the search facets."""
-    solr_search = await SolrSearch.validate_parameters(
+    solr_search = await Solr.validate_parameters(
         server_config,
         flavour=flavour,
         uniq_key=uniq_key,
@@ -169,7 +177,7 @@ async def data_search(
     datasets matching specific search criteria and retrieve a list of data
     files or locations that meet the query parameters.
     """
-    solr_search = await SolrSearch.validate_parameters(
+    solr_search = await Solr.validate_parameters(
         server_config,
         flavour=flavour,
         uniq_key=uniq_key,
@@ -216,7 +224,7 @@ async def load_data(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Service not enabled.",
         )
-    solr_search = await SolrSearch.validate_parameters(
+    solr_search = await Solr.validate_parameters(
         server_config,
         flavour=flavour,
         uniq_key="uri",
@@ -235,3 +243,98 @@ async def load_data(
         status_code=status_code,
         media_type="text/plain",
     )
+
+
+@app.put(
+    "/api/databrowser/userdata/{username}",
+    status_code=status.HTTP_202_ACCEPTED,
+    tags=["User Data"],
+)
+async def put_user_data(
+    username: str,
+    paths: Annotated[
+        List[str], Query(description="Paths to the user's data to be added")
+    ],
+    facets: Annotated[
+        Dict[str, str], Body(..., description="Facet key-value pairs for metadata")
+    ],
+    background_tasks: BackgroundTasks,
+    current_user: TokenPayload = Depends(auth.required),
+) -> Dict[str, str]:
+    """
+    Add user data to the Apache Solr search system and MongoDB.
+
+    Parameters
+    ----------
+    username : str
+        The username to which the data belongs.
+    paths : List[str]
+        A list of file paths to be added to the user's dataset.
+    facets : Dict[str, str]
+        A dictionary of metadata key-value pairs that describe the data being added.
+    background_tasks : BackgroundTasks
+        FastAPI's background task system for offloading tasks.
+    current_user : TokenPayload
+        The current authenticated user's token payload, used to validate the username.
+    """
+    if username != current_user.preferred_username:  # type: ignore
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Permission denied"
+        )
+
+    solr_instance = Solr(server_config)
+    try:
+        background_tasks.add_task(
+            solr_instance.add_userdata, username, *paths, **facets
+        )
+    except Exception as e:  # pragma: no cover
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to add user data: {str(e)}",
+        )
+    return {
+        "status": "Crawling has been started. Check the Data Browser for updates."
+    }
+
+
+@app.delete(
+    "/api/databrowser/userdata/{username}",
+    status_code=status.HTTP_202_ACCEPTED,
+    tags=["User Data"],
+)
+async def delete_user_data(
+    username: str,
+    search_keys: Annotated[
+        Dict[str, Union[str, int]],
+        Body(..., description="Search keys for the data to be deleted")
+    ],
+    current_user: TokenPayload = Depends(auth.required),
+) -> Dict[str, str]:
+    """
+    Delete user data from the Apache Solr search system.
+
+    Parameters
+    ----------
+    username : str
+        The username to which the data belongs.
+    search_keys : Dict[str, str]
+        A dictionary of search keys to identify the data to be deleted.
+    current_user : TokenPayload
+        The current authenticated user's token payload, used to validate the username.
+
+    """
+    if username != current_user.preferred_username:  # type: ignore
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Permission denied"
+        )
+
+    solr_instance = Solr(server_config)
+    try:
+        await solr_instance.delete_userdata(username, search_keys)
+    except Exception as e:  # pragma: no cover
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete user data: {str(e)}",
+        )
+
+    return {"status": "User data has been deleted successfully"}

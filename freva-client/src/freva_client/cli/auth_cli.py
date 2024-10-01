@@ -49,9 +49,7 @@ def authenticate_cli(
         "-f",
         help="Force token recreation, even if current token is still valid.",
     ),
-    verbose: int = typer.Option(
-        0, "-v", help="Increase verbosity", count=True
-    ),
+    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
     version: Optional[bool] = typer.Option(
         False,
         "-V",
