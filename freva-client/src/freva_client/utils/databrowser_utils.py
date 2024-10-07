@@ -70,7 +70,7 @@ class Config:
     def overview(self) -> Dict[str, Any]:
         """Get an overview of the all databrowser flavours and search keys."""
         try:
-            res = requests.get(f"{self.databrowser_url}/overview", timeout=3)
+            res = requests.get(f"{self.databrowser_url}/overview", timeout=15)
         except requests.exceptions.ConnectionError:
             raise ValueError(f"Could not connect to {self.databrowser_url}") from None
         return cast(Dict[str, Any], res.json())
