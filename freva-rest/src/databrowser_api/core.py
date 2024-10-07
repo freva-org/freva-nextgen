@@ -5,7 +5,9 @@ import concurrent.futures
 import json
 import multiprocessing as mp
 import os
+import threading
 import uuid
+from concurrent.futures import Future
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
@@ -100,9 +102,7 @@ def fixed_facets(
             for facet_rule in allowed_facet_values:
                 for facet_key, allowed_values in facet_rule.items():
                     if facet_key in fwrites:
-                        logger.critical(fwrites)
                         facet_value = fwrites[facet_key]
-                        logger.critical(allowed_values)
                         if isinstance(allowed_values, list):
                             if facet_value not in allowed_values:
                                 logger.warning(
@@ -492,13 +492,15 @@ class Solr:
         self.query["start"] = start
         self.query["sort"] = "file desc"
 
-        self.payload: List[Dict[str, Union[str, List[str], Dict[str, str]]]] = []
+        self.payload: Union[List[Dict[str, Union[str, List[str], Dict[str, str]]]],
+                            Dict[str, Union[str, List[str], Dict[str, str]]]] = []
         self.fwrites: Dict[str, str] = {}
         self._lock = Lock()
         self.total_files = 0
         self.current_batch: List[Dict[str, str]] = []
         self.loop = asyncio.get_event_loop()
         self.suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", "zar"]
+        self.submitted_tasks_in_excutor: List[Future[str]] = []
 
     @asynccontextmanager
     async def _session_get(self) -> AsyncIterator[Tuple[int, Dict[str, Any]]]:
@@ -546,7 +548,7 @@ class Solr:
                         response_data = await res.json()
                     except HTTPException:  # pragma: no cover
                         logger.error(
-                            "POST request failed: HTTP exception raised."
+                            "POST request failed: %s", await res.text()
                         )
                         response_data = {}
             except Exception as error:
@@ -1103,13 +1105,22 @@ class Solr:
         ~~~~~~~
         None
         """
-        query_str = " AND ".join(
-            f"{key.lower()}:\\{value.replace(':', '\\:')}"
-            if key.lower() == "file"
-            else f"{key.lower()}:{value.lower()}"
-            for key, value in search_keys.items()
-        )
-        self.payload = [{"delete": {"query": query_str}}]
+        def escape_special_chars(value: str) -> str:
+            for char in self.escape_chars:
+                if char in value:
+                    value = value.replace(char, f"\\{char}")
+            return value
+        query_parts = []
+        for key, value in search_keys.items():
+            key_lower = key.lower()
+            if key_lower == "file":
+                escaped_value = escape_special_chars(value)
+                query_parts.append(f"{key_lower}:{escaped_value}")
+            else:
+                escaped_value = escape_special_chars(value.lower())
+                query_parts.append(f"{key_lower}:{escaped_value}")
+        query_str = " AND ".join(query_parts)
+        self.payload = {"delete": {"query": query_str}}
         async with self._session_post():
             pass
 
@@ -1127,6 +1138,28 @@ class Solr:
         ]
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
+
+    # TODO: needs to be refactored
+    def get_executor_info(self) -> None:
+
+        logger.debug("Executor Information:")
+        logger.debug(f"Max workers: {self.executor._max_workers}")
+        active_threads = [
+            thread for thread in threading.enumerate()
+            if thread.name and thread.name.startswith(
+                cast(str, self.executor._thread_name_prefix))
+        ]
+        logger.info(f"Active executor threads: {len(active_threads)}")
+        for thread in active_threads:
+            logger.info(f"  Thread name: {thread.name}, Thread ID: {thread.ident}")
+        for i, future in enumerate(self.submitted_tasks_in_excutor):
+            if future.done():
+                status = "Completed"
+            elif future.running():
+                status = "Running"
+            else:
+                status = "Pending"
+            logger.debug(f"  Task {i}: Status - {status}")
 
     async def _iter_paths(self, path: os.PathLike[str]) -> None:
         """
@@ -1151,18 +1184,20 @@ class Solr:
             async for file_path in self._gather_files_from_dir(Path(path)):
                 paths_to_process.append(file_path)
                 if len(paths_to_process) >= self.batch_size:
-                    self.executor.submit(
+                    future = self.executor.submit(
                         run_async_in_thread,
                         self._process_paths_in_executor,
                         paths_to_process,
                     )
+                    self.submitted_tasks_in_excutor.append(future)
                     paths_to_process = []
-                    logger.info("Processed %d files", self.total_files)
 
         if paths_to_process:
-            self.executor.submit(
+            future = self.executor.submit(
                 run_async_in_thread, self._process_paths_in_executor, paths_to_process
             )
+            self.submitted_tasks_in_excutor.append(future)
+        self.get_executor_info()
 
     async def _gather_files_from_dir(self, path: Path) -> AsyncIterator[Path]:
         """
@@ -1439,6 +1474,7 @@ class Solr:
         self.executor = concurrent.futures.ThreadPoolExecutor(
             max_workers=min(mp.cpu_count(), 15)
         )
+
         try:
             self.validated_userdata = await self._validating_userdata_paths(*paths)
             self.fwrites |= {"user": user} | cast(Dict[str, str], fwrites)
