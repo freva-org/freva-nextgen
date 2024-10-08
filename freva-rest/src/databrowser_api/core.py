@@ -40,7 +40,7 @@ from freva_rest.config import ServerConfig
 from freva_rest.logger import logger
 from freva_rest.utils import create_redis_connection
 from pydantic import BaseModel
-from pymongo import UpdateOne
+from pymongo import UpdateOne, errors
 from typing_extensions import TypedDict
 
 FlavourType = Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"]
@@ -496,7 +496,7 @@ class Solr:
                             Dict[str, Union[str, List[str], Dict[str, str]]]] = []
         self.fwrites: Dict[str, str] = {}
         self._lock = Lock()
-        self.total_files = 0
+        self.total_ingested_files = 0
         self.current_batch: List[Dict[str, str]] = []
         self.loop = asyncio.get_event_loop()
         self.suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", "zar"]
@@ -747,7 +747,8 @@ class Solr:
         except Exception as error:
             logger.warning(f"Could not remove metadata from MongoDB: {error}")
 
-    async def _insert_to_mongo(self, metadata_batch: List[Dict[str, Any]]) -> None:
+    async def _insert_to_mongo(self, metadata_batch: List[Dict[str, Any]],
+                               path_to_mongo: Path) -> None:
         """
         Bulk upsert user metadata into MongoDB.
 
@@ -755,30 +756,55 @@ class Solr:
         ~~~~~~~~~~
         metadata_batch : List[Dict[str, Any]]
             A list of dictionaries containing metadata to insert into MongoDB.
+        path_to_mongo: Path
+            The path input by the user to store the metadata in MongoDB.
 
         Returns
         ~~~~~~~
         None
         """
-        try:
-            bulk_operations = []
-            for metadata in metadata_batch:
+        bulk_operations = []
+
+        for metadata in metadata_batch:
+            try:
                 filter_query = {"file": metadata["file"], "uri": metadata["uri"]}
+                metadata["path"] = str(path_to_mongo)
                 update_query = {"$set": metadata}
+
                 bulk_operations.append(
                     UpdateOne(filter_query, update_query, upsert=True)
                 )
 
-            if bulk_operations:
-                await self._config.mongo_collection_userdata.bulk_write(
-                    bulk_operations, ordered=False
-                )
-                logger.info(
-                    f"Inserted or updated {len(bulk_operations)} records into MongoDB."
+            except Exception as error:
+                logger.warning(
+                    f"Skipping problematic metadata record: {metadata} "
+                    f"due to error: {error}"
                 )
 
-        except Exception as error:
-            logger.warning(f"Could not add metadata to MongoDB: {error}")
+        if bulk_operations:
+            try:
+                result = await self._config.mongo_collection_userdata.bulk_write(
+                    bulk_operations, ordered=False, bypass_document_validation=False
+                )
+                logger.info(
+                    f"Successfully inserted or updated "
+                    f"{result.modified_count} records into MongoDB."
+                )
+
+            except errors.BulkWriteError as bwe:
+                for err in bwe.details['writeErrors']:
+                    error_index = err['index']
+                    logger.error(f"Error in document at index {error_index}: "
+                                 f"{err['errmsg']}")
+                    logger.error(f"Problematic document: "
+                                 f"{metadata_batch[error_index]}")
+                    successful_writes = (
+                        bwe.details.get('nInserted', 0)
+                        + bwe.details.get('nUpserted', 0)
+                        + bwe.details.get('nModified', 0)
+                    )
+                logger.info(f"Partially succeeded: {successful_writes} "
+                            f"documents inserted/updated successfully.")
 
     @ensure_future
     async def store_results(self, num_results: int, status: int) -> None:
@@ -1088,8 +1114,9 @@ class Solr:
         """
         for metadata in metadata_batch:
             self.payload = [metadata]
-            async with self._session_post():
-                pass
+            async with self._session_post() as (status, _):
+                if status == 200:
+                    self.total_ingested_files += 1
 
     async def _delete_from_solr(self, search_keys: Dict[str, str]) -> None:
         """
@@ -1188,13 +1215,15 @@ class Solr:
                         run_async_in_thread,
                         self._process_paths_in_executor,
                         paths_to_process,
+                        path,
                     )
                     self.submitted_tasks_in_excutor.append(future)
                     paths_to_process = []
 
         if paths_to_process:
             future = self.executor.submit(
-                run_async_in_thread, self._process_paths_in_executor, paths_to_process
+                run_async_in_thread, self._process_paths_in_executor,
+                paths_to_process, path,
             )
             self.submitted_tasks_in_excutor.append(future)
         self.get_executor_info()
@@ -1219,7 +1248,8 @@ class Solr:
             ):
                 yield item
 
-    async def _process_paths_in_executor(self, paths: List[Path]) -> None:
+    async def _process_paths_in_executor(
+            self, paths: List[Path], path_to_mongo: Path) -> None:
         """
         Process a batch of file paths to crawl metadata and ingest them
         to Solr and MongoDB.
@@ -1228,6 +1258,8 @@ class Solr:
         ~~~~~~~~~~
         paths : List[Path]
             A list of file paths to be processed.
+        path_to_mongo : Path
+            The path input by the user.
 
         Returns
         ~~~~~~
@@ -1245,11 +1277,10 @@ class Solr:
             await self._add_to_solr(metadata_collection)
             try:
                 asyncio.run_coroutine_threadsafe(
-                    self._insert_to_mongo(metadata_collection), self.loop
+                    self._insert_to_mongo(metadata_collection, path_to_mongo), self.loop
                 )
             except Exception as e:
                 logger.warning(f"Error while adding data to MongoDB: {e}")
-            self.total_files += len(metadata_collection)
 
     @ensure_future
     async def _purge_user_data(self, search_keys: Dict[str, str]) -> None:
@@ -1483,7 +1514,8 @@ class Solr:
         finally:
             self.executor.shutdown(wait=True)
             logger.info(
-                "Shutting down executor. Total ingested files: %s", self.total_files
+                "Shutting down executor. Total ingested files: %s",
+                self.total_ingested_files
             )
 
     async def delete_userdata(
@@ -1504,4 +1536,4 @@ class Solr:
         """
         search_keys["user"] = user
         await self._purge_user_data(search_keys)
-        logger.info("Deleted user data from Solr: %s", search_keys)
+        logger.info("Deleted files from Solr and MongoDB with keys: %s", search_keys)
