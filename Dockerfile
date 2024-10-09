@@ -25,7 +25,7 @@ RUN set -e &&\
 FROM base as final
 COPY --from=builder /opt/app/dist /opt/app/dist
 RUN python3 -m pip install /opt/app/dist/freva_rest*.whl
-RUN python3 -m pip install xarray
+RUN python3 -m pip install xarray netcdf4 h5netcdf
 WORKDIR /opt/freva-rest
 EXPOSE $API_PORT
 USER freva
