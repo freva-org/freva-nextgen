@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Authentication &#8212; Freva Databrowser 2408.0.0 documentation</title>
+    <title>Authentication &#8212; Freva Databrowser 2410.0.0-beta documentation</title>
   
   
   
@@ -38,7 +38,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=88d57c38"></script>
+    <script src="../_static/documentation_options.js?v=4a762f8f"></script>
     <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -136,8 +136,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2408.0.0 documentation - Home"/>
-    <script>document.write(`<img src="../_static/logo.png" class="logo__image only-dark" alt="Freva Databrowser 2408.0.0 documentation - Home"/>`);</script>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2410.0.0-beta documentation - Home"/>
+    <script>document.write(`<img src="../_static/logo.png" class="logo__image only-dark" alt="Freva Databrowser 2410.0.0-beta documentation - Home"/>`);</script>
   
   
 </a></div>
@@ -744,30 +744,23 @@ sub command of the command line interface</p>
 </pre></div>
 </div>
 <p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[1m                                                                                [0m
-[1m [0m[1;33mUsage: [0m[1mfreva-client auth [OPTIONS][0m[1m                                            [0m[1m [0m
-[1m                                                                                [0m
- Create OAuth2 access and refresh token.                                        
-                                                                                
-[2m╭─[0m[2m Options [0m[2m───────────────────────────────────────────────────────────────────[0m[2m─╮[0m
-[2m│[0m [1;36m-[0m[1;36m-host[0m                   [1;33mTEXT   [0m  Set the hostname of the databrowser, if    [2m│[0m
-[2m│[0m                                   not set (default) the hostname is read     [2m│[0m
-[2m│[0m                                   from a config file                         [2m│[0m
-[2m│[0m                                   [2m[default: None]                           [0m [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-username[0m       [1;32m-u[0m      [1;33mTEXT   [0m  The username used for authentication.      [2m│[0m
-[2m│[0m                                   [2m[default: runner]                    [0m      [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-refresh[0m[1;36m-token[0m  [1;32m-r[0m      [1;33mTEXT   [0m  Instead of using a password, you can use a [2m│[0m
-[2m│[0m                                   refresh token. refresh the access token.   [2m│[0m
-[2m│[0m                                   This is recommended for non-interactive    [2m│[0m
-[2m│[0m                                   environments.                              [2m│[0m
-[2m│[0m                                   [2m[default: None]                           [0m [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-force[0m          [1;32m-f[0m      [1;33m       [0m  Force token recreation, even if current    [2m│[0m
-[2m│[0m                                   token is still valid.                      [2m│[0m
-[2m│[0m                  [1;32m-v[0m      [1;33mINTEGER[0m  Increase verbosity [2m[default: 0][0m            [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-version[0m        [1;32m-V[0m      [1;33m       [0m  Show version an exit                       [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-help[0m                   [1;33m       [0m  Show this message and exit.                [2m│[0m
-[2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Usage: freva-client auth [OPTIONS]
 
+  Create OAuth2 access and refresh token.
+
+Options:
+  --host TEXT               Set the hostname of the databrowser, if not set
+                            (default) the hostname is read from a config file
+  -u, --username TEXT       The username used for authentication.  [default:
+                            runner]
+  -r, --refresh-token TEXT  Instead of using a password, you can use a refresh
+                            token. refresh the access token. This is
+                            recommended for non-interactive environments.
+  -f, --force               Force token recreation, even if current token is
+                            still valid.
+  -v                        Increase verbosity  [default: 0]
+  -V, --version             Show version an exit
+  --help                    Show this message and exit.
 
 </pre></div>
 </div>

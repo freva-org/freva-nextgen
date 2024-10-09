@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Databrowser python module &#8212; Freva Databrowser 2408.0.0 documentation</title>
+    <title>Databrowser python module &#8212; Freva Databrowser 2410.0.0-beta documentation</title>
   
   
   
@@ -38,7 +38,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=88d57c38"></script>
+    <script src="../_static/documentation_options.js?v=4a762f8f"></script>
     <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -136,8 +136,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2408.0.0 documentation - Home"/>
-    <script>document.write(`<img src="../_static/logo.png" class="logo__image only-dark" alt="Freva Databrowser 2408.0.0 documentation - Home"/>`);</script>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2410.0.0-beta documentation - Home"/>
+    <script>document.write(`<img src="../_static/logo.png" class="logo__image only-dark" alt="Freva Databrowser 2410.0.0-beta documentation - Home"/>`);</script>
   
   
 </a></div>
@@ -637,13 +637,66 @@ before you are able to access the data. Refer also to the
 </pre></div>
 </div>
 <dl class="py method">
-<dt class="sig sig-object py" id="freva_client.databrowser.count_values">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">count_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">facets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flavour</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'freva'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip6'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip5'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cordex'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nextgems'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'freva'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fail_on_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extended_search</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">search_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#freva_client.databrowser.count_values" title="Link to this definition">#</a></dt>
-<dd><p>Count the number of objects in the databrowser.</p>
+<dt class="sig sig-object py" id="freva_client.databrowser.add_user_data">
+<span class="sig-name descname"><span class="pre">add_user_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">paths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">facets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#freva_client.databrowser.add_user_data" title="Link to this definition">#</a></dt>
+<dd><p>Add user data to the databrowser.</p>
+<p>Via this functionality, user would be able to add data to the databrowser.
+It accepts file paths and metadata facets to categorize and store the user’s
+data.</p>
 <section id="id5">
 <h4>Parameters<a class="headerlink" href="#id5" title="Link to this heading">#</a></h4>
 <dl class="simple">
-<dt><a href="#id6"><span class="problematic" id="id7">*</span></a>facets: str</dt><dd><p>If you are not sure about the correct search key’s you can use
+<dt>username: str</dt><dd><p>The username of user.</p>
+</dd>
+<dt>paths: list[str]</dt><dd><p>A list of paths to the data files that should be uploaded or cataloged.</p>
+</dd>
+<dt>facets: dict[str, str]</dt><dd><p>A dictionary containing metadata facets (key-value pairs) to describe the
+data.</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h4>Returns<a class="headerlink" href="#returns" title="Link to this heading">#</a></h4>
+<dl class="simple">
+<dt>None</dt><dd><p>If the operation is successful, no return value is provided.</p>
+</dd>
+</dl>
+</section>
+<section id="raises">
+<h4>Raises<a class="headerlink" href="#raises" title="Link to this heading">#</a></h4>
+<dl class="simple">
+<dt>ValueError</dt><dd><p>If the operation fails to add the user data.</p>
+</dd>
+</dl>
+</section>
+<section id="id6">
+<h4>Example<a class="headerlink" href="#id6" title="Link to this heading">#</a></h4>
+<p><span class="caption-text">Code </span></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">freva_client</span> <span class="kn">import</span> <span class="n">authenticate</span><span class="p">,</span> <span class="n">databrowser</span>
+<span class="n">token_info</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">&quot;janedoe&quot;</span><span class="p">)</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">()</span>
+<span class="n">db</span><span class="o">.</span><span class="n">add_user_data</span><span class="p">(</span>
+    <span class="s2">&quot;janedoe&quot;</span><span class="p">,</span>
+    <span class="p">[</span><span class="s2">&quot;.&quot;</span><span class="p">],</span>
+    <span class="p">{</span><span class="s2">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;cmip5&quot;</span><span class="p">,</span> <span class="s2">&quot;experiment&quot;</span><span class="p">:</span> <span class="s2">&quot;something&quot;</span><span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="freva_client.databrowser.count_values">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">count_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">facets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flavour</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'freva'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip6'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip5'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cordex'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nextgems'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'freva'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fail_on_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extended_search</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">search_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#freva_client.databrowser.count_values" title="Link to this definition">#</a></dt>
+<dd><p>Count the number of objects in the databrowser.</p>
+<section id="id7">
+<h4>Parameters<a class="headerlink" href="#id7" title="Link to this heading">#</a></h4>
+<dl class="simple">
+<dt><a href="#id8"><span class="problematic" id="id9">*</span></a>facets: str</dt><dd><p>If you are not sure about the correct search key’s you can use
 positional arguments to search of any matching entries. For example
 ‘era5’ would allow you to search for any entries
 containing era5, regardless of project, product etc.</p>
@@ -678,21 +731,21 @@ name will be taken from the freva config file.</p>
 </dd>
 <dt>fail_on_error: bool, default: False</dt><dd><p>Make the call fail if the connection to the databrowser could not</p>
 </dd>
-<dt><a href="#id8"><span class="problematic" id="id9">**</span></a>search_keys: str</dt><dd><p>The search constraints to be applied in the data search. If not given
+<dt><a href="#id10"><span class="problematic" id="id11">**</span></a>search_keys: str</dt><dd><p>The search constraints to be applied in the data search. If not given
 the whole dataset will be queried.</p>
 </dd>
 </dl>
 </section>
-<section id="returns">
-<h4>Returns<a class="headerlink" href="#returns" title="Link to this heading">#</a></h4>
+<section id="id12">
+<h4>Returns<a class="headerlink" href="#id12" title="Link to this heading">#</a></h4>
 <dl class="simple">
 <dt>dict[str, int]:</dt><dd><p>Dictionary with the number of objects for each search facet/key
 is given.</p>
 </dd>
 </dl>
 </section>
-<section id="id10">
-<h4>Example<a class="headerlink" href="#id10" title="Link to this heading">#</a></h4>
+<section id="id13">
+<h4>Example<a class="headerlink" href="#id13" title="Link to this heading">#</a></h4>
 <p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">freva_client</span> <span class="kn">import</span> <span class="n">databrowser</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">databrowser</span><span class="o">.</span><span class="n">count_values</span><span class="p">(</span><span class="n">experiment</span><span class="o">=</span><span class="s2">&quot;cmorph&quot;</span><span class="p">))</span>
@@ -728,22 +781,70 @@ example for getting all ocean reanalysis datasets you can apply the
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="freva_client.databrowser.delete_user_data">
+<span class="sig-name descname"><span class="pre">delete_user_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#freva_client.databrowser.delete_user_data" title="Link to this definition">#</a></dt>
+<dd><p>Delete user data from the databrowser.</p>
+<p>Uing this, user would be able to delete the user’s data from the databrowser
+based on the provided search keys.</p>
+<section id="id14">
+<h4>Parameters<a class="headerlink" href="#id14" title="Link to this heading">#</a></h4>
+<dl class="simple">
+<dt>username: str</dt><dd><p>The username associated with the data to be deleted.</p>
+</dd>
+<dt>search_keys: dict[str, str]</dt><dd><p>A dictionary containing the search keys to identify the data to be deleted.</p>
+</dd>
+</dl>
+</section>
+<section id="id15">
+<h4>Returns<a class="headerlink" href="#id15" title="Link to this heading">#</a></h4>
+<dl class="simple">
+<dt>None</dt><dd><p>If the operation is successful, no return value is provided.</p>
+</dd>
+</dl>
+</section>
+<section id="id16">
+<h4>Raises<a class="headerlink" href="#id16" title="Link to this heading">#</a></h4>
+<dl class="simple">
+<dt>ValueError</dt><dd><p>If the operation fails to delete the user data.</p>
+</dd>
+</dl>
+</section>
+<section id="id17">
+<h4>Example<a class="headerlink" href="#id17" title="Link to this heading">#</a></h4>
+<p><span class="caption-text">Code </span></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">freva_client</span> <span class="kn">import</span> <span class="n">databrowser</span><span class="p">,</span> <span class="n">authenticate</span>
+<span class="n">token_info</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">&quot;janedoe&quot;</span><span class="p">)</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">()</span>
+<span class="n">db</span><span class="o">.</span><span class="n">delete_user_data</span><span class="p">(</span>
+    <span class="s2">&quot;janedoe&quot;</span><span class="p">,</span>
+    <span class="p">{</span><span class="s2">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;cmip5&quot;</span><span class="p">,</span> <span class="s2">&quot;experiment&quot;</span><span class="p">:</span> <span class="s2">&quot;something&quot;</span><span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="freva_client.databrowser.intake_catalogue">
 <span class="sig-name descname"><span class="pre">intake_catalogue</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">esm_datastore</span></span></span><a class="headerlink" href="#freva_client.databrowser.intake_catalogue" title="Link to this definition">#</a></dt>
 <dd><p>Create an intake esm catalogue object from the search.</p>
 <p>This method creates a intake-esm catalogue from the current object
 search. Instead of having the original files as target objects you can
 also choose to stream the files via zarr.</p>
-<section id="id11">
-<h4>Returns<a class="headerlink" href="#id11" title="Link to this heading">#</a></h4>
+<section id="id18">
+<h4>Returns<a class="headerlink" href="#id18" title="Link to this heading">#</a></h4>
 <p>intake_esm.core.esm_datastore: intake-esm catalogue.</p>
 </section>
-<section id="raises">
-<h4>Raises<a class="headerlink" href="#raises" title="Link to this heading">#</a></h4>
+<section id="id19">
+<h4>Raises<a class="headerlink" href="#id19" title="Link to this heading">#</a></h4>
 <p>ValueError: If user is not authenticated or catalogue creation failed.</p>
 </section>
-<section id="id12">
-<h4>Example<a class="headerlink" href="#id12" title="Link to this heading">#</a></h4>
+<section id="id20">
+<h4>Example<a class="headerlink" href="#id20" title="Link to this heading">#</a></h4>
 <p>Let’s create an intake-esm catalogue that points points allows for
 streaming the target data as zarr:</p>
 <p><span class="caption-text">Code </span></p>
@@ -771,8 +872,8 @@ streaming the target data as zarr:</p>
 <p>You can retrieve all information that is associated with your current
 databrowser search. This can be useful for reverse searches for example
 for retrieving metadata of object stores or file/directory names.</p>
-<section id="id13">
-<h4>Example<a class="headerlink" href="#id13" title="Link to this heading">#</a></h4>
+<section id="id21">
+<h4>Example<a class="headerlink" href="#id21" title="Link to this heading">#</a></h4>
 <p>Reverse search: retrieving meta data from a known file</p>
 <p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">freva_client</span> <span class="kn">import</span> <span class="n">databrowser</span>
@@ -793,10 +894,10 @@ for retrieving metadata of object stores or file/directory names.</p>
 <dd><p>Search for data attributes (facets) in the databrowser.</p>
 <p>The method queries the databrowser for available search facets (keys)
 like model, experiment etc.</p>
-<section id="id14">
-<h4>Parameters<a class="headerlink" href="#id14" title="Link to this heading">#</a></h4>
+<section id="id22">
+<h4>Parameters<a class="headerlink" href="#id22" title="Link to this heading">#</a></h4>
 <dl class="simple">
-<dt><a href="#id15"><span class="problematic" id="id16">*</span></a>facets: str</dt><dd><p>If you are not sure about the correct search key’s you can use
+<dt><a href="#id23"><span class="problematic" id="id24">*</span></a>facets: str</dt><dd><p>If you are not sure about the correct search key’s you can use
 positional arguments to search of any matching entries. For example
 ‘era5’ would allow you to search for any entries
 containing era5, regardless of project, product etc.</p>
@@ -831,20 +932,20 @@ name will be taken from the freva config file.</p>
 </dd>
 <dt>fail_on_error: bool, default: False</dt><dd><p>Make the call fail if the connection to the databrowser could not</p>
 </dd>
-<dt><a href="#id17"><span class="problematic" id="id18">**</span></a>search_keys: str, list[str]</dt><dd><p>The facets to be applied in the data search. If not given
+<dt><a href="#id25"><span class="problematic" id="id26">**</span></a>search_keys: str, list[str]</dt><dd><p>The facets to be applied in the data search. If not given
 the whole dataset will be queried.</p>
 </dd>
 </dl>
 </section>
-<section id="id19">
-<h4>Returns<a class="headerlink" href="#id19" title="Link to this heading">#</a></h4>
+<section id="id27">
+<h4>Returns<a class="headerlink" href="#id27" title="Link to this heading">#</a></h4>
 <dl class="simple">
 <dt>dict[str, list[str]]:</dt><dd><p>Dictionary with a list search facet values for each search facet key</p>
 </dd>
 </dl>
 </section>
-<section id="id20">
-<h4>Example<a class="headerlink" href="#id20" title="Link to this heading">#</a></h4>
+<section id="id28">
+<h4>Example<a class="headerlink" href="#id28" title="Link to this heading">#</a></h4>
 <p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">freva_client</span> <span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">all_facets</span> <span class="o">=</span> <span class="n">databrowser</span><span class="o">.</span><span class="n">metadata_search</span><span class="p">(</span><span class="n">project</span><span class="o">=</span><span class="s1">&#39;obs*&#39;</span><span class="p">)</span>
@@ -914,8 +1015,8 @@ example for getting all ocean reanalysis datasets you can apply the
 <p>If you don’t know what search flavours or search keys you can use
 for searching the data you can use this method to get an overview
 over what is available.</p>
-<section id="id21">
-<h4>Parameters<a class="headerlink" href="#id21" title="Link to this heading">#</a></h4>
+<section id="id29">
+<h4>Parameters<a class="headerlink" href="#id29" title="Link to this heading">#</a></h4>
 <dl class="simple">
 <dt>host: str, default None</dt><dd><p>Override the host name of the databrowser server. This is usually
 the url where the freva web site can be found. Such as
@@ -924,12 +1025,12 @@ name will be taken from the freva config file.</p>
 </dd>
 </dl>
 </section>
-<section id="id22">
-<h4>Returns<a class="headerlink" href="#id22" title="Link to this heading">#</a></h4>
+<section id="id30">
+<h4>Returns<a class="headerlink" href="#id30" title="Link to this heading">#</a></h4>
 <p>str: A string representation over what is available.</p>
 </section>
-<section id="id23">
-<h4>Example<a class="headerlink" href="#id23" title="Link to this heading">#</a></h4>
+<section id="id31">
+<h4>Example<a class="headerlink" href="#id31" title="Link to this heading">#</a></h4>
 <p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">freva_client</span> <span class="kn">import</span> <span class="n">databrowser</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">databrowser</span><span class="o">.</span><span class="n">overview</span><span class="p">())</span>
@@ -1051,8 +1152,8 @@ Search attributes by flavour:
 <dt class="sig sig-object py" id="freva_client.databrowser.url">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#freva_client.databrowser.url" title="Link to this definition">#</a></dt>
 <dd><p>Get the url of the databrowser API.</p>
-<section id="id24">
-<h4>Example<a class="headerlink" href="#id24" title="Link to this heading">#</a></h4>
+<section id="id32">
+<h4>Example<a class="headerlink" href="#id32" title="Link to this heading">#</a></h4>
 <p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">freva_client</span> <span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">()</span>
@@ -1121,7 +1222,9 @@ Search attributes by flavour:
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tldr-too-long-didn-t-read">TLDR: Too long didn’t read</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#library-reference">Library Reference</a><ul class="visible nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser"><code class="docutils literal notranslate"><span class="pre">databrowser</span></code></a><ul class="visible nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.add_user_data"><code class="docutils literal notranslate"><span class="pre">databrowser.add_user_data()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.count_values"><code class="docutils literal notranslate"><span class="pre">databrowser.count_values()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.delete_user_data"><code class="docutils literal notranslate"><span class="pre">databrowser.delete_user_data()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.intake_catalogue"><code class="docutils literal notranslate"><span class="pre">databrowser.intake_catalogue()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.metadata"><code class="docutils literal notranslate"><span class="pre">databrowser.metadata</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.metadata_search"><code class="docutils literal notranslate"><span class="pre">databrowser.metadata_search()</span></code></a></li>
