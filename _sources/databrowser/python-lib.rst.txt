@@ -27,7 +27,7 @@ You can the to following methods
 - :py:meth:`freva_client.databrowser.metadata_search`: This class method lists
   all search categories (facets) and their values.
 
-- :py:meth:`freva_client.databrowser.count_values`: You can count the
+- :py:meth:`freva_client.databrowser.count_values`: You can count the 
   occurrences of search results with this method.
 
 
