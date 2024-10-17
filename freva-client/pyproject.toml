@@ -28,6 +28,7 @@ dependencies = [
 "requests",
 "intake_esm",
 "rich",
+"setuptools",
 "tomli",
 "typer",
 ]
