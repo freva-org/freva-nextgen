@@ -1,7 +1,7 @@
 """Main script that runs the rest API."""
 
 import os
-from typing import Annotated, Dict, List, Literal, Union
+from typing import Annotated, Dict, List, Literal, Mapping, Sequence, Union
 
 from fastapi import (
     BackgroundTasks,
@@ -253,39 +253,31 @@ async def load_data(
 async def put_user_data(
     username: str,
     paths: Annotated[
-        List[str], Query(description="Paths to the user's data to be added")
+        Sequence[str], Query(description="Paths to the user's data to be added")
     ],
     facets: Annotated[
-        Dict[str, str], Body(..., description="Facet key-value pairs for metadata")
+        Mapping[str, str], Body(..., description="Facet key-value pairs for metadata")
     ],
     background_tasks: BackgroundTasks,
     current_user: TokenPayload = Depends(auth.required),
 ) -> Dict[str, str]:
-    """
-    Add user data to the Apache Solr search system and MongoDB.
-
-    Parameters
-    ----------
-    username : str
-        The username to which the data belongs.
-    paths : List[str]
-        A list of file paths to be added to the user's dataset.
-    facets : Dict[str, str]
-        A dictionary of metadata key-value pairs that describe the data being added.
-    background_tasks : BackgroundTasks
-        FastAPI's background task system for offloading tasks.
-    current_user : TokenPayload
-        The current authenticated user's token payload, used to validate the username.
-    """
+    """Add user data to the Apache Solr search system and MongoDB."""
     if username != current_user.preferred_username:  # type: ignore
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Permission denied"
         )
 
     solr_instance = Solr(server_config)
+
     try:
+        validated_paths = await solr_instance._validating_userdata_paths(*paths)
         background_tasks.add_task(
-            solr_instance.add_userdata, username, *paths, **facets
+            solr_instance.add_userdata, (username, validated_paths, facets)
+        )
+    except FileNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid paths provided: {str(e)}",
         )
     except Exception as e:  # pragma: no cover
         raise HTTPException(
@@ -310,19 +302,7 @@ async def delete_user_data(
     ],
     current_user: TokenPayload = Depends(auth.required),
 ) -> Dict[str, str]:
-    """
-    Delete user data from the Apache Solr search system.
-
-    Parameters
-    ----------
-    username : str
-        The username to which the data belongs.
-    search_keys : Dict[str, str]
-        A dictionary of search keys to identify the data to be deleted.
-    current_user : TokenPayload
-        The current authenticated user's token payload, used to validate the username.
-
-    """
+    """Delete user data from the Apache Solr search system."""
     if username != current_user.preferred_username:  # type: ignore
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Permission denied"

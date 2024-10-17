@@ -60,6 +60,7 @@ deps = -e ./freva-rest
        pymongo
        pytest-env
        setuptools
+       mongomock
 
 commands =
     pytest -vv --cov=freva-rest --cov=freva-client --cov=freva-data-portal-worker --cov-report=html:coverage_report --junitxml report.xml --cov-report xml tests

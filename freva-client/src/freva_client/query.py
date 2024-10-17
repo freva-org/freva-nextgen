@@ -206,7 +206,8 @@ class databrowser:
         self,
         *facets: str,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
+        flavour: Literal["freva", "cmip6", "cmip5", "cordex",
+                         "nextgems", "user"] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -377,7 +378,7 @@ class databrowser:
         .. execute_code::
 
             from freva_client import databrowser
-            db = databrowser(dataset="cmip6-fs", stream_zarr=True)
+            db = databrowser(dataset="cmip6-hsm", stream_zarr=True)
             cat = db.intake_catalogue()
             print(cat.df)
         """
@@ -389,7 +390,8 @@ class databrowser:
     def count_values(
         cls,
         *facets: str,
-        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
+        flavour: Literal["freva", "cmip6", "cmip5", "cordex",
+                         "nextgems", "user"] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -519,7 +521,8 @@ class databrowser:
     def metadata_search(
         cls,
         *facets: str,
-        flavour: Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"] = "freva",
+        flavour: Literal["freva", "cmip6", "cmip5", "cordex",
+                         "nextgems", "user"] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -854,8 +857,6 @@ class databrowser:
             requests.exceptions.HTTPError,
         ) as error:
             msg = f"adding user data request failed with {error}"
-            if self._fail_on_error:
-                raise ValueError(msg) from None
             logger.warning(msg)
         return None
 
@@ -875,7 +876,5 @@ class databrowser:
             requests.exceptions.HTTPError,
         ) as error:
             msg = f"DELETE request failed with {error}"
-            if self._fail_on_error:
-                raise ValueError(msg) from None
             logger.warning(msg)
         return None

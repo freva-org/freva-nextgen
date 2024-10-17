@@ -8,11 +8,39 @@ run-name: ${{ github.actor }} is preparing the next release
       - "v*.*.*"
 
 jobs:
+  release-type-determination:
+    name: Determine if tag is pre-released or not
+    runs-on: ubuntu-latest
+    outputs:
+      is_prerelease: ${{ steps.check-prerelease.outputs.is_prerelease }}
+      tag: ${{ steps.get-tag.outputs.tag }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get tag
+        id: get-tag
+        run: |
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Check if tag is a pre-release
+        id: check-prerelease
+        run: |
+          TAG="${{ steps.get-tag.outputs.tag }}"
+          if [[ "$TAG" == *"-dev"* || "$TAG" == *"-beta"* || "$TAG" == *"-alpha"* ]]; then
+            echo "This is a pre-release tag."
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "This is not a pre-release tag."
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi  
   tests:
     uses: ./.github/workflows/ci_job.yml
+
   docs:
     runs-on: ubuntu-latest
-    needs: tests
+    needs: [tests, release-type-determination]
+    if: needs.release-type-determination.outputs.is_prerelease == 'false'
     permissions:
       contents: write
     steps:
@@ -56,75 +84,50 @@ jobs:
 
   build-and-push-image:
     runs-on: ubuntu-latest
-    needs: tests
-    permissions:
-      contents: read
-      packages: write
+    needs: [tests, release-type-determination]
     steps:
-      -
-        name: Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      -
-        name: Set up Python 3
+      - name: Set up Python 3
         uses: actions/setup-python@v4
         with:
           python-version: "3.X"
 
-      -
-        name: Get tag
-        id: repository
-        run: |
-          echo "repo=$(echo ${{ github.repository }}|tr 'A-Z' 'a-z')" >> $GITHUB_OUTPUT
-          echo "tag=$(python freva-rest/src/freva_rest/__init__.py)" >> $GITHUB_OUTPUT
+      - name: Get tag
+        run: echo "tag=${{ needs.release-type-determination.outputs.tag }}" >> $GITHUB_OUTPUT
+        shell: bash
 
-
-      -
-        name: Check if tag is a pre-release
-        id: check-prerelease
-        run: |
-          TAG=${{ steps.repository.outputs.tag }}
-          if [[ "$TAG" == *"-dev"* || "$TAG" == *"-beta"* || "$TAG" == *"-alpha"* ]]; then
-            echo "This is a pre-release tag."
-            echo "LATEST_TAG=${{ steps.repository.outputs.tag }}" >> $GITHUB_ENV
-          else
-            echo "This is not a pre-release tag."
-            echo "LATEST_TAG=latest" >> $GITHUB_ENV
-          fi
-
-      -
-        name: Set up QEMU
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 
-      -
-        name: Set up Docker Buildx
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      -
-        name: Log in to the Container registry
+      - name: Log in to the Container registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.ACCESS_TOKEN }}
 
-      -
-        name: Build and push freva-rest API image
+      - name: Build and push freva-rest API image
         uses: docker/build-push-action@v4
         with:
-          build-args: VERSION=${{steps.repository.outputs.tag}}
+          build-args: VERSION=${{ needs.release-type-determination.outputs.tag }}
           platforms: linux/amd64
           push: true
           tags: |
-            ghcr.io/freva-clint/freva-rest-api:${{ steps.repository.outputs.tag }}
-            ghcr.io/freva-clint/freva-rest-api:${{ env.LATEST_TAG }}
+            ghcr.io/freva-clint/freva-rest-api:${{ needs.release-type-determination.outputs.tag }}
+            ghcr.io/freva-clint/freva-rest-api:${{ needs.release-type-determination.outputs.is_prerelease == 'false' && 'latest' || needs.release-type-determination.outputs.tag }}
+
+
   pypi:
     name: Create Pip package
-    permissions:
-      id-token: write
-    needs: [tests, build-and-push-image, docs]
+    needs: [tests, build-and-push-image, docs, release-type-determination]
+    if: needs.release-type-determination.outputs.is_prerelease == 'false'
     runs-on: ubuntu-latest
     steps:
       -
@@ -155,10 +158,8 @@ jobs:
 
   bump-databrowser-version:
     runs-on: ubuntu-latest
-    needs: [build-and-push-image, docs]
-    permissions:
-      contents: read
-      packages: write
+    needs: [build-and-push-image, docs, release-type-determination]
+    if: needs.release-type-determination.outputs.is_prerelease == 'false'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

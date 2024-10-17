@@ -325,37 +325,3 @@ def test_get_overview(test_server: str) -> None:
     res = requests.get(f"{test_server}/api/auth/v2/.well-known/openid-configuration")
     assert res.status_code == 200
 
-# TODO: this test has to be more exact
-def test_no_solr_put(client_no_solr: TestClient, auth: Dict[str, str]) -> None:
-    """Test what happens if there is no connection to Solr during a PUT request."""
-    token = auth["access_token"]
-    data = {}
-    params = {
-        "paths": "./freva-rest/src/databrowser_api/mock/data/"  # URL-encoded path
-    }
-    response = client_no_solr.put(
-        "/api/databrowser/userdata/janedoe",
-        params=params,
-        json=data,
-        headers={"Authorization": f"Bearer {token}"},
-    )
-
-    assert response.status_code == 202
-
-
-def test_userdata_ingestion_batch_files(
-    client: TestClient, auth: Dict[str, str]
-) -> None:
-    """Test what happens if there is no connection to Solr during a PUT request."""
-    token = auth["access_token"]
-    data = {}
-    params = {
-        "paths": "./freva-rest/src/databrowser_api/mock/data/" 
-    }
-    response = client.put(
-        "/api/databrowser/userdata/janedoe",
-        params=params,
-        json=data,
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response.status_code == 202

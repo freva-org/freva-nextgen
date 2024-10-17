@@ -1,5 +1,4 @@
 """The core functionality to interact with the apache solr search system."""
-# TODO: all prints should be replaced with a websocket response
 import asyncio
 import concurrent.futures
 import json
@@ -24,6 +23,7 @@ from typing import (
     Iterable,
     List,
     Literal,
+    Mapping,
     Sized,
     Tuple,
     Union,
@@ -43,7 +43,7 @@ from pydantic import BaseModel
 from pymongo import UpdateOne, errors
 from typing_extensions import TypedDict
 
-FlavourType = Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"]
+FlavourType = Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"]
 IntakeType = TypedDict(
     "IntakeType",
     {
@@ -84,37 +84,6 @@ def run_async_in_thread(coro_func: Callable[..., Coroutine[Any, Any, Any]],
     finally:
         new_loop.close()
     return result  # pragma: no cover
-
-
-# TODO: Need to be considered to refactor
-def fixed_facets(
-    allowed_facet_values: List[Dict[str, Union[str, List[str]]]]
-) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Coroutine[Any, Any, Any]]]:
-    """Decorator that validates specific facet keys and their respective
-    disallowed values."""
-
-    def decorator(
-        async_func: Callable[..., Awaitable[Any]]
-    ) -> Callable[..., Coroutine[Any, Any, Any]]:
-        @wraps(async_func)
-        async def wrapper(self: Any, user: str, *args: Any, **fwrites: str) -> Any:
-            """Async wrapper that performs facet validation."""
-            for facet_rule in allowed_facet_values:
-                for facet_key, allowed_values in facet_rule.items():
-                    if facet_key in fwrites:
-                        facet_value = fwrites[facet_key]
-                        if isinstance(allowed_values, list):
-                            if facet_value not in allowed_values:
-                                logger.warning(
-                                    f"Disallowed value '{facet_value}' "
-                                    "for facet key '{facet_key}'"
-                                )
-                                fwrites[facet_key] = allowed_values[0]
-            return await async_func(self, user, *args, **fwrites)
-
-        return wrapper
-
-    return decorator
 
 
 def ensure_future(
@@ -182,6 +151,7 @@ class Translator:
         "cmip5",
         "cordex",
         "nextgems",
+        "user",
     )
 
     @property
@@ -228,6 +198,7 @@ class Translator:
             "rcm_version": "secondary",
             "dataset": "secondary",
             "time": "secondary",
+            "user": "secondary",
         }
 
     @property
@@ -348,6 +319,7 @@ class Translator:
             "cmip5": self._cmip5_lookup,
             "cordex": self._cordex_lookup,
             "nextgems": self._nextgems_lookup,
+            "user": {k: k for k in self._freva_facets}
         }[self.flavour]
 
     @cached_property
@@ -501,6 +473,7 @@ class Solr:
         self.loop = asyncio.get_event_loop()
         self.suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", "zar"]
         self.submitted_tasks_in_excutor: List[Future[str]] = []
+        self.fs_type: str = "posix"
 
     @asynccontextmanager
     async def _session_get(self) -> AsyncIterator[Tuple[int, Dict[str, Any]]]:
@@ -743,9 +716,9 @@ class Solr:
                 for key, value in search_keys.items()
             }
             await self._config.mongo_collection_userdata.delete_many(query)
-            logger.info(f"Deleted metadata from MongoDB with query: {query}")
+            logger.info(f"[MONGO] Deleted metadata with query: {query}")
         except Exception as error:
-            logger.warning(f"Could not remove metadata from MongoDB: {error}")
+            logger.warning(f"[MONGO] Could not remove metadata: {error}")
 
     async def _insert_to_mongo(self, metadata_batch: List[Dict[str, Any]],
                                path_to_mongo: Path) -> None:
@@ -766,45 +739,40 @@ class Solr:
         bulk_operations = []
 
         for metadata in metadata_batch:
-            try:
-                filter_query = {"file": metadata["file"], "uri": metadata["uri"]}
-                metadata["path"] = str(path_to_mongo)
-                update_query = {"$set": metadata}
+            filter_query = {"file": metadata["file"], "uri": metadata["uri"]}
+            metadata["path"] = str(path_to_mongo)
+            update_query = {"$set": metadata}
 
-                bulk_operations.append(
-                    UpdateOne(filter_query, update_query, upsert=True)
-                )
-
-            except Exception as error:
-                logger.warning(
-                    f"Skipping problematic metadata record: {metadata} "
-                    f"due to error: {error}"
-                )
-
+            bulk_operations.append(
+                UpdateOne(filter_query, update_query, upsert=True)
+            )
         if bulk_operations:
             try:
                 result = await self._config.mongo_collection_userdata.bulk_write(
                     bulk_operations, ordered=False, bypass_document_validation=False
                 )
                 logger.info(
-                    f"Successfully inserted or updated "
+                    f"[MONGO] Successfully inserted or updated "
                     f"{result.modified_count} records into MongoDB."
+                    f"{result.matched_count} records aleady up-to-date."
                 )
 
             except errors.BulkWriteError as bwe:
                 for err in bwe.details['writeErrors']:
                     error_index = err['index']
-                    logger.error(f"Error in document at index {error_index}: "
+                    logger.error(f"[MONGO] Error in document at index {error_index}: "
                                  f"{err['errmsg']}")
-                    logger.error(f"Problematic document: "
+                    logger.error(f"[MONGO] Problematic document: "
                                  f"{metadata_batch[error_index]}")
                     successful_writes = (
                         bwe.details.get('nInserted', 0)
                         + bwe.details.get('nUpserted', 0)
                         + bwe.details.get('nModified', 0)
                     )
-                logger.info(f"Partially succeeded: {successful_writes} "
-                            f"documents inserted/updated successfully.")
+                    nMatched = bwe.details.get('nMatched', 0)
+                logger.info(f"[MONGO] Partially succeeded: {successful_writes} "
+                            f"documents inserted/updated successfully."
+                            f"{nMatched} documents already up-to-date.")
 
     @ensure_future
     async def store_results(self, num_results: int, status: int) -> None:
@@ -988,18 +956,26 @@ class Solr:
                 query.append(f"{key}:({query_pos})")
             if query_neg:
                 query.append(f"-{key}:({query_neg})")
+        # Cause we are adding a new query which effects
+        # all queries, it might be a neckbottle of performance
+        if self.translator.flavour == 'user':
+            user_query = 'user:*'
+        else:
+            user_query = '{!ex=userTag}-user:*'
         return url, {
-            "fq": self.time + ["", " AND ".join(query) or "*:*"],
             "q": "*:*",
+            "fq": self.time + ["", user_query, " AND ".join(query) or "*:*"],
         }
 
     @property
     def _post_url(self) -> str:
         """Construct the URL and payload for a solr POST request."""
+        # All user-data stores in the latest core
         core = {
-            True: self._config.solr_cores[0],
-            False: self._config.solr_cores[-1],
+            True: self._config.solr_cores[-1],
+            False: self._config.solr_cores[0],
         }[self.multi_version]
+
         url = f"{self._config.get_core_url(core)}/update/json?commit=true"
         return url
 
@@ -1166,11 +1142,9 @@ class Solr:
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
 
-    # TODO: needs to be refactored
     def get_executor_info(self) -> None:
 
-        logger.debug("Executor Information:")
-        logger.debug(f"Max workers: {self.executor._max_workers}")
+        logger.info(f"Max workers: {self.executor._max_workers}")
         active_threads = [
             thread for thread in threading.enumerate()
             if thread.name and thread.name.startswith(
@@ -1179,14 +1153,6 @@ class Solr:
         logger.info(f"Active executor threads: {len(active_threads)}")
         for thread in active_threads:
             logger.info(f"  Thread name: {thread.name}, Thread ID: {thread.ident}")
-        for i, future in enumerate(self.submitted_tasks_in_excutor):
-            if future.done():
-                status = "Completed"
-            elif future.running():
-                status = "Running"
-            else:
-                status = "Pending"
-            logger.debug(f"  Task {i}: Status - {status}")
 
     async def _iter_paths(self, path: os.PathLike[str]) -> None:
         """
@@ -1279,8 +1245,8 @@ class Solr:
                 asyncio.run_coroutine_threadsafe(
                     self._insert_to_mongo(metadata_collection, path_to_mongo), self.loop
                 )
-            except Exception as e:
-                logger.warning(f"Error while adding data to MongoDB: {e}")
+            except Exception as e:  # pragma: no cover
+                logger.warning(f"[MONGO] Error while adding data: {e}")
 
     @ensure_future
     async def _purge_user_data(self, search_keys: Dict[str, str]) -> None:
@@ -1446,20 +1412,15 @@ class Solr:
         else:
             time_str = "fx"
 
-        if len(times) > 1:
-            dt = abs((times[1] - times[0]).total_seconds())
-        else:
-            dt = 0
+        dt = abs((times[1] - times[0]).total_seconds()) if len(times) > 1 else 0
 
-        variables = []
-        for var in data_vars:
-            if var in coords:
-                continue
-            if any(term in var.lower() for term in ["lon", "lat", "bnds", "x", "y"]):
-                continue
-            if var.lower() in ["rotated_pole", "rot_pole"]:
-                continue
-            variables.append(var)
+        variables = [
+            var for var in data_vars
+            if var not in coords
+            and not any(term in var.lower() for term in
+                        ["lon", "lat", "bnds", "x", "y"])
+            and var.lower() not in ["rotated_pole", "rot_pole"]
+        ]
 
         if len(variables) != 1:
             logger.error("Only one data variable allowed, found: %s", variables)
@@ -1476,13 +1437,8 @@ class Solr:
 
         return cast(Dict[str, Union[str, list[str], Dict[str, str]]], _data)
 
-    @fixed_facets(
-        [
-            {"fs_type": ["posix"]},
-        ]
-    )
     async def add_userdata(
-        self, user: str, *paths: Union[str, os.PathLike[str]], **fwrites: Dict[str, str]
+        self, args: Tuple[str, list[os.PathLike[str]], Mapping[str, str]]
     ) -> None:
         """
         Add user data to the Apache Solr search system and MongoDB.
@@ -1493,8 +1449,7 @@ class Solr:
         Parameters:
         ~~~~~~~~~~
         - user (str): The identifier of the user whose data is being added.
-        - *paths (os.PathLike): One or more file system paths that contain the
-           user data.
+        - paths (List[os.PathLike[str]]): validated user data paths.
         - **fwrites (Dict[str, str]): Key-value pairs representing additional
           metadata to be written,
 
@@ -1507,8 +1462,10 @@ class Solr:
         )
 
         try:
-            self.validated_userdata = await self._validating_userdata_paths(*paths)
-            self.fwrites |= {"user": user} | cast(Dict[str, str], fwrites)
+            user, paths, fwrites = args
+            self.validated_userdata = paths
+            self.fwrites |= {"user": user,
+                             "fs_type": self.fs_type} | cast(Dict[str, str], fwrites)
             await self._ingest_user_data()
 
         finally:

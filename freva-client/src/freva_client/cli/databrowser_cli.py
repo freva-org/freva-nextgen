@@ -42,6 +42,7 @@ class Flavours(str, Enum):
     cmip5: str = "cmip5"
     cordex: str = "cordex"
     nextgems: str = "nextgems"
+    user: str = "user"
 
 
 class TimeSelect(str, Enum):
@@ -187,7 +188,7 @@ def metadata_search(
         time=time or "",
         time_select=cast(Literal["file", "flexible", "strict"], time_select.value),
         flavour=cast(
-            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
+            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
             flavour.value,
         ),
         host=host,
@@ -310,7 +311,7 @@ def data_search(
         time=time or "",
         time_select=cast(Literal["file", "flexible", "strict"], time_select),
         flavour=cast(
-            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
+            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
             flavour.value,
         ),
         uniq_key=cast(Literal["uri", "file"], uniq_key.value),
@@ -441,7 +442,7 @@ def intake_catalogue(
         time=time or "",
         time_select=cast(Literal["file", "flexible", "strict"], time_select),
         flavour=cast(
-            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
+            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
             flavour.value,
         ),
         uniq_key=cast(Literal["uri", "file"], uniq_key.value),
@@ -564,7 +565,7 @@ def count_values(
             time=time or "",
             time_select=cast(Literal["file", "flexible", "strict"], time_select),
             flavour=cast(
-                Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
+                Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
                 flavour.value,
             ),
             host=host,
@@ -580,7 +581,7 @@ def count_values(
                 time=time or "",
                 time_select=cast(Literal["file", "flexible", "strict"], time_select),
                 flavour=cast(
-                    Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
+                    Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
                     flavour.value,
                 ),
                 host=host,

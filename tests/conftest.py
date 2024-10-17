@@ -227,7 +227,6 @@ def client_no_mongo(cfg: ServerConfig) -> Iterator[TestClient]:
             with TestClient(app) as test_client:
                 yield test_client
 
-
 @pytest.fixture(scope="function")
 def client_no_solr(cfg: ServerConfig) -> Iterator[TestClient]:
     """Setup a client with an invalid solr."""

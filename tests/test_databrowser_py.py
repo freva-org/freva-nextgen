@@ -7,7 +7,7 @@ import pytest
 from freva_client import databrowser
 from freva_client.auth import Auth, authenticate
 from freva_client.utils.logger import DatabrowserWarning
-
+from fastapi import HTTPException
 
 def test_search_files(test_server: str) -> None:
     """Test searching for files."""
@@ -157,7 +157,7 @@ def test_zarr_stream(test_server: str, auth_instance: Auth) -> None:
         auth_instance._auth_token = token
 
 
-def test_userdata_filenotfound(test_server: str, auth_instance: Auth) -> None:
+def test_userdata_failed(test_server: str, auth_instance: Auth) -> None:
     """Test user data wrong paths."""
     token = deepcopy(auth_instance._auth_token)
     try:
@@ -165,25 +165,11 @@ def test_userdata_filenotfound(test_server: str, auth_instance: Auth) -> None:
         db = databrowser(host=test_server)
         _ = authenticate(username="janedoe", host=test_server)
         length = len(db)
-        db.add_user_data(
-            username="janedoe", paths="/somewhere/wrong", facets={"username": "johndoe"}
-        )
-        assert len(db) == length
-    finally:
-        auth_instance._auth_token = token
-
-
-def test_userdata_fixed_facets(test_server: str, auth_instance: Auth) -> None:
-    """Test user data wrong paths."""
-    token = deepcopy(auth_instance._auth_token)
-    try:
-        auth_instance.auth_instance = None
-        db = databrowser(host=test_server)
-        _ = authenticate(username="janedoe", host=test_server)
-        length = len(db)
-        db.add_user_data(username="janedoe", paths="./", facets={"fs_type": "hsm"})
-        db.add_user_data(username="janedoe", paths="./", facets={"fs_type": "swift"})
-
+        with pytest.raises(ValueError) as exc_info:
+            db.add_user_data(
+                username="janedoe", paths=["/somewhere/wrong"], facets={"username": "johndoe"}
+            )
+        assert "Failed to add user data" in str(exc_info.value)
         assert len(db) == length
     finally:
         auth_instance._auth_token = token
