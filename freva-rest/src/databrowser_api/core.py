@@ -6,12 +6,10 @@ import multiprocessing as mp
 import os
 import threading
 import uuid
-from concurrent.futures import Future
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from functools import cached_property, wraps
-from pathlib import Path
 from threading import Lock
 from typing import (
     Any,
@@ -23,7 +21,7 @@ from typing import (
     Iterable,
     List,
     Literal,
-    Mapping,
+    Sequence,
     Sized,
     Tuple,
     Union,
@@ -31,8 +29,6 @@ from typing import (
 )
 
 import aiohttp
-import numpy as np
-import xarray as xr
 from databrowser_api import __version__
 from dateutil.parser import ParserError, parse
 from fastapi import HTTPException
@@ -57,21 +53,6 @@ IntakeType = TypedDict(
         "aggregation_control": Dict[str, Any],
     },
 )
-
-UserDataType = TypedDict(
-    "UserDataType",
-    {
-        "experiment": str,
-        "institute": str,
-        "model": str,
-        "variable": str,
-        "time_frequency": str,
-        "ensemble": str,
-        "project": str,
-        "realm": str,
-    },
-)
-# TODO: Needs more consideration
 
 
 def run_async_in_thread(coro_func: Callable[..., Coroutine[Any, Any, Any]],
@@ -472,7 +453,9 @@ class Solr:
         self.current_batch: List[Dict[str, str]] = []
         self.loop = asyncio.get_event_loop()
         self.suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", "zar"]
-        self.submitted_tasks_in_excutor: List[Future[str]] = []
+        # TODO: If one adds a dataset from cloud storage, the file system type
+        # should be changed to cloud storage type. We need to find an approach
+        # to determine the file system
         self.fs_type: str = "posix"
 
     @asynccontextmanager
@@ -701,13 +684,13 @@ class Solr:
         Delete bulk user metadata from MongoDB based on the search keys.
 
         Parameters
-        ~~~~~~~~~~
-        search_keys : Dict[str, str]
+        ----------
+        search_keys: Dict[str, str]
             A dictionariy containing search keys used to identify
             data for deletion.
 
         Returns
-        ~~~~~~~
+        -------
         None
         """
         try:
@@ -720,27 +703,23 @@ class Solr:
         except Exception as error:
             logger.warning(f"[MONGO] Could not remove metadata: {error}")
 
-    async def _insert_to_mongo(self, metadata_batch: List[Dict[str, Any]],
-                               path_to_mongo: Path) -> None:
+    async def _insert_to_mongo(self, metadata_batch: List[Dict[str, Any]]) -> None:
         """
         Bulk upsert user metadata into MongoDB.
 
         Parameters
-        ~~~~~~~~~~
-        metadata_batch : List[Dict[str, Any]]
+        ----------
+        metadata_batch: List[Dict[str, Any]]
             A list of dictionaries containing metadata to insert into MongoDB.
-        path_to_mongo: Path
-            The path input by the user to store the metadata in MongoDB.
 
         Returns
-        ~~~~~~~
+        -------
         None
         """
         bulk_operations = []
 
         for metadata in metadata_batch:
             filter_query = {"file": metadata["file"], "uri": metadata["uri"]}
-            metadata["path"] = str(path_to_mongo)
             update_query = {"$set": metadata}
 
             bulk_operations.append(
@@ -751,9 +730,12 @@ class Solr:
                 result = await self._config.mongo_collection_userdata.bulk_write(
                     bulk_operations, ordered=False, bypass_document_validation=False
                 )
+                successful_upsert = (result.upserted_count
+                                     + result.modified_count
+                                     + result.inserted_count)
                 logger.info(
                     f"[MONGO] Successfully inserted or updated "
-                    f"{result.modified_count} records into MongoDB."
+                    f"{successful_upsert} records into MongoDB."
                     f"{result.matched_count} records aleady up-to-date."
                 )
 
@@ -773,6 +755,8 @@ class Solr:
                 logger.info(f"[MONGO] Partially succeeded: {successful_writes} "
                             f"documents inserted/updated successfully."
                             f"{nMatched} documents already up-to-date.")
+            except Exception as error:
+                logger.error(f"[MONGO] Could not insert metadata: {error}")
 
     @ensure_future
     async def store_results(self, num_results: int, status: int) -> None:
@@ -1072,6 +1056,17 @@ class Solr:
         if catalogue_type == "intake":
             yield "\n   ]\n}"
 
+    def get_executor_info(self) -> None:
+        logger.info(f"Max workers: {self.executor._max_workers}")
+        active_threads = [
+            thread for thread in threading.enumerate()
+            if thread.name and thread.name.startswith(
+                cast(str, self.executor._thread_name_prefix))
+        ]
+        logger.info(f"Active executor threads: {len(active_threads)}")
+        for thread in active_threads:
+            logger.info(f"  Thread name: {thread.name}, Thread ID: {thread.ident}")
+
     async def _add_to_solr(
         self, metadata_batch: List[Dict[str, Union[str, List[str], Dict[str, str]]]]
     ) -> None:
@@ -1099,13 +1094,13 @@ class Solr:
         Delete user data from Apache Solr based on search keys.
 
         Parameters
-        ~~~~~~~~~~
+        ----------
         search_keys : Dict[str, str]
             A dictionary of search keys used to identify data to be deleted.
             Keys are field names and values are search values.
 
         Returns
-        ~~~~~~~
+        -------
         None
         """
         def escape_special_chars(value: str) -> str:
@@ -1127,126 +1122,79 @@ class Solr:
         async with self._session_post():
             pass
 
-    async def _ingest_user_data(self) -> None:
+    async def _ingest_user_metadata(self) -> None:
         """
-        Ingest user data by processing all validated paths asynchronously.
+        Ingest validated user metadata asynchronously.
 
         Returns
-        ~~~~~~~
+        -------
         None
         """
+
         tasks = [
-            asyncio.ensure_future(self._iter_paths(path))
-            for path in self.validated_userdata
+            asyncio.ensure_future(
+                self._submit_user_metadata(self.validated_user_metadata)
+            )
         ]
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
 
-    def get_executor_info(self) -> None:
-
-        logger.info(f"Max workers: {self.executor._max_workers}")
-        active_threads = [
-            thread for thread in threading.enumerate()
-            if thread.name and thread.name.startswith(
-                cast(str, self.executor._thread_name_prefix))
-        ]
-        logger.info(f"Active executor threads: {len(active_threads)}")
-        for thread in active_threads:
-            logger.info(f"  Thread name: {thread.name}, Thread ID: {thread.ident}")
-
-    async def _iter_paths(self, path: os.PathLike[str]) -> None:
+    async def _submit_user_metadata(self, user_metadata: List[Dict[str, Any]]) -> None:
         """
-        Iterate over files in a directory or process a single file and
-        and submit the crawling and ingeting metadata to the executor.
+        Submit batches of user metadata for processing.
 
         Parameters
-        ~~~~~~~~~~
-        path : os.PathLike
-            The path to either a file or a directory containing user data.
+        ----------
+        user_metadata : List[Dict[str, Any]]
+            A list of user metadata to be processed.
 
         Returns
-        ~~~~~~~
+        -------
         None
         """
-        paths_to_process = []
-        if Path(path).is_file() and any(
-            Path(path).suffix == suffix for suffix in self.suffixes
-        ):
-            paths_to_process.append(path)
-        elif Path(path).is_dir():
-            async for file_path in self._gather_files_from_dir(Path(path)):
-                paths_to_process.append(file_path)
-                if len(paths_to_process) >= self.batch_size:
-                    future = self.executor.submit(
-                        run_async_in_thread,
-                        self._process_paths_in_executor,
-                        paths_to_process,
-                        path,
-                    )
-                    self.submitted_tasks_in_excutor.append(future)
-                    paths_to_process = []
-
-        if paths_to_process:
-            future = self.executor.submit(
-                run_async_in_thread, self._process_paths_in_executor,
-                paths_to_process, path,
-            )
-            self.submitted_tasks_in_excutor.append(future)
-        self.get_executor_info()
-
-    async def _gather_files_from_dir(self, path: Path) -> AsyncIterator[Path]:
-        """
-        Gather files from a directory based on specific patterns and suffixes.
-
-        Parameters
-        ~~~~~~~~~~
-        path : Path
-            The directory path to scan for files.
-
-        Yields
-        ~~~~~~
-        Path
-            Files that match the given suffix patterns.
-        """
-        for item in Path(path).rglob("*.*"):
-            if item.is_file() and any(
-                item.suffix == suffix for suffix in self.suffixes
-            ):
-                yield item
-
-    async def _process_paths_in_executor(
-            self, paths: List[Path], path_to_mongo: Path) -> None:
-        """
-        Process a batch of file paths to crawl metadata and ingest them
-        to Solr and MongoDB.
-
-        Parameters
-        ~~~~~~~~~~
-        paths : List[Path]
-            A list of file paths to be processed.
-        path_to_mongo : Path
-            The path input by the user.
-
-        Returns
-        ~~~~~~
-        None
-        """
-        metadata_collection: list[dict[str, str | list[str] | dict[str, str]]] = []
-        for path in paths:
-            metadata = await self._get_metadata(path)
-            if isinstance(metadata, Exception) or metadata == {}:
-                logger.warning("Error getting metadata: %s", metadata)
-            else:
-                metadata_collection.append(metadata)
-
-        if metadata_collection:
-            await self._add_to_solr(metadata_collection)
-            try:
-                asyncio.run_coroutine_threadsafe(
-                    self._insert_to_mongo(metadata_collection, path_to_mongo), self.loop
+        user_metadata_batch_to_process = []
+        for metadata in user_metadata:
+            metadata.update(self.fwrites)
+            user_metadata_batch_to_process.append(metadata)
+            if len(user_metadata_batch_to_process) >= self.batch_size:
+                self.executor.submit(
+                    run_async_in_thread,
+                    self._process_user_metadata_in_executor,
+                    user_metadata_batch_to_process,
                 )
-            except Exception as e:  # pragma: no cover
-                logger.warning(f"[MONGO] Error while adding data: {e}")
+                user_metadata_batch_to_process = []
+
+        if user_metadata_batch_to_process:
+            self.executor.submit(
+                run_async_in_thread,
+                self._process_user_metadata_in_executor,
+                user_metadata_batch_to_process,
+            )
+
+    async def _process_user_metadata_in_executor(self,
+                                                 user_metadata_batch:
+                                                 List[Dict[str, Any]]
+                                                 ) -> None:
+        """
+        Process a batch of user metadata for ingestion into Solr and MongoDB.
+
+        Parameters
+        ----------
+        user_metadata_batch : List[Dict[str, Any]]
+            A batch of metadata to be processed and ingested into Solr and MongoDB.
+
+        Returns
+        -------
+        None
+        """
+
+        await self._add_to_solr(user_metadata_batch)
+        try:
+            asyncio.run_coroutine_threadsafe(
+                self._insert_to_mongo(user_metadata_batch), self.loop
+            )
+        except Exception as e:  # pragma: no cover
+            logger.warning(f"[MONGO] Error while adding data: {e}")
 
     @ensure_future
     async def _purge_user_data(self, search_keys: Dict[str, str]) -> None:
@@ -1254,229 +1202,95 @@ class Solr:
         Purge the user data from both the Apache Solr search system and MongoDB.
 
         Parameters
-        ~~~~~~~~~~
-        search_keys : Dict[str, str]
+        ----------
+        search_keys: Dict[str, str]
             A list of dictionaries containing search keys used to identify the
             data to be purged.
 
         Returns
-        ~~~~~~~
+        -------
         None
         """
         await self._delete_from_solr(search_keys)
         await self._delete_from_mongo(search_keys)
 
-    async def _validating_userdata_paths(
-        self, *paths: Union[str, os.PathLike[str]]
-    ) -> List[os.PathLike[str]]:
+    async def _validate_user_metadata(
+        self,
+        user_metadata: Sequence[Dict[str, str]],
+    ) -> List[Dict[str, str]]:
         """
-        Validate the user data input paths by checking if each path exists.
+        Validate the user metadata by checking for required fields.
 
-        Parameters
-        ~~~~~~~~~~
-        *paths : os.PathLike
-            One or more paths to validate.
-
-        Returns
-        ~~~~~~~~~~
-        List[os.PathLike]
-            A list of valid paths that exist.
-        """
-        validated_paths: List[os.PathLike[str]] = []
-        for path in paths:
-            if not Path(path).exists():
-                logger.warning(f"The path {str(path)} does not exist")
-            else:
-                validated_paths.append(cast(os.PathLike[str], path))
-
-        if not validated_paths:
-            raise FileNotFoundError("No valid paths found")
-
-        return validated_paths
-
-    def _timedelta_to_cmor_frequency(self, dt: float) -> str:
-        """
-        Convert a time delta to a CMOR-compliant frequency string.
-
-        Parameters
-        ~~~~~~~~~~
-        dt : float
-            Time delta in seconds.
-
-        Returns
-        ~~~~~~~
-        str
-            The CMOR frequency corresponding to the time delta.
-        """
-        for total_seconds, frequency in self.time_table.items():
-            if dt >= total_seconds:
-                return frequency
-        return "fx"  # pragma: no cover
-
-    @property
-    def time_table(self) -> dict[int, str]:
-        """
-        Provide a mapping from time intervals (in seconds) to CMOR frequency strings.
-
-        Returns
-        ~~~~~~~
-        Dict[int, str]
-            A dictionary mapping time intervals (seconds) to CMOR frequencies.
-        """
-        return {
-            315360000: "dec",  # Decade
-            31104000: "yr",  # Year
-            2538000: "mon",  # Month
-            1296000: "sem",  # Seasonal (half-year)
-            84600: "day",  # Day
-            21600: "6h",  # Six-hourly
-            10800: "3h",  # Three-hourly
-            3600: "hr",  # Hourly
-            1: "subhr",  # Sub-hourly
-        }
-
-    def get_time_frequency(self, time_delta: int, freq_attr: str = "") -> str:
-        """
-        Determine the CMOR-compliant time frequency based on the time delta
-        and/or frequency attribute.
-
-        Parameters
-        ~~~~~~~~~~
-        time_delta : int
-            The time delta in seconds between consecutive time steps.
-        freq_attr : str, optional
-            The time frequency attribute that might already exist in
-            the data, by default "".
-
-        Returns
-        ~~~~~~~
-        str
-            The CMOR-compliant time frequency.
-        """
-        if freq_attr in self.time_table.values():
-            return freq_attr
-        return self._timedelta_to_cmor_frequency(time_delta)
-
-    async def _get_metadata(self, file_name: os.PathLike[str]
-                            ) -> Dict[str, Union[str, List[str], Dict[str, str]]]:
-        """
-        Read metadata information from a given file using xarray.
-
-        Parameters
-        ~~~~~~~~~~
-        file_name: os.PathLike
-            The input file to read metadata from.
-
-        Returns
-        ~~~~~~~
-        dict[str, str]
-            A dictionary holding metadata information as key-value pairs.
-            The metadata includes:
-                - variable: The primary variable name from the file.
-                - time_frequency: The time frequency of the data.
-                - time: The time range or "fx" if no time data is present.
-                - cmor_table: The CMOR table, defaults to the time frequency.
-                - version: Version information, defaults to an empty string
-                  if not found.
-                - file: The file path.
-                - uri: The file URI.
-
-        """
-
-        loop = asyncio.get_running_loop()
-
-        def open_dataset_with_lock() -> xr.Dataset:
-            with self._lock:
-                with xr.open_mfdataset(
-                    str(file_name), parallel=False, use_cftime=True, lock=False
-                ) as dset:
-                    return dset
-
-        try:
-            dset = await loop.run_in_executor(None, open_dataset_with_lock)
-            time_freq = dset.attrs.get("frequency", "")
-            data_vars = list(map(str, dset.data_vars))
-            coords = list(map(str, dset.coords))
-
-            try:
-                times = dset["time"].values[:]
-            except (KeyError, IndexError, TypeError):
-                times = np.array([])
-
-        except Exception as error:
-            logger.warning("Failed to open data file %s: %s", str(file_name), error)
-            return {}
-
-        if len(times) > 0:
-            time_str = f"[{times[0].isoformat()}Z TO {times[-1].isoformat()}Z]"
-        else:
-            time_str = "fx"
-
-        dt = abs((times[1] - times[0]).total_seconds()) if len(times) > 1 else 0
-
-        variables = [
-            var for var in data_vars
-            if var not in coords
-            and not any(term in var.lower() for term in
-                        ["lon", "lat", "bnds", "x", "y"])
-            and var.lower() not in ["rotated_pole", "rot_pole"]
-        ]
-
-        if len(variables) != 1:
-            logger.error("Only one data variable allowed, found: %s", variables)
-
-        _data = self.fwrites.copy()
-
-        _data.setdefault("variable", variables[0])
-        _data.setdefault("time_frequency", self.get_time_frequency(dt, time_freq))
-        _data["time"] = time_str
-        _data.setdefault("cmor_table", _data["time_frequency"])
-        _data.setdefault("version", "")
-        _data["file"] = str(file_name)
-        _data["uri"] = str(file_name)
-
-        return cast(Dict[str, Union[str, list[str], Dict[str, str]]], _data)
-
-    async def add_userdata(
-        self, args: Tuple[str, list[os.PathLike[str]], Mapping[str, str]]
-    ) -> None:
-        """
-        Add user data to the Apache Solr search system and MongoDB.
-
-        This method validates user data paths, prepares the necessary information,
-        and ingests the data into the Apache Solr and MongoDB systems.
-
-        Parameters:
-        ~~~~~~~~~~
-        - user (str): The identifier of the user whose data is being added.
-        - paths (List[os.PathLike[str]]): validated user data paths.
-        - **fwrites (Dict[str, str]): Key-value pairs representing additional
-          metadata to be written,
+        parameters:
+        ----------
+        user_metadata: Sequence[Dict[str, str]]
+            A sequence of user metadata entries, which can be
+            dictionaries containing metadata.
 
         Returns:
-        ~~~~~~~~
-        - None
+        --------
+            List[Dict[str, str]]: A list of validated metadata
+            dictionaries ready for ingestion.
+
+        Raises:
+        -------
+            HTTPException: If no valid metadata is found
+            or if required fields are missing.
         """
-        self.executor = concurrent.futures.ThreadPoolExecutor(
-            max_workers=min(mp.cpu_count(), 15)
-        )
+        required_fields = {"file", "variable", "time", "time_frequency"}
+        validated_user_metadata: List[Dict[str, str]] = []
+        for metadata in user_metadata:
+            if not required_fields.issubset(metadata):
+                logger.warning(
+                    f"Invalid metadata: missing one or"
+                    f"more required fields {required_fields}"
+                )
+                continue
+            metadata["uri"] = metadata["file"]
+            validated_user_metadata.append(metadata)
+        if not validated_user_metadata:
+            raise HTTPException(
+                status_code=422, detail="No valid metadata found in the input."
+            )
+        return validated_user_metadata
 
+    async def add_user_metadata(
+        self, user_name: str, user_metadata: List[Dict[str, Any]],
+        **fwrites: Dict[str, str]
+    ) -> None:
+        """
+        Add validated user metadata to the Apache Solr search system
+        and MongoDB.
+
+        parameters:
+        ----------
+        user_name: str
+            The username associated with the metadata.
+        user_metadata: List[Dict[str, Any]]
+            The metadata to be ingested.
+        fwrites: Dict[str, str]
+            Optional additional file write parameters.
+        """
+        max_workers = min(mp.cpu_count(), 15)
+        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
+        self.fwrites |= {
+            "user": user_name,
+            "fs_type": self.fs_type
+        } | fwrites.get("facet", {})
         try:
-            user, paths, fwrites = args
-            self.validated_userdata = paths
-            self.fwrites |= {"user": user,
-                             "fs_type": self.fs_type} | cast(Dict[str, str], fwrites)
-            await self._ingest_user_data()
-
+            self.validated_user_metadata = user_metadata
+            await self._ingest_user_metadata()
         finally:
-            self.executor.shutdown(wait=True)
+            self.get_executor_info()
+            if self.executor:
+                self.executor.shutdown(wait=True)
             logger.info(
-                "Shutting down executor. Total ingested files: %s",
+                "Executor shutdown complete. Total ingested files: %d",
                 self.total_ingested_files
             )
 
-    async def delete_userdata(
-        self, user: str, search_keys: Dict[str, Union[str, int]]
+    async def delete_user_metadata(
+        self, user_name: str, search_keys: Dict[str, Union[str, int]]
     ) -> None:
         """
         Delete user data from the Apache Solr search system and MongoDB.
@@ -1486,11 +1300,12 @@ class Solr:
         purge the data.
 
         Parameters:
-        ~~~~~~~~~~
-        - user (str): The identifier of the user whose data is being deleted.
-        - search_keys (Dict[str, Union[str, int]]): A dictionary of keys used to
-          identify the data to be deleted.
+        ----------
+        user: str
+            The identifier of the user whose data is being deleted.
+        search_keys: Dict[str, Union[str, int]]:
+            A dictionary of keys used to identify the data to be deleted.
         """
-        search_keys["user"] = user
+        search_keys["user"] = user_name
         await self._purge_user_data(search_keys)
         logger.info("Deleted files from Solr and MongoDB with keys: %s", search_keys)

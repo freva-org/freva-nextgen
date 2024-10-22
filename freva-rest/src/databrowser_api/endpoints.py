@@ -1,23 +1,40 @@
 """Main script that runs the rest API."""
 
 import os
-from typing import Annotated, Dict, List, Literal, Mapping, Sequence, Union
+from typing import Annotated, Any, Dict, List, Literal, Union
 
-from fastapi import (
-    BackgroundTasks,
-    Body,
-    Depends,
-    HTTPException,
-    Query,
-    Request,
-    status,
-)
+from fastapi import Body, Depends, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse, StreamingResponse
 from freva_rest.auth import TokenPayload, auth
 from freva_rest.rest import app, server_config
+from pydantic import BaseModel, Field
 
 from .core import FlavourType, Solr, Translator
 from .schema import Required, SearchFlavours, SolrSchema
+
+
+class AddUserDataRequestBody(BaseModel):
+    """Request body schema for adding user data."""
+    user_metadata: List[Dict[str, str]] = Field(
+        ...,
+        description="List of user metadata objects or strings to be"
+        " added to the databrowser.",
+        examples=[[
+            {"variable": "tas",
+             "time_frequency": "mon",
+             "time": "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",
+             "file": "path of the file"},
+        ]]
+    )
+    facets: Dict[str, Any] = Field(
+        ...,
+        description="Key-value pairs representing metadata search attributes.",
+        examples=[{
+            "project": "user-data",
+            "product": "new",
+            "institute": "globe"
+        }]
+    )
 
 
 @app.get("/api/databrowser/overview", tags=["Data search"])
@@ -245,72 +262,57 @@ async def load_data(
     )
 
 
-@app.put(
-    "/api/databrowser/userdata/{username}",
+@app.post(
+    "/api/databrowser/userdata",
     status_code=status.HTTP_202_ACCEPTED,
     tags=["User Data"],
 )
-async def put_user_data(
-    username: str,
-    paths: Annotated[
-        Sequence[str], Query(description="Paths to the user's data to be added")
-    ],
-    facets: Annotated[
-        Mapping[str, str], Body(..., description="Facet key-value pairs for metadata")
-    ],
-    background_tasks: BackgroundTasks,
+async def post_user_data(
+    request: Annotated[AddUserDataRequestBody, Body(...)],
     current_user: TokenPayload = Depends(auth.required),
 ) -> Dict[str, str]:
-    """Add user data to the Apache Solr search system and MongoDB."""
-    if username != current_user.preferred_username:  # type: ignore
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Permission denied"
-        )
+    """Add user metadata into the Apache Solr search system and MongoDB."""
 
     solr_instance = Solr(server_config)
-
     try:
-        validated_paths = await solr_instance._validating_userdata_paths(*paths)
-        background_tasks.add_task(
-            solr_instance.add_userdata, (username, validated_paths, facets)
+        validated_user_metadata = await solr_instance._validate_user_metadata(
+            request.user_metadata
         )
-    except FileNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid paths provided: {str(e)}",
+        await solr_instance.add_user_metadata(
+            current_user.preferred_username,  # type: ignore
+            validated_user_metadata,
+            facets=request.facets
         )
-    except Exception as e:  # pragma: no cover
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to add user data: {str(e)}",
+            detail=f"An unexpected error occurred while adding user data: {str(e)}",
         )
     return {
-        "status": "Crawling has been started. Check the Data Browser for updates."
+        "status": "User data has been added successfully.",
     }
 
 
 @app.delete(
-    "/api/databrowser/userdata/{username}",
+    "/api/databrowser/userdata",
     status_code=status.HTTP_202_ACCEPTED,
     tags=["User Data"],
 )
 async def delete_user_data(
-    username: str,
-    search_keys: Annotated[
-        Dict[str, Union[str, int]],
-        Body(..., description="Search keys for the data to be deleted")
-    ],
+    request: Dict[str, Union[str, int]] = Body(
+        ...,
+        example={"project": "user-data", "product": "new", "institute": "globe"}
+    ),
     current_user: TokenPayload = Depends(auth.required),
 ) -> Dict[str, str]:
-    """Delete user data from the Apache Solr search system."""
-    if username != current_user.preferred_username:  # type: ignore
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Permission denied"
-        )
+    """Delete user metadata from the Apache Solr search system and MongoDB."""
 
     solr_instance = Solr(server_config)
     try:
-        await solr_instance.delete_userdata(username, search_keys)
+        await solr_instance.delete_user_metadata(
+            current_user.preferred_username,  # type: ignore
+            request
+        )
     except Exception as e:  # pragma: no cover
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

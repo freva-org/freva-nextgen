@@ -56,7 +56,8 @@ Getting an overview
                 "cmip6",
                 "cmip5",
                 "cordex",
-                "nextgems"
+                "nextgems",
+                "user"
               ],
               "attributes": {
                 "freva": [
@@ -915,42 +916,53 @@ Creating zarr endpoints for streaming data
 Adding and deleting User Data in Databrowser
 ---------------------------------------------
 
-.. http:put:: /api/databrowser/userdata/{str:username}
+.. http:post:: /api/databrowser/userdata
 
-   This endpoint allows authenticated users to add their own data to the databrowser. Users can specify the paths to their data files and provide metadata facets for indexing and searching their datasets.
+   This endpoint allows authenticated users to add metadata about their own data to the databrowser. Users provide a list of metadata entries and optional facets for indexing and searching their datasets.
 
-   :param username: The username of the user adding data. Must match the authenticated user's username.
-   :type username: str
-   :query paths: Paths to the user's data files to be added. Multiple paths can be specified.
-   :type paths: list[str]
-   :reqbody facets: Facet key-value pairs for metadata tagging. These facets are used for indexing and searching the data.
-   :type facets: dict[str, str]
+   :reqbody user_metadata: A list of metadata entries about the user's data to be added. Each entry must include the required fields: **file**, **variable**, **time**, and **time_frequency**.
+   :type user_metadata: list[dict[str, str]]
+
+   :reqbody facets: Optional key-value pairs representing metadata search attributes. These facets are used for indexing and searching the data.
+   :type facets: dict[str, Any]
+
    :reqheader Authorization: Bearer token for authentication.
    :reqheader Content-Type: application/json
 
-   :statuscode 202: User data added successfully.
-   :statuscode 403: Permission denied (if the username does not match the authenticated user).
+   :statuscode 202: User data has been added successfully.
    :statuscode 500: Failed to add user data due to a server error.
 
-   **Example Request**
+   Example Request
+   ~~~~~~~~~~~~~~~~
 
-   The user must authenticate using a valid access token. The data paths are specified as query parameters, and the metadata facets are included in the JSON body of the request.
+   The user must authenticate using a valid access token. The metadata entries and facets are included in the JSON body of the request.
 
    .. sourcecode:: http
 
-       PUT /api/databrowser/userdata/johndoe?paths=/data/file1.nc&paths=/data/file2.nc HTTP/1.1
+       POST /api/databrowser/userdata HTTP/1.1
        Host: www.freva.dkrz.de
        Authorization: Bearer YOUR_ACCESS_TOKEN
        Content-Type: application/json
 
        {
-           "project": "cordex",
-           "experiment": "rcp85",
-           "model": "mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1",
-           "variable": "tas"
+           "user_metadata": [
+               {
+                   "file": "/data/file1.nc",
+                   "variable": "tas",
+                   "time": "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",
+                   "time_frequency": "mon",
+                   "additional_info": "Sample data file"
+               }
+           ],
+           "facets": {
+               "project": "user-data",
+               "product": "new",
+               "institute": "globe"
+           }
        }
 
-   **Example Response**
+   Example Response
+   ~~~~~~~~~~~~~~~~
 
    .. sourcecode:: http
 
@@ -958,10 +970,11 @@ Adding and deleting User Data in Databrowser
        Content-Type: application/json
 
        {
-           "status": "User data added successfully"
+           "status": "User data has been added successfully."
        }
 
-   **Example**
+   Example
+   ~~~~~~~
 
    Below you can find example usages of this request in different scripting and programming languages.
 
@@ -970,15 +983,25 @@ Adding and deleting User Data in Databrowser
        .. code-tab:: bash
            :caption: Shell
 
-           curl -X PUT \
-           'https://www.freva.dkrz.de/api/databrowser/userdata/johndoe?paths=/data/file1.nc&paths=/data/file2.nc' \
+           curl -X POST \
+           'https://www.freva.dkrz.de/api/databrowser/userdata' \
            -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
            -H "Content-Type: application/json" \
            -d '{
-               "project": "cordex",
-               "experiment": "rcp85",
-               "model": "mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1",
-               "variable": "tas"
+               "user_metadata": [
+                   {
+                       "file": "/data/file1.nc",
+                       "variable": "tas",
+                       "time": "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",
+                       "time_frequency": "mon",
+                       "additional_info": "Sample data file"
+                   }
+               ],
+               "facets": {
+                   "project": "user-data",
+                   "product": "new",
+                   "institute": "globe"
+               }
            }'
 
        .. code-tab:: python
@@ -986,22 +1009,29 @@ Adding and deleting User Data in Databrowser
 
            import requests
 
-           url = "https://www.freva.dkrz.de/api/databrowser/userdata/johndoe"
-           params = {
-               "paths": ["/data/file1.nc", "/data/file2.nc"]
-           }
+           url = "https://www.freva.dkrz.de/api/databrowser/userdata"
            headers = {
                "Authorization": "Bearer YOUR_ACCESS_TOKEN",
                "Content-Type": "application/json"
            }
            data = {
-               "project": "cordex",
-               "experiment": "rcp85",
-               "model": "mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1",
-               "variable": "tas"
+               "user_metadata": [
+                   {
+                       "file": "/data/file1.nc",
+                       "variable": "tas",
+                       "time": "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",
+                       "time_frequency": "mon",
+                       "additional_info": "Sample data file"
+                   }
+               ],
+               "facets": {
+                   "project": "user-data",
+                   "product": "new",
+                   "institute": "globe"
+               }
            }
 
-           response = requests.put(url, params=params, headers=headers, json=data)
+           response = requests.post(url, headers=headers, json=data)
            print(response.json())
 
        .. code-tab:: r
@@ -1009,17 +1039,26 @@ Adding and deleting User Data in Databrowser
 
            library(httr)
 
-           url <- "https://www.freva.dkrz.de/api/databrowser/userdata/johndoe"
-           params <- list(paths = c("/data/file1.nc", "/data/file2.nc"))
+           url <- "https://www.freva.dkrz.de/api/databrowser/userdata"
            headers <- c(Authorization = "Bearer YOUR_ACCESS_TOKEN")
            body <- list(
-               project = "cordex",
-               experiment = "rcp85",
-               model = "mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1",
-               variable = "tas"
+               user_metadata = list(
+                   list(
+                       file = "/data/file1.nc",
+                       variable = "tas",
+                       time = "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",
+                       time_frequency = "mon",
+                       additional_info = "Sample data file"
+                   )
+               ),
+               facets = list(
+                   project = "user-data",
+                   product = "new",
+                   institute = "globe"
+               )
            )
 
-           response <- PUT(url, query = params, add_headers(.headers = headers), body = body, encode = "json")
+           response <- POST(url, add_headers(.headers = headers), body = body, encode = "json")
            content <- content(response, "parsed")
            print(content)
 
@@ -1028,26 +1067,34 @@ Adding and deleting User Data in Databrowser
 
            using HTTP, JSON
 
-           url = "https://www.freva.dkrz.de/api/databrowser/userdata/johndoe"
-           params = Dict("paths[]" => ["/data/file1.nc", "/data/file2.nc"])
+           url = "https://www.freva.dkrz.de/api/databrowser/userdata"
            headers = Dict(
                "Authorization" => "Bearer YOUR_ACCESS_TOKEN",
                "Content-Type" => "application/json"
            )
            body = JSON.json(Dict(
-               "project" => "cordex",
-               "experiment" => "rcp85",
-               "model" => "mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1",
-               "variable" => "tas"
+               "user_metadata" => [
+                   Dict(
+                       "file" => "/data/file1.nc",
+                       "variable" => "tas",
+                       "time" => "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",
+                       "time_frequency" => "mon",
+                       "additional_info" => "Sample data file"
+                   )
+               ],
+               "facets" => Dict(
+                   "project" => "user-data",
+                   "product" => "new",
+                   "institute" => "globe"
+               )
            ))
 
-           response = HTTP.request("PUT", url, query = params, headers = headers, body = body)
+           response = HTTP.request("POST", url, headers = headers, body = body)
            println(String(response.body))
 
        .. code-tab:: c
            :caption: C/C++
 
-           ```c
            #include <stdio.h>
            #include <curl/curl.h>
 
@@ -1055,19 +1102,24 @@ Adding and deleting User Data in Databrowser
                CURL *curl;
                CURLcode res;
 
-               const char *url = "https://www.freva.dkrz.de/api/databrowser/userdata/johndoe";
-               const char *paths[] = {"/data/file1.nc", "/data/file2.nc"};
+               const char *url = "https://www.freva.dkrz.de/api/databrowser/userdata";
                const char *token = "YOUR_ACCESS_TOKEN";
                const char *json_data = "{"
-                   "\"project\": \"cordex\","
-                   "\"experiment\": \"rcp85\","
-                   "\"model\": \"mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1\","
-                   "\"variable\": \"tas\""
+                   "\"user_metadata\": ["
+                       "{"
+                           "\"file\": \"/data/file1.nc\","
+                           "\"variable\": \"tas\","
+                           "\"time\": \"[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]\","
+                           "\"time_frequency\": \"mon\","
+                           "\"additional_info\": \"Sample data file\""
+                       "}"
+                   "],"
+                   "\"facets\": {"
+                       "\"project\": \"user-data\","
+                       "\"product\": \"new\","
+                       "\"institute\": \"globe\""
+                   "}"
                "}";
-
-               // Build the query string
-               char query[256];
-               snprintf(query, sizeof(query), "?paths=%s&paths=%s", paths[0], paths[1]);
 
                // Initialize curl
                curl = curl_easy_init();
@@ -1078,16 +1130,14 @@ Adding and deleting User Data in Databrowser
                    snprintf(auth_header, sizeof(auth_header), "Authorization: Bearer %s", token);
                    headers = curl_slist_append(headers, auth_header);
 
-                   // Set the URL with query parameters
-                   char full_url[512];
-                   snprintf(full_url, sizeof(full_url), "%s%s", url, query);
-                   curl_easy_setopt(curl, CURLOPT_URL, full_url);
+                   // Set the URL
+                   curl_easy_setopt(curl, CURLOPT_URL, url);
 
                    // Set headers
                    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
-                   // Set the HTTP method to PUT
-                   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+                   // Set the HTTP method to POST
+                   curl_easy_setopt(curl, CURLOPT_POST, 1L);
 
                    // Set the JSON data to send
                    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_data);
@@ -1104,41 +1154,40 @@ Adding and deleting User Data in Databrowser
                }
                return 0;
            }
-           ```
 
-.. http:delete:: /api/databrowser/userdata/{str:username}
+.. http:delete:: /api/databrowser/userdata
 
    This endpoint allows authenticated users to delete their previously indexed data from the databrowser. Users specify search keys to identify the data entries they wish to remove.
 
-   :param username: The username of the user deleting data. Must match the authenticated user's username.
-   :type username: str
-   :reqbody search_keys: Search keys (facet key-value pairs) used to identify the data to delete.
-   :type search_keys: dict[str, str]
+   :reqbody search_keys: Search keys (key-value pairs) used to identify the data to delete.
+   :type search_keys: dict[str, Any]
+
    :reqheader Authorization: Bearer token for authentication.
    :reqheader Content-Type: application/json
 
-   :statuscode 202: User data deleted successfully.
-   :statuscode 403: Permission denied (if the username does not match the authenticated user).
-   :statuscode 422: invalid query parameters
+   :statuscode 202: User data has been deleted successfully.
    :statuscode 500: Failed to delete user data due to a server error.
 
-   **Example Request**
+   Example Request
+   ~~~~~~~~~~~~~~~
 
    The user must authenticate using a valid access token. The search keys are provided in the JSON body of the request to specify which data entries to delete.
 
    .. sourcecode:: http
 
-       DELETE /api/databrowser/userdata/johndoe HTTP/1.1
+       DELETE /api/databrowser/userdata HTTP/1.1
        Host: www.freva.dkrz.de
        Authorization: Bearer YOUR_ACCESS_TOKEN
        Content-Type: application/json
 
        {
-           "project": "cordex",
-           "experiment": "rcp85"
+           "project": "user-data",
+           "product": "new",
+           "institute": "globe"
        }
 
-   **Example Response**
+   Example Response
+   ~~~~~~~~~~~~~~~~
 
    .. sourcecode:: http
 
@@ -1146,10 +1195,11 @@ Adding and deleting User Data in Databrowser
        Content-Type: application/json
 
        {
-           "status": "User data deleted successfully"
+           "status": "User data has been deleted successfully"
        }
 
-   **Example**
+   Example
+   ~~~~~~~
 
    Below you can find example usages of this request in different scripting and programming languages.
 
@@ -1159,12 +1209,13 @@ Adding and deleting User Data in Databrowser
            :caption: Shell
 
            curl -X DELETE \
-           'https://www.freva.dkrz.de/api/databrowser/userdata/johndoe' \
+           'https://www.freva.dkrz.de/api/databrowser/userdata' \
            -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
            -H "Content-Type: application/json" \
            -d '{
-               "project": "cordex",
-               "experiment": "rcp85"
+               "project": "user-data",
+               "product": "new",
+               "institute": "globe"
            }'
 
        .. code-tab:: python
@@ -1172,14 +1223,15 @@ Adding and deleting User Data in Databrowser
 
            import requests
 
-           url = "https://www.freva.dkrz.de/api/databrowser/userdata/johndoe"
+           url = "https://www.freva.dkrz.de/api/databrowser/userdata"
            headers = {
                "Authorization": "Bearer YOUR_ACCESS_TOKEN",
                "Content-Type": "application/json"
            }
            data = {
-               "project": "cordex",
-               "experiment": "rcp85"
+               "project": "user-data",
+               "product": "new",
+               "institute": "globe"
            }
 
            response = requests.delete(url, headers=headers, json=data)
@@ -1190,11 +1242,12 @@ Adding and deleting User Data in Databrowser
 
            library(httr)
 
-           url <- "https://www.freva.dkrz.de/api/databrowser/userdata/johndoe"
+           url <- "https://www.freva.dkrz.de/api/databrowser/userdata"
            headers <- c(Authorization = "Bearer YOUR_ACCESS_TOKEN")
            body <- list(
-               project = "cordex",
-               experiment = "rcp85"
+               project = "user-data",
+               product = "new",
+               institute = "globe"
            )
 
            response <- DELETE(url, add_headers(.headers = headers), body = body, encode = "json")
@@ -1206,14 +1259,15 @@ Adding and deleting User Data in Databrowser
 
            using HTTP, JSON
 
-           url = "https://www.freva.dkrz.de/api/databrowser/userdata/johndoe"
+           url = "https://www.freva.dkrz.de/api/databrowser/userdata"
            headers = Dict(
                "Authorization" => "Bearer YOUR_ACCESS_TOKEN",
                "Content-Type" => "application/json"
            )
            body = JSON.json(Dict(
-               "project" => "cordex",
-               "experiment" => "rcp85"
+               "project" => "user-data",
+               "product" => "new",
+               "institute" => "globe"
            ))
 
            response = HTTP.request("DELETE", url, headers = headers, body = body)
@@ -1222,7 +1276,6 @@ Adding and deleting User Data in Databrowser
        .. code-tab:: c
            :caption: C/C++
 
-           ```c
            #include <stdio.h>
            #include <curl/curl.h>
 
@@ -1230,11 +1283,12 @@ Adding and deleting User Data in Databrowser
                CURL *curl;
                CURLcode res;
 
-               const char *url = "https://www.freva.dkrz.de/api/databrowser/userdata/johndoe";
+               const char *url = "https://www.freva.dkrz.de/api/databrowser/userdata";
                const char *token = "YOUR_ACCESS_TOKEN";
                const char *json_data = "{"
-                   "\"project\": \"cordex\","
-                   "\"experiment\": \"rcp85\""
+                   "\"project\": \"user-data\","
+                   "\"product\": \"new\","
+                   "\"institute\": \"globe\""
                "}";
 
                // Initialize curl
@@ -1270,7 +1324,6 @@ Adding and deleting User Data in Databrowser
                }
                return 0;
            }
-           ```
 
 ---
 

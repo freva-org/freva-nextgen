@@ -156,6 +156,74 @@ def test_zarr_stream(test_server: str, auth_instance: Auth) -> None:
     finally:
         auth_instance._auth_token = token
 
+def test_userdata_add_path_xarray_py(test_server: str, auth_instance: Auth) -> None:
+    """Test adding path and xarray user data."""
+    import xarray as xr
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance.auth_instance = None
+        db = databrowser(host=test_server)
+        _ = authenticate(username="janedoe", host=test_server)
+
+        db.userdata("delete", metadata={})
+        filename1 = "./freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/GERICS/NCC-NorESM1-M/rcp85/r1i1p1/GERICS-REMO2015/v1/3hr/pr/v20181212/pr_EUR-11_NCC-NorESM1-M_rcp85_r1i1p1_GERICS-REMO2015_v2_3hr_200701020130-200701020430.nc"
+        filename2 = "./freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/CLMcom/MPI-M-MPI-ESM-LR/historical/r0i0p0/CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_fx.nc"
+        xarray_data = xr.open_dataset(filename1)
+        db.userdata(
+            "add", userdata_items=[xarray_data, filename2],
+            metadata={}
+        )
+        assert len(databrowser(flavour="user")) == 2
+
+    finally:
+        auth_instance._auth_token = token
+
+
+def test_userdata_add_path_py_batch(test_server: str, auth_instance: Auth) -> None:
+    """Test adding path user data."""
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance.auth_instance = None
+        db = databrowser(host=test_server)
+        _ = authenticate(username="janedoe", host=test_server)
+
+        db.userdata("delete", metadata={})
+        filename1 = "./freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/"
+        db.batch_size = 1
+        db.userdata(
+            "add", userdata_items=[filename1],
+            metadata={}
+        )
+        assert len(databrowser(flavour="user")) > 1
+    finally:
+        auth_instance._auth_token = token
+
+
+def test_userdata_add_xarray_py_batch(test_server: str, auth_instance: Auth) -> None:
+    """Test adding xarray user data."""
+    import xarray as xr
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance.auth_instance = None
+        db = databrowser(host=test_server)
+        _ = authenticate(username="janedoe", host=test_server)
+
+        db.userdata("delete", metadata={})
+        filename1 = "./freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/GERICS/NCC-NorESM1-M/rcp85/r1i1p1/GERICS-REMO2015/v1/3hr/pr/v20181212/pr_EUR-11_NCC-NorESM1-M_rcp85_r1i1p1_GERICS-REMO2015_v2_3hr_200701020130-200701020430.nc"
+        filename2 = "./freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/CLMcom/MPI-M-MPI-ESM-LR/historical/r0i0p0/CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_fx.nc"
+        filename3 = "./freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/CLMcom/MPI-M-MPI-ESM-LR/historical/r1i1p1/CLMcom-CCLM4-8-17/v1/daypt/tas/v20140515/tas_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_daypt_194912011200-194912101200.nc"
+        xarray_data1 = xr.open_dataset(filename1)
+        xarray_data2 = xr.open_dataset(filename2)
+        xarray_data3 = xr.open_dataset(filename3)
+
+        db.batch_size = 1
+        db.userdata(
+            "add", userdata_items=[xarray_data1, xarray_data2, xarray_data3],
+            metadata={}
+        )
+        assert len(databrowser(flavour="user")) == 3
+    finally:
+        auth_instance._auth_token = token
 
 def test_userdata_failed(test_server: str, auth_instance: Auth) -> None:
     """Test user data wrong paths."""
@@ -165,26 +233,83 @@ def test_userdata_failed(test_server: str, auth_instance: Auth) -> None:
         db = databrowser(host=test_server)
         _ = authenticate(username="janedoe", host=test_server)
         length = len(db)
-        with pytest.raises(ValueError) as exc_info:
-            db.add_user_data(
-                username="janedoe", paths=["/somewhere/wrong"], facets={"username": "johndoe"}
+        with pytest.raises(FileNotFoundError) as exc_info:
+            db.userdata(
+                "add", userdata_items=["/somewhere/wrong"], metadata={"username": "johndoe"}
             )
-        assert "Failed to add user data" in str(exc_info.value)
+        assert "No valid file paths or xarray datasets found." in str(exc_info.value)
         assert len(db) == length
     finally:
         auth_instance._auth_token = token
 
 
-def test_userdata_put_delete_failure(test_server: str, auth_instance: Auth) -> None:
+def test_userdata_post_delete_failure(test_server: str, auth_instance: Auth) -> None:
 
     token = deepcopy(auth_instance._auth_token)
     try:
         auth_instance.auth_instance = None
-        db = databrowser(host=test_server, fail_on_error=True)
+        _ = authenticate(username="janedoe")
+        db = databrowser(host="foo.bar.de:7777", fail_on_error=True)
+        with pytest.raises(ValueError):
+            db.userdata("add",userdata_items=["./freva-rest/src/databrowser_api/mock_broken/bears.nc"], metadata={"username": "janedoe"})
+        with pytest.raises(ValueError):
+            db.userdata("delete",metadata={"username": "janedoe"})
+    finally:
+        auth_instance._auth_token = token
+def test_userdata_post_delete_without_failure(test_server: str, auth_instance: Auth) -> None:
+
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance.auth_instance = None
+        _ = authenticate(username="janedoe")
+        db = databrowser(host="foo.bar.de:7777")
+        with pytest.raises(ValueError):
+            db.userdata("add",userdata_items=["./freva-rest/src/databrowser_api/mock_broken/bears.nc"], metadata={"username": "janedoe"})
+        with pytest.raises(ValueError):
+            db.userdata("delete",metadata={"username": "janedoe"})
+    finally:
+        auth_instance._auth_token = token
+
+def test_userdata_correct_args_wrong_place(
+    test_server: str, auth_instance: Auth
+) -> None:
+    """Test adding user data with wrong arguments."""
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance.auth_instance = None
+        db = databrowser(host=test_server)
         _ = authenticate(username="janedoe", host=test_server)
-        length = len(db)
-        db.add_user_data(username="janedoe", paths="./", facets={"username": "janedoe"})
-        db.delete_user_data(username="janedoe", search_keys={"username": "janedoe"})
-        assert len(db) == length
+        with pytest.raises(FileNotFoundError):
+            db.userdata("add", metadata={"username": "johndoe"})
+        db.userdata("delete", userdata_items=["./freva-rest/src/databrowser_api/mock_broken/bears.nc"], metadata={"username": "johndoe"})
+    finally:
+        auth_instance._auth_token = token
+
+def test_userdata_empty_metadata_value_error(
+    test_server: str, auth_instance: Auth
+) -> None:
+    """Test adding user data with wrong arguments."""
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance.auth_instance = None
+        db = databrowser(host=test_server)
+        _ = authenticate(username="janedoe", host=test_server)
+        with pytest.raises(ValueError):
+            db.userdata("add", userdata_items=["./freva-rest/src/databrowser_api/mock/data/model/obs/reanalysis/reanalysis/NOAA/NODC/OC5/mon/ocean/Omon/r1i1p1/v20200101/hc700/hc700_mon_NODC_OC5_r1i1p1_201201-201212.nc"], metadata={"username": "johndoe"})
+    finally:
+        auth_instance._auth_token = token
+
+
+def test_userdata_non_path_xarray(
+    test_server: str, auth_instance: Auth
+) -> None:
+    """Test adding user data with wrong arguments."""
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance.auth_instance = None
+        db = databrowser(host=test_server)
+        _ = authenticate(username="janedoe", host=test_server)
+        with pytest.raises(FileNotFoundError):
+            db.userdata("add", userdata_items=[[1]], metadata={"username": "johndoe"})
     finally:
         auth_instance._auth_token = token

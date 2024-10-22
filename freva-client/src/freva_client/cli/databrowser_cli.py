@@ -10,6 +10,7 @@ from tempfile import NamedTemporaryFile
 from typing import Dict, List, Literal, Optional, Union, cast
 
 import typer
+import xarray as xr
 from freva_client import databrowser
 from freva_client.auth import Auth
 from freva_client.utils import exception_handler, logger
@@ -612,7 +613,6 @@ databrowser_app.add_typer(user_data_app, name="user-data")
 @user_data_app.command(name="add", help="Add user data into the databrowser.")
 @exception_handler
 def user_data_add(
-    username: str = typer.Argument(..., help="Username of the data owner"),
     paths: List[str] = typer.Option(
         ...,
         "--path",
@@ -622,8 +622,8 @@ def user_data_add(
     facets: Optional[List[str]] = typer.Option(
         None,
         "--facet",
-        "-f",
-        help="Facet key-value pairs for metadata in the format key=value.",
+        help="Key-value metadata pairs to categorize the user"
+        "input data in the format key=value.",
     ),
     host: Optional[str] = typer.Option(
         None,
@@ -643,6 +643,7 @@ def user_data_add(
     """Add user data into the databrowser."""
     logger.set_verbosity(verbose)
     logger.debug("Checking if the user has the right to add data")
+
     result = databrowser(host=host)
     _auth(result._cfg.auth_url, access_token)
 
@@ -657,22 +658,21 @@ def user_data_add(
             key, value = facet.split("=", 1)
             facet_dict[key] = value
 
-    logger.debug(
-        f"Adding user data for {username} with paths {paths} and facets {facet_dict}"
-    )
-    result.add_user_data(username=username, paths=paths, facets=facet_dict)
-    logger.info("User data started crawling. Check the Databrowser to see the updates.")
+    logger.debug(f"Adding user data with paths {paths} and facets {facet_dict}")
+    result.userdata(action="add", userdata_items=cast(List[Union[str, xr.Dataset]],
+                                                      paths), metadata=facet_dict)
+    logger.info("User data has been added successfully")
 
 
 @user_data_app.command(name="delete", help="Delete user data from the databrowser.")
 @exception_handler
-def user_data_remove(
-    username: str = typer.Argument(..., help="Username of the data owner"),
+def user_data_delete(
     search_keys: List[str] = typer.Option(
         None,
         "--search-key",
         "-s",
-        help="Search keys for the data to be deleted in the format key=value.",
+        help="Key-value metadata pairs to search and identify user data "
+        "for deletion in the format key=value.",
     ),
     host: Optional[str] = typer.Option(
         None,
@@ -706,5 +706,5 @@ def user_data_remove(
                 raise typer.Exit(code=1)
             key, value = search_key.split("=", 1)
             search_key_dict[key] = value
-    result.delete_user_data(username=username, search_keys=search_key_dict)
+    result.userdata(action="delete", metadata=search_key_dict)
     logger.info("User data deleted successfully.")

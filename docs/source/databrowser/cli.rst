@@ -418,8 +418,8 @@ To add your data to the databrowser, use the `user-data add` command. You'll nee
 .. code:: console
 
     token=$(freva-client auth -u janedoe | jq -r .access_token)
-    freva-client databrowser user-data add janedoe \
-        --path ./freva-rest/src/databrowser_api/mock/ \
+    freva-client databrowser user-data add \
+        --path freva-rest/src/databrowser_api/mock/ \
         --facet project=cordex \
         --facet experiment=rcp85 \
         --facet model=mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1 \
@@ -432,13 +432,17 @@ To add your data to the databrowser, use the `user-data add` command. You'll nee
    from subprocess import run, PIPE
    from freva_client import authenticate
    token = authenticate(username="janedoe")
-   res = run(["freva-client", "databrowser", "user-data",
-              "add", "janedoe",
-              "--path", "./freva-rest/src/databrowser_api/mock/",
-              "--facet", "project=cordex",
-              "--access-token", token["access_token"],
-             ], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
+   res = run(
+       ["freva-client", "databrowser", "user-data", "add",
+       "--path", "../freva-rest/src/databrowser_api/mock/",
+       "--facet", "project=cordex",
+       "--facet", "experiment=rcp85",
+       "--facet", "model=mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1",
+       "--facet", "variable=tas",
+       "--access-token", token["access_token"]],
+       check=True, stdout=PIPE, stderr=PIPE
+   )
+   print("STDOUT:", res.stderr.decode())
 
 
 This command adds the specified data files to the databrowser and tags them with the provided metadata facets. These facets help in indexing and searching your data within the system.
@@ -446,12 +450,12 @@ This command adds the specified data files to the databrowser and tags them with
 Deleting User Data
 ~~~~~~~~~~~~~~~~~~
 
-If you need to remove your data from the databrowser, use the `user-data delete` command. Provide your username and the search keys (metadata facets) that identify the data you wish to delete.
+If you need to remove your data from the databrowser, use the `user-data delete` command. Provide your username and the search keys (metadata facets) that identify the user data you wish to delete.
 
 .. code:: console
 
     token=$(freva-client auth -u janedoe | jq -r .access_token)
-    freva-client databrowser user-data delete janedoe \
+    freva-client databrowser user-data delete \
         --search-key project=cordex \
         --search-key experiment=rcp85 \
         --access-token $token
@@ -463,10 +467,10 @@ If you need to remove your data from the databrowser, use the `user-data delete`
    from freva_client import authenticate
    token = authenticate(username="janedoe")
    res = run(["freva-client", "databrowser", "user-data",
-              "delete", "janedoe",
+              "delete",
               "--search-key", "project=cordex", \
               "--access-token", token["access_token"],
              ], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
+   print(res.stderr.decode())
 
 This command deletes all data entries that match the specified search keys from the databrowser.
