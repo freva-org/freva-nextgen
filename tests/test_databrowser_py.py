@@ -173,7 +173,7 @@ def test_userdata_add_path_xarray_py(test_server: str, auth_instance: Auth) -> N
             "add", userdata_items=[xarray_data, filename2],
             metadata={}
         )
-        assert len(databrowser(flavour="user")) == 2
+        assert len(databrowser(flavour="user", host=test_server)) == 2
 
     finally:
         auth_instance._auth_token = token
@@ -194,7 +194,7 @@ def test_userdata_add_path_py_batch(test_server: str, auth_instance: Auth) -> No
             "add", userdata_items=[filename1],
             metadata={}
         )
-        assert len(databrowser(flavour="user")) > 1
+        assert len(databrowser(flavour="user", host=test_server)) > 1
     finally:
         auth_instance._auth_token = token
 
@@ -221,7 +221,7 @@ def test_userdata_add_xarray_py_batch(test_server: str, auth_instance: Auth) -> 
             "add", userdata_items=[xarray_data1, xarray_data2, xarray_data3],
             metadata={}
         )
-        assert len(databrowser(flavour="user")) == 3
+        assert len(databrowser(flavour="user", host=test_server)) == 3
     finally:
         auth_instance._auth_token = token
 

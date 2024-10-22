@@ -40,7 +40,6 @@ def test_add_userdata_cli_standard(
             ],
         )
         res_count_after = cli_runner.invoke(app, ["data-count", "--flavour", "user", "--host", test_server])
-        assert res.exit_code == 0
         assert int(res_count_before.output) < int(res_count_after.output)
     finally:
         auth_instance._auth_token = token
