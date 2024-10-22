@@ -756,12 +756,11 @@ class databrowser:
         Manage user data in the databrowser system by adding new data or
         deleting existing data.
 
-        For the "add" action, the user can provide data items (file paths
-        or xarray datasets)
-        along with metadata (key-value pairs) to categorize and organize
-        the data.
+        For the "``add``" action, the user can provide data items (file paths
+        or xarray datasets) along with metadata (key-value pairs) to
+        categorize and organize the data.
 
-        For the "delete" action, the user provides metadata as search
+        For the "``delete``" action, the user provides metadata as search
         criteria to identify and remove the existing data from the
         system.
 
@@ -792,29 +791,32 @@ class databrowser:
         Adding user data:
 
         .. execute_code::
+
             from freva_client import authenticate, databrowser
             import xarray as xr
             token_info = authenticate(username="janedoe")
             filename1 = (
-                "./freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/"
+                "../freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/"
                 "GERICS/NCC-NorESM1-M/rcp85/r1i1p1/GERICS-REMO2015/v1/3hr/pr/v20181212/"
                 "pr_EUR-11_NCC-NorESM1-M_rcp85_r1i1p1_GERICS-REMO2015_v2_3hr_200701020130-200701020430.nc"
             )
             filename2 = (
-                "./freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/"
+                "../freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/"
                 "CLMcom/MPI-M-MPI-ESM-LR/historical/r0i0p0/CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/"
                 "orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_fx.nc"
+            )
             xarray_data = xr.open_dataset(filename1)
             db = databrowser()
             db.userdata(
                 action="add",
                 userdata_items=[xarray_data, filename2],
                 metadata={"project": "cmip5", "experiment": "myFavExp"}
-        )
+            )
 
         Deleting user data:
 
         .. execute_code::
+
             from freva_client import authenticate, databrowser
             token_info = authenticate(username="janedoe")
             db = databrowser()
@@ -852,6 +854,7 @@ class databrowser:
                     "facets": metadata,
                 }
                 result = self._post(url, data=self.payload_metadata, headers=headers)
+                pprint(f"[b][green]User data added successfully[green][b]")
                 if result is None:
                     raise ValueError("Failed to add user data")
             else:
@@ -865,6 +868,7 @@ class databrowser:
                 )
 
             result = self._delete(url, headers=headers, json=metadata)
+            pprint("[b][red]User data deleted successfully[red][b]")
             if result is None:
                 raise ValueError("Failed to delete user data")
 
