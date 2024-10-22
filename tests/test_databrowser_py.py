@@ -248,7 +248,7 @@ def test_userdata_post_delete_failure(test_server: str, auth_instance: Auth) -> 
     token = deepcopy(auth_instance._auth_token)
     try:
         auth_instance.auth_instance = None
-        _ = authenticate(username="janedoe")
+        _ = authenticate(username="janedoe", host=test_server)
         db = databrowser(host="foo.bar.de:7777", fail_on_error=True)
         with pytest.raises(ValueError):
             db.userdata("add",userdata_items=["./freva-rest/src/databrowser_api/mock_broken/bears.nc"], metadata={"username": "janedoe"})
@@ -261,7 +261,7 @@ def test_userdata_post_delete_without_failure(test_server: str, auth_instance: A
     token = deepcopy(auth_instance._auth_token)
     try:
         auth_instance.auth_instance = None
-        _ = authenticate(username="janedoe")
+        _ = authenticate(username="janedoe", host=test_server)
         db = databrowser(host="foo.bar.de:7777")
         with pytest.raises(ValueError):
             db.userdata("add",userdata_items=["./freva-rest/src/databrowser_api/mock_broken/bears.nc"], metadata={"username": "janedoe"})
