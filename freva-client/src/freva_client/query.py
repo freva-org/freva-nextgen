@@ -854,7 +854,7 @@ class databrowser:
                     "facets": metadata,
                 }
                 result = self._post(url, data=self.payload_metadata, headers=headers)
-                pprint(f"[b][green]User data added successfully[green][b]")
+                pprint("[b][green]User data added successfully[green][b]")
                 if result is None:
                     raise ValueError("Failed to add user data")
             else:
