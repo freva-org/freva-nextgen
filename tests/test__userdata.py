@@ -32,7 +32,7 @@ def test_add_userdata_cli_standard(
                 "user-data",
                 "add",
                 "--path",
-                "/Users/mo/dev/20241018/freva-nextgen/freva-rest",
+                "./freva-rest",
                 "--host",
                 test_server,
                 "--access-token",
@@ -40,6 +40,7 @@ def test_add_userdata_cli_standard(
             ],
         )
         res_count_after = cli_runner.invoke(app, ["data-count", "--flavour", "user", "--host", test_server])
+        assert res.exit_code == 0
         assert int(res_count_before.output) < int(res_count_after.output)
     finally:
         auth_instance._auth_token = token
