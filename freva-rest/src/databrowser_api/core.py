@@ -1276,7 +1276,7 @@ class Solr:
         self.fwrites |= {
             "user": user_name,
             "fs_type": self.fs_type
-        } | fwrites.get("facet", {})
+        } | fwrites.get("facets", {})
         try:
             self.validated_user_metadata = user_metadata
             await self._ingest_user_metadata()
