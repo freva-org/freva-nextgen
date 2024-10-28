@@ -197,41 +197,6 @@ def test_userdata_add_path_py_batch(test_server: str, auth_instance: Auth) -> No
     finally:
         auth_instance._auth_token = token
 
-
-def test_userdata_add_xarray_py_batch(test_server: str, auth_instance: Auth) -> None:
-    """Test adding xarray user data."""
-    import xarray as xr
-    token = deepcopy(auth_instance._auth_token)
-    try:
-        auth_instance.auth_instance = None
-        _ = authenticate(username="janedoe", host=test_server)
-
-        databrowser.userdata("delete", metadata={}, host=test_server)
-        filename1 = "./freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/GERICS/NCC-NorESM1-M/rcp85/r1i1p1/GERICS-REMO2015/v1/3hr/pr/v20181212/pr_EUR-11_NCC-NorESM1-M_rcp85_r1i1p1_GERICS-REMO2015_v2_3hr_200701020130-200701020430.nc"
-        filename2 = "./freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/CLMcom/MPI-M-MPI-ESM-LR/historical/r0i0p0/CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_fx.nc"
-        filename3 = "./freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/CLMcom/MPI-M-MPI-ESM-LR/historical/r1i1p1/CLMcom-CCLM4-8-17/v1/daypt/tas/v20140515/tas_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_daypt_194912011200-194912101200.nc"
-        xarray_data1 = xr.open_dataset(filename1)
-        xarray_data2 = xr.open_dataset(filename2)
-        xarray_data3 = xr.open_dataset(filename3)
-        def init_with_batch_size_1(self, userdata_items):
-            from threading import Lock
-            self._suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", "zar"]
-            self._batch_size = 1
-            self._lock = Lock()
-            self._user_metadata = []
-            self._metadata_collection = []
-            with self._get_executor() as executor:
-                self.validated_userdata = self._validate_user_data(userdata_items)
-                self._process_user_data(executor)
-        with patch("freva_client.utils.databrowser_utils.UserDataHandler.__init__", new=init_with_batch_size_1):
-            databrowser.userdata(
-                "add", userdata_items=[xarray_data1, xarray_data2, xarray_data3],
-                metadata={}, host=test_server
-            )
-        assert len(databrowser(flavour="user", host=test_server)) == 3
-    finally:
-        auth_instance._auth_token = token
-
 def test_userdata_failed(test_server: str, auth_instance: Auth) -> None:
     """Test user data wrong paths."""
     token = deepcopy(auth_instance._auth_token)

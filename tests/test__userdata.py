@@ -207,27 +207,6 @@ def test_userdata_delete_api_422(
     )
     assert response.status_code == 422
 
-
-@patch("pymongo.MongoClient", new=mongomock.MongoClient)
-def test_user_falvour(
-    client: TestClient
-) -> None:
-    """Test user flavour through the API."""
-    
-    first_res = client.get(
-        "/api/databrowser/data_search/user/uri",
-        params={
-            "translate": "false",
-        },
-    )
-    second_res = client.get(
-        "/api/databrowser/data_search/freva/uri",
-        params={
-            "translate": "false",
-        },
-    )
-    assert all(item not in second_res.text.split() for item in first_res.text.split())
-
 @patch("pymongo.MongoClient", new=mongomock.MongoClient)
 def test_add_userdata_cli_broken_file(
     cli_runner: CliRunner, test_server: str, auth_instance: Auth

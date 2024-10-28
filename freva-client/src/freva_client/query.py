@@ -821,9 +821,9 @@ class databrowser:
 
         if action == "add":
             user_data_handler = UserDataHandler(userdata_items)
-            if user_data_handler._user_metadata:
+            if user_data_handler.user_metadata:
                 payload_metadata = {
-                    "user_metadata": user_data_handler._user_metadata,
+                    "user_metadata": user_data_handler.user_metadata,
                     "facets": metadata,
                 }
                 result = this._request(

@@ -413,7 +413,7 @@ Before using the `user-data` commands, you need to create an access token and au
 Adding User Data
 ~~~~~~~~~~~~~~~~
 
-To add your data to the databrowser, use the `user-data add` command. You'll need to provide your username, the paths to your data files, and any metadata you'd like to associate with your data.
+To add your data to the databrowser, use the `user-data add` command. You'll need to provide the paths to your data files, and any metadata you'd like to associate with your data.
 
 .. code:: console
 

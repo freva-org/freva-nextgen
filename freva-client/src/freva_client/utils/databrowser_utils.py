@@ -1,15 +1,12 @@
 """Various utilities for getting the databrowser working."""
 
 import concurrent.futures
-import glob
 import os
 import sys
 import sysconfig
 from configparser import ConfigParser, ExtendedInterpolation
-from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
-from threading import Lock
 from typing import (
     Any,
     Dict,
@@ -203,138 +200,85 @@ class UserDataHandler:
     from the data files.
     """
     def __init__(self, userdata_items: List[Union[str, xr.Dataset]]) -> None:
-
         self._suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", "zar"]
-        self._batch_size = 150
-        self._lock = Lock()
-        self._user_metadata: List[Dict[str, Union[str, List[str], Dict[str, str]]]] = []
-
+        self.user_metadata: List[Dict[str, Union[str, List[str], Dict[str, str]]]] = []
         self._metadata_collection: List[Dict[str, Union[str, List[str]]]] = []
+        try:
+            self._executor = concurrent.futures.ThreadPoolExecutor(
+                max_workers=min(int(os.cpu_count() or 4), 15)
+            )
+            self._process_user_data(userdata_items)
+        finally:
+            self._executor.shutdown(wait=True)
+            logger.info(
+                "Shutting down executors"
+            )
 
-        with self._get_executor() as executor:
-            self.validated_userdata = self._validate_user_data(userdata_items)
-            self._process_user_data(executor)
-
-    @contextmanager
-    def _get_executor(self) -> Iterator[concurrent.futures.ThreadPoolExecutor]:
-        """Context manager for ThreadPoolExecutor."""
-        with concurrent.futures.ThreadPoolExecutor(
-             max_workers=min(int(os.cpu_count() or 4), 15)) as executor:
-            yield executor
-
-    def _expand_wildcards(self, path_str: str) -> List[Path]:
-        """
-        Expand wildcards in path strings to list of Path objects.
-        Handles both ~ for home directory and wildcards.
-        """
-        expanded_path = os.path.expanduser(path_str)
-        matched_paths = glob.glob(expanded_path, recursive=True)
-
-        if not matched_paths:
-            logger.warning(f"No files found matching pattern: {path_str}")
-            return []
-
-        valid_paths = []
-        for path in matched_paths:
-            path_obj = Path(path)
-            if path_obj.is_file() and any(
-                path_obj.name.endswith(suffix) for suffix in self._suffixes
-            ):
-                valid_paths.append(path_obj)
-
-        return valid_paths
+    def _gather_files(self, path: Path, pattern: str = "*") -> Iterator[Path]:
+        """Gather all valid files from directory and wildcard pattern."""
+        for item in path.rglob(pattern):
+            if item.is_file() and item.suffix in self._suffixes:
+                yield item
 
     def _validate_user_data(
         self,
         user_data: Sequence[Union[str, xr.Dataset]],
-    ) -> Tuple[List[Path], List[xr.Dataset]]:
+    ) -> Dict[str, Union[List[Path], List[xr.Dataset]]]:
         validated_paths: List[Path] = []
         validated_xarray_datasets: List[xr.Dataset] = []
-
         for data in user_data:
-            if isinstance(data, str):
-                if any(char in data for char in ['*', '?', '[']):
-                    expanded_paths = self._expand_wildcards(data)
-                    validated_paths.extend(expanded_paths)
-                else:
-                    path = Path(os.path.expanduser(data))
-                    if not path.exists():
-                        logger.warning(f"File path does not exist: {data}")
-                        continue
+            if isinstance(data, (str, Path)):
+                path = Path(data).expanduser().absolute()
+                if path.is_dir():
+                    validated_paths.extend(self._gather_files(path))
+                elif path.is_file() and path.suffix in self._suffixes:
                     validated_paths.append(path)
+                else:
+                    validated_paths.extend(
+                        self._gather_files(path.parent, pattern=path.name)
+                    )
             elif isinstance(data, xr.Dataset):
                 validated_xarray_datasets.append(data)
 
         if not validated_paths and not validated_xarray_datasets:
             raise FileNotFoundError("No valid file paths or xarray datasets found.")
+        return {
+            "validated_user_paths": validated_paths,
+            "validated_user_xrdatasets": validated_xarray_datasets,
+        }
 
-        return validated_paths, validated_xarray_datasets
-
-    def _process_user_data(self,
-                           executor: concurrent.futures.ThreadPoolExecutor) -> None:
+    def _process_user_data(self, userdata_items: List[Union[str, xr.Dataset]],
+                           ) -> None:
         """Process xarray datasets and file paths using thread pool."""
         futures = []
+        validated_userdata: Dict[str, Union[List[Path], List[xr.Dataset]]] = \
+            self._validate_user_data(userdata_items)
+        if validated_userdata["validated_user_xrdatasets"]:
+            futures.append(
+                self._executor.submit(self._process_userdata_in_executor,
+                                      validated_userdata["validated_user_xrdatasets"])
+            )
 
-        if self.validated_userdata[1]:
-            for batch in self._batch_data(self.validated_userdata[1]):
-                futures.append(
-                    executor.submit(self._process_userdata_in_executor, batch)
-                )
-
-        if self.validated_userdata[0]:
-            for batch in self._batch_data(self.validated_userdata[0]):
-                futures.append(
-                    executor.submit(self._process_userdata_in_executor, batch)
-                )
-
-            for path in self.validated_userdata[0]:
-                if path.is_dir():
-                    for batch in self._batch_data(self._gather_files_from_dir(path)):
-                        futures.append(
-                            executor.submit(self._process_userdata_in_executor, batch)
-                        )
-
+        if validated_userdata["validated_user_paths"]:
+            futures.append(
+                self._executor.submit(self._process_userdata_in_executor,
+                                      validated_userdata["validated_user_paths"])
+            )
         for future in futures:
             try:
                 future.result()
             except Exception as e:  # pragma: no cover
                 logger.error(f"Error processing batch: {e}")
 
-    def _batch_data(
-        self,
-        items: Union[
-            List[Path],
-            Iterator[Path],
-            List[xr.Dataset]
-        ]
-    ) -> Iterator[Union[List[os.PathLike[str]], List[xr.Dataset]]]:
-        """Yield batches of items (either Paths or xarray Datasets)."""
-        batch = []
-        for item in items:
-            if isinstance(item, (Path, xr.Dataset)):
-                batch.append(item)
-                if len(batch) >= self._batch_size:
-                    yield cast(Union[List[os.PathLike[str]], List[xr.Dataset]], batch)
-                    batch = []
-
-        if batch:
-            yield cast(Union[List[os.PathLike[str]], List[xr.Dataset]], batch)
-
-    def _gather_files_from_dir(self, path: Path) -> Iterator[Path]:
-        """Gather all valid files from directory."""
-        for item in path.rglob("*"):
-            if item.is_file() and item.suffix in self._suffixes:
-                yield item
-
     def _process_userdata_in_executor(
-        self, user_data: Union[List[os.PathLike[str]], List[xr.Dataset]]
+        self, validated_userdata: Union[List[Path], List[xr.Dataset]]
     ) -> None:
-        for data in user_data:
+        for data in validated_userdata:
             metadata = self._get_metadata(data)
             if isinstance(metadata, Exception) or metadata == {}:
                 logger.warning("Error getting metadata: %s", metadata)
             else:
-                self._user_metadata.append(metadata)
+                self.user_metadata.append(metadata)
 
     def _timedelta_to_cmor_frequency(self, dt: float) -> str:
         for total_seconds, frequency in self._time_table.items():
@@ -383,7 +327,7 @@ class UserDataHandler:
                 times = np.array([])
 
         except Exception as error:
-            logger.warning("Failed to open data file %s: %s", str(path), error)
+            logger.error("Failed to open data file %s: %s", str(path), error)
             return {}
         if len(times) > 0:
             try:
