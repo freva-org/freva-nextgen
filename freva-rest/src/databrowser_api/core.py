@@ -1,8 +1,6 @@
 """The core functionality to interact with the apache solr search system."""
 import asyncio
-import concurrent.futures
 import json
-import multiprocessing as mp
 import os
 import uuid
 from contextlib import asynccontextmanager
@@ -1205,8 +1203,6 @@ class Solr:
         fwrites: Dict[str, str]
             Optional additional metadata to be added to the user metadata.
         """
-        max_workers = min(mp.cpu_count(), 15)
-        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
         self.fwrites |= {
             "user": user_name,
             "fs_type": self.fs_type
