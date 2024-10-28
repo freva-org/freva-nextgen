@@ -6,6 +6,7 @@ from typing import Annotated, Any, Dict, List, Literal, Union
 from fastapi import Body, Depends, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse, StreamingResponse
 from freva_rest.auth import TokenPayload, auth
+from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 from pydantic import BaseModel, Field
 
@@ -284,6 +285,7 @@ async def post_user_data(
             facets=request.facets
         )
     except Exception as e:
+        logger.error(f"An unexpected error occurred while adding user data: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred while adding user data: {str(e)}",
@@ -313,7 +315,8 @@ async def delete_user_data(
             current_user.preferred_username,  # type: ignore
             request
         )
-    except Exception as e:  # pragma: no cover
+    except Exception as e:
+        logger.error(f"Failed to delete user data: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete user data: {str(e)}",

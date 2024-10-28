@@ -413,7 +413,7 @@ Before using the `user-data` commands, you need to create an access token and au
 Adding User Data
 ~~~~~~~~~~~~~~~~
 
-To add your data to the databrowser, use the `user-data add` command. You'll need to provide your username, the paths to your data files, and any metadata facets you'd like to associate with your data.
+To add your data to the databrowser, use the `user-data add` command. You'll need to provide your username, the paths to your data files, and any metadata you'd like to associate with your data.
 
 .. code:: console
 
@@ -445,12 +445,12 @@ To add your data to the databrowser, use the `user-data add` command. You'll nee
    print("STDOUT:", res.stderr.decode())
 
 
-This command adds the specified data files to the databrowser and tags them with the provided metadata facets. These facets help in indexing and searching your data within the system.
+This command adds the specified data files to the databrowser and tags them with the provided metadata. These search filters help in indexing and searching your data within the system.
 
 Deleting User Data
 ~~~~~~~~~~~~~~~~~~
 
-If you need to remove your data from the databrowser, use the `user-data delete` command. Provide your username and the search keys (metadata facets) that identify the user data you wish to delete.
+If you need to remove your data from the databrowser, use the `user-data delete` command. Provide your the search keys (facets) that identify the user data you wish to delete.
 
 .. code:: console
 

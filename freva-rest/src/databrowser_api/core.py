@@ -4,7 +4,6 @@ import concurrent.futures
 import json
 import multiprocessing as mp
 import os
-import threading
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -53,18 +52,6 @@ IntakeType = TypedDict(
         "aggregation_control": Dict[str, Any],
     },
 )
-
-
-def run_async_in_thread(coro_func: Callable[..., Coroutine[Any, Any, Any]],
-                        *args: Any, **kwargs: Any) -> Any:
-    """Run an async function in a new event loop in a thread."""
-    new_loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(new_loop)
-    try:
-        result = new_loop.run_until_complete(coro_func(*args, **kwargs))
-    finally:
-        new_loop.close()
-    return result  # pragma: no cover
 
 
 def ensure_future(
@@ -679,7 +666,7 @@ class Solr:
             catalogue=catalogue, total_count=total_count
         )
 
-    async def _delete_from_mongo(self, search_keys: Dict[str, str]) -> None:
+    async def _delete_from_mongo(self, search_keys: Dict[str, Union[str, int]]) -> None:
         """
         Delete bulk user metadata from MongoDB based on the search keys.
 
@@ -695,7 +682,7 @@ class Solr:
         """
         try:
             query = {
-                key: value if key.lower() == "file" else value.lower()
+                key: value if key.lower() == "file" else str(value).lower()
                 for key, value in search_keys.items()
             }
             await self._config.mongo_collection_userdata.delete_many(query)
@@ -960,7 +947,10 @@ class Solr:
             False: self._config.solr_cores[0],
         }[self.multi_version]
 
-        url = f"{self._config.get_core_url(core)}/update/json?commit=true"
+        url = (
+            f"{self._config.get_core_url(core)}/update/json"
+            "?commit=true&overwrite=false"
+        )
         return url
 
     async def check_for_status(
@@ -1056,17 +1046,6 @@ class Solr:
         if catalogue_type == "intake":
             yield "\n   ]\n}"
 
-    def get_executor_info(self) -> None:
-        logger.info(f"Max workers: {self.executor._max_workers}")
-        active_threads = [
-            thread for thread in threading.enumerate()
-            if thread.name and thread.name.startswith(
-                cast(str, self.executor._thread_name_prefix))
-        ]
-        logger.info(f"Active executor threads: {len(active_threads)}")
-        for thread in active_threads:
-            logger.info(f"  Thread name: {thread.name}, Thread ID: {thread.ident}")
-
     async def _add_to_solr(
         self, metadata_batch: List[Dict[str, Union[str, List[str], Dict[str, str]]]]
     ) -> None:
@@ -1089,7 +1068,7 @@ class Solr:
                 if status == 200:
                     self.total_ingested_files += 1
 
-    async def _delete_from_solr(self, search_keys: Dict[str, str]) -> None:
+    async def _delete_from_solr(self, search_keys: Dict[str, Union[str, int]]) -> None:
         """
         Delete user data from Apache Solr based on search keys.
 
@@ -1112,92 +1091,47 @@ class Solr:
         for key, value in search_keys.items():
             key_lower = key.lower()
             if key_lower == "file":
-                escaped_value = escape_special_chars(value)
+                escaped_value = escape_special_chars(str(value))
                 query_parts.append(f"{key_lower}:{escaped_value}")
             else:
-                escaped_value = escape_special_chars(value.lower())
+                escaped_value = escape_special_chars(str(value).lower())
                 query_parts.append(f"{key_lower}:{escaped_value}")
         query_str = " AND ".join(query_parts)
         self.payload = {"delete": {"query": query_str}}
         async with self._session_post():
             pass
 
-    async def _ingest_user_metadata(self) -> None:
+    async def _ingest_user_metadata(self,
+                                    user_metadata:
+                                    List[Dict[str, Any]]
+                                    ) -> None:
         """
         Ingest validated user metadata asynchronously.
 
-        Returns
-        -------
-        None
-        """
-
-        tasks = [
-            asyncio.ensure_future(
-                self._submit_user_metadata(self.validated_user_metadata)
-            )
-        ]
-        if tasks:
-            await asyncio.gather(*tasks, return_exceptions=True)
-
-    async def _submit_user_metadata(self, user_metadata: List[Dict[str, Any]]) -> None:
-        """
-        Submit batches of user metadata for processing.
-
         Parameters
         ----------
-        user_metadata : List[Dict[str, Any]]
-            A list of user metadata to be processed.
+        user_metadata: List[Dict[str, Any]]
+            A list of validated user metadata dictionaries.
 
         Returns
         -------
         None
         """
-        user_metadata_batch_to_process = []
+
+        user_metadata_batch = []
         for metadata in user_metadata:
             metadata.update(self.fwrites)
-            user_metadata_batch_to_process.append(metadata)
-            if len(user_metadata_batch_to_process) >= self.batch_size:
-                self.executor.submit(
-                    run_async_in_thread,
-                    self._process_user_metadata_in_executor,
-                    user_metadata_batch_to_process,
-                )
-                user_metadata_batch_to_process = []
+            user_metadata_batch.append(metadata)
+            if len(user_metadata_batch) >= self.batch_size:
+                await self._add_to_solr(user_metadata_batch)
+                await self._insert_to_mongo(user_metadata_batch)
+                user_metadata_batch = []
 
-        if user_metadata_batch_to_process:
-            self.executor.submit(
-                run_async_in_thread,
-                self._process_user_metadata_in_executor,
-                user_metadata_batch_to_process,
-            )
+        if user_metadata_batch:
+            await self._add_to_solr(user_metadata_batch)
+            await self._insert_to_mongo(user_metadata_batch)
 
-    async def _process_user_metadata_in_executor(self,
-                                                 user_metadata_batch:
-                                                 List[Dict[str, Any]]
-                                                 ) -> None:
-        """
-        Process a batch of user metadata for ingestion into Solr and MongoDB.
-
-        Parameters
-        ----------
-        user_metadata_batch : List[Dict[str, Any]]
-            A batch of metadata to be processed and ingested into Solr and MongoDB.
-
-        Returns
-        -------
-        None
-        """
-
-        await self._add_to_solr(user_metadata_batch)
-        try:
-            asyncio.run_coroutine_threadsafe(
-                self._insert_to_mongo(user_metadata_batch), self.loop
-            )
-        except Exception as e:  # pragma: no cover
-            logger.warning(f"[MONGO] Error while adding data: {e}")
-
-    @ensure_future
-    async def _purge_user_data(self, search_keys: Dict[str, str]) -> None:
+    async def _purge_user_data(self, search_keys: Dict[str, Union[str, int]]) -> None:
         """
         Purge the user data from both the Apache Solr search system and MongoDB.
 
@@ -1269,7 +1203,7 @@ class Solr:
         user_metadata: List[Dict[str, Any]]
             The metadata to be ingested.
         fwrites: Dict[str, str]
-            Optional additional file write parameters.
+            Optional additional metadata to be added to the user metadata.
         """
         max_workers = min(mp.cpu_count(), 15)
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
@@ -1277,17 +1211,10 @@ class Solr:
             "user": user_name,
             "fs_type": self.fs_type
         } | fwrites.get("facets", {})
-        try:
-            self.validated_user_metadata = user_metadata
-            await self._ingest_user_metadata()
-        finally:
-            self.get_executor_info()
-            if self.executor:
-                self.executor.shutdown(wait=True)
-            logger.info(
-                "Executor shutdown complete. Total ingested files: %d",
-                self.total_ingested_files
-            )
+        await self._ingest_user_metadata(user_metadata)
+        logger.info(
+            "Ingested %d files into Solr and MongoDB", self.total_ingested_files
+        )
 
     async def delete_user_metadata(
         self, user_name: str, search_keys: Dict[str, Union[str, int]]

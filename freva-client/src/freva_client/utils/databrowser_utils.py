@@ -1,16 +1,35 @@
 """Various utilities for getting the databrowser working."""
 
+import concurrent.futures
+import glob
 import os
 import sys
 import sysconfig
 from configparser import ConfigParser, ExtendedInterpolation
+from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, Literal, Optional, Tuple, cast
+from threading import Lock
+from typing import (
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    cast,
+)
 
 import appdirs
+import numpy as np
 import requests
 import tomli
+import xarray as xr
+
+from . import logger
 
 
 class Config:
@@ -175,3 +194,234 @@ class Config:
     def userdata_url(self) -> str:
         """Define the url for adding and deleting user-data."""
         return f"{self.databrowser_url}/userdata"
+
+
+class UserDataHandler:
+    """Class for processing user data.
+
+    This class is used for processing user data and extracting metadata
+    from the data files.
+    """
+    def __init__(self, userdata_items: List[Union[str, xr.Dataset]]) -> None:
+
+        self._suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", "zar"]
+        self._batch_size = 150
+        self._lock = Lock()
+        self._user_metadata: List[Dict[str, Union[str, List[str], Dict[str, str]]]] = []
+
+        self._metadata_collection: List[Dict[str, Union[str, List[str]]]] = []
+
+        with self._get_executor() as executor:
+            self.validated_userdata = self._validate_user_data(userdata_items)
+            self._process_user_data(executor)
+
+    @contextmanager
+    def _get_executor(self) -> Iterator[concurrent.futures.ThreadPoolExecutor]:
+        """Context manager for ThreadPoolExecutor."""
+        with concurrent.futures.ThreadPoolExecutor(
+             max_workers=min(int(os.cpu_count() or 4), 15)) as executor:
+            yield executor
+
+    def _expand_wildcards(self, path_str: str) -> List[Path]:
+        """
+        Expand wildcards in path strings to list of Path objects.
+        Handles both ~ for home directory and wildcards.
+        """
+        expanded_path = os.path.expanduser(path_str)
+        matched_paths = glob.glob(expanded_path, recursive=True)
+
+        if not matched_paths:
+            logger.warning(f"No files found matching pattern: {path_str}")
+            return []
+
+        valid_paths = []
+        for path in matched_paths:
+            path_obj = Path(path)
+            if path_obj.is_file() and any(
+                path_obj.name.endswith(suffix) for suffix in self._suffixes
+            ):
+                valid_paths.append(path_obj)
+
+        return valid_paths
+
+    def _validate_user_data(
+        self,
+        user_data: Sequence[Union[str, xr.Dataset]],
+    ) -> Tuple[List[Path], List[xr.Dataset]]:
+        validated_paths: List[Path] = []
+        validated_xarray_datasets: List[xr.Dataset] = []
+
+        for data in user_data:
+            if isinstance(data, str):
+                if any(char in data for char in ['*', '?', '[']):
+                    expanded_paths = self._expand_wildcards(data)
+                    validated_paths.extend(expanded_paths)
+                else:
+                    path = Path(os.path.expanduser(data))
+                    if not path.exists():
+                        logger.warning(f"File path does not exist: {data}")
+                        continue
+                    validated_paths.append(path)
+            elif isinstance(data, xr.Dataset):
+                validated_xarray_datasets.append(data)
+
+        if not validated_paths and not validated_xarray_datasets:
+            raise FileNotFoundError("No valid file paths or xarray datasets found.")
+
+        return validated_paths, validated_xarray_datasets
+
+    def _process_user_data(self,
+                           executor: concurrent.futures.ThreadPoolExecutor) -> None:
+        """Process xarray datasets and file paths using thread pool."""
+        futures = []
+
+        if self.validated_userdata[1]:
+            for batch in self._batch_data(self.validated_userdata[1]):
+                futures.append(
+                    executor.submit(self._process_userdata_in_executor, batch)
+                )
+
+        if self.validated_userdata[0]:
+            for batch in self._batch_data(self.validated_userdata[0]):
+                futures.append(
+                    executor.submit(self._process_userdata_in_executor, batch)
+                )
+
+            for path in self.validated_userdata[0]:
+                if path.is_dir():
+                    for batch in self._batch_data(self._gather_files_from_dir(path)):
+                        futures.append(
+                            executor.submit(self._process_userdata_in_executor, batch)
+                        )
+
+        for future in futures:
+            try:
+                future.result()
+            except Exception as e:  # pragma: no cover
+                logger.error(f"Error processing batch: {e}")
+
+    def _batch_data(
+        self,
+        items: Union[
+            List[Path],
+            Iterator[Path],
+            List[xr.Dataset]
+        ]
+    ) -> Iterator[Union[List[os.PathLike[str]], List[xr.Dataset]]]:
+        """Yield batches of items (either Paths or xarray Datasets)."""
+        batch = []
+        for item in items:
+            if isinstance(item, (Path, xr.Dataset)):
+                batch.append(item)
+                if len(batch) >= self._batch_size:
+                    yield cast(Union[List[os.PathLike[str]], List[xr.Dataset]], batch)
+                    batch = []
+
+        if batch:
+            yield cast(Union[List[os.PathLike[str]], List[xr.Dataset]], batch)
+
+    def _gather_files_from_dir(self, path: Path) -> Iterator[Path]:
+        """Gather all valid files from directory."""
+        for item in path.rglob("*"):
+            if item.is_file() and item.suffix in self._suffixes:
+                yield item
+
+    def _process_userdata_in_executor(
+        self, user_data: Union[List[os.PathLike[str]], List[xr.Dataset]]
+    ) -> None:
+        for data in user_data:
+            metadata = self._get_metadata(data)
+            if isinstance(metadata, Exception) or metadata == {}:
+                logger.warning("Error getting metadata: %s", metadata)
+            else:
+                self._user_metadata.append(metadata)
+
+    def _timedelta_to_cmor_frequency(self, dt: float) -> str:
+        for total_seconds, frequency in self._time_table.items():
+            if dt >= total_seconds:
+                return frequency
+        return "fx"  # pragma: no cover
+
+    @property
+    def _time_table(self) -> dict[int, str]:
+        return {
+            315360000: "dec",  # Decade
+            31104000: "yr",  # Year
+            2538000: "mon",  # Month
+            1296000: "sem",  # Seasonal (half-year)
+            84600: "day",  # Day
+            21600: "6h",  # Six-hourly
+            10800: "3h",  # Three-hourly
+            3600: "hr",  # Hourly
+            1: "subhr",  # Sub-hourly
+        }
+
+    def _get_time_frequency(self, time_delta: int, freq_attr: str = "") -> str:
+        if freq_attr in self._time_table.values():
+            return freq_attr
+        return self._timedelta_to_cmor_frequency(time_delta)
+
+    def _get_metadata(
+        self, path: Union[os.PathLike[str], xr.Dataset]
+    ) -> Dict[str, Union[str, List[str], Dict[str, str]]]:
+        """Get metadata from a path or xarray dataset."""
+
+        try:
+            dset = (
+                path if isinstance(path, xr.Dataset)
+                else xr.open_mfdataset(str(path),
+                                       parallel=False,
+                                       use_cftime=True,
+                                       lock=False)
+            )
+            time_freq = dset.attrs.get("frequency", "")
+            data_vars = list(map(str, dset.data_vars))
+            coords = list(map(str, dset.coords))
+            try:
+                times = dset["time"].values[:]
+            except (KeyError, IndexError, TypeError):
+                times = np.array([])
+
+        except Exception as error:
+            logger.warning("Failed to open data file %s: %s", str(path), error)
+            return {}
+        if len(times) > 0:
+            try:
+                time_str = f"[{times[0].isoformat()}Z TO {times[-1].isoformat()}Z]"
+                dt = abs((times[1] - times[0]).total_seconds()) if len(times) > 1 else 0
+            except Exception as non_cftime:
+                logger.info("The time var is not based on the cftime: %s", non_cftime)
+                time_str = (
+                    f"[{np.datetime_as_string(times[0], unit='s')}Z TO "
+                    f"{np.datetime_as_string(times[-1], unit='s')}Z]"
+                )
+                dt = (
+                    abs((times[1] - times[0]).astype("timedelta64[s]").astype(int))
+                    if len(times) > 1
+                    else 0
+                )
+        else:
+            time_str = "fx"
+            dt = 0
+
+        variables = [
+            var
+            for var in data_vars
+            if var not in coords
+            and not any(
+                term in var.lower() for term in ["lon", "lat", "bnds", "x", "y"]
+            )
+            and var.lower() not in ["rotated_pole", "rot_pole"]
+        ]
+
+        _data: Dict[str, Union[str, List[str], Dict[str, str]]] = {}
+        _data.setdefault("variable", variables[0])
+        _data.setdefault("time_frequency", self._get_time_frequency(dt, time_freq))
+        _data["time"] = time_str
+        _data.setdefault("cmor_table", _data["time_frequency"])
+        _data.setdefault("version", "")
+        if isinstance(path, Path):
+            _data["file"] = str(path)
+        if isinstance(path, xr.Dataset):
+            _data["file"] = str(dset.encoding["source"])
+        return _data

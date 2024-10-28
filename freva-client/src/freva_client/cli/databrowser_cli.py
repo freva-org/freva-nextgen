@@ -643,7 +643,6 @@ def user_data_add(
     """Add user data into the databrowser."""
     logger.set_verbosity(verbose)
     logger.debug("Checking if the user has the right to add data")
-
     result = databrowser(host=host)
     _auth(result._cfg.auth_url, access_token)
 
@@ -659,8 +658,12 @@ def user_data_add(
             facet_dict[key] = value
 
     logger.debug(f"Adding user data with paths {paths} and facets {facet_dict}")
-    result.userdata(action="add", userdata_items=cast(List[Union[str, xr.Dataset]],
-                                                      paths), metadata=facet_dict)
+    databrowser.userdata(
+        action="add",
+        userdata_items=cast(List[Union[str, xr.Dataset]], paths),
+        metadata=facet_dict,
+        host=host
+    )
     logger.info("User data has been added successfully")
 
 
@@ -706,5 +709,5 @@ def user_data_delete(
                 raise typer.Exit(code=1)
             key, value = search_key.split("=", 1)
             search_key_dict[key] = value
-    result.userdata(action="delete", metadata=search_key_dict)
+    databrowser.userdata(action="delete", metadata=search_key_dict, host=host)
     logger.info("User data deleted successfully.")
