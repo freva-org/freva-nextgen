@@ -494,8 +494,8 @@ class Solr:
                         return True
                 return False
         finally:
-            self.url = original_url
-            self.query = original_query
+            self.url = original_url if original_url is not None else ""
+            self.query = original_query if original_query is not None else {}
 
     @asynccontextmanager
     async def _session_get(self) -> AsyncIterator[Tuple[int, Dict[str, Any]]]:
