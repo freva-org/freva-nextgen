@@ -443,7 +443,7 @@ class Solr:
         # to determine the file system
         self.fs_type: str = "posix"
 
-    async def _is_query_duplicate(self, uri: str, file_path: str) ->bool:
+    async def _is_query_duplicate(self, uri: str, file_path: str) -> bool:
         """
         Check if a document with the given URI or file path already exists in Solr.
 
