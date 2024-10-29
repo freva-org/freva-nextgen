@@ -279,7 +279,7 @@ async def post_user_data(
         validated_user_metadata = await solr_instance._validate_user_metadata(
             request.user_metadata
         )
-        await solr_instance.add_user_metadata(
+        status_msg = await solr_instance.add_user_metadata(
             current_user.preferred_username,  # type: ignore
             validated_user_metadata,
             facets=request.facets
@@ -291,7 +291,7 @@ async def post_user_data(
             detail=f"An unexpected error occurred while adding user data: {str(e)}",
         )
     return {
-        "status": "User data has been added successfully.",
+        "status": str(status_msg)
     }
 
 

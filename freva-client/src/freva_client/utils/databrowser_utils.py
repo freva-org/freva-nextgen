@@ -210,9 +210,6 @@ class UserDataHandler:
             self._process_user_data(userdata_items)
         finally:
             self._executor.shutdown(wait=True)
-            logger.info(
-                "Shutting down executors"
-            )
 
     def _gather_files(self, path: Path, pattern: str = "*") -> Iterator[Path]:
         """Gather all valid files from directory and wildcard pattern."""

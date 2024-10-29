@@ -829,10 +829,12 @@ class databrowser:
                 result = this._request(
                     "POST", url, data=payload_metadata, headers=headers
                 )
-
-                if result is None:
+                if result is not None:
+                    response_data = result.json()
+                    status_message = response_data.get("status")
+                else:
                     raise ValueError("Failed to add user data")
-                pprint("[b][green]User data added successfully[green][b]")
+                pprint(f"[b][green]{status_message}[green][b]")
             else:
                 raise ValueError("No metadata generated from the input data.")
 

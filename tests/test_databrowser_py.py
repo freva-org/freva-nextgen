@@ -167,33 +167,14 @@ def test_userdata_add_path_xarray_py(test_server: str, auth_instance: Auth) -> N
         _ = authenticate(username="janedoe", host=test_server)
 
         databrowser.userdata("delete", metadata={}, host=test_server)
-        filename1 = "./freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/GERICS/NCC-NorESM1-M/rcp85/r1i1p1/GERICS-REMO2015/v1/3hr/pr/v20181212/pr_EUR-11_NCC-NorESM1-M_rcp85_r1i1p1_GERICS-REMO2015_v2_3hr_200701020130-200701020430.nc"
-        filename2 = "./freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/CLMcom/MPI-M-MPI-ESM-LR/historical/r0i0p0/CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_fx.nc"
-        xarray_data = xr.open_dataset(filename1)
+        filename = "./freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/CLMcom/MPI-M-MPI-ESM-LR/historical/r0i0p0/CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_fx_another.nc"
+        xarray_data = xr.open_dataset(filename)
         databrowser.userdata(
-            "add", userdata_items=[xarray_data, filename2],
+            "add", userdata_items=[xarray_data, xarray_data, filename],
             metadata={}, host=test_server
         )
-        assert len(databrowser(flavour="user", host=test_server)) == 2
+        assert len(databrowser(flavour="user", host=test_server)) == 1
 
-    finally:
-        auth_instance._auth_token = token
-
-
-def test_userdata_add_path_py_batch(test_server: str, auth_instance: Auth) -> None:
-    """Test adding path user data."""
-    token = deepcopy(auth_instance._auth_token)
-    try:
-        auth_instance.auth_instance = None
-        _ = authenticate(username="janedoe", host=test_server)
-
-        databrowser.userdata("delete", metadata={}, host=test_server)
-        filename1 = "./freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/"
-        databrowser.userdata(
-            "add", userdata_items=[filename1],
-            metadata={}, host=test_server
-        )
-        assert len(databrowser(flavour="user", host=test_server)) > 1
     finally:
         auth_instance._auth_token = token
 

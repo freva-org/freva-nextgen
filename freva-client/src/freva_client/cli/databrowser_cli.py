@@ -664,7 +664,6 @@ def user_data_add(
         metadata=facet_dict,
         host=host
     )
-    logger.info("User data has been added successfully")
 
 
 @user_data_app.command(name="delete", help="Delete user data from the databrowser.")
@@ -710,4 +709,3 @@ def user_data_delete(
             key, value = search_key.split("=", 1)
             search_key_dict[key] = value
     databrowser.userdata(action="delete", metadata=search_key_dict, host=host)
-    logger.info("User data deleted successfully.")

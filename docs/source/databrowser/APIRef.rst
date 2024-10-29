@@ -929,7 +929,7 @@ Adding and deleting User Data in Databrowser
    :reqheader Authorization: Bearer token for authentication.
    :reqheader Content-Type: application/json
 
-   :statuscode 202: User data has been added successfully.
+   :statuscode 202: Request accepted, returns status message indicating ingestion results.
    :statuscode 500: Failed to add user data due to a server error.
 
    Example Request
@@ -961,7 +961,7 @@ Adding and deleting User Data in Databrowser
            }
        }
 
-   Example Response
+   Example Response (Success)
    ~~~~~~~~~~~~~~~~
 
    .. sourcecode:: http
@@ -970,8 +970,21 @@ Adding and deleting User Data in Databrowser
        Content-Type: application/json
 
        {
-           "status": "User data has been added successfully."
+           "status": "Your data has been successfully added to the databrowser. (Ingested 5 files into Solr and MongoDB)"
        }
+
+   Example Response (No Files)
+   ~~~~~~~~~~~~~~~~
+
+   .. sourcecode:: http
+
+       HTTP/1.1 202 Accepted
+       Content-Type: application/json
+
+       {
+           "status": "No data was added to the databrowser. (No files ingested into Solr and MongoDB)"
+       }
+
 
    Example
    ~~~~~~~

@@ -443,6 +443,60 @@ class Solr:
         # to determine the file system
         self.fs_type: str = "posix"
 
+    async def _is_query_duplicate(self, uri: str, file_path: str) ->bool:
+        """
+        Check if a document with the given URI or file path already exists in Solr.
+
+        Parameters
+        ----------
+        uri : str
+            The URI to check
+        file_path : str
+            The file path to check
+
+        Returns
+        -------
+        bool
+            True if document exists, False otherwise
+        """
+        original_url = getattr(self, 'url', None)
+        original_query = getattr(self, 'query', None)
+        try:
+            core_url = self._config.get_core_url(self._config.solr_cores[-1])
+            self.url = f"{core_url}/select"
+
+            def escape_special_chars(value: str) -> str:
+                for char in self.escape_chars:
+                    if char in value:
+                        value = value.replace(char, f"\\{char}")
+                value = value.replace('"', '\\"')
+                return value
+
+            escaped_uri = escape_special_chars(str(uri))
+            escaped_file = escape_special_chars(str(file_path))
+
+            query_parts = [
+                f'uri:"{escaped_uri}"',
+                f'file:"{escaped_file}"'
+            ]
+            query_str = " OR ".join(query_parts)
+
+            self.query = {
+                "q": query_str,
+                "fl": "id",
+                "rows": "1",
+                "wt": "json"
+            }
+            async with self._session_get() as res:
+                response_status, response_data = res
+                if response_status == 200:
+                    if response_data['response']['numFound'] > 0:
+                        return True
+                return False
+        finally:
+            self.url = original_url
+            self.query = original_query
+
     @asynccontextmanager
     async def _session_get(self) -> AsyncIterator[Tuple[int, Dict[str, Any]]]:
         """Wrap the get request round a try and catch statement."""
@@ -1051,20 +1105,34 @@ class Solr:
         Add a batch of metadata to the Apache Solr cataloguing system.
 
         Parameters
-        ~~~~~~~~~~
+        ----------
         metadata_batch : List[Tuple[str, Dict[str, Union[str, List[str]]]]]
             A list of tuples, each containing a file identifier and its
             associated metadata.
 
         Returns
-        ~~~~~~~
+        -------
         None
         """
+
+        new_querie = []
         for metadata in metadata_batch:
-            self.payload = [metadata]
+            uri = metadata.get('uri', '')
+            file_path = metadata.get('file', '')
+
+            if not uri and not file_path:
+                new_querie.append(metadata)
+                continue
+            logger.critical(metadata)
+            is_duplicate = await self._is_query_duplicate(str(uri), str(file_path))
+            if not is_duplicate:
+                new_querie.append(metadata)
+        final_querie = [dict(t) for t in {tuple(sorted(d.items())) for d in new_querie}]
+        if final_querie:
+            self.payload = final_querie
             async with self._session_post() as (status, _):
                 if status == 200:
-                    self.total_ingested_files += 1
+                    self.total_ingested_files += len(new_querie)
 
     async def _delete_from_solr(self, search_keys: Dict[str, Union[str, int]]) -> None:
         """
@@ -1189,7 +1257,7 @@ class Solr:
     async def add_user_metadata(
         self, user_name: str, user_metadata: List[Dict[str, Any]],
         **fwrites: Dict[str, str]
-    ) -> None:
+    ) -> str:
         """
         Add validated user metadata to the Apache Solr search system
         and MongoDB.
@@ -1208,9 +1276,22 @@ class Solr:
             "fs_type": self.fs_type
         } | fwrites.get("facets", {})
         await self._ingest_user_metadata(user_metadata)
+
         logger.info(
             "Ingested %d files into Solr and MongoDB", self.total_ingested_files
         )
+        if self.total_ingested_files == 0:
+            status_msg = (
+                "No data was added to the databrowser. "
+                "(No files ingested into Solr and MongoDB)"
+            )
+        else:
+            status_msg = (
+                f"Your data has been successfully added to the databrowser. "
+                f"(Ingested {self.total_ingested_files} files into Solr and MongoDB)"
+            )
+
+        return status_msg
 
     async def delete_user_metadata(
         self, user_name: str, search_keys: Dict[str, Union[str, int]]
