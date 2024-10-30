@@ -1119,7 +1119,7 @@ class Solr:
             self.payload = [metadata]
             async with self._session_post() as (status, _):
                 if status == 200:
-                    self.total_ingested_files += len(metadata_batch)
+                    self.total_ingested_files += 1
 
     async def _delete_from_solr(self, search_keys: Dict[str, Union[str, int]]) -> None:
         """
