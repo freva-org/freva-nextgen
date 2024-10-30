@@ -9,6 +9,36 @@ from typer.testing import CliRunner
 import mongomock
 from unittest.mock import patch
 
+def test_delete_all_userdata_cli(
+    cli_runner: CliRunner, test_server: str, auth_instance: Auth
+) -> None:
+    """Test deleting all user data through the
+    CLI."""
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance._auth_token = None
+
+        res = cli_runner.invoke(app, ["--host", test_server])
+        assert res.exit_code > 0
+
+        token_data = authenticate(username="janedoe", host=test_server)
+        auth_instance._auth_token = None
+        res = cli_runner.invoke(
+            app,
+            [
+                "user-data",
+                "delete",
+                "--host",
+                test_server,
+                "--access-token",
+                token_data["access_token"],
+            ],
+        )
+        res_count_after = cli_runner.invoke(app, ["data-count", "--flavour", "user", "--host", test_server])
+        assert res.exit_code == 0
+        assert int(res_count_after.output) == 0
+    finally:
+        auth_instance._auth_token = token
 
 def test_userdata_add_api_202(
     client: TestClient, auth: Dict[str, str], user_data_payload_sample: Dict
@@ -16,67 +46,21 @@ def test_userdata_add_api_202(
     """Test user data through the API with valid metadata."""
     token = auth["access_token"]
     data = user_data_payload_sample
-    response = client.post(
-        "/api/databrowser/userdata",
-        json=data,
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    print(response.text)
-    assert response.status_code == 202
-
-
-def test_userdata_add_api_202_duplicate_bulk_error_mongo(
-    client: TestClient, auth: Dict[str, str], user_data_payload_sample_partially_success: Dict
-) -> None:
-    """Test user data through the API with valid metadata."""
-    token = auth["access_token"]
-    data = user_data_payload_sample_partially_success
-    response = client.post(
-        "/api/databrowser/userdata",
-        json=data,
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    print(response.text)
-    assert response.status_code == 202
-
-def test_userdata_add_api_422(
-    client: TestClient, auth: Dict[str, str]
-) -> None:
-    """Test user data through the API with invalid metadata."""
-    token = auth["access_token"]
-    data = {
-        "user_metadata": {
-            "project": "cmip5",
-            "experiment": "something",
-        },
-        "facets": {
-            "product": "johndoe",
-        }
-    }
-    print(client)
-    response = client.post(
-        "/api/databrowser/userdata",
-        json=data,
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    print(response.text)
-    assert response.status_code == 422
-
-
-def test_userdata_delete_api_202(
-    client: TestClient, auth: Dict[str, str]
-) -> None:
-    """Test user data through the API with valid metadata."""
-    token = auth["access_token"]
-    data = {}
-    response = client.request(
+    # first delete:
+    client.request(
         "DELETE",
         f"/api/databrowser/userdata",
+        json={},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    # then add:
+    response = client.post(
+        "/api/databrowser/userdata",
         json=data,
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 202
-
+    
 def test_add_userdata_cli_standard(
     cli_runner: CliRunner, test_server: str, auth_instance: Auth
 ) -> None:
@@ -164,6 +148,54 @@ def test_add_userdata_cli_all_successful_and_escape_char(
         auth_instance._auth_token = token
 
 
+def test_userdata_add_api_202_duplicate_bulk_error_mongo(
+    client: TestClient, auth: Dict[str, str], user_data_payload_sample_partially_success: Dict
+) -> None:
+    """Test user data through the API with valid metadata."""
+    token = auth["access_token"]
+    data = user_data_payload_sample_partially_success
+    response = client.post(
+        "/api/databrowser/userdata",
+        json=data,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 202
+
+def test_userdata_add_api_422(
+    client: TestClient, auth: Dict[str, str]
+) -> None:
+    """Test user data through the API with invalid metadata."""
+    token = auth["access_token"]
+    data = {
+        "user_metadata": {
+            "project": "cmip5",
+            "experiment": "something",
+        },
+        "facets": {
+            "product": "johndoe",
+        }
+    }
+    response = client.post(
+        "/api/databrowser/userdata",
+        json=data,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 422
+
+
+def test_userdata_delete_api_202(
+    client: TestClient, auth: Dict[str, str]
+) -> None:
+    """Test user data through the API with valid metadata."""
+    token = auth["access_token"]
+    data = {}
+    response = client.request(
+        "DELETE",
+        f"/api/databrowser/userdata",
+        json=data,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 202
 
 
 def test_userdata_add_api_500(

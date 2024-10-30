@@ -1115,24 +1115,11 @@ class Solr:
         None
         """
 
-        new_querie = []
         for metadata in metadata_batch:
-            uri = metadata.get('uri', '')
-            file_path = metadata.get('file', '')
-
-            if not uri and not file_path:
-                new_querie.append(metadata)
-                continue
-            logger.critical(metadata)
-            is_duplicate = await self._is_query_duplicate(str(uri), str(file_path))
-            if not is_duplicate:
-                new_querie.append(metadata)
-        final_querie = [dict(t) for t in {tuple(sorted(d.items())) for d in new_querie}]
-        if final_querie:
-            self.payload = final_querie
+            self.payload = [metadata]
             async with self._session_post() as (status, _):
                 if status == 200:
-                    self.total_ingested_files += len(new_querie)
+                    self.total_ingested_files += len(metadata_batch)
 
     async def _delete_from_solr(self, search_keys: Dict[str, Union[str, int]]) -> None:
         """
@@ -1172,7 +1159,7 @@ class Solr:
                                     List[Dict[str, Any]]
                                     ) -> None:
         """
-        Ingest validated user metadata asynchronously.
+        Ingest validated user metadata.
 
         Parameters
         ----------
@@ -1183,19 +1170,33 @@ class Solr:
         -------
         None
         """
+        processed_metadata = [
+            {**metadata, **self.fwrites}
+            for metadata in user_metadata
+        ]
+        for i in range(0, len(processed_metadata), self.batch_size):
+            batch = processed_metadata[i:i + self.batch_size]
+            processed_batch = await self._process_metadata(batch)
+            if processed_batch:
+                await self._add_to_solr(processed_batch)
+                await self._insert_to_mongo(processed_batch)
 
-        user_metadata_batch = []
-        for metadata in user_metadata:
-            metadata.update(self.fwrites)
-            user_metadata_batch.append(metadata)
-            if len(user_metadata_batch) >= self.batch_size:
-                await self._add_to_solr(user_metadata_batch)
-                await self._insert_to_mongo(user_metadata_batch)
-                user_metadata_batch = []
+    async def _process_metadata(
+        self,
+        metadata_batch: List[Dict[str, Union[str, List[str], Dict[str, str]]]]
+    ) -> List[Dict[str, Union[str, List[str], Dict[str, str]]]]:
+        """Process the metadata batch by removing duplicates before ingestion."""
+        new_querie = []
+        for metadata in metadata_batch:
+            uri = metadata.get('uri', '')
+            file_path = metadata.get('file', '')
 
-        if user_metadata_batch:
-            await self._add_to_solr(user_metadata_batch)
-            await self._insert_to_mongo(user_metadata_batch)
+            if not uri and not file_path:
+                continue
+            is_duplicate = await self._is_query_duplicate(str(uri), str(file_path))
+            if not is_duplicate:
+                new_querie.append(metadata)
+        return [dict(t) for t in {tuple(sorted(d.items())) for d in new_querie}]
 
     async def _purge_user_data(self, search_keys: Dict[str, Union[str, int]]) -> None:
         """
