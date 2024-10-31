@@ -3,7 +3,7 @@
 import logging
 import subprocess
 import time
-import urllib.request
+import json
 from pathlib import Path
 
 # Set up logging
@@ -15,13 +15,14 @@ logging.basicConfig(
 logger = logging.getLogger("container-check")
 
 
-def check_container(container_name: str = "freva-rest") -> None:
+def check_container(image_name: str = "freva-rest", container_name: str = "freva-rest") -> None:
     """Check if the contianer starts up."""
     try:
         process = subprocess.Popen(
             [
                 "docker",
                 "run",
+                "--name", container_name,
                 "--net=host",
                 "-e",
                 "MONGO_USER=mongo",
@@ -35,17 +36,49 @@ def check_container(container_name: str = "freva-rest") -> None:
                 "API_WORKER=8",
                 "-e",
                 "MONGO_DB=search_stats",
-                container_name,
+                "-e",
+                "OIDC_URL=http://localhost:8080/realms/freva/.well-known/openid-configuration",
+                image_name,
             ],
         )
-        time.sleep(10)
+        time.sleep(15)
         if process.poll() is not None:
-            raise RuntimeError("Container died.")
+            stdout, stderr = process.communicate()
+            raise RuntimeError(f"Container died. Exit code: {process.returncode}. "
+                             f"Stdout: {stdout}, Stderr: {stderr}")
+        
+        logger.info("Container started successfully.")
     except Exception as error:
-        logger.critical("Strting the container failed: %s", error)
+        logger.critical("Starting the container failed: %s", error)
         raise
-    process.terminate()
-    logger.info("Container seems to work!")
+    finally:
+        if process and process.poll() is None:
+            try:
+                process.terminate()
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+        try:
+            logger.info(f"Stopping container {container_name}")
+            stop_process = subprocess.Popen(
+                ["docker", "stop", container_name],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            stop_process.wait(timeout=10)
+            
+            logger.info(f"Removing container {container_name}")
+            rm_process = subprocess.Popen(
+                ["docker", "rm", container_name],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            rm_process.wait(timeout=10)
+            
+            logger.info("Container cleanup completed successfully")
+        except Exception as cleanup_error:
+            logger.error("Failed to clean up container: %s", cleanup_error)
 
 
 if __name__ == "__main__":
