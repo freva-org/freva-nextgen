@@ -137,6 +137,7 @@ class Translator:
             "fs_type",
             "grid_label",
             "grid_id",
+            "format",
         ]
 
     @property
@@ -671,7 +672,7 @@ class Solr:
                 }
                 for v in facets
             ],
-            "assets": {"column_name": "uri", "format_column_name": "format"},
+            "assets": {"column_name": self.uniq_key, "format_column_name": "format"},
             "id": "freva",
             "description": f"Catalogue from freva-databrowser v{__version__}",
             "title": "freva-databrowser catalogue",
