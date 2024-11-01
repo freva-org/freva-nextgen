@@ -930,6 +930,7 @@ Adding and deleting User Data in Databrowser
    :reqheader Content-Type: application/json
 
    :statuscode 202: Request accepted, returns status message indicating ingestion results.
+   :statuscode 422: Invalid request parameters.
    :statuscode 500: Failed to add user data due to a server error.
 
    Example Request
