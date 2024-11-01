@@ -276,9 +276,15 @@ async def post_user_data(
 
     solr_instance = Solr(server_config)
     try:
-        validated_user_metadata = await solr_instance._validate_user_metadata(
-            request.user_metadata
-        )
+        try:
+            validated_user_metadata = await solr_instance._validate_user_metadata(
+                request.user_metadata
+            )
+        except HTTPException as he:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Invalid request data: {str(he)}"
+            )
         status_msg = await solr_instance.add_user_metadata(
             current_user.preferred_username,  # type: ignore
             validated_user_metadata,
@@ -322,4 +328,4 @@ async def delete_user_data(
             detail=f"Failed to delete user data: {str(e)}",
         )
 
-    return {"status": "User data has been deleted successfully"}
+    return {"status": "User data has been deleted successfully from the databrowser."}

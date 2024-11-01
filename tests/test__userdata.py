@@ -180,6 +180,7 @@ def test_userdata_add_api_422(
         json=data,
         headers={"Authorization": f"Bearer {token}"},
     )
+    print(response.status_code)
     assert response.status_code == 422
 
 
