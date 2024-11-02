@@ -5,6 +5,7 @@ from pathlib import Path
 
 import mock
 import pytest
+
 from freva_client import databrowser
 
 

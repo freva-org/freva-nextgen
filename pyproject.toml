@@ -37,6 +37,17 @@ warn_redundant_casts = true
 ignore_missing_imports = true
 allow_untyped_calls = true
 
+[tool.isort]
+known_first_party = [
+    "freva_rest",
+    "freva_client",
+    "freva_data_portal",
+    "data_portal_worker",
+    "databrowser_api",
+]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+
+
 [tool.tox]
 legacy_tox_ini = """
 [tox]
@@ -60,7 +71,6 @@ deps = -e ./freva-rest
        pymongo
        pytest-env
        setuptools
-       mongomock
        xarray
 
 commands =

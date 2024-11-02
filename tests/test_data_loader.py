@@ -2,10 +2,10 @@
 
 import time
 
-import pytest
-from data_portal_worker.load_data import RedisCacheFactory, get_dask_client
 from distributed import Client
 from pytest import LogCaptureFixture
+
+from data_portal_worker.load_data import RedisCacheFactory, get_dask_client
 
 
 def test_get_client() -> None:
