@@ -26,15 +26,16 @@ from typing import (
 )
 
 import aiohttp
-from databrowser_api import __version__
 from dateutil.parser import ParserError, parse
 from fastapi import HTTPException
-from freva_rest.config import ServerConfig
-from freva_rest.logger import logger
-from freva_rest.utils import create_redis_connection
 from pydantic import BaseModel
 from pymongo import UpdateOne, errors
 from typing_extensions import TypedDict
+
+from databrowser_api import __version__
+from freva_rest.config import ServerConfig
+from freva_rest.logger import logger
+from freva_rest.utils import create_redis_connection
 
 FlavourType = Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"]
 IntakeType = TypedDict(

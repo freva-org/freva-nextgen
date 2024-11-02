@@ -5,6 +5,7 @@ from getpass import getuser
 from typing import Optional
 
 import typer
+
 from freva_client import authenticate
 from freva_client.utils import exception_handler, logger
 

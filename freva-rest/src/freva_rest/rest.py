@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import AsyncIterator
 
 from fastapi import FastAPI
+
 from freva_rest import __version__
 
 from .config import ServerConfig, defaults

@@ -11,6 +11,7 @@ from typing import Dict, List, Literal, Optional, Union, cast
 
 import typer
 import xarray as xr
+
 from freva_client import databrowser
 from freva_client.auth import Auth
 from freva_client.utils import exception_handler, logger
