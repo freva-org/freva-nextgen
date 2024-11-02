@@ -44,7 +44,7 @@ By default the container starts with the ``freva-rest-service`` command.
 The following default values are available on start up:
 
 ```console
-reva-rest-server --help                                                                                                                                     (python3_12)
+freva-rest-server --help                                                                                                                                     (python3_12)
 
  Usage: freva-rest-server [OPTIONS]
 
@@ -74,41 +74,71 @@ reva-rest-server --help                                                         
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
-You can either adjust the server settings by overriding the default flags
-listed above or setting environment variables in the container.
+You can adjust the server settings by either overriding the default flags or setting environment variables in the container.
 
-The following environment variables can be set:
+### Environment Configuration
+Create a `.env` file with the following environment variables:
 
-- ``DEBUG``: Start server in debug mode (1), (default: 0 -> no debug).
-- ``API_PORT``: the port the rest service should be running on (default 8080).
-- ``API_WORKER``: the number of multi-process work serving the API (default: 8).
-- ``SOLR_HOST``: host name of the solr server, host name and port should be
-                 separated by a ``:``, for example ``localhost:8983``
-- ``SOLR_CORE`` : name of the solr core that contains datasets with multiple
-                  versions
-- ``MONGO_HOST``: host name of the mongodb server, where query statistics are
-                 stored. Host name and port should separated by a ``:``, for
-                 example ``localhost:27017``
-- ``MONGO_USER``: user name for the mongodb.
-- ``MONGO_PASSWORD``: password to log on to the mongodb.
-- ``MONGO_DB``: database name of the mongodb instance.
-- ``API_URL``: url of the machine that runs of the rest api
-- ``API_CACHE_EXP``: expiry time in seconds of the cached data
-- ``REDIS_HOST``: Host and port of the redis cache
-                  Host name and port should separated by a ``:``, for
-                  example ``localhost:5672``
-- ``REDIS_PASS``: Password for the redis connection.
-- ``REDIS_USER``: Username for the redis connection.
-- ``REDIS_SSL_CERTFILE``: Path to the TSL certificate file used to encrypt
-                          the redis connection.
-- ``REDIS_SSL_KEYFILE``: Path to the TSL key file used to encrypt the redis
-                         connection.
-- ``OIDC_URL``: Discovery of the open connect id service.
-- ``OIDC_CLIENT_ID``: Name of the client (app) that is used to create
-                          the access tokens, defaults to freva
-- ``OIDC_CLIENT_SECRET``: You can set a client secret, if you have
-                           configured your oidc instance to use a client secret.
+```ini
+# Server Configuration
+DEBUG=0                  # Start server in debug mode (1), (default: 0 -> no debug)
+API_PORT=7777            # The port the rest service should be running on
+API_WORKER=8            # Number of multi-process workers serving the API
+API_URL=http://www.example.de/
+API_CACHE_EXP=3600      # Expiry time in seconds of the cached data
 
-> ``📝`` You can override the path to the default config file using the ``API_CONFIG``
+# Database Configuration
+MONGO_USER=mongo
+MONGO_PASSWORD=secret
+MONGO_DB=search_stats
+MONGO_INITDB_DATABASE=search_stats
+MONGO_HOST=localhost:27017  # Host name and port should be separated by ":"
+
+POSTGRES_USER=freva
+POSTGRES_PASSWORD=secret
+POSTGRES_DB=freva_db
+
+# Solr Configuration
+SOLR_HOST=localhost:8983   # Host name and port should be separated by ":"
+SOLR_CORE=files           # Name of the solr core for datasets with multiple versions
+
+# Redis Configuration
+REDIS_HOST=redis://localhost:6379
+REDIS_USER=              # Username for the redis connection
+REDIS_PASS=              # Password for the redis connection
+REDIS_SSL_CERTFILE=/certs/client-cert.pem
+REDIS_SSL_KEYFILE=/certs/client-key.pem
+
+# OIDC Configuration
+OIDC_URL=http://keycloak:8080/realms/freva/.well-known/openid-configuration
+OIDC_CLIENT_ID=freva     #Name of the client (app) that is used to create the access tokens, defaults to freva
+OIDC_CLIENT_SECRET=      # Optional: Set if your OIDC instance uses a client secret
+```
+
+### Required Volumes
+The container requires several persistent volumes that should be mounted:
+
+```console
+docker run -d \
+  --name freva-rest \
+  --env-file .env \
+  -v $(pwd)/postgres_data:/var/lib/postgresql/data \
+  -v $(pwd)/mongodb_data:/data/db \
+  -v $(pwd)/solr_data:/var/solr \
+  -v $(pwd)/certs:/certs:ro \
+  -p 7777:7777 \
+  -p 27017:27017 \
+  -p 8983:8983 \
+  -p 5432:5432 \
+  ghcr.io/freva-clint/freva-rest:latest
+```
+
+Create the necessary directories before starting the container:
+```console
+mkdir -p {postgres_data,mongodb_data,mongodb_logs,solr_data,certs}
+```
+
+> [!NOTE]
+> You can override the path to the default config file using the ``API_CONFIG``
          environment variable. The default location of this config file is
          ``/opt/databrowser/api_config.toml``.

@@ -41,7 +41,7 @@ def check_container(image_name: str = "freva-rest", container_name: str = "freva
                 image_name,
             ],
         )
-        time.sleep(15)
+        time.sleep(20)
         if process.poll() is not None:
             stdout, stderr = process.communicate()
             raise RuntimeError(f"Container died. Exit code: {process.returncode}. "
@@ -66,7 +66,7 @@ def check_container(image_name: str = "freva-rest", container_name: str = "freva
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
-            stop_process.wait(timeout=10)
+            stop_process.wait(timeout=15)
             
             logger.info(f"Removing container {container_name}")
             rm_process = subprocess.Popen(

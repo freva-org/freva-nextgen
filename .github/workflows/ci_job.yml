@@ -97,6 +97,8 @@ jobs:
       - name: Build freva-storage-service image
         uses: docker/build-push-action@v4
         with:
+          context: .
+          file: freva-rest/Dockerfile
           platforms: linux/amd64
           push: false
           load: true
