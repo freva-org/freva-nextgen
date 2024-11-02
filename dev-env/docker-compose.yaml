@@ -3,7 +3,7 @@ services:
   solr:
     networks:
       - freva-rest
-    image: solr:latest
+    image: docker.io/solr:latest
     environment:
       CORE: files
     ports:
@@ -16,7 +16,7 @@ services:
   redis:
     networks:
       - freva-rest
-    image: redis:latest
+    image: docker.io/redis:latest
     ports:
       - "6379:6379"
     environment:
@@ -53,7 +53,7 @@ services:
       --import-realm
       -Dkeycloak.migration.strategy=OVERWRITE_EXISTING
   ldap:
-    image: osixia/openldap:latest
+    image: docker.io/osixia/openldap:latest
     environment:
       LDAP_ORGANISATION: "My Organization"
       LDAP_DOMAIN: "example.com"
