@@ -9,7 +9,7 @@ import os
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple, cast
 
 import requests
 import tomli
@@ -100,12 +100,18 @@ class ServerConfig:
     @property
     def mongo_collection_search(self) -> AsyncIOMotorCollection:
         """Define the mongoDB collection for databrowser searches."""
-        return self.mongo_client[self.mongo_db]["search_queries"]
+        return cast(
+            AsyncIOMotorCollection,
+            self.mongo_client[self.mongo_db]["search_queries"],
+        )
 
     @property
     def mongo_collection_userdata(self) -> AsyncIOMotorCollection:
         """Define the mongoDB collection for user data information."""
-        return self.mongo_client[self.mongo_db]["user_data"]
+        return cast(
+            AsyncIOMotorCollection,
+            self.mongo_client[self.mongo_db]["user_data"],
+        )
 
     def power_cycle_mongodb(self) -> None:
         """Reset an existing mongoDB connection."""
