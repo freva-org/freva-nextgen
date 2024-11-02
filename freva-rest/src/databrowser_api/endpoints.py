@@ -1,15 +1,41 @@
 """Main script that runs the rest API."""
 
 import os
-from typing import Annotated, List, Literal, Union
+from typing import Annotated, Any, Dict, List, Literal, Union
 
-from fastapi import Depends, HTTPException, Query, Request, status
+from fastapi import Body, Depends, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse, StreamingResponse
 from freva_rest.auth import TokenPayload, auth
+from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
+from pydantic import BaseModel, Field
 
-from .core import FlavourType, SolrSearch, Translator
+from .core import FlavourType, Solr, Translator
 from .schema import Required, SearchFlavours, SolrSchema
+
+
+class AddUserDataRequestBody(BaseModel):
+    """Request body schema for adding user data."""
+    user_metadata: List[Dict[str, str]] = Field(
+        ...,
+        description="List of user metadata objects or strings to be"
+        " added to the databrowser.",
+        examples=[[
+            {"variable": "tas",
+             "time_frequency": "mon",
+             "time": "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",
+             "file": "path of the file"},
+        ]]
+    )
+    facets: Dict[str, Any] = Field(
+        ...,
+        description="Key-value pairs representing metadata search attributes.",
+        examples=[{
+            "project": "user-data",
+            "product": "new",
+            "institute": "globe"
+        }]
+    )
 
 
 @app.get("/api/databrowser/overview", tags=["Data search"])
@@ -58,7 +84,7 @@ async def intake_catalogue(
     The generated catalogue can be used by tools compatible with intake-esm,
     such as Pangeo.
     """
-    solr_search = await SolrSearch.validate_parameters(
+    solr_search = await Solr.validate_parameters(
         server_config,
         flavour=flavour,
         uniq_key=uniq_key,
@@ -104,7 +130,7 @@ async def metadata_search(
     provides a comprehensive view of the available facets and their
     corresponding counts based on the provided search criteria.
     """
-    solr_search = await SolrSearch.validate_parameters(
+    solr_search = await Solr.validate_parameters(
         server_config,
         flavour=flavour,
         uniq_key=uniq_key,
@@ -135,7 +161,7 @@ async def extended_search(
     request: Request = Required,
 ) -> JSONResponse:
     """Get the search facets."""
-    solr_search = await SolrSearch.validate_parameters(
+    solr_search = await Solr.validate_parameters(
         server_config,
         flavour=flavour,
         uniq_key=uniq_key,
@@ -169,7 +195,7 @@ async def data_search(
     datasets matching specific search criteria and retrieve a list of data
     files or locations that meet the query parameters.
     """
-    solr_search = await SolrSearch.validate_parameters(
+    solr_search = await Solr.validate_parameters(
         server_config,
         flavour=flavour,
         uniq_key=uniq_key,
@@ -216,7 +242,7 @@ async def load_data(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Service not enabled.",
         )
-    solr_search = await SolrSearch.validate_parameters(
+    solr_search = await Solr.validate_parameters(
         server_config,
         flavour=flavour,
         uniq_key="uri",
@@ -235,3 +261,71 @@ async def load_data(
         status_code=status_code,
         media_type="text/plain",
     )
+
+
+@app.post(
+    "/api/databrowser/userdata",
+    status_code=status.HTTP_202_ACCEPTED,
+    tags=["User Data"],
+)
+async def post_user_data(
+    request: Annotated[AddUserDataRequestBody, Body(...)],
+    current_user: TokenPayload = Depends(auth.required),
+) -> Dict[str, str]:
+    """Add user metadata into the Apache Solr search system and MongoDB."""
+
+    solr_instance = Solr(server_config)
+    try:
+        try:
+            validated_user_metadata = await solr_instance._validate_user_metadata(
+                request.user_metadata
+            )
+        except HTTPException as he:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Invalid request data: {str(he)}"
+            )
+        status_msg = await solr_instance.add_user_metadata(
+            current_user.preferred_username,  # type: ignore
+            validated_user_metadata,
+            facets=request.facets
+        )
+    except Exception as e:
+        logger.error(f"An unexpected error occurred while adding user data: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while adding user data: {str(e)}",
+        )
+    return {
+        "status": str(status_msg)
+    }
+
+
+@app.delete(
+    "/api/databrowser/userdata",
+    status_code=status.HTTP_202_ACCEPTED,
+    tags=["User Data"],
+)
+async def delete_user_data(
+    request: Dict[str, Union[str, int]] = Body(
+        ...,
+        example={"project": "user-data", "product": "new", "institute": "globe"}
+    ),
+    current_user: TokenPayload = Depends(auth.required),
+) -> Dict[str, str]:
+    """Delete user metadata from the Apache Solr search system and MongoDB."""
+
+    solr_instance = Solr(server_config)
+    try:
+        await solr_instance.delete_user_metadata(
+            current_user.preferred_username,  # type: ignore
+            request
+        )
+    except Exception as e:
+        logger.error(f"Failed to delete user data: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete user data: {str(e)}",
+        )
+
+    return {"status": "User data has been deleted successfully from the databrowser."}

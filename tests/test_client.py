@@ -324,3 +324,4 @@ def test_get_overview(test_server: str) -> None:
     """Test the open id connect discovery endpoint."""
     res = requests.get(f"{test_server}/api/auth/v2/.well-known/openid-configuration")
     assert res.status_code == 200
+

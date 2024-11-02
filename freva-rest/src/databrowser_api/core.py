@@ -1,5 +1,4 @@
 """The core functionality to interact with the apache solr search system."""
-
 import asyncio
 import json
 import os
@@ -18,6 +17,7 @@ from typing import (
     Iterable,
     List,
     Literal,
+    Sequence,
     Sized,
     Tuple,
     Union,
@@ -32,9 +32,10 @@ from freva_rest.config import ServerConfig
 from freva_rest.logger import logger
 from freva_rest.utils import create_redis_connection
 from pydantic import BaseModel
+from pymongo import UpdateOne, errors
 from typing_extensions import TypedDict
 
-FlavourType = Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"]
+FlavourType = Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"]
 IntakeType = TypedDict(
     "IntakeType",
     {
@@ -58,8 +59,17 @@ def ensure_future(
     @wraps(async_func)
     async def wrapper(*args: Any, **kwargs: Any) -> asyncio.Task[Any]:
         """Async wrapper function that creates the call."""
-        loop = asyncio.get_event_loop()
-        return asyncio.ensure_future(async_func(*args, **kwargs), loop=loop)
+        try:
+            loop = (
+                asyncio.get_running_loop()
+            )  # Safely get the current running event loop
+        except RuntimeError:
+            # No running event loop, create a new one
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        # Schedule the coroutine for execution in the background
+        return asyncio.ensure_future(async_func(*args, **kwargs))
 
     return wrapper
 
@@ -106,6 +116,7 @@ class Translator:
         "cmip5",
         "cordex",
         "nextgems",
+        "user",
     )
 
     @property
@@ -153,6 +164,7 @@ class Translator:
             "rcm_version": "secondary",
             "dataset": "secondary",
             "time": "secondary",
+            "user": "secondary",
         }
 
     @property
@@ -273,6 +285,7 @@ class Translator:
             "cmip5": self._cmip5_lookup,
             "cordex": self._cordex_lookup,
             "nextgems": self._nextgems_lookup,
+            "user": {k: k for k in self._freva_facets}
         }[self.flavour]
 
     @cached_property
@@ -334,8 +347,9 @@ class Translator:
         )
 
 
-class SolrSearch:
-    """Definitions for making search queries on apache solr.
+class Solr:
+    """Definitions for making search queries on apache solr and
+    ingesting the user data into the apache solr.
 
     Parameters
     ----------
@@ -368,7 +382,7 @@ class SolrSearch:
 
     batch_size: int = 150
     """Maximum solr batch query size for one single query result."""
-
+    suffixes = [".nc", ".nc4", ".grb", ".grib", ".tar", ".zarr"]
     escape_chars: Tuple[str, ...] = (
         "+",
         "-",
@@ -395,7 +409,7 @@ class SolrSearch:
         uniq_key: Literal["file", "uri"] = "file",
         flavour: FlavourType = "freva",
         start: int = 0,
-        multi_version: bool = False,
+        multi_version: bool = True,
         translate: bool = True,
         _translator: Union[None, Translator] = None,
         **query: list[str],
@@ -415,6 +429,72 @@ class SolrSearch:
         self.url, self.query = self._get_url()
         self.query["start"] = start
         self.query["sort"] = "file desc"
+
+        self.payload: Union[List[Dict[str, Union[str, List[str], Dict[str, str]]]],
+                            Dict[str, Union[str, List[str], Dict[str, str]]]] = []
+        self.fwrites: Dict[str, str] = {}
+        self.total_ingested_files = 0
+        self.total_duplicated_files = 0
+        self.current_batch: List[Dict[str, str]] = []
+        self.suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", "zar"]
+        # TODO: If one adds a dataset from cloud storage, the file system type
+        # should be changed to cloud storage type. We need to find an approach
+        # to determine the file system
+        self.fs_type: str = "posix"
+
+    async def _is_query_duplicate(self, uri: str, file_path: str) -> bool:
+        """
+        Check if a document with the given URI or file path already exists in Solr.
+
+        Parameters
+        ----------
+        uri : str
+            The URI to check
+        file_path : str
+            The file path to check
+
+        Returns
+        -------
+        bool
+            True if document exists, False otherwise
+        """
+        original_url = getattr(self, 'url', None)
+        original_query = getattr(self, 'query', None)
+        try:
+            core_url = self._config.get_core_url(self._config.solr_cores[-1])
+            self.url = f"{core_url}/select"
+
+            def escape_special_chars(value: str) -> str:
+                for char in self.escape_chars:
+                    if char in value:
+                        value = value.replace(char, f"\\{char}")
+                value = value.replace('"', '\\"')
+                return value
+
+            escaped_uri = escape_special_chars(str(uri))
+            escaped_file = escape_special_chars(str(file_path))
+
+            query_parts = [
+                f'uri:"{escaped_uri}"',
+                f'file:"{escaped_file}"'
+            ]
+            query_str = " OR ".join(query_parts)
+
+            self.query = {
+                "q": query_str,
+                "fl": "id",
+                "rows": "1",
+                "wt": "json"
+            }
+            async with self._session_get() as res:
+                response_status, response_data = res
+                if response_status == 200:
+                    if response_data['response']['numFound'] > 0:
+                        return True
+                return False
+        finally:
+            self.url = original_url if original_url is not None else ""
+            self.query = original_query if original_query is not None else {}
 
     @asynccontextmanager
     async def _session_get(self) -> AsyncIterator[Tuple[int, Dict[str, Any]]]:
@@ -442,6 +522,37 @@ class SolrSearch:
                 )
         yield status, search
 
+    @asynccontextmanager
+    async def _session_post(self) -> AsyncIterator[Tuple[int, Dict[str, Any]]]:
+        """Wrap the post request round a try and catch statement."""
+        logger.info(
+            "Sending POST request to %s for uniq_key: %s with payload: %s",
+            self._post_url,
+            self.uniq_key,
+            self.payload,
+        )
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
+            try:
+                async with session.post(self._post_url, json=self.payload) as res:
+                    try:
+                        await self.check_for_status(res)
+                        logger.info(
+                            "POST request successful with status: %d", res.status
+                        )
+                        response_data = await res.json()
+                    except HTTPException:  # pragma: no cover
+                        logger.error(
+                            "POST request failed: %s", await res.text()
+                        )
+                        response_data = {}
+            except Exception as error:
+                logger.error("Connection to %s failed: %s", self.url, error)
+                raise HTTPException(
+                    status_code=503,
+                    detail="Could not connect to Solr POST endpoint",
+                )
+        yield res.status, response_data
+
     @classmethod
     async def validate_parameters(
         cls,
@@ -453,8 +564,8 @@ class SolrSearch:
         multi_version: bool = False,
         translate: bool = True,
         **query: list[str],
-    ) -> "SolrSearch":
-        """Create an instance of an SolrSearch class with parameter validation.
+    ) -> "Solr":
+        """Create an instance of an Solr class with parameter validation.
 
         Parameters
         ----------
@@ -483,7 +594,7 @@ class SolrSearch:
                 and key not in ("time_select",) + cls.uniq_keys
             ):
                 raise HTTPException(status_code=422, detail="Could not validate input.")
-        return SolrSearch(
+        return Solr(
             config,
             flavour=flavour,
             translate=translate,
@@ -606,6 +717,85 @@ class SolrSearch:
             catalogue=catalogue, total_count=total_count
         )
 
+    async def _delete_from_mongo(self, search_keys: Dict[str, Union[str, int]]) -> None:
+        """
+        Delete bulk user metadata from MongoDB based on the search keys.
+
+        Parameters
+        ----------
+        search_keys: Dict[str, str]
+            A dictionariy containing search keys used to identify
+            data for deletion.
+
+        Returns
+        -------
+        None
+        """
+        try:
+            query = {
+                key: value if key.lower() == "file" else str(value).lower()
+                for key, value in search_keys.items()
+            }
+            await self._config.mongo_collection_userdata.delete_many(query)
+            logger.info(f"[MONGO] Deleted metadata with query: {query}")
+        except Exception as error:
+            logger.warning(f"[MONGO] Could not remove metadata: {error}")
+
+    async def _insert_to_mongo(self, metadata_batch: List[Dict[str, Any]]) -> None:
+        """
+        Bulk upsert user metadata into MongoDB.
+
+        Parameters
+        ----------
+        metadata_batch: List[Dict[str, Any]]
+            A list of dictionaries containing metadata to insert into MongoDB.
+
+        Returns
+        -------
+        None
+        """
+        bulk_operations = []
+
+        for metadata in metadata_batch:
+            filter_query = {"file": metadata["file"], "uri": metadata["uri"]}
+            update_query = {"$set": metadata}
+
+            bulk_operations.append(
+                UpdateOne(filter_query, update_query, upsert=True)
+            )
+        if bulk_operations:
+            try:
+                result = await self._config.mongo_collection_userdata.bulk_write(
+                    bulk_operations, ordered=False, bypass_document_validation=False
+                )
+                successful_upsert = (result.upserted_count
+                                     + result.modified_count
+                                     + result.inserted_count)
+                logger.info(
+                    f"[MONGO] Successfully inserted or updated "
+                    f"{successful_upsert} records into MongoDB."
+                    f"{result.matched_count} records aleady up-to-date."
+                )
+
+            except errors.BulkWriteError as bwe:
+                for err in bwe.details['writeErrors']:
+                    error_index = err['index']
+                    logger.error(f"[MONGO] Error in document at index {error_index}: "
+                                 f"{err['errmsg']}")
+                    logger.error(f"[MONGO] Problematic document: "
+                                 f"{metadata_batch[error_index]}")
+                    successful_writes = (
+                        bwe.details.get('nInserted', 0)
+                        + bwe.details.get('nUpserted', 0)
+                        + bwe.details.get('nModified', 0)
+                    )
+                    nMatched = bwe.details.get('nMatched', 0)
+                logger.info(f"[MONGO] Partially succeeded: {successful_writes} "
+                            f"documents inserted/updated successfully."
+                            f"{nMatched} documents already up-to-date.")
+            except Exception as error:
+                logger.error(f"[MONGO] Could not insert metadata: {error}")
+
     @ensure_future
     async def store_results(self, num_results: int, status: int) -> None:
         """Store the query into a database.
@@ -628,7 +818,7 @@ class SolrSearch:
         }
         facets = {k: "&".join(v) for (k, v) in self.facets.items()}
         try:
-            await self._config.mongo_collection.insert_one(
+            await self._config.mongo_collection_search.insert_one(
                 {"metadata": data, "query": facets}
             )
         except Exception as error:
@@ -788,13 +978,31 @@ class SolrSearch:
                 query.append(f"{key}:({query_pos})")
             if query_neg:
                 query.append(f"-{key}:({query_neg})")
+        # Cause we are adding a new query which effects
+        # all queries, it might be a neckbottle of performance
+        if self.translator.flavour == 'user':
+            user_query = 'user:*'
+        else:
+            user_query = '{!ex=userTag}-user:*'
         return url, {
-            "fq": self.time + ["", " AND ".join(query) or "*:*"],
             "q": "*:*",
+            "fq": self.time + ["", user_query, " AND ".join(query) or "*:*"],
         }
 
-    async def _post_url(self) -> tuple[str, Dict[str, Any]]:
-        return "", {}  # pragma: no cover
+    @property
+    def _post_url(self) -> str:
+        """Construct the URL and payload for a solr POST request."""
+        # All user-data stores in the latest core
+        core = {
+            True: self._config.solr_cores[-1],
+            False: self._config.solr_cores[0],
+        }[self.multi_version]
+
+        url = (
+            f"{self._config.get_core_url(core)}/update/json"
+            "?commit=true&overwrite=false"
+        )
+        return url
 
     async def check_for_status(
         self, response: aiohttp.client_reqrep.ClientResponse
@@ -888,3 +1096,222 @@ class SolrSearch:
 
         if catalogue_type == "intake":
             yield "\n   ]\n}"
+
+    async def _add_to_solr(
+        self, metadata_batch: List[Dict[str, Union[str, List[str], Dict[str, str]]]]
+    ) -> None:
+        """
+        Add a batch of metadata to the Apache Solr cataloguing system.
+
+        Parameters
+        ----------
+        metadata_batch : List[Tuple[str, Dict[str, Union[str, List[str]]]]]
+            A list of tuples, each containing a file identifier and its
+            associated metadata.
+
+        Returns
+        -------
+        None
+        """
+
+        for metadata in metadata_batch:
+            self.payload = [metadata]
+            async with self._session_post() as (status, _):
+                if status == 200:
+                    self.total_ingested_files += 1
+
+    async def _delete_from_solr(self, search_keys: Dict[str, Union[str, int]]) -> None:
+        """
+        Delete user data from Apache Solr based on search keys.
+
+        Parameters
+        ----------
+        search_keys : Dict[str, str]
+            A dictionary of search keys used to identify data to be deleted.
+            Keys are field names and values are search values.
+
+        Returns
+        -------
+        None
+        """
+        def escape_special_chars(value: str) -> str:
+            for char in self.escape_chars:
+                if char in value:
+                    value = value.replace(char, f"\\{char}")
+            return value
+        query_parts = []
+        for key, value in search_keys.items():
+            key_lower = key.lower()
+            if key_lower == "file":
+                escaped_value = escape_special_chars(str(value))
+                query_parts.append(f"{key_lower}:{escaped_value}")
+            else:
+                escaped_value = escape_special_chars(str(value).lower())
+                query_parts.append(f"{key_lower}:{escaped_value}")
+        query_str = " AND ".join(query_parts)
+        self.payload = {"delete": {"query": query_str}}
+        async with self._session_post():
+            pass
+
+    async def _ingest_user_metadata(self,
+                                    user_metadata:
+                                    List[Dict[str, Any]]
+                                    ) -> None:
+        """
+        Ingest validated user metadata.
+
+        Parameters
+        ----------
+        user_metadata: List[Dict[str, Any]]
+            A list of validated user metadata dictionaries.
+
+        Returns
+        -------
+        None
+        """
+        processed_metadata = [
+            {**metadata, **self.fwrites}
+            for metadata in user_metadata
+        ]
+        for i in range(0, len(processed_metadata), self.batch_size):
+            batch = processed_metadata[i:i + self.batch_size]
+            processed_batch = await self._process_metadata(batch)
+            self.total_duplicated_files += len(batch) - len(processed_batch)
+            if processed_batch:
+                await self._add_to_solr(processed_batch)
+                await self._insert_to_mongo(processed_batch)
+
+    async def _process_metadata(
+        self,
+        metadata_batch: List[Dict[str, Union[str, List[str], Dict[str, str]]]]
+    ) -> List[Dict[str, Union[str, List[str], Dict[str, str]]]]:
+        """Process the metadata batch by removing duplicates before ingestion."""
+        new_querie = []
+        for metadata in metadata_batch:
+            uri = metadata.get('uri', '')
+            file_path = metadata.get('file', '')
+
+            if not uri and not file_path:
+                continue
+            is_duplicate = await self._is_query_duplicate(str(uri), str(file_path))
+            if not is_duplicate:
+                new_querie.append(metadata)
+        return [dict(t) for t in {tuple(sorted(d.items())) for d in new_querie}]
+
+    async def _purge_user_data(self, search_keys: Dict[str, Union[str, int]]) -> None:
+        """
+        Purge the user data from both the Apache Solr search system and MongoDB.
+
+        Parameters
+        ----------
+        search_keys: Dict[str, str]
+            A list of dictionaries containing search keys used to identify the
+            data to be purged.
+
+        Returns
+        -------
+        None
+        """
+        await self._delete_from_solr(search_keys)
+        await self._delete_from_mongo(search_keys)
+
+    async def _validate_user_metadata(
+        self,
+        user_metadata: Sequence[Dict[str, str]],
+    ) -> List[Dict[str, str]]:
+        """
+        Validate the user metadata by checking for required fields.
+
+        parameters:
+        ----------
+        user_metadata: Sequence[Dict[str, str]]
+            A sequence of user metadata entries, which can be
+            dictionaries containing metadata.
+
+        Returns:
+        --------
+            List[Dict[str, str]]: A list of validated metadata
+            dictionaries ready for ingestion.
+
+        Raises:
+        -------
+            HTTPException: If no valid metadata is found
+            or if required fields are missing.
+        """
+        required_fields = {"file", "variable", "time", "time_frequency"}
+        validated_user_metadata: List[Dict[str, str]] = []
+        for metadata in user_metadata:
+            if not required_fields.issubset(metadata):
+                logger.warning(
+                    f"Invalid metadata: missing one or"
+                    f"more required fields {required_fields}"
+                )
+                continue
+            metadata["uri"] = metadata["file"]
+            validated_user_metadata.append(metadata)
+        if not validated_user_metadata:
+            raise HTTPException(
+                status_code=422, detail="No valid metadata found in the input."
+            )
+        return validated_user_metadata
+
+    async def add_user_metadata(
+        self, user_name: str, user_metadata: List[Dict[str, Any]],
+        **fwrites: Dict[str, str]
+    ) -> str:
+        """
+        Add validated user metadata to the Apache Solr search system
+        and MongoDB.
+
+        parameters:
+        ----------
+        user_name: str
+            The username associated with the metadata.
+        user_metadata: List[Dict[str, Any]]
+            The metadata to be ingested.
+        fwrites: Dict[str, str]
+            Optional additional metadata to be added to the user metadata.
+        """
+        self.fwrites |= {
+            "user": user_name,
+            "fs_type": self.fs_type
+        } | fwrites.get("facets", {})
+        await self._ingest_user_metadata(user_metadata)
+
+        logger.info(
+            "Ingested %d files into Solr and MongoDB", self.total_ingested_files
+        )
+        if self.total_ingested_files == 0:
+            status_msg = (
+                f"No data was added to the databrowser. "
+                f"{self.total_duplicated_files} files were "
+                f"duplicates and not added."
+            )
+        else:
+            status_msg = (
+                f"{self.total_ingested_files} have been successfully "
+                f"added to the databrowser. {self.total_duplicated_files} "
+                f"files were duplicates and not added."
+            )
+        return status_msg
+
+    async def delete_user_metadata(
+        self, user_name: str, search_keys: Dict[str, Union[str, int]]
+    ) -> None:
+        """
+        Delete user data from the Apache Solr search system and MongoDB.
+
+        This method deletes the data associated with a user from both the Solr
+        search system and MongoDB, using specific search keys to find and then
+        purge the data.
+
+        Parameters:
+        ----------
+        user: str
+            The identifier of the user whose data is being deleted.
+        search_keys: Dict[str, Union[str, int]]:
+            A dictionary of keys used to identify the data to be deleted.
+        """
+        search_keys["user"] = user_name
+        await self._purge_user_data(search_keys)
+        logger.info("Deleted files from Solr and MongoDB with keys: %s", search_keys)
