@@ -115,7 +115,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: freva-rest
-          file: Dockerfile
+          file: freva-rest/Dockerfile
           build-args: VERSION=${{steps.repository.outputs.tag}}
           platforms: linux/amd64
           push: true
