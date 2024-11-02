@@ -13,7 +13,7 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import requests
 import tomli
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
 from typing_extensions import TypedDict
 
 from .logger import THIS_NAME, logger, logger_file_handle
@@ -66,7 +66,9 @@ class ServerConfig:
         Set the logging level to DEBUG
     """
 
-    config_file: Path = Path(os.environ.get("API_CONFIG") or defaults["API_CONFIG"])
+    config_file: Path = Path(
+        os.environ.get("API_CONFIG") or defaults["API_CONFIG"]
+    )
     debug: bool = False
 
     def __post_init__(self) -> None:
@@ -75,23 +77,47 @@ class ServerConfig:
             self._config = tomli.loads(self.config_file.read_text("utf-8"))
         except Exception as error:
             logger.critical("Failed to load %s", error)
-            self._config = tomli.loads(defaults["API_CONFIG"].read_text("utf-8"))
-        self.mongo_client = AsyncIOMotorClient(
-            self.mongo_url, serverSelectionTimeoutMS=5000
-        )
-        self.mongo_collection_search = self.mongo_client[self.mongo_db][
-            "search_queries"
-        ]
-        self.mongo_collection_userdata = self.mongo_client[self.mongo_db]["user_data"]
-
+            self._config = tomli.loads(
+                defaults["API_CONFIG"].read_text("utf-8")
+            )
+        self._mongo_client: Optional[AsyncIOMotorClient] = None
         self._solr_fields = self._get_solr_fields()
         self._oidc_overview: Optional[Dict[str, Any]] = None
-        self.oidc_discovery_url = os.environ.get("OICD_URL") or defaults["OIDC_URL"]
+        self.oidc_discovery_url = (
+            os.environ.get("OICD_URL") or defaults["OIDC_URL"]
+        )
         self.oidc_client = os.environ.get("OIDC_CLIENT_ID", "freva")
+
+    @property
+    def mongo_client(self) -> AsyncIOMotorClient:
+        """Create an async connection client to the mongodb."""
+        if self._mongo_client is None:
+            self._mongo_client = AsyncIOMotorClient(
+                self.mongo_url, serverSelectionTimeoutMS=5000
+            )
+        return self._mongo_client
+
+    @property
+    def mongo_collection_search(self) -> AsyncIOMotorCollection:
+        """Define the mongoDB collection for databrowser searches."""
+        return self.mongo_client[self.mongo_db]["search_queries"]
+
+    @property
+    def mongo_collection_userdata(self) -> AsyncIOMotorCollection:
+        """Define the mongoDB collection for user data information."""
+        return self.mongo_client[self.mongo_db]["user_data"]
+
+    def power_cycle_mongodb(self) -> None:
+        """Reset an existing mongoDB connection."""
+        if self._mongo_client is not None:
+            self._mongo_client.close()
+        self._mongo_client = None
 
     def reload(self) -> None:
         """Reload the configuration."""
-        self.config_file = Path(os.environ.get("API_CONFIG") or defaults["API_CONFIG"])
+        self.config_file = Path(
+            os.environ.get("API_CONFIG") or defaults["API_CONFIG"]
+        )
         self.debug = defaults["DEBUG"]
         self.__post_init__()
 
@@ -108,26 +134,28 @@ class ServerConfig:
     @property
     def mongo_url(self) -> str:
         """Get the url to the mongodb."""
-        host = self._config.get("mongo_db", {}).get("hostname", "") or os.environ.get(
-            "MONGO_HOST", "localhost"
-        )
+        host = self._config.get("mongo_db", {}).get(
+            "hostname", ""
+        ) or os.environ.get("MONGO_HOST", "localhost")
         host, _, m_port = host.partition(":")
-        port = m_port or str(self._config.get("mongo_db", {}).get("port", 27017))
-        user = self._config.get("mongo_db", {}).get("user", "") or os.environ.get(
-            "MONGO_USER", "mongo"
+        port = m_port or str(
+            self._config.get("mongo_db", {}).get("port", 27017)
         )
-        passwd = self._config.get("mongo_db", {}).get("password", "") or os.environ.get(
-            "MONGO_PASSWORD", "secret"
-        )
+        user = self._config.get("mongo_db", {}).get(
+            "user", ""
+        ) or os.environ.get("MONGO_USER", "mongo")
+        passwd = self._config.get("mongo_db", {}).get(
+            "password", ""
+        ) or os.environ.get("MONGO_PASSWORD", "secret")
 
         return f"mongodb://{user}:{passwd}@{host}:{port}"
 
     @property
     def mongo_db(self) -> str:
         """Get the database name where the stats is stored."""
-        return self._config.get("mongo_db", {}).get("name", "") or os.environ.get(
-            "MONGO_DB", "search_stats"
-        )
+        return self._config.get("mongo_db", {}).get(
+            "name", ""
+        ) or os.environ.get("MONGO_DB", "search_stats")
 
     @cached_property
     def solr_fields(self) -> List[str]:
@@ -186,6 +214,10 @@ class ServerConfig:
                     "name"
                 ] not in ("file_name", "file", "file_no_version"):
                     yield entry["name"]
-        except (requests.exceptions.ConnectionError) as error:  # pragma: no cover
-            logger.error("Connection to %s failed: %s", url, error)  # pragma: no cover
+        except (
+            requests.exceptions.ConnectionError
+        ) as error:  # pragma: no cover
+            logger.error(
+                "Connection to %s failed: %s", url, error
+            )  # pragma: no cover
             yield ""  # pragma: no cover
