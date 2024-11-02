@@ -138,6 +138,7 @@ class Translator:
             "fs_type",
             "grid_label",
             "grid_id",
+            "format",
         ]
 
     @property
@@ -436,8 +437,8 @@ class Solr:
         self.fwrites: Dict[str, str] = {}
         self._lock = Lock()
         self.total_ingested_files = 0
+        self.total_duplicated_files = 0
         self.current_batch: List[Dict[str, str]] = []
-        self.loop = asyncio.get_event_loop()
         self.suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", "zar"]
         # TODO: If one adds a dataset from cloud storage, the file system type
         # should be changed to cloud storage type. We need to find an approach
@@ -672,7 +673,7 @@ class Solr:
                 }
                 for v in facets
             ],
-            "assets": {"column_name": "uri", "format_column_name": "format"},
+            "assets": {"column_name": self.uniq_key, "format_column_name": "format"},
             "id": "freva",
             "description": f"Catalogue from freva-databrowser v{__version__}",
             "title": "freva-databrowser catalogue",
@@ -1178,6 +1179,7 @@ class Solr:
         for i in range(0, len(processed_metadata), self.batch_size):
             batch = processed_metadata[i:i + self.batch_size]
             processed_batch = await self._process_metadata(batch)
+            self.total_duplicated_files += len(batch) - len(processed_batch)
             if processed_batch:
                 await self._add_to_solr(processed_batch)
                 await self._insert_to_mongo(processed_batch)
@@ -1284,15 +1286,16 @@ class Solr:
         )
         if self.total_ingested_files == 0:
             status_msg = (
-                "No data was added to the databrowser. "
-                "(No files ingested into Solr and MongoDB)"
+                f"No data was added to the databrowser. "
+                f"{self.total_duplicated_files} files were "
+                f"duplicates and not added."
             )
         else:
             status_msg = (
-                f"Your data has been successfully added to the databrowser. "
-                f"(Ingested {self.total_ingested_files} files into Solr and MongoDB)"
+                f"{self.total_ingested_files} have been successfully "
+                f"added to the databrowser. {self.total_duplicated_files} "
+                f"files were duplicates and not added."
             )
-
         return status_msg
 
     async def delete_user_metadata(
