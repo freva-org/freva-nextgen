@@ -7,7 +7,6 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from functools import cached_property, wraps
-from threading import Lock
 from typing import (
     Any,
     AsyncIterator,
@@ -434,7 +433,6 @@ class Solr:
         self.payload: Union[List[Dict[str, Union[str, List[str], Dict[str, str]]]],
                             Dict[str, Union[str, List[str], Dict[str, str]]]] = []
         self.fwrites: Dict[str, str] = {}
-        self._lock = Lock()
         self.total_ingested_files = 0
         self.total_duplicated_files = 0
         self.current_batch: List[Dict[str, str]] = []
