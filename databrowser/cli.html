@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>The databrowser command line interface &#8212; Freva Databrowser 2410.0.1 documentation</title>
+    <title>The databrowser command line interface &#8212; Freva Databrowser 2411.0.0 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
 
-    <script src="../_static/documentation_options.js?v=35aa8f8f"></script>
+    <script src="../_static/documentation_options.js?v=6ca234d0"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -127,8 +127,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2410.0.1 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2410.0.1 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2411.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2411.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -406,6 +406,7 @@ Commands:
   data-search       Search the databrowser for datasets.
   intake-catalogue  Create an intake catalogue from the search.
   metadata-search   Search databrowser for metadata (facets).
+  user-data         Add or delete user data.
 
 </pre></div>
 </div>
@@ -439,7 +440,7 @@ Options:
                                   determines whether the search will be based
                                   on file paths or Uniform Resource
                                   Identifiers  [default: file]
-  -f, --flavour [freva|cmip6|cmip5|cordex|nextgems]
+  -f, --flavour [freva|cmip6|cmip5|cordex|nextgems|user]
                                   The Data Reference Syntax (DRS) standard
                                   specifying the type of climate datasets to
                                   query.  [default: freva]
@@ -737,7 +738,7 @@ Options:
                                   determines whether the search will be based
                                   on file paths or Uniform Resource
                                   Identifiers  [default: file]
-  -f, --flavour [freva|cmip6|cmip5|cordex|nextgems]
+  -f, --flavour [freva|cmip6|cmip5|cordex|nextgems|user]
                                   The Data Reference Syntax (DRS) standard
                                   specifying the type of climate datasets to
                                   query.  [default: freva]
@@ -815,7 +816,7 @@ Options:
                                   any entries containing era5, regardless of
                                   project, product etc.
   -d, --detail                    Separate the count by search facets.
-  -f, --flavour [freva|cmip6|cmip5|cordex|nextgems]
+  -f, --flavour [freva|cmip6|cmip5|cordex|nextgems|user]
                                   The Data Reference Syntax (DRS) standard
                                   specifying the type of climate datasets to
                                   query.  [default: freva]
@@ -911,7 +912,7 @@ Options:
                                   --facet &#39;era5&#39; would allow you to search for
                                   any entries containing era5, regardless of
                                   project, product etc.
-  -f, --flavour [freva|cmip6|cmip5|cordex|nextgems]
+  -f, --flavour [freva|cmip6|cmip5|cordex|nextgems|user]
                                   The Data Reference Syntax (DRS) standard
                                   specifying the type of climate datasets to
                                   query.  [default: freva]
@@ -1084,6 +1085,58 @@ commands can be piped and processed by <code class="docutils literal notranslate
 <p>The above example will select only the first entry of the ensembles that
 are associated with files on the tape archive.</p>
 </section>
+<section id="adding-and-deleting-user-data">
+<h2>Adding and Deleting User Data<a class="headerlink" href="#adding-and-deleting-user-data" title="Link to this heading">#</a></h2>
+<p>You can manage your personal datasets within the databrowser by adding or deleting user-specific data. This functionality allows you to include your own data files into the databrowser, making them accessible for analysis and retrieval alongside other datasets.</p>
+<p>Before using the <cite>user-data</cite> commands, you need to create an access token and authenticate with the system. Please refer to the <a class="reference internal" href="../auth/index.html#auth"><span class="std std-ref">Authentication</span></a> chapter for more details on token creation and authentication.</p>
+<section id="adding-user-data">
+<h3>Adding User Data<a class="headerlink" href="#adding-user-data" title="Link to this heading">#</a></h3>
+<p>To add your data to the databrowser, use the <cite>user-data add</cite> command. You’ll need to provide the paths to your data files, and any metadata you’d like to associate with your data.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">token=$(freva-client auth -u janedoe | jq -r .access_token)</span>
+<span class="go">freva-client databrowser user-data add \</span>
+<span class="go">    --path freva-rest/src/databrowser_api/mock/ \</span>
+<span class="go">    --facet project=cordex \</span>
+<span class="go">    --facet experiment=rcp85 \</span>
+<span class="go">    --facet model=mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1 \</span>
+<span class="go">    --facet variable=tas \</span>
+<span class="go">    --access-token $token</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>STDOUT: [2024-11-02T21:44:17] ERROR    freva-client: Failed to open data file           
+                               /home/runner/work/freva-nextgen/freva-nextgen/doc
+                               s/../freva-rest/src/databrowser_api/mock/data/mod
+                               el/obs/reanalysis/reanalysis/NOAA/NODC/OC5/mon/oc
+                               ean/Omon/r1i1p1/v20200101/hc700/hc700_mon_NODC_OC
+                               5_r1i1p1_201201-201212.nc: Failed to decode      
+                               variable &#39;time&#39;: unable to decode time units     
+                               &#39;months since 1955-01-01 00:00:00&#39; with &quot;calendar
+                               &#39;standard&#39;&quot;. Try opening your dataset with       
+                               decode_times=False or installing cftime if it is 
+                               not installed.                                   
+                      WARNING  freva-client: Error getting metadata: {}         
+
+</pre></div>
+</div>
+<p>This command adds the specified data files to the databrowser and tags them with the provided metadata. These search filters help in indexing and searching your data within the system.</p>
+</section>
+<section id="deleting-user-data">
+<h3>Deleting User Data<a class="headerlink" href="#deleting-user-data" title="Link to this heading">#</a></h3>
+<p>If you need to remove your data from the databrowser, use the <cite>user-data delete</cite> command. Provide your the search keys (facets) that identify the user data you wish to delete.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">token=$(freva-client auth -u janedoe | jq -r .access_token)</span>
+<span class="go">freva-client databrowser user-data delete \</span>
+<span class="go">    --search-key project=cordex \</span>
+<span class="go">    --search-key experiment=rcp85 \</span>
+<span class="go">    --access-token $token</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+<p>This command deletes all data entries that match the specified search keys from the databrowser.</p>
+</section>
+</section>
 </section>
 
 
@@ -1136,6 +1189,11 @@ are associated with files on the tape archive.</p>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parsing-the-command-output">Parsing the command output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-and-deleting-user-data">Adding and Deleting User Data</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-user-data">Adding User Data</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deleting-user-data">Deleting User Data</a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 
