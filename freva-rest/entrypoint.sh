@@ -11,13 +11,13 @@ NC='\033[0m'
 
 display_logo() {
     echo -e "${BLUE}"
-    echo "░▒▓████████▓▒░▒▓███████▓▒░░▒▓████████▓▒░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░ "
-    echo "░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░"
-    echo "░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░       ░▒▓█▓▒▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░"
-    echo "░▒▓██████▓▒░ ░▒▓███████▓▒░░▒▓██████▓▒░  ░▒▓█▓▒▒▓█▓▒░░▒▓████████▓▒░"
-    echo "░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░"
-    echo "░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░"
-    echo "░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓████████▓▒░  ░▒▓██▓▒░  ░▒▓█▓▒░░▒▓█▓▒░"
+    echo -e "${BLUE}░▒▓████████▓▒░▒▓███████▓▒░░▒▓████████▓▒░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░ ${NC}"
+    echo -e "${BLUE}░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░${NC}"
+    echo -e "${BLUE}░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░       ░▒▓█▓▒▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░${NC}"
+    echo -e "${BLUE}░▒▓██████▓▒░ ░▒▓███████▓▒░░▒▓██████▓▒░  ░▒▓█▓▒▒▓█▓▒░░▒▓████████▓▒░${NC}"
+    echo -e "${BLUE}░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░${NC}"
+    echo -e "${BLUE}░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░${NC}"
+    echo -e "${BLUE}░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓████████▓▒░  ░▒▓██▓▒░  ░▒▓█▓▒░░▒▓█▓▒░${NC}"
     echo -e "${NC}"
     echo -e "${GREEN}==================================================================${NC}"
     echo -e "${YELLOW}                    Starting FREVA Services                      ${NC}"
@@ -48,8 +48,8 @@ log_service() {
 }
 
 wait_for_mongo() {
-    for i in {1..30}; do
-        if mongosh --quiet --eval "db.adminCommand('ping')" &>/dev/null; then
+    for i in {1..10}; do
+        if bash mongosh --quiet --eval "db.adminCommand('ping')" &>/dev/null; then
             return 0
         fi
         sleep 1
@@ -60,7 +60,7 @@ wait_for_mongo() {
 
 reset_mongo_user() {
     log_info "Resetting MongoDB user..."
-    mongosh admin --quiet --eval "
+    bash mongosh admin --quiet --eval "
         if (db.getUser('${MONGO_USER}')) {
             db.dropUser('${MONGO_USER}');
             print('Existing user dropped');
@@ -86,7 +86,7 @@ reset_mongo_user() {
 
 verify_auth() {
     log_debug "Verifying authentication..."
-    mongosh admin --quiet --eval "
+    bash mongosh admin --quiet --eval "
         try {
             db.auth('${MONGO_USER}', '${MONGO_PASSWORD}');
             db.adminCommand('listDatabases');
@@ -104,7 +104,7 @@ init_mongodb() {
         exit 1
     fi
     log_info "Starting MongoDB without authentication..."
-    mongod --dbpath ${MONGO_HOME}/data --port ${MONGO_PORT} --bind_ip_all --fork --logpath "$LOG_FILE" --noauth &
+    bash mongod --dbpath ${MONGO_HOME}/data --port ${MONGO_PORT} --bind_ip_all --fork --logpath "$LOG_FILE" --noauth &
     wait_for_mongo
     if ! verify_auth; then
         log_warn "Authentication failed with existing credentials - resetting user..."
@@ -113,13 +113,13 @@ init_mongodb() {
         log_info "Existing credentials are valid"
     fi
     log_info "Shutting down MongoDB for restart..."
-    mongod --shutdown --dbpath ${MONGO_HOME}/data
+    bash mongod --shutdown --dbpath ${MONGO_HOME}/data
     sleep 5
     log_info "Starting MongoDB with authentication..."
-    mongod --dbpath ${MONGO_HOME}/data --port ${MONGO_PORT} --bind_ip 0.0.0.0 --auth &
+    bash mongod --dbpath ${MONGO_HOME}/data --port ${MONGO_PORT} --bind_ip 0.0.0.0 --auth &
     wait_for_mongo
     log_info "Initializing MongoDB collections..."
-    mongosh --authenticationDatabase admin -u "${MONGO_USER}" -p "${MONGO_PASSWORD}" --eval "
+    bash mongosh --authenticationDatabase admin -u "${MONGO_USER}" -p "${MONGO_PASSWORD}" --eval "
         if (db.getSiblingDB('${MONGO_DB}').getCollection('searches').countDocuments() == 0) {
             db.getSiblingDB('${MONGO_DB}').createCollection('searches');
         }
