@@ -108,6 +108,11 @@ REDIS_SSL_KEYFILE=/certs/client-key.pem
 OIDC_URL=http://keycloak:8080/realms/freva/.well-known/openid-configuration
 OIDC_CLIENT_ID=freva     #Name of the client (app) that is used to create the access tokens, defaults to freva
 OIDC_CLIENT_SECRET=      # Optional: Set if your OIDC instance uses a client secret
+
+# Service activation flags
+# Set to 1 to enable, 0 to disable the service
+USE_MONGODB=1  # Controls MongoDB initialization
+USE_SOLR=1     # Controls Apache Solr initialization
 ```
 
 ### Required Volumes

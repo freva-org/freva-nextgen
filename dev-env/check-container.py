@@ -3,8 +3,6 @@
 import logging
 import subprocess
 import time
-import json
-from pathlib import Path
 
 # Set up logging
 logging.basicConfig(

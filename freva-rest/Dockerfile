@@ -1,6 +1,5 @@
 FROM alpine:latest as base
 ARG VERSION
-ARG DEBIAN_FRONTEND=noninteractive
 
 LABEL org.opencontainers.image.authors="DRKZ-CLINT"
 LABEL org.opencontainers.image.source="https://github.com/FREVA-CLINT/freva-nextgen/freva-rest"
@@ -61,8 +60,8 @@ ENV API_CONFIG=/opt/freva-rest/api_config.toml \
     SOLR_PORT=8983 \
     MONGO_PORT=27017 \
     # usr pass
-    MONGO_USER=mongo \
-    MONGO_PASSWORD=secret \
+    MONGO_USER="" \
+    MONGO_PASSWORD="" \
     # db
     MONGO_DB=search_stats \
     MONGO_INITDB_DATABASE=search_stats \
@@ -75,7 +74,9 @@ ENV API_CONFIG=/opt/freva-rest/api_config.toml \
     REDIS_SSL_CERTFILE=/certs/client-cert.pem \
     REDIS_SSL_KEYFILE=/certs/client-key.pem \
     SOLR_HOST=localhost:8983 \
-    MONGO_HOST=localhost:27017
+    MONGO_HOST=localhost:27017 \
+    USE_MONGODB=1 \
+    USE_SOLR=1
 
 RUN mkdir -p /etc/mongodb /opt/app /opt/freva-rest ${SOLR_HOME} ${MONGO_HOME}/data && \
     echo "security:\n  authorization: enabled\n\

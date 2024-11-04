@@ -19,9 +19,9 @@ display_logo() {
     echo "░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░"
     echo "░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓████████▓▒░  ░▒▓██▓▒░  ░▒▓█▓▒░░▒▓█▓▒░"
     echo -e "${NC}"
-    echo -e "${GREEN}=======================================================${NC}"
-    echo -e "${YELLOW}                Starting FREVA Services                 ${NC}"
-    echo -e "${GREEN}=======================================================${NC}"
+    echo -e "${GREEN}==================================================================${NC}"
+    echo -e "${YELLOW}                    Starting FREVA Services                      ${NC}"
+    echo -e "${GREEN}==================================================================${NC}"
     echo ""
 }
 
@@ -32,7 +32,7 @@ log_info() {
 }
 
 log_warn() {
-    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] [WARNING]${NC} $*"
+    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] [WARNNING]${NC} $*"
 }
 
 log_error() {
@@ -98,6 +98,11 @@ verify_auth() {
 
 init_mongodb() {
     log_service "=== Initializing MongoDB ==="
+    if [[ -z "${MONGO_USER}" ]] || [[ -z "${MONGO_PASSWORD}" ]]; then
+        log_error "MongoDB is enabled but MONGO_USER and/or MONGO_PASSWORD are not set"
+        log_error "Please provide credentials via environment variables"
+        exit 1
+    fi
     log_info "Starting MongoDB without authentication..."
     mongod --dbpath ${MONGO_HOME}/data --port ${MONGO_PORT} --bind_ip_all --fork --logpath "$LOG_FILE" --noauth &
     wait_for_mongo
@@ -134,10 +139,20 @@ init_solr() {
 main() {
     display_logo
     log_service "Initializing services..."
-    init_mongodb
-    init_solr
+    if [[ "${USE_MONGODB}" == "1" ]]; then
+        init_mongodb
+        log_info "MongoDB initialization completed"
+    else
+        log_warn "MongoDB service is skipped (USE_MONGODB=0)"
+    fi
+    if [[ "${USE_SOLR}" == "1" ]]; then
+        init_solr
+        log_info "Solr initialization completed"
+    else
+        log_warn "Solr service is skipped (USE_SOLR=0)"
+    fi
     log_service "Starting freva-rest..."
-    exec python3 -m freva_rest.cli
+    exec python3 -m freva_rest.cli "$@"
 }
 
 main "$@"
