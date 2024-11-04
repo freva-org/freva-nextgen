@@ -3,9 +3,10 @@
 from typing import Dict, List
 
 import typer
+from rich import print as pprint
+
 from freva_client import __version__
 from freva_client.utils import logger
-from rich import print as pprint
 
 APP_NAME: str = "freva-client"
 

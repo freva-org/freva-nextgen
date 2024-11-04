@@ -4,12 +4,11 @@ import json
 from copy import deepcopy
 from tempfile import NamedTemporaryFile
 
-import pytest
-from fastapi import HTTPException
-from freva_client.auth import Auth, authenticate
-from freva_client.cli.databrowser_cli import databrowser_app as app
 from pytest import LogCaptureFixture
 from typer.testing import CliRunner
+
+from freva_client.auth import Auth, authenticate
+from freva_client.cli.databrowser_cli import databrowser_app as app
 
 
 def test_overview(cli_runner: CliRunner, test_server: str) -> None:
@@ -37,7 +36,9 @@ def test_search_files_normal(cli_runner: CliRunner, test_server: str) -> None:
     )
     assert res.exit_code == 0
     assert not res.stdout
-    res = cli_runner.invoke(app, ["data-search", "--host", test_server, "--json"])
+    res = cli_runner.invoke(
+        app, ["data-search", "--host", test_server, "--json"]
+    )
     assert res.exit_code == 0
     assert isinstance(json.loads(res.stdout), list)
 
@@ -49,7 +50,9 @@ def test_search_files_zarr(
     token = deepcopy(auth_instance._auth_token)
     try:
         auth_instance._auth_token = None
-        res = cli_runner.invoke(app, ["data-search", "--host", test_server, "--zar"])
+        res = cli_runner.invoke(
+            app, ["data-search", "--host", test_server, "--zar"]
+        )
         assert res.exit_code > 0
         token_data = authenticate(username="janedoe", host=test_server)
         auth_instance._auth_token = None
@@ -86,7 +89,9 @@ def test_search_files_zarr(
         auth_instance._auth_token = token
 
 
-def test_intake_catalogue_no_zarr(cli_runner: CliRunner, test_server: str) -> None:
+def test_intake_catalogue_no_zarr(
+    cli_runner: CliRunner, test_server: str
+) -> None:
     """Test intake catalgoue creation without zarr."""
 
     res = cli_runner.invoke(app, ["intake-catalogue", "--host", test_server])
@@ -100,7 +105,7 @@ def test_intake_catalogue_no_zarr(cli_runner: CliRunner, test_server: str) -> No
         )
         assert res.exit_code == 0
         with open(temp_f.name, "r") as stream:
-            assert (json.load(stream), dict)
+            assert isinstance(json.load(stream), dict)
 
 
 def test_intake_files_zarr(
@@ -145,7 +150,9 @@ def test_metadata_search(cli_runner: CliRunner, test_server: str) -> None:
     )
     assert res.exit_code == 0
     assert res.stdout
-    res = cli_runner.invoke(app, ["metadata-search", "--host", test_server, "--json"])
+    res = cli_runner.invoke(
+        app, ["metadata-search", "--host", test_server, "--json"]
+    )
     assert res.exit_code == 0
     output = json.loads(res.stdout)
     assert isinstance(output, dict)
@@ -162,7 +169,9 @@ def test_count_values(cli_runner: CliRunner, test_server: str) -> None:
     res = cli_runner.invoke(app, ["data-count", "--host", test_server])
     assert res.exit_code == 0
     assert res.stdout
-    res = cli_runner.invoke(app, ["data-count", "--host", test_server, "--json"])
+    res = cli_runner.invoke(
+        app, ["data-count", "--host", test_server, "--json"]
+    )
     assert res.exit_code == 0
     assert isinstance(json.loads(res.stdout), int)
 

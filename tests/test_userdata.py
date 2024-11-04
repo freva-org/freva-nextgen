@@ -1,19 +1,21 @@
-from typing import Dict
-from fastapi.testclient import TestClient
-import mongomock
-from unittest.mock import patch
+"""Tests for add user data to the databrowser."""
+
+import os
 from copy import deepcopy
+from typing import Dict, List, Union
+
+import mock
+import requests
+from typer.testing import CliRunner
+
 from freva_client.auth import Auth, authenticate
 from freva_client.cli.databrowser_cli import databrowser_app as app
-from typer.testing import CliRunner
-import mongomock
-from unittest.mock import patch
+
 
 def test_delete_all_userdata_cli(
     cli_runner: CliRunner, test_server: str, auth_instance: Auth
 ) -> None:
-    """Test deleting all user data through the
-    CLI."""
+    """Test deleting all user data through the CLI."""
     token = deepcopy(auth_instance._auth_token)
     try:
         auth_instance._auth_token = None
@@ -34,33 +36,38 @@ def test_delete_all_userdata_cli(
                 token_data["access_token"],
             ],
         )
-        res_count_after = cli_runner.invoke(app, ["data-count", "--flavour", "user", "--host", test_server])
+        res_count_after = cli_runner.invoke(
+            app, ["data-count", "--flavour", "user", "--host", test_server]
+        )
         assert res.exit_code == 0
         assert int(res_count_after.output) == 0
     finally:
         auth_instance._auth_token = token
 
+
 def test_userdata_add_api_202(
-    client: TestClient, auth: Dict[str, str], user_data_payload_sample: Dict
+    test_server: str,
+    auth: Dict[str, str],
+    user_data_payload_sample: Dict[str, Union[List[str], Dict[str, str]]],
 ) -> None:
     """Test user data through the API with valid metadata."""
     token = auth["access_token"]
     data = user_data_payload_sample
     # first delete:
-    client.request(
-        "DELETE",
-        f"/api/databrowser/userdata",
+    requests.delete(
+        f"{test_server}/api/databrowser/userdata",
         json={},
         headers={"Authorization": f"Bearer {token}"},
     )
     # then add:
-    response = client.post(
-        "/api/databrowser/userdata",
+    response = requests.post(
+        f"{test_server}/api/databrowser/userdata",
         json=data,
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 202
-    
+
+
 def test_add_userdata_cli_standard(
     cli_runner: CliRunner, test_server: str, auth_instance: Auth
 ) -> None:
@@ -74,7 +81,9 @@ def test_add_userdata_cli_standard(
 
         token_data = authenticate(username="janedoe", host=test_server)
         auth_instance._auth_token = None
-        res_count_before = cli_runner.invoke(app, ["data-count", "--flavour", "user", "--host", test_server])
+        res_count_before = cli_runner.invoke(
+            app, ["data-count", "--flavour", "user", "--host", test_server]
+        )
 
         res = cli_runner.invoke(
             app,
@@ -89,7 +98,9 @@ def test_add_userdata_cli_standard(
                 token_data["access_token"],
             ],
         )
-        res_count_after = cli_runner.invoke(app, ["data-count", "--flavour", "user", "--host", test_server])
+        res_count_after = cli_runner.invoke(
+            app, ["data-count", "--flavour", "user", "--host", test_server]
+        )
         assert res.exit_code == 0
         assert int(res_count_before.output) < int(res_count_after.output)
     finally:
@@ -109,7 +120,9 @@ def test_add_userdata_cli_all_successful_and_escape_char(
 
         token_data = authenticate(username="janedoe", host=test_server)
         auth_instance._auth_token = None
-        res_count_before = cli_runner.invoke(app, ["data-count", "--flavour", "user", "--host", test_server])
+        res_count_before = cli_runner.invoke(
+            app, ["data-count", "--flavour", "user", "--host", test_server]
+        )
 
         res_add = cli_runner.invoke(
             app,
@@ -125,7 +138,9 @@ def test_add_userdata_cli_all_successful_and_escape_char(
             ],
         )
         assert res_add.exit_code == 0
-        res_count_middle = cli_runner.invoke(app, ["data-count", "--flavour", "user", "--host", test_server])
+        res_count_middle = cli_runner.invoke(
+            app, ["data-count", "--flavour", "user", "--host", test_server]
+        )
         assert int(res_count_before.output) <= int(res_count_middle.output)
 
         res_del = cli_runner.invoke(
@@ -141,7 +156,9 @@ def test_add_userdata_cli_all_successful_and_escape_char(
                 token_data["access_token"],
             ],
         )
-        res_count_after = cli_runner.invoke(app, ["data-count", "--flavour", "user", "--host", test_server])
+        res_count_after = cli_runner.invoke(
+            app, ["data-count", "--flavour", "user", "--host", test_server]
+        )
         assert res_del.exit_code == 0
         assert int(res_count_middle.output) == int(res_count_after.output)
     finally:
@@ -149,21 +166,23 @@ def test_add_userdata_cli_all_successful_and_escape_char(
 
 
 def test_userdata_add_api_202_duplicate_bulk_error_mongo(
-    client: TestClient, auth: Dict[str, str], user_data_payload_sample_partially_success: Dict
+    test_server: str,
+    auth: Dict[str, str],
+    user_data_payload_sample_partially_success: Dict[
+        str, Union[List[str], Dict[str, str]]
+    ],
 ) -> None:
     """Test user data through the API with valid metadata."""
     token = auth["access_token"]
-    data = user_data_payload_sample_partially_success
-    response = client.post(
-        "/api/databrowser/userdata",
-        json=data,
+    response = requests.post(
+        f"{test_server}/api/databrowser/userdata",
+        json=user_data_payload_sample_partially_success,
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 202
 
-def test_userdata_add_api_422(
-    client: TestClient, auth: Dict[str, str]
-) -> None:
+
+def test_userdata_add_api_422(test_server: str, auth: Dict[str, str]) -> None:
     """Test user data through the API with invalid metadata."""
     token = auth["access_token"]
     data = {
@@ -173,10 +192,10 @@ def test_userdata_add_api_422(
         },
         "facets": {
             "product": "johndoe",
-        }
+        },
     }
-    response = client.post(
-        "/api/databrowser/userdata",
+    response = requests.post(
+        f"{test_server}/api/databrowser/userdata",
         json=data,
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -185,62 +204,54 @@ def test_userdata_add_api_422(
 
 
 def test_userdata_delete_api_202(
-    client: TestClient, auth: Dict[str, str]
+    test_server: str, auth: Dict[str, str]
 ) -> None:
     """Test user data through the API with valid metadata."""
     token = auth["access_token"]
-    data = {}
-    response = client.request(
-        "DELETE",
-        f"/api/databrowser/userdata",
-        json=data,
+    response = requests.delete(
+        f"{test_server}/api/databrowser/userdata",
+        json={},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 202
 
 
-def test_userdata_add_api_500(
-    client: TestClient, auth: Dict[str, str]
-) -> None:
+def test_userdata_add_api_500(test_server: str, auth: Dict[str, str]) -> None:
     """Test user data through the API with invalid user_metadata."""
     token = auth["access_token"]
     data = {
-        "user_metadata": [
-            {"variable": "tas", "time_frequency": "mon"}
-        ],
+        "user_metadata": [{"variable": "tas", "time_frequency": "mon"}],
         "facets": {
             "product": "johndoe",
-        }
+        },
     }
-    response = client.post(
-        "/api/databrowser/userdata",
+    response = requests.post(
+        f"{test_server}/api/databrowser/userdata",
         json=data,
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 500
 
+
 def test_userdata_delete_api_422(
-    client: TestClient, auth: Dict[str, str]
+    test_server: str, auth: Dict[str, str]
 ) -> None:
     """Test user data through the API with invalid metadata."""
     token = auth["access_token"]
     data = {
-        "user_metadata": [
-            {"variable": "tas", "time_frequency": "mon"}
-        ],
+        "user_metadata": [{"variable": "tas", "time_frequency": "mon"}],
         "facets": {
             "product": "johndoe",
-        }
+        },
     }
-    response = client.request(
-        "DELETE",
-        f"/api/databrowser/userdata",
+    response = requests.delete(
+        f"{test_server}/api/databrowser/userdata",
         json=data,
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 422
 
-@patch("pymongo.MongoClient", new=mongomock.MongoClient)
+
 def test_add_userdata_cli_broken_file(
     cli_runner: CliRunner, test_server: str, auth_instance: Auth
 ) -> None:
@@ -254,7 +265,9 @@ def test_add_userdata_cli_broken_file(
 
         token_data = authenticate(username="janedoe", host=test_server)
         auth_instance._auth_token = None
-        res_count_before = cli_runner.invoke(app, ["data-count", "--flavour", "user", "--host", test_server])
+        res_count_before = cli_runner.invoke(
+            app, ["data-count", "--flavour", "user", "--host", test_server]
+        )
         # add the broken file
         res = cli_runner.invoke(
             app,
@@ -271,7 +284,9 @@ def test_add_userdata_cli_broken_file(
                 token_data["access_token"],
             ],
         )
-        res_count_after = cli_runner.invoke(app, ["data-count", "--flavour", "user", "--host", test_server])
+        res_count_after = cli_runner.invoke(
+            app, ["data-count", "--flavour", "user", "--host", test_server]
+        )
         assert res.exit_code == 0
         assert int(res_count_before.output) == int(res_count_after.output)
         # remove whatever is existing
@@ -286,12 +301,12 @@ def test_add_userdata_cli_broken_file(
                 "--access-token",
                 token_data["access_token"],
             ],
-        )        
-        
+        )
+
     finally:
         auth_instance._auth_token = token
 
-@patch("pymongo.MongoClient", new=mongomock.MongoClient)
+
 def test_wrong_equal_facet(
     cli_runner: CliRunner, test_server: str, auth_instance: Auth
 ) -> None:
@@ -306,7 +321,9 @@ def test_wrong_equal_facet(
         token_data = authenticate(username="janedoe", host=test_server)
         auth_instance._auth_token = None
         # First add the file
-        res_count_before = cli_runner.invoke(app, ["data-count", "--flavour", "user", "--host", test_server])
+        res_count_before = cli_runner.invoke(
+            app, ["data-count", "--flavour", "user", "--host", test_server]
+        )
         res = cli_runner.invoke(
             app,
             [
@@ -322,7 +339,9 @@ def test_wrong_equal_facet(
                 token_data["access_token"],
             ],
         )
-        res_count_after = cli_runner.invoke(app, ["data-count", "--flavour", "user", "--host", test_server])
+        res_count_after = cli_runner.invoke(
+            app, ["data-count", "--flavour", "user", "--host", test_server]
+        )
         assert res.exit_code == 1
         assert int(res_count_before.output) == int(res_count_after.output)
         # remove whatever is existing
@@ -342,27 +361,41 @@ def test_wrong_equal_facet(
     finally:
         auth_instance._auth_token = token
 
-def test_no_solr_post(client_no_solr: TestClient, auth: Dict[str, str]) -> None:
+
+def test_no_solr_post(test_server: str, auth: Dict[str, str]) -> None:
     """Test what happens if there is no connection to Solr during a PUT request."""
+    env = os.environ.copy()
+    env["SOLR_HOST"] = "foo.bar.de"
     token = auth["access_token"]
     data = {
-        "user_metadata": [{"variable": "tas", "time_frequency": "mon", "time": "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]", "file": "path of the file"}],
-        "facets": {}
+        "user_metadata": [
+            {
+                "variable": "tas",
+                "time_frequency": "mon",
+                "time": "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",
+                "file": "path of the file",
+            }
+        ],
+        "facets": {},
     }
-    res = client_no_solr.post(
-        "/api/databrowser/userdata",
-        json=data,
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert res.status_code == 500
-def test_no_solr_delete(client_no_solr: TestClient, auth: Dict[str, str]) -> None:
+    with mock.patch.dict(os.environ, env, clear=True):
+        res = requests.post(
+            f"{test_server}/api/databrowser/userdata",
+            json=data,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert res.status_code == 500
+
+
+def test_no_solr_delete(test_server: str, auth: Dict[str, str]) -> None:
     """Test what happens if there is no connection to Solr during a PUT request."""
     token = auth["access_token"]
-    data = {}
-    res = client_no_solr.request(
-        "DELETE",
-        "/api/databrowser/userdata",
-        json=data,
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert res.status_code == 500
+    env = os.environ.copy()
+    env["SOLR_HOST"] = "foo.bar.de"
+    with mock.patch.dict(os.environ, env, clear=True):
+        res = requests.delete(
+            f"{test_server}/api/databrowser/userdata",
+            json={},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert res.status_code == 500

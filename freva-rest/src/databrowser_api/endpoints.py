@@ -5,10 +5,11 @@ from typing import Annotated, Any, Dict, List, Literal, Union
 
 from fastapi import Body, Depends, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse, StreamingResponse
+from pydantic import BaseModel, Field
+
 from freva_rest.auth import TokenPayload, auth
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
-from pydantic import BaseModel, Field
 
 from .core import FlavourType, Solr, Translator
 from .schema import Required, SearchFlavours, SolrSchema

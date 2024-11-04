@@ -4,6 +4,7 @@ import os
 from typing import Optional
 
 import typer
+
 from freva_client.utils import logger
 
 from .auth_cli import authenticate_cli

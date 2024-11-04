@@ -1,13 +1,12 @@
 """Unit tests for the configuration."""
 
 import logging
-import os
 from pathlib import Path
 from typing import List
 
-import mock
-from freva_rest.config import ServerConfig, defaults
 from pytest import LogCaptureFixture
+
+from freva_rest.config import ServerConfig, defaults
 
 
 def test_valid_config() -> None:
