@@ -1,4 +1,4 @@
-"""Unit tests for the freva databrowser rest-api."""
+"""Unit tests for data queries via the rest-api."""
 
 import json
 import os
