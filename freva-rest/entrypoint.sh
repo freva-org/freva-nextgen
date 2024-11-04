@@ -131,34 +131,11 @@ init_solr() {
     log_info "Solr started successfully"
 }
 
-init_postgresql() {
-    log_service "=== Initializing PostgreSQL ==="
-    PG_BIN="/usr/lib/postgresql/$(ls /usr/lib/postgresql)/bin"
-    export PATH=$PATH:$PG_BIN
-    
-    log_info "Initializing PostgreSQL data directory..."
-    "$PG_BIN/initdb" -D "$PGDATA"
-    
-    log_info "Starting PostgreSQL server..."
-    "$PG_BIN/postgres" -D "$PGDATA" &
-    PG_PID=$!
-    
-    until "$PG_BIN/pg_isready" -h localhost; do
-        log_debug "Waiting for PostgreSQL to be ready..."
-        sleep 1
-    done
-    
-    log_info "Creating PostgreSQL database..."
-    "$PG_BIN/createdb" -O freva freva_db
-    log_info "PostgreSQL initialization completed"
-}
-
 main() {
     display_logo
     log_service "Initializing services..."
     init_mongodb
     init_solr
-    init_postgresql
     log_service "Starting freva-rest..."
     exec python3 -m freva_rest.cli
 }

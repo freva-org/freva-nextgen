@@ -44,7 +44,7 @@ By default the container starts with the ``freva-rest-service`` command.
 The following default values are available on start up:
 
 ```console
-freva-rest-server --help                                                                                                                                     (python3_12)
+freva-rest-server --help
 
  Usage: freva-rest-server [OPTIONS]
 
@@ -76,8 +76,7 @@ freva-rest-server --help                                                        
 
 You can adjust the server settings by either overriding the default flags or setting environment variables in the container.
 
-### Environment Configuration
-Create a `.env` file with the following environment variables:
+### Available Environment Variables
 
 ```ini
 # Server Configuration
@@ -93,10 +92,6 @@ MONGO_PASSWORD=secret
 MONGO_DB=search_stats
 MONGO_INITDB_DATABASE=search_stats
 MONGO_HOST=localhost:27017  # Host name and port should be separated by ":"
-
-POSTGRES_USER=freva
-POSTGRES_PASSWORD=secret
-POSTGRES_DB=freva_db
 
 # Solr Configuration
 SOLR_HOST=localhost:8983   # Host name and port should be separated by ":"
@@ -121,8 +116,7 @@ The container requires several persistent volumes that should be mounted:
 ```console
 docker run -d \
   --name freva-rest \
-  --env-file .env \
-  -v $(pwd)/postgres_data:/var/lib/postgresql/data \
+  -e {mentioned envs above} \
   -v $(pwd)/mongodb_data:/data/db \
   -v $(pwd)/solr_data:/var/solr \
   -v $(pwd)/certs:/certs:ro \
@@ -135,7 +129,7 @@ docker run -d \
 
 Create the necessary directories before starting the container:
 ```console
-mkdir -p {postgres_data,mongodb_data,mongodb_logs,solr_data,certs}
+mkdir -p {mongodb_data,solr_data,certs}
 ```
 
 > [!NOTE]

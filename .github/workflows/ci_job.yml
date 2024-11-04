@@ -89,7 +89,7 @@ jobs:
 
       - name: Set up services
         run: |
-          docker compose -f dev-env/docker-compose-without-solr-mongo.yaml up -d --remove-orphans
+          docker compose -f dev-env/docker-compose.yaml up -d redis ldap keycloak --remove-orphans
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
