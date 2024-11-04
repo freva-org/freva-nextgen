@@ -55,9 +55,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     try:
         yield
     finally:
-        try:
+        try:  # pragma: no cover
             server_config.mongo_client.close()
-        except Exception as error:  # pragma: no cover
+        except Exception as error:
             logger.warning("Could not shutdown mongodb connection: %s", error)
 
 
