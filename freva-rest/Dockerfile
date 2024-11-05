@@ -1,18 +1,19 @@
-FROM alpine:latest as base
+FROM debian:bookworm-slim AS base
 ARG VERSION
 
 LABEL org.opencontainers.image.authors="DRKZ-CLINT"
 LABEL org.opencontainers.image.source="https://github.com/FREVA-CLINT/freva-nextgen/freva-rest"
 LABEL org.opencontainers.image.version="$VERSION"
 
-RUN apk update && \
-    apk add --no-cache \
-    python3 py3-pip python3-dev \
-    gcc g++ make curl openssl pkgconfig \
-    py3-setuptools py3-wheel build-base \
-    gnupg wget git \
-    libgcc libstdc++ \
-    openjdk11-jre bash procps
+# prerequisites
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3 python3-pip python3-dev \
+    gcc g++ make curl openssl pkg-config \
+    python3-setuptools python3-wheel build-essential \
+    gnupg wget git ca-certificates \
+    default-jre bash procps \
+    && rm -rf /var/lib/apt/lists/*
 
 # mongodb
 COPY --from=mongo:latest /usr/bin/mongod /usr/bin/mongod
@@ -59,12 +60,7 @@ ENV API_CONFIG=/opt/freva-rest/api_config.toml \
     API_PORT=7777 \
     SOLR_PORT=8983 \
     MONGO_PORT=27017 \
-    # usr pass
-    MONGO_USER="" \
-    MONGO_PASSWORD="" \
-    # db
-    MONGO_DB=search_stats \
-    MONGO_INITDB_DATABASE=search_stats \
+    # url
     API_URL=http://www.example.de/ \
     # oidc
     OIDC_CLIENT_ID=freva \
@@ -83,15 +79,15 @@ RUN mkdir -p /etc/mongodb /opt/app /opt/freva-rest ${SOLR_HOME} ${MONGO_HOME}/da
 storage:\n  dbPath: /opt/mongodb/data\n\
 net:\n  port: 27017\n  bindIp: 0.0.0.0\n" > /etc/mongodb/mongod.conf
 
-RUN bash /opt/solr/docker/scripts/init-var-solr && \
-    bash /opt/solr/docker/scripts/precreate-core latest && \
-    bash /opt/solr/docker/scripts/precreate-core files && \
+RUN /opt/solr/docker/scripts/init-var-solr && \
+    /opt/solr/docker/scripts/precreate-core latest && \
+    /opt/solr/docker/scripts/precreate-core files && \
     find /var/solr -type d -print0 | xargs -0 chmod 0771 && \
     find /var/solr -type f -print0 | xargs -0 chmod 0661 && \
     mv /var/solr ${SOLR_HOME} && \
     ln -s ${SOLR_HOME} /var/solr
 
-FROM base as builder
+FROM base AS builder
 WORKDIR /opt/app
 COPY . .
 RUN python3 -m pip install --upgrade pip --break-system-packages && \
@@ -99,13 +95,14 @@ RUN python3 -m pip install --upgrade pip --break-system-packages && \
     python3 -m pip install . --break-system-packages && \
     python3 -m build --sdist --wheel
 
-FROM base as final
+FROM base AS final
 WORKDIR /opt/freva-rest
 COPY --from=builder /opt/app/dist /opt/app/dist
 COPY src/freva_rest/api_config.toml $API_CONFIG
 COPY entrypoint.sh ./
 RUN chmod +x ./entrypoint.sh && \
     python3 -m pip install /opt/app/dist/freva_rest*.whl --break-system-packages
+
 
 RUN mkdir -p /data/db && \
     mkdir -p /opt/freva-rest/mongodb/log
