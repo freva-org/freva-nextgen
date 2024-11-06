@@ -1,5 +1,4 @@
-"""Welcome to the RestAPI for freva 🧉
---------------------------------------
+"""## Welcome to the RestAPI for freva 🧉
 
 Freva, the free evaluation system framework, is a data search and analysis
 platform developed by the atmospheric science community for the atmospheric
@@ -10,8 +9,8 @@ science community. With help of Freva researchers can:
 - create a common interface for user defined data analysis tools.
 - apply data analysis tools in a reproducible manner.
 
-Authentication
---------------
+### Authentication
+
 The API supports token-based authentication using OAuth2. To obtain an access
 token, clients can use the `/api/freva/auth/v2/token` endpoint by providing valid
 username and password credentials. The access token should then be included in
@@ -25,6 +24,9 @@ from pathlib import Path
 from typing import AsyncIterator
 
 from fastapi import FastAPI
+from fastapi.openapi.docs import get_redoc_html
+from fastapi.requests import Request
+from fastapi.responses import FileResponse, HTMLResponse
 
 from freva_rest import __version__
 
@@ -34,10 +36,30 @@ from .logger import logger, reset_loggers
 metadata_tags = [
     {
         "name": "Data search",
-        "description": "Search for data based on `key=value` search queries.",
+        "description": (
+            "The following endpoints can be used to search for data."
+            "Search queries can be refined by applying "
+            "`key=value` based contraints."
+        ),
     },
-    {"name": "Load data", "description": "Load the data via `zarr` files."},
-    {"name": "Authentication", "description": "Create access tokens."},
+    {
+        "name": "User data",
+        "description": (
+            "With help of the following endpoints you can add your own data"
+            "to the data search system, aka databrwoser."
+        ),
+    },
+    {
+        "name": "Load data",
+        "description": (
+            "With help of the following endpoints you can "
+            "conviniently load and access data via `zarr`."
+        ),
+    },
+    {
+        "name": "Authentication",
+        "description": "These endpoints are for authentication.",
+    },
 ]
 
 server_config = ServerConfig(
@@ -68,9 +90,9 @@ app = FastAPI(
     title="Freva RestAPI",
     version=__version__,
     description=__doc__,
-    openapi_url="/api/freva/docs/openapi.json",
-    docs_url="/api/freva/docs",
-    redoc_url=None,
+    openapi_url="/api/freva-nextgen/help/openapi.json",
+    docs_url=None,
+    openapi_tags=metadata_tags,
     lifespan=lifespan,
     contact={"name": "DKRZ, Clint", "email": "freva@dkrz.de"},
     license_info={
@@ -78,3 +100,17 @@ app = FastAPI(
         "url": "https://opensource.org/license/bsd-2-clause",
     },
 )
+
+
+@app.get("/api/freva-nextgen/help", include_in_schema=False)
+async def custom_redoc_ui_html(request: Request) -> HTMLResponse:
+    return get_redoc_html(
+        openapi_url="/api/freva-nextgen/help/openapi.json",
+        title="Freva RestAPI",
+        redoc_favicon_url="/favicon.ico",
+    )
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon() -> FileResponse:
+    return FileResponse(Path(__file__).parent / "favicon.ico")
