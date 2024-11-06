@@ -213,7 +213,7 @@ def test_server() -> Iterator[str]:
         thread2.daemon = True
         thread2.start()
         time.sleep(5)
-        yield f'{env["API_URL"]}/api/freva-nextgen/'
+        yield f'{env["API_URL"]}/api/freva-nextgen'
         asyncio.run(shutdown_data_loader())
         asyncio.run(flush_cache())
 
