@@ -62,8 +62,8 @@ tests = ["xarray",
          ]
 
 [tool.setuptools.package-data]
-freva_rest = ["*.toml", "*.ico"]
-databrowser_api = ["mock/*.json"]
+freva_rest = ["*.toml", "*.ico", "mock/*.json"]
+
 [tool.distutils.bdist_wheel]
 universal = true
 [tool.setuptools.dynamic]

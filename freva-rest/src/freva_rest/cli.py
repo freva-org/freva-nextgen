@@ -173,7 +173,7 @@ def start(
         ssl_cert = str(Path(ssl_cert).absolute())
     cfg = ServerConfig(defaults["API_CONFIG"], debug=debug)
     if dev:
-        from databrowser_api.mock import read_data
+        from freva_rest.databrowser_api.mock import read_data
 
         for core in cfg.solr_cores:
             asyncio.run(read_data(core, cfg.solr_host, cfg.solr_port))

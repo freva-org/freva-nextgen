@@ -32,7 +32,7 @@ from pydantic import BaseModel
 from pymongo import UpdateOne, errors
 from typing_extensions import TypedDict
 
-from databrowser_api import __version__
+from freva_rest import __version__
 from freva_rest.config import ServerConfig
 from freva_rest.logger import logger
 from freva_rest.utils import create_redis_connection
@@ -1101,9 +1101,7 @@ class Solr:
         -------
         AsyncIterator: Stream of search results.
         """
-        api_path = (
-            f"{os.environ.get('API_URL', '')}/data-portal/zarr"
-        )
+        api_path = f"{os.environ.get('API_URL', '')}/data-portal/zarr"
         if catalogue_type == "intake":
             _, intake = await self.init_intake_catalogue()
             async for string in self.intake_catalogue(intake.catalogue, True):
@@ -1223,7 +1221,7 @@ class Solr:
             {**metadata, **self.fwrites} for metadata in user_metadata
         ]
         for i in range(0, len(processed_metadata), self.batch_size):
-            batch = processed_metadata[i:i + self.batch_size]
+            batch = processed_metadata[i : i + self.batch_size]
             processed_batch = await self._process_metadata(batch)
             self.total_duplicated_files += len(batch) - len(processed_batch)
             if processed_batch:

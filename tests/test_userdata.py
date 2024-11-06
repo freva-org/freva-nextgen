@@ -131,7 +131,7 @@ def test_add_userdata_cli_all_successful_and_escape_char(
                 "add",
                 "--path",
                 (
-                    "./freva-rest/src/databrowser_api/mock/data/model/global/"
+                    "./freva-rest/src/freva_rest/databrowser_api/mock/data/model/global/"
                     "cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/r2i1p1f1/Amon/ua/"
                     "gn/v20190815/"
                     "ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_gn_197901-199812.nc"
@@ -155,7 +155,7 @@ def test_add_userdata_cli_all_successful_and_escape_char(
                 "delete",
                 "-s",
                 (
-                    "file=./freva-rest/src/databrowser_api/mock/data/model/"
+                    "file=./freva-rest/src/freva_rest/databrowser_api/mock/data/model/"
                     "global/cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/r2i1p1f1/"
                     "Amon/ua/gn/v20190815/"
                     "ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_gn_197901-199812.nc"
@@ -285,7 +285,7 @@ def test_add_userdata_cli_broken_file(
                 "user-data",
                 "add",
                 "--path",
-                "./freva-rest/src/databrowser_api/mock_broken/bears.nc",
+                "./freva-rest/src/freva_rest/databrowser_api/mock_broken/bears.nc",
                 "--facet",
                 "product=johndoe",
                 "--host",
@@ -341,7 +341,7 @@ def test_wrong_equal_facet(
                 "add",
                 "--path",
                 (
-                    "./freva-rest/src/databrowser_api/mock/data/model/global/"
+                    "./freva-rest/src/freva_rest/databrowser_api/mock/data/model/global/"
                     "cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/r2i1p1f1/Amon/"
                     "ua/gn/v20190815/"
                     "ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_gn_197901-199812.nc"
@@ -367,7 +367,7 @@ def test_wrong_equal_facet(
                 "delete",
                 "-s",
                 (
-                    "file:./freva-rest/src/databrowser_api/mock/data/model/"
+                    "file:./freva-rest/src/freva_rest/databrowser_api/mock/data/model/"
                     "global/cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/r2i1p1f1/"
                     "Amon/ua/gn/v20190815/"
                     "ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_gn_197901-199812.nc"
