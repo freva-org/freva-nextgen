@@ -1,5 +1,3 @@
-"""Simple script to start and stop the storage service."""
-
 import logging
 import subprocess
 import time

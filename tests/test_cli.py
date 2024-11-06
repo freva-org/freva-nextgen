@@ -7,12 +7,13 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 from types import TracebackType
 
 import mock
+from pytest_mock import MockerFixture
+from typer.testing import CliRunner
+
 from freva_client import __version__
 from freva_client.auth import Auth
 from freva_client.cli import app as cli_app
 from freva_rest.cli import cli, get_cert_file
-from pytest_mock import MockerFixture
-from typer.testing import CliRunner
 
 
 class MockTempfile:
@@ -137,7 +138,9 @@ def test_rest_cli(mocker: MockerFixture) -> None:
             )
 
 
-def test_auth(test_server: str, cli_runner: CliRunner, auth_instance: Auth) -> None:
+def test_auth(
+    test_server: str, cli_runner: CliRunner, auth_instance: Auth
+) -> None:
     """Test authentication."""
     old_token = deepcopy(auth_instance._auth_token)
     try:

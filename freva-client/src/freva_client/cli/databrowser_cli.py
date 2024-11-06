@@ -10,6 +10,8 @@ from tempfile import NamedTemporaryFile
 from typing import Dict, List, Literal, Optional, Union, cast
 
 import typer
+import xarray as xr
+
 from freva_client import databrowser
 from freva_client.auth import Auth
 from freva_client.utils import exception_handler, logger
@@ -42,6 +44,7 @@ class Flavours(str, Enum):
     cmip5: str = "cmip5"
     cordex: str = "cordex"
     nextgems: str = "nextgems"
+    user: str = "user"
 
 
 class TimeSelect(str, Enum):
@@ -163,9 +166,7 @@ def metadata_search(
     parse_json: bool = typer.Option(
         False, "-j", "--json", help="Parse output in json format."
     ),
-    verbose: int = typer.Option(
-        0, "-v", help="Increase verbosity", count=True
-    ),
+    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
     version: Optional[bool] = typer.Option(
         False,
         "-V",
@@ -187,11 +188,9 @@ def metadata_search(
     result = databrowser.metadata_search(
         *(facets or []),
         time=time or "",
-        time_select=cast(
-            Literal["file", "flexible", "strict"], time_select.value
-        ),
+        time_select=cast(Literal["file", "flexible", "strict"], time_select.value),
         flavour=cast(
-            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
+            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
             flavour.value,
         ),
         host=host,
@@ -253,9 +252,7 @@ def data_search(
         "--time-select",
         help=TimeSelect.get_help(),
     ),
-    zarr: bool = typer.Option(
-        False, "--zarr", help="Create zarr stream files."
-    ),
+    zarr: bool = typer.Option(False, "--zarr", help="Create zarr stream files."),
     access_token: Optional[str] = typer.Option(
         None,
         "--access-token",
@@ -289,9 +286,7 @@ def data_search(
             "the hostname is read from a config file"
         ),
     ),
-    verbose: int = typer.Option(
-        0, "-v", help="Increase verbosity", count=True
-    ),
+    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
     multiversion: bool = typer.Option(
         False,
         "--multi-version",
@@ -318,7 +313,7 @@ def data_search(
         time=time or "",
         time_select=cast(Literal["file", "flexible", "strict"], time_select),
         flavour=cast(
-            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
+            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
             flavour.value,
         ),
         uniq_key=cast(Literal["uri", "file"], uniq_key.value),
@@ -425,9 +420,7 @@ def intake_catalogue(
             "the hostname is read from a config file"
         ),
     ),
-    verbose: int = typer.Option(
-        0, "-v", help="Increase verbosity", count=True
-    ),
+    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
     multiversion: bool = typer.Option(
         False,
         "--multi-version",
@@ -451,7 +444,7 @@ def intake_catalogue(
         time=time or "",
         time_select=cast(Literal["file", "flexible", "strict"], time_select),
         flavour=cast(
-            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
+            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
             flavour.value,
         ),
         uniq_key=cast(Literal["uri", "file"], uniq_key.value),
@@ -469,9 +462,7 @@ def intake_catalogue(
             print(Path(temp_f.name).read_text())
 
 
-@databrowser_app.command(
-    name="data-count", help="Count the databrowser search results"
-)
+@databrowser_app.command(name="data-count", help="Count the databrowser search results")
 @exception_handler
 def count_values(
     search_keys: Optional[List[str]] = typer.Argument(
@@ -547,9 +538,7 @@ def count_values(
     parse_json: bool = typer.Option(
         False, "-j", "--json", help="Parse output in json format."
     ),
-    verbose: int = typer.Option(
-        0, "-v", help="Increase verbosity", count=True
-    ),
+    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
     version: Optional[bool] = typer.Option(
         False,
         "-V",
@@ -576,11 +565,9 @@ def count_values(
         result = databrowser.count_values(
             *facets,
             time=time or "",
-            time_select=cast(
-                Literal["file", "flexible", "strict"], time_select
-            ),
+            time_select=cast(Literal["file", "flexible", "strict"], time_select),
             flavour=cast(
-                Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
+                Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
                 flavour.value,
             ),
             host=host,
@@ -594,11 +581,9 @@ def count_values(
             databrowser(
                 *facets,
                 time=time or "",
-                time_select=cast(
-                    Literal["file", "flexible", "strict"], time_select
-                ),
+                time_select=cast(Literal["file", "flexible", "strict"], time_select),
                 flavour=cast(
-                    Literal["freva", "cmip6", "cmip5", "cordex", "nextgems"],
+                    Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
                     flavour.value,
                 ),
                 host=host,
@@ -620,3 +605,108 @@ def count_values(
             print(f"{key}: {', '.join(counts)}")
     else:
         print(result)
+
+
+user_data_app = typer.Typer(help="Add or delete user data.")
+databrowser_app.add_typer(user_data_app, name="user-data")
+
+
+@user_data_app.command(name="add", help="Add user data into the databrowser.")
+@exception_handler
+def user_data_add(
+    paths: List[str] = typer.Option(
+        ...,
+        "--path",
+        "-p",
+        help="Paths to the user's data to be added.",
+    ),
+    facets: Optional[List[str]] = typer.Option(
+        None,
+        "--facet",
+        help="Key-value metadata pairs to categorize the user"
+        "input data in the format key=value.",
+    ),
+    host: Optional[str] = typer.Option(
+        None,
+        "--host",
+        help=(
+            "Set the hostname of the databrowser. If not set (default), "
+            "the hostname is read from a config file."
+        ),
+    ),
+    access_token: Optional[str] = typer.Option(
+        None,
+        "--access-token",
+        help="Access token for authentication when adding user data.",
+    ),
+    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
+) -> None:
+    """Add user data into the databrowser."""
+    logger.set_verbosity(verbose)
+    logger.debug("Checking if the user has the right to add data")
+    result = databrowser(host=host)
+    _auth(result._cfg.auth_url, access_token)
+
+    facet_dict = {}
+    if facets:
+        for facet in facets:
+            if "=" not in facet:
+                logger.error(
+                    f"Invalid facet format: {facet}. Expected format: key=value."
+                )
+                raise typer.Exit(code=1)
+            key, value = facet.split("=", 1)
+            facet_dict[key] = value
+
+    logger.debug(f"Adding user data with paths {paths} and facets {facet_dict}")
+    databrowser.userdata(
+        action="add",
+        userdata_items=cast(List[Union[str, xr.Dataset]], paths),
+        metadata=facet_dict,
+        host=host
+    )
+
+
+@user_data_app.command(name="delete", help="Delete user data from the databrowser.")
+@exception_handler
+def user_data_delete(
+    search_keys: List[str] = typer.Option(
+        None,
+        "--search-key",
+        "-s",
+        help="Key-value metadata pairs to search and identify user data "
+        "for deletion in the format key=value.",
+    ),
+    host: Optional[str] = typer.Option(
+        None,
+        "--host",
+        help=(
+            "Set the hostname of the databrowser. If not set (default), "
+            "the hostname is read from a config file."
+        ),
+    ),
+    access_token: Optional[str] = typer.Option(
+        None,
+        "--access-token",
+        help="Access token for authentication when deleting user data.",
+    ),
+    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
+) -> None:
+    """Delete user data from the databrowser."""
+    logger.set_verbosity(verbose)
+    logger.debug("Checking if the user has the right to delete data")
+    result = databrowser(host=host)
+    _auth(result._cfg.auth_url, access_token)
+
+    search_key_dict = {}
+    if search_keys:
+        for search_key in search_keys:
+            if "=" not in search_key:
+                logger.error(
+                    f"Invalid search key format: {search_key}. "
+                    "Expected format: key=value."
+                )
+                raise typer.Exit(code=1)
+            key, value = search_key.split("=", 1)
+            search_key_dict[key] = value
+    databrowser.userdata(action="delete", metadata=search_key_dict, host=host)

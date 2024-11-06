@@ -10,18 +10,17 @@ import mock
 import pytest
 import requests
 import xarray as xr
-from fastapi.testclient import TestClient
 
 
-def test_auth(client: TestClient) -> None:
+def test_auth(test_server: str) -> None:
     """Test the authentication methods."""
-    res1 = client.post(
-        "/api/auth/v2/token",
+    res1 = requests.post(
+        f"{test_server}/api/auth/v2/token",
         data={"username": "foo", "password": "bar"},
     )
     assert res1.status_code == 404
-    res2 = client.post(
-        "/api/auth/v2/token",
+    res2 = requests.post(
+        f"{test_server}/api/auth/v2/token",
         data={
             "username": "janedoe",
             "password": "janedoe123",
@@ -219,15 +218,15 @@ def test_no_broker(test_server: str, auth: Dict[str, str]) -> None:
             assert "error" in file
 
 
-def test_no_cache(client: TestClient, auth: Dict[str, str]) -> None:
+def test_no_cache(test_server: str, auth: Dict[str, str]) -> None:
     """Test the behviour if no cache is present."""
     _id = "c0f32204-57a7-5157-bdc8-a79cee618f70.zarr"
     env = os.environ.copy()
     env["REDIS_USER"] = "foo"
     with mock.patch("freva_rest.utils.REDIS_CACHE", None):
         with mock.patch.dict(os.environ, env, clear=True):
-            res = client.get(
-                f"api/freva-data-portal/zarr/{_id}/status",
+            res = requests.get(
+                f"{test_server}/api/freva-data-portal/zarr/{_id}/status",
                 headers={"Authorization": f"Bearer {auth['access_token']}"},
                 timeout=7,
             )
@@ -237,8 +236,8 @@ def test_no_cache(client: TestClient, auth: Dict[str, str]) -> None:
     with mock.patch("freva_rest.utils.REDIS_CACHE", None):
         with mock.patch.dict(os.environ, env, clear=True):
             os.environ["API_SERVICES"] = "databrowser"
-            res = client.get(
-                f"api/freva-data-portal/zarr/{_id}/status",
+            res = requests.get(
+                f"{test_server}/api/freva-data-portal/zarr/{_id}/status",
                 headers={"Authorization": f"Bearer {auth['access_token']}"},
                 timeout=7,
             )

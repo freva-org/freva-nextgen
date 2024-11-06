@@ -13,22 +13,24 @@ from typing import Dict, Iterator
 
 import mock
 import pytest
+import requests
 import uvicorn
+from typer.testing import CliRunner
+
 from data_portal_worker.cli import _main as run_data_loader
 from databrowser_api.mock import read_data
-from fastapi.testclient import TestClient
 from freva_client.auth import Auth
 from freva_client.utils import logger
 from freva_rest.api import app
 from freva_rest.config import ServerConfig, defaults
 from freva_rest.utils import create_redis_connection
-from typer.testing import CliRunner
 
 
 def run_test_server(port: int) -> None:
     """Start a test server using uvcorn."""
     logger.setLevel(10)
-    uvicorn.run(app, host="0.0.0.0", port=port, reload=False, workers=None)
+    with mock.patch("databrowser_api.endpoints.Solr.batch_size", 3):
+        uvicorn.run(app, host="0.0.0.0", port=port, reload=False, workers=None)
 
 
 def find_free_port() -> int:
@@ -70,7 +72,7 @@ async def flush_cache() -> None:
 async def shutdown_data_loader() -> None:
     """Cancel the data loader process."""
     cache = await create_redis_connection()
-    for i in range(5):
+    for _ in range(5):
         await cache.publish(
             "data-portal", json.dumps({"shutdown": True}).encode("utf-8")
         )
@@ -115,7 +117,9 @@ def valid_freva_config() -> Iterator[Path]:
         with TemporaryDirectory() as temp_dir:
             freva_config = Path(temp_dir) / "share" / "freva" / "freva.toml"
             freva_config.parent.mkdir(exist_ok=True, parents=True)
-            freva_config.write_text("[freva]\nhost = 'https://www.freva.com:80/api'")
+            freva_config.write_text(
+                "[freva]\nhost = 'https://www.freva.com:80/api'"
+            )
             yield Path(temp_dir)
 
 
@@ -155,7 +159,9 @@ def valid_eval_conf_file() -> Iterator[Path]:
             _prep_env(EVALUATION_SYSTEM_CONFIG_FILE=str(eval_file)),
             clear=True,
         ):
-            with mock.patch("sysconfig.get_path", lambda x, y="foo": str(temp_dir)):
+            with mock.patch(
+                "sysconfig.get_path", lambda x, y="foo": str(temp_dir)
+            ):
                 yield eval_file
 
 
@@ -165,20 +171,33 @@ def invalid_eval_conf_file() -> Iterator[Path]:
     with TemporaryDirectory() as temp_dir:
         eval_file = Path(temp_dir) / "eval.conf"
         eval_file.write_text(
-            "[foo]\n" "solr.host = http://localhost\n" "databrowser.port = 8080"
+            "[foo]\n"
+            "solr.host = http://localhost\n"
+            "databrowser.port = 8080"
         )
         with mock.patch.dict(
             os.environ,
             _prep_env(EVALUATION_SYSTEM_CONFIG_FILE=str(eval_file)),
             clear=True,
         ):
-            with mock.patch("sysconfig.get_path", lambda x, y="foo": str(temp_dir)):
+            with mock.patch(
+                "sysconfig.get_path", lambda x, y="foo": str(temp_dir)
+            ):
                 yield eval_file
+
+
+@pytest.fixture(scope="module")
+def cfg() -> Iterator[ServerConfig]:
+    """Create a valid server config."""
+    conf = ServerConfig(defaults["API_CONFIG"], debug=True)
+    for core in conf.solr_cores:
+        asyncio.run(read_data(core, conf.solr_host, conf.solr_port))
+    yield conf
 
 
 @pytest.fixture(scope="session", autouse=True)
 def test_server() -> Iterator[str]:
-    """Start the test server."""
+    """Setup a new instance of a test server while mocking an environment."""
     env = os.environ.copy()
     port = find_free_port()
     env["API_URL"] = f"http://127.0.0.1:{port}"
@@ -188,7 +207,9 @@ def test_server() -> Iterator[str]:
         thread1.daemon = True
         thread1.start()
         time.sleep(1)
-        thread2 = threading.Thread(target=run_loader_process, args=(find_free_port(),))
+        thread2 = threading.Thread(
+            target=run_loader_process, args=(find_free_port(),)
+        )
         thread2.daemon = True
         thread2.start()
         time.sleep(5)
@@ -198,52 +219,10 @@ def test_server() -> Iterator[str]:
 
 
 @pytest.fixture(scope="module")
-def cfg() -> Iterator[ServerConfig]:
-    """Create a valid server config."""
-    cfg = ServerConfig(defaults["API_CONFIG"], debug=True)
-    for core in cfg.solr_cores:
-        asyncio.run(read_data(core, cfg.solr_host, cfg.solr_port))
-    yield cfg
-
-
-@pytest.fixture(scope="module")
-def client(cfg: ServerConfig) -> Iterator[TestClient]:
-    """Setup the test client for the unit test."""
-    with mock.patch("databrowser_api.endpoints.SolrSearch.batch_size", 3):
-        with TestClient(app) as test_client:
-            yield test_client
-
-
-@pytest.fixture(scope="function")
-def client_no_mongo(cfg: ServerConfig) -> Iterator[TestClient]:
-    """Setup a client with an invalid mongodb."""
-    env = os.environ.copy()
-    env["MONGO_HOST"] = "foo.bar.de"
-    with mock.patch.dict(os.environ, env, clear=True):
-        cfg = ServerConfig(defaults["API_CONFIG"], debug=True)
-        for core in cfg.solr_cores:
-            asyncio.run(read_data(core, cfg.solr_host, cfg.solr_port))
-        with mock.patch("freva_rest.rest.server_config.mongo_collection", None):
-            with TestClient(app) as test_client:
-                yield test_client
-
-
-@pytest.fixture(scope="function")
-def client_no_solr(cfg: ServerConfig) -> Iterator[TestClient]:
-    """Setup a client with an invalid mongodb."""
-    env = os.environ.copy()
-    env["SOLR_HOST"] = "foo.bar.de"
-    with mock.patch.dict(os.environ, env, clear=True):
-        ServerConfig(defaults["API_CONFIG"], debug=True)
-        with TestClient(app) as test_client:
-            yield test_client
-
-
-@pytest.fixture(scope="module")
-def auth(client: TestClient) -> Iterator[Dict[str, str]]:
+def auth(test_server: str) -> Iterator[Dict[str, str]]:
     """Create a valid acccess token."""
-    res = client.post(
-        "/api/auth/v2/token",
+    res = requests.post(
+        f"{test_server}/api/auth/v2/token",
         data={
             "username": "janedoe",
             "password": "janedoe123",
@@ -251,3 +230,139 @@ def auth(client: TestClient) -> Iterator[Dict[str, str]]:
         },
     )
     yield res.json()
+
+
+@pytest.fixture(scope="function")
+def user_data_payload_sample() -> Dict[str, list[str]]:
+    """Create a user data payload."""
+    return {
+        "user_metadata": [
+            {
+                "variable": "ua",
+                "time_frequency": "mon",
+                "time": "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",
+                "cmor_table": "mon",
+                "version": "",
+                "file": (
+                    "freva-rest/src/databrowser_api/mock/data/model"
+                    "/global/cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip"
+                    "/r2i1p1f1/Amon/ua/gn/v20190815/"
+                    "ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_gn_197901-199812.nc"
+                ),
+            },
+            {
+                "variable": "ua",
+                "time_frequency": "mon",
+                "time": "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",
+                "cmor_table": "mon",
+                "version": "",
+                "file": (
+                    "freva-rest/src/databrowser_api/mock/data/model/"
+                    "global/cmip6/CMIP6/CMIP/CSIRO-ARCCSS/ACCESS-CM2/"
+                    "amip/r1i1p1f1/Amon/ua/gn/v20201108/"
+                    "ua_Amon_ACCESS-CM2_amip_r1i1p1f1_gn_197901-201412.nc"
+                ),
+            },
+            {
+                "variable": "ua",
+                "time_frequency": "mon",
+                "time": "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",
+                "cmor_table": "mon",
+                "version": "",
+                "file": (
+                    "freva-rest/src/databrowser_api/mock/data/model/"
+                    "global/cmip6/CMIP6/CMIP/CSIRO-ARCCSS/ACCESS-CM2/"
+                    "amip/r1i1p1f1/Amon/ua/gn/v20191108/"
+                    "ua_Amon_ACCESS-CM2_amip_r1i1p1f1_gn_197001-201512.nc"
+                ),
+            },
+            {
+                "variable": "pr",
+                "time_frequency": "3h",
+                "time": "[2007-01-02T01:30:00Z TO 2007-01-02T04:30:00Z]",
+                "cmor_table": "3h",
+                "version": "",
+                "file": (
+                    "freva-rest/src/databrowser_api/mock/data/model/"
+                    "regional/cordex/output/EUR-11/GERICS/NCC-NorESM1-M/"
+                    "rcp85/r1i1p1/GERICS-REMO2015/v1/3hr/pr/v20181212/"
+                    "pr_EUR-11_NCC-NorESM1-M_rcp85_r1i1p1_GERICS-REMO2015"
+                    "_v2_3hr_200701020130-200701020430.nc"
+                ),
+            },
+            {
+                "variable": "tas",
+                "time_frequency": "day",
+                "time": "[1949-12-01T12:00:00Z TO 1949-12-10T12:00:00Z]",
+                "cmor_table": "day",
+                "version": "",
+                "file": (
+                    "freva-rest/src/databrowser_api/mock/data/model/"
+                    "regional/cordex/output/EUR-11/CLMcom/"
+                    "MPI-M-MPI-ESM-LR/historical/r0i0p0/"
+                    "CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/"
+                    "orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_"
+                    "CLMcom-CCLM4-8-17_v1_fx.nc"
+                ),
+            },
+            {
+                "variable": "tas",
+                "time_frequency": "day",
+                "time": "[1949-12-01T12:00:00Z TO 1949-12-10T12:00:00Z]",
+                "cmor_table": "day",
+                "version": "",
+                "file": (
+                    "freva-rest/src/databrowser_api/mock/data/model/"
+                    "regional/cordex/output/EUR-11/CLMcom/"
+                    "MPI-M-MPI-ESM-LR/historical/r1i1p1/"
+                    "CLMcom-CCLM4-8-17/v1/daypt/tas/v20140515/"
+                    "tas_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_"
+                    "CLMcom-CCLM4-8-17_v1_daypt_194912011200-194912101200.nc"
+                ),
+            },
+        ],
+        "facets": {"project": "cmip5", "experiment": "myFavExp"},
+    }
+
+
+@pytest.fixture(scope="function")
+def user_data_payload_sample_partially_success() -> Dict[str, list[str]]:
+    return {
+        "user_metadata": [
+            {
+                "variable": "ua",
+                "time_frequency": "mon",
+                "time": "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",
+                "cmor_table": "mon",
+                "version": "",
+                "file": (
+                    "freva-rest/src/databrowser_api/mock/data/model/"
+                    "global/cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/"
+                    "r2i1p1f1/Amon/ua/gn/v20190815/"
+                    "ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_gn_197901-199812.nc"
+                ),
+            },
+            {
+                "variable": "ua",
+                "time_frequency": "mon",
+                "time": "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",
+                "cmor_table": "mon",
+                "version": "",
+                "file": "",
+            },
+            {
+                "variable": "tas",
+                "time_frequency": "day",
+                "time": "fx",
+                "file": (
+                    "freva-rest/src/databrowser_api/mock/data/model/"
+                    "regional/cordex/output/EUR-11/CLMcom/"
+                    "MPI-M-MPI-ESM-LR/historical/r0i0p0/"
+                    "CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/"
+                    "orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_"
+                    "CLMcom-CCLM4-8-17_v1_fx.nc"
+                ),
+            },
+        ],
+        "facets": {"project": "cmip5", "experiment": "myFavExp"},
+    }
