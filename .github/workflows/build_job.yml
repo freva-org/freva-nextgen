@@ -116,6 +116,8 @@ jobs:
       - name: Build and push freva-rest API image
         uses: docker/build-push-action@v4
         with:
+          context: freva-rest
+          file: freva-rest/Dockerfile
           build-args: VERSION=${{ needs.release-type-determination.outputs.tag }}
           platforms: linux/amd64
           push: true

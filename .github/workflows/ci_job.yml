@@ -89,7 +89,7 @@ jobs:
 
       - name: Set up services
         run: |
-          docker compose -f dev-env/docker-compose.yaml up -d --remove-orphans
+          docker compose -f dev-env/docker-compose.yaml up -d redis ldap keycloak --remove-orphans
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -97,6 +97,8 @@ jobs:
       - name: Build freva-storage-service image
         uses: docker/build-push-action@v4
         with:
+          context: freva-rest
+          file: freva-rest/Dockerfile
           platforms: linux/amd64
           push: false
           load: true
