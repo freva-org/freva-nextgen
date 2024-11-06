@@ -14,18 +14,18 @@ Generally speaking, you have three options to interact with the authorization
 system:
 
 
-- via the REST API ``/api/auth/v2`` endpoints
+- via the REST API ``/api/freva-nextgen/auth/v2`` endpoints
 - via the :py:func:`freva_client.authenticate` function
 - via the ``freva-client auth`` command-line interface
 
 Using the restAPI endpoints
 ---------------------------
 The API supports token-based authentication using OAuth2. To obtain an access
-token, clients can use the ``/api/auth/v2/token`` endpoint by providing
-valid username and password credentials. The access token should then be
-included in the authorization header for secured endpoints.
+token, clients can use the ``/api/freva-nextgen/auth/v2/token`` endpoint by 
+providing valid username and password credentials. The access token should 
+then be included in the authorization header for secured endpoints.
 
-.. http:post:: /api/auth/v2/token
+.. http:post:: /api/freva-nextgen/auth/v2/token
 
     Create an new login token from a username and password.
     You should either set a username and password or an existing refresh token.
@@ -58,7 +58,7 @@ included in the authorization header for secured endpoints.
 
     .. sourcecode:: http
 
-        POST /api/auth/v2/token HTTP/1.1
+        POST /api/freva-nextgen/auth/v2/token HTTP/1.1
         host: www.freva.dkrz.de
 
         {
@@ -93,7 +93,7 @@ included in the authorization header for secured endpoints.
         .. code-tab:: bash
             :caption: Shell
 
-            curl -X POST https://www.freva.dkrz.de/api/auth/v2/token \
+            curl -X POST https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/token \
              -d "username=janedoe" \
              -d "password=janedoe123"
 
@@ -102,7 +102,7 @@ included in the authorization header for secured endpoints.
 
             import requests
             response = requests.post(
-              "https://www.freva.dkrz.de/api/auth/v2/token",
+              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/token",
               data={"username": "janedoe", "password": "janedoe123"}
             )
             token_data = response.json()
@@ -112,9 +112,9 @@ included in the authorization header for secured endpoints.
 
             library(httr)
 
-            url <- "https://freva.dkrz.de/api/auth/v2/token"
+            url <- "https://freva.dkrz.de/api/freva-nextgen/auth/v2/token"
             response <- POST(
-               "https://www.freva.dkrz.de/api/auth/v2/token",
+               "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/token",
                body = list(username = "janedoe", password = "janedoe123"),
                encode = "form"
             )
@@ -127,7 +127,7 @@ included in the authorization header for secured endpoints.
             using JSON
 
             response = HTTP.POST(
-              "https://www.freva.dkrz.de/api/auth/v2/token",
+              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/token",
               body = Dict("username" => "janedoe", "password" => "janedoe123")
             )
             token_data = JSON.parse(String(response.body))
@@ -148,7 +148,7 @@ included in the authorization header for secured endpoints.
                     struct curl_slist *headers = NULL;
                     headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
 
-                    curl_easy_setopt(curl, CURLOPT_URL, "https://www.freva.dkrz.de/api/auth/v2/token");
+                    curl_easy_setopt(curl, CURLOPT_URL, "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/token");
                     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
                     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "username=janedoe&password=janedoe123");
 
@@ -162,7 +162,7 @@ included in the authorization header for secured endpoints.
 ---
 
 
-.. http:get:: /api/auth/v2/status
+.. http:get:: /api/freva-nextgen/auth/v2/status
 
     Check the status of an access token.
 
@@ -179,7 +179,7 @@ included in the authorization header for secured endpoints.
 
     .. sourcecode:: http
 
-        POST /api/auth/v2/status HTTP/1.1
+        POST /api/freva-nextgen/auth/v2/status HTTP/1.1
         host: www.freva.dkrz.de
         Authorization: Bearer your_access_token
 
@@ -207,7 +207,7 @@ included in the authorization header for secured endpoints.
         .. code-tab:: bash
             :caption: Shell
 
-            curl -X GET https://www.freva.dkrz.de/api/auth/v2/status \
+            curl -X GET https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/status \
              -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 
         .. code-tab:: python
@@ -215,7 +215,7 @@ included in the authorization header for secured endpoints.
 
             import requests
             response = requests.get(
-              "https://www.freva.dkrz.de/api/auth/v2/status",
+              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/status",
               headers={"Authorization": "Bearer YOUR_ACCESS_TOKEN"}
             )
             token_data = response.json()
@@ -226,7 +226,7 @@ included in the authorization header for secured endpoints.
             library(httr)
 
             response <- GET(
-               "https://www.freva.dkrz.de/api/auth/v2/status",
+               "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/status",
                add_headers(Authorization = paste("Bearer", "YOUR_ACCESS_TOKEN"))
             )
             token_data <- content(response, "parsed")
@@ -238,7 +238,7 @@ included in the authorization header for secured endpoints.
             using JSON
 
             response = HTTP.get(
-              "https://www.freva.dkrz.de/api/auth/v2/status",
+              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/status",
               headers = Dict("Authorization" => "Bearer YOUR_ACCESS_TOKEN")
             )
             token_data = JSON.parse(String(response.body))
@@ -259,7 +259,7 @@ included in the authorization header for secured endpoints.
                     struct curl_slist *headers = NULL;
                     headers = curl_slist_append(headers, "Authorization: Bearer YOUR_ACCESS_TOKEN");
 
-                    curl_easy_setopt(curl, CURLOPT_URL, "https://www.freva.dkrz.de/api/auth/v2/status");
+                    curl_easy_setopt(curl, CURLOPT_URL, "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/status");
                     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
                     res = curl_easy_perform(curl);

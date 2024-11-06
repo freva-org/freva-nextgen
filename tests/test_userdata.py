@@ -55,13 +55,13 @@ def test_userdata_add_api_202(
     data = user_data_payload_sample
     # first delete:
     requests.delete(
-        f"{test_server}/api/databrowser/userdata",
+        f"{test_server}/databrowser/userdata",
         json={},
         headers={"Authorization": f"Bearer {token}"},
     )
     # then add:
     response = requests.post(
-        f"{test_server}/api/databrowser/userdata",
+        f"{test_server}/databrowser/userdata",
         json=data,
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -130,7 +130,12 @@ def test_add_userdata_cli_all_successful_and_escape_char(
                 "user-data",
                 "add",
                 "--path",
-                "./freva-rest/src/databrowser_api/mock/data/model/global/cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/r2i1p1f1/Amon/ua/gn/v20190815/ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_gn_197901-199812.nc",
+                (
+                    "./freva-rest/src/databrowser_api/mock/data/model/global/"
+                    "cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/r2i1p1f1/Amon/ua/"
+                    "gn/v20190815/"
+                    "ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_gn_197901-199812.nc"
+                ),
                 "--host",
                 test_server,
                 "--access-token",
@@ -149,7 +154,12 @@ def test_add_userdata_cli_all_successful_and_escape_char(
                 "user-data",
                 "delete",
                 "-s",
-                "file=./freva-rest/src/databrowser_api/mock/data/model/global/cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/r2i1p1f1/Amon/ua/gn/v20190815/ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_gn_197901-199812.nc",
+                (
+                    "file=./freva-rest/src/databrowser_api/mock/data/model/"
+                    "global/cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/r2i1p1f1/"
+                    "Amon/ua/gn/v20190815/"
+                    "ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_gn_197901-199812.nc"
+                ),
                 "--host",
                 test_server,
                 "--access-token",
@@ -175,7 +185,7 @@ def test_userdata_add_api_202_duplicate_bulk_error_mongo(
     """Test user data through the API with valid metadata."""
     token = auth["access_token"]
     response = requests.post(
-        f"{test_server}/api/databrowser/userdata",
+        f"{test_server}/databrowser/userdata",
         json=user_data_payload_sample_partially_success,
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -195,7 +205,7 @@ def test_userdata_add_api_422(test_server: str, auth: Dict[str, str]) -> None:
         },
     }
     response = requests.post(
-        f"{test_server}/api/databrowser/userdata",
+        f"{test_server}/databrowser/userdata",
         json=data,
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -209,7 +219,7 @@ def test_userdata_delete_api_202(
     """Test user data through the API with valid metadata."""
     token = auth["access_token"]
     response = requests.delete(
-        f"{test_server}/api/databrowser/userdata",
+        f"{test_server}/databrowser/userdata",
         json={},
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -226,7 +236,7 @@ def test_userdata_add_api_500(test_server: str, auth: Dict[str, str]) -> None:
         },
     }
     response = requests.post(
-        f"{test_server}/api/databrowser/userdata",
+        f"{test_server}/databrowser/userdata",
         json=data,
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -245,7 +255,7 @@ def test_userdata_delete_api_422(
         },
     }
     response = requests.delete(
-        f"{test_server}/api/databrowser/userdata",
+        f"{test_server}/databrowser/userdata",
         json=data,
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -330,7 +340,12 @@ def test_wrong_equal_facet(
                 "user-data",
                 "add",
                 "--path",
-                "./freva-rest/src/databrowser_api/mock/data/model/global/cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/r2i1p1f1/Amon/ua/gn/v20190815/ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_gn_197901-199812.nc",
+                (
+                    "./freva-rest/src/databrowser_api/mock/data/model/global/"
+                    "cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/r2i1p1f1/Amon/"
+                    "ua/gn/v20190815/"
+                    "ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_gn_197901-199812.nc"
+                ),
                 "--facet",
                 "product:johndoe",
                 "--host",
@@ -351,7 +366,12 @@ def test_wrong_equal_facet(
                 "user-data",
                 "delete",
                 "-s",
-                "file:./freva-rest/src/databrowser_api/mock/data/model/global/cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/r2i1p1f1/Amon/ua/gn/v20190815/ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_gn_197901-199812.nc",
+                (
+                    "file:./freva-rest/src/databrowser_api/mock/data/model/"
+                    "global/cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/r2i1p1f1/"
+                    "Amon/ua/gn/v20190815/"
+                    "ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_gn_197901-199812.nc"
+                ),
                 "--host",
                 test_server,
                 "--access-token",
@@ -380,7 +400,7 @@ def test_no_solr_post(test_server: str, auth: Dict[str, str]) -> None:
     }
     with mock.patch.dict(os.environ, env, clear=True):
         res = requests.post(
-            f"{test_server}/api/databrowser/userdata",
+            f"{test_server}/databrowser/userdata",
             json=data,
             headers={"Authorization": f"Bearer {token}"},
         )
@@ -394,7 +414,7 @@ def test_no_solr_delete(test_server: str, auth: Dict[str, str]) -> None:
     env["SOLR_HOST"] = "foo.bar.de"
     with mock.patch.dict(os.environ, env, clear=True):
         res = requests.delete(
-            f"{test_server}/api/databrowser/userdata",
+            f"{test_server}/databrowser/userdata",
             json={},
             headers={"Authorization": f"Bearer {token}"},
         )

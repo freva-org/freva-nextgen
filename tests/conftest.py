@@ -200,7 +200,7 @@ def test_server() -> Iterator[str]:
     """Setup a new instance of a test server while mocking an environment."""
     env = os.environ.copy()
     port = find_free_port()
-    env["API_URL"] = f"http://127.0.0.1:{port}"
+    env["API_URL"] = f"http://127.0.0.1:{port}/api/freva-nextgen"
     with mock.patch.dict(os.environ, env, clear=True):
         asyncio.run(flush_cache())
         thread1 = threading.Thread(target=run_test_server, args=(port,))
@@ -222,7 +222,7 @@ def test_server() -> Iterator[str]:
 def auth(test_server: str) -> Iterator[Dict[str, str]]:
     """Create a valid acccess token."""
     res = requests.post(
-        f"{test_server}/api/auth/v2/token",
+        f"{test_server}/auth/v2/token",
         data={
             "username": "janedoe",
             "password": "janedoe123",

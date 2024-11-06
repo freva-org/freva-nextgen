@@ -4,42 +4,54 @@ import os
 from typing import Annotated, Any, Dict, List, Literal, Union
 
 from fastapi import Body, Depends, HTTPException, Query, Request, status
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import (
+    JSONResponse,
+    PlainTextResponse,
+    StreamingResponse,
+)
 from pydantic import BaseModel, Field
 
 from freva_rest.auth import TokenPayload, auth
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 
-from .core import FlavourType, Solr, Translator
+from .core import FlavourType, SearchResult, Solr, Translator
 from .schema import Required, SearchFlavours, SolrSchema
 
 
 class AddUserDataRequestBody(BaseModel):
     """Request body schema for adding user data."""
+
     user_metadata: List[Dict[str, str]] = Field(
         ...,
         description="List of user metadata objects or strings to be"
         " added to the databrowser.",
-        examples=[[
-            {"variable": "tas",
-             "time_frequency": "mon",
-             "time": "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",
-             "file": "path of the file"},
-        ]]
+        examples=[
+            [
+                {
+                    "variable": "tas",
+                    "time_frequency": "mon",
+                    "time": "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",
+                    "file": "path of the file",
+                },
+            ]
+        ],
     )
     facets: Dict[str, Any] = Field(
         ...,
         description="Key-value pairs representing metadata search attributes.",
-        examples=[{
-            "project": "user-data",
-            "product": "new",
-            "institute": "globe"
-        }]
+        examples=[
+            {"project": "user-data", "product": "new", "institute": "globe"}
+        ],
     )
 
 
-@app.get("/api/databrowser/overview", tags=["Data search"])
+@app.get(
+    "/api/freva-nextgen/databrowser/overview",
+    tags=["Data search"],
+    status_code=200,
+    response_model=SearchFlavours,
+)
 async def overview() -> SearchFlavours:
     """Get all available search flavours and their attributes.
 
@@ -60,12 +72,113 @@ async def overview() -> SearchFlavours:
                 for f in translator.forward_lookup.values()
                 if f not in translator.cordex_keys
             ]
-    return SearchFlavours(flavours=list(Translator.flavours), attributes=attributes)
+    return SearchFlavours(
+        flavours=list(Translator.flavours), attributes=attributes
+    )
 
 
 @app.get(
-    "/api/databrowser/intake_catalogue/{flavour}/{uniq_key}",
+    "/api/freva-nextgen/databrowser/metadata-search/{flavour}/{uniq_key}",
     tags=["Data search"],
+    status_code=200,
+    response_model=SearchResult,
+    responses={
+        422: {"description": "Invalid flavour or search keys."},
+        503: {"description": "Search backend error"},
+    },
+)
+async def metadata_search(
+    flavour: FlavourType,
+    uniq_key: Literal["file", "uri"],
+    multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
+    translate: Annotated[bool, SolrSchema.params["translate"]] = True,
+    facets: Annotated[
+        Union[List[str], None], SolrSchema.params["facets"]
+    ] = None,
+    request: Request = Required,
+) -> JSONResponse:
+    """Query the available metadata.
+
+    This endpoint allows you to search metadata (facets) based on the
+    specified Data Reference Syntax (DRS) standard (`flavour`) and the type of
+    search result (`uniq_key`), which can be either `file` or `uri`.
+    Facets represent the metadata categories associated with the climate
+    datasets, such as experiment, model, institute, and more. This method
+    provides a comprehensive view of the available facets and their
+    corresponding counts based on the provided search criteria.
+    """
+    solr_search = await Solr.validate_parameters(
+        server_config,
+        flavour=flavour,
+        uniq_key=uniq_key,
+        multi_version=multi_version,
+        translate=translate,
+        start=0,
+        **SolrSchema.process_parameters(request),
+    )
+    status_code, result = await solr_search.extended_search(
+        facets or [], max_results=0
+    )
+    await solr_search.store_results(result.total_count, status_code)
+    output = result.dict()
+    del output["search_results"]
+    return JSONResponse(content=output, status_code=status_code)
+
+
+@app.get(
+    "/api/freva-nextgen/databrowser/data-search/{flavour}/{uniq_key}",
+    tags=["Data search"],
+    status_code=200,
+    responses={
+        422: {"description": "Invalid flavour or search keys."},
+        503: {"description": "Search backend error"},
+    },
+    response_class=PlainTextResponse,
+)
+async def data_search(
+    flavour: FlavourType,
+    uniq_key: Literal["file", "uri"],
+    start: Annotated[int, SolrSchema.params["start"]] = 0,
+    multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
+    translate: Annotated[bool, SolrSchema.params["translate"]] = True,
+    request: Request = Required,
+) -> StreamingResponse:
+    """Search for datasets.
+
+    This endpoint allows you to search for climate datasets based on the
+    specified Data Reference Syntax (DRS) standard (`flavour`) and the type of
+    search result (`uniq_key`), which can be either "file" or "uri". The
+    `databrowser` method provides a flexible and efficient way to query
+    datasets matching specific search criteria and retrieve a list of data
+    files or locations that meet the query parameters.
+    """
+    solr_search = await Solr.validate_parameters(
+        server_config,
+        flavour=flavour,
+        uniq_key=uniq_key,
+        start=start,
+        multi_version=multi_version,
+        translate=translate,
+        **SolrSchema.process_parameters(request),
+    )
+    status_code, total_count = await solr_search.init_stream()
+    await solr_search.store_results(total_count, status_code)
+    return StreamingResponse(
+        solr_search.stream_response(),
+        status_code=status_code,
+        media_type="text/plain",
+    )
+
+
+@app.get(
+    "/api/freva-nextgen/databrowser/intake-catalogue/{flavour}/{uniq_key}",
+    tags=["Data search"],
+    status_code=200,
+    responses={
+        422: {"description": "Invalid flavour or search keys."},
+        503: {"description": "Search backend error"},
+    },
+    response_class=JSONResponse,
 )
 async def intake_catalogue(
     flavour: FlavourType,
@@ -110,46 +223,8 @@ async def intake_catalogue(
 
 
 @app.get(
-    "/api/databrowser/metadata_search/{flavour}/{uniq_key}",
-    tags=["Data search"],
-)
-async def metadata_search(
-    flavour: FlavourType,
-    uniq_key: Literal["file", "uri"],
-    multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
-    translate: Annotated[bool, SolrSchema.params["translate"]] = True,
-    facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
-    request: Request = Required,
-) -> JSONResponse:
-    """Get the search facets.
-
-    This endpoint allows you to search metadata (facets) based on the
-    specified Data Reference Syntax (DRS) standard (`flavour`) and the type of
-    search result (`uniq_key`), which can be either `file` or `uri`.
-    Facets represent the metadata categories associated with the climate
-    datasets, such as experiment, model, institute, and more. This method
-    provides a comprehensive view of the available facets and their
-    corresponding counts based on the provided search criteria.
-    """
-    solr_search = await Solr.validate_parameters(
-        server_config,
-        flavour=flavour,
-        uniq_key=uniq_key,
-        multi_version=multi_version,
-        translate=translate,
-        start=0,
-        **SolrSchema.process_parameters(request),
-    )
-    status_code, result = await solr_search.extended_search(facets or [], max_results=0)
-    await solr_search.store_results(result.total_count, status_code)
-    output = result.dict()
-    del output["search_results"]
-    return JSONResponse(content=output, status_code=status_code)
-
-
-@app.get(
-    "/api/databrowser/extended_search/{flavour}/{uniq_key}",
-    tags=["Data search"],
+    "/api/freva-nextgen/databrowser/extended-search/{flavour}/{uniq_key}",
+    include_in_schema=False,
 )
 async def extended_search(
     flavour: FlavourType,
@@ -158,10 +233,12 @@ async def extended_search(
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     max_results: Annotated[int, SolrSchema.params["batch_size"]] = 150,
-    facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
+    facets: Annotated[
+        Union[List[str], None], SolrSchema.params["facets"]
+    ] = None,
     request: Request = Required,
 ) -> JSONResponse:
-    """Get the search facets."""
+    """This endpoint is used by the databrowser web ui client."""
     solr_search = await Solr.validate_parameters(
         server_config,
         flavour=flavour,
@@ -178,46 +255,16 @@ async def extended_search(
     return JSONResponse(content=result.dict(), status_code=status_code)
 
 
-@app.get("/api/databrowser/data_search/{flavour}/{uniq_key}", tags=["Data search"])
-async def data_search(
-    flavour: FlavourType,
-    uniq_key: Literal["file", "uri"],
-    start: Annotated[int, SolrSchema.params["start"]] = 0,
-    multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
-    translate: Annotated[bool, SolrSchema.params["translate"]] = True,
-    request: Request = Required,
-) -> StreamingResponse:
-    """Search for datasets.
-
-    This endpoint allows you to search for climate datasets based on the
-    specified Data Reference Syntax (DRS) standard (`flavour`) and the type of
-    search result (`uniq_key`), which can be either "file" or "uri". The
-    `databrowser` method provides a flexible and efficient way to query
-    datasets matching specific search criteria and retrieve a list of data
-    files or locations that meet the query parameters.
-    """
-    solr_search = await Solr.validate_parameters(
-        server_config,
-        flavour=flavour,
-        uniq_key=uniq_key,
-        start=start,
-        multi_version=multi_version,
-        translate=translate,
-        **SolrSchema.process_parameters(request),
-    )
-    status_code, total_count = await solr_search.init_stream()
-    await solr_search.store_results(total_count, status_code)
-    return StreamingResponse(
-        solr_search.stream_response(),
-        status_code=status_code,
-        media_type="text/plain",
-    )
-
-
 @app.get(
-    "/api/databrowser/load/{flavour}",
+    "/api/freva-nextgen/databrowser/load/{flavour}",
     status_code=status.HTTP_201_CREATED,
     tags=["Load data"],
+    responses={
+        401: {"description": "Unauthorised / not a valid token."},
+        422: {"description": "Invalid flavour or search keys."},
+        503: {"description": "Search backend error"},
+    },
+    response_class=PlainTextResponse,
 )
 async def load_data(
     flavour: FlavourType,
@@ -230,14 +277,23 @@ async def load_data(
             title="Catalogue type",
             alias="catalogue-type",
             description=(
-                "Set the type of catalogue you want to create from this" "query"
+                "Set the type of catalogue you want to create from this"
+                "query"
             ),
         ),
     ] = None,
     request: Request = Required,
     current_user: TokenPayload = Depends(auth.required),
 ) -> StreamingResponse:
-    """Search for datasets and stream the results as zarr."""
+    """Search for datasets and stream the results as zarr.
+
+    This endpoint works essentially just like the `data-search` endpoint with
+    the only difference that you will get *temporary* endpoints to `zarr` urls.
+    You can use these endpoints to access data via http.
+
+    [!NOTE]
+    The urls are only temporary and will be invalidated.
+    """
     if "zarr-stream" not in os.getenv("API_SERVICES", ""):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -265,62 +321,84 @@ async def load_data(
 
 
 @app.post(
-    "/api/databrowser/userdata",
+    "/api/freva-nextgen/databrowser/userdata",
     status_code=status.HTTP_202_ACCEPTED,
-    tags=["User Data"],
+    tags=["User data"],
+    response_class=JSONResponse,
+    responses={
+        401: {"description": "Unauthorised / not a valid token."},
+        500: {"description": "Search backend error"},
+    },
 )
 async def post_user_data(
     request: Annotated[AddUserDataRequestBody, Body(...)],
     current_user: TokenPayload = Depends(auth.required),
 ) -> Dict[str, str]:
-    """Add user metadata into the Apache Solr search system and MongoDB."""
+    """Index your own metadata and make it searchable.
+
+
+    With help of this endpoint you can add your own data to the search index.
+    After the data has been successfully added you can use the other endpoints
+    like `data-search` or `metadata-search` to search for the data you've
+    indexed.
+    """
 
     solr_instance = Solr(server_config)
     try:
         try:
-            validated_user_metadata = await solr_instance._validate_user_metadata(
-                request.user_metadata
+            validated_user_metadata = (
+                await solr_instance._validate_user_metadata(
+                    request.user_metadata
+                )
             )
         except HTTPException as he:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Invalid request data: {str(he)}"
+                detail=f"Invalid request data: {str(he)}",
             )
         status_msg = await solr_instance.add_user_metadata(
             current_user.preferred_username,  # type: ignore
             validated_user_metadata,
-            facets=request.facets
+            facets=request.facets,
         )
     except Exception as e:
-        logger.error(f"An unexpected error occurred while adding user data: {str(e)}")
+        logger.error(
+            f"An unexpected error occurred while adding user data: {str(e)}"
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred while adding user data: {str(e)}",
         )
-    return {
-        "status": str(status_msg)
-    }
+    return {"status": str(status_msg)}
 
 
 @app.delete(
-    "/api/databrowser/userdata",
+    "/api/freva-nextgen/databrowser/userdata",
     status_code=status.HTTP_202_ACCEPTED,
-    tags=["User Data"],
+    tags=["User data"],
+    responses={
+        401: {"description": "Unauthorised / not a valid token."},
+        500: {"description": "Search backend error."},
+    },
+    response_class=JSONResponse,
 )
 async def delete_user_data(
     request: Dict[str, Union[str, int]] = Body(
         ...,
-        example={"project": "user-data", "product": "new", "institute": "globe"}
+        example={
+            "project": "user-data",
+            "product": "new",
+            "institute": "globe",
+        },
     ),
     current_user: TokenPayload = Depends(auth.required),
 ) -> Dict[str, str]:
-    """Delete user metadata from the Apache Solr search system and MongoDB."""
+    """This endpoint let's you delete metadata that has been indexed."""
 
     solr_instance = Solr(server_config)
     try:
         await solr_instance.delete_user_metadata(
-            current_user.preferred_username,  # type: ignore
-            request
+            current_user.preferred_username, request  # type: ignore
         )
     except Exception as e:
         logger.error(f"Failed to delete user data: {str(e)}")
@@ -329,4 +407,6 @@ async def delete_user_data(
             detail=f"Failed to delete user data: {str(e)}",
         )
 
-    return {"status": "User data has been deleted successfully from the databrowser."}
+    return {
+        "status": "User data has been deleted successfully from the databrowser."
+    }
