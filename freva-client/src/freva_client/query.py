@@ -782,11 +782,11 @@ class databrowser:
             import xarray as xr
             token_info = authenticate(username="janedoe")
             filenames = (
-                "../freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/"
+                "../freva-rest/src/freva_rest/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/"
                 "GERICS/NCC-NorESM1-M/rcp85/r1i1p1/GERICS-REMO2015/v1/3hr/pr/v20181212/*.nc"
             )
             filename1 = (
-                "../freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/"
+                "../freva-rest/src/freva_rest/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/"
                 "CLMcom/MPI-M-MPI-ESM-LR/historical/r0i0p0/CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/"
                 "orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_fx.nc"
             )

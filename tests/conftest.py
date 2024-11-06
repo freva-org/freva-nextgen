@@ -18,11 +18,11 @@ import uvicorn
 from typer.testing import CliRunner
 
 from data_portal_worker.cli import _main as run_data_loader
-from freva_rest.databrowser_api.mock import read_data
 from freva_client.auth import Auth
 from freva_client.utils import logger
 from freva_rest.api import app
 from freva_rest.config import ServerConfig, defaults
+from freva_rest.databrowser_api.mock import read_data
 from freva_rest.utils import create_redis_connection
 
 
@@ -200,7 +200,7 @@ def test_server() -> Iterator[str]:
     """Setup a new instance of a test server while mocking an environment."""
     env = os.environ.copy()
     port = find_free_port()
-    env["API_URL"] = f"http://127.0.0.1:{port}/api/freva-nextgen"
+    env["API_URL"] = f"http://127.0.0.1:{port}"
     with mock.patch.dict(os.environ, env, clear=True):
         asyncio.run(flush_cache())
         thread1 = threading.Thread(target=run_test_server, args=(port,))
@@ -213,7 +213,7 @@ def test_server() -> Iterator[str]:
         thread2.daemon = True
         thread2.start()
         time.sleep(5)
-        yield env["API_URL"]
+        yield f'{env["API_URL"]}/api/freva-nextgen/'
         asyncio.run(shutdown_data_loader())
         asyncio.run(flush_cache())
 
