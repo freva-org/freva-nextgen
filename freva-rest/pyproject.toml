@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0", "appdirs"]
-build-backend = "setuptools.build_meta"
+requires = ["flit_core >=3.2", "appdirs"]
+build-backend = "flit_core.buildapi"
 [project]
 name = "freva-rest"
 description = "RestAPI the free evaluation system, freva"
@@ -61,10 +61,6 @@ tests = ["xarray",
          "pytest-cov",
          ]
 
-[tool.setuptools.package-data]
-freva_rest = ["*.toml", "*.ico", "mock/*.json"]
+[package-data]
+freva_rest = ["py.typed", "*.toml", "*.ico", "mock/*.json"]
 
-[tool.distutils.bdist_wheel]
-universal = true
-[tool.setuptools.dynamic]
-version = {attr = "freva_rest.__version__"}

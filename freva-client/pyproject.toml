@@ -49,4 +49,4 @@ include = ["assets/*"]
 [tool.flit.external-data]
 directory = "assets"
 [package-data]
-freva_deployment = ["py.typed"]
+freva_client = ["py.typed"]
