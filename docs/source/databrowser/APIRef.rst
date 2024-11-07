@@ -150,7 +150,7 @@ Getting an overview
 Searching for datasets locations
 ---------------------------------
 
-.. http:get:: /api/freva-nextgen/databrowser/data_search/(str:flavour)/(str:uniq_key)
+.. http:get:: /api/freva-nextgen/databrowser/data-search/(str:flavour)/(str:uniq_key)
 
     This endpoint allows you to search for climate datasets based on the specified
     Data Reference Syntax (DRS) standard (`flavour`) and the type of search result
@@ -198,7 +198,7 @@ Searching for datasets locations
 
     .. sourcecode:: http
 
-        GET /api/freva-nextgen/databrowser/data_search/freva/file?product=EUR-11&fs_type=swift HTTP/1.1
+        GET /api/freva-nextgen/databrowser/data-search/freva/file?product=EUR-11&fs_type=swift HTTP/1.1
         Host: www.freva.dkrz.de
 
     Example Response
@@ -229,14 +229,14 @@ Searching for datasets locations
             :caption: Shell
 
             curl -X GET \
-            'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data_search/freva/file?product=EUR-11&fs_type=swift'
+            'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data-search/freva/file?product=EUR-11&fs_type=swift'
 
         .. code-tab:: python
             :caption: Python
 
             import requests
             response = requests.get(
-                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data_search/freva/file",
+                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data-search/freva/file",
                 params={"product": "EUR-11", "fs_type": "swift"}
             )
             data = list(response.iter_lines(decode_unicode=True))
@@ -246,7 +246,7 @@ Searching for datasets locations
 
             library(httr)
             response <- GET(
-                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data_search/freva/file",
+                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data-search/freva/file",
                 query = list(product = "EUR-11", fs_type = "swift")
             )
             data <- strsplit(content(response, as = "text", encoding = "UTF-8"), "\n")[[1]]
@@ -258,7 +258,7 @@ Searching for datasets locations
 
             using HTTP
             response = HTTP.get(
-                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data_search/freva/file",
+                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data-search/freva/file",
                 query = Dict("product" => "EUR-11", "fs_type" => "swift")
             )
             data = split(String(HTTP.body(response)),"\n")
@@ -272,7 +272,7 @@ Searching for datasets locations
             int main() {
                 CURL *curl;
                 CURLcode res;
-                const char *url = "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data_search/freva/file";
+                const char *url = "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data-search/freva/file";
 
                 // Query parameters
                 const char *product = "EUR-11";
@@ -325,7 +325,7 @@ effortlessly in the Freva Databrowser REST API!
 Searching for metadata
 ----------------------
 
-.. http:get:: /api/freva-nextgen/databrowser/metadata_search/(str:flavour)/(str:uniq_key)
+.. http:get:: /api/freva-nextgen/databrowser/metadata-search/(str:flavour)/(str:uniq_key)
 
     This endpoint allows you to search metadata (facets) based on the
     specified Data Reference Syntax (DRS) standard (`flavour`) and the type of
@@ -389,7 +389,7 @@ Searching for metadata
 
     .. sourcecode:: http
 
-        GET /api/freva-nextgen/databrowser/metadata_search/freva/file?product=EUR-11 HTTP/1.1
+        GET /api/freva-nextgen/databrowser/metadata-search/freva/file?product=EUR-11 HTTP/1.1
         Host: www.freva.dkrz.de
 
     Example Response
@@ -460,7 +460,7 @@ Searching for metadata
         .. code-tab:: bash
             :caption: Shell
 
-            curl -X GET 'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata_search/freva/file?product=EUR-11'
+            curl -X GET 'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata-search/freva/file?product=EUR-11'
 
 
         .. code-tab:: python
@@ -468,7 +468,7 @@ Searching for metadata
 
             import requests
             response = requests.get(
-                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata_search/freva/file",
+                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata-search/freva/file",
                 params={"product": "EUR-11"}
             )
             data = response.json()
@@ -478,7 +478,7 @@ Searching for metadata
 
             library(httr)
             response <- GET(
-                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata_search/freva/file",
+                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata-search/freva/file",
                 query = list(product = "EUR-11")
             )
             data <- jsonlite::fromJSON(content(response, as = "text", encoding = "utf-8"))
@@ -489,7 +489,7 @@ Searching for metadata
             using HTTP
             using JSON
             response = HTTP.get(
-                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata_search/freva/file",
+                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata-search/freva/file",
                 query = Dict("product" => "EUR-11")
             )
             data = JSON.parse(String(HTTP.body(response)))
@@ -503,7 +503,7 @@ Searching for metadata
             int main() {
                 CURL *curl;
                 CURLcode res;
-                const char *url = "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata_search/freva/file";
+                const char *url = "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata-search/freva/file";
 
                 // Query parameters
                 const char *product = "EUR-11";
@@ -546,7 +546,7 @@ Searching for metadata
 Generating an intake-esm catalogue
 ----------------------------------
 
-.. http:get:: /api/freva-nextgen/databrowser/intake_catalogue/(str:flavour)/(str:uniq_key)
+.. http:get:: /api/freva-nextgen/databrowser/intake-catalogue/(str:flavour)/(str:uniq_key)
 
     This endpoint generates an intake-esm catalogue in JSON format from a `freva`
     search. The catalogue includes metadata about the datasets found in the search
@@ -599,7 +599,7 @@ Generating an intake-esm catalogue
 
     .. sourcecode:: http
 
-        GET /api/freva-nextgen/databrowser/intake_catalogue/freva/file?product=EUR-11 HTTP/1.1
+        GET /api/freva-nextgen/databrowser/intake-catalogue/freva/file?product=EUR-11 HTTP/1.1
         Host: www.freva.dkrz.de
 
     Example Response
@@ -670,7 +670,7 @@ Generating an intake-esm catalogue
             :caption: Shell
 
             curl -X GET \
-            'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake_catalogue/freva/file?product=EUR-11' > catalogue.json
+            'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake-catalogue/freva/file?product=EUR-11' > catalogue.json
 
         .. code-tab:: python
             :caption: Python
@@ -678,7 +678,7 @@ Generating an intake-esm catalogue
             import requests
             import intake
             response = requests.get(
-                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake_catalogue/freva/file",
+                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake-catalogue/freva/file",
                 params={"product": "EUR-11"}
             )
             cat = intake.open_esm_datastore(cat)
@@ -688,11 +688,11 @@ Generating an intake-esm catalogue
 
             library(httr)
             response <- GET(
-                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake_catalogue/freva/file",
+                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake-catalogue/freva/file",
                 query = list(product = "EUR-11")
             )
             json_content <- content(response, "text", encoding="utf-8")
-            write(json_content, file = "intake_catalogue.json")
+            write(json_content, file = "intake-catalogue.json")
 
         .. code-tab:: julia
             :caption: Julia
@@ -700,11 +700,11 @@ Generating an intake-esm catalogue
             using HTTP
             using JSON
             response = HTTP.get(
-                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake_catalogue/freva/file",
+                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake-catalogue/freva/file",
                 query = Dict("product" => "EUR-11")
             )
             data = JSON.parse(String(HTTP.body(response)))
-            open("intake_catalogue.json", "w") do io
+            open("intake-catalogue.json", "w") do io
                 write(io, JSON.json(data))
             end
 
@@ -721,10 +721,10 @@ Generating an intake-esm catalogue
 
                 curl = curl_easy_init();
                 if (curl) {
-                    char url[] = "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake_catalogue/freva/file?product=EUR-11";
+                    char url[] = "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake-catalogue/freva/file?product=EUR-11";
                     curl_easy_setopt(curl, CURLOPT_URL, url);
 
-                    fp = fopen("intake_catalogue.json", "w");
+                    fp = fopen("intake-catalogue.json", "w");
                     curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
 
                     res = curl_easy_perform(curl);
@@ -790,7 +790,7 @@ Creating zarr endpoints for streaming data
    Example Request
    ~~~~~~~~~~~~~~~
 
-   The logic works just like for the ``data_search`` and ``intake_catalogue``
+   The logic works just like for the ``data-search`` and ``intake-catalogue``
    endpoints. We constrain the data search by ``key=value`` search pairs.
    The only difference is that we have to authenticate by using an access token.
    You will also have to use a valid access token if you want to access the
@@ -810,8 +810,8 @@ Creating zarr endpoints for streaming data
        HTTP/1.1 200 OK
        Content-Type: plain/text
 
-       https://www.freva.dkrz.de/api/freva-data-portal/zarr/dcb608a0-9d77-5045-b656-f21dfb5e9acf.zarr
-       https://www.freva.dkrz.de/api/freva-data-portal/zarr/f56264e3-d713-5c27-bc4e-c97f15b5fe86.zarr
+       https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr/dcb608a0-9d77-5045-b656-f21dfb5e9acf.zarr
+       https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr/f56264e3-d713-5c27-bc4e-c97f15b5fe86.zarr
 
 
    Example
@@ -1344,7 +1344,7 @@ Adding and deleting User Data in Databrowser
 
 .. note::
    Please note that in these examples,
-   I used "https://www.freva.dkrz.de" as a placeholder URL.
+   "https://www.freva.dkrz.de" were used as a placeholder URL.
    You should replace it with the actual URL of your
-   Freva Databrowser REST API. The response above is truncated for brevity.
+   Freva Databrowser REST API. The responses above are truncated for brevity.
    The actual response will include more datasets in the `catalog_dict` list.
