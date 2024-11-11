@@ -442,7 +442,7 @@ To add your data to the databrowser, use the `user-data add` command. You'll nee
        "--access-token", token["access_token"]],
        check=True, stdout=PIPE, stderr=PIPE
    )
-   print("STDOUT:", res.stderr.decode())
+   print(res.stdout.decode())
 
 
 This command adds the specified data files to the databrowser and tags them with the provided metadata. These search filters help in indexing and searching your data within the system.

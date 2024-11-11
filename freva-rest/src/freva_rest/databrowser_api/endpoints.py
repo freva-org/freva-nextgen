@@ -393,7 +393,7 @@ async def delete_user_data(
     ),
     current_user: TokenPayload = Depends(auth.required),
 ) -> Dict[str, str]:
-    """This endpoint let's you delete metadata that has been indexed."""
+    """This endpoint lets you delete metadata that has been indexed."""
 
     solr_instance = Solr(server_config)
     try:
