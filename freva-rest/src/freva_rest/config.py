@@ -56,7 +56,7 @@ class ServerConfig(BaseModel):
         ),
     ] = os.getenv("API_URL", "")
     debug: Annotated[
-        Union[str, int, bool],
+        Union[bool, int, str],
         Field(
             title="Debug mode",
             description="Turn on debug mode",
@@ -202,7 +202,7 @@ class ServerConfig(BaseModel):
         except Exception as error:
             logger.critical("Failed to load config file: %s", error)
             self._config = self._fallback_config
-        if isinstance(self.debug, str) and self.debug.isdigit:  # type: ignore
+        if isinstance(self.debug, str):
             self.debug = bool(int(self.debug))
         self.debug = bool(self.debug)
         self.set_debug(self.debug)

@@ -56,7 +56,7 @@ import os
 from enum import Enum
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import uvicorn
 from pydantic.fields import FieldInfo
@@ -83,21 +83,26 @@ def create_arg_parser(
         default=7777,
         type=int,
     )
-
     for key, field in fields.items():
         name = key.replace("_", "-")
-        if field.annotation == bool:
+        if field.annotation in (
+            bool,
+            Union[str, int, bool],
+            Union[int, bool],
+        ) or isinstance(field.default, bool):
             parser.add_argument(
                 f"--{name}",
                 help=field.description,
                 action="store_true",
                 default=False,
             )
+
         elif name not in forbidden:
             parser.add_argument(
                 f"--{name}",
                 help=field.description,
-                default=field.default,
+                default=field.default or None,
+                type=type(field.default),
             )
     return parser
 
@@ -164,11 +169,11 @@ def cli(argv: Optional[List[str]] = None) -> None:
         args.redis_ssl_certdir, args.redis_ssl_certfile, args.redis_ssl_keyfile
     )
     defaults: Dict[str, str] = {
-        "API_CONFIG": str(args.config.absolute()),
+        "API_CONFIG": str(Path(args.config).expanduser().absolute()),
         "DEBUG": str(int(args.debug)),
         "API_SERVICES": ",".join(args.services).replace("_", "-"),
-        "API_REDIS_SSL_KEYFILE": str(ssl_cert),
-        "API_REDIS_SSL_CERTFILE": str(ssl_key),
+        "API_REDIS_SSL_KEYFILE": str(ssl_cert or ""),
+        "API_REDIS_SSL_CERTFILE": str(ssl_key or ""),
     }
     cfg = ServerConfig(config=args.config, debug=args.debug)
     for key, value in args._get_kwargs():
