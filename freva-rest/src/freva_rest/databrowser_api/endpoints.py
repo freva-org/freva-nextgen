@@ -294,7 +294,7 @@ async def load_data(
     [!NOTE]
     The urls are only temporary and will be invalidated.
     """
-    if "zarr-stream" not in os.getenv("API_SERVICES", ""):
+    if "zarr-stream" not in server_config.services:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Service not enabled.",
@@ -351,23 +351,23 @@ async def post_user_data(
                     request.user_metadata
                 )
             )
-        except HTTPException as he:
+        except HTTPException as error:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Invalid request data: {str(he)}",
+                detail=f"Invalid request data: {error}",
             )
         status_msg = await solr_instance.add_user_metadata(
             current_user.preferred_username,  # type: ignore
             validated_user_metadata,
             facets=request.facets,
         )
-    except Exception as e:
-        logger.error(
-            f"An unexpected error occurred while adding user data: {str(e)}"
+    except Exception as error:
+        logger.exception(
+            "An unexpected error occurred while adding user data: %s", error
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred while adding user data: {str(e)}",
+            detail=f"An unexpected error occurred while adding user data: {error}",
         )
     return {"status": str(status_msg)}
 
@@ -385,11 +385,13 @@ async def post_user_data(
 async def delete_user_data(
     request: Dict[str, Union[str, int]] = Body(
         ...,
-        example={
-            "project": "user-data",
-            "product": "new",
-            "institute": "globe",
-        },
+        examples=[
+            {
+                "project": "user-data",
+                "product": "new",
+                "institute": "globe",
+            }
+        ],
     ),
     current_user: TokenPayload = Depends(auth.required),
 ) -> Dict[str, str]:
@@ -400,11 +402,11 @@ async def delete_user_data(
         await solr_instance.delete_user_metadata(
             current_user.preferred_username, request  # type: ignore
         )
-    except Exception as e:
-        logger.error(f"Failed to delete user data: {str(e)}")
+    except Exception as error:
+        logger.exception("Failed to delete user data: %s", error)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete user data: {str(e)}",
+            detail=f"Failed to delete user data: {error}",
         )
 
     return {

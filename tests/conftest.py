@@ -21,7 +21,7 @@ from data_portal_worker.cli import _main as run_data_loader
 from freva_client.auth import Auth
 from freva_client.utils import logger
 from freva_rest.api import app
-from freva_rest.config import ServerConfig, defaults
+from freva_rest.config import ServerConfig
 from freva_rest.databrowser_api.mock import read_data
 from freva_rest.utils import create_redis_connection
 
@@ -42,15 +42,18 @@ def find_free_port() -> int:
 
 def get_data_loader_config() -> bytes:
     """Create the config for the data-loader process."""
-    redis_host = os.getenv("REDIS_HOST")
     return b64encode(
         json.dumps(
             {
-                "user": os.getenv("REDIS_USER"),
-                "passwd": os.getenv("REDIS_PASS"),
-                "host": redis_host,
-                "ssl_cert": Path(os.getenv("REDIS_SSL_CERTFILE")).read_text(),
-                "ssl_key": Path(os.getenv("REDIS_SSL_KEYFILE")).read_text(),
+                "user": os.getenv("API_REDIS_USER"),
+                "passwd": os.getenv("API_REDIS_PASSWORD"),
+                "host": os.getenv("API_REDIS_HOST"),
+                "ssl_cert": Path(
+                    os.getenv("API_REDIS_SSL_CERTFILE")
+                ).read_text(),
+                "ssl_key": Path(
+                    os.getenv("API_REDIS_SSL_KEYFILE")
+                ).read_text(),
             }
         ).encode("utf-8")
     )
@@ -87,6 +90,26 @@ def _prep_env(**config: str) -> Dict[str, str]:
     for key, value in config.items():
         env[key] = value
     return env
+
+
+def setup_server() -> Iterator[str]:
+    """Start the test server."""
+    env = os.environ.copy()
+    port = find_free_port()
+    env["API_URL"] = f"http://127.0.0.1:{port}"
+    with mock.patch.dict(os.environ, env, clear=True):
+        asyncio.run(flush_cache())
+        thread1 = threading.Thread(target=run_test_server, args=(port,))
+        thread1.daemon = True
+        thread1.start()
+        time.sleep(1)
+        thread2 = threading.Thread(
+            target=run_loader_process, args=(find_free_port(),)
+        )
+        thread2.daemon = True
+        thread2.start()
+        time.sleep(5)
+        yield f'{env["API_URL"]}/api/freva-nextgen'
 
 
 @pytest.fixture(scope="session")
@@ -189,9 +212,9 @@ def invalid_eval_conf_file() -> Iterator[Path]:
 @pytest.fixture(scope="module")
 def cfg() -> Iterator[ServerConfig]:
     """Create a valid server config."""
-    conf = ServerConfig(defaults["API_CONFIG"], debug=True)
+    conf = ServerConfig(debug=True)
     for core in conf.solr_cores:
-        asyncio.run(read_data(core, conf.solr_host, conf.solr_port))
+        asyncio.run(read_data(core, conf.solr_url))
     yield conf
 
 
@@ -199,21 +222,16 @@ def cfg() -> Iterator[ServerConfig]:
 def test_server() -> Iterator[str]:
     """Setup a new instance of a test server while mocking an environment."""
     env = os.environ.copy()
-    port = find_free_port()
-    env["API_URL"] = f"http://127.0.0.1:{port}"
+    for key in (
+        "REDIS_HOST",
+        "REDIS_USER",
+        "REDIS_SSL_KEYFILE",
+        "REDIS_SSL_CERTFILE",
+    ):
+        env[key] = os.getenv(f"API_{key}", "")
+    env["REDIS_PASS"] = os.getenv("API_REDIS_PASSWORD")
     with mock.patch.dict(os.environ, env, clear=True):
-        asyncio.run(flush_cache())
-        thread1 = threading.Thread(target=run_test_server, args=(port,))
-        thread1.daemon = True
-        thread1.start()
-        time.sleep(1)
-        thread2 = threading.Thread(
-            target=run_loader_process, args=(find_free_port(),)
-        )
-        thread2.daemon = True
-        thread2.start()
-        time.sleep(5)
-        yield f'{env["API_URL"]}/api/freva-nextgen'
+        yield from setup_server()
         asyncio.run(shutdown_data_loader())
         asyncio.run(flush_cache())
 

@@ -1,7 +1,8 @@
 """Module for accessing basic server configuration.
 
 The minimal configuration is accessed via environment variables. Entries can
-be overridden with a specific toml file holding configurations.
+be overridden with a specific toml file holding configurations or environment 
+variables.
 """
 
 import logging
@@ -9,84 +10,224 @@ import os
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple, cast
+from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, Union, cast
+from urllib.parse import urlparse
 
 import requests
 import tomli
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
+from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
 
 from .logger import THIS_NAME, logger, logger_file_handle
 
-CONFIG_TYPE = TypedDict(
-    "CONFIG_TYPE",
-    {
-        "API_CONFIG": Path,
-        "LOGGER": logging.Logger,
-        "NAME": str,
-        "DEBUG": bool,
-        "API_CACHE_EXP": int,
-        "API_URL": str,
-        "REDIS_HOST": Optional[str],
-        "REDIS_SSL_CERTFILE": Optional[str],
-        "REDIS_SSL_KEYFILE": Optional[str],
-        "REDIS_PASS": Optional[str],
-        "REDIS_USER": Optional[str],
-        "OIDC_URL": str,
-    },
-)
-defaults: CONFIG_TYPE = {
-    "API_CONFIG": Path(__file__).parent / "api_config.toml",
-    "LOGGER": logger,
-    "NAME": THIS_NAME,
-    "DEBUG": False,
-    "API_CACHE_EXP": 3600,
-    "REDIS_SSL_CERTFILE": None,
-    "REDIS_SSL_KEYFILE": None,
-    "REDIS_HOST": None,
-    "REDIS_USER": None,
-    "REDIS_PASS": None,
-    "OIDC_URL": "http://localhost:8080/realms/freva/.well-known/openid-configuration",
-    "API_URL": "http://localhost:7777",
-}
+ConfigItem = Union[str, int, float, None]
 
 
-@dataclass
-class ServerConfig:
+class ServerConfig(BaseModel):
     """Read the basic configuration for the server.
 
     The configuration can either be set via environment variables or a server
     config file.
-
-    Parameters
-    ----------
-    config_file: pathlib.Path
-        Path to the basic configuration file.
-    debug: bool, default: False
-        Set the logging level to DEBUG
     """
 
-    config_file: Path = Path(
-        os.environ.get("API_CONFIG") or defaults["API_CONFIG"]
+    config: Path = Field(
+        os.getenv("API_CONFIG", Path(__file__).parent / "api_config.toml"),
+        title="API Config",
+        description=("Path to a .toml file holding the API" "configuration"),
     )
-    debug: bool = False
+    api_url: str = Field(
+        os.getenv("API_URL", ""),
+        title="API Url",
+        description="The url of the host serving the API.",
+    )
+    debug: bool = Field(
+        os.getenv("DEBUG", "0"),
+        title="Debug mode",
+        description="Turn on debug mode",
+    )
+    mongo_host: str = Field(
+        os.getenv("API_MONGO_HOST", ""),
+        title="MongoDB hostname",
+        description="Set the <HOSTNAME>:<PORT> to the MongoDB service.",
+    )
+    mongo_user: str = Field(
+        os.getenv("API_MONGO_USER", ""),
+        title="MongoDB user name.",
+        description="The mongoDB user name to log on to the mongoDB.",
+    )
+    mongo_password: str = Field(
+        os.getenv("API_MONGO_PASSWORD", ""),
+        title="MongoDB password.",
+        description="The MongoDb password to log on to the mongoDB.",
+    )
+    mongo_db: str = Field(
+        os.getenv("API_MONGO_DB", ""),
+        title="Mongo database",
+        description="Name of the Mongo database that is used.",
+    )
+    solr_host: str = Field(
+        os.getenv("API_SOLR_HOST", ""),
+        title="Solr hostname",
+        description="Set the <HOSTNAME>:<PORT> to the Apache Solr service.",
+    )
+    solr_core: str = Field(
+        os.getenv("API_SOLR_CORE", ""),
+        title="Solr core",
+        description="Set the name of the core for the search index.",
+    )
+    cache_exp: str = Field(
+        os.getenv("API_CACHE_EXP", ""),
+        title="Cache expiration.",
+        description=(
+            "The expiration time in sec" "of the data loading cache."
+        ),
+    )
+    api_services: str = Field(
+        os.getenv("API_SERVICES", "databrowser,zarr-stream"),
+        title="Services",
+        description="The services that should be enabled.",
+    )
+    redis_host: str = Field(
+        os.getenv("API_REDIS_HOST", ""),
+        title="Rest Host",
+        description="Url of the redis cache.",
+    )
+    redis_ssl_certfile: str = Field(
+        os.getenv("API_REDIS_SSL_CERTFILE", ""),
+        title="Redis cert file.",
+        description=(
+            "Path to the public"
+            "certfile to make"
+            "connections to the"
+            "cache"
+        ),
+    )
+    redis_ssl_keyfile: str = Field(
+        os.getenv("API_REDIS_SSL_KEYFILE", ""),
+        title="Redis key file.",
+        description=(
+            "Path to the privat"
+            "key file to make"
+            "connections to the"
+            "cache"
+        ),
+    )
+    redis_password: str = Field(
+        os.getenv("API_REDIS_PASSWORD", ""),
+        title="Redis password",
+        description=("Password for redis connections."),
+    )
+    redis_user: str = Field(
+        os.getenv("API_REDIS_USER", ""),
+        title="Redis username",
+        description=("Username for redis connections."),
+    )
+    oidc_discovery_url: str = Field(
+        os.getenv("API_OIDC_DISCOVERY_URL", ""),
+        title="OIDC url",
+        description="OpenID connect discovery url.",
+    )
+    oidc_client_id: str = Field(
+        os.getenv("API_OIDC_CLIENT_ID", ""),
+        title="OIDC client id",
+        description="The OIDC client id used for authentication.",
+    )
+    oidc_client_secret: str = Field(
+        os.getenv("API_OIDC_CLIENT_SECRET", ""),
+        title="OIDC client secret",
+        description="The OIDC client secret, if any, used for authentication.",
+    )
 
-    def __post_init__(self) -> None:
-        self.set_debug(self.debug)
+    def _read_config(self, section: str, key: str) -> Any:
+        fallback = self._fallback_config[section][key] or None
+        return self._config.get(section, {}).get(key, fallback)
+
+    def model_post_init(self, __context: Any = None) -> None:
+        self._fallback_config: Dict[str, Any] = tomli.loads(
+            (Path(__file__).parent / "api_config.toml").read_text()
+        )
+        self._config: Dict[str, Any] = {}
+        api_config = Path(self.config).expanduser().absolute()
         try:
-            self._config = tomli.loads(self.config_file.read_text("utf-8"))
+            self._config = tomli.loads(api_config.read_text())
         except Exception as error:
-            logger.critical("Failed to load %s", error)
-            self._config = tomli.loads(
-                defaults["API_CONFIG"].read_text("utf-8")
-            )
+            logger.critical("Failed to load config file: %s", error)
+            self._config = self._fallback_config
+        if isinstance(self.debug, str) and self.debug.isdigit:
+            self.debug = bool(int(self.debug))
+        self.debug = bool(self.debug)
+        self.set_debug(self.debug)
         self._mongo_client: Optional[AsyncIOMotorClient] = None
         self._solr_fields = self._get_solr_fields()
         self._oidc_overview: Optional[Dict[str, Any]] = None
-        self.oidc_discovery_url = (
-            os.environ.get("OICD_URL") or defaults["OIDC_URL"]
+        self.oidc_discovery_url = self.oidc_discovery_url or self._read_config(
+            "oidc", "discovery_url"
         )
-        self.oidc_client = os.environ.get("OIDC_CLIENT_ID", "freva")
+        self.oidc_client_secret = self.oidc_client_secret or self._read_config(
+            "oidc", "client_secret"
+        )
+        self.oidc_client_id = self.oidc_client_id or self._read_config(
+            "oidc", "client_id"
+        )
+        self.mongo_host = self.mongo_host or self._read_config(
+            "mongo_db", "hostname"
+        )
+        self.mongo_user = self.mongo_user or self._read_config(
+            "mongo_db", "user"
+        )
+        self.mongo_password = self.mongo_password or self._read_config(
+            "mongo_db", "password"
+        )
+        self.mongo_db = self.mongo_db or self._read_config("mongo_db", "name")
+        self.solr_host = self.solr_host or self._read_config(
+            "solr", "hostname"
+        )
+        self.solr_core = self.solr_core or self._read_config("solr", "core")
+        self.redis_user = self.redis_user or self._read_config("cache", "user")
+        self.redis_password = self.redis_password or self._read_config(
+            "cache", "password"
+        )
+        self.cache_exp = self.cache_exp or self._read_config("cache", "exp")
+        self.redis_ssl_keyfile = self.redis_ssl_keyfile or self._read_config(
+            "cache", "key_file"
+        )
+        self.redis_ssl_certfile = self.redis_ssl_certfile or self._read_config(
+            "cache", "cert_file"
+        )
+        self.redis_host = self.redis_host or self._read_config(
+            "cache", "hostname"
+        )
+
+    @staticmethod
+    def get_url(url: str, default_port: Union[str, int]) -> str:
+        """Parse the url by constructing: <scheme>://<host>:<port>"""
+        # Remove netloc, host from <scheme>://<host>:<port>
+        port = url.split("://", 1)[-1].partition(":")[-1]
+        if port:
+            # The url has already a port
+            return url
+        return f"{url}:{default_port}"
+        # If the original url has already a port in the suffix remove it
+
+    @property
+    def services(self) -> Set[str]:
+        """Define the services that are served."""
+        return set(
+            s.strip() for s in self.api_services.split(",") if s.strip()
+        )
+
+    @property
+    def redis_url(self) -> str:
+        """Construct the url to the redis service."""
+        url = self.get_url(self.redis_host, self._read_config("cache", "port"))
+        return url.split("://")[-1].partition(":")[0]
+
+    @property
+    def redis_port(self) -> int:
+        """Get the port the redis host is listining on."""
+        url = self.get_url(self.redis_host, self._read_config("cache", "port"))
+        return int(url.split("://")[-1].partition(":")[-1])
 
     @property
     def mongo_client(self) -> AsyncIOMotorClient:
@@ -121,11 +262,7 @@ class ServerConfig:
 
     def reload(self) -> None:
         """Reload the configuration."""
-        self.config_file = Path(
-            os.environ.get("API_CONFIG") or defaults["API_CONFIG"]
-        )
-        self.debug = defaults["DEBUG"]
-        self.__post_init__()
+        self.model_post_init()
 
     @property
     def oidc_overview(self) -> Dict[str, Any]:
@@ -140,33 +277,15 @@ class ServerConfig:
     @property
     def mongo_url(self) -> str:
         """Get the url to the mongodb."""
-        host = self._config.get("mongo_db", {}).get(
-            "hostname", ""
-        ) or os.environ.get("MONGO_HOST", "localhost")
-        host, _, m_port = host.partition(":")
-        port = m_port or str(
-            self._config.get("mongo_db", {}).get("port", 27017)
-        )
-        user = self._config.get("mongo_db", {}).get(
-            "user", ""
-        ) or os.environ.get("MONGO_USER", "mongo")
-        passwd = self._config.get("mongo_db", {}).get(
-            "password", ""
-        ) or os.environ.get("MONGO_PASSWORD", "secret")
-
-        return f"mongodb://{user}:{passwd}@{host}:{port}"
-
-    @property
-    def mongo_db(self) -> str:
-        """Get the database name where the stats is stored."""
-        return self._config.get("mongo_db", {}).get(
-            "name", ""
-        ) or os.environ.get("MONGO_DB", "search_stats")
-
-    @cached_property
-    def solr_fields(self) -> List[str]:
-        """Get all relevant solr facet fields."""
-        return list(self._solr_fields)
+        url = self.get_url(
+            self.mongo_host, self._read_config("mongo_db", "port")
+        ).removeprefix("mongodb://")
+        user_prefix = ""
+        if self.mongo_user:
+            user_prefix = f"{self.mongo_user}@"
+            if self.mongo_password:
+                user_prefix = f"{self.mongo_user}:{self.mongo_password}@"
+        return f"mongodb://{user_prefix}{url}"
 
     @property
     def log_level(self) -> int:
@@ -183,34 +302,29 @@ class ServerConfig:
         logger.setLevel(level)
         logger_file_handle.setLevel(level)
 
+    @cached_property
+    def solr_fields(self) -> List[str]:
+        """Get all relevant solr facet fields."""
+        return list(self._solr_fields)
+
     @property
     def solr_cores(self) -> Tuple[str, str]:
         """Get the names of the solr core."""
-        core = self._config.get("solr", {}).get("core", "") or os.environ.get(
-            "SOLR_CORE", "files"
-        )
-        return core, "latest"
-
-    @property
-    def solr_host(self) -> str:
-        """Get the hostname of the running apache solr server."""
-        return (
-            self._config.get("solr", {}).get("hostname", "")
-            or os.environ.get("SOLR_HOST", "localhost").partition(":")[0]
-        )
-
-    @property
-    def solr_port(self) -> str:
-        """Get the port of the running apache solr server."""
-        return (
-            str(self._config.get("solr", {}).get("port", ""))
-            or os.environ.get("SOLR_HOST", "").partition(":")[-1]
-        ) or "8983"
+        return self.solr_core, "latest"
 
     def get_core_url(self, core: str) -> str:
         """Get the url for a specific solr core."""
-        server = f"{self.solr_host}:{self.solr_port}"
-        return f"http://{server}/solr/{core}"
+        return f"{self.solr_url}/solr/{core}"
+
+    @property
+    def solr_url(self) -> str:
+        """Construct the url to the solr server."""
+        solr_port = str(self._read_config("solr", "port"))
+        url = self.get_url(self.solr_host, solr_port)
+        _, split, _ = url.partition("://")
+        if not split:
+            return f"http://{url}"
+        return url
 
     def _get_solr_fields(self) -> Iterator[str]:
         url = f"{self.get_core_url(self.solr_cores[-1])}/schema/fields"

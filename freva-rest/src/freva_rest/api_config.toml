@@ -1,13 +1,27 @@
 # This is the default toml config file that is used by the rest API server.
 #
 [solr]
-# hostname = "localhost"
-# port = 8983
-# core = "files"
+hostname = "localhost"
+port = 8983
+core = "files"
 
 [mongo_db]
-# hostname = "localhost"
-# port = 27017
-# user = "admin"
-# password = "example"
-# name = "search_stats"
+hostname = "localhost"
+port = 27017
+user = ""
+password = ""
+name = "search_stats"
+
+[cache]
+hostname = "localhost"
+port = 6379
+exp = 3600
+user = ""
+password = ""
+cert_file = ""
+key_file = ""
+
+[oidc]
+discovery_url = "http://localhost:8080/realms/freva/.well-known/openid-configuration"
+client_id = "freva"
+client_secret = ""

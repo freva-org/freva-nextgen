@@ -1,7 +1,7 @@
-"""Command line interface (cli) for running the rest server.
+"""# Command line interface (cli) for running the rest server.
 
-Configuring
------------
+## Configuring
+
 
 There are two fundamental different options to configure the service.
 
@@ -16,52 +16,90 @@ variables can be set:
 - ``DEBUG``: Start server in debug mode (1), (default: 0 -> no debug).
 - ``API_PORT``: the port the rest service should be running on (default 8080).
 - ``API_WORKER``: the number of multi-process work serving the API (default: 8).
-- ``SOLR_HOST``: host name of the solr server, host name and port should be
+- ``API_SOLR_HOST``: host name of the solr server, host name and port should be
                  separated by a ``:``, for example ``localhost:8983``
-- ``SOLR_CORE`` : name of the solr core that contains datasets with multiple
+- ``API_SOLR_CORE`` : name of the solr core that contains datasets with multiple
                   versions
-- ``MONGO_HOST``: host name of the mongodb server, where query statistics are
+- ``API_MONGO_HOST``: host name of the mongodb server, where query statistics are
                  stored. Host name and port should separated by a ``:``, for
                  example ``localhost:27017``
-- ``MONGO_USER``: user name for the mongodb.
-- ``MONGO_PASSWORD``: password to log on to the mongodb.
-- ``MONGO_DB``: database name of the mongodb instance.
+- ``API_MONGO_USER``: user name for the mongodb.
+- ``API_MONGO_PASSWORD``: password to log on to the mongodb.
+- ``API_MONGO_DB``: database name of the mongodb instance.
 - ``API_URL``: url of the machine that runs of the rest api
 - ``API_CACHE_EXP``: expiry time in seconds of the cached data
-- ``REDIS_HOST``: Host and port of the redis cache
+- ``API_REDIS_HOST``: Host and port of the redis cache
                   Host name and port should separated by a ``:``, for
                   example ``localhost:5672``
-- ``REDIS_PASS``: Password for the redis connection.
-- ``REDIS_USER``: Username for the redis connection.
-- ``REDIS_SSL_CERTFILE``: Path to the TSL certificate file used to encrypt
+- ``API_REDIS_PASS``: Password for the redis connection.
+- ``API_REDIS_USER``: Username for the redis connection.
+- ``API_REDIS_SSL_CERTFILE``: Path to the TSL certificate file used to encrypt
                           the redis connection.
-- ``REDIS_SSL_KEYFILE``: Path to the TSL key file used to encrypt the redis
+- ``API_REDIS_SSL_KEYFILE``: Path to the TSL key file used to encrypt the redis
                          connection.
-- ``OIDC_URL``: Discovery of the open connect id service.
-- ``OIDC_CLIENT_ID``: Name of the client (app) that is used to create
+- ``API_OIDC_URL``: Discovery of the open connect id service.
+- ``API_OIDC_CLIENT_ID``: Name of the client (app) that is used to create
                           the access tokens, defaults to freva
-- ``OIDC_CLIENT_SECRET``: You can set a client secret, if you have
+- ``API_OIDC_CLIENT_SECRET``: You can set a client secret, if you have
+- ``API_SERVICES``:  The services the api should serve.
 
 📝  You can override the path to the default config file using the
     ``API_CONFIG`` environment variable. The default location of this config
     file is ``/opt/databrowser/api_config.toml``.
 """
 
+import argparse
 import asyncio
 import logging
 import os
 from enum import Enum
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
-import typer
 import uvicorn
+from pydantic.fields import FieldInfo
+from rich.markdown import Markdown
+from rich_argparse import ArgumentDefaultsRichHelpFormatter
 
-from .config import ServerConfig, defaults
+from .config import ServerConfig
 from .logger import logger
 
-cli = typer.Typer(name="freva-rest-server", help=__doc__, epilog=__doc__)
+
+def create_arg_parser(
+    fields: Dict[str, FieldInfo], forbidden: List[str]
+) -> argparse.ArgumentParser:
+    """Create the cli parser."""
+    parser = argparse.ArgumentParser(
+        prog="freva-rest-server",
+        description=Markdown(__doc__),  # type: ignore
+        formatter_class=ArgumentDefaultsRichHelpFormatter,
+    )
+    parser.add_argument(
+        "--port",
+        "-p",
+        help="Set the port the server should be running on.",
+        default=7777,
+        type=int,
+    )
+
+    for key, field in fields.items():
+        name = key.replace("_", "-")
+        if field.annotation == bool:
+            parser.add_argument(
+                f"--{name}",
+                help=field.description,
+                action="store_true",
+                default=False,
+            )
+        elif name not in forbidden:
+            parser.add_argument(
+                f"--{name}",
+                help=field.description,
+                type=field.annotation,
+                default=field.default,
+            )
+    return parser
 
 
 class Services(str, Enum):
@@ -87,126 +125,74 @@ def get_cert_file(
     return cert_file or default_cert, key_file or default_key
 
 
-@cli.command(name="freva-rest-api")
-def start(
-    config_file: Optional[Path] = typer.Option(
-        os.environ.get("API_CONFIG", defaults["API_CONFIG"]),
-        "-c",
-        "--config-file",
-        help="Path to the server configuration file",
-    ),
-    port: int = typer.Option(
-        os.environ.get("API_PORT", 8080),
-        "-p",
-        "--port",
-        help="The port the api is running on",
-    ),
-    services: List[Services] = typer.Option(
-        ("zarr-stream", "databrowser"),
-        "-s",
-        "--services",
-        help="Set additional services this rest API should serve.",
-    ),
-    oidc_url: str = typer.Option(
-        os.environ.get(
-            "OIDC_URL",
-            "http://localhost:8080/realms/freva/.well-known/openid-configuration",
-        ),
-        "--oidc-url",
-        "--openid-connect-url",
-        help="The url to openid configuration",
-    ),
-    oidc_client_id: str = typer.Option(
-        os.environ.get("OIDC_CLIENT_ID", "freva"),
-        "--oidc-client-id",
-        "--oidc-client",
-        help="Name of the openid client.",
-    ),
-    oidc_client_secret: Optional[str] = typer.Option(
-        os.environ.get("OIDC_CLIENT_SECRET", ""),
-        "--oidc-client-secret",
-        help="Name of the openid client secret.",
-    ),
-    ssl_cert_dir: Optional[str] = typer.Option(
-        None,
-        "--cert-dir",
-        help=(
-            "Set the path to the directory containing the tls cert and key files"
-            " that are used to establish a secure connection, if you set the"
-            " it will be assumed that cert file is saved as client-cert.pem"
-            " and the key file client-key.pem. This flag can be used as a"
-            " short cut instead of using the `--tls-cert` and `--tls-key` flats"
-        ),
-    ),
-    ssl_cert: Optional[str] = typer.Option(
-        os.environ.get("REDIS_SSL_CERTFILE"),
-        "--tls-cert",
-        help=(
-            "Set the path to the tls certificate file that is used to establish"
-            " a secure connection to the data portal cache."
-        ),
-    ),
-    ssl_key: Optional[str] = typer.Option(
-        os.environ.get("REDIS_SSL_KEYFILE"),
-        "--tls-key",
-        help=(
-            "Set the path to the tls key file that is used to establish"
-            " a secure connection to the data portal cache."
-        ),
-    ),
-    dev: bool = typer.Option(False, help="Add test data to the dev solr."),
-    debug: bool = typer.Option(
-        bool(int(os.environ.get("DEBUG", 0))), help="Turn on debug mode."
-    ),
-) -> None:
+def cli(argv: Optional[List[str]] = None) -> None:
     """Start the freva rest API."""
-    if debug:
+    cfg = ServerConfig()
+    parser = create_arg_parser(cfg.__fields__, ["api-services"])
+    parser.add_argument(
+        "--dev", action="store_true", help="Enable development mode"
+    )
+    parser.add_argument(
+        "--n-workers",
+        "-w",
+        help="Number of parallel processes.",
+        default=os.getenv("API_WORKER", "8"),
+        type=int,
+    )
+    parser.add_argument(
+        "--redis-ssl-certdir",
+        help=(
+            "The directory where the certficates are stored."
+            " This can be used to instead of setting the cert, and key files."
+        ),
+        type=Path,
+        default=None,
+    ),
+    parser.add_argument(
+        "--services",
+        "-s",
+        help="The services the API should serve",
+        nargs="+",
+        default=["databrowser", "stream-zarr"],
+        choices=["databrowser", "stream-zarr"],
+    )
+
+    args = parser.parse_args(argv)
+    if args.debug:
         logger.setLevel(logging.DEBUG)
-    defaults["API_CONFIG"] = (config_file or defaults["API_CONFIG"]).absolute()
-    defaults["DEBUG"] = debug
-    defaults["API_CACHE_EXP"] = int(os.environ.get("API_CACHE_EXP") or "3600")
-    defaults["REDIS_HOST"] = os.environ.get("REDIS_HOST") or "redis://localhost:6379"
-    defaults["API_URL"] = os.environ.get("API_URL") or f"http://localhost:{port}"
-    defaults["REDIS_SSL_CERTFILE"] = ssl_cert
-    defaults["REDIS_SSL_KEYFILE"] = ssl_key
-    if ssl_cert:
-        ssl_cert = str(Path(ssl_cert).absolute())
-    cfg = ServerConfig(defaults["API_CONFIG"], debug=debug)
-    if dev:
+    ssl_cert, ssl_key = get_cert_file(
+        args.redis_ssl_certdir, args.redis_ssl_certfile, args.redis_ssl_keyfile
+    )
+    defaults: Dict[str, str] = {
+        "API_CONFIG": str(args.config.absolute()),
+        "DEBUG": str(int(args.debug)),
+        "API_SERVICES": ",".join(args.services).replace("_", "-"),
+        "API_REDIS_SSL_KEYFILE": str(ssl_cert),
+        "API_REDIS_SSL_CERTFILE": str(ssl_key),
+    }
+    cfg = ServerConfig(config=args.config, debug=args.debug)
+    for key, value in args._get_kwargs():
+        name = key.upper().removeprefix("API_")
+        if key in cfg.model_fields_set and key not in ["debug"]:
+            defaults.setdefault(f"API_{name}", str(value or ""))
+    if args.dev:
         from freva_rest.databrowser_api.mock import read_data
 
         for core in cfg.solr_cores:
-            asyncio.run(read_data(core, cfg.solr_host, cfg.solr_port))
-    workers = {False: int(os.environ.get("API_WORKER", 8)), True: None}
-    ssl_cert, ssl_key = get_cert_file(ssl_cert_dir, ssl_cert, ssl_key)
-    api_services = ",".join(services).replace("_", "-")
+            asyncio.run(read_data(core, cfg.solr_url))
+    workers = {False: args.n_workers, True: None}
     with NamedTemporaryFile(suffix=".conf", prefix="env") as temp_f:
-        Path(temp_f.name).write_text(
-            (
-                f"DEBUG={int(debug)}\n"
-                f"API_CONFIG={defaults['API_CONFIG']}\n"
-                f"API_PORT={port}\n"
-                f"API_CACHE_EXP={defaults['API_CACHE_EXP']}\n"
-                f"REDIS_HOST={defaults['REDIS_HOST']}\n"
-                f"REDIS_PASS={os.getenv('REDIS_PASS', 'secret')}\n"
-                f"REDIS_USER={os.getenv('REDIS_USER', 'redis')}\n"
-                f"REDIS_SSL_CERTFILE={ssl_cert or ''}\n"
-                f"REDIS_SSL_KEYFILE={ssl_key or ''}\n"
-                f"OICD_URL={oidc_url}\n"
-                f"OICD_CLIENT_ID={oidc_client_id}\n"
-                f"OICD_CLIENT_SECRET={oidc_client_secret or ''}\n"
-                f"API_URL={defaults['API_URL']}\n"
-                f"API_SERVICES={api_services}\n"
-            ),
-            encoding="utf-8",
+        env = "\n".join(
+            [f"{k}={v.strip()}" for (k, v) in defaults.items() if v.strip()]
         )
+        Path(temp_f.name).write_text(env, encoding="utf-8")
         uvicorn.run(
             "freva_rest.api:app",
             host="0.0.0.0",
-            port=port,
-            reload=dev,
+            port=args.port,
+            reload=args.dev,
             log_level=cfg.log_level,
-            workers=workers[dev],
+            workers=workers[args.dev],
             env_file=temp_f.name,
         )
 
