@@ -3,15 +3,16 @@
 ## Configuring
 
 
-There are two fundamental different options to configure the service.
+There are three fundamental different options to configure the service.
 
+1. via command line arguments
+1. via environment variables.
 1. via the `config` ``.toml`` file.
-2. via environment variables.
 
-Note, that the order here is important. First, any configuration from the
-config file is loaded, only if the configuration wasn't found in the config
-file environment variables are evaluated. The following environment
-variables can be set:
+Note, that the order here is important. First, given command line arguments
+are evaluated, if present any of the below given environment variables
+are evaluated, finally the api config file is evaluated. The following
+environment variables are evaluated:
 
 - ``DEBUG``: Start server in debug mode (1), (default: 0 -> no debug).
 - ``API_PORT``: the port the rest service should be running on (default 8080).
@@ -96,7 +97,6 @@ def create_arg_parser(
             parser.add_argument(
                 f"--{name}",
                 help=field.description,
-                type=field.annotation,
                 default=field.default,
             )
     return parser

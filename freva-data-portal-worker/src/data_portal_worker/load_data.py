@@ -67,9 +67,7 @@ class RedisCacheFactory(redis.Redis):
             "ssl_keyfile": os.getenv("REDIS_SSL_KEYFILE") or None,
             "ssl_ca_certs": os.getenv("REDIS_SSL_CERTFILE") or None,
         }
-        conn["ssl"] = (
-            conn["ssl_certfile"] is not None and len(conn["ssl_certfile"]) > 0
-        )
+        conn["ssl"] = conn["ssl_certfile"] is not None
         data_logger.info("Creating redis connection with args: %s", conn)
         super().__init__(
             host=conn["host"],

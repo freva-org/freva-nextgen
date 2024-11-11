@@ -1,25 +1,33 @@
 """Module for accessing basic server configuration.
 
 The minimal configuration is accessed via environment variables. Entries can
-be overridden with a specific toml file holding configurations or environment 
+be overridden with a specific toml file holding configurations or environment
 variables.
 """
 
 import logging
 import os
-from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, Union, cast
-from urllib.parse import urlparse
+from typing import (
+    Annotated,
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+    cast,
+)
 
 import requests
 import tomli
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
 from pydantic import BaseModel, Field
-from typing_extensions import TypedDict
 
-from .logger import THIS_NAME, logger, logger_file_handle
+from .logger import logger, logger_file_handle
 
 ConfigItem = Union[str, int, float, None]
 
@@ -31,113 +39,153 @@ class ServerConfig(BaseModel):
     config file.
     """
 
-    config: Path = Field(
-        os.getenv("API_CONFIG", Path(__file__).parent / "api_config.toml"),
-        title="API Config",
-        description=("Path to a .toml file holding the API" "configuration"),
-    )
-    api_url: str = Field(
-        os.getenv("API_URL", ""),
-        title="API Url",
-        description="The url of the host serving the API.",
-    )
-    debug: bool = Field(
-        os.getenv("DEBUG", "0"),
-        title="Debug mode",
-        description="Turn on debug mode",
-    )
-    mongo_host: str = Field(
-        os.getenv("API_MONGO_HOST", ""),
-        title="MongoDB hostname",
-        description="Set the <HOSTNAME>:<PORT> to the MongoDB service.",
-    )
-    mongo_user: str = Field(
-        os.getenv("API_MONGO_USER", ""),
-        title="MongoDB user name.",
-        description="The mongoDB user name to log on to the mongoDB.",
-    )
-    mongo_password: str = Field(
-        os.getenv("API_MONGO_PASSWORD", ""),
-        title="MongoDB password.",
-        description="The MongoDb password to log on to the mongoDB.",
-    )
-    mongo_db: str = Field(
-        os.getenv("API_MONGO_DB", ""),
-        title="Mongo database",
-        description="Name of the Mongo database that is used.",
-    )
-    solr_host: str = Field(
-        os.getenv("API_SOLR_HOST", ""),
-        title="Solr hostname",
-        description="Set the <HOSTNAME>:<PORT> to the Apache Solr service.",
-    )
-    solr_core: str = Field(
-        os.getenv("API_SOLR_CORE", ""),
-        title="Solr core",
-        description="Set the name of the core for the search index.",
-    )
-    cache_exp: str = Field(
-        os.getenv("API_CACHE_EXP", ""),
-        title="Cache expiration.",
-        description=(
-            "The expiration time in sec" "of the data loading cache."
+    config: Annotated[
+        Union[str, Path],
+        Field(
+            title="API Config",
+            description=(
+                "Path to a .toml file holding the API" "configuration"
+            ),
         ),
-    )
-    api_services: str = Field(
-        os.getenv("API_SERVICES", "databrowser,zarr-stream"),
-        title="Services",
-        description="The services that should be enabled.",
-    )
-    redis_host: str = Field(
-        os.getenv("API_REDIS_HOST", ""),
-        title="Rest Host",
-        description="Url of the redis cache.",
-    )
-    redis_ssl_certfile: str = Field(
-        os.getenv("API_REDIS_SSL_CERTFILE", ""),
-        title="Redis cert file.",
-        description=(
-            "Path to the public"
-            "certfile to make"
-            "connections to the"
-            "cache"
+    ] = os.getenv("API_CONFIG", Path(__file__).parent / "api_config.toml")
+    api_url: Annotated[
+        str,
+        Field(
+            title="API Url",
+            description="The url of the host serving the API.",
         ),
-    )
-    redis_ssl_keyfile: str = Field(
-        os.getenv("API_REDIS_SSL_KEYFILE", ""),
-        title="Redis key file.",
-        description=(
-            "Path to the privat"
-            "key file to make"
-            "connections to the"
-            "cache"
+    ] = os.getenv("API_URL", "")
+    debug: Annotated[
+        Union[str, int, bool],
+        Field(
+            title="Debug mode",
+            description="Turn on debug mode",
         ),
-    )
-    redis_password: str = Field(
-        os.getenv("API_REDIS_PASSWORD", ""),
-        title="Redis password",
-        description=("Password for redis connections."),
-    )
-    redis_user: str = Field(
-        os.getenv("API_REDIS_USER", ""),
-        title="Redis username",
-        description=("Username for redis connections."),
-    )
-    oidc_discovery_url: str = Field(
-        os.getenv("API_OIDC_DISCOVERY_URL", ""),
-        title="OIDC url",
-        description="OpenID connect discovery url.",
-    )
-    oidc_client_id: str = Field(
-        os.getenv("API_OIDC_CLIENT_ID", ""),
-        title="OIDC client id",
-        description="The OIDC client id used for authentication.",
-    )
-    oidc_client_secret: str = Field(
-        os.getenv("API_OIDC_CLIENT_SECRET", ""),
-        title="OIDC client secret",
-        description="The OIDC client secret, if any, used for authentication.",
-    )
+    ] = os.getenv("DEBUG", "0")
+    mongo_host: Annotated[
+        str,
+        Field(
+            title="MongoDB hostname",
+            description="Set the <HOSTNAME>:<PORT> to the MongoDB service.",
+        ),
+    ] = os.getenv("API_MONGO_HOST", "")
+    mongo_user: Annotated[
+        str,
+        Field(
+            title="MongoDB user name.",
+            description="The mongoDB user name to log on to the mongoDB.",
+        ),
+    ] = os.getenv("API_MONGO_USER", "")
+    mongo_password: Annotated[
+        str,
+        Field(
+            title="MongoDB password.",
+            description="The MongoDb password to log on to the mongoDB.",
+        ),
+    ] = os.getenv("API_MONGO_PASSWORD", "")
+    mongo_db: Annotated[
+        str,
+        Field(
+            title="Mongo database",
+            description="Name of the Mongo database that is used.",
+        ),
+    ] = os.getenv("API_MONGO_DB", "")
+    solr_host: Annotated[
+        str,
+        Field(
+            title="Solr hostname",
+            description="Set the <HOSTNAME>:<PORT> to the Solr service.",
+        ),
+    ] = os.getenv("API_SOLR_HOST", "")
+    solr_core: Annotated[
+        str,
+        Field(
+            title="Solr core",
+            description="Set the name of the core for the search index.",
+        ),
+    ] = os.getenv("API_SOLR_CORE", "")
+    cache_exp: Annotated[
+        str,
+        Field(
+            title="Cache expiration.",
+            description=(
+                "The expiration time in sec" "of the data loading cache."
+            ),
+        ),
+    ] = os.getenv("API_CACHE_EXP", "")
+    api_services: Annotated[
+        str,
+        Field(
+            title="Services",
+            description="The services that should be enabled.",
+        ),
+    ] = os.getenv("API_SERVICES", "databrowser,zarr-stream")
+    redis_host: Annotated[
+        str,
+        Field(
+            title="Rest Host",
+            description="Url of the redis cache.",
+        ),
+    ] = os.getenv("API_REDIS_HOST", "")
+    redis_ssl_certfile: Annotated[
+        str,
+        Field(
+            title="Redis cert file.",
+            description=(
+                "Path to the public"
+                "certfile to make"
+                "connections to the"
+                "cache"
+            ),
+        ),
+    ] = os.getenv("API_REDIS_SSL_CERTFILE", "")
+    redis_ssl_keyfile: Annotated[
+        str,
+        Field(
+            title="Redis key file.",
+            description=(
+                "Path to the privat"
+                "key file to make"
+                "connections to the"
+                "cache"
+            ),
+        ),
+    ] = os.getenv("API_REDIS_SSL_KEYFILE", "")
+    redis_password: Annotated[
+        str,
+        Field(
+            title="Redis password",
+            description=("Password for redis connections."),
+        ),
+    ] = os.getenv("API_REDIS_PASSWORD", "")
+    redis_user: Annotated[
+        str,
+        Field(
+            title="Redis username",
+            description=("Username for redis connections."),
+        ),
+    ] = os.getenv("API_REDIS_USER", "")
+    oidc_discovery_url: Annotated[
+        str,
+        Field(
+            title="OIDC url",
+            description="OpenID connect discovery url.",
+        ),
+    ] = os.getenv("API_OIDC_DISCOVERY_URL", "")
+    oidc_client_id: Annotated[
+        str,
+        Field(
+            title="OIDC client id",
+            description="The OIDC client id used for authentication.",
+        ),
+    ] = os.getenv("API_OIDC_CLIENT_ID", "")
+    oidc_client_secret: Annotated[
+        str,
+        Field(
+            title="OIDC client secret",
+            description="The OIDC client secret, if any, used for authentication.",
+        ),
+    ] = os.getenv("API_OIDC_CLIENT_SECRET", "")
 
     def _read_config(self, section: str, key: str) -> Any:
         fallback = self._fallback_config[section][key] or None
@@ -154,7 +202,7 @@ class ServerConfig(BaseModel):
         except Exception as error:
             logger.critical("Failed to load config file: %s", error)
             self._config = self._fallback_config
-        if isinstance(self.debug, str) and self.debug.isdigit:
+        if isinstance(self.debug, str) and self.debug.isdigit:  # type: ignore
             self.debug = bool(int(self.debug))
         self.debug = bool(self.debug)
         self.set_debug(self.debug)

@@ -1,6 +1,5 @@
 """Main script that runs the rest API."""
 
-import os
 from typing import Annotated, Any, Dict, List, Literal, Union
 
 from fastapi import Body, Depends, HTTPException, Query, Request, status

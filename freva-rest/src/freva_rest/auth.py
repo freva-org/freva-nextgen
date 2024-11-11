@@ -1,7 +1,6 @@
 """Definition of routes for authentication."""
 
 import datetime
-import os
 from typing import Annotated, Any, Dict, Literal, Optional, cast
 
 import aiohttp
