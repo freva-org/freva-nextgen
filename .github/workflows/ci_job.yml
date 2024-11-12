@@ -31,7 +31,7 @@ jobs:
           http://localhost:8080/realms/freva/.well-known/openid-configuration
       - name: Starting the local server
         run: |
-          python run_server.py -c api_config.toml --debug --dev -p 7777
+          python run_server.py --config api_config.toml --debug --dev -p 7777
       - name: Linting, type checking and docs with tox
         run: tox run-parallel --parallel-no-spinner
 
