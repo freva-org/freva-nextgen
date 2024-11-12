@@ -60,27 +60,27 @@ API_URL=http://www.example.de/
 API_CACHE_EXP=3600      # Expiry time in seconds of the cached data
 
 # Database Configuration
-MONGO_USER=mongo
-MONGO_PASSWORD=secret
-MONGO_DB=search_stats
-MONGO_INITDB_DATABASE=search_stats
-MONGO_HOST=localhost:27017  # Host name and port should be separated by ":"
+API_MONGO_USER=mongo
+API_MONGO_PASSWORD=secret
+API_MONGO_DB=search_stats
+API_MONGO_INITDB_DATABASE=search_stats
+API_MONGO_HOST=localhost:27017  # Host name and port should be separated by ":"
 
 # Solr Configuration
-SOLR_HOST=localhost:8983   # Host name and port should be separated by ":"
-SOLR_CORE=files           # Name of the solr core for datasets with multiple versions
+API_SOLR_HOST=localhost:8983   # Host name and port should be separated by ":"
+API_SOLR_CORE=files           # Name of the solr core for datasets with multiple versions
 
 # Redis Configuration
-REDIS_HOST=redis://localhost:6379
-REDIS_USER=              # Username for the redis connection
-REDIS_PASS=              # Password for the redis connection
-REDIS_SSL_CERTFILE=/certs/client-cert.pem
-REDIS_SSL_KEYFILE=/certs/client-key.pem
+API_REDIS_HOST=redis://localhost:6379
+API_REDIS_USER=              # Username for the redis connection
+API_REDIS_PASS=              # Password for the redis connection
+API_REDIS_SSL_CERTFILE=/certs/client-cert.pem
+API_REDIS_SSL_KEYFILE=/certs/client-key.pem
 
 # OIDC Configuration
-OIDC_URL=http://keycloak:8080/realms/freva/.well-known/openid-configuration
-OIDC_CLIENT_ID=freva     #Name of the client (app) that is used to create the access tokens, defaults to freva
-OIDC_CLIENT_SECRET=      # Optional: Set if your OIDC instance uses a client secret
+API_OIDC_URL=http://keycloak:8080/realms/freva/.well-known/openid-configuration
+API_OIDC_CLIENT_ID=freva     #Name of the client (app) that is used to create the access tokens, defaults to freva
+API_OIDC_CLIENT_SECRET=      # Optional: Set if your OIDC instance uses a client secret
 
 # Service activation flags
 # Set to 1 to enable, 0 to disable the service
