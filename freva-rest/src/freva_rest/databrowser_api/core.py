@@ -2,7 +2,6 @@
 
 import asyncio
 import json
-import os
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -1221,7 +1220,7 @@ class Solr:
             {**metadata, **self.fwrites} for metadata in user_metadata
         ]
         for i in range(0, len(processed_metadata), self.batch_size):
-            batch = processed_metadata[i : i + self.batch_size]
+            batch = processed_metadata[i:i + self.batch_size]
             processed_batch = await self._process_metadata(batch)
             self.total_duplicated_files += len(batch) - len(processed_batch)
             if processed_batch:
