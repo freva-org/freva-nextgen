@@ -32,7 +32,7 @@ from pydantic import BaseModel
 from pymongo import UpdateOne, errors
 from typing_extensions import TypedDict
 
-from databrowser_api import __version__
+from freva_rest import __version__
 from freva_rest.config import ServerConfig
 from freva_rest.logger import logger
 from freva_rest.utils import create_redis_connection
@@ -1101,9 +1101,7 @@ class Solr:
         -------
         AsyncIterator: Stream of search results.
         """
-        api_path = (
-            f"{os.environ.get('API_URL', '')}/api/freva-data-portal/zarr"
-        )
+        api_path = f"{os.environ.get('API_URL', '')}/api/freva-nextgen/data-portal/zarr"
         if catalogue_type == "intake":
             _, intake = await self.init_intake_catalogue()
             async for string in self.intake_catalogue(intake.catalogue, True):

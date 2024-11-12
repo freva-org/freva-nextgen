@@ -115,7 +115,7 @@ on Linux):
 To permanently set or override the freva server host name you have to set
 the ``host`` variable in that file. In most cases this variable can be
 set to the url of the freva web site you are using, for example
-https//www.freva.dkrz.de.
+https://www.freva.dkrz.de.
 
 Table of Content
 ================

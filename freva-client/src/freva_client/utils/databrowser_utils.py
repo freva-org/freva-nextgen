@@ -73,7 +73,9 @@ class Config:
             host = f"{host}:{port}"
         return f"{scheme}://{host}"
 
-    def _read_config(self, path: Path, file_type: Literal["toml", "ini"]) -> str:
+    def _read_config(
+        self, path: Path, file_type: Literal["toml", "ini"]
+    ) -> str:
         """Read the configuration."""
         data_types = {"toml": self._read_toml, "ini": self._read_ini}
         try:
@@ -88,7 +90,9 @@ class Config:
         try:
             res = requests.get(f"{self.databrowser_url}/overview", timeout=15)
         except requests.exceptions.ConnectionError:
-            raise ValueError(f"Could not connect to {self.databrowser_url}") from None
+            raise ValueError(
+                f"Could not connect to {self.databrowser_url}"
+            ) from None
         return cast(Dict[str, Any], res.json())
 
     def _get_databrowser_host_from_config(self) -> str:
@@ -103,7 +107,9 @@ class Config:
             Path(appdirs.user_config_dir("freva")) / "freva.toml": "toml",
             Path(self.get_dirs(user=True)) / "freva.toml": "toml",
             freva_config: "toml",
-            Path(os.environ.get("EVALUATION_SYSTEM_CONFIG_FILE") or eval_conf): "ini",
+            Path(
+                os.environ.get("EVALUATION_SYSTEM_CONFIG_FILE") or eval_conf
+            ): "ini",
         }
         for config_path, config_type in paths.items():
             if config_path.is_file():
@@ -130,7 +136,7 @@ class Config:
     @property
     def search_url(self) -> str:
         """Define the data search endpoint."""
-        return f"{self.databrowser_url}/data_search/{self.flavour}/{self.uniq_key}"
+        return f"{self.databrowser_url}/data-search/{self.flavour}/{self.uniq_key}"
 
     @property
     def zarr_loader_url(self) -> str:
@@ -140,13 +146,14 @@ class Config:
     @property
     def intake_url(self) -> str:
         """Define the url for creating intake catalogues."""
-        return f"{self.databrowser_url}/intake_catalogue/{self.flavour}/{self.uniq_key}"
+        return f"{self.databrowser_url}/intake-catalogue/{self.flavour}/{self.uniq_key}"
 
     @property
     def metadata_url(self) -> str:
         """Define the endpoint for the metadata search."""
         return (
-            f"{self.databrowser_url}/metadata_search/" f"{self.flavour}/{self.uniq_key}"
+            f"{self.databrowser_url}/metadata-search/"
+            f"{self.flavour}/{self.uniq_key}"
         )
 
     @staticmethod
@@ -166,7 +173,7 @@ class Config:
         if port:
             hostname = f"{hostname}:{port}"
         hostname = hostname.partition("/")[0]
-        return f"{scheme}://{hostname}/api"
+        return f"{scheme}://{hostname}/api/freva-nextgen"
 
     @staticmethod
     def get_dirs(user: bool = True) -> Path:
@@ -199,9 +206,12 @@ class UserDataHandler:
     This class is used for processing user data and extracting metadata
     from the data files.
     """
+
     def __init__(self, userdata_items: List[Union[str, xr.Dataset]]) -> None:
         self._suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", "zar"]
-        self.user_metadata: List[Dict[str, Union[str, List[str], Dict[str, str]]]] = []
+        self.user_metadata: List[
+            Dict[str, Union[str, List[str], Dict[str, str]]]
+        ] = []
         self._metadata_collection: List[Dict[str, Union[str, List[str]]]] = []
         try:
             self._executor = concurrent.futures.ThreadPoolExecutor(
@@ -238,28 +248,37 @@ class UserDataHandler:
                 validated_xarray_datasets.append(data)
 
         if not validated_paths and not validated_xarray_datasets:
-            raise FileNotFoundError("No valid file paths or xarray datasets found.")
+            raise FileNotFoundError(
+                "No valid file paths or xarray datasets found."
+            )
         return {
             "validated_user_paths": validated_paths,
             "validated_user_xrdatasets": validated_xarray_datasets,
         }
 
-    def _process_user_data(self, userdata_items: List[Union[str, xr.Dataset]],
-                           ) -> None:
+    def _process_user_data(
+        self,
+        userdata_items: List[Union[str, xr.Dataset]],
+    ) -> None:
         """Process xarray datasets and file paths using thread pool."""
         futures = []
-        validated_userdata: Dict[str, Union[List[Path], List[xr.Dataset]]] = \
+        validated_userdata: Dict[str, Union[List[Path], List[xr.Dataset]]] = (
             self._validate_user_data(userdata_items)
+        )
         if validated_userdata["validated_user_xrdatasets"]:
             futures.append(
-                self._executor.submit(self._process_userdata_in_executor,
-                                      validated_userdata["validated_user_xrdatasets"])
+                self._executor.submit(
+                    self._process_userdata_in_executor,
+                    validated_userdata["validated_user_xrdatasets"],
+                )
             )
 
         if validated_userdata["validated_user_paths"]:
             futures.append(
-                self._executor.submit(self._process_userdata_in_executor,
-                                      validated_userdata["validated_user_paths"])
+                self._executor.submit(
+                    self._process_userdata_in_executor,
+                    validated_userdata["validated_user_paths"],
+                )
             )
         for future in futures:
             try:
@@ -309,11 +328,11 @@ class UserDataHandler:
 
         try:
             dset = (
-                path if isinstance(path, xr.Dataset)
-                else xr.open_mfdataset(str(path),
-                                       parallel=False,
-                                       use_cftime=True,
-                                       lock=False)
+                path
+                if isinstance(path, xr.Dataset)
+                else xr.open_mfdataset(
+                    str(path), parallel=False, use_cftime=True, lock=False
+                )
             )
             time_freq = dset.attrs.get("frequency", "")
             data_vars = list(map(str, dset.data_vars))
@@ -328,16 +347,28 @@ class UserDataHandler:
             return {}
         if len(times) > 0:
             try:
-                time_str = f"[{times[0].isoformat()}Z TO {times[-1].isoformat()}Z]"
-                dt = abs((times[1] - times[0]).total_seconds()) if len(times) > 1 else 0
+                time_str = (
+                    f"[{times[0].isoformat()}Z TO {times[-1].isoformat()}Z]"
+                )
+                dt = (
+                    abs((times[1] - times[0]).total_seconds())
+                    if len(times) > 1
+                    else 0
+                )
             except Exception as non_cftime:
-                logger.info("The time var is not based on the cftime: %s", non_cftime)
+                logger.info(
+                    "The time var is not based on the cftime: %s", non_cftime
+                )
                 time_str = (
                     f"[{np.datetime_as_string(times[0], unit='s')}Z TO "
                     f"{np.datetime_as_string(times[-1], unit='s')}Z]"
                 )
                 dt = (
-                    abs((times[1] - times[0]).astype("timedelta64[s]").astype(int))
+                    abs(
+                        (times[1] - times[0])
+                        .astype("timedelta64[s]")
+                        .astype(int)
+                    )
                     if len(times) > 1
                     else 0
                 )
@@ -350,14 +381,17 @@ class UserDataHandler:
             for var in data_vars
             if var not in coords
             and not any(
-                term in var.lower() for term in ["lon", "lat", "bnds", "x", "y"]
+                term in var.lower()
+                for term in ["lon", "lat", "bnds", "x", "y"]
             )
             and var.lower() not in ["rotated_pole", "rot_pole"]
         ]
 
         _data: Dict[str, Union[str, List[str], Dict[str, str]]] = {}
         _data.setdefault("variable", variables[0])
-        _data.setdefault("time_frequency", self._get_time_frequency(dt, time_freq))
+        _data.setdefault(
+            "time_frequency", self._get_time_frequency(dt, time_freq)
+        )
         _data["time"] = time_str
         _data.setdefault("cmor_table", _data["time_frequency"])
         _data.setdefault("version", "")

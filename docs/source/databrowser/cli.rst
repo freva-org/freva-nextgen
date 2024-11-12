@@ -419,7 +419,7 @@ To add your data to the databrowser, use the `user-data add` command. You'll nee
 
     token=$(freva-client auth -u janedoe | jq -r .access_token)
     freva-client databrowser user-data add \
-        --path freva-rest/src/databrowser_api/mock/ \
+        --path freva-rest/src/freva_rest/databrowser_api/mock/ \
         --facet project=cordex \
         --facet experiment=rcp85 \
         --facet model=mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1 \
@@ -434,7 +434,7 @@ To add your data to the databrowser, use the `user-data add` command. You'll nee
    token = authenticate(username="janedoe")
    res = run(
        ["freva-client", "databrowser", "user-data", "add",
-       "--path", "../freva-rest/src/databrowser_api/mock/",
+       "--path", "../freva-rest/src/freva_rest/databrowser_api/mock/",
        "--facet", "project=cordex",
        "--facet", "experiment=rcp85",
        "--facet", "model=mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1",
@@ -442,7 +442,7 @@ To add your data to the databrowser, use the `user-data add` command. You'll nee
        "--access-token", token["access_token"]],
        check=True, stdout=PIPE, stderr=PIPE
    )
-   print("STDOUT:", res.stderr.decode())
+   print(res.stdout.decode())
 
 
 This command adds the specified data files to the databrowser and tags them with the provided metadata. These search filters help in indexing and searching your data within the system.
