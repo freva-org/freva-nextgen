@@ -1,5 +1,8 @@
 # This is the default toml config file that is used by the rest API server.
 #
+[restAPI]
+services = ["databrowser", "zarr-stream"]
+url = "http://localhost:7777"
 [solr]
 hostname = "localhost"
 port = 8983

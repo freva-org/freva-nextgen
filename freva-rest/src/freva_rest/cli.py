@@ -55,6 +55,7 @@ import logging
 import os
 from enum import Enum
 from pathlib import Path
+from socket import gethostname
 from tempfile import NamedTemporaryFile
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -158,8 +159,8 @@ def cli(argv: Optional[List[str]] = None) -> None:
         "-s",
         help="The services the API should serve",
         nargs="+",
-        default=["databrowser", "stream-zarr"],
-        choices=["databrowser", "stream-zarr"],
+        default=os.getenv("API_SERVICES", "").split(","),
+        choices=["databrowser", "zarr-stream"],
     )
 
     args = parser.parse_args(argv)
@@ -171,9 +172,10 @@ def cli(argv: Optional[List[str]] = None) -> None:
     defaults: Dict[str, str] = {
         "API_CONFIG": str(Path(args.config).expanduser().absolute()),
         "DEBUG": str(int(args.debug)),
-        "API_SERVICES": ",".join(args.services).replace("_", "-"),
-        "API_REDIS_SSL_KEYFILE": str(ssl_cert or ""),
-        "API_REDIS_SSL_CERTFILE": str(ssl_key or ""),
+        "API_SERVICES": ",".join(args.services or "").replace("_", "-"),
+        "API_REDIS_SSL_KEYFILE": str(ssl_key or ""),
+        "API_REDIS_SSL_CERTFILE": str(ssl_cert or ""),
+        "API_URL": args.api_url or f"http://{gethostname()}:{args.port}",
     }
     cfg = ServerConfig(config=args.config, debug=args.debug)
     for key, value in args._get_kwargs():

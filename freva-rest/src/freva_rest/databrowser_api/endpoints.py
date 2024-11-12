@@ -294,6 +294,7 @@ async def load_data(
     The urls are only temporary and will be invalidated.
     """
     if "zarr-stream" not in server_config.services:
+        print("foo", server_config.services)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Service not enabled.",

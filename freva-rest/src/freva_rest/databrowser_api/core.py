@@ -1101,7 +1101,7 @@ class Solr:
         -------
         AsyncIterator: Stream of search results.
         """
-        api_path = f"{os.environ.get('API_URL', '')}/api/freva-nextgen/data-portal/zarr"
+        api_path = f"{self._config.api_url}/api/freva-nextgen/data-portal/zarr"
         if catalogue_type == "intake":
             _, intake = await self.init_intake_catalogue()
             async for string in self.intake_catalogue(intake.catalogue, True):
@@ -1221,7 +1221,7 @@ class Solr:
             {**metadata, **self.fwrites} for metadata in user_metadata
         ]
         for i in range(0, len(processed_metadata), self.batch_size):
-            batch = processed_metadata[i:i + self.batch_size]
+            batch = processed_metadata[i : i + self.batch_size]
             processed_batch = await self._process_metadata(batch)
             self.total_duplicated_files += len(batch) - len(processed_batch)
             if processed_batch:

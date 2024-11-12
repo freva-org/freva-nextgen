@@ -209,6 +209,10 @@ class ServerConfig(BaseModel):
         self._mongo_client: Optional[AsyncIOMotorClient] = None
         self._solr_fields = self._get_solr_fields()
         self._oidc_overview: Optional[Dict[str, Any]] = None
+        self.api_services = self.api_services or ",".join(
+            self._read_config("restAPI", "services")
+        )
+        self.api_url = self.api_url or self._read_config("restAPI", "url")
         self.oidc_discovery_url = self.oidc_discovery_url or self._read_config(
             "oidc", "discovery_url"
         )
