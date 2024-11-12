@@ -30,7 +30,13 @@ def run_test_server(port: int) -> None:
     """Start a test server using uvcorn."""
     logger.setLevel(10)
     with mock.patch("freva_rest.databrowser_api.endpoints.Solr.batch_size", 3):
-        uvicorn.run(app, host="0.0.0.0", port=port, reload=False, workers=None)
+        with mock.patch(
+            "freva_rest.databrowser_api.endpoints.server_config.api_url",
+            f"http://localhost:{port}",
+        ):
+            uvicorn.run(
+                app, host="0.0.0.0", port=port, reload=False, workers=None
+            )
 
 
 def find_free_port() -> int:
@@ -94,22 +100,19 @@ def _prep_env(**config: str) -> Dict[str, str]:
 
 def setup_server() -> Iterator[str]:
     """Start the test server."""
-    env = os.environ.copy()
     port = find_free_port()
-    env["API_URL"] = f"http://127.0.0.1:{port}"
-    with mock.patch.dict(os.environ, env, clear=True):
-        asyncio.run(flush_cache())
-        thread1 = threading.Thread(target=run_test_server, args=(port,))
-        thread1.daemon = True
-        thread1.start()
-        time.sleep(1)
-        thread2 = threading.Thread(
-            target=run_loader_process, args=(find_free_port(),)
-        )
-        thread2.daemon = True
-        thread2.start()
-        time.sleep(5)
-        yield f'{env["API_URL"]}/api/freva-nextgen'
+    asyncio.run(flush_cache())
+    thread1 = threading.Thread(target=run_test_server, args=(port,))
+    thread1.daemon = True
+    thread1.start()
+    time.sleep(1)
+    thread2 = threading.Thread(
+        target=run_loader_process, args=(find_free_port(),)
+    )
+    thread2.daemon = True
+    thread2.start()
+    time.sleep(5)
+    yield f"http://localhost:{port}/api/freva-nextgen"
 
 
 @pytest.fixture(scope="session")
