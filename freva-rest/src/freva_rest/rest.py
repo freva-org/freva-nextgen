@@ -45,7 +45,7 @@ metadata_tags = [
     {
         "name": "User data",
         "description": (
-            "With help of the following endpoints you can add your own data"
+            "With help of the following endpoints you can add your own data "
             "to the data search system, aka databrwoser."
         ),
     },
@@ -95,6 +95,9 @@ app = FastAPI(
     license_info={
         "name": "BSD 2-Clause License",
         "url": "https://opensource.org/license/bsd-2-clause",
+        "x-logo": {
+            "url": "https://freva-clint.github.io/freva-nextgen/_static/logo.png"
+        },
     },
 )
 

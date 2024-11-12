@@ -5,5 +5,5 @@ python-dotenv==1.0.1
 requests==2.32.3
 types-requests==2.32.0.20241016
 rich==13.9.4
-typer==0.12.5
+typer==0.13.0
 uvicorn==0.32.0
