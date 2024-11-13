@@ -44,9 +44,7 @@ def prep_server(inp_dir: Path) -> None:
     REDIS_CONFIG["ssl_key"] = key_file.read_text()
     REDIS_CONFIG["ssl_cert"] = cert_file.read_text()
     config_file = TEMP_DIR / "data-portal-cluster-config.json"
-    config_file.write_bytes(
-        b64encode(json.dumps(REDIS_CONFIG).encode("utf-8"))
-    )
+    config_file.write_bytes(b64encode(json.dumps(REDIS_CONFIG).encode("utf-8")))
 
 
 def kill_proc(proc: str) -> None:

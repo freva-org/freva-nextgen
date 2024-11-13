@@ -4,10 +4,11 @@ import json
 from copy import deepcopy
 from tempfile import NamedTemporaryFile
 
-from freva_client.auth import Auth, authenticate
-from freva_client.cli.databrowser_cli import databrowser_app as app
 from pytest import LogCaptureFixture
 from typer.testing import CliRunner
+
+from freva_client.auth import Auth, authenticate
+from freva_client.cli.databrowser_cli import databrowser_app as app
 
 
 def test_overview(cli_runner: CliRunner, test_server: str) -> None:
@@ -104,7 +105,7 @@ def test_intake_catalogue_no_zarr(
         )
         assert res.exit_code == 0
         with open(temp_f.name, "r") as stream:
-            assert (json.load(stream), dict)
+            assert isinstance(json.load(stream), dict)
 
 
 def test_intake_files_zarr(

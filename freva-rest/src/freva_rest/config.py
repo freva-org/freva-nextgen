@@ -9,11 +9,11 @@ import os
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple, cast
 
 import requests
 import tomli
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
 from typing_extensions import TypedDict
 
 from .logger import THIS_NAME, logger, logger_file_handle
@@ -80,18 +80,44 @@ class ServerConfig:
             self._config = tomli.loads(
                 defaults["API_CONFIG"].read_text("utf-8")
             )
-        self.mongo_client = AsyncIOMotorClient(
-            self.mongo_url, serverSelectionTimeoutMS=5000
-        )
-        self.mongo_collection = self.mongo_client[self.mongo_db][
-            "search_queries"
-        ]
+        self._mongo_client: Optional[AsyncIOMotorClient] = None
         self._solr_fields = self._get_solr_fields()
         self._oidc_overview: Optional[Dict[str, Any]] = None
         self.oidc_discovery_url = (
             os.environ.get("OICD_URL") or defaults["OIDC_URL"]
         )
         self.oidc_client = os.environ.get("OIDC_CLIENT_ID", "freva")
+
+    @property
+    def mongo_client(self) -> AsyncIOMotorClient:
+        """Create an async connection client to the mongodb."""
+        if self._mongo_client is None:
+            self._mongo_client = AsyncIOMotorClient(
+                self.mongo_url, serverSelectionTimeoutMS=5000
+            )
+        return self._mongo_client
+
+    @property
+    def mongo_collection_search(self) -> AsyncIOMotorCollection:
+        """Define the mongoDB collection for databrowser searches."""
+        return cast(
+            AsyncIOMotorCollection,
+            self.mongo_client[self.mongo_db]["search_queries"],
+        )
+
+    @property
+    def mongo_collection_userdata(self) -> AsyncIOMotorCollection:
+        """Define the mongoDB collection for user data information."""
+        return cast(
+            AsyncIOMotorCollection,
+            self.mongo_client[self.mongo_db]["user_data"],
+        )
+
+    def power_cycle_mongodb(self) -> None:
+        """Reset an existing mongoDB connection."""
+        if self._mongo_client is not None:
+            self._mongo_client.close()
+        self._mongo_client = None
 
     def reload(self) -> None:
         """Reload the configuration."""

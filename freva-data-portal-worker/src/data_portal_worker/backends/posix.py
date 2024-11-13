@@ -7,14 +7,13 @@ import netCDF4
 import rasterio
 import xarray as xr
 import zarr
+
 from data_portal_worker.utils import data_logger
 
 try:
     import cfgrib
 except (ImportError, RuntimeError):  # pragma: no cover
-    data_logger.warning(
-        "Could not import cfgrib, loading GRB files is disabled"
-    )
+    data_logger.warning("Could not import cfgrib, loading GRB files is disabled")
 
 
 def get_xr_engine(file_path: str) -> Optional[str]:

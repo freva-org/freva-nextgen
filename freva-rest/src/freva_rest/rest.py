@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import AsyncIterator
 
 from fastapi import FastAPI
+
 from freva_rest import __version__
 
 from .config import ServerConfig, defaults
@@ -54,9 +55,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     try:
         yield
     finally:
-        try:
+        try:  # pragma: no cover
             server_config.mongo_client.close()
-        except Exception as error:  # pragma: no cover
+        except Exception as error:
             logger.warning("Could not shutdown mongodb connection: %s", error)
 
 

@@ -5,6 +5,7 @@ from typing import Dict, Optional
 
 import redis.asyncio as redis
 from fastapi import HTTPException, status
+
 from freva_rest.logger import logger
 
 REDIS_CACHE: Optional[redis.Redis] = None
