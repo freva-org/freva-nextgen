@@ -1,30 +1,114 @@
-# This is the default toml config file that is used by the rest API server.
+# Default configuration file for the REST API server.
 #
+# This file configures the REST API, specifying which services to enable,
+# database connections, caching options, and authentication details.
+# Adjust these settings as per your deployment requirements.
+
 [restAPI]
+# Setting for the freva-rest api are configured in this section.
+
+# List of services the API should provide.
+# - `databrowser`: Enables the search functionality, allowing users to search
+#   and retrieve metadata related to available datasets.
+# - `zarr-stream`: Provides streaming access to data in Zarr format, suitable
+#   for large, multi-dimensional arrays often used in scientific data.
+# By default, both services are enabled. Remove a service from the list
+# to disable it if not required for your API instance.
 services = ["databrowser", "zarr-stream"]
-url = "http://localhost:7777"
+
+# Specify a reverse proxy URL if the server is only accessible through a proxy.
+# This can help configure the API to respond with correct URLs when deployed
+# behind a reverse proxy.
+# Example: If the server is located at `my-server.example.com:7777` but
+# is accessed publicly via `https://www.my-server.org`, set `proxy` to
+# "https://www.my-server.org". Leave this empty if no reverse proxy is used.
+proxy = ""
+
+
 [solr]
+# Solr is used for indexing and querying metadata of multi-version datasets.
+
+# Hostname where Apache Solr, the search backend, is running.
 hostname = "localhost"
+
+# Port on which Solr listens for HTTP requests (default is typically 8983).
+# Adjust this if your Solr instance uses a non-default port.
 port = 8983
+
+# Name of the Solr core that stores multi-version datasets.
+# This core is where the search engine will look for metadata entries to return
+# as search results.
 core = "files"
 
+
 [mongo_db]
+# MongoDB is used for storing auxiliary information like search statistics,
+# user-defined metadata, and other non-search-related data.
+
+# Hostname where the MongoDB server is running.
 hostname = "localhost"
+
+# Port on which MongoDB accepts connections (default is typically 27017).
+# Ensure this matches the MongoDB server's configured port.
 port = 27017
+
+# Username to authenticate with MongoDB. Leave this empty if MongoDB authentication
+# is not enabled on your server.
 user = ""
+
+# Password associated with the MongoDB user. Leave empty if no password is required.
 password = ""
+
+# Database name within MongoDB for storing statistics and user data.
+# Use this to keep track of data such as query logs, user activity, or custom metadata.
 name = "search_stats"
 
+
 [cache]
+# Redis is used to make the zarr streaming data available. This helps to
+# improve response times by reducing repeated data loading.
+
+# Hostname where the Redis cache server is running.
 hostname = "localhost"
+
+# Port Redis uses to accept client connections (default is typically 6379).
+# Adjust if your Redis instance uses a non-standard port.
 port = 6379
+
+# Cache expiration time in seconds. After this period, cached entries are
+# invalidated, and fresh data will be retrieved from the database.
+# Set to 3600 (1 hour) by default.
 exp = 3600
+
+# Redis username for authentication, if Redis security is enabled.
+# If Redis does not require a username, leave this empty.
 user = ""
+
+# Password for authenticating to Redis, if required. Leave empty if no password is used.
 password = ""
+
+# Paths to SSL certificate and key files if using secure connections with Redis.
+# Only required if Redis is configured with SSL/TLS security.
 cert_file = ""
 key_file = ""
 
+
 [oidc]
+# OpenID Connect (OIDC) configuration for secure user authentication.
+# This section defines settings for integration with an OIDC provider,
+# allowing users to authenticate with a trusted identity provider.
+# Freva (Framework for Evaluation of Models and Observational Data) uses
+# OIDC to authenticate requests, ensuring secure access control.
+
+# URL for OIDC provider’s discovery document. This document contains
+# important endpoints (e.g., token and authorization URLs) used by the API.
+# Replace with your specific OIDC provider's URL.
 discovery_url = "http://localhost:8080/realms/freva/.well-known/openid-configuration"
+
+# Client ID registered with the OIDC provider. This ID identifies the API as
+# an authorized client application for secure access.
 client_id = "freva"
+
+# Secret key associated with the client ID. Keep this secure as it is used to
+# authenticate the API to the OIDC provider.
 client_secret = ""
