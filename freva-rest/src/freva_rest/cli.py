@@ -32,7 +32,7 @@ environment variables are evaluated:
 - ``API_REDIS_HOST``: Host and port of the redis cache
                   Host name and port should separated by a ``:``, for
                   example ``localhost:5672``
-- ``API_REDIS_PASS``: Password for the redis connection.
+- ``API_REDIS_PASSWORD``: Password for the redis connection.
 - ``API_REDIS_USER``: Username for the redis connection.
 - ``API_REDIS_SSL_CERTFILE``: Path to the TSL certificate file used to encrypt
                           the redis connection.

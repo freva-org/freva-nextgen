@@ -70,7 +70,7 @@ API_SOLR_CORE=files           # Name of the solr core for datasets with multiple
 # Redis Configuration
 API_REDIS_HOST=redis://localhost:6379
 API_REDIS_USER=              # Username for the redis connection
-API_REDIS_PASS=              # Password for the redis connection
+API_REDIS_PASSWORD=              # Password for the redis connection
 API_REDIS_SSL_CERTFILE=/certs/client-cert.pem
 API_REDIS_SSL_KEYFILE=/certs/client-key.pem
 
