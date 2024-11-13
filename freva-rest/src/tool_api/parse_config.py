@@ -2,7 +2,7 @@ import tomllib
 from typing import Any, Union
 from pathlib import Path
 import logging
-from .input_parameters import ParameterList
+from input_parameters import ParameterList
 from pydantic import ValidationError
 
 def load_toml_to_dict(input_file:Union[str, Path]) -> dict:

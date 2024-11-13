@@ -1,7 +1,6 @@
 from pydantic import ConfigDict, BaseModel, Field
 from pydantic.functional_validators import field_validator
 
-from collections.abc import Sequence
 from pathlib import Path
 from typing import Any,  Dict, Optional, Union, List, Literal
 from typing_extensions import Annotated
@@ -9,7 +8,7 @@ from datetime import datetime
 
 import json
 
-BaseParamType = Union[str, int, float, bool, datetime, Sequence]
+BaseParamType = Union[str, int, float, bool, datetime, list, tuple]
 
 class BaseParam(BaseModel):
     """
@@ -142,7 +141,7 @@ class DataField(BaseParam):
                                different search facets together, for example for comparing
                                multi model ensembles.
         multiple(bool, optional): Flag indicating whether multiple values can be selected for the selected facet.
-        predefined_facets(Dict[str, Union[str, Sequence[str]]], optional): A dict containing default values for other search facets. 
+        predefined_facets(Dict[str, Union[str, List[str]]], optional): A dict containing default values for other search facets. 
         default (str, optional): The default value of the parameter. 
         type (Literal["DataField"]): A description of the parameter's type. 
 
@@ -165,23 +164,23 @@ class DataField(BaseParam):
     facet: str = Field()
     group: int = 1
     multiple: bool = False
-    predefined_facets: Optional[Dict[str, Union[str, Sequence[str]]]] = None
+    predefined_facets: Optional[Dict[str, Union[str, List[str]]]] = None
     default: str = None
     type: Literal["DataField"] = "DataField"
 
 class Range(BaseParam):
     """
-    A simple Sequence parameter for iterable, indexable sequences such as lists and tuples.
+    A simple Range parameter for iterable, indexable sequences such as lists and tuples.
 
     Args:
-        default (Sequence[BaseParamType], optional): The default value of the parameter. Defaults to None.
-        type (Literal["Sequence"]): A description of the parameter's type. Must be "Sequence".
+        default (List[BaseParamType], optional): The default value of the parameter. Defaults to None.
+        type (Literal["Range"]): A description of the parameter's type. Must be "Range".
 
     Attributes:
-        default (Sequence[BaseParamType]): The default value of the parameter. 
-        type (Literal["Sequence"]): A description of the parameter's type. 
+        default (List[BaseParamType]): The default value of the parameter. 
+        type (Literal["Range"]): A description of the parameter's type. 
     """
-    default: Optional[Sequence[BaseParamType]] = None
+    default: Optional[List[BaseParamType]] = None
     type: Literal["Range"] = "Range"
 
 class File(BaseParam):
@@ -220,7 +219,7 @@ class ParameterList(BaseModel):
 
     Args:
         input_parameters (List[ParameterType]): A list containing valid plugin input parameters. 
-                                                Valid parameters are Bool, String, Integer, Date, DataField, Range, File, Sequence.
+                                                Valid parameters are Bool, String, Integer, Date, DataField, Range, File, Range.
 
     Attributes:
         input_parameters(List[ParameterType]): A list containing valid parameters. 
