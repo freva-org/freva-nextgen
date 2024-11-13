@@ -31,7 +31,7 @@ def run_test_server(port: int) -> None:
     logger.setLevel(10)
     with mock.patch("freva_rest.databrowser_api.endpoints.Solr.batch_size", 3):
         with mock.patch(
-            "freva_rest.databrowser_api.endpoints.server_config.api_url",
+            "freva_rest.databrowser_api.endpoints.server_config.proxy",
             f"http://localhost:{port}",
         ):
             uvicorn.run(

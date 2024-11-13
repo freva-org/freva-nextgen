@@ -56,7 +56,7 @@ You can adjust the server settings by either overriding the default flags or set
 DEBUG=0                  # Start server in debug mode (1), (default: 0 -> no debug)
 API_PORT=7777            # The port the rest service should be running on
 API_WORKER=8            # Number of multi-process workers serving the API
-API_URL=http://www.example.de/
+API_PROXY=http://www.example.de/
 API_CACHE_EXP=3600      # Expiry time in seconds of the cached data
 
 # Database Configuration

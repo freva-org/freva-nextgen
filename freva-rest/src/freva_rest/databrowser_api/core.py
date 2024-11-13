@@ -1100,7 +1100,7 @@ class Solr:
         -------
         AsyncIterator: Stream of search results.
         """
-        api_path = f"{self._config.api_url}/api/freva-nextgen/data-portal/zarr"
+        api_path = f"{self._config.proxy}/api/freva-nextgen/data-portal/zarr"
         if catalogue_type == "intake":
             _, intake = await self.init_intake_catalogue()
             async for string in self.intake_catalogue(intake.catalogue, True):

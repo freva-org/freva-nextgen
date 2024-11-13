@@ -9,6 +9,7 @@ import logging
 import os
 from functools import cached_property
 from pathlib import Path
+from socket import gethostname
 from typing import (
     Annotated,
     Any,
@@ -48,13 +49,13 @@ class ServerConfig(BaseModel):
             ),
         ),
     ] = os.getenv("API_CONFIG", Path(__file__).parent / "api_config.toml")
-    api_url: Annotated[
+    proxy: Annotated[
         str,
         Field(
-            title="API Url",
-            description="The url of the host serving the API.",
+            title="Proxy url",
+            description="URL of a proxy that serves this API (if any).",
         ),
-    ] = os.getenv("API_URL", "")
+    ] = os.getenv("API_PROXY", "")
     debug: Annotated[
         Union[bool, int, str],
         Field(
@@ -212,7 +213,11 @@ class ServerConfig(BaseModel):
         self.api_services = self.api_services or ",".join(
             self._read_config("restAPI", "services")
         )
-        self.api_url = self.api_url or self._read_config("restAPI", "url")
+        self.proxy = (
+            self.proxy
+            or self._read_config("restAPI", "proxy")
+            or f"http://{gethostname()}"
+        )
         self.oidc_discovery_url = self.oidc_discovery_url or self._read_config(
             "oidc", "discovery_url"
         )

@@ -27,7 +27,7 @@ environment variables are evaluated:
 - ``API_MONGO_USER``: user name for the mongodb.
 - ``API_MONGO_PASSWORD``: password to log on to the mongodb.
 - ``API_MONGO_DB``: database name of the mongodb instance.
-- ``API_URL``: url of the machine that runs of the rest api
+- ``API_PROXY``: url of a proxy that servers the API - if any.
 - ``API_CACHE_EXP``: expiry time in seconds of the cached data
 - ``API_REDIS_HOST``: Host and port of the redis cache
                   Host name and port should separated by a ``:``, for
@@ -175,7 +175,7 @@ def cli(argv: Optional[List[str]] = None) -> None:
         "API_SERVICES": ",".join(args.services or "").replace("_", "-"),
         "API_REDIS_SSL_KEYFILE": str(ssl_key or ""),
         "API_REDIS_SSL_CERTFILE": str(ssl_cert or ""),
-        "API_URL": args.api_url or f"http://{gethostname()}:{args.port}",
+        "API_PROXY": args.proxy or f"http://{gethostname()}:{args.port}",
     }
     cfg = ServerConfig(config=args.config, debug=args.debug)
     for key, value in args._get_kwargs():
