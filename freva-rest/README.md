@@ -41,13 +41,10 @@ docker pull ghcr.io/freva-clint/freva-rest:latest
 ```
 
 By default the container starts with the ``freva-rest-service`` command.
-The following default values are available on start up:
+See the `freva-rest-server --help` command for configure options.
 
-```console
-freva-rest-server --help
-```
-
-You can adjust the server settings by either overriding the default flags or setting environment variables in the container.
+You can adjust the server settings by either overriding the default flags or 
+setting environment variables in the container.
 
 ### Available Environment Variables
 
