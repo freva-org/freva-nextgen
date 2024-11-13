@@ -1,8 +1,8 @@
-# This is the default toml config file that is used by the rest API server.
+# This is the server configuration file for running the restAPI as
 #
 [restAPI]
 services = ["databrowser", "zarr-stream"]
-url = "http://localhost:7777"
+proxy = ""
 
 [solr]
 hostname = "localhost"
