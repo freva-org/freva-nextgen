@@ -30,7 +30,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 
 from freva_rest import __version__
 
-from .config import ServerConfig, defaults
+from .config import ServerConfig
 from .logger import logger, reset_loggers
 
 metadata_tags = [
@@ -57,15 +57,16 @@ metadata_tags = [
         ),
     },
     {
+        "name": "Analysis Tools",
+        "description": "Define, submit and monitor any data anaylsys tools.",
+    },
+    {
         "name": "Authentication",
         "description": "These endpoints are for authentication.",
     },
 ]
 
-server_config = ServerConfig(
-    Path(os.environ.get("API_CONFIG", defaults["API_CONFIG"])),
-    debug=bool(os.environ.get("DEBUG", int(defaults["DEBUG"]))),
-)
+server_config = ServerConfig()
 
 
 @asynccontextmanager

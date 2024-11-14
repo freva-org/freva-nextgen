@@ -64,7 +64,7 @@ environment. You can now develop and test the project within this environment.
 After the containers are up and running you can start the REST server the following:
 
 ```console
-python run_server.py -c api_config.toml --debug --dev -p 7777 -f
+python run_server.py --config dev-env/api_config.toml --debug --dev -p 7777 -f
 ```
 
 The ``--debug`` and ``--dev`` flag will make sure that any changes are loaded.

@@ -54,9 +54,7 @@ def test_databrowser(test_server: str) -> None:
 
 def test_no_solr(test_server: str) -> None:
     """Test what happens if there is no connection to the solr."""
-    env = os.environ.copy()
-    env["SOLR_HOST"] = "foo.bar.de"
-    with mock.patch.dict(os.environ, env, clear=True):
+    with mock.patch("freva_rest.rest.server_config.solr_host", "foo.bar"):
         res = requests.get(
             f"{test_server}/databrowser/data-search/cmip6/uri",
             params={"activity_id": "cmipx"},
@@ -286,9 +284,7 @@ def test_no_mongo_parameter_insert(test_server: str) -> None:
         collection = mongo_client[server_config.mongo_db]["search_queries"]
         collection.drop()
         assert collection.find_one() is None
-    env = os.environ.copy()
-    env["MONGO_HOST"] = "foo.bar.de"
-    with mock.patch.dict(os.environ, env, clear=True):
+    with mock.patch("freva_rest.rest.server_config.mongo_password", "foo"):
         server_config.power_cycle_mongodb()
         res1 = requests.get(
             f"{test_server}/databrowser/data-search/cmip6/uri",
@@ -305,10 +301,7 @@ def test_zarr_stream_not_implemented(
     test_server: str, auth: Dict[str, str]
 ) -> None:
     """Test if zarr request is not served when told not to do so."""
-    env = os.environ.copy()
-    env["API_SERVICES"] = ""
-    with mock.patch.dict(os.environ, env, clear=True):
-        os.environ["API_SERVICES"] = ""
+    with mock.patch("freva_rest.rest.server_config.api_services", ""):
         res = requests.get(
             f"{test_server}/databrowser/load/freva",
             headers={"Authorization": f"Bearer {auth['access_token']}"},
