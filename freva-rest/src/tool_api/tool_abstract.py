@@ -5,7 +5,7 @@ from typing_extensions import Annotated
 from datetime import datetime
 
 
-from input_parameters import ParameterList
+from .input_parameters import ParameterList
 
 
 class ToolAbstract(BaseModel):
@@ -64,29 +64,7 @@ class ToolAbstract(BaseModel):
         and returns one that is 'flattened', i.e. where table ids from the TOML file no longer appear.
         """
         raise NotImplementedError
-    
-    # Methods to interface with the Rest API
-    def _post_tool(self) -> str:
-        """Post config to Freva Rest API
-        If accepted, creates a new db entry for the tool.
-        The db entry should probably be tied to the user that posts the config, 
-        so the posted tool load in the user's workspace.
-        If tool already exists in db, reject.
-        """
-        raise NotImplementedError
-    
-    def _put_tool(self) -> str:
-        """Update config of a given tool.
-        If plugin already exists centrally, overwrite it with the current config.
-        This allows users to use their own versions of a given plugin within Freva.
-        """
-        raise NotImplementedError
-    
-    def _del_tool(self, tool_id:str) -> str:
-        """Delete tool entry in the db, given by its id in the database.
-        This should be rejected if a user tries to delete a tool that isn't theirs.
-        """
-        raise NotImplementedError
+
     
 
 
