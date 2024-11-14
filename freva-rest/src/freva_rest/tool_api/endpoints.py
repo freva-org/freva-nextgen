@@ -5,13 +5,15 @@ from typing import Annotated, Dict, List, Optional, Union
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from fastapi import Body, Depends, Path, status
-from fastapi.responses import PlainTextResponse, StreamingResponse
+from fastapi.responses import (JSONResponse, PlainTextResponse,
+                               StreamingResponse)
 from pydantic import BaseModel, Field
 
 from freva_rest.auth import TokenPayload, auth
 from freva_rest.rest import app
 
 from .internal_endpoints import *  # noqa: F401
+from .tool_abstract import ToolAbstract
 
 ParameterItems = Union[str, float, int, datetime, bool, None]
 
@@ -48,6 +50,44 @@ class ToolParameterPayload(BaseModel):
         ),
     ] = None
 
+class AddModelStatus(BaseModel):
+    """Response model for successful addition of a tool."""
+
+    uuid: Annotated[
+        UUID,
+        Field(
+            title="Tool id.",
+            description="Unique identifyer for the tool.",
+        ),
+    ]
+    status_code: Annotated[
+        int,
+        Field(
+            title="Status code",
+            description="The status code of the tool submission."
+            )
+    ]
+
+class RemoveModelStatus(BaseModel):
+    """Response model for successful removal of a tool from the database."""
+
+    message: Annotated[
+        str,
+        Field(
+            title="Human readable status of tool removal.",
+        )
+    ]
+    status_code: Annotated[
+        str,
+        Field(
+            title="Status code",
+            description=(
+                "Status code of tool removal"
+                "0: success, 1: could not remove"         
+            )
+        )
+    ]
+
 
 class CancelStatus(BaseModel):
     """Response model for canceling jobs."""
@@ -58,7 +98,7 @@ class CancelStatus(BaseModel):
             description="Human readable status of the cancelation.",
             examples=[
                 "Job with id 095be615-a8ad-4c33-8e9c-c7612fbf6c9f was canceled",
-                "Job with id 095be615-a8ad-4c33-8e9c-c7612fbf6c9f has already been cancled",
+                "Job with id 095be615-a8ad-4c33-8e9c-c7612fbf6c9f has already been cancelled",
             ],
         ),
     ]
@@ -117,6 +157,55 @@ class SubmitStatus(BaseModel):
         ),
     ]
 
+@app.get("/api/freva-nextgen/tool/overview", 
+         tags=["Analysis tools"],
+         response_model=Union[ToolAbstract, List[ToolAbstract]]
+)
+async def tool_overview(
+    current_user: TokenPayload = Depends(auth.required)
+):
+    """Get all available tools and their attributes."""
+    tool = ToolAbstract(name="foo", 
+                        author="bar",
+                        version="0.0",
+                        summary="",
+                        added="2024-11-13",
+                        command="fakecommand",
+                        binary="fakebinary",
+                        output_type="data"
+    )
+    return tool
+
+@app.post("/api/freva-nextgen/tool/add/{tool}", 
+          tags=["Analysis tools"],
+          status_code=status.HTTP_202_ACCEPTED,
+          responses={
+            400: {"description": "Invalid tool configuration."},
+            401: {"description": "Unauthorised / not a valid token."},
+            500: {"description": "Adding the tool was unsuccessful."},
+            503: {"description": "Service is currently unavailable."}
+          },
+          response_model=AddModelStatus)
+async def add_tool(tool: Annotated[ToolAbstract, Body(...)],
+                   current_user: TokenPayload = Depends(auth.required)
+):
+    """Add a tool to the MongoDB or update it if it already exists"""
+    return AddModelStatus(uuid=uuid5(NAMESPACE_URL, "bar"), status_code=202)
+
+@app.delete("/api/freva-nextgen/tool/del/{tool}",
+            tags=["Analysis tools"],
+            status_code=status.HTTP_202_ACCEPTED,
+            responses={
+                401: {"description": "Unauthorised / not a valid token."},
+                404: {"description": "The requested tool cannot be found."},
+                500: {"description": "Removing tool was unsuccessful."},
+                503: {"description": "Service is currently unavailable."}
+            },
+            response_model=RemoveModelStatus)
+async def delete_tool(tool_uuid: Annotated[UUID, Body(...)],
+                      current_user: TokenPayload = Depends(auth.required)):
+    """Remove a tool and its metadata from the database."""
+    return RemoveModelStatus(message="Foo bar! Tool was deleted.", status_code="0")
 
 @app.post(
     "/api/freva-nextgen/tool/submit/{tool}",
