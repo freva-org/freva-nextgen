@@ -181,7 +181,7 @@ def test_userdata_add_path_xarray_py(
 
         databrowser.userdata("delete", metadata={}, host=test_server)
         filename = (
-            "./freva-rest/src/databrowser_api/mock/data/model/regional"
+            "./freva-rest/src/freva_rest/databrowser_api/mock/data/model/regional"
             "/cordex/output/EUR-11/CLMcom/MPI-M-MPI-ESM-LR/historical"
             "/r0i0p0/CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/"
             "orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_"
@@ -236,7 +236,7 @@ def test_userdata_post_delete_failure(
             databrowser.userdata(
                 "add",
                 userdata_items=[
-                    "./freva-rest/src/databrowser_api/mock_broken/bears.nc"
+                    "./freva-rest/src/freva_rest/databrowser_api/mock_broken/bears.nc"
                 ],
                 metadata={"username": "janedoe"},
                 host="foo.bar.de:7777",
@@ -266,7 +266,7 @@ def test_userdata_post_delete_without_failure(
             databrowser.userdata(
                 "add",
                 userdata_items=[
-                    "./freva-rest/src/databrowser_api/mock_broken/bears.nc"
+                    "./freva-rest/src/freva_rest/databrowser_api/mock_broken/bears.nc"
                 ],
                 metadata={"username": "janedoe"},
                 host="foo.bar.de:7777",
@@ -296,7 +296,7 @@ def test_userdata_correct_args_wrong_place(
         databrowser.userdata(
             "delete",
             userdata_items=[
-                "./freva-rest/src/databrowser_api/mock_broken/bears.nc"
+                "./freva-rest/src/freva_rest/databrowser_api/mock_broken/bears.nc"
             ],
             metadata={"username": "johndoe"},
             host=test_server,
@@ -318,7 +318,7 @@ def test_userdata_empty_metadata_value_error(
                 "add",
                 userdata_items=[
                     (
-                        "./freva-rest/src/databrowser_api/mock/data/model/obs/"
+                        "./freva-rest/src/freva_rest/databrowser_api/mock/data/model/obs/"
                         "reanalysis/reanalysis/NOAA/NODC/OC5/mon/ocean/Omon/"
                         "r1i1p1/v20200101/hc700/"
                         "hc700_mon_NODC_OC5_r1i1p1_201201-201212.nc"
@@ -361,12 +361,12 @@ def test_add_userdata_wild_card(test_server: str, auth_instance: Auth) -> None:
             "add",
             userdata_items=[
                 (
-                    "./freva-rest/src/databrowser_api/mock/data/model/global/"
+                    "./freva-rest/src/freva_rest/databrowser_api/mock/data/model/global/"
                     "cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/r2i1p1f1/"
                     "Amon/ua/gn/v20190815/*.nc"
                 ),
                 (
-                    "./freva-rest/src/databrowser_api/mock/data/model/global/"
+                    "./freva-rest/src/freva_rest/databrowser_api/mock/data/model/global/"
                     "cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/r2i1p1f1/Amon/"
                     "ua/gn/v20190815/somewhere_wrong/*.nc"
                 ),

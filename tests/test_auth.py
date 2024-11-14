@@ -240,7 +240,7 @@ def test_userinfo(
     """Test getting the user info."""
 
     res = requests.get(
-        f"{test_server}//api/auth/v2/userinfo",
+        f"{test_server}/auth/v2/userinfo",
         headers={"Authorization": f"Bearer {auth['access_token']}"},
         timeout=3,
     )
@@ -248,8 +248,31 @@ def test_userinfo(
     assert "last_name" in res.json()
     with mocker.patch("freva_rest.auth.get_userinfo", return_value={}):
         res = requests.get(
-            f"{test_server}//api/auth/v2/userinfo",
+            f"{test_server}/auth/v2/userinfo",
             headers={"Authorization": f"Bearer {auth['access_token']}"},
             timeout=3,
         )
         assert res.status_code == 404
+
+
+def test_token_status(test_server: str, auth: Dict[str, str]) -> None:
+    """Check the token status methods."""
+    res1 = requests.get(
+        f"{test_server}/auth/v2/status",
+        headers={"Authorization": f"Bearer {auth['access_token']}"},
+    )
+    assert res1.status_code == 200
+    assert "exp" in res1.json()
+    res2 = requests.get(
+        f"{test_server}/auth/v2/status",
+        headers={"Authorization": "Bearer foo"},
+    )
+    assert res2.status_code != 200
+
+
+def test_get_overview(test_server: str) -> None:
+    """Test the open id connect discovery endpoint."""
+    res = requests.get(
+        f"{test_server}/auth/v2/.well-known/openid-configuration"
+    )
+    assert res.status_code == 200

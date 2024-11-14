@@ -50,13 +50,13 @@ class Token(BaseModel):
     scope: str
 
 
-@app.get("/api/auth/v2/status", tags=["Authentication"])
+@app.get("/api/freva-nextgen/auth/v2/status", tags=["Authentication"])
 async def get_token_status(id_token: IDToken = Security(auth.required)) -> TokenPayload:
     """Check the status of an access token."""
     return cast(TokenPayload, id_token)
 
 
-@app.get("/api/auth/v2/userinfo", tags=["Authentication"])
+@app.get("/api/freva-nextgen/auth/v2/userinfo", tags=["Authentication"])
 async def userinfo(
     id_token: IDToken = Security(auth.required), request: Request = Required
 ) -> UserInfo:
@@ -83,7 +83,7 @@ async def userinfo(
 
 
 @app.get(
-    "/api/auth/v2/.well-known/openid-configuration",
+    "/api/freva-nextgen/auth/v2/.well-known/openid-configuration",
     tags=["Authentication"],
     response_class=RedirectResponse,
 )
@@ -92,7 +92,7 @@ async def open_id_config() -> RedirectResponse:
     return RedirectResponse(server_config.oidc_discovery_url)
 
 
-@app.post("/api/auth/v2/token", tags=["Authentication"])
+@app.post("/api/freva-nextgen/auth/v2/token", tags=["Authentication"])
 async def fetch_or_refresh_token(
     username: Annotated[
         Optional[str],

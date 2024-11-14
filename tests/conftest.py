@@ -18,18 +18,18 @@ import uvicorn
 from typer.testing import CliRunner
 
 from data_portal_worker.cli import _main as run_data_loader
-from databrowser_api.mock import read_data
 from freva_client.auth import Auth
 from freva_client.utils import logger
 from freva_rest.api import app
 from freva_rest.config import ServerConfig, defaults
+from freva_rest.databrowser_api.mock import read_data
 from freva_rest.utils import create_redis_connection
 
 
 def run_test_server(port: int) -> None:
     """Start a test server using uvcorn."""
     logger.setLevel(10)
-    with mock.patch("databrowser_api.endpoints.Solr.batch_size", 3):
+    with mock.patch("freva_rest.databrowser_api.endpoints.Solr.batch_size", 3):
         uvicorn.run(app, host="0.0.0.0", port=port, reload=False, workers=None)
 
 
@@ -213,7 +213,7 @@ def test_server() -> Iterator[str]:
         thread2.daemon = True
         thread2.start()
         time.sleep(5)
-        yield env["API_URL"]
+        yield f'{env["API_URL"]}/api/freva-nextgen'
         asyncio.run(shutdown_data_loader())
         asyncio.run(flush_cache())
 
@@ -222,7 +222,7 @@ def test_server() -> Iterator[str]:
 def auth(test_server: str) -> Iterator[Dict[str, str]]:
     """Create a valid acccess token."""
     res = requests.post(
-        f"{test_server}/api/auth/v2/token",
+        f"{test_server}/auth/v2/token",
         data={
             "username": "janedoe",
             "password": "janedoe123",
@@ -244,7 +244,7 @@ def user_data_payload_sample() -> Dict[str, list[str]]:
                 "cmor_table": "mon",
                 "version": "",
                 "file": (
-                    "freva-rest/src/databrowser_api/mock/data/model"
+                    "freva-rest/src/freva_rest/databrowser_api/mock/data/model"
                     "/global/cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip"
                     "/r2i1p1f1/Amon/ua/gn/v20190815/"
                     "ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_gn_197901-199812.nc"
@@ -257,7 +257,7 @@ def user_data_payload_sample() -> Dict[str, list[str]]:
                 "cmor_table": "mon",
                 "version": "",
                 "file": (
-                    "freva-rest/src/databrowser_api/mock/data/model/"
+                    "freva-rest/src/freva_rest/databrowser_api/mock/data/model/"
                     "global/cmip6/CMIP6/CMIP/CSIRO-ARCCSS/ACCESS-CM2/"
                     "amip/r1i1p1f1/Amon/ua/gn/v20201108/"
                     "ua_Amon_ACCESS-CM2_amip_r1i1p1f1_gn_197901-201412.nc"
@@ -270,7 +270,7 @@ def user_data_payload_sample() -> Dict[str, list[str]]:
                 "cmor_table": "mon",
                 "version": "",
                 "file": (
-                    "freva-rest/src/databrowser_api/mock/data/model/"
+                    "freva-rest/src/freva_rest/databrowser_api/mock/data/model/"
                     "global/cmip6/CMIP6/CMIP/CSIRO-ARCCSS/ACCESS-CM2/"
                     "amip/r1i1p1f1/Amon/ua/gn/v20191108/"
                     "ua_Amon_ACCESS-CM2_amip_r1i1p1f1_gn_197001-201512.nc"
@@ -283,7 +283,7 @@ def user_data_payload_sample() -> Dict[str, list[str]]:
                 "cmor_table": "3h",
                 "version": "",
                 "file": (
-                    "freva-rest/src/databrowser_api/mock/data/model/"
+                    "freva-rest/src/freva_rest/databrowser_api/mock/data/model/"
                     "regional/cordex/output/EUR-11/GERICS/NCC-NorESM1-M/"
                     "rcp85/r1i1p1/GERICS-REMO2015/v1/3hr/pr/v20181212/"
                     "pr_EUR-11_NCC-NorESM1-M_rcp85_r1i1p1_GERICS-REMO2015"
@@ -297,7 +297,7 @@ def user_data_payload_sample() -> Dict[str, list[str]]:
                 "cmor_table": "day",
                 "version": "",
                 "file": (
-                    "freva-rest/src/databrowser_api/mock/data/model/"
+                    "freva-rest/src/freva_rest/databrowser_api/mock/data/model/"
                     "regional/cordex/output/EUR-11/CLMcom/"
                     "MPI-M-MPI-ESM-LR/historical/r0i0p0/"
                     "CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/"
@@ -312,7 +312,7 @@ def user_data_payload_sample() -> Dict[str, list[str]]:
                 "cmor_table": "day",
                 "version": "",
                 "file": (
-                    "freva-rest/src/databrowser_api/mock/data/model/"
+                    "freva-rest/src/freva_rest/databrowser_api/mock/data/model/"
                     "regional/cordex/output/EUR-11/CLMcom/"
                     "MPI-M-MPI-ESM-LR/historical/r1i1p1/"
                     "CLMcom-CCLM4-8-17/v1/daypt/tas/v20140515/"
@@ -336,7 +336,7 @@ def user_data_payload_sample_partially_success() -> Dict[str, list[str]]:
                 "cmor_table": "mon",
                 "version": "",
                 "file": (
-                    "freva-rest/src/databrowser_api/mock/data/model/"
+                    "freva-rest/src/freva_rest/databrowser_api/mock/data/model/"
                     "global/cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/"
                     "r2i1p1f1/Amon/ua/gn/v20190815/"
                     "ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_gn_197901-199812.nc"
@@ -355,7 +355,7 @@ def user_data_payload_sample_partially_success() -> Dict[str, list[str]]:
                 "time_frequency": "day",
                 "time": "fx",
                 "file": (
-                    "freva-rest/src/databrowser_api/mock/data/model/"
+                    "freva-rest/src/freva_rest/databrowser_api/mock/data/model/"
                     "regional/cordex/output/EUR-11/CLMcom/"
                     "MPI-M-MPI-ESM-LR/historical/r0i0p0/"
                     "CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/"
