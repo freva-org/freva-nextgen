@@ -203,38 +203,33 @@ def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
 
 def test_no_broker(test_server: str, auth: Dict[str, str]) -> None:
     """Test the behviour if no broker is present."""
-    env = os.environ.copy()
-    env["REDIS_USER"] = "foo"
-    with mock.patch("freva_rest.utils.REDIS_CACHE", None):
-        with mock.patch.dict(os.environ, env, clear=True):
-            res = requests.get(
-                f"{test_server}/databrowser/load/freva/",
-                params={"dataset": "cmip6-fs"},
-                headers={"Authorization": f"Bearer {auth['access_token']}"},
-                timeout=7,
-                stream=True,
-            )
-            file = list(res.iter_lines(decode_unicode=True))[0]
-            assert "error" in file
+    with mock.patch(
+        "freva_rest.databrowser_api.core.create_redis_connection", None
+    ):
+        res = requests.get(
+            f"{test_server}/databrowser/load/freva/",
+            params={"dataset": "cmip6-fs"},
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+            timeout=7,
+            stream=True,
+        )
+        file = list(res.iter_lines(decode_unicode=True))[0]
+        assert "error" in file
 
 
 def test_no_cache(test_server: str, auth: Dict[str, str]) -> None:
     """Test the behviour if no cache is present."""
     _id = "c0f32204-57a7-5157-bdc8-a79cee618f70.zarr"
-    env = os.environ.copy()
-    env["REDIS_USER"] = "foo"
     with mock.patch("freva_rest.utils.REDIS_CACHE", None):
-        with mock.patch.dict(os.environ, env, clear=True):
+        with mock.patch("freva_rest.utils.CONFIG.redis_user", "foo"):
             res = requests.get(
                 f"{test_server}/data-portal/zarr/{_id}/status",
                 headers={"Authorization": f"Bearer {auth['access_token']}"},
                 timeout=7,
             )
             assert res.status_code == 503
-    env = os.environ.copy()
-    env["API_SERVICES"] = "databrowser"
     with mock.patch("freva_rest.utils.REDIS_CACHE", None):
-        with mock.patch.dict(os.environ, env, clear=True):
+        with mock.patch("freva_rest.utils.CONFIG.api_services", ""):
             os.environ["API_SERVICES"] = "databrowser"
             res = requests.get(
                 f"{test_server}/data-portal/zarr/{_id}/status",

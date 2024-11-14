@@ -209,7 +209,6 @@ def test_userdata_add_api_422(test_server: str, auth: Dict[str, str]) -> None:
         json=data,
         headers={"Authorization": f"Bearer {token}"},
     )
-    print(response.status_code)
     assert response.status_code == 422
 
 
@@ -384,8 +383,6 @@ def test_wrong_equal_facet(
 
 def test_no_solr_post(test_server: str, auth: Dict[str, str]) -> None:
     """Test what happens if there is no connection to Solr during a PUT request."""
-    env = os.environ.copy()
-    env["SOLR_HOST"] = "foo.bar.de"
     token = auth["access_token"]
     data = {
         "user_metadata": [
@@ -398,7 +395,7 @@ def test_no_solr_post(test_server: str, auth: Dict[str, str]) -> None:
         ],
         "facets": {},
     }
-    with mock.patch.dict(os.environ, env, clear=True):
+    with mock.patch("freva_rest.rest.server_config.solr_host", "foo.bar"):
         res = requests.post(
             f"{test_server}/databrowser/userdata",
             json=data,
@@ -410,9 +407,7 @@ def test_no_solr_post(test_server: str, auth: Dict[str, str]) -> None:
 def test_no_solr_delete(test_server: str, auth: Dict[str, str]) -> None:
     """Test what happens if there is no connection to Solr during a PUT request."""
     token = auth["access_token"]
-    env = os.environ.copy()
-    env["SOLR_HOST"] = "foo.bar.de"
-    with mock.patch.dict(os.environ, env, clear=True):
+    with mock.patch("freva_rest.rest.server_config.solr_host", "foo.bar"):
         res = requests.delete(
             f"{test_server}/databrowser/userdata",
             json={},

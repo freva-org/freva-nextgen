@@ -1,7 +1,6 @@
 """Definition of routes for authentication."""
 
 import datetime
-import os
 from typing import Annotated, Any, Dict, Literal, Optional, cast
 
 import aiohttp
@@ -51,7 +50,9 @@ class Token(BaseModel):
 
 
 @app.get("/api/freva-nextgen/auth/v2/status", tags=["Authentication"])
-async def get_token_status(id_token: IDToken = Security(auth.required)) -> TokenPayload:
+async def get_token_status(
+    id_token: IDToken = Security(auth.required),
+) -> TokenPayload:
     """Check the status of an access token."""
     return cast(TokenPayload, id_token)
 
@@ -75,7 +76,9 @@ async def userinfo(
                 response.raise_for_status()
                 token_data = await response.json()
                 return UserInfo(
-                    **get_userinfo({k.lower(): str(v) for (k, v) in token_data.items()})
+                    **get_userinfo(
+                        {k.lower(): str(v) for (k, v) in token_data.items()}
+                    )
                 )
         except Exception as error:
             logger.error(error)
@@ -143,8 +146,9 @@ async def fetch_or_refresh_token(
 ) -> Token:
     """Interact with the openID connect endpoint for client authentication."""
     data: Dict[str, Optional[str]] = {
-        "client_id": (client_id or "").replace("None", "") or server_config.oidc_client,
-        "client_secret": client_secret or os.getenv("OIDC_CLIENT_SECRET", ""),
+        "client_id": (client_id or "").replace("None", "")
+        or server_config.oidc_client_id,
+        "client_secret": client_secret or server_config.oidc_client_secret,
         "grant_type": grant_type,
     }
     if grant_type == "password":
@@ -161,7 +165,7 @@ async def fetch_or_refresh_token(
             response.raise_for_status()
         except Exception as error:
             logger.error(error)
-            raise HTTPException(status_code=404)
+            raise HTTPException(status_code=404) from None
         token_data = await response.json()
         expires_at = (
             token_data.get("exp")
