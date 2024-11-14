@@ -10,18 +10,17 @@ import mock
 import pytest
 import requests
 import xarray as xr
-from fastapi.testclient import TestClient
 
 
-def test_auth(client: TestClient) -> None:
+def test_auth(test_server: str) -> None:
     """Test the authentication methods."""
-    res1 = client.post(
-        "/api/auth/v2/token",
+    res1 = requests.post(
+        f"{test_server}/auth/v2/token",
         data={"username": "foo", "password": "bar"},
     )
     assert res1.status_code == 404
-    res2 = client.post(
-        "/api/auth/v2/token",
+    res2 = requests.post(
+        f"{test_server}/auth/v2/token",
         data={
             "username": "janedoe",
             "password": "janedoe123",
@@ -35,14 +34,14 @@ def test_load_files_success(test_server: str, auth: Dict[str, str]) -> None:
     """Test loading single files."""
     token = auth["access_token"]
     res1 = requests.get(
-        f"{test_server}/api/databrowser/load/freva/",
+        f"{test_server}/databrowser/load/freva/",
         params={"dataset": "cmip6-fs"},
         headers={"Authorization": "Bearer foo"},
         timeout=3,
     )
     assert res1.status_code == 401
     res2 = requests.get(
-        f"{test_server}/api/databrowser/load/freva/",
+        f"{test_server}/databrowser/load/freva/",
         params={"dataset": "cmip6-fs"},
         headers={"Authorization": f"Bearer {token}"},
         timeout=3,
@@ -86,7 +85,7 @@ def test_load_files_success(test_server: str, auth: Dict[str, str]) -> None:
     )
     assert data.status_code == 200
     res3 = requests.get(
-        f"{test_server}/api/databrowser/load/freva/",
+        f"{test_server}/databrowser/load/freva/",
         params={"dataset": "cmip6-fs", "catalogue-type": "intake"},
         headers={"Authorization": f"Bearer {token}"},
         timeout=3,
@@ -120,7 +119,7 @@ def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
     """Test for things that can go wrong when loading the data."""
     token = auth["access_token"]
     res2 = requests.get(
-        f"{test_server}/api/databrowser/load/freva/",
+        f"{test_server}/databrowser/load/freva/",
         params={"dataset": "*fs", "project": "cmip6"},
         headers={"Authorization": f"Bearer {token}"},
         stream=True,
@@ -142,20 +141,20 @@ def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
     )
     assert data.status_code in (400, 404)
     data = requests.get(
-        f"{test_server}/api/freva-data-portal/zarr/foobar.zarr/lon/.zmetadata",
+        f"{test_server}/data-portal/zarr/foobar.zarr/lon/.zmetadata",
         headers={"Authorization": f"Bearer {token}"},
         timeout=3,
     )
     assert data.status_code in (404, 400)
     res2 = requests.get(
-        f"{test_server}/api/databrowser/load/freva/",
+        f"{test_server}/databrowser/load/freva/",
         params={"dataset": "foo"},
         headers={"Authorization": f"Bearer {token}"},
         timeout=3,
     )
     assert res2.status_code in (400, 404)
     data = requests.get(
-        f"{test_server}/api/freva-data-portal/foo.zarr/status",
+        f"{test_server}/data-portal/foo.zarr/status",
         params={"timeout": 5},
         headers={"Authorization": f"Bearer {token}"},
         timeout=7,
@@ -164,7 +163,7 @@ def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
     with pytest.warns():
         for _ in range(2):
             res3 = requests.get(
-                f"{test_server}/api/databrowser/load/freva/",
+                f"{test_server}/databrowser/load/freva/",
                 params={"project": "mock"},
                 headers={"Authorization": f"Bearer {token}"},
                 stream=True,
@@ -183,7 +182,7 @@ def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
     assert data.status_code >= 500
     for _ in range(2):
         res3 = requests.get(
-            f"{test_server}/api/databrowser/load/freva/",
+            f"{test_server}/databrowser/load/freva/",
             params={"file": "*.json"},
             headers={"Authorization": f"Bearer {token}"},
             stream=True,
@@ -204,41 +203,36 @@ def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
 
 def test_no_broker(test_server: str, auth: Dict[str, str]) -> None:
     """Test the behviour if no broker is present."""
-    env = os.environ.copy()
-    env["REDIS_USER"] = "foo"
-    with mock.patch("freva_rest.utils.REDIS_CACHE", None):
-        with mock.patch.dict(os.environ, env, clear=True):
-            res = requests.get(
-                f"{test_server}/api/databrowser/load/freva/",
-                params={"dataset": "cmip6-fs"},
-                headers={"Authorization": f"Bearer {auth['access_token']}"},
-                timeout=7,
-                stream=True,
-            )
-            file = list(res.iter_lines(decode_unicode=True))[0]
-            assert "error" in file
+    with mock.patch(
+        "freva_rest.databrowser_api.core.create_redis_connection", None
+    ):
+        res = requests.get(
+            f"{test_server}/databrowser/load/freva/",
+            params={"dataset": "cmip6-fs"},
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+            timeout=7,
+            stream=True,
+        )
+        file = list(res.iter_lines(decode_unicode=True))[0]
+        assert "error" in file
 
 
-def test_no_cache(client: TestClient, auth: Dict[str, str]) -> None:
+def test_no_cache(test_server: str, auth: Dict[str, str]) -> None:
     """Test the behviour if no cache is present."""
     _id = "c0f32204-57a7-5157-bdc8-a79cee618f70.zarr"
-    env = os.environ.copy()
-    env["REDIS_USER"] = "foo"
     with mock.patch("freva_rest.utils.REDIS_CACHE", None):
-        with mock.patch.dict(os.environ, env, clear=True):
-            res = client.get(
-                f"api/freva-data-portal/zarr/{_id}/status",
+        with mock.patch("freva_rest.utils.CONFIG.redis_user", "foo"):
+            res = requests.get(
+                f"{test_server}/data-portal/zarr/{_id}/status",
                 headers={"Authorization": f"Bearer {auth['access_token']}"},
                 timeout=7,
             )
             assert res.status_code == 503
-    env = os.environ.copy()
-    env["API_SERVICES"] = "databrowser"
     with mock.patch("freva_rest.utils.REDIS_CACHE", None):
-        with mock.patch.dict(os.environ, env, clear=True):
+        with mock.patch("freva_rest.utils.CONFIG.api_services", ""):
             os.environ["API_SERVICES"] = "databrowser"
-            res = client.get(
-                f"api/freva-data-portal/zarr/{_id}/status",
+            res = requests.get(
+                f"{test_server}/data-portal/zarr/{_id}/status",
                 headers={"Authorization": f"Bearer {auth['access_token']}"},
                 timeout=7,
             )

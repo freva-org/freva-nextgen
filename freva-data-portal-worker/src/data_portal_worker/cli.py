@@ -63,8 +63,7 @@ def _main(
 def run_data_loader(argv: Optional[List[str]] = None) -> None:
     """Daemon that waits for messages to load the data."""
     config_file = (
-        Path(appdirs.user_cache_dir("freva"))
-        / "data-portal-cluster-config.json"
+        Path(appdirs.user_cache_dir("freva")) / "data-portal-cluster-config.json"
     )
 
     redis_host, _, redis_port = (

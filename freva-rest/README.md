@@ -41,74 +41,73 @@ docker pull ghcr.io/freva-clint/freva-rest:latest
 ```
 
 By default the container starts with the ``freva-rest-service`` command.
-The following default values are available on start up:
+See the `freva-rest-server --help` command for configure options.
 
-```console
-reva-rest-server --help                                                                                                                                     (python3_12)
+You can adjust the server settings by either overriding the default flags or 
+setting environment variables in the container.
 
- Usage: freva-rest-server [OPTIONS]
+### Available Environment Variables
 
- Start the freva rest API.
+```ini
+# Server Configuration
+DEBUG=0                  # Start server in debug mode (1), (default: 0 -> no debug)
+API_PORT=7777            # The port the rest service should be running on
+API_WORKER=8            # Number of multi-process workers serving the API
+API_PROXY=http://www.example.de/
+API_CACHE_EXP=3600      # Expiry time in seconds of the cached data
 
-╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --config-file         -c                PATH                       Path to the server configuration file                                                                 │
-│                                                                    [default: /home/wilfred/workspace/freva-nextgen/freva-rest/src/freva_rest/api_config.toml]            │
-│ --port                -p                INTEGER                    The port the api is running on [default: 8080]                                                        │
-│ --services            -s                [zarr-stream|databrowser]  Set additional services this rest API should serve. [default: zarr-stream, databrowser]               │
-│ --cert-dir                              TEXT                       Set the path to the directory contaning the tls cert and key files that are used to establish a       │
-│                                                                    secure connection, if you set the it will be assumed that cert file is saved as client-cert.pem and   │
-│                                                                    the key file client-key.pem. This flag can be used as a short cut instead of using the `--tls-cert`   │
-│                                                                    and `--tls-key` flats                                                                                 │
-│                                                                    [default: None]                                                                                       │
-│ --tls-cert                              TEXT                       Set the path to the tls certificate file that is used to establish a secure connection to the data    │
-│                                                                    portal cache.                                                                                         │
-│                                                                    [default: None]                                                                                       │
-│ --tls-key                               TEXT                       Set the path to the tls key file that is used to establish a secure connection to the data portal     │
-│                                                                    cache.                                                                                                │
-│                                                                    [default: None]                                                                                       │
-│ --dev                     --no-dev                                 Add test data to the dev solr. [default: no-dev]                                                      │
-│ --debug                   --no-debug                               Turn on debug mode. [default: no-debug]                                                               │
-│ --install-completion                                               Install completion for the current shell.                                                             │
-│ --show-completion                                                  Show completion for the current shell, to copy it or customize the installation.                      │
-│ --help                                                             Show this message and exit.                                                                           │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+# Database Configuration
+API_MONGO_USER=mongo
+API_MONGO_PASSWORD=secret
+API_MONGO_DB=search_stats
+API_MONGO_INITDB_DATABASE=search_stats
+API_MONGO_HOST=localhost:27017  # Host name and port should be separated by ":"
+
+# Solr Configuration
+API_SOLR_HOST=localhost:8983   # Host name and port should be separated by ":"
+API_SOLR_CORE=files           # Name of the solr core for datasets with multiple versions
+
+# Redis Configuration
+API_REDIS_HOST=redis://localhost:6379
+API_REDIS_USER=              # Username for the redis connection
+API_REDIS_PASSWORD=              # Password for the redis connection
+API_REDIS_SSL_CERTFILE=/certs/client-cert.pem
+API_REDIS_SSL_KEYFILE=/certs/client-key.pem
+
+# OIDC Configuration
+API_OIDC_URL=http://keycloak:8080/realms/freva/.well-known/openid-configuration
+API_OIDC_CLIENT_ID=freva     #Name of the client (app) that is used to create the access tokens, defaults to freva
+API_OIDC_CLIENT_SECRET=      # Optional: Set if your OIDC instance uses a client secret
+
+# Service activation flags
+# Set to 1 to enable, 0 to disable the service
+USE_MONGODB=1  # Controls MongoDB initialization
+USE_SOLR=1     # Controls Apache Solr initialization
 ```
 
-You can either adjust the server settings by overriding the default flags
-listed above or setting environment variables in the container.
+### Required Volumes
+The container requires several persistent volumes that should be mounted:
 
-The following environment variables can be set:
+```console
+docker run -d \
+  --name freva-rest \
+  -e {mentioned envs above} \
+  -v $(pwd)/mongodb_data:/data/db \
+  -v $(pwd)/solr_data:/var/solr \
+  -v $(pwd)/certs:/certs:ro \
+  -p 7777:7777 \
+  -p 27017:27017 \
+  -p 8983:8983 \
+  -p 5432:5432 \
+  ghcr.io/freva-clint/freva-rest:latest
+```
 
-- ``DEBUG``: Start server in debug mode (1), (default: 0 -> no debug).
-- ``API_PORT``: the port the rest service should be running on (default 8080).
-- ``API_WORKER``: the number of multi-process work serving the API (default: 8).
-- ``SOLR_HOST``: host name of the solr server, host name and port should be
-                 separated by a ``:``, for example ``localhost:8983``
-- ``SOLR_CORE`` : name of the solr core that contains datasets with multiple
-                  versions
-- ``MONGO_HOST``: host name of the mongodb server, where query statistics are
-                 stored. Host name and port should separated by a ``:``, for
-                 example ``localhost:27017``
-- ``MONGO_USER``: user name for the mongodb.
-- ``MONGO_PASSWORD``: password to log on to the mongodb.
-- ``MONGO_DB``: database name of the mongodb instance.
-- ``API_URL``: url of the machine that runs of the rest api
-- ``API_CACHE_EXP``: expiry time in seconds of the cached data
-- ``REDIS_HOST``: Host and port of the redis cache
-                  Host name and port should separated by a ``:``, for
-                  example ``localhost:5672``
-- ``REDIS_PASS``: Password for the redis connection.
-- ``REDIS_USER``: Username for the redis connection.
-- ``REDIS_SSL_CERTFILE``: Path to the TSL certificate file used to encrypt
-                          the redis connection.
-- ``REDIS_SSL_KEYFILE``: Path to the TSL key file used to encrypt the redis
-                         connection.
-- ``OIDC_URL``: Discovery of the open connect id service.
-- ``OIDC_CLIENT_ID``: Name of the client (app) that is used to create
-                          the access tokens, defaults to freva
-- ``OIDC_CLIENT_SECRET``: You can set a client secret, if you have
-                           configured your oidc instance to use a client secret.
+Create the necessary directories before starting the container:
+```console
+mkdir -p {mongodb_data,solr_data,certs}
+```
 
-> ``📝`` You can override the path to the default config file using the ``API_CONFIG``
+> [!NOTE]
+> You can override the path to the default config file using the ``API_CONFIG``
          environment variable. The default location of this config file is
          ``/opt/databrowser/api_config.toml``.

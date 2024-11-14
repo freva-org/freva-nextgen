@@ -1,5 +1,6 @@
 """Query climate data sets by using-key value pair search queries."""
 
+
 import sys
 from collections import defaultdict
 from fnmatch import fnmatch
@@ -8,6 +9,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import (
     Any,
+    Collection,
     Dict,
     Iterator,
     List,
@@ -21,12 +23,13 @@ from typing import (
 import intake
 import intake_esm
 import requests
+import xarray as xr
 import yaml
 from rich import print as pprint
 
 from .auth import Auth
 from .utils import logger
-from .utils.databrowser_utils import Config
+from .utils.databrowser_utils import Config, UserDataHandler
 
 __all__ = ["databrowser"]
 
@@ -207,7 +210,7 @@ class databrowser:
         *facets: str,
         uniq_key: Literal["file", "uri"] = "file",
         flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems"
+            "freva", "cmip6", "cmip5", "cordex", "nextgems", "user"
         ] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
@@ -243,8 +246,7 @@ class databrowser:
         self, facets: Tuple[str, ...], search_kw: Dict[str, List[str]]
     ) -> None:
         metadata = {
-            k: v[::2]
-            for (k, v) in self._facet_search(extended_search=True).items()
+            k: v[::2] for (k, v) in self._facet_search(extended_search=True).items()
         }
         primary_key = list(metadata.keys() or ["project"])[0]
         num_facets = 0
@@ -267,19 +269,15 @@ class databrowser:
         headers = {}
         if self._stream_zarr:
             query_url = self._cfg.zarr_loader_url
-            token = self._auth.check_authentication(
-                auth_url=self._cfg.auth_url
-            )
+            token = self._auth.check_authentication(auth_url=self._cfg.auth_url)
             headers = {"Authorization": f"Bearer {token['access_token']}"}
-        result = self._get(query_url, headers=headers, stream=True)
+        result = self._request("GET", query_url, headers=headers, stream=True)
         if result is not None:
             try:
                 for res in result.iter_lines():
                     yield res.decode("utf-8")
             except KeyboardInterrupt:
-                pprint(
-                    "[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr
-                )
+                pprint("[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr)
 
     def __repr__(self) -> str:
         params = ", ".join(
@@ -306,9 +304,7 @@ class databrowser:
 
         # Create a table-like structure for available flavors and search facets
         style = 'style="text-align: left"'
-        facet_heading = (
-            f"Available search facets for <em>{self._flavour}</em> flavour"
-        )
+        facet_heading = f"Available search facets for <em>{self._flavour}</em> flavour"
         html_repr = (
             "<table>"
             f"<tr><th colspan='2' {style}>{self.__class__.__name__}"
@@ -337,7 +333,7 @@ class databrowser:
 
 
         """
-        result = self._get(self._cfg.metadata_url)
+        result = self._request("GET", self._cfg.metadata_url)
         if result:
             return cast(int, result.json().get("total_count", 0))
         return 0
@@ -347,15 +343,11 @@ class databrowser:
         kwargs: Dict[str, Any] = {"stream": True}
         url = self._cfg.intake_url
         if self._stream_zarr:
-            token = self._auth.check_authentication(
-                auth_url=self._cfg.auth_url
-            )
+            token = self._auth.check_authentication(auth_url=self._cfg.auth_url)
             url = self._cfg.zarr_loader_url
-            kwargs["headers"] = {
-                "Authorization": f"Bearer {token['access_token']}"
-            }
+            kwargs["headers"] = {"Authorization": f"Bearer {token['access_token']}"}
             kwargs["params"] = {"catalogue-type": "intake"}
-        result = self._get(url, **kwargs)
+        result = self._request("GET", url, **kwargs)
         if result is None:
             raise ValueError("No results found")
 
@@ -365,9 +357,7 @@ class databrowser:
                 for content in result.iter_content(decode_unicode=False):
                     stream.write(content)
         except Exception as error:
-            raise ValueError(
-                f"Couldn't write catalogue content: {error}"
-            ) from None
+            raise ValueError(f"Couldn't write catalogue content: {error}") from None
 
     def intake_catalogue(self) -> intake_esm.core.esm_datastore:
         """Create an intake esm catalogue object from the search.
@@ -392,7 +382,7 @@ class databrowser:
         .. execute_code::
 
             from freva_client import databrowser
-            db = databrowser(dataset="cmip6-fs", stream_zarr=True)
+            db = databrowser(dataset="cmip6-hsm", stream_zarr=True)
             cat = db.intake_catalogue()
             print(cat.df)
         """
@@ -405,7 +395,7 @@ class databrowser:
         cls,
         *facets: str,
         flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems"
+            "freva", "cmip6", "cmip5", "cordex", "nextgems", "user"
         ] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
@@ -455,6 +445,7 @@ class databrowser:
             Select all versions and not just the latest version (default).
         fail_on_error: bool, default: False
             Make the call fail if the connection to the databrowser could not
+            be established.
         **search_keys: str
             The search constraints to be applied in the data search. If not given
             the whole dataset will be queried.
@@ -504,9 +495,7 @@ class databrowser:
         result = this._facet_search(extended_search=extended_search)
         counts = {}
         for facet, value_counts in result.items():
-            counts[facet] = dict(
-                zip(value_counts[::2], map(int, value_counts[1::2]))
-            )
+            counts[facet] = dict(zip(value_counts[::2], map(int, value_counts[1::2])))
         return counts
 
     @cached_property
@@ -531,8 +520,7 @@ class databrowser:
 
         """
         return {
-            k: v[::2]
-            for (k, v) in self._facet_search(extended_search=True).items()
+            k: v[::2] for (k, v) in self._facet_search(extended_search=True).items()
         }
 
     @classmethod
@@ -540,7 +528,7 @@ class databrowser:
         cls,
         *facets: str,
         flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems"
+            "freva", "cmip6", "cmip5", "cordex", "nextgems", "user"
         ] = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
@@ -593,6 +581,7 @@ class databrowser:
             name will be taken from the freva config file.
         fail_on_error: bool, default: False
             Make the call fail if the connection to the databrowser could not
+            be established.
         **search_keys: str, list[str]
             The facets to be applied in the data search. If not given
             the whole dataset will be queried.
@@ -664,9 +653,7 @@ class databrowser:
         )
         return {
             k: v[::2]
-            for (k, v) in this._facet_search(
-                extended_search=extended_search
-            ).items()
+            for (k, v) in this._facet_search(extended_search=extended_search).items()
         }
 
     @classmethod
@@ -723,7 +710,7 @@ class databrowser:
         self,
         extended_search: bool = False,
     ) -> Dict[str, List[str]]:
-        result = self._get(self._cfg.metadata_url)
+        result = self._request("GET", self._cfg.metadata_url)
         if result is None:
             return {}
         data = result.json()
@@ -733,26 +720,172 @@ class databrowser:
             constraints = data["primary_facets"]
         return {f: v for f, v in data["facets"].items() if f in constraints}
 
-    def _get(
-        self, url: str, **kwargs: Any
-    ) -> Optional[requests.models.Response]:
-        """Apply the get method to the databrowser."""
-        logger.debug("Searching %s with parameters: %s", url, self._params)
-        params = kwargs.pop("params", {})
-        kwargs.setdefault("timeout", 30)
-        try:
-            res = requests.get(
-                url, params={**self._params, **params}, **kwargs
+    @classmethod
+    def userdata(
+        cls,
+        action: Literal["add", "delete"],
+        userdata_items: Optional[List[Union[str, xr.Dataset]]] = None,
+        metadata: Optional[Dict[str, str]] = None,
+        host: Optional[str] = None,
+        fail_on_error: bool = False,
+    ) -> None:
+        """Add or delete user data in the databrowser system.
+
+        Manage user data in the databrowser system by adding new data or
+        deleting existing data.
+
+        For the "``add``" action, the user can provide data items (file paths
+        or xarray datasets) along with metadata (key-value pairs) to
+        categorize and organize the data.
+
+        For the "``delete``" action, the user provides metadata as search
+        criteria to identify and remove the existing data from the
+        system.
+
+        Parameters
+        ~~~~~~~~~~
+        action : Literal["add", "delete"]
+            The action to perform: "add" to add new data, or "delete"
+            to remove existing data.
+        userdata_items : List[Union[str, xr.Dataset]], optional
+            A list of user file paths or xarray datasets to add to the
+            databrowser (required for "add").
+        metadata : Dict[str, str], optional
+            Key-value metadata pairs to categorize the data (for "add")
+            or search and identify data for
+            deletion (for "delete").
+        host : str, optional
+            Override the host name of the databrowser server. This is usually
+            the url where the freva web site can be found. Such as
+            www.freva.dkrz.de. By default no host name is given and the host
+            name will be taken from the freva config file.
+        fail_on_error : bool, optional
+            Make the call fail if the connection to the databrowser could not
+            be established.
+
+        Raises
+        ~~~~~~
+        ValueError
+            If the operation fails or required parameters are missing
+            for the specified action.
+        FileNotFoundError
+            If no user data is provided for the "add" action.
+
+        Example
+        ~~~~~~~
+
+        Adding user data:
+
+        .. execute_code::
+
+            from freva_client import authenticate, databrowser
+            import xarray as xr
+            token_info = authenticate(username="janedoe")
+            filenames = (
+                "../freva-rest/src/freva_rest/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/"
+                "GERICS/NCC-NorESM1-M/rcp85/r1i1p1/GERICS-REMO2015/v1/3hr/pr/v20181212/*.nc"
             )
-            res.raise_for_status()
-            return res
+            filename1 = (
+                "../freva-rest/src/freva_rest/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/"
+                "CLMcom/MPI-M-MPI-ESM-LR/historical/r0i0p0/CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/"
+                "orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_fx.nc"
+            )
+            xarray_data = xr.open_dataset(filename1)
+            databrowser.userdata(
+                action="add",
+                userdata_items=[xarray_data, filenames],
+                metadata={"project": "cmip5", "experiment": "myFavExp"}
+            )
+
+        Deleting user data:
+
+        .. execute_code::
+
+            from freva_client import authenticate, databrowser
+            token_info = authenticate(username="janedoe")
+            databrowser.userdata(
+                action="delete",
+                metadata={"project": "cmip5", "experiment": "myFavExp"}
+            )
+        """
+        this = cls(
+            host=host,
+            fail_on_error=fail_on_error,
+        )
+        userdata_items = userdata_items or []
+        metadata = metadata or {}
+        url = f"{this._cfg.userdata_url}"
+        token = this._auth.check_authentication(auth_url=this._cfg.auth_url)
+        headers = {"Authorization": f"Bearer {token['access_token']}"}
+        payload_metadata: dict[str, Collection[Collection[str]]] = {}
+
+        if action == "add":
+            user_data_handler = UserDataHandler(userdata_items)
+            if user_data_handler.user_metadata:
+                payload_metadata = {
+                    "user_metadata": user_data_handler.user_metadata,
+                    "facets": metadata,
+                }
+                result = this._request(
+                    "POST", url, data=payload_metadata, headers=headers
+                )
+                if result is not None:
+                    response_data = result.json()
+                    status_message = response_data.get("status")
+                else:
+                    raise ValueError("Failed to add user data")
+                pprint(f"[b][green]{status_message}[green][b]")
+            else:
+                raise ValueError("No metadata generated from the input data.")
+
+        if action == "delete":
+            if userdata_items:
+                logger.info(
+                    "'userdata_items' are not needed for the 'delete'"
+                    "action and will be ignored."
+                )
+
+            result = this._request("DELETE", url, data=metadata, headers=headers)
+
+            if result is None:
+                raise ValueError("Failed to delete user data")
+            pprint("[b][green]User data deleted successfully[green][b]")
+
+    def _request(
+        self,
+        method: Literal["GET", "POST", "PUT", "PATCH", "DELETE"],
+        url: str,
+        data: Optional[Dict[str, Any]] = None,
+        **kwargs: Any
+    ) -> Optional[requests.models.Response]:
+        """Request method to handle CRUD operations (GET, POST, PUT, PATCH, DELETE)."""
+        method_upper = method.upper()
+        timeout = kwargs.pop("timeout", 30)
+        params = kwargs.pop("params", {})
+        stream = kwargs.pop("stream", False)
+
+        logger.debug("%s request to %s with data: %s and parameters: %s",
+                     method_upper, url, data, {**self._params, **params})
+
+        try:
+            req = requests.Request(
+                method=method_upper,
+                url=url,
+                params={**self._params, **params},
+                json=None if method_upper in "GET" else data,
+                **kwargs
+            )
+            with requests.Session() as session:
+                prepared = session.prepare_request(req)
+                res = session.send(prepared, timeout=timeout, stream=stream)
+                res.raise_for_status()
+                return res
+
         except KeyboardInterrupt:
             pprint("[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr)
-        except (
-            requests.exceptions.ConnectionError,
-            requests.exceptions.HTTPError,
-        ) as error:
-            msg = f"Search request failed with {error}"
+        except (requests.exceptions.ConnectionError,
+                requests.exceptions.HTTPError) as error:
+            msg = f"{method_upper} request failed with {error}"
             if self._fail_on_error:
                 raise ValueError(msg) from None
             logger.warning(msg)

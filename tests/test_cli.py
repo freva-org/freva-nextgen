@@ -7,12 +7,13 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 from types import TracebackType
 
 import mock
+from pytest_mock import MockerFixture
+from typer.testing import CliRunner
+
 from freva_client import __version__
 from freva_client.auth import Auth
 from freva_client.cli import app as cli_app
 from freva_rest.cli import cli, get_cert_file
-from pytest_mock import MockerFixture
-from typer.testing import CliRunner
 
 
 class MockTempfile:
@@ -112,24 +113,21 @@ def test_rest_cli(mocker: MockerFixture) -> None:
     with TemporaryDirectory() as temp_dir:
         MockTempfile.temp_dir = temp_dir
         with mock.patch("freva_rest.cli.NamedTemporaryFile", MockTempfile):
-            runner = CliRunner()
-            result1 = runner.invoke(cli, ["--dev", "--no-debug"])
-            assert result1.exit_code == 0
+            cli(["--dev"])
             mock_run.assert_called_once_with(
                 "freva_rest.api:app",
                 host="0.0.0.0",
-                port=8080,
+                port=7777,
                 reload=True,
                 log_level=20,
                 workers=None,
                 env_file=str(Path(temp_dir) / "foo.txt"),
             )
-            result2 = runner.invoke(cli, ["--debug", "--no-dev"])
-            assert result2.exit_code == 0
+            cli(["--debug"])
             mock_run.assert_called_with(
                 "freva_rest.api:app",
                 host="0.0.0.0",
-                port=8080,
+                port=7777,
                 reload=False,
                 log_level=10,
                 workers=8,
@@ -137,7 +135,9 @@ def test_rest_cli(mocker: MockerFixture) -> None:
             )
 
 
-def test_auth(test_server: str, cli_runner: CliRunner, auth_instance: Auth) -> None:
+def test_auth(
+    test_server: str, cli_runner: CliRunner, auth_instance: Auth
+) -> None:
     """Test authentication."""
     old_token = deepcopy(auth_instance._auth_token)
     try:

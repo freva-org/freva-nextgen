@@ -5,6 +5,7 @@ from pathlib import Path
 
 import mock
 import pytest
+
 from freva_client import databrowser
 
 
@@ -14,7 +15,9 @@ def test_invalid_eval_config(invalid_eval_conf_file: Path) -> None:
     with pytest.raises(ValueError):
         databrowser()
     db = databrowser(host="www.example.com:8080")
-    assert db.url == "http://www.example.com:8080/api/databrowser"
+    assert (
+        db.url == "http://www.example.com:8080/api/freva-nextgen/databrowser"
+    )
 
 
 def test_invalid_freva_config(invalid_freva_conf_file: Path) -> None:
@@ -23,19 +26,19 @@ def test_invalid_freva_config(invalid_freva_conf_file: Path) -> None:
     with pytest.raises(ValueError):
         databrowser()
     db = databrowser(host="https://www.example.com")
-    assert db.url == "https://www.example.com/api/databrowser"
+    assert db.url == "https://www.example.com/api/freva-nextgen/databrowser"
 
 
 def test_valid_eval_config(valid_eval_conf_file: Path) -> None:
     """Test if we can load an evaluation system config file."""
     assert valid_eval_conf_file.is_file()
     db = databrowser()
-    assert db.url == "https://www.eval.conf:8081/api/databrowser"
+    assert db.url == "https://www.eval.conf:8081/api/freva-nextgen/databrowser"
     valid_eval_conf_file.write_text(
         "[evaluation_system]\ndatabrowser.host = http://www.eval.conf/api\n"
     )
     db = databrowser()
-    assert db.url == "http://www.eval.conf/api/databrowser"
+    assert db.url == "http://www.eval.conf/api/freva-nextgen/databrowser"
 
 
 def test_valid_freva_config(valid_freva_config: Path) -> None:
@@ -49,7 +52,9 @@ def test_valid_freva_config(valid_freva_config: Path) -> None:
                 lambda x, y="foo": str(valid_freva_config),
             ):
                 db = databrowser()
-                assert db.url == "https://www.freva.com:80/api/databrowser"
+                assert db.url == (
+                    "https://www.freva.com:80/api/freva-nextgen/databrowser"
+                )
     config_file = valid_freva_config / "share" / "freva" / "freva.toml"
     assert config_file.is_file()
     config_file.write_text(config_file.read_text().replace(":80", ""))
@@ -60,4 +65,6 @@ def test_valid_freva_config(valid_freva_config: Path) -> None:
             lambda x, y="foo": str(valid_freva_config),
         ):
             db = databrowser()
-            assert db.url == "https://www.freva.com/api/databrowser"
+            assert db.url == (
+                "https://www.freva.com/api/freva-nextgen/databrowser"
+            )
