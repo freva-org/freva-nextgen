@@ -113,21 +113,24 @@ def test_rest_cli(mocker: MockerFixture) -> None:
     with TemporaryDirectory() as temp_dir:
         MockTempfile.temp_dir = temp_dir
         with mock.patch("freva_rest.cli.NamedTemporaryFile", MockTempfile):
-            cli(["--dev"])
+            runner = CliRunner()
+            result1 = runner.invoke(cli, ["--dev", "--no-debug"])
+            assert result1.exit_code == 0
             mock_run.assert_called_once_with(
                 "freva_rest.api:app",
                 host="0.0.0.0",
-                port=7777,
+                port=8080,
                 reload=True,
                 log_level=20,
                 workers=None,
                 env_file=str(Path(temp_dir) / "foo.txt"),
             )
-            cli(["--debug"])
+            result2 = runner.invoke(cli, ["--debug", "--no-dev"])
+            assert result2.exit_code == 0
             mock_run.assert_called_with(
                 "freva_rest.api:app",
                 host="0.0.0.0",
-                port=7777,
+                port=8080,
                 reload=False,
                 log_level=10,
                 workers=8,

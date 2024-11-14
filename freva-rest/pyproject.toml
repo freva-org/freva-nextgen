@@ -25,13 +25,13 @@ dependencies = [
 "fastapi-third-party-auth",
 "dask",
 "pyjwt",
+"typer",
 "uvicorn",
 "python-dotenv",
 "python-dateutil",
 "python-multipart",
 "tomli",
 "rich",
-"rich-argparse",
 "motor",
 "requests",
 "redis",
@@ -63,3 +63,4 @@ tests = ["xarray",
 
 [package-data]
 freva_rest = ["py.typed", "*.toml", "*.ico", "mock/*.json"]
+

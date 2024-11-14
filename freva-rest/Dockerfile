@@ -63,14 +63,14 @@ ENV API_CONFIG=/opt/freva-rest/api_config.toml \
     # url
     API_URL=http://www.example.de/ \
     # oidc
-    API_OIDC_CLIENT_ID=freva \
-    API_OIDC_URL=http://keycloak:8080/realms/freva/.well-known/openid-configuration \
+    OIDC_CLIENT_ID=freva \
+    OIDC_URL=http://keycloak:8080/realms/freva/.well-known/openid-configuration \
     # hosts
-    API_REDIS_HOST=redis://localhost:6379 \
-    API_REDIS_SSL_CERTFILE=/certs/client-cert.pem \
-    API_REDIS_SSL_KEYFILE=/certs/client-key.pem \
-    API_SOLR_HOST=localhost:8983 \
-    API_MONGO_HOST=localhost:27017 \
+    REDIS_HOST=redis://localhost:6379 \
+    REDIS_SSL_CERTFILE=/certs/client-cert.pem \
+    REDIS_SSL_KEYFILE=/certs/client-key.pem \
+    SOLR_HOST=localhost:8983 \
+    MONGO_HOST=localhost:27017 \
     USE_MONGODB=1 \
     USE_SOLR=1
 
