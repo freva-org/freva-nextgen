@@ -1,9 +1,12 @@
-import tomllib
-from typing import Any, Union
-from pathlib import Path
 import logging
-from input_parameters import ParameterList
+import tomllib
+from pathlib import Path
+from typing import Any, Union
+
 from pydantic import ValidationError
+
+from .tool_abstract import ParameterList
+
 
 def load_toml_to_dict(input_file:Union[str, Path]) -> dict:
     """
