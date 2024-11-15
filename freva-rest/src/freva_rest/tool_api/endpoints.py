@@ -1,7 +1,7 @@
 """Define all public endpoints."""
 
 from datetime import datetime
-from typing import Annotated, Dict, List, Optional, Union
+from typing import Annotated, Dict, List, Literal, Optional, Union
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from fastapi import Body, Depends, Path, status
@@ -13,7 +13,7 @@ from freva_rest.auth import TokenPayload, auth
 from freva_rest.rest import app
 
 from .internal_endpoints import *  # noqa: F401
-from .tool_abstract import ToolAbstract
+from .tool_abstract import BaseParam, ToolAbstract, ParameterList
 
 ParameterItems = Union[str, float, int, datetime, bool, None]
 
@@ -68,13 +68,14 @@ class AddModelStatus(BaseModel):
             )
     ]
 
-class RemoveModelStatus(BaseModel):
-    """Response model for successful removal of a tool from the database."""
+class SetModelStatus(BaseModel):
+    """Response model for successful setting of model status."""
 
     message: Annotated[
         str,
         Field(
-            title="Human readable status of tool removal.",
+            title="Status Message",
+            description="Human readable status of tool."
         )
     ]
     status_code: Annotated[
@@ -88,6 +89,21 @@ class RemoveModelStatus(BaseModel):
         )
     ]
 
+class ModelOverviewStatus(BaseModel):
+    """Response model for getting the tool overview."""
+    tools: Annotated[
+                Union[ToolAbstract, List[ToolAbstract]],
+                Field(
+                    description="All tools available to the user."
+                )
+    ]
+    status_code: Annotated[
+        int,
+        Field(
+            title="Status code",
+            description="The status code of the overview request.",
+        ),
+    ]
 
 class CancelStatus(BaseModel):
     """Response model for canceling jobs."""
@@ -159,24 +175,30 @@ class SubmitStatus(BaseModel):
 
 @app.get("/api/freva-nextgen/tool/overview", 
          tags=["Analysis tools"],
-         response_model=Union[ToolAbstract, List[ToolAbstract]]
+         response_model=ModelOverviewStatus,
+         responses={
+            401: {"description": "Unauthorised / not a valid token."},
+            500: {"description": "Getting overview failed due to an internal server error."},
+            503: {"description": "Service is currently unavailable."}
+          }
 )
 async def tool_overview(
-    current_user: TokenPayload = Depends(auth.required)
 ):
     """Get all available tools and their attributes."""
+    example_param = BaseParam(name="param")
     tool = ToolAbstract(name="foo", 
                         author="bar",
                         version="0.0",
                         summary="",
                         added="2024-11-13",
+                        parameters=ParameterList(input_parameters=[example_param]),
                         command="fakecommand",
                         binary="fakebinary",
                         output_type="data"
     )
-    return tool
+    return ModelOverviewStatus(models=tool, status_code=202)
 
-@app.post("/api/freva-nextgen/tool/add/{tool}", 
+@app.post("/api/freva-nextgen/tool/add", 
           tags=["Analysis tools"],
           status_code=status.HTTP_202_ACCEPTED,
           responses={
@@ -185,27 +207,50 @@ async def tool_overview(
             500: {"description": "Adding the tool was unsuccessful."},
             503: {"description": "Service is currently unavailable."}
           },
-          response_model=AddModelStatus)
+          response_model=AddModelStatus
+          )
 async def add_tool(tool: Annotated[ToolAbstract, Body(...)],
                    current_user: TokenPayload = Depends(auth.required)
 ):
-    """Add a tool to the MongoDB or update it if it already exists"""
+    """Add a tool to the MongoDB or update it if it already exists."""
     return AddModelStatus(uuid=uuid5(NAMESPACE_URL, "bar"), status_code=202)
 
-@app.delete("/api/freva-nextgen/tool/del/{tool}",
+@app.post("/api/freva-nextgen/tool/set-state/{tool}/{version}/{state}",
             tags=["Analysis tools"],
             status_code=status.HTTP_202_ACCEPTED,
             responses={
                 401: {"description": "Unauthorised / not a valid token."},
                 404: {"description": "The requested tool cannot be found."},
-                500: {"description": "Removing tool was unsuccessful."},
+                500: {"description": "Setting tool state was unsuccessful."},
                 503: {"description": "Service is currently unavailable."}
             },
-            response_model=RemoveModelStatus)
-async def delete_tool(tool_uuid: Annotated[UUID, Body(...)],
-                      current_user: TokenPayload = Depends(auth.required)):
-    """Remove a tool and its metadata from the database."""
-    return RemoveModelStatus(message="Foo bar! Tool was deleted.", status_code="0")
+            response_model=SetModelStatus)
+async def set_tool_state(
+                tool_uuid: Annotated[UUID, Body(...)],
+                version: Annotated[Optional[str],
+                            Field(
+                                title="Version",
+                                description=(
+                                    "The version of the tool, if not given the latest "
+                                    "version will be applied."
+                                ),
+                                examples=["v0.0.1"],
+                            )
+                        ],
+                state: Annotated[Literal[0, 1], 
+                                 Field(
+                                     title="Plugin state",
+                                     description=(
+                                         "The state of the tool, for a given version "
+                                         "that will be set. 0 is to deactivate " 
+                                         "and 1 to activate the given plugin."
+                                     )
+                                 )
+                        ],
+                current_user: TokenPayload = Depends(auth.required)):
+    """Set the state of a given model for a given version in the MariaDB.
+       This state can either be active or inactive."""
+    return SetModelStatus(message=f"Foo bar! New state is {state}", status_code="0")
 
 @app.post(
     "/api/freva-nextgen/tool/submit/{tool}",
