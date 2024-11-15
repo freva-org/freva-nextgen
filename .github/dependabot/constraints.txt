@@ -1,4 +1,4 @@
-aiohttp==3.10.10
+aiohttp==3.11.2
 fastapi==0.115.5
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
