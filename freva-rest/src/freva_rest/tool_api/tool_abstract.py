@@ -45,11 +45,11 @@ class BaseParam(BaseModel):
     default: Optional[BaseParamType] = Field(mandatory=False, description="Default value of parameter.")
     type: Literal["BaseParam"] = "BaseParam"
 
-    @field_validator("title", mode="after")
-    def set_default_title(self, title):
-        if title is None:
-            title = self.name
-        return title
+    @model_validator(mode="after")
+    def set_default_title(self):
+        if self.title is None:
+            self.title = self.name
+        return self
 
 
 class Bool(BaseParam):
