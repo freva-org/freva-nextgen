@@ -183,6 +183,7 @@ class SubmitStatus(BaseModel):
           }
 )
 async def tool_overview(
+            current_user: TokenPayload = Depends(auth.required)
 ):
     """Get all available tools and their attributes."""
     example_param = BaseParam(name="param")
