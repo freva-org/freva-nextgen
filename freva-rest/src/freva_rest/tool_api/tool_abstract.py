@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic.functional_validators import field_validator
 from typing_extensions import Annotated
 
-BaseParamType = Union[str, int, float, bool, datetime, list, tuple]
+BaseParamType = Union[str, int, float, bool, datetime, list, tuple, None]
 
 class BaseParam(BaseModel):
     """
@@ -38,11 +38,11 @@ class BaseParam(BaseModel):
 
     model_config = ConfigDict(extra="forbid") # forbid extra fields entered by a user
 
-    name: str = Field(mandatory=True, min_length=1, description="Name of the parameter.")
-    title: str = Field(mandatory=False, description="Title of parameter.")
-    help: str = Field(mandatory=False, description="Description of parameter's function.")
-    mandatory: bool = Field(mandatory=False, default=False, description="Boolean value determining if parameter value has to be set.")
-    default: Optional[BaseParamType] = Field(mandatory=False, description="Default value of parameter.")
+    name: str = Field(min_length=1, description="Name of the parameter.")
+    title: Optional[str] = Field(default=None, description="Title of parameter.")
+    help: Optional[str] = Field(default=None, description="Description of parameter's function.", validate_default=True)
+    mandatory: bool = Field(default=False, description="Boolean value determining if parameter value has to be set.")
+    default: Optional[BaseParamType] = Field(default=None, description="Default value of parameter.")
     type: Literal["BaseParam"] = "BaseParam"
 
     @model_validator(mode="after")
@@ -214,7 +214,7 @@ class File(BaseParam):
         return path
 
 ParameterType = Annotated[
-    Union[Bool, String, Float, Integer, Date, DataField, Range, File, Range],
+    Union[BaseParam, Bool, String, Float, Integer, Date, DataField, Range, File, Range],
       Field(discriminator="type")
 ]
 class ParameterList(BaseModel):
@@ -238,50 +238,48 @@ class ToolAbstract(BaseModel):
     """Define the database model for the tool configuration."""
 
     # basic tool metadata 
-    name: Annotated[str, Field(required=True, description="Name of the tool")]
-    author: Annotated[str, Field(required=True, description="Tool Author(s)")]
-    version: Annotated[str, Field(required=True, description="Tool version")]
+    name: Annotated[str, Field( description="Name of the tool")]
+    author: Annotated[str, Field(description="Tool Author(s)")]
+    version: Annotated[str, Field(description="Tool version")]
     summary: Annotated[
         str,
         Field(
-            required=True,
             description="Short description of what the tool is supposed to do.",
         ),
     ]
     description: Annotated[
         str,
         Field(
-            required=False,
             description="A more detailed description of the tool",
         ),
     ] = None
     title: Annotated[
         str,
-        Field(required=False, description="An optional title of the tool."),
+        Field(description="An optional title of the tool."),
     ] = None
     added: Annotated[
-        datetime, Field(required=True, description="When the tool was added.")
+        datetime, Field(description="When the tool was added.")
     ]
     # input parameters 
     parameters: Annotated[
         ParameterList,
-        Field(required=True, description="The input parameters of the tool."),
+        Field(description="The input parameters of the tool."),
     ]
     # tool command and binary used to execute tool
     command: Annotated[
-        str, Field(required=True, description="The command that is executed.")
+        str, Field(description="The command that is executed.")
     ]
     binary: Annotated[
-        str, Field(required=True, description="Binary used to execute tool command.")
+        str, Field(description="Binary used to execute tool command.")
     ]
     # output parameters
     output_type: Annotated[
         Literal["plots", "data", "both"], 
-        Field(required=True, description="Type of output. Can be either 'plots', 'data' or 'both'")
+        Field(description="Type of output. Can be either 'plots', 'data' or 'both'")
     ]
 
     @model_validator(mode="before")
-    def _validate_config(self, config: Union[str, dict]) -> dict:
+    def _validate_config(self, config: Union[str, dict]):
         """
         Run a number of tests on the given config, for example that it contains certain keys 
         for the different categories of the config (such as tool_metadata, input_parameters, runtime_parameters, output_parameters)
@@ -289,7 +287,7 @@ class ToolAbstract(BaseModel):
         Idea is that it gets a TOML file string as input, parses it as a dictionary, checks this dictionary
         and returns one that is 'flattened', i.e. where table ids from the TOML file no longer appear.
         """
-        raise NotImplementedError
+        return self
 
     
 
