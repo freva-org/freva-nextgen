@@ -1,7 +1,7 @@
 """Define all public endpoints."""
 
 from datetime import datetime
-from typing import Annotated, Dict, List, Literal, Optional, Union
+from typing import Annotated, Dict
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from fastapi import Body, Depends, Path, status
@@ -10,173 +10,46 @@ from fastapi.responses import (
     PlainTextResponse,
     StreamingResponse,
 )
-from pydantic import BaseModel, Field
 
 from freva_rest.auth import TokenPayload, auth
 from freva_rest.rest import app
 
-from .internal_endpoints import *  # noqa: F401
+from .internal_endpoints import tool_communication
+from .schemas import (
+    CancelJobStatus,
+    ChangeVisibilityStatus,
+    DisableVisibilityPaylaod,
+    EnableVisibilityPayload,
+    SubmitJobStatus,
+    ToolAddPayload,
+    ToolParameterPayload,
+)
 from .tool_abstract import ToolAbstract
 
-ParameterItems = Union[str, float, int, datetime, bool, None]
-
-
-class ToolParameterPayload(BaseModel):
-    """This class represents the payload for the tool import parameters."""
-
-    parameters: Annotated[
-        Optional[Dict[str, Union[ParameterItems, List[ParameterItems]]]],
-        Field(
-            title="Parameters",
-            description="The parameters you pass to the tool.",
-            examples=[
-                {
-                    "variable": "tas",
-                    "product": "EUR-11",
-                    "project": "cordex",
-                    "time-frequency": "day",
-                    "experiment": "historical",
-                    "time-period": ["1970", "2000"],
-                }
-            ],
-        ),
-    ] = None
-    version: Annotated[
-        Optional[str],
-        Field(
-            title="Version",
-            description=(
-                "The version of the tool, if not given the latest "
-                "version will be applied."
-            ),
-            examples=["v0.0.1"],
-        ),
-    ] = None
-
-
-class AddModelStatus(BaseModel):
-    """Response model for successful addition of a tool."""
-
-    uuid: Annotated[
-        UUID,
-        Field(
-            title="Tool id.",
-            description="Unique identifyer for the tool.",
-        ),
-    ]
-    status_code: Annotated[
-        int,
-        Field(
-            title="Status code",
-            description="The status code of the tool submission.",
-        ),
-    ]
-
-class RemoveModelStatus(BaseModel):
-    """Response model for successful removal of a tool from the database."""
-
-    message: Annotated[
-        str,
-        Field(
-            title="Human readable status of tool removal.",
-        )
-    ]
-    status_code: Annotated[
-        str,
-        Field(
-            title="Status code",
-            description=(
-                "Status code of tool removal" "0: success, 1: could not remove"
-            ),
-        ),
-    ]
-
-
-class CancelStatus(BaseModel):
-    """Response model for canceling jobs."""
-
-    message: Annotated[
-        str,
-        Field(
-            description="Human readable status of the cancelation.",
-            examples=[
-                "Job with id 095be615-a8ad-4c33-8e9c-c7612fbf6c9f was canceled",
-                "Job with id 095be615-a8ad-4c33-8e9c-c7612fbf6c9f has already been cancelled",
-            ],
-        ),
-    ]
-    status_code: Annotated[
-        int,
-        Field(
-            description=(
-                "Machine readable status of the cancelation"
-                "0: success, 1: could not cancel"
-            ),
-            examples=[0, 1],
-        ),
-    ]
-
-
-class SubmitStatus(BaseModel):
-    """Response model for job successful job submission."""
-
-    uuid: Annotated[
-        UUID,
-        Field(
-            title="Tool id.",
-            description="Unique identifyer for the tool.",
-        ),
-    ]
-    status_code: Annotated[
-        int,
-        Field(
-            title="Status code",
-            description="The status code of the job submission.",
-        ),
-    ]
-    hostname: Annotated[
-        str,
-        Field(
-            title="Hostname",
-            description="The remote host the job is running on.",
-        ),
-    ]
-    time_submitted: Annotated[
-        str,
-        Field(
-            title="Submit time",
-            alias="time-submitted",
-            description="The time the job was submitted",
-        ),
-    ]
-    batch_mode: Annotated[
-        bool,
-        Field(
-            title="Batch mode",
-            alias="batch-mode",
-            description=(
-                "Boolean indicating wether the job is a batch mode job."
-            ),
-        ),
-    ]
+__all__ = [
+    "tool_communication",
+    "tool_overview",
+    "add_tool",
+    "submit_tool",
+    "cancel_job",
+    "disable_tool",
+]
 
 
 @app.get(
     "/api/freva-nextgen/tool/overview",
-    tags=["Analysis tools"],
+    tags=["Analysis Tools"],
     response_model=Dict[str, ToolAbstract],
     status_code=status.HTTP_200_OK,
     responses={
         401: {"description": "Unauthorised / not a valid token."},
         503: {"description": "Service is currently unavailable."},
-        status.HTTP_200_OK: {
-            "description": ("List of tools that are currently" " available"),
-        },
+        200: {"description": "List of tools that are currently available"},
     },
 )
 async def tool_overview(
-    current_user: TokenPayload = Depends(auth.required)
-):
+    current_user: TokenPayload = Depends(auth.required),
+) -> JSONResponse:
     """Get all available tools and their attributes."""
     tool = ToolAbstract(
         name="foo",
@@ -193,59 +66,118 @@ async def tool_overview(
 
 
 @app.post(
-    "/api/freva-nextgen/tool/add",
-    tags=["Analysis tools"],
-    status_code=status.HTTP_202_ACCEPTED,
+    "/api/freva-nextgen/tool/add/{tool}",
+    tags=["Analysis Tools"],
+    status_code=status.HTTP_200_OK,
     responses={
         400: {"description": "Invalid tool configuration."},
         401: {"description": "Unauthorised / not a valid token."},
         500: {"description": "Adding the tool was unsuccessful."},
         503: {"description": "Service is currently unavailable."},
     },
-    response_model=AddModelStatus,
+    response_class=PlainTextResponse,
 )
 async def add_tool(
-    tool: Annotated[ToolAbstract, Body(...)],
+    tool: Annotated[
+        str,
+        Path(
+            title="Tool",
+            description=(
+                "The name of the data analysis tool that should be added."
+            ),
+            examples=["animator"],
+        ),
+    ],
+    properties: Annotated[
+        ToolAddPayload, Body(..., description=ToolAddPayload.__doc__)
+    ],
     current_user: TokenPayload = Depends(auth.required),
-):
+) -> StreamingResponse:
     """Add a tool to the MongoDB or update it if it already exists."""
-    return AddModelStatus(uuid=uuid5(NAMESPACE_URL, "bar"), status_code=202)
+    return StreamingResponse(
+        ("" for _ in range(10)),
+        status_code=status.HTTP_200_OK,
+        media_type="text/plain",
+    )
 
 
-@app.delete(
-    "/api/freva-nextgen/tool/del/{tool}",
-    tags=["Analysis tools"],
-    status_code=status.HTTP_202_ACCEPTED,
+@app.post(
+    "/api/freva-nextgen/tool/disable/{tool}",
+    tags=["Analysis Tools"],
+    status_code=status.HTTP_200_OK,
     responses={
         401: {"description": "Unauthorised / not a valid token."},
         404: {"description": "The requested tool cannot be found."},
         500: {"description": "Removing tool was unsuccessful."},
         503: {"description": "Service is currently unavailable."},
     },
-    response_model=RemoveModelStatus,
+    response_model=ChangeVisibilityStatus,
 )
-async def delete_tool(
-    tool_uuid: Annotated[UUID, Body(...)],
+async def disable_tool(
+    tool: Annotated[
+        str,
+        Path(
+            title="Tool",
+            description=(
+                "The name of the data analysis tool that should be disbled."
+            ),
+            examples=["animator"],
+        ),
+    ],
+    properties: Annotated[DisableVisibilityPaylaod, Body(...)],
     current_user: TokenPayload = Depends(auth.required),
-):
+) -> ChangeVisibilityStatus:
     """Remove a tool and its metadata from the database."""
-    return RemoveModelStatus(
-        message="Foo bar! Tool was deleted.", status_code="0"
+    return ChangeVisibilityStatus(
+        message="Foo bar! Tool was disabled.", status_code=0
+    )
+
+
+@app.post(
+    "/api/freva-nextgen/tool/enable/{tool}",
+    tags=["Analysis Tools"],
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"description": "Unauthorised / not a valid token."},
+        404: {"description": "The requested tool cannot be found."},
+        500: {"description": "Removing tool was unsuccessful."},
+        503: {"description": "Service is currently unavailable."},
+    },
+    response_model=ChangeVisibilityStatus,
+)
+async def enable_tool(
+    tool: Annotated[
+        str,
+        Path(
+            title="Tool",
+            description=(
+                "The name of the data analysis tool that should be disbled."
+            ),
+            examples=["animator"],
+        ),
+    ],
+    properties: Annotated[EnableVisibilityPayload, Body(...)],
+    current_user: TokenPayload = Depends(auth.required),
+) -> ChangeVisibilityStatus:
+    """Enable a tool for a list of users."""
+    return ChangeVisibilityStatus(
+        message="Foo bar! Tool was enabled.", status_code=0
     )
 
 
 @app.post(
     "/api/freva-nextgen/tool/submit/{tool}",
-    tags=["Analysis tools"],
-    status_code=status.HTTP_201_CREATED,
+    tags=["Analysis Tools"],
+    status_code=status.HTTP_202_ACCEPTED,
     responses={
         400: {"description": "Invalid input parameters were given."},
         401: {"description": "Unauthorised / not a valid token."},
         404: {"description": "If the tool is not known to the system."},
         500: {"description": "If the job submission failed."},
         503: {"description": "If the service is currently unavailable."},
+        202: {"description": "The job has been successfully submitted."},
     },
-    response_model=SubmitStatus,
+    response_model=SubmitJobStatus,
 )
 async def submit_tool(
     tool: Annotated[
@@ -260,7 +192,7 @@ async def submit_tool(
     ],
     payload: Annotated[ToolParameterPayload, Body(...)],
     current_user: TokenPayload = Depends(auth.required),
-) -> SubmitStatus:
+) -> SubmitJobStatus:
     """Submit an existing tool in via the workload manager.
 
     This endpoint should be submitting a tool that is knwon to the system.
@@ -273,7 +205,7 @@ async def submit_tool(
         - Submit script. -> if failed: 500.
         - Exit 201
     """
-    return SubmitStatus(
+    return SubmitJobStatus(
         uuid=uuid5(NAMESPACE_URL, "foo"),
         status_code=0,
         time_submitted=datetime.now().isoformat(),
@@ -283,8 +215,8 @@ async def submit_tool(
 
 
 @app.get(
-    "/api/freva-nextgen/tool/log/{tool}",
-    tags=["Analysis tools"],
+    "/api/freva-nextgen/tool/log/{uuid}",
+    tags=["Analysis Tools"],
     status_code=status.HTTP_200_OK,
     responses={
         401: {"description": "Unauthorised / not a valid token."},
@@ -313,20 +245,22 @@ async def job_log(
         - Check if output exists and can be read -> if not: 500
     """
     return StreamingResponse(
-        "", status_code=status.HTTP_200_OK, media_type="text/plain"
+        ("" for _ in range(10)),
+        status_code=status.HTTP_200_OK,
+        media_type="text/plain",
     )
 
 
 @app.post(
-    "/api/freva-nextgen/tool/cancel/{tool}",
-    tags=["Analysis tools"],
+    "/api/freva-nextgen/tool/cancel/{uuid}",
+    tags=["Analysis Tools"],
     status_code=status.HTTP_200_OK,
     responses={
         401: {"description": "Unauthorised / not a valid token."},
         404: {"description": "The job id is not known to the system."},
         500: {"description": "If the job cancelation failed."},
     },
-    response_model=CancelStatus,
+    response_model=CancelJobStatus,
 )
 async def cancel_job(
     uuid: Annotated[
@@ -338,7 +272,7 @@ async def cancel_job(
         ),
     ],
     current_user: TokenPayload = Depends(auth.required),
-) -> CancelStatus:
+) -> CancelJobStatus:
     """Cancel a running job of a given uuid.
 
     This endpoint cancels a *running* of a given uuid that belongs to a user.
@@ -349,4 +283,4 @@ async def cancel_job(
         - Check if job belongs to user: if not: 401
         - Cancel job: if failed: 500
     """
-    return CancelStatus(message="foo", status_code=0)
+    return CancelJobStatus(message="foo", status_code=0)

@@ -4,7 +4,7 @@ import enum
 from datetime import datetime
 from typing import Annotated, Literal, Optional, Union
 
-from pydantic import BaseModel, Field, field_serializer, field_validator
+from pydantic import BaseModel, Field, field_serializer
 
 InputType = Union[str, int, float, None]
 
@@ -89,8 +89,7 @@ class ToolConfig(BaseModel):
     ] = None
     state: Annotated[
         Literal[0, 1],
-        Field(
-           required=True, description="State of the tool in the db.")
+        Field(description="State of the tool in the db."),
     ] = 1
 
 

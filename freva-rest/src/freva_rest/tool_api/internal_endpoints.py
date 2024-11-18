@@ -6,8 +6,8 @@ from fastapi import Path, WebSocket
 
 from freva_rest.rest import app
 
-
 __all__ = ["tool_communication"]
+
 
 @app.websocket(
     "/api/freva-nextgen/tool_internal/ws/{uuid}/{client_secret}",
