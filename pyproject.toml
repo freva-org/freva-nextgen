@@ -1,19 +1,20 @@
 [tool.pytest.ini_options]
 env = [
-    "MONGO_HOST=localhost:27017",
-    "MONGO_DB=search_stats",
-    "MONGO_USER=mongo",
-    "MONGO_PASSWORD=secret",
-    "SOLR_HOST=localhost:8983",
-    "SOLR_CORE=files",
+    "API_MONGO_HOST=localhost:27017",
+    "API_MONGO_DB=search_stats",
+    "API_MONGO_USER=mongo",
+    "API_MONGO_PASSWORD=secret",
+    "API_SOLR_HOST=localhost:8983",
+    "API_SOLR_CORE=files",
     "FREVA_NO_RICH_PANELS=1",
     "FREVA_CONFIG={PWD}/dev-env/freva.toml",
-    "REDIS_SSL_CERTFILE={PWD}/dev-env/config/certs/client-cert.pem",
-    "REDIS_SSL_KEYFILE={PWD}/dev-env/config/certs/client-key.pem",
-    "REDIS_HOST=redis://localhost:6379",
-    "REDIS_USER=redis",
-    "REDIS_PASS=secret",
+    "API_REDIS_SSL_CERTFILE={PWD}/dev-env/config/certs/client-cert.pem",
+    "API_REDIS_SSL_KEYFILE={PWD}/dev-env/config/certs/client-key.pem",
+    "API_REDIS_HOST=redis://localhost:6379",
+    "API_REDIS_USER=redis",
+    "API_REDIS_PASSWORD=secret",
     "API_SERVICES=zarr-stream,databrowser",
+    "API_CONFIG={PWD}/freva-rest/src/freva_rest/api_config.toml",
 
 ]
 filterwarnings = ["ignore::UserWarning"]
@@ -74,7 +75,7 @@ deps = -e ./freva-rest
        xarray
 
 commands =
-    pytest -vv --cov=freva-rest --cov=freva-client --cov=freva-data-portal-worker --cov-report=html:coverage_report --junitxml report.xml --cov-report xml tests
+    pytest -vv --cov=freva-rest --cov=freva-client --cov=freva-data-portal-worker --cov-report=html:coverage_report --junitxml report.xml --cov-report xml tests/
     python3 -m coverage report --fail-under=98.5 --precision=2
 [testenv:docs]
 description = "Create the documentation."

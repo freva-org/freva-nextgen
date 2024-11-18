@@ -1,23 +1,17 @@
 """Various utilities for the restAPI."""
 
-import os
 from typing import Dict, Optional
 
 import redis.asyncio as redis
 from fastapi import HTTPException, status
 
+from freva_rest.config import ServerConfig
 from freva_rest.logger import logger
 
 REDIS_CACHE: Optional[redis.Redis] = None
-REDIS_HOST, _, REDIS_PORT = (
-    (os.environ.get("REDIS_HOST") or "localhost")
-    .removeprefix("redis://")
-    .partition(":")
-)
-REDIS_SSL_CERTFILE = os.getenv("REDIS_SSL_CERTFILE") or None
-REDIS_SSL_KEYFILE = os.getenv("REDIS_SSL_KEYFILE") or None
 CACHING_SERVICES = set(("zarr-stream",))
 """All the services that need the redis cache."""
+CONFIG = ServerConfig()
 
 
 def get_userinfo(user_info: Dict[str, str]) -> Dict[str, str]:
@@ -52,20 +46,17 @@ async def create_redis_connection(
 ) -> redis.Redis:
     """Reuse a potentially created redis connection."""
     kwargs = dict(
-        host=REDIS_HOST,
-        username=os.getenv("REDIS_USER"),
-        password=os.getenv("REDIS_PASS"),
-        port=int(REDIS_PORT or "6379"),
-        ssl=REDIS_SSL_CERTFILE is not None,
-        ssl_certfile=REDIS_SSL_CERTFILE,
-        ssl_keyfile=REDIS_SSL_KEYFILE,
-        ssl_ca_certs=REDIS_SSL_CERTFILE,
+        host=CONFIG.redis_url,
+        port=CONFIG.redis_port,
+        username=CONFIG.redis_user or None,
+        password=CONFIG.redis_password or None,
+        ssl=CONFIG.redis_ssl_certfile is not None,
+        ssl_certfile=CONFIG.redis_ssl_certfile or None,
+        ssl_keyfile=CONFIG.redis_ssl_keyfile or None,
+        ssl_ca_certs=CONFIG.redis_ssl_certfile or None,
         db=0,
     )
-    services = set(
-        [s.strip() for s in os.getenv("API_SERVICES", "").split(",") if s.strip()]
-    )
-    if CACHING_SERVICES - services == CACHING_SERVICES:
+    if CACHING_SERVICES - CONFIG.services == CACHING_SERVICES:
         # All services that would need caching are disabled.
         # If this is the case and we ended up here, we shouldn't be here.
         # tell the users.
@@ -73,17 +64,18 @@ async def create_redis_connection(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Service not enabled.",
         )
+
     if cache is None:
         logger.info("Creating redis connection using: %s", kwargs)
     cache = cache or redis.Redis(
-        host=REDIS_HOST,
-        username=os.getenv("REDIS_USER"),
-        password=os.getenv("REDIS_PASS"),
-        port=int(REDIS_PORT or "6379"),
-        ssl=REDIS_SSL_CERTFILE is not None,
-        ssl_certfile=REDIS_SSL_CERTFILE,
-        ssl_keyfile=REDIS_SSL_KEYFILE,
-        ssl_ca_certs=REDIS_SSL_CERTFILE,
+        host=CONFIG.redis_url,
+        port=CONFIG.redis_port,
+        username=CONFIG.redis_user or None,
+        password=CONFIG.redis_password or None,
+        ssl=CONFIG.redis_ssl_certfile is not None,
+        ssl_certfile=CONFIG.redis_ssl_certfile or None,
+        ssl_keyfile=CONFIG.redis_ssl_keyfile or None,
+        ssl_ca_certs=CONFIG.redis_ssl_certfile or None,
         db=0,
     )
     try:

@@ -66,7 +66,7 @@ def start_server(inp_dir: Path, foreground: bool = False, *args: str) -> None:
         kill_proc(proc)
     prep_server(inp_dir)
     config_file = TEMP_DIR / "data-portal-cluster-config.json"
-    args += ("--cert-dir", str(inp_dir.absolute() / "certs"))
+    args += ("--redis-ssl-certdir", str(inp_dir.absolute() / "certs"))
     python_exe = sys.executable
     portal_pid = TEMP_DIR / "data-portal.pid"
     rest_pid = TEMP_DIR / "rest-server.pid"

@@ -57,16 +57,28 @@ class RedisCacheFactory(redis.Redis):
             .partition(":")
         )
         port_i = int(port or "6379")
+        conn = {
+            "host": host,
+            "port": port_i,
+            "db": db,
+            "username": os.getenv("REDIS_USER"),
+            "password": os.getenv("REDIS_PASS"),
+            "ssl_certfile": os.getenv("REDIS_SSL_CERTFILE") or None,
+            "ssl_keyfile": os.getenv("REDIS_SSL_KEYFILE") or None,
+            "ssl_ca_certs": os.getenv("REDIS_SSL_CERTFILE") or None,
+        }
+        conn["ssl"] = conn["ssl_certfile"] is not None
+        data_logger.info("Creating redis connection with args: %s", conn)
         super().__init__(
-            host=host,
-            port=port_i,
-            db=db,
-            username=os.getenv("REDIS_USER"),
-            password=os.getenv("REDIS_PASS"),
-            ssl=bool(len(os.getenv("REDIS_SSL_CERTFILE", ""))),
-            ssl_certfile=os.getenv("REDIS_SSL_CERTFILE") or None,
-            ssl_keyfile=os.getenv("REDIS_SSL_KEYFILE") or None,
-            ssl_ca_certs=os.getenv("REDIS_SSL_CERTFILE") or None,
+            host=conn["host"],
+            port=conn["port"],
+            db=conn["db"],
+            username=conn["username"],
+            password=conn["password"],
+            ssl=conn["ssl"],
+            ssl_certfile=conn["ssl_certfile"],
+            ssl_keyfile=conn["ssl_keyfile"],
+            ssl_ca_certs=conn["ssl_ca_certs"],
         )
 
 
@@ -192,7 +204,9 @@ class DataLoadFactory:
             # might not have xarray and all the backends instanciated.
             # Since the xarray dataset object isn't needed anyway byt the
             # rest-api we simply add it to a cache entry of its own.
-            self.cache.setex(f"{path_id}-dset", expires_in, cloudpickle.dumps(dset))
+            self.cache.setex(
+                f"{path_id}-dset", expires_in, cloudpickle.dumps(dset)
+            )
         except Exception as error:
             data_logger.exception("Could not process %s: %s", path_id, error)
             status_dict["status"] = 1
@@ -215,7 +229,9 @@ class DataLoadFactory:
         arr_meta = meta["metadata"][f"{variable}/{array_meta_key}"]
         data = encode_chunk(
             get_data_chunk(
-                encode_zarr_variable(dset.variables[variable], name=variable).data,
+                encode_zarr_variable(
+                    dset.variables[variable], name=variable
+                ).data,
                 chunk,
                 out_shape=arr_meta["chunks"],
             ).tobytes(),
@@ -300,8 +316,12 @@ class ProcessQueue(DataLoadFactory):
 
     def spawn(self, inp_obj: str, uuid5: str) -> str:
         """Subumit a new data loading task to the process pool."""
-        data_logger.debug("Assigning %s to %s for future processing", inp_obj, uuid5)
-        data_cache: Optional[bytes] = cast(Optional[bytes], self.cache.get(uuid5))
+        data_logger.debug(
+            "Assigning %s to %s for future processing", inp_obj, uuid5
+        )
+        data_cache: Optional[bytes] = cast(
+            Optional[bytes], self.cache.get(uuid5)
+        )
         status_dict: LoadDict = {
             "status": 2,
             "obj_path": f"/api/freva-data-portal/zarr/{uuid5}.zarr",
