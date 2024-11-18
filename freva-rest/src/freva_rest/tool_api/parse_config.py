@@ -25,8 +25,10 @@ def load_toml_to_dict(input_file:Union[str, Path]) -> dict:
     """
     if isinstance(input_file, str): input_file = Path(input_file)
     valid_toml_file_extensions = [".toml"]
-    assert input_file.exists(), f"Input file {input_file} cannot be found. Please make sure it exists and that you have read permissions for it." 
-    assert input_file.is_file() and input_file.suffix.lower() in valid_toml_file_extensions, f"Path {input_file} does not point to a recognised TOML file."
+    if not input_file.exists():
+        raise FileNotFoundError(f"Input file {input_file} cannot be found. Please make sure it exists and that you have read permissions for it.")
+    if not input_file.is_file() or input_file.suffix.lower() not in valid_toml_file_extensions:
+        raise ValueError(f"Path {input_file} does not point to a recognised TOML file.")
     try:
         with input_file.open(mode='rb') as fp:
             try:

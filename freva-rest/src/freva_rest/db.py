@@ -2,7 +2,7 @@
 
 import enum
 from datetime import datetime
-from typing import Annotated, Optional, Union
+from typing import Annotated, Literal, Optional, Union
 
 from pydantic import BaseModel, Field, field_serializer, field_validator
 
@@ -87,6 +87,11 @@ class ToolConfig(BaseModel):
         Optional[str],
         Field(required=False, description="An optional title of the tool."),
     ] = None
+    state: Annotated[
+        Literal[0, 1],
+        Field(
+           required=True, description="State of the tool in the db.")
+    ] = 1
 
 
 class RunningJobDB(BaseModel):

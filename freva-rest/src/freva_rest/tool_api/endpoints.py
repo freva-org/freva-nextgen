@@ -1,7 +1,7 @@
 """Define all public endpoints."""
 
 from datetime import datetime
-from typing import Annotated, Dict, List, Optional, Union
+from typing import Annotated, Dict, List, Literal, Optional, Union
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from fastapi import Body, Depends, Path, status
@@ -72,7 +72,6 @@ class AddModelStatus(BaseModel):
         ),
     ]
 
-
 class RemoveModelStatus(BaseModel):
     """Response model for successful removal of a tool from the database."""
 
@@ -80,7 +79,7 @@ class RemoveModelStatus(BaseModel):
         str,
         Field(
             title="Human readable status of tool removal.",
-        ),
+        )
     ]
     status_code: Annotated[
         str,
@@ -176,8 +175,8 @@ class SubmitStatus(BaseModel):
     },
 )
 async def tool_overview(
-    current_user: TokenPayload = Depends(auth.required),
-) -> JSONResponse:
+    current_user: TokenPayload = Depends(auth.required)
+):
     """Get all available tools and their attributes."""
     tool = ToolAbstract(
         name="foo",
@@ -209,7 +208,7 @@ async def add_tool(
     tool: Annotated[ToolAbstract, Body(...)],
     current_user: TokenPayload = Depends(auth.required),
 ):
-    """Add a tool to the MongoDB or update it if it already exists"""
+    """Add a tool to the MongoDB or update it if it already exists."""
     return AddModelStatus(uuid=uuid5(NAMESPACE_URL, "bar"), status_code=202)
 
 
