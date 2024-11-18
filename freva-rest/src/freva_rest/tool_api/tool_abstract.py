@@ -8,11 +8,12 @@ from typing_extensions import Annotated
 
 BaseParamType = Union[str, int, float, bool, datetime, list, tuple]
 
+
 class BaseParam(BaseModel):
     """
     Base class for all parameter types. Inherits from pydantic.BaseModel.
 
-    All other available parameters inherit from this class. 
+    All other available parameters inherit from this class.
     A parameter object created by this class holds the following user-provided information.
     Values taken by the parameter can be any of type BaseParamType, which include str, int, float, bool, datetime, Sequence.
     This base class does not allow for any user-defined attributes, other than those described below.
@@ -27,45 +28,59 @@ class BaseParam(BaseModel):
         mandatory(bool, optional): Boolean value determining if setting this parameter is required. Defaults to False.
         default(BaseParamType, optional): A default value for the parameter, in case non is set by the user. Defaults to None.
         type(Literal["BaseParam"]): A description of the parameter's type. Defaults to "BaseParam".
-    
+
     Attributes:
         name (str): Name of the parameter.
         help (str): Description of the parameter's function.
         mandatory(bool): Boolean value determining if setting this parameter is required.
         default(BaseParamType): A default value for the parameter, in case non is set by the user.
-        type(Literal["BaseParam"]): A description of the parameter's type. 
+        type(Literal["BaseParam"]): A description of the parameter's type.
     """
 
-    model_config = ConfigDict(extra="forbid") # forbid extra fields entered by a user
+    model_config = ConfigDict(
+        extra="forbid"
+    )  # forbid extra fields entered by a user
 
-    name: str = Field(mandatory=True, min_length=1, description="Name of the parameter.")
+    name: str = Field(
+        mandatory=True, min_length=1, description="Name of the parameter."
+    )
     title: str = Field(mandatory=False, description="Title of parameter.")
-    help: str = Field(mandatory=False, description="Description of parameter's function.")
-    mandatory: bool = Field(mandatory=False, default=False, description="Boolean value determining if parameter value has to be set.")
-    default: Optional[BaseParamType] = Field(mandatory=False, description="Default value of parameter.")
+    help: str = Field(
+        mandatory=False, description="Description of parameter's function."
+    )
+    mandatory: bool = Field(
+        mandatory=False,
+        default=False,
+        description="Boolean value determining if parameter value has to be set.",
+    )
+    default: Optional[BaseParamType] = Field(
+        mandatory=False, description="Default value of parameter."
+    )
     type: Literal["BaseParam"] = "BaseParam"
 
     @field_validator("title", mode="after")
-    def set_default_title(self, title):
+    def set_default_title(cls, title):
         if title is None:
-            title = self.name
+            title = cls.name
         return title
 
 
 class Bool(BaseParam):
     """
-    A simple boolean parameter. 
+    A simple boolean parameter.
 
     Args:
         default (bool, optional): The default value of the parameter. Defaults to None.
         type (Literal["Bool"]): A description of the parameter's type. Must be "Bool".
-    
+
     Attributes:
-        default (bool, optional): The default value of the parameter. 
-        type (Literal["Bool"]): A description of the parameter's type. 
+        default (bool, optional): The default value of the parameter.
+        type (Literal["Bool"]): A description of the parameter's type.
     """
+
     default: Optional[bool] = None
     type: Literal["Bool"] = "Bool"
+
 
 class Integer(BaseParam):
     """
@@ -77,11 +92,13 @@ class Integer(BaseParam):
         type (Literal["Integer"]): A description of the parameter's type. Must be "Integer".
 
     Attributes:
-        default (int): The default value of the parameter. 
-        type (Literal["Integer"]): A description of the parameter's type. 
+        default (int): The default value of the parameter.
+        type (Literal["Integer"]): A description of the parameter's type.
     """
+
     default: Optional[int] = None
     type: Literal["Integer"] = "Integer"
+
 
 class Float(BaseParam):
     """
@@ -92,11 +109,13 @@ class Float(BaseParam):
         type (Literal["Float"]): A description of the parameter's type. Must be "Float".
 
     Attributes:
-        default (float): The default value of the parameter. 
-        type (Literal["Float"]): A description of the parameter's type. 
+        default (float): The default value of the parameter.
+        type (Literal["Float"]): A description of the parameter's type.
     """
+
     default: Optional[float] = None
     type: Literal["Float"] = "Float"
+
 
 class String(BaseParam):
     """
@@ -107,11 +126,13 @@ class String(BaseParam):
         type (Literal["String"]): A description of the parameter's type. Must be "String".
 
     Attributes:
-        default (str): The default value of the parameter. 
-        type (Literal["String"]): A description of the parameter's type. 
+        default (str): The default value of the parameter.
+        type (Literal["String"]): A description of the parameter's type.
     """
+
     default: Optional[str] = None
     type: Literal["String"] = "String"
+
 
 class Date(BaseParam):
     """
@@ -122,18 +143,20 @@ class Date(BaseParam):
         type (Literal["Date"]): A description of the parameter's type. Must be "Date".
 
     Attributes:
-        default (datetime): The default value of the parameter. 
-        type (Literal["Date"]): A description of the parameter's type. 
+        default (datetime): The default value of the parameter.
+        type (Literal["Date"]): A description of the parameter's type.
     """
+
     default: Optional[datetime] = None
     type: Literal["Date"] = "Date"
+
 
 class DataField(BaseParam):
     """
     A parameter for selecting valid values using the databrowser.
 
     Args:
-        facet (str): The databrowser facet used for this parameter. 
+        facet (str): The databrowser facet used for this parameter.
         group (int, optional): The group this search facet belongs to. This can be used to group
                                different search facets together, for example for comparing
                                multi model ensembles. Default is 1.
@@ -143,14 +166,14 @@ class DataField(BaseParam):
         type (Literal["DataField"]): A description of the parameter's type. Must be "DataField".
 
     Attributes:
-        facet (str): The databrowser facet used for this parameter. 
+        facet (str): The databrowser facet used for this parameter.
         group (int, optional): The group this search facet belongs to. This can be used to group
                                different search facets together, for example for comparing
                                multi model ensembles.
         multiple(bool, optional): Flag indicating whether multiple values can be selected for the selected facet.
-        predefined_facets(Dict[str, Union[str, List[str]]], optional): A dict containing default values for other search facets. 
-        default (str, optional): The default value of the parameter. 
-        type (Literal["DataField"]): A description of the parameter's type. 
+        predefined_facets(Dict[str, Union[str, List[str]]], optional): A dict containing default values for other search facets.
+        default (str, optional): The default value of the parameter.
+        type (Literal["DataField"]): A description of the parameter's type.
 
     Example:
 
@@ -168,12 +191,14 @@ class DataField(BaseParam):
                         help="Select the variable name"
         )
     """
+
     facet: str = Field()
     group: int = 1
     multiple: bool = False
     predefined_facets: Optional[Dict[str, Union[str, List[str]]]] = None
     default: str = None
     type: Literal["DataField"] = "DataField"
+
 
 class Range(BaseParam):
     """
@@ -184,11 +209,13 @@ class Range(BaseParam):
         type (Literal["Range"]): A description of the parameter's type. Must be "Range".
 
     Attributes:
-        default (List[BaseParamType]): The default value of the parameter. 
-        type (Literal["Range"]): A description of the parameter's type. 
+        default (List[BaseParamType]): The default value of the parameter.
+        type (Literal["Range"]): A description of the parameter's type.
     """
+
     default: Optional[List[BaseParamType]] = None
     type: Literal["Range"] = "Range"
+
 
 class File(BaseParam):
     """
@@ -199,13 +226,13 @@ class File(BaseParam):
         type (Literal["File"]): A description of the parameter's type. Must be "File".
 
     Attributes:
-        default (Path): The default value of the parameter. 
-        type (Literal["File"]): A description of the parameter's type. 
+        default (Path): The default value of the parameter.
+        type (Literal["File"]): A description of the parameter's type.
     """
+
     default: Optional[Path] = None
     type: Literal["File"] = "File"
 
-    
     @field_validator("default")
     @classmethod
     def assert_is_file(cls, path: Path):
@@ -213,10 +240,13 @@ class File(BaseParam):
             raise ValueError("Default value must be a file!")
         return path
 
+
 ParameterType = Annotated[
     Union[Bool, String, Float, Integer, Date, DataField, Range, File, Range],
-      Field(discriminator="type")
+    Field(discriminator="type"),
 ]
+
+
 class ParameterList(BaseModel):
     """
     A list holding all parameters for a given Freva plugin.
@@ -225,78 +255,66 @@ class ParameterList(BaseModel):
     using ParameterList.model_dump_json().
 
     Args:
-        input_parameters (List[ParameterType]): A list containing valid plugin input parameters. 
+        input_parameters (List[ParameterType]): A list containing valid plugin input parameters.
                                                 Valid parameters are Bool, String, Integer, Date, DataField, Range, File, Range.
 
     Attributes:
-        input_parameters(List[ParameterType]): A list containing valid parameters. 
+        input_parameters(List[ParameterType]): A list containing valid parameters.
     """
-    input_parameters : List[ParameterType]
-        
+
+    input_parameters: List[ParameterType]
+
 
 class ToolAbstract(BaseModel):
     """Define the database model for the tool configuration."""
 
-    # basic tool metadata 
-    name: Annotated[str, Field(required=True, description="Name of the tool")]
-    author: Annotated[str, Field(required=True, description="Tool Author(s)")]
-    version: Annotated[str, Field(required=True, description="Tool version")]
+    # basic tool metadata
+    name: Annotated[str, Field(description="Name of the tool")]
+    author: Annotated[str, Field(description="Tool Author(s)")]
+    version: Annotated[str, Field(description="Tool version")]
     summary: Annotated[
         str,
         Field(
-            required=True,
             description="Short description of what the tool is supposed to do.",
         ),
     ]
     description: Annotated[
-        str,
+        Optional[str],
         Field(
-            required=False,
             description="A more detailed description of the tool",
         ),
     ] = None
     title: Annotated[
-        str,
-        Field(required=False, description="An optional title of the tool."),
+        Optional[str],
+        Field(description="An optional title of the tool."),
     ] = None
-    added: Annotated[
-        datetime, Field(required=True, description="When the tool was added.")
-    ]
-    # input parameters 
+    added: Annotated[datetime, Field(description="When the tool was added.")]
+    # input parameters
     parameters: Annotated[
-        ParameterList,
-        Field(required=True, description="The input parameters of the tool."),
-    ]
+        Optional[List[ParameterType]],
+        Field(description="The input parameters of the tool."),
+    ] = None
     # tool command and binary used to execute tool
-    command: Annotated[
-        str, Field(required=True, description="The command that is executed.")
-    ]
+    command: Annotated[str, Field(description="The command that is executed.")]
     binary: Annotated[
-        str, Field(required=True, description="Binary used to execute tool command.")
+        str,
+        Field(description="Binary used to execute tool command."),
     ]
     # output parameters
     output_type: Annotated[
-        Literal["plots", "data", "both"], 
-        Field(required=True, description="Type of output. Can be either 'plots', 'data' or 'both'")
+        Literal["plots", "data", "both"],
+        Field(
+            description="Type of output. Can be either 'plots', 'data' or 'both'",
+        ),
     ]
 
     @model_validator(mode="before")
     def _validate_config(self, config: Union[str, dict]) -> dict:
         """
-        Run a number of tests on the given config, for example that it contains certain keys 
+        Run a number of tests on the given config, for example that it contains certain keys
         for the different categories of the config (such as tool_metadata, input_parameters, runtime_parameters, output_parameters)
-        raises an error if checks fail. 
+        raises an error if checks fail.
         Idea is that it gets a TOML file string as input, parses it as a dictionary, checks this dictionary
         and returns one that is 'flattened', i.e. where table ids from the TOML file no longer appear.
         """
         raise NotImplementedError
-
-    
-
-
-
-
-
-
-
-
