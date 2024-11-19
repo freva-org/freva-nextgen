@@ -57,6 +57,10 @@ metadata_tags = [
         ),
     },
     {
+        "name": "Analysis Tools",
+        "description": "Define, submit and monitor any data anaylsys tools.",
+    },
+    {
         "name": "Authentication",
         "description": "These endpoints are for authentication.",
     },
