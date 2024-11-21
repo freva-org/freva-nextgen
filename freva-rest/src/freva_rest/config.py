@@ -7,6 +7,7 @@ variables.
 
 import logging
 import os
+import urllib.parse
 from functools import cached_property
 from pathlib import Path
 from socket import gethostname
@@ -16,6 +17,7 @@ from typing import (
     Dict,
     Iterator,
     List,
+    Literal,
     Optional,
     Set,
     Tuple,
@@ -44,9 +46,7 @@ class ServerConfig(BaseModel):
         Union[str, Path],
         Field(
             title="API Config",
-            description=(
-                "Path to a .toml file holding the API" "configuration"
-            ),
+            description=("Path to a .toml file holding the API" "configuration"),
         ),
     ] = os.getenv("API_CONFIG", Path(__file__).parent / "api_config.toml")
     proxy: Annotated[
@@ -109,9 +109,7 @@ class ServerConfig(BaseModel):
         str,
         Field(
             title="Cache expiration.",
-            description=(
-                "The expiration time in sec" "of the data loading cache."
-            ),
+            description=("The expiration time in sec" "of the data loading cache."),
         ),
     ] = os.getenv("API_CACHE_EXP", "")
     api_services: Annotated[
@@ -133,10 +131,7 @@ class ServerConfig(BaseModel):
         Field(
             title="Redis cert file.",
             description=(
-                "Path to the public"
-                "certfile to make"
-                "connections to the"
-                "cache"
+                "Path to the public" "certfile to make" "connections to the" "cache"
             ),
         ),
     ] = os.getenv("API_REDIS_SSL_CERTFILE", "")
@@ -145,10 +140,7 @@ class ServerConfig(BaseModel):
         Field(
             title="Redis key file.",
             description=(
-                "Path to the privat"
-                "key file to make"
-                "connections to the"
-                "cache"
+                "Path to the privat" "key file to make" "connections to the" "cache"
             ),
         ),
     ] = os.getenv("API_REDIS_SSL_KEYFILE", "")
@@ -227,19 +219,13 @@ class ServerConfig(BaseModel):
         self.oidc_client_id = self.oidc_client_id or self._read_config(
             "oidc", "client_id"
         )
-        self.mongo_host = self.mongo_host or self._read_config(
-            "mongo_db", "hostname"
-        )
-        self.mongo_user = self.mongo_user or self._read_config(
-            "mongo_db", "user"
-        )
+        self.mongo_host = self.mongo_host or self._read_config("mongo_db", "hostname")
+        self.mongo_user = self.mongo_user or self._read_config("mongo_db", "user")
         self.mongo_password = self.mongo_password or self._read_config(
             "mongo_db", "password"
         )
         self.mongo_db = self.mongo_db or self._read_config("mongo_db", "name")
-        self.solr_host = self.solr_host or self._read_config(
-            "solr", "hostname"
-        )
+        self.solr_host = self.solr_host or self._read_config("solr", "hostname")
         self.solr_core = self.solr_core or self._read_config("solr", "core")
         self.redis_user = self.redis_user or self._read_config("cache", "user")
         self.redis_password = self.redis_password or self._read_config(
@@ -252,9 +238,7 @@ class ServerConfig(BaseModel):
         self.redis_ssl_certfile = self.redis_ssl_certfile or self._read_config(
             "cache", "cert_file"
         )
-        self.redis_host = self.redis_host or self._read_config(
-            "cache", "hostname"
-        )
+        self.redis_host = self.redis_host or self._read_config("cache", "hostname")
 
     @staticmethod
     def get_url(url: str, default_port: Union[str, int]) -> str:
@@ -270,9 +254,7 @@ class ServerConfig(BaseModel):
     @property
     def services(self) -> Set[str]:
         """Define the services that are served."""
-        return set(
-            s.strip() for s in self.api_services.split(",") if s.strip()
-        )
+        return set(s.strip() for s in self.api_services.split(",") if s.strip())
 
     @property
     def redis_url(self) -> str:
@@ -391,10 +373,80 @@ class ServerConfig(BaseModel):
                     "name"
                 ] not in ("file_name", "file", "file_no_version"):
                     yield entry["name"]
-        except (
-            requests.exceptions.ConnectionError
-        ) as error:  # pragma: no cover
-            logger.error(
-                "Connection to %s failed: %s", url, error
-            )  # pragma: no cover
+        except requests.exceptions.ConnectionError as error:  # pragma: no cover
+            logger.error("Connection to %s failed: %s", url, error)  # pragma: no cover
             yield ""  # pragma: no cover
+
+    @cached_property
+    def stac_credentials(self) -> Tuple[str, str]:
+        """Get the username and password for STAC authentication."""
+        username = (
+            self._read_config("stacapi", "username")
+            or os.environ.get("STAC_USERNAME")
+            or ""
+        )
+        password = (
+            self._read_config("stacapi", "password")
+            or os.environ.get("STAC_PASSWORD")
+            or ""
+        )
+        return username, password
+
+    @cached_property
+    def stacapi_host(self) -> str:
+        """Get the hostname of the STAC service."""
+        return self._read_config("stacapi", "hostname") or os.environ.get(
+            "STAC_HOST", "localhost"
+        )
+
+    @cached_property
+    def stacapi_port(self) -> str:
+        """Get the port of the STAC service."""
+        return self._read_config("stacapi", "port") or os.environ.get(
+            "STAC_PORT", "8083"
+        )
+
+    def get_stac_url(
+        self,
+        spec: Literal["collections", "items", "ping"],
+        collection: Optional[str] = None,
+    ) -> str:
+        """Get the url of the STAC for transaction.
+        Parameters:
+        -----------
+            spec: Literal["collections", "items"]: Spec type
+            collection: Optional collection name, required for "items" spec
+        Returns:
+        --------
+            Complete STAC URL as string
+        """
+        host = self.stacapi_host
+        port = self.stacapi_port
+        username, password = self.stac_credentials
+        netloc = f"{host}:{port}"
+        if not username or not password:
+            missing = []
+            if not username:
+                missing.append("username")
+            if not password:
+                missing.append("password")
+            raise ValueError(
+                f"Missing required authentication credentials: {', '.join(missing)}. "
+                "Please provide them either in config or environment variables "
+                "(STAC_USERNAME, STAC_PASSWORD)"
+            )
+        encoded_username = urllib.parse.quote(username)
+        encoded_password = urllib.parse.quote(password)
+        netloc = f"{encoded_username}:{encoded_password}@{netloc}"
+        base_url = f"http://{netloc}"
+        if spec == "collections":
+            return f"{base_url}/{spec}"
+        if spec == "items":
+            logger.debug("Collection: %s", collection)
+            if collection is None:
+                raise ValueError(
+                    "Collection name is required for 'items' spec"
+                )  # pragma: no cover
+            return f"{base_url}/collections/{collection}/bulk_items"
+        if spec == "ping":
+            return f"{base_url}/_mgmt/{spec}"
