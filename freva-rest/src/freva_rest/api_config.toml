@@ -136,4 +136,4 @@ password = "secret"
 # This section defines settings for connecting to a STAC Browser, allowing the API
 # to query and retrieve metadata from STAC-compliant catalogs.
 hostname = "localhost"
-port = 8084
+port = 8085

@@ -105,7 +105,7 @@ services:
       - SB_catalogUrl=http://localhost:8083
       - SB_catalogTitle=Freva STAC Service
     ports:
-      - "8084:8080"
+      - "8085:8080"
     depends_on:
       - stac-api
 
