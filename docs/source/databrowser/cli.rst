@@ -240,7 +240,7 @@ the data via zarr.
 
 
 Creating STAC Collections
-------------------------
+--------------------------
 The ``stac-collection`` sub command allows you to create a dynamic `STAC (SpatioTemporal Asset Catalog) collection <https://stacspec.org/en/about/stac-spec/>_ `
 from the current search. This can be useful for sharing standardized geospatial
 data catalogs and enabling interoperability between different data systems.
@@ -250,12 +250,12 @@ data catalogs and enabling interoperability between different data systems.
     freva-client databrowser stac-collection --help
 
 .. execute_code::
-    :hide_code:
+   :hide_code:
 
-    from subprocess import run, PIPE
+   from subprocess import run, PIPE
 
-    res = run(["freva-client", "databrowser", "stac-collection", "--help"], check=True, stdout=PIPE, stderr=PIPE)
-    print(res.stdout.decode())
+   res = run(["freva-client", "databrowser", "stac-collection", "--help"], check=True, stdout=PIPE, stderr=PIPE)
+   print(res.stdout.decode())
 
 The STAC collection provides multiple ways to access and interact with the data:
  - Access your climate data through the intake-esm data catalog specification

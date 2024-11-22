@@ -544,7 +544,7 @@ Searching for metadata
 .. _databrowser-api-stac:
 
 Generating a STAC collection
----------------------------
+-----------------------------
 
 .. http:get:: /api/freva-nextgen/databrowser/stac-collection/(str:flavour)/(str:uniq_key)
 
@@ -587,7 +587,7 @@ Generating a STAC collection
     :resheader Content-Type: ``application/json``: creation status and collection link
 
     Example Request
-    ~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~
 
     Here's an example of how to use this endpoint with additional parameters.
     In this example, we want to create a STAC collection that follows the
@@ -600,7 +600,7 @@ Generating a STAC collection
         Host: www.freva.dkrz.de
 
     Example Response
-    ~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~
 
     .. sourcecode:: http
 
