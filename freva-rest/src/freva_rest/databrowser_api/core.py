@@ -1225,10 +1225,6 @@ class Solr:
         items: list[pystac.Item]
             List of STAC Items to be ingested using upsert method.
 
-        Returns
-        -------
-        None
-
         Raises
         ------
         HTTPException
@@ -1251,10 +1247,6 @@ class Solr:
         collection: pystac.Collection
             STAC Collection to be ingested.
 
-        Returns
-        -------
-        None
-
         Raises
         ------
         HTTPException
@@ -1272,10 +1264,6 @@ class Solr:
         ----------
         collection: pystac.Collection
             STAC Collection with updated data.
-
-        Returns
-        -------
-        None
 
         Raises
         ------
@@ -1320,10 +1308,6 @@ class Solr:
         search_keys: Dict[str, str]
             A dictionariy containing search keys used to identify
             data for deletion.
-
-        Returns
-        -------
-        None
         """
         try:
             query = {
@@ -1343,10 +1327,6 @@ class Solr:
         ----------
         metadata_batch: List[Dict[str, Any]]
             A list of dictionaries containing metadata to insert into MongoDB.
-
-        Returns
-        -------
-        None
         """
         bulk_operations = []
 

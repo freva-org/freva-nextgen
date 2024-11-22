@@ -284,14 +284,14 @@ def test_stac_collection(test_server: str) -> None:
         params={"activity_id": "cmip3", "multi-version": False},
     )
     assert res5.status_code == 404
-    # 500 Internal Server Error, no credentials
-    with mock.patch("freva_rest.rest.server_config.stac_credentials", ("", "")):
-        res_no_creds = requests.get(
-            f"{test_server}/databrowser/stac-collection/cmip6/uri",
-            params={"activity_id": "cmip", "multi-version": True},
-        )
-        assert res_no_creds.status_code == 500
-
+    # 500 Internal Server Error, no crendentials
+    with mock.patch("freva_rest.rest.server_config.stacapi_user", ""), \
+        mock.patch("freva_rest.rest.server_config.stacapi_password", ""):
+            res_no_creds = requests.get(
+                f"{test_server}/databrowser/stac-collection/cmip6/uri",
+                params={"activity_id": "cmip", "multi-version": True},
+            )
+            assert res_no_creds.status_code == 500
 def test_bad_intake_request(test_server: str) -> None:
     """Test for a wrong intake request."""
     res1 = requests.get(

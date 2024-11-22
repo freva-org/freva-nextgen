@@ -179,6 +179,48 @@ class ServerConfig(BaseModel):
             description="The OIDC client secret, if any, used for authentication.",
         ),
     ] = os.getenv("API_OIDC_CLIENT_SECRET", "")
+    stacapi_host: Annotated[
+        str,
+        Field(
+            title="STAC host",
+            description="The hostname of the STAC service.",
+        ),
+    ] = os.getenv("API_STAC_HOST", "")
+    stacapi_port: Annotated[
+        str,
+        Field(
+            title="STAC port",
+            description="The port of the STAC service.",
+        ),
+    ] = os.getenv("API_STAC_PORT", "")
+    stacapi_user: Annotated[
+        str,
+        Field(
+            title="STAC-API username",
+            description="The username for the STAC service.",
+        ),
+    ] = os.getenv("API_STAC_USER", "")
+    stacapi_password: Annotated[
+        str,
+        Field(
+            title="STAC-API password",
+            description="The password for the STAC service.",
+        ),
+    ] = os.getenv("API_STAC_PASSWORD", "")
+    stacbrowser_host: Annotated[
+        str,
+        Field(
+            title="STAC browser host",
+            description="The hostname of the STAC browser service.",
+        ),
+    ] = os.getenv("API_STACBROWSER_HOST", "")
+    stacbrowser_port: Annotated[
+        str,
+        Field(
+            title="STAC browser port",
+            description="The port of the STAC browser service.",
+        ),
+    ] = os.getenv("API_STACBROWSER_PORT", "")
 
     def _read_config(self, section: str, key: str) -> Any:
         fallback = self._fallback_config[section][key] or None
@@ -239,6 +281,21 @@ class ServerConfig(BaseModel):
             "cache", "cert_file"
         )
         self.redis_host = self.redis_host or self._read_config("cache", "hostname")
+        self.stacapi_host = self.stacapi_host or \
+            self._read_config("stacapi", "hostname")
+        self.stacapi_port = self.stacapi_port or \
+            self._read_config("stacapi", "port")
+        self.stacapi_user = self.stacapi_user or \
+            self._read_config("stacapi", "username")
+        self.stacapi_password = self.stacapi_password or self._read_config(
+            "stacapi", "password"
+        )
+        self.stacbrowser_host = self.stacbrowser_host or self._read_config(
+            "stacbrowser", "hostname"
+        )
+        self.stacbrowser_port = self.stacbrowser_port or self._read_config(
+            "stacbrowser", "port"
+        )
 
     @staticmethod
     def get_url(url: str, default_port: Union[str, int]) -> str:
@@ -377,35 +434,6 @@ class ServerConfig(BaseModel):
             logger.error("Connection to %s failed: %s", url, error)  # pragma: no cover
             yield ""  # pragma: no cover
 
-    @cached_property
-    def stac_credentials(self) -> Tuple[str, str]:
-        """Get the username and password for STAC authentication."""
-        username = (
-            self._read_config("stacapi", "username")
-            or os.environ.get("STAC_USERNAME")
-            or ""
-        )
-        password = (
-            self._read_config("stacapi", "password")
-            or os.environ.get("STAC_PASSWORD")
-            or ""
-        )
-        return username, password
-
-    @cached_property
-    def stacapi_host(self) -> str:
-        """Get the hostname of the STAC service."""
-        return self._read_config("stacapi", "hostname") or os.environ.get(
-            "STAC_HOST", "localhost"
-        )
-
-    @cached_property
-    def stacapi_port(self) -> str:
-        """Get the port of the STAC service."""
-        return self._read_config("stacapi", "port") or os.environ.get(
-            "STAC_PORT", "8083"
-        )
-
     def get_stac_url(
         self,
         spec: Literal["collections", "items", "ping"],
@@ -422,8 +450,9 @@ class ServerConfig(BaseModel):
         """
         host = self.stacapi_host
         port = self.stacapi_port
-        username, password = self.stac_credentials
         netloc = f"{host}:{port}"
+        username = self.stacapi_user
+        password = self.stacapi_password
         if not username or not password:
             missing = []
             if not username:
@@ -433,10 +462,10 @@ class ServerConfig(BaseModel):
             raise ValueError(
                 f"Missing required authentication credentials: {', '.join(missing)}. "
                 "Please provide them either in config or environment variables "
-                "(STAC_USERNAME, STAC_PASSWORD)"
+                "(API_STAC_USER, API_STAC_PASSWORD)"
             )
-        encoded_username = urllib.parse.quote(username)
-        encoded_password = urllib.parse.quote(password)
+        encoded_username = urllib.parse.quote(self.stacapi_user)
+        encoded_password = urllib.parse.quote(self.stacapi_password)
         netloc = f"{encoded_username}:{encoded_password}@{netloc}"
         base_url = f"http://{netloc}"
         if spec == "collections":
