@@ -8,7 +8,7 @@ from typing import Annotated, Dict, List, Literal, Optional, Union
 from fastapi import HTTPException, status
 from packaging.version import InvalidVersion, Version
 from pydantic import BaseModel, ConfigDict, Field
-from pydantic.functional_validators import field_validator
+from pydantic.functional_validators import field_validator, model_validator
 
 from freva_rest.config import ServerConfig
 
@@ -123,12 +123,12 @@ class BaseParam(BaseModel):
         Field(mandatory=False, description="Default value of parameter."),
     ] = None
 
-    @field_validator("title", mode="after")
-    def set_default_title(cls, title: Optional[str]) -> str:
+    @model_validator(mode="after")
+    def validate_intput(self) -> "BaseParam":
         """Assign the title."""
-        if title is None:
-            title = cls.name
-        return title
+        if self.title is None:
+            self.title = self.name
+        return self
 
 
 class Bool(BaseParam):

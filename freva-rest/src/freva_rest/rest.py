@@ -84,7 +84,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     lock = filelock.FileLock(cache_dir / "client_secret.txt.lock")
     client_secret_file = cache_dir / "client_secret.txt"
     secret = str(uuid5(NAMESPACE_URL, datetime.now().isoformat()))
-    if not client_secret_file.exists():
+    if not client_secret_file.exists():  # pragma: no cover
         with lock:
             client_secret_file.write_text(secret, encoding="utf-8")
     try:
