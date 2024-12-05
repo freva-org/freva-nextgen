@@ -9,6 +9,8 @@ MAGENTA='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
+MONGO_PORT=$(echo "${API_MONGO_HOST}" | cut -d ':' -f2)
+
 display_logo() {
     echo -e "${BLUE}"
     echo -e "${BLUE} ████████▓▒░ ████████▓▒░  ████████▓▒░ ██▓▒░  ██▓▒░  ███████▓▒░ ${NC}"
@@ -61,15 +63,15 @@ wait_for_mongo() {
 reset_mongo_user() {
     log_info "Resetting MongoDB user..."
     mongosh admin --quiet --eval "
-        if (db.getUser('${MONGO_USER}')) {
-            db.dropUser('${MONGO_USER}');
+        if (db.getUser('${API_MONGO_USER}')) {
+            db.dropUser('${API_MONGO_USER}');
             print('Existing user dropped');
         } else {
             print('User does not exist, proceeding with creation new user');
         }
         db.createUser({
-            user: '${MONGO_USER}',
-            pwd: '${MONGO_PASSWORD}',
+            user: '${API_MONGO_USER}',
+            pwd: '${API_MONGO_PASSWORD}',
             roles: [
                 { role: 'root', db: 'admin' },
                 { role: 'userAdminAnyDatabase', db: 'admin' },
@@ -88,7 +90,7 @@ verify_auth() {
     log_debug "Verifying authentication..."
     mongosh admin --quiet --eval "
         try {
-            db.auth('${MONGO_USER}', '${MONGO_PASSWORD}');
+            db.auth('${API_MONGO_USER}', '${API_MONGO_PASSWORD}');
             db.adminCommand('listDatabases');
             quit(0);
         } catch(err) {
@@ -98,14 +100,16 @@ verify_auth() {
 
 init_mongodb() {
     log_service "=== Initializing MongoDB ==="
-    if [[ -z "${MONGO_USER}" ]] || [[ -z "${MONGO_PASSWORD}" ]]; then
-        log_error "MongoDB is enabled but MONGO_USER and/or MONGO_PASSWORD are not set"
+    if [[ -z "${API_MONGO_USER}" ]] || [[ -z "${API_MONGO_PASSWORD}" ]]; then
+        log_error "MongoDB is enabled but API_MONGO_USER and/or API_MONGO_PASSWORD are not set"
         log_error "Please provide credentials via environment variables"
         exit 1
     fi
     log_info "Starting MongoDB without authentication..."
     mongod --dbpath ${MONGO_HOME}/data --port ${MONGO_PORT} --bind_ip_all --fork --logpath "$LOG_FILE" --noauth &
     wait_for_mongo
+    log_info "Initializing MongoDB userdata entrypoint..."
+    mongosh admin "/docker-entrypoint-initdb.d/mongo-userdata-init.js"
     if ! verify_auth; then
         log_warn "Authentication failed with existing credentials - resetting user..."
         reset_mongo_user
@@ -119,9 +123,9 @@ init_mongodb() {
     mongod --dbpath ${MONGO_HOME}/data --port ${MONGO_PORT} --bind_ip 0.0.0.0 --auth &
     wait_for_mongo
     log_info "Initializing MongoDB collections..."
-    mongosh --authenticationDatabase admin -u "${MONGO_USER}" -p "${MONGO_PASSWORD}" --eval "
-        if (db.getSiblingDB('${MONGO_DB}').getCollection('searches').countDocuments() == 0) {
-            db.getSiblingDB('${MONGO_DB}').createCollection('searches');
+    mongosh --authenticationDatabase admin -u "${API_MONGO_USER}" -p "${API_MONGO_PASSWORD}" --eval "
+        if (db.getSiblingDB('${API_MONGO_DB}').getCollection('searches').countDocuments() == 0) {
+            db.getSiblingDB('${API_MONGO_DB}').createCollection('searches');
         }
     "
 }
@@ -129,7 +133,7 @@ init_mongodb() {
 init_solr() {
     log_service "=== Initializing Solr ==="
     solr start -force
-    until curl -s "http://localhost:${SOLR_PORT}/solr/admin/ping" >/dev/null 2>&1; do
+    until curl -s "http://${API_SOLR_HOST}/solr/admin/ping" >/dev/null 2>&1; do
         log_debug "Waiting for Solr to start..."
         sleep 1
     done
