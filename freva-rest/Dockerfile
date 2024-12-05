@@ -110,7 +110,6 @@ RUN chmod +x ./entrypoint.sh && \
         export CFLAGS="-O3" && \
         export DISABLE_NUMCODECS_SSE2=true && \
         export DISABLE_NUMCODECS_AVX2=true && \
-        pip3 install numcodecs --only-binary numcodecs --break-system-packages && \
         python3 -m pip install /opt/app/dist/freva_rest*.whl --break-system-packages; \
     else \
         python3 -m pip install /opt/app/dist/freva_rest*.whl --break-system-packages; \
