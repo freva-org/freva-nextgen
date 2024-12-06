@@ -10,6 +10,7 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 MONGO_PORT=$(echo "${API_MONGO_HOST}" | cut -d ':' -f2)
+MONGO_HOST=$(echo "${API_MONGO_HOST}" | cut -d ':' -f1)
 
 display_logo() {
     echo -e "${BLUE}"
@@ -140,6 +141,35 @@ init_solr() {
     log_info "Solr started successfully"
 }
 
+start_freva_service() {
+    local command=$1
+    shift || true
+
+    log_service "Starting freva-rest..."
+
+    case "${command:-}" in
+        "")
+            exec python3 -m freva_rest.cli
+            ;;
+        "sh"|"bash"|"zsh")
+            exec "${command}" "$@"
+            ;;
+        -*)
+            exec python3 -m freva_rest.cli "${command}" "$@"
+            ;;
+        "exec")
+            if [ $# -eq 0 ]; then
+                log_error "Error: 'exec' provided without a command to execute."
+                return 1
+            fi
+            exec "$@"
+            ;;
+        *)
+            exec "${command}" "$@"
+            ;;
+    esac
+}
+
 main() {
     display_logo
     log_service "Initializing services..."
@@ -155,8 +185,7 @@ main() {
     else
         log_warn "Solr service is skipped (USE_SOLR=0)"
     fi
-    log_service "Starting freva-rest..."
-    exec python3 -m freva_rest.cli "$@"
+    start_freva_service "$@"
 }
 
 main "$@"
