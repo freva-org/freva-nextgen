@@ -91,14 +91,6 @@ WORKDIR /opt/app
 COPY . .
 RUN python3 -m pip install --upgrade pip --break-system-packages && \
     python3 -m pip install build --break-system-packages && \
-    # if [ "$TARGETARCH" = "arm64" ]; then \
-    #     export CFLAGS="-O3" && \
-    #     export DISABLE_NUMCODECS_SSE2=true && \
-    #     export DISABLE_NUMCODECS_AVX2=true && \
-    #     python3 -m pip install . --break-system-packages; \
-    # else \
-    #     python3 -m pip install . --break-system-packages; \
-    # fi && \
     python3 -m pip install . --break-system-packages && \
     python3 -m build --sdist --wheel
 
@@ -107,16 +99,9 @@ WORKDIR /opt/freva-rest
 COPY --from=builder /opt/app/dist /opt/app/dist
 COPY src/freva_rest/api_config.toml $API_CONFIG
 COPY entrypoint.sh ./
-RUN chmod +x ./entrypoint.sh && \\
+COPY entrypoint.sh ./
+RUN chmod +x ./entrypoint.sh && \
     python3 -m pip install /opt/app/dist/freva_rest*.whl --break-system-packages
-    # if [ "$TARGETARCH" = "arm64" ]; then \
-    #     export CFLAGS="-O3" && \
-    #     export DISABLE_NUMCODECS_SSE2=true && \
-    #     export DISABLE_NUMCODECS_AVX2=true && \
-    #     python3 -m pip install /opt/app/dist/freva_rest*.whl --break-system-packages; \
-    # else \
-    #     python3 -m pip install /opt/app/dist/freva_rest*.whl --break-system-packages; \
-    # fi
 
 RUN mkdir -p /data/db && \
     mkdir -p /opt/freva-rest/mongodb/log
