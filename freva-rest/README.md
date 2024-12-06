@@ -43,6 +43,18 @@ docker pull ghcr.io/freva-clint/freva-rest:latest
 By default the container starts with the ``freva-rest-service`` command.
 See the `freva-rest-server --help` command for configure options.
 
+### Service Startup Options
+
+The container supports several startup modes on `AMD64` and `ARM64`:
+
+```console
+# Default mode - starts the freva-rest service
+docker run ghcr.io/freva-clint/freva-rest:latest
+
+# Start with custom freva-rest flags
+docker run ghcr.io/freva-clint/freva-rest:latest -p 8000
+```
+
 You can adjust the server settings by either overriding the default flags or 
 setting environment variables in the container.
 
