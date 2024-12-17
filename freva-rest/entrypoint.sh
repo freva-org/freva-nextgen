@@ -142,12 +142,12 @@ init_solr() {
 }
 
 start_freva_service() {
-    local command=$1
+    local command="${1:-}"
     shift || true
 
     log_service "Starting freva-rest..."
 
-    case "${command:-}" in
+    case "${command}" in
         "")
             exec python3 -m freva_rest.cli
             ;;
