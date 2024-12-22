@@ -3,7 +3,6 @@ ARG VERSION
 LABEL org.opencontainers.image.authors="DRKZ-CLINT"
 LABEL org.opencontainers.image.source="https://github.com/FREVA-CLINT/freva-nextgen/freva-rest"
 LABEL org.opencontainers.image.version="$VERSION"
-# Environment Variables
 ENV API_CONFIG=/opt/freva-rest/api_config.toml \
     PYTHONUNBUFFERED=1 \
     CONDA_PREFIX=/opt/conda \
@@ -23,7 +22,6 @@ WORKDIR /opt/app
 COPY . .
 RUN python3 -m pip install --no-cache-dir --upgrade pip && \
     python3 -m pip install --no-cache-dir build && \
-    python3 -m pip install --no-cache-dir . && \
     python3 -m build --sdist --wheel
 
 FROM base AS final
@@ -31,8 +29,6 @@ WORKDIR /opt/freva-rest
 COPY --from=builder /opt/app/dist /opt/app/dist
 COPY src/freva_rest/api_config.toml $API_CONFIG
 ENV PATH=/opt/conda/bin:$PATH
-
-# Install application and dependencies
 RUN mkdir -p /docker-entrypoint-initdb.d && \
     mamba install -y -q -c conda-forge --override-channels freva-rest-server procps-ng && \
     python3 -m pip install --no-cache-dir /opt/app/dist/freva_rest*.whl
