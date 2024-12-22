@@ -121,6 +121,7 @@ jobs:
           build-args: VERSION=${{ needs.release-type-determination.outputs.tag }}
           platforms: linux/amd64, linux/arm64
           push: true
+          no-cache: true
           tags: |
             ghcr.io/freva-clint/freva-rest-api:${{ needs.release-type-determination.outputs.tag }}
             ghcr.io/freva-clint/freva-rest-api:${{ needs.release-type-determination.outputs.is_prerelease == 'false' && 'latest' || needs.release-type-determination.outputs.tag }}

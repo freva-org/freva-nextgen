@@ -102,6 +102,7 @@ jobs:
           platforms: linux/amd64
           push: false
           load: true
+          no-cache: true
           tags: freva-rest:latest
 
       - name: Waiting for keycloak
