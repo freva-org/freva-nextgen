@@ -40,8 +40,4 @@ RUN mkdir -p /docker-entrypoint-initdb.d && \
 COPY entrypoint.sh /docker-entrypoint-initdb.d/entrypoint.sh
 RUN chmod +x /docker-entrypoint-initdb.d/entrypoint.sh
 
-VOLUME /opt/conda/var/freva-server/data/mongodb
-VOLUME /opt/conda/libexec/apache-solr/server/solr
-VOLUME /opt/conda/data
-
 ENTRYPOINT ["/docker-entrypoint-initdb.d/entrypoint.sh"]
