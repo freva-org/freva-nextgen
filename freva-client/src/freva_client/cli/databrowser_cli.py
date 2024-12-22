@@ -32,27 +32,27 @@ def _auth(url: str, token: Optional[str]) -> None:
 class UniqKeys(str, Enum):
     """Literal implementation for the cli."""
 
-    file: str = "file"
-    uri: str = "uri"
+    file = "file"
+    uri = "uri"
 
 
 class Flavours(str, Enum):
     """Literal implementation for the cli."""
 
-    freva: str = "freva"
-    cmip6: str = "cmip6"
-    cmip5: str = "cmip5"
-    cordex: str = "cordex"
-    nextgems: str = "nextgems"
-    user: str = "user"
+    freva = "freva"
+    cmip6 = "cmip6"
+    cmip5 = "cmip5"
+    cordex = "cordex"
+    nextgems = "nextgems"
+    user = "user"
 
 
 class TimeSelect(str, Enum):
     """Literal implementation for the cli."""
 
-    strict: str = "strict"
-    flexible: str = "flexible"
-    file: str = "file"
+    strict = "strict"
+    flexibe = "flexible"
+    file = "file"
 
     @staticmethod
     def get_help() -> str:
@@ -188,7 +188,9 @@ def metadata_search(
     result = databrowser.metadata_search(
         *(facets or []),
         time=time or "",
-        time_select=cast(Literal["file", "flexible", "strict"], time_select.value),
+        time_select=cast(
+            Literal["file", "flexible", "strict"], time_select.value
+        ),
         flavour=cast(
             Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
             flavour.value,
@@ -462,7 +464,9 @@ def intake_catalogue(
             print(Path(temp_f.name).read_text())
 
 
-@databrowser_app.command(name="data-count", help="Count the databrowser search results")
+@databrowser_app.command(
+    name="data-count", help="Count the databrowser search results"
+)
 @exception_handler
 def count_values(
     search_keys: Optional[List[str]] = typer.Argument(
@@ -581,9 +585,13 @@ def count_values(
             databrowser(
                 *facets,
                 time=time or "",
-                time_select=cast(Literal["file", "flexible", "strict"], time_select),
+                time_select=cast(
+                    Literal["file", "flexible", "strict"], time_select
+                ),
                 flavour=cast(
-                    Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
+                    Literal[
+                        "freva", "cmip6", "cmip5", "cordex", "nextgems", "user"
+                    ],
                     flavour.value,
                 ),
                 host=host,
@@ -663,11 +671,13 @@ def user_data_add(
         action="add",
         userdata_items=cast(List[Union[str, xr.Dataset]], paths),
         metadata=facet_dict,
-        host=host
+        host=host,
     )
 
 
-@user_data_app.command(name="delete", help="Delete user data from the databrowser.")
+@user_data_app.command(
+    name="delete", help="Delete user data from the databrowser."
+)
 @exception_handler
 def user_data_delete(
     search_keys: List[str] = typer.Option(

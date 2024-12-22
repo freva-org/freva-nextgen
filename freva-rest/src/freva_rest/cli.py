@@ -111,11 +111,11 @@ def create_arg_parser(
 class Services(str, Enum):
     """Literal implementation for the cli."""
 
-    zarr_stream: str = "zarr-stream"
-    stream: str = "zarr-stream"
-    data_portal: str = "zarr-stream"
-    databrowser: str = "databrowser"
-    search: str = "databrowser"
+    zarr_stream = "zarr-stream"
+    stream = "zarr-stream"
+    data_portal = "zarr-stream"
+    databrowser = "databrowser"
+    search = "databrowser"
 
 
 def get_cert_file(
