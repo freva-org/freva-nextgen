@@ -49,7 +49,7 @@ init_mongodb() {
     log_service "=== Initialising MongoDB ==="
     /bin/bash /opt/conda/libexec/freva-rest-server/scripts/init-mongo
     log_info "Starting MongoDB with authentication..."
-    /opt/conda/bin/mongod -f /opt/conda/share/freva-rest-server/mongodb/mongod.conf --auth &
+    /opt/conda/bin/mongod -f /opt/conda/share/freva-rest-server/mongodb/mongod.yaml --auth &
 }
 
 init_solr() {
