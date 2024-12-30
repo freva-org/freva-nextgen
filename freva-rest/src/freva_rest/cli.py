@@ -53,19 +53,36 @@ import argparse
 import asyncio
 import logging
 import os
+import sys
 from enum import Enum
 from pathlib import Path
 from socket import gethostname
 from tempfile import NamedTemporaryFile
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import uvicorn
 from pydantic.fields import FieldInfo
+from rich import print as pprint
 from rich.markdown import Markdown
 from rich_argparse import ArgumentDefaultsRichHelpFormatter
 
+from freva_rest import __version__
+
 from .config import ServerConfig
 from .logger import logger
+
+
+class VersionAction(argparse._VersionAction):
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: Any,
+        option_string=None,
+    ):
+        version = self.version or "%(prog)s"
+        pprint(version % {"prog": parser.prog or sys.argv[1]})
+        parser.exit()
 
 
 def create_arg_parser(
@@ -76,6 +93,13 @@ def create_arg_parser(
         prog="freva-rest-server",
         description=Markdown(__doc__),  # type: ignore
         formatter_class=ArgumentDefaultsRichHelpFormatter,
+    )
+    parser.add_argument(
+        "-V",
+        "--version",
+        help="Display version and exit.",
+        version=f"[b][red]%(prog)s[/red]: {__version__}[/b]",
+        action=VersionAction,
     )
     parser.add_argument(
         "--port",
