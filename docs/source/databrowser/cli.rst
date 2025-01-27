@@ -239,25 +239,46 @@ sub command you can instruct the system to create zarr file streams to access
 the data via zarr.
 
 
-Creating STAC Collections
+Creating STAC Catalogue
 --------------------------
-The ``stac-collection`` sub command allows you to create a dynamic `STAC (SpatioTemporal Asset Catalog) collection <https://stacspec.org/en/about/stac-spec/>_ `
-from the current search. This can be useful for sharing standardized geospatial
-data catalogs and enabling interoperability between different data systems.
+The ``stac-catalogue`` sub command allows you to create an static or dynamic 
+`SpatioTemporal Asset Catalog (STAC) <https://stacspec.org/en/about/stac-spec/>_ `
+from the current search. This can be useful for creating, sharing and using 
+standardized geospatial data catalogs and enabling interoperability between 
+different data systems.
 
 .. code:: console
 
-    freva-client databrowser stac-collection --help
+    freva-client databrowser stac-catalogue --help
 
 .. execute_code::
    :hide_code:
 
    from subprocess import run, PIPE
 
-   res = run(["freva-client", "databrowser", "stac-collection", "--help"], check=True, stdout=PIPE, stderr=PIPE)
+   res = run(["freva-client", "databrowser", "stac-catalogue", "--help"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
-The STAC collection provides multiple ways to access and interact with the data:
+To get an static STAC catalogue you can use the following command:
+
+.. code:: console
+
+    freva-client databrowser stac-catalogue 
+
+and to specify the output directory you can use the following command, 
+otherwise it would be saved in the current directory:
+
+.. code:: console
+
+    freva-client databrowser stac-catalogue --outdir /path/to/output
+
+And to get a dynamic STAC catalogue you can simply use the ``--stac_dynamic`` flag:
+
+.. code:: console
+
+    freva-client databrowser stac-catalogue --stac_dynamic
+
+The STAC Catalogue provides multiple ways to access and interact with the data:
  - Access your climate data through the intake-esm data catalog specification
  - Download and access search results as Zarr files, available as STAC Assets at both collection and item levels
  - Browse and explore your search results directly through the Freva DataBrowser web interface

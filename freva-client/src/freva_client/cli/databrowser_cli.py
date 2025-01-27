@@ -32,27 +32,27 @@ def _auth(url: str, token: Optional[str]) -> None:
 class UniqKeys(str, Enum):
     """Literal implementation for the cli."""
 
-    file: str = "file"
-    uri: str = "uri"
+    file = "file"
+    uri = "uri"
 
 
 class Flavours(str, Enum):
     """Literal implementation for the cli."""
 
-    freva: str = "freva"
-    cmip6: str = "cmip6"
-    cmip5: str = "cmip5"
-    cordex: str = "cordex"
-    nextgems: str = "nextgems"
-    user: str = "user"
+    freva = "freva"
+    cmip6 = "cmip6"
+    cmip5 = "cmip5"
+    cordex = "cordex"
+    nextgems = "nextgems"
+    user = "user"
 
 
 class TimeSelect(str, Enum):
     """Literal implementation for the cli."""
 
-    strict: str = "strict"
-    flexible: str = "flexible"
-    file: str = "file"
+    strict = "strict"
+    flexible = "flexible"
+    file = "file"
 
     @staticmethod
     def get_help() -> str:
@@ -463,11 +463,11 @@ def intake_catalogue(
 
 
 @databrowser_app.command(
-    name="stac-collection",
-    help="Create a STAC collection from the search."
+    name="stac-catalogue",
+    help="Create a dynamic or static STAC catalogue from the search."
 )
 @exception_handler
-def stac_collection(
+def stac_catalogue(
     search_keys: Optional[List[str]] = typer.Argument(
         default=None,
         help="Refine your data search with this `key=value` pair search "
@@ -544,8 +544,26 @@ def stac_collection(
         help="Show version an exit",
         callback=version_callback,
     ),
+    stac_dynamic: bool = typer.Option(
+        False,
+        "--stac-dynamic",
+        help=(
+            "Create a dynamic STAC catalogue."
+        ),
+    ),
+    outdir: Optional[Path] = typer.Option(
+        None,
+        "-o",
+        "--outdir",
+        help=(
+            "Path to the file where the static STAC catalogue,"
+            "should be written to. If None given (default) the catalogue is"
+            "saved to current working directory. Please note that this argument"
+            "is only used when stac-dynamic is set to False."
+        ),
+    ),
 ) -> None:
-    """Create a STAC collection for climate datasets based on the specified
+    """Create a STAC catalogue for climate datasets based on the specified
     Data Reference Syntax (DRS) standard (flavour) and the type of search
     result (uniq_key), which can be either "file" or "uri"."""
     logger.set_verbosity(verbose)
@@ -564,7 +582,7 @@ def stac_collection(
         stream_zarr=False,
         **(parse_cli_args(search_keys or [])),
     )
-    print(result.stac_collection())
+    print(result.stac_catalogue(stac_dynamic=stac_dynamic, outdir=outdir))
 
 
 @databrowser_app.command(name="data-count", help="Count the databrowser search results")

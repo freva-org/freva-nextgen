@@ -107,16 +107,33 @@ def test_intake_catalogue_no_zarr(
         with open(temp_f.name, "r") as stream:
             assert isinstance(json.load(stream), dict)
 
-def test_stac_collection(
+def test_stac_catalogue(
     cli_runner: CliRunner, test_server: str
 ) -> None:
-    """Test stacl collection"""
+    """Test STAC Catalogue"""
 
-    res = cli_runner.invoke(app, ["stac-collection", "--host", test_server])
+    # sucessful test with static STAC catalogue
+    res = cli_runner.invoke(app, ["stac-catalogue", "--host", test_server, "--outdir", "/tmp"])
     assert res.exit_code == 0
     assert res.stdout
-    # no result
-    res = cli_runner.invoke(app, ["stac-collection", "--host", test_server, "foo=b"])
+
+    # failed test with static STAC catalogue - wrong output
+    res = cli_runner.invoke(app, ["stac-catalogue", "--host", test_server, "--outdir", "/foo/bar"])
+    assert res.exit_code == 1
+    assert not res.stdout
+
+    # failed test with static STAC catalogue - wrong search params
+    res = cli_runner.invoke(app, ["stac-catalogue", "--host", test_server, "foo=b"])
+    assert res.exit_code == 1
+    assert not res.stdout
+
+    # Successful test with dynamic STAC catalogue
+    res = cli_runner.invoke(app, ["stac-catalogue", "--host", test_server, "--stac-dynamic"])
+    assert res.exit_code == 0
+    assert res.stdout
+
+    # failed test with dynamic STAC catalogue
+    res = cli_runner.invoke(app, ["stac-catalogue", "--host", test_server, "--stac-dynamic", "foo=b"])
     assert res.exit_code == 1
     assert not res.stdout
 

@@ -10,11 +10,13 @@ from fastapi import (
     HTTPException,
     Query,
     Request,
+    Response,
     status,
 )
 from fastapi.responses import (
     JSONResponse,
     PlainTextResponse,
+    RedirectResponse,
     StreamingResponse,
 )
 from pydantic import BaseModel, Field
@@ -23,7 +25,7 @@ from freva_rest.auth import TokenPayload, auth
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 
-from .core import FlavourType, SearchResult, Solr, Translator
+from .core import STAC, FlavourType, SearchResult, Solr, Translator
 from .schema import Required, SearchFlavours, SolrSchema
 
 
@@ -223,36 +225,38 @@ async def intake_catalogue(
 
 
 @app.get(
-    "/api/freva-nextgen/databrowser/stac-collection/{flavour}/{uniq_key}",
+    "/api/freva-nextgen/databrowser/stac-catalogue/{flavour}/{uniq_key}",
     tags=["Data search"],
     status_code=200,
     responses={
+        303: {"description": "See Other - Redirected to STAC-Browser"},
         413: {"description": "Result stream too big."},
         422: {"description": "Invalid flavour or search keys."},
         503: {"description": "Search backend error"},
         500: {"description": "Internal server error"},
     },
-    response_class=JSONResponse,
+    response_class=Response,
 )
-async def stac_collection(
+async def stac_catalogue(
     flavour: FlavourType,
     uniq_key: Literal["file", "uri"],
     start: Annotated[int, SolrSchema.params["start"]] = 0,
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     max_results: Annotated[int, SolrSchema.params["max_results"]] = -1,
+    stac_dynamic: bool = False,
     request: Request = Required,
     background_tasks: BackgroundTasks = Required,
-) -> Dict[str, str]:
-    """Create a STAC collection from a freva search.
+) -> Response:
+    """Create a STAC catalogue from a freva search.
 
     This endpoint transforms Freva databrowser search results into a dynamic
-    STAC (SpatioTemporal Asset Catalog) Collection. STAC is an open standard
+    and STATIC SpatioTemporal Asset Catalog (STAC). STAC is an open standard
     for geospatial data catalouging, enabling consistent discovery and access
     of climate datasets, satellite imagery and spatiotemporal data. It provides
     a common language for describing geospatial information and related metadata.
     """
-    solr_search = await Solr.validate_parameters(
+    stac_instance = await STAC.validate_parameters(
         server_config,
         flavour=flavour,
         uniq_key=uniq_key,
@@ -261,21 +265,54 @@ async def stac_collection(
         translate=translate,
         **SolrSchema.process_parameters(request),
     )
-    status_code, total_count = await solr_search.validate_stac()
-    await solr_search.store_results(total_count, status_code)
+    status_code, total_count = await stac_instance.validate_stac()
+    await stac_instance.store_results(total_count, status_code)
     if total_count == 0:
         raise HTTPException(status_code=404, detail="No results found.")
     if total_count > max_results and max_results > 0:
         raise HTTPException(status_code=413, detail="Result stream too big.")
-    collection_id = f"freva-{str(uuid.uuid4())}"
-    background_tasks.add_task(solr_search.init_stac_collection, request, collection_id)
-    return {
-        "status": (
-            f"STAC catalog creation initiated successfully. "
-            f"To see the collection, use this link: "
-            f"{request.base_url}/stac/{collection_id}"
+    collection_id = f"{flavour}-{str(uuid.uuid4())}"
+    if stac_dynamic:
+        logger.critical(server_config.stacbrowser_port)
+
+        async def run_stac_creation() -> None:
+            """Execute the STAC catalogue creation background task
+            in a seperate fucntion to avoid blocking the main request
+            thread and have more control over the background task to
+            handle and deliver status without blocking the client
+            response."""
+            try:
+                async for _ in stac_instance.init_stac_collection(
+                    request, collection_id, stac_dynamic
+                ):
+                    pass
+            except Exception as e:
+                logger.error(f"Error in background task: {str(e)}", exc_info=True)
+                raise
+
+        background_tasks.add_task(run_stac_creation)
+
+        host = str(server_config.stacbrowser_host)
+        if not host.startswith(('http://', 'https://')):
+            host = f'http://{host}'
+
+        redirect_url = (
+            f"{host}:{str(server_config.stacbrowser_port)}"
+            f"/collections/{collection_id}"
         )
-    }
+        return RedirectResponse(
+            url=redirect_url,
+            status_code=303
+        )
+    else:
+        file_name = f"stac-catalog-{collection_id}-{uniq_key}.tar.gz"
+        return StreamingResponse(
+            stac_instance.init_stac_collection(request, collection_id, stac_dynamic),
+            media_type="application/x-tar+gzip",
+            headers={
+                "Content-Disposition": f'attachment; filename="{file_name}"'
+            }
+        )
 
 
 @app.get(

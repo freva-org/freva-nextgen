@@ -249,38 +249,50 @@ def test_intake_search(test_server: str) -> None:
     assert res4.status_code == 413
 
 
-def test_stac_collection(test_server: str) -> None:
-    """Test the creation of stac collection."""
+def test_stac_catalogue(test_server: str) -> None:
+    """Test the creation of STAC Catalogue."""
     # 200 OK
-    res1 = requests.get(
-        f"{test_server}/databrowser/stac-collection/cmip6/uri",
-        params={"activity_id": "cmip", "multi-version": True},
+    res = requests.get(
+        f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
+        params={
+            "activity_id": "cmip", 
+            "multi-version": True, 
+            "stac_dynamic": True
+        },
+        allow_redirects=False
     )
-    response_data = res1.json()
-    assert "STAC catalog creation initiated successfully" in response_data["status"]
-    assert res1.status_code == 200
+    
+    assert res.status_code == 303
+
+    assert 'Location' in res.headers
+    redirect_url = res.headers['Location']
+    assert redirect_url.startswith(('http://', 'https://'))
+    assert '/collections/' in redirect_url
+    
+    print(f"Test passed: Redirect URL: {redirect_url}")
+
     # 500 no stacapi service is running
     with mock.patch("freva_rest.rest.server_config.stacapi_host", "foo.bar"):
         res2 = requests.get(
-            f"{test_server}/databrowser/stac-collection/cmip6/uri",
+            f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
             params={"activity_id": "cmip", "multi-version": True},
         )
         assert res2.status_code == 503
     # 413 Request Entity Too Large
     res3 = requests.get(
-        f"{test_server}/databrowser/stac-collection/cmip6/uri",
+        f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
         params={"activity_id": "cmip", "multi-version": False, "max-results": 1},
     )
     assert res3.status_code == 413
     # 422 Unprocessable Entity
     res4 = requests.get(
-        f"{test_server}/databrowser/stac-collection/cmip6/uri",
+        f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
         params={"collection": "cmip2", "multi-version": False},
     )
     assert res4.status_code == 422
     # 404 Not Found
     res5 = requests.get(
-        f"{test_server}/databrowser/stac-collection/cmip6/uri",
+        f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
         params={"activity_id": "cmip3", "multi-version": False},
     )
     assert res5.status_code == 404
@@ -288,7 +300,7 @@ def test_stac_collection(test_server: str) -> None:
     with mock.patch("freva_rest.rest.server_config.stacapi_user", ""), \
         mock.patch("freva_rest.rest.server_config.stacapi_password", ""):
             res_no_creds = requests.get(
-                f"{test_server}/databrowser/stac-collection/cmip6/uri",
+                f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
                 params={"activity_id": "cmip", "multi-version": True},
             )
             assert res_no_creds.status_code == 500

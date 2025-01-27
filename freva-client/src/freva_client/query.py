@@ -390,18 +390,25 @@ class databrowser:
             self._create_intake_catalogue_file(temp_f.name)
             return intake.open_esm_datastore(temp_f.name)
 
-    def stac_collection(self) -> Dict[str, Any]:
-        """Create an STAC API collection endpoint from the search.
-        This method creates a STAC API collection endpoint from the
-        current object search.
+    def stac_catalogue(
+        self,
+        stac_dynamic: bool = False,
+        outdir: Optional[Union[str, Path]] = None,
+        **kwargs: Any,
+    ) -> str:
+        """Create an static or dynamic STAC API catalogue endpoint
+        from the search. This method creates a STAC API collection
+        endpoint from the current object search.
 
         Returns
         ~~~~~~~
-        Dict[str, Any]: STAC API collection endpoint.
+        Union[Dict[str, Any], BinaryIO]
+        Either a STAC API collection endpoint as a dictionary (for dynamic catalogs),
+        or a tar.gz file stream (for static catalogs).
 
         Raises
         ~~~~~~
-        ValueError: If stac-collection creation failed.
+        ValueError: If stac-catalogue creation failed.
 
         Example
         ~~~~~~~
@@ -412,14 +419,53 @@ class databrowser:
 
             from freva_client import databrowser
             db = databrowser(dataset="cmip6-hsm")
-            print(db.stac_collection())
+            print(db.stac_catalogue(stac_dynamic=True))
+
+        Now let's create a static STAC catalogue:
+
+        .. execute_code::
+
+            from tempfile import mktemp
+            temp_path = mktemp(suffix=".tar.gz")
+
+            from freva_client import databrowser
+            db = databrowser(dataset="cmip6-hsm")
+            db.stac_catalogue(stac_dynamic=False, outdir=temp_path)
+            print(f"STAC catalog saved to: {temp_path}")
 
         """
+        params: Dict[str, Any] = {
+            "stac_dynamic": stac_dynamic,
+        }
+        kwargs.update({"stream": True,
+                       "params": params})
+
         stac_url = self._cfg.stac_url
-        result = self._request("GET", stac_url)
-        if result is None:
-            raise ValueError("No results found")
-        return cast(Dict[str, Any], result.json())
+        result = self._request("GET", stac_url, **kwargs)
+        if result is None or result.status_code == 404:
+            raise ValueError(
+                "No STAC catalog found. Please check if you have any search results."
+            )
+        if params.get("stac_dynamic") is False:
+            filename = result.headers.get('Content-Disposition', '').split(
+                'filename=')[-1].strip('"')
+            save_dir = Path(outdir) if outdir else Path.cwd()
+            save_dir.mkdir(parents=True, exist_ok=True)
+            save_path = save_dir / filename
+
+            total_size = 0
+            with open(save_path, 'wb') as f:
+                for chunk in result.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+                        total_size += len(chunk)
+
+            return (
+                f"STAC catalog saved to: {save_path} "
+                f"(size: {total_size / 1024 / 1024:.2f} MB)"
+            )
+        else:
+            return f"STAC catalog available at: {result.url}"
 
     @classmethod
     def count_values(

@@ -1,7 +1,9 @@
 """The core functionality to interact with the apache solr search system."""
 
 import asyncio
+import io
 import json
+import tarfile
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -443,17 +445,6 @@ class Solr:
         # should be changed to cloud storage type. We need to find an approach
         # to determine the file system
         self.fs_type: str = "posix"
-        self.spatial_extent = {
-            "minx": float("inf"),
-            "miny": float("inf"),
-            "maxx": float("-inf"),
-            "maxy": float("-inf"),
-        }
-        self.temporal_extent: dict[str, Optional[datetime]] = {
-            "start": None,
-            "end": None,
-        }
-        self.assets_prereqs: Dict[str, Union[str, int]] = {}
 
     async def _is_query_duplicate(self, uri: str, file_path: str) -> bool:
         """
@@ -640,7 +631,7 @@ class Solr:
             key = key.lower().replace("_not_", "")
             if (
                 key not in translator.valid_facets
-                and key not in ("time_select",) + cls.uniq_keys
+                and key not in ("time_select", "stac_dynamic") + cls.uniq_keys
             ):
                 raise HTTPException(status_code=422, detail="Could not validate input.")
         return Solr(
@@ -768,536 +759,6 @@ class Solr:
         return search_status, IntakeCatalogue(
             catalogue=catalogue, total_count=total_count
         )
-
-    async def _create_stac_collection(self, collection_id: str) -> pystac.Collection:
-        usage_desc = dedent(
-            f"""
-            ## {self.translator.flavour.upper()} Dataset Collection
-
-            This is a collection from flavour **{self.translator.flavour}**
-
-            **`Attention`:** _Item ingestion in progress. The STAC collection
-            is currently being populated with items. This collection will be
-            ready for use when this notice disappears upon refresh.__
-
-            ___
-            ℹ️ Contact the Freva team at [freva@dkrz.de](mailto:freva@dkrz.de)
-            to ask questions or report issues.
-        """
-        ).strip()
-        intake_desc = dedent(
-            f"""
-            # Installing Intake-ESM
-            ```bash
-            # Method 1: Using pip
-            pip install intake-esm
-            # Method 2: Using conda (recommended)
-            conda install -c conda-forge intake-esm
-            ```
-            # Quick Guide: INTAKE-ESM Catalog on Levante (Python)
-            ```python
-            import intake
-            # create a catalog object from a EMS JSON file containing dataset metadata
-            cat = intake.open_esm_datastore(
-            '{str(self.assets_prereqs.get('full_endpoint')).replace(
-                "stac-collection", "intake-catalogue")}')
-            ```
-        """
-        )
-        collection = pystac.Collection(
-            id=collection_id,
-            title=f"Dataset {collection_id[:13]}",
-            description=usage_desc.strip(),
-            extent=pystac.Extent(
-                spatial=pystac.SpatialExtent([[-180.0, -90.0, 180.0, 90.0]]),
-                temporal=pystac.TemporalExtent([[None, None]]),  # type: ignore
-            ),
-        )
-        assets = {
-            "freva-databrowser": pystac.Asset(
-                href=(
-                    f"{self.assets_prereqs.get('base_url')}databrowser/?"
-                    f"{self.assets_prereqs.get('only_params')}"
-                ),
-                title="Freva Web DataBrowser",
-                description=(
-                    "Interactive web interface for data exploration and analysis. "
-                    "Access through any browser."
-                ),
-                roles=["overview"],
-                media_type="text/html",
-            ),
-            "intake-catalogue": pystac.Asset(
-                href=str(self.assets_prereqs.get("full_endpoint")).replace(
-                    "stac-collection", "intake-catalogue"
-                ),
-                title="Intake-ESM Catalogue",
-                description=intake_desc,
-                roles=["metadata"],
-                media_type="application/json",
-            ),
-            "download-zarr": pystac.Asset(
-                href=(
-                    f"{self.assets_prereqs.get('base_url')}api/freva-nextgen/"
-                    f"databrowser/load/{self.translator.flavour}?"
-                    f"{self.assets_prereqs.get('only_params')}"
-                ),
-                title="Download Zarr Dataset",
-                description="Direct access to data in Zarr format.",
-                roles=["data"],
-                media_type="application/vnd+zarr",
-                extra_fields={
-                    "requires": ["oauth2"],
-                    "authentication": {
-                        "type": "oauth2",
-                        "description": (
-                            "Authentication using your Freva credentials is required."
-                        ),
-                    },
-                },
-            ),
-        }
-
-        for key, asset in assets.items():
-            collection.add_asset(key, asset)
-
-        if self.facets:
-            collection.extra_fields["search_keys"] = {
-                key: values for key, values in self.facets.items()
-            }
-        else:
-            logger.info("No search keys found for collection")
-
-        collection.providers = [
-            pystac.Provider(
-                name="Deutsches Klimarechenzentrum (DKRZ)",
-                url="https://www.dkrz.de",
-            )
-        ]
-        return collection
-
-    async def _iter_stac_items(self) -> AsyncIterator[List[pystac.Item]]:
-        self.query["cursorMark"] = "*"
-        items_batch = []
-        while True:
-            async with self._session_get() as res:
-                _, results = res
-            for result in results.get("response", {}).get("docs", [{}]):
-                item = await self._create_stac_item(result)
-                items_batch.append(item)
-
-                if len(items_batch) >= self.batch_size:
-                    yield items_batch
-                    items_batch = []
-
-            if items_batch:
-                yield items_batch
-            next_cursor_mark = results.get("nextCursorMark", None)
-            if next_cursor_mark == self.query["cursorMark"] or not results:
-                break
-            self.query["cursorMark"] = next_cursor_mark
-
-    def parse_datetime(self, time_str: str) -> Tuple[datetime, datetime]:
-        """
-        Parse a time range string into start and end datetimes.
-
-        Parameters
-        ----------
-        time_str : str
-            Time range string in rdate format '[start_time TO end_time]'
-
-        Returns
-        -------
-        Tuple[datetime, datetime]
-            Start and end datetime objects
-        """
-        clean_start_time = time_str.replace("[", "").split(" TO ")[0]
-        clean_end_time = time_str.replace("]", "").split(" TO ")[1]
-        return parser.parse(clean_start_time), parser.parse(clean_end_time)
-
-    def parse_bbox(self, bbox_str: Union[str, List[str]]) -> List[float]:
-        """
-        Parse a bounding box string into coordinates.
-
-        Parameters
-        ----------
-        bbox_str : Union[str, List[str]]
-            Bounding box in ENVELOPE format: 'ENVELOPE(west,east,north,south)'
-            or as a list with one element
-
-        Returns
-        -------
-        List[float]
-            Coordinates as [minx, miny, maxx, maxy]
-        """
-        if isinstance(bbox_str, list):
-            bbox_str = bbox_str[0]
-        nums = [
-            float(x)
-            for x in bbox_str.replace("ENVELOPE(", "").replace(")", "").split(",")
-        ]
-        return [nums[0], nums[3], nums[1], nums[2]]
-
-    def _update_spatial_extent(self, bbox: List[float]) -> None:
-        """
-        Update collection's spatial extent based on item bbox.
-
-        Parameters
-        ----------
-        bbox : List[float]
-            Bounding box coordinates [minx, miny, maxx, maxy]
-        """
-        self.spatial_extent["minx"] = min(self.spatial_extent["minx"], bbox[0])
-        self.spatial_extent["miny"] = min(self.spatial_extent["miny"], bbox[1])
-        self.spatial_extent["maxx"] = max(self.spatial_extent["maxx"], bbox[2])
-        self.spatial_extent["maxy"] = max(self.spatial_extent["maxy"], bbox[3])
-
-    def _update_temporal_extent(self, start_time: datetime, end_time: datetime) -> None:
-        """
-        Update collection's temporal extent based on item timerange.
-
-        Parameters
-        ----------
-        start_time : datetime
-            Item's start datetime
-        end_time : datetime
-            Item's end datetime
-        """
-        if self.temporal_extent["start"] is None:
-            self.temporal_extent["start"] = start_time
-        elif start_time < self.temporal_extent["start"]:
-            self.temporal_extent["start"] = start_time
-
-        if self.temporal_extent["end"] is None:
-            self.temporal_extent["end"] = end_time
-        elif end_time > self.temporal_extent["end"]:
-            self.temporal_extent["end"] = end_time
-
-    async def _create_stac_item(self, result: Dict[str, Any]) -> pystac.Item:
-        """
-        Create a STAC Item from a result dictionary.
-
-        Args:
-            result (Dict[str, Any]): Dictionary containing item metadata
-
-        Returns:
-            pystac.Item: Created STAC item
-        """
-        intake_desc = dedent(
-            f"""
-            # Installing Intake-ESM
-            ```bash
-            # Method 1: Using pip
-            pip install intake-esm
-            # Method 2: Using conda (recommended)
-            conda install -c conda-forge intake-esm
-            ```
-            # Quick Guide: INTAKE-ESM Catalog on Levante (Python)
-            ```python
-            import intake
-            # create a catalog object from a EMS JSON file containing dataset metadata
-            cat = intake.open_esm_datastore('{
-                str(self.assets_prereqs.get("full_endpoint")).replace(
-                    "stac-collection",
-                    "intake-catalogue"
-                )
-            }')
-            ```
-            """
-        )
-        id = result.get(self.uniq_key, "")
-        normalized_id = (
-            id.replace("https://", "")
-            .replace("http://", "")
-            .replace("/", "-")
-            .replace(".", "-")
-            .strip()
-        )
-        bbox = result.get("bbox")
-        if bbox:
-            try:
-                bbox = self.parse_bbox(bbox)
-                self._update_spatial_extent(bbox)
-            except ValueError as e:  # pragma: no cover
-                logger.warning(f"Invalid bbox for {id}: {e}")
-                bbox = None
-
-        time = result.get("time")
-        start_time = end_time = None
-        if time:
-            try:
-                start_time, end_time = self.parse_datetime(time)
-                self._update_temporal_extent(start_time, end_time)
-            except ValueError as e:
-                logger.warning(f"Invalid datetime for {id}: {e}")
-
-        geometry = None
-        if bbox:
-            geometry = {
-                "type": "Polygon",
-                "coordinates": [
-                    [
-                        [bbox[0], bbox[1]],
-                        [bbox[2], bbox[1]],
-                        [bbox[2], bbox[3]],
-                        [bbox[0], bbox[3]],
-                        [bbox[0], bbox[1]],
-                    ]
-                ],
-            }
-
-        properties = {
-            **{
-                k: result.get(k)
-                for k in self._config.solr_fields
-                if k in result and result.get(k) is not None
-            },
-            "title": id,
-        }
-        item = pystac.Item(
-            id=normalized_id,
-            collection=self.collection.id,
-            geometry=geometry,
-            bbox=bbox,
-            datetime=start_time or datetime.now(),
-            properties=properties,
-        )
-
-        if start_time and end_time:
-            item.common_metadata.start_datetime = start_time
-            item.common_metadata.end_datetime = end_time
-        assets = {
-            "freva-databrowser": pystac.Asset(
-                href=(
-                    f"{self.assets_prereqs.get('base_url')}databrowser/?"
-                    f"{self.assets_prereqs.get('only_params')}"
-                ),
-                title="Freva Web DaaBrowser",
-                description=(
-                    "Access the Freva web interface for data exploration and analysis"
-                ),
-                roles=["overview"],
-                media_type="text/html",
-            ),
-            "intake-catalogue": pystac.Asset(
-                href=(
-                    str(self.assets_prereqs.get("full_endpoint")).replace(
-                        "stac-collection", "intake-catalogue"
-                    )
-                    + f"?{self.uniq_key}={id}"
-                ),
-                title="Intake Catalogue",
-                description=intake_desc,
-                roles=["metadata"],
-                media_type="application/json",
-            ),
-            "download-zarr": pystac.Asset(
-                href=(
-                    f"{self.assets_prereqs.get('base_url')}api/freva-nextgen/"
-                    f"databrowser/load/{self.translator.flavour}?"
-                    f"{self.assets_prereqs.get('only_params')}&{self.uniq_key}={id}"
-                ),
-                title="Stream Zarr Data",
-                description="Download the data in Zarr format",
-                roles=["data"],
-                media_type="application/vnd+zarr",
-                extra_fields={
-                    "requires": ["oauth2"],
-                    "authentication": {
-                        "type": "oauth2",
-                        "description": (
-                            "Authentication using your Freva credentials is required."
-                        ),
-                    },
-                },
-            ),
-        }
-
-        for key, asset in assets.items():
-            item.add_asset(key, asset)
-
-        return item
-
-    def finalize_stac_collection(self) -> None:
-        """
-        Finalize STAC collection by updating spatial and temporal extents.
-
-        Raises
-        ------
-        Exception
-            If collection validation fails
-        """
-        collection_desc = dedent(
-            f"""
-            ## {self.translator.flavour.upper()} Flavour Dataset Collection
-
-            A curated climate datasets STAC Collection from the
-            `{self.translator.flavour.upper()}` flavour, and
-            specific search parameters through the Freva
-            databrowser. Includes standardized metadata and direct
-            data access capabilities.
-
-            ___
-            ℹ️ Contact the Freva team at [freva@dkrz.de](mailto:freva@dkrz.de)
-            to ask questions or report issues.
-        """
-        ).strip()
-        if self.spatial_extent["minx"] != float("inf") and self.spatial_extent[
-            "maxx"
-        ] != float("-inf"):
-
-            bbox = [
-                self.spatial_extent["minx"],
-                self.spatial_extent["miny"],
-                self.spatial_extent["maxx"],
-                self.spatial_extent["maxy"],
-            ]
-            self.collection.extent.spatial = pystac.SpatialExtent([bbox])
-
-        if self.temporal_extent["start"] and self.temporal_extent["end"]:
-            self.collection.extent.temporal = pystac.TemporalExtent(
-                [[self.temporal_extent["start"], self.temporal_extent["end"]]]
-            )
-        self.collection.description = collection_desc
-        try:
-            self.collection.validate()
-        except Exception as e:  # pragma: no cover
-            logger.error(f"Collection validation failed: {e}")
-
-    async def validate_stac(self) -> Tuple[int, int]:
-        """Validate STAC API availability and get result counts."""
-        self._set_catalogue_queries()
-        self.query["facet.field"] += ["time", "bbox"]
-        self.query["fl"] += ["time", "bbox"]
-        async with self._session_get() as res:
-            search_status, search = res
-        await self.stacapi_availability()
-        total_count = int(search.get("response", {}).get("numFound", 0))
-        return search_status, total_count
-
-    async def init_stac_collection(
-        self,
-        request: Request,
-        collection_id: str,
-    ) -> None:
-        """
-        Initialize and populate a STAC collection from Databrowser search results.
-
-        Parameters
-        ----------
-        request : Request
-            FastAPI request object containing base URL and query parameters
-        collection_id : str
-            Unique identifier for the STAC collection
-
-        Returns
-        -------
-        Tuple[int, pystac.Collection]
-            Status code and created STAC collection
-        """
-        try:
-            self.assets_prereqs = {
-                "base_url": str(request.base_url),
-                "full_endpoint": f"{str(request.url)}?{str(request.query_params)}",
-                "only_params": str(request.query_params),
-            }
-
-            self.collection = await self._create_stac_collection(collection_id)
-            await self.ingest_stac_collection(self.collection)
-
-            async for item_batch in self._iter_stac_items():
-                await self.ingest_stac_item(item_batch)
-
-            self.finalize_stac_collection()
-            await self.update_stac_collection(self.collection)
-
-        except Exception as e:  # pragma: no cover
-            logger.error(
-                f"STAC collection creation failed for {collection_id}: {str(e)}"
-            )
-
-    async def ingest_stac_item(self, items: list[pystac.Item]) -> None:
-        """
-        Ingest bulk STAC Items into the catalog via API.
-
-        Parameters
-        ----------
-        items: list[pystac.Item]
-            List of STAC Items to be ingested using upsert method.
-
-        Raises
-        ------
-        HTTPException
-            If ingestion fails or server returns non-201 status.
-        """
-        url = self._config.get_stac_url("items", items[0].collection_id)
-        items_dict = {
-            "items": {item.id: item.to_dict() for item in items},
-            "method": "upsert",
-        }
-        async with self._session_post(url, items_dict):
-            pass
-
-    async def ingest_stac_collection(self, collection: pystac.Collection) -> None:
-        """
-        Ingest a STAC Collection into the STAC-API Catalog.
-
-        Parameters
-        ----------
-        collection: pystac.Collection
-            STAC Collection to be ingested.
-
-        Raises
-        ------
-        HTTPException
-            If ingestion fails or server returns non-201 status.
-        """
-        url = self._config.get_stac_url("collections")
-        async with self._session_post(url, collection.to_dict()):
-            pass
-
-    async def update_stac_collection(self, collection: pystac.Collection) -> None:
-        """
-        Update existing STAC Collection in the STAC_API Catalogue.
-
-        Parameters
-        ----------
-        collection: pystac.Collection
-            STAC Collection with updated data.
-
-        Raises
-        ------
-        HTTPException
-            If update fails or server returns non-200 status.
-        """
-        url = f"{self._config.get_stac_url('collections')}/{collection.id}"
-        async with self._session_put(url, collection.to_dict()):
-            pass
-
-    async def stacapi_availability(self) -> bool:
-        """
-        Check STAC API server availability via ping/pong endpoint.
-
-        Returns
-        -------
-        bool
-            True if server is available and returns 200 status.
-
-        Raises
-        ------
-        HTTPException
-            If server is unreachable or returns non-200 status.
-        """
-        original_url = getattr(self, "url", None)
-        self.url = self._config.get_stac_url("ping")
-        try:
-            async with self._session_get() as res:
-                return res[0] == 200
-        except Exception as error:
-            logger.error("STAC server connection failed: %s", error)
-            raise HTTPException(status_code=503, detail="STAC server unreachable")
-        finally:
-            self.url = original_url or ""
 
     async def _delete_from_mongo(self, search_keys: Dict[str, Union[str, int]]) -> None:
         """
@@ -1900,3 +1361,744 @@ class Solr:
         search_keys["user"] = user_name
         await self._purge_user_data(search_keys)
         logger.info("Deleted files from Solr and MongoDB with keys: %s", search_keys)
+
+
+class STAC(Solr):
+    """STAC class to create static and dynamic STAC catalogues."""
+
+    def __init__(
+        self,
+        config: ServerConfig,
+        *,
+        uniq_key: Literal["file", "uri"] = "file",
+        flavour: FlavourType = "freva",
+        start: int = 0,
+        multi_version: bool = True,
+        translate: bool = True,
+        _translator: Union[None, Translator] = None,
+        **query: list[str],
+    ):
+        super().__init__(
+            config,
+            uniq_key=uniq_key,
+            flavour=flavour,
+            start=start,
+            multi_version=multi_version,
+            translate=translate,
+            _translator=_translator,
+            **query
+        )
+        self.buffer = io.BytesIO()
+        self.tar = tarfile.open(fileobj=self.buffer, mode='w:gz')
+        self.spatial_extent = {
+            "minx": float("inf"),
+            "miny": float("inf"),
+            "maxx": float("-inf"),
+            "maxy": float("-inf"),
+        }
+        self.temporal_extent: dict[str, Optional[datetime]] = {
+            "start": None,
+            "end": None,
+        }
+        self.assets_prereqs: Dict[str, Union[str, int]] = {}
+
+    @classmethod
+    async def validate_parameters(
+        cls,
+        config: ServerConfig,
+        *,
+        uniq_key: Literal["file", "uri"] = "file",
+        flavour: FlavourType = "freva",
+        start: int = 0,
+        multi_version: bool = False,
+        translate: bool = True,
+        **query: list[str],
+    ) -> "STAC":
+        """Use Solr validate_parameters and return a STAC validated_parameters
+        for validating the search params through Solr in STAC inheritated cls."""
+        solr_instance = await super().validate_parameters(
+            config,
+            uniq_key=uniq_key,
+            flavour=flavour,
+            start=start,
+            multi_version=multi_version,
+            translate=translate,
+            **query
+        )
+
+        return cls(
+            config,
+            uniq_key=uniq_key,
+            flavour=flavour,
+            start=start,
+            multi_version=multi_version,
+            translate=translate,
+            _translator=solr_instance.translator,
+            **query
+        )
+
+    async def _create_stac_collection(self, collection_id: str) -> pystac.Collection:
+        """Create a STAC collection from the Solr search results."""
+
+        usage_desc = dedent(
+            f"""
+            ## {self.translator.flavour.upper()} Dataset Collection
+
+            This is a collection from flavour **{self.translator.flavour}**
+
+            **`Attention`:** _Item ingestion in progress. The STAC collection
+            is currently being populated with items. This collection will be
+            ready for use when this notice disappears upon refresh.__
+
+            ___
+            ℹ️ Contact the Freva team at [freva@dkrz.de](mailto:freva@dkrz.de)
+            to ask questions or report issues.
+        """
+        ).strip()
+        intake_desc = dedent(
+            f"""
+            # Installing Intake-ESM
+            ```bash
+            # Method 1: Using pip
+            pip install intake-esm
+            # Method 2: Using conda (recommended)
+            conda install -c conda-forge intake-esm
+            ```
+            # Quick Guide: INTAKE-ESM Catalog on Levante (Python)
+            ```python
+            import intake
+            # create a catalog object from a EMS JSON file containing dataset metadata
+            cat = intake.open_esm_datastore(
+            '{str(self.assets_prereqs.get('full_endpoint')).replace(
+                "stac-catalogue", "intake-catalogue")}')
+            ```
+        """
+        )
+        collection = pystac.Collection(
+            id=collection_id,
+            title=f"Dataset {collection_id[:13]}",
+            description=usage_desc.strip(),
+            extent=pystac.Extent(
+                # We need to define an initial temporal and spatial extent,
+                # and then we update those values as we iterate over the items
+                spatial=pystac.SpatialExtent([[-180.0, -90.0, 180.0, 90.0]]),
+                temporal=pystac.TemporalExtent([[None, None]]),  # type: ignore
+            ),
+        )
+        assets = {
+            "freva-databrowser": pystac.Asset(
+                href=(
+                    f"{self.assets_prereqs.get('base_url')}databrowser/?"
+                    f"{self.assets_prereqs.get('only_params')}"
+                ),
+                title="Freva Web DataBrowser",
+                description=(
+                    "Interactive web interface for data exploration and analysis. "
+                    "Access through any browser."
+                ),
+                roles=["overview"],
+                media_type="text/html",
+            ),
+            "intake-catalogue": pystac.Asset(
+                href=str(self.assets_prereqs.get("full_endpoint")).replace(
+                    "stac-catalogue", "intake-catalogue"
+                ),
+                title="Intake-ESM Catalogue",
+                description=intake_desc,
+                roles=["metadata"],
+                media_type="application/json",
+            ),
+            "download-zarr": pystac.Asset(
+                href=(
+                    f"{self.assets_prereqs.get('base_url')}api/freva-nextgen/"
+                    f"databrowser/load/{self.translator.flavour}?"
+                    f"{self.assets_prereqs.get('only_params')}"
+                ),
+                title="Download Zarr Dataset",
+                description="Direct access to data in Zarr format.",
+                roles=["data"],
+                media_type="application/vnd+zarr",
+                extra_fields={
+                    "requires": ["oauth2"],
+                    "authentication": {
+                        "type": "oauth2",
+                        "description": (
+                            "Authentication using your Freva credentials is required."
+                        ),
+                    },
+                },
+            ),
+        }
+
+        for key, asset in assets.items():
+            collection.add_asset(key, asset)
+
+        if self.facets:
+            collection.extra_fields["search_keys"] = {
+                key: values for key, values in self.facets.items()
+            }
+        else:
+            logger.info("No search keys found for collection")
+
+        collection.providers = [
+            pystac.Provider(
+                name="Deutsches Klimarechenzentrum (DKRZ)",
+                url="https://www.dkrz.de",
+            )
+        ]
+        return collection
+
+    async def _iter_stac_items(self) -> AsyncIterator[List[pystac.Item]]:
+        self.query["cursorMark"] = "*"
+        items_batch = []
+        while True:
+            async with self._session_get() as res:
+                _, results = res
+            for result in results.get("response", {}).get("docs", [{}]):
+                item = await self._create_stac_item(result)
+                items_batch.append(item)
+
+                if len(items_batch) >= self.batch_size:
+                    yield items_batch
+                    items_batch = []
+
+            if items_batch:
+                yield items_batch
+            next_cursor_mark = results.get("nextCursorMark", None)
+            if next_cursor_mark == self.query["cursorMark"] or not results:
+                break
+            self.query["cursorMark"] = next_cursor_mark
+
+    def parse_datetime(self, time_str: str) -> Tuple[datetime, datetime]:
+        """
+        Parse a time range string into start and end datetimes.
+
+        Parameters
+        ----------
+        time_str : str
+            Time range string in rdate format '[start_time TO end_time]'
+
+        Returns
+        -------
+        Tuple[datetime, datetime]
+            Start and end datetime objects
+        """
+        clean_start_time = time_str.replace("[", "").split(" TO ")[0]
+        clean_end_time = time_str.replace("]", "").split(" TO ")[1]
+        return parser.parse(clean_start_time), parser.parse(clean_end_time)
+
+    def parse_bbox(self, bbox_str: Union[str, List[str]]) -> List[float]:
+        """
+        Parse a bounding box string into coordinates.
+
+        Parameters
+        ----------
+        bbox_str : Union[str, List[str]]
+            Bounding box in ENVELOPE format: 'ENVELOPE(west,east,north,south)'
+            or as a list with one element
+
+        Returns
+        -------
+        List[float]
+            Coordinates as [minx, miny, maxx, maxy]
+        """
+        if isinstance(bbox_str, list):
+            bbox_str = bbox_str[0]
+        nums = [
+            float(x)
+            for x in bbox_str.replace("ENVELOPE(", "").replace(")", "").split(",")
+        ]
+        return [nums[0], nums[3], nums[1], nums[2]]
+
+    def _update_spatial_extent(self, bbox: List[float]) -> None:
+        """
+        Update collection's spatial extent based on item bbox.
+
+        Parameters
+        ----------
+        bbox : List[float]
+            Bounding box coordinates [minx, miny, maxx, maxy]
+        """
+        self.spatial_extent["minx"] = min(self.spatial_extent["minx"], bbox[0])
+        self.spatial_extent["miny"] = min(self.spatial_extent["miny"], bbox[1])
+        self.spatial_extent["maxx"] = max(self.spatial_extent["maxx"], bbox[2])
+        self.spatial_extent["maxy"] = max(self.spatial_extent["maxy"], bbox[3])
+
+    def _update_temporal_extent(self, start_time: datetime, end_time: datetime) -> None:
+        """
+        Update collection's temporal extent based on item timerange.
+
+        Parameters
+        ----------
+        start_time : datetime
+            Item's start datetime
+        end_time : datetime
+            Item's end datetime
+        """
+        if self.temporal_extent["start"] is None:
+            self.temporal_extent["start"] = start_time
+        elif start_time < self.temporal_extent["start"]:
+            self.temporal_extent["start"] = start_time
+
+        if self.temporal_extent["end"] is None:
+            self.temporal_extent["end"] = end_time
+        elif end_time > self.temporal_extent["end"]:
+            self.temporal_extent["end"] = end_time
+
+    async def _create_stac_item(self, result: Dict[str, Any]) -> pystac.Item:
+        """
+        Create a STAC Item from a result dictionary.
+
+        Args:
+            result (Dict[str, Any]): Dictionary containing item metadata
+
+        Returns:
+            pystac.Item: Created STAC item
+        """
+        intake_desc = dedent(
+            f"""
+            # Installing Intake-ESM
+            ```bash
+            # Method 1: Using pip
+            pip install intake-esm
+            # Method 2: Using conda (recommended)
+            conda install -c conda-forge intake-esm
+            ```
+            # Quick Guide: INTAKE-ESM Catalog on Levante (Python)
+            ```python
+            import intake
+            # create a catalog object from a EMS JSON file containing dataset metadata
+            cat = intake.open_esm_datastore('{
+                str(self.assets_prereqs.get("full_endpoint")).replace(
+                    "stac-catalogue",
+                    "intake-catalogue"
+                )
+            }')
+            ```
+            """
+        )
+        id = result.get(self.uniq_key, "")
+        normalized_id = (
+            id.replace("https://", "")
+            .replace("http://", "")
+            .replace("/", "-")
+            .replace(".", "-")
+            .strip()
+        )
+        bbox = result.get("bbox")
+        if bbox:
+            try:
+                bbox = self.parse_bbox(bbox)
+                self._update_spatial_extent(bbox)
+            except ValueError as e:  # pragma: no cover
+                logger.warning(f"Invalid bbox for {id}: {e}")
+                bbox = None
+
+        time = result.get("time")
+        start_time = end_time = None
+        if time:
+            try:
+                start_time, end_time = self.parse_datetime(time)
+                self._update_temporal_extent(start_time, end_time)
+            except ValueError as e:
+                logger.warning(f"Invalid datetime for {id}: {e}")
+
+        geometry = None
+        if bbox:
+            geometry = {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [bbox[0], bbox[1]],
+                        [bbox[2], bbox[1]],
+                        [bbox[2], bbox[3]],
+                        [bbox[0], bbox[3]],
+                        [bbox[0], bbox[1]],
+                    ]
+                ],
+            }
+
+        properties = {
+            **{
+                k: result.get(k)
+                for k in self._config.solr_fields
+                if k in result and result.get(k) is not None
+            },
+            "title": id,
+        }
+        item = pystac.Item(
+            id=normalized_id,
+            collection=self.collection.id,
+            geometry=geometry,
+            bbox=bbox,
+            datetime=start_time or datetime.now(),
+            properties=properties,
+        )
+
+        if start_time and end_time:
+            item.common_metadata.start_datetime = start_time
+            item.common_metadata.end_datetime = end_time
+        assets = {
+            "freva-databrowser": pystac.Asset(
+                href=(
+                    f"{self.assets_prereqs.get('base_url')}databrowser/?"
+                    f"{self.assets_prereqs.get('only_params')}"
+                ),
+                title="Freva Web DaaBrowser",
+                description=(
+                    "Access the Freva web interface for data exploration and analysis"
+                ),
+                roles=["overview"],
+                media_type="text/html",
+            ),
+            "intake-catalogue": pystac.Asset(
+                href=(
+                    str(self.assets_prereqs.get("full_endpoint")).replace(
+                        "stac-catalogue", "intake-catalogue"
+                    )
+                    + f"?{self.uniq_key}={id}"
+                ),
+                title="Intake Catalogue",
+                description=intake_desc,
+                roles=["metadata"],
+                media_type="application/json",
+            ),
+            "download-zarr": pystac.Asset(
+                href=(
+                    f"{self.assets_prereqs.get('base_url')}api/freva-nextgen/"
+                    f"databrowser/load/{self.translator.flavour}?"
+                    f"{self.assets_prereqs.get('only_params')}&{self.uniq_key}={id}"
+                ),
+                title="Stream Zarr Data",
+                description="Download the data in Zarr format",
+                roles=["data"],
+                media_type="application/vnd+zarr",
+                extra_fields={
+                    "requires": ["oauth2"],
+                    "authentication": {
+                        "type": "oauth2",
+                        "description": (
+                            "Authentication using your Freva credentials is required."
+                        ),
+                    },
+                },
+            ),
+        }
+
+        for key, asset in assets.items():
+            item.add_asset(key, asset)
+
+        return item
+
+    def finalize_stac_collection(self) -> None:
+        """
+        Finalize STAC collection by updating spatial and temporal extents.
+
+        Raises
+        ------
+        Exception
+            If collection validation fails
+        """
+        collection_desc = dedent(
+            f"""
+            ## {self.translator.flavour.upper()} Flavour Dataset Collection
+
+            A curated climate datasets STAC Collection from the
+            `{self.translator.flavour.upper()}` flavour, and
+            specific search parameters through the Freva
+            databrowser. Includes standardized metadata and direct
+            data access capabilities.
+
+            ___
+            ℹ️ Contact the Freva team at [freva@dkrz.de](mailto:freva@dkrz.de)
+            to ask questions or report issues.
+        """
+        ).strip()
+        if self.spatial_extent["minx"] != float("inf") and self.spatial_extent[
+            "maxx"
+        ] != float("-inf"):
+
+            bbox = [
+                self.spatial_extent["minx"],
+                self.spatial_extent["miny"],
+                self.spatial_extent["maxx"],
+                self.spatial_extent["maxy"],
+            ]
+            self.collection.extent.spatial = pystac.SpatialExtent([bbox])
+
+        if self.temporal_extent["start"] and self.temporal_extent["end"]:
+            self.collection.extent.temporal = pystac.TemporalExtent(
+                [[self.temporal_extent["start"], self.temporal_extent["end"]]]
+            )
+        self.collection.description = collection_desc
+        try:
+            self.collection.validate()
+        except Exception as e:  # pragma: no cover
+            logger.error(f"Collection validation failed: {e}")
+
+    async def validate_stac(self) -> Tuple[int, int]:
+        """Validate STAC API availability and get result counts."""
+        self._set_catalogue_queries()
+        self.query["facet.field"] += ["time", "bbox"]
+        self.query["fl"] += ["time", "bbox"]
+        async with self._session_get() as res:
+            search_status, search = res
+        await self.stacapi_availability()
+        total_count = int(search.get("response", {}).get("numFound", 0))
+        return search_status, total_count
+
+    async def init_stac_collection(
+        self,
+        request: Request,
+        collection_id: str,
+        stac_dynamic: bool,
+    ) -> AsyncIterator[bytes]:
+        """Initialize and stream a STAC collection from Databrowser search results.
+
+        Parameters
+        ----------
+        request : Request
+            FastAPI request object containing base URL and query parameters
+        collection_id : str
+            Unique identifier for the STAC collection
+        stac_dynamic : bool
+            If True, use dynamic STAC API, if False create static catalog
+
+        Yields
+        ------
+        bytes
+            Chunks of the tar.gz archive when stac_dynamic is False
+        """
+        logger.info("Creating STAC Catalogue for %s", collection_id)
+        try:
+            self.assets_prereqs = {
+                "base_url": str(request.base_url),
+                "full_endpoint": f"{str(request.url)}?{str(request.query_params)}",
+                "only_params": str(request.query_params),
+            }
+
+            if stac_dynamic:
+                self.collection = await self._create_stac_collection(collection_id)
+                await self.ingest_stac_collection(self.collection)
+                async for item_batch in self._iter_stac_items():
+                    await self.ingest_stac_item(item_batch)
+                self.finalize_stac_collection()
+                await self.update_stac_collection(self.collection)
+            else:
+                # STAC-Catalog
+                async for chunk in self.stream_catalog(collection_id):
+                    yield chunk
+
+                # intial STAC-Collection
+                self.collection = await self._create_stac_collection(collection_id)
+                async for chunk in self.stream_collection(
+                    self.collection.to_dict(),
+                    collection_id
+                ):
+                    yield chunk
+
+                # STAC-Items
+                async for item_batch in self._iter_stac_items():
+                    for item in item_batch:
+                        async for chunk in self.stream_item(
+                            item.to_dict(),
+                            collection_id
+                        ):
+                            yield chunk
+
+                # updated STAC-Collection
+                self.finalize_stac_collection()
+                async for chunk in self.stream_collection(
+                    self.collection.to_dict(),
+                    collection_id
+                ):
+                    yield chunk
+
+                final_chunk = await self.close()
+                if final_chunk:
+                    yield final_chunk
+
+        except Exception as e:
+            logger.error(
+                f"STAC collection creation failed for {collection_id}: {str(e)}"
+            )
+            raise
+
+    async def ingest_stac_item(self, items: list[pystac.Item]) -> None:
+        """
+        Ingest bulk STAC Items into the catalog via API.
+
+        Parameters
+        ----------
+        items: list[pystac.Item]
+            List of STAC Items to be ingested using upsert method.
+
+        Raises
+        ------
+        HTTPException
+            If ingestion fails or server returns non-201 status.
+        """
+        url = self._config.get_stac_url("items", items[0].collection_id)
+        items_dict = {
+            "items": {item.id: item.to_dict() for item in items},
+            "method": "upsert",
+        }
+        async with self._session_post(url, items_dict):
+            pass
+
+    async def ingest_stac_collection(self, collection: pystac.Collection) -> None:
+        """
+        Ingest a STAC Collection into the STAC-API Catalog.
+
+        Parameters
+        ----------
+        collection: pystac.Collection
+            STAC Collection to be ingested.
+
+        Raises
+        ------
+        HTTPException
+            If ingestion fails or server returns non-201 status.
+        """
+        url = self._config.get_stac_url("collections")
+        async with self._session_post(url, collection.to_dict()):
+            pass
+
+    async def update_stac_collection(self, collection: pystac.Collection) -> None:
+        """
+        Update existing STAC Collection in the STAC_API Catalogue.
+
+        Parameters
+        ----------
+        collection: pystac.Collection
+            STAC Collection with updated data.
+
+        Raises
+        ------
+        HTTPException
+            If update fails or server returns non-200 status.
+        """
+        url = f"{self._config.get_stac_url('collections')}/{collection.id}"
+        async with self._session_put(url, collection.to_dict()):
+            pass
+
+    async def stacapi_availability(self) -> bool:
+        """
+        Check STAC API server availability via ping/pong endpoint.
+
+        Returns
+        -------
+        bool
+            True if server is available and returns 200 status.
+
+        Raises
+        ------
+        HTTPException
+            If server is unreachable or returns non-200 status.
+        """
+        original_url = getattr(self, "url", None)
+        self.url = self._config.get_stac_url("ping")
+        try:
+            async with self._session_get() as res:
+                return res[0] == 200
+        except Exception as error:
+            logger.error("STAC server connection failed: %s", error)
+            raise HTTPException(status_code=503, detail="STAC server unreachable")
+        finally:
+            self.url = original_url or ""
+
+    def add_object(
+            self, name: str,
+            content: str,
+            mtime: Optional[float] = None) -> bytes:
+        """Add an object of STAC such as Catalog, Collection or Item
+        to the tgz archive and return the bytes."""
+        content_bytes = content.encode('utf-8')
+        info = tarfile.TarInfo(name=name)
+        info.size = len(content_bytes)
+        info.mtime = mtime or datetime.now().timestamp()
+
+        content_io = io.BytesIO(content_bytes)
+        self.tar.addfile(info, content_io)
+
+        chunk = self.buffer.getvalue()
+        self.buffer.seek(0)
+        self.buffer.truncate()
+        return chunk
+
+    async def finalize_tar(self) -> bytes:
+        """Close the tgz file and return final bytes."""
+        self.tar.close()
+        final_chunk = self.buffer.getvalue()
+        self.buffer.close()
+        return final_chunk
+
+    async def stream_catalog(self, collection_id: str) -> AsyncIterator[bytes]:
+        catalog = {
+            "type": "Catalog",
+            "stac_version": "1.0.0",
+            "id": "static-catalog",
+            "description": "Static STAC catalog for Freva databrowser search",
+            "links": [
+                {
+                    "rel": "root",
+                    "href": "./catalog.json",
+                    "type": "application/json"
+                },
+                {
+                    "rel": "child",
+                    "href": f"./collections/{collection_id}/collection.json",
+                    "type": "application/json"
+                }
+            ]
+        }
+        chunk = self.add_object(
+            "stac-catalog/catalog.json",
+            json.dumps(catalog, indent=2)
+        )
+        if chunk:
+            yield chunk
+
+    async def stream_collection(
+        self,
+        collection: Dict[str, Any],
+        collection_id: str
+    ) -> AsyncIterator[bytes]:
+        collection["links"] = [
+            {
+                "rel": "root",
+                "href": "../../catalog.json",
+                "type": "application/json"
+            },
+            {
+                "rel": "parent",
+                "href": "../../catalog.json",
+                "type": "application/json"
+            },
+            {
+                "rel": "items",
+                "href": "./items",
+                "type": "application/json"
+            }
+        ]
+
+        chunk = self.add_object(
+            f"stac-catalog/collections/{collection_id}/collection.json",
+            json.dumps(collection, indent=2)
+        )
+        if chunk:
+            yield chunk
+
+    async def stream_item(
+        self, item: Dict[str, Any], collection_id: str
+    ) -> AsyncIterator[bytes]:
+        chunk = self.add_object(
+            f"stac-catalog/collections/{collection_id}/items/{item['id']}.json",
+            json.dumps(item, indent=2)
+        )
+        if chunk:
+            yield chunk
+
+    async def close(self) -> bytes:
+        """Close the tgz archive and return final bytes."""
+        return await self.finalize_tar()
