@@ -37,7 +37,7 @@ dependencies = [
 "watchfiles",
 "xarray",
 "xpublish",
-"zarr==2.18.4",
+"zarr==2.18.2",
 ]
 [project.scripts]
 data-loader-worker = "data_portal_worker:cli.run_data_loader"

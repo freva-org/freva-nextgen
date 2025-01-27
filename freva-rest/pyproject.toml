@@ -40,7 +40,7 @@ dependencies = [
 "watchfiles",
 "uuid",
 "typing_extensions",
-"zarr==2.18.4",
+"zarr==2.18.2",
 "pystac",
 "httpx",
 ]
