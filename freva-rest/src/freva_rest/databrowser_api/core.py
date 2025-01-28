@@ -432,6 +432,7 @@ class Solr:
             )
         except ValueError as err:
             raise HTTPException(status_code=500, detail=str(err)) from err
+        self.stac_dynamic = bool(query.pop("stac_dynamic", [True])[0])
         self.facets = self.translator.translate_query(query, backwards=True)
         self.url, self.query = self._get_url()
         self.query["start"] = start
