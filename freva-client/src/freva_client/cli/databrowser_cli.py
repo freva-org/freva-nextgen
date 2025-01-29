@@ -544,22 +544,16 @@ def stac_catalogue(
         help="Show version an exit",
         callback=version_callback,
     ),
-    stac_dynamic: bool = typer.Option(
-        False,
-        "--stac-dynamic",
-        help=(
-            "Create a dynamic STAC catalogue."
-        ),
-    ),
-    outdir: Optional[Path] = typer.Option(
+    filename: Optional[Path] = typer.Option(
         None,
         "-o",
-        "--outdir",
+        "--filename",
         help=(
             "Path to the file where the static STAC catalogue,"
-            "should be written to. If None given (default) the catalogue is"
-            "saved to current working directory. Please note that this argument"
-            "is only used when stac-dynamic is set to False."
+            "should be written to. If you enter and the path is "
+            "does not exist, the file will be created in the current "
+            "working directory. If you don't enter a path, the STAC API"
+            "dynamic catalogue link will be printed to stdout."
         ),
     ),
 ) -> None:
@@ -582,7 +576,7 @@ def stac_catalogue(
         stream_zarr=False,
         **(parse_cli_args(search_keys or [])),
     )
-    print(result.stac_catalogue(stac_dynamic=stac_dynamic, outdir=outdir))
+    print(result.stac_catalogue(filename=filename))
 
 
 @databrowser_app.command(name="data-count", help="Count the databrowser search results")

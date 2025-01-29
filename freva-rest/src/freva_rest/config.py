@@ -464,10 +464,14 @@ class ServerConfig(BaseModel):
                 "Please provide them either in config or environment variables "
                 "(API_STAC_USER, API_STAC_PASSWORD)"
             )
-        encoded_username = urllib.parse.quote(self.stacapi_user)
-        encoded_password = urllib.parse.quote(self.stacapi_password)
-        netloc = f"{encoded_username}:{encoded_password}@{netloc}"
+
+        escape_chars = ':/?#[]@'
+        if any(c in escape_chars for c in username) or any(c in escape_chars for c in password):
+            raise ValueError("Username and password cannot contain characters: :/?#[]@")
+
+        netloc = f"{username}:{password}@{netloc}"
         base_url = f"http://{netloc}"
+
         if spec == "collections":
             return f"{base_url}/{spec}"
         if spec == "items":

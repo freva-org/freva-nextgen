@@ -517,7 +517,7 @@ class Solr:
                 except HTTPException:  # pragma: no cover
                     search = {}  # pragma: no cover
             except Exception as error:
-                logger.error("Connection to %s failed: %s", self.url, error)
+                logger.exception("Connection to %s failed: %s", self.url, error)
                 raise HTTPException(
                     status_code=503,
                     detail="Could not connect to Solr server",
@@ -554,7 +554,7 @@ class Solr:
                     logger.error("POST request failed: %s", response.text)
                     response_data = {}
             except Exception as error:
-                logger.error("Connection to %s failed: %s", url, error)
+                logger.exception("Connection to %s failed: %s", url, error)
                 raise HTTPException(
                     status_code=503,
                     detail="Could not connect to the instance",
@@ -586,8 +586,8 @@ class Solr:
                 except HTTPException:  # pragma: no cover
                     logger.error("PUT request failed: %s", response.text)
                     response_data = {}
-            except Exception as error:
-                logger.error("Connection to %s failed: %s", url, error)
+            except ConnectionError:
+                logger.exception("Connection to %s failed", url)
                 raise HTTPException(
                     status_code=503,
                     detail="Could not connect to the instance",
@@ -1392,10 +1392,10 @@ class STAC(Solr):
         self.buffer = io.BytesIO()
         self.tar = tarfile.open(fileobj=self.buffer, mode='w:gz')
         self.spatial_extent = {
-            "minx": float("inf"),
-            "miny": float("inf"),
-            "maxx": float("-inf"),
-            "maxy": float("-inf"),
+            "minx": float("-180"),
+            "miny": float("-90"),
+            "maxx": float("180"),
+            "maxy": float("90"),
         }
         self.temporal_extent: dict[str, Optional[datetime]] = {
             "start": None,
@@ -1509,7 +1509,7 @@ class STAC(Solr):
                 roles=["metadata"],
                 media_type="application/json",
             ),
-            "download-zarr": pystac.Asset(
+            "zarr-access": pystac.Asset(
                 href=(
                     f"{self.assets_prereqs.get('base_url')}api/freva-nextgen/"
                     f"databrowser/load/{self.translator.flavour}?"
@@ -1543,8 +1543,8 @@ class STAC(Solr):
 
         collection.providers = [
             pystac.Provider(
-                name="Deutsches Klimarechenzentrum (DKRZ)",
-                url="https://www.dkrz.de",
+                name="Freva DataBrowser",
+                url="https://www.freva.dkrz.de",
             )
         ]
         return collection
@@ -1596,18 +1596,18 @@ class STAC(Solr):
         ----------
         bbox_str : Union[str, List[str]]
             Bounding box in ENVELOPE format: 'ENVELOPE(west,east,north,south)'
-            or as a list with one element
+            or as a list with one element: ['ENVELOPE(west,east,north,south)']
 
         Returns
         -------
         List[float]
             Coordinates as [minx, miny, maxx, maxy]
         """
-        if isinstance(bbox_str, list):
-            bbox_str = bbox_str[0]
+        bbox = bbox_str[0] if isinstance(bbox_str, list) else bbox_str
+
         nums = [
             float(x)
-            for x in bbox_str.replace("ENVELOPE(", "").replace(")", "").split(",")
+            for x in bbox.replace("ENVELOPE(", "").replace(")", "").split(",")
         ]
         return [nums[0], nums[3], nums[1], nums[2]]
 
@@ -1626,8 +1626,7 @@ class STAC(Solr):
         self.spatial_extent["maxy"] = max(self.spatial_extent["maxy"], bbox[3])
 
     def _update_temporal_extent(self, start_time: datetime, end_time: datetime) -> None:
-        """
-        Update collection's temporal extent based on item timerange.
+        """Update collection's temporal extent based on item timerange.
 
         Parameters
         ----------
@@ -1647,13 +1646,14 @@ class STAC(Solr):
             self.temporal_extent["end"] = end_time
 
     async def _create_stac_item(self, result: Dict[str, Any]) -> pystac.Item:
-        """
-        Create a STAC Item from a result dictionary.
+        """Create a STAC Item from a result dictionary.
 
-        Args:
+        Parameters
+        ----------
             result (Dict[str, Any]): Dictionary containing item metadata
 
-        Returns:
+        Returns
+        --------
             pystac.Item: Created STAC item
         """
         intake_desc = dedent(
@@ -1665,7 +1665,7 @@ class STAC(Solr):
             # Method 2: Using conda (recommended)
             conda install -c conda-forge intake-esm
             ```
-            # Quick Guide: INTAKE-ESM Catalog on Levante (Python)
+            # Quick Guide: INTAKE-ESM Catalog (Python)
             ```python
             import intake
             # create a catalog object from a EMS JSON file containing dataset metadata
@@ -1686,6 +1686,7 @@ class STAC(Solr):
             .replace(".", "-")
             .strip()
         )
+        logger.critical(f"result: {result.get("bbox")}")
         bbox = result.get("bbox")
         if bbox:
             try:
@@ -1764,7 +1765,7 @@ class STAC(Solr):
                 roles=["metadata"],
                 media_type="application/json",
             ),
-            "download-zarr": pystac.Asset(
+            "zarr-access": pystac.Asset(
                 href=(
                     f"{self.assets_prereqs.get('base_url')}api/freva-nextgen/"
                     f"databrowser/load/{self.translator.flavour}?"

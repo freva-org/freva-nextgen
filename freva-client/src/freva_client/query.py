@@ -392,13 +392,23 @@ class databrowser:
 
     def stac_catalogue(
         self,
-        stac_dynamic: bool = False,
-        outdir: Optional[Union[str, Path]] = None,
+        filename: Optional[Union[str, Path]] = None,
         **kwargs: Any,
     ) -> str:
         """Create an static or dynamic STAC API catalogue endpoint
         from the search. This method creates a STAC API collection
         endpoint from the current object search.
+
+        Parameters
+        ~~~~~~~~~~
+        stac_dynamic: bool, default: False
+            Create a dynamic STAC API collection endpoint. If set to False
+            a static STAC catalogue will be created.
+        filename: str, default: None
+            The filename of the STAC catalogue. If not given the STAC catalogue
+            will be saved to the current working directory.
+        **kwargs: Any
+            Additional keyword arguments to be passed to the request.
 
         Returns
         ~~~~~~~
@@ -419,7 +429,7 @@ class databrowser:
 
             from freva_client import databrowser
             db = databrowser(dataset="cmip6-hsm")
-            print(db.stac_catalogue(stac_dynamic=True))
+            print(db.stac_catalogue())
 
         Now let's create a static STAC catalogue:
 
@@ -430,15 +440,13 @@ class databrowser:
 
             from freva_client import databrowser
             db = databrowser(dataset="cmip6-hsm")
-            db.stac_catalogue(stac_dynamic=False, outdir=temp_path)
+            db.stac_catalogue(filename=temp_path)
             print(f"STAC catalog saved to: {temp_path}")
 
         """
         params: Dict[str, Any] = {
-            "stac_dynamic": stac_dynamic,
+            "stac_dynamic": False if filename is not None else True
         }
-        kwargs.update({"stream": True,
-                       "params": params})
 
         stac_url = self._cfg.stac_url
         result = self._request("GET", stac_url, **kwargs)
@@ -447,11 +455,16 @@ class databrowser:
                 "No STAC catalog found. Please check if you have any search results."
             )
         if params.get("stac_dynamic") is False:
-            filename = result.headers.get('Content-Disposition', '').split(
+            default_filename = result.headers.get('Content-Disposition', '').split(
                 'filename=')[-1].strip('"')
-            save_dir = Path(outdir) if outdir else Path.cwd()
-            save_dir.mkdir(parents=True, exist_ok=True)
-            save_path = save_dir / filename
+
+            save_path = Path(filename)
+            if save_path.is_dir() and save_path.exists():
+                save_path = save_path / default_filename
+            if save_path.is_dir() and not save_path.exists():
+                save_path = Path.cwd() / default_filename
+
+            save_path.parent.mkdir(parents=True, exist_ok=True)
 
             total_size = 0
             with open(save_path, 'wb') as f:
@@ -464,8 +477,6 @@ class databrowser:
                 f"STAC catalog saved to: {save_path} "
                 f"(size: {total_size / 1024 / 1024:.2f} MB)"
             )
-        else:
-            return f"STAC catalog available at: {result.url}"
 
     @classmethod
     def count_values(

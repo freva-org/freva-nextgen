@@ -263,20 +263,17 @@ To get an static STAC catalogue you can use the following command:
 
 .. code:: console
 
-    freva-client databrowser stac-catalogue 
+    freva-client databrowser stac-catalogue --filename /path/to/output
 
-and to specify the output directory you can use the following command, 
-otherwise it would be saved in the current directory:
+and if the specified filename directory doesn't exist or not provided, 
+the STAC catalogue will be saved in the current directory. It can be 
+only a directory or a full path with the filename. 
 
-.. code:: console
-
-    freva-client databrowser stac-catalogue --outdir /path/to/output
-
-And to get a dynamic STAC catalogue you can simply use the ``--stac_dynamic`` flag:
+And to get a dynamic STAC catalogue there is no need to specify the output directory or any other options:
 
 .. code:: console
 
-    freva-client databrowser stac-catalogue --stac_dynamic
+    freva-client databrowser stac-catalogue
 
 The STAC Catalogue provides multiple ways to access and interact with the data:
  - Access your climate data through the intake-esm data catalog specification
