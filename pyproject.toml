@@ -94,7 +94,7 @@ setenv =
     FREVA_NO_RICH_PANELS = 1
 allowlist_externals = make
 commands = make -C docs clean
-           make -C docs html
+           make -C docs html 
 [testenv:lint]
 description = "Check code quality."
 deps = -e ./freva-rest

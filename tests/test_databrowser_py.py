@@ -136,13 +136,13 @@ def test_stac_catalogue(test_server: str) -> None:
     """Test the STAC Catalogue functionality."""
     # dynamic STAC catalogue
     db = databrowser(host=test_server, dataset="cmip6-fs")
-    res = db.stac_catalogue(stac_dynamic=True, outdir="/tmp")
+    res = db.stac_catalogue()
     assert "STAC catalog available at: " in res
 
     # static STAC catalogue
     db = databrowser(host=test_server, dataset="cmip6-fs")
-    res = db.stac_catalogue(stac_dynamic=False, outdir="/tmp")
-    assert "STAC catalog saved to: /tmp/stac-catalog" in res
+    res = db.stac_catalogue(filename="/tmp/something.tar.gz")
+    assert "STAC catalog saved to: /tmp/something.tar.gz" in res
 
 def test_intake_with_zarr(test_server: str, auth_instance: Auth) -> None:
     """Test the intake zarr catalogue creation."""

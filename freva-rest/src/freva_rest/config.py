@@ -7,7 +7,6 @@ variables.
 
 import logging
 import os
-import urllib.parse
 from functools import cached_property
 from pathlib import Path
 from socket import gethostname
@@ -466,9 +465,10 @@ class ServerConfig(BaseModel):
             )
 
         escape_chars = ':/?#[]@'
-        if any(c in escape_chars for c in username) or any(c in escape_chars for c in password):
-            raise ValueError("Username and password cannot contain characters: :/?#[]@")
-
+        error_msg = "Username and password cannot contain characters: :/?#[]@"
+        if (any(c in escape_chars for c in username)
+                or any(c in escape_chars for c in password)):
+            raise ValueError(error_msg)
         netloc = f"{username}:{password}@{netloc}"
         base_url = f"http://{netloc}"
 

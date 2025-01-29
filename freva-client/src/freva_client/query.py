@@ -458,7 +458,7 @@ class databrowser:
             default_filename = result.headers.get('Content-Disposition', '').split(
                 'filename=')[-1].strip('"')
 
-            save_path = Path(filename)
+            save_path = Path(cast(str, filename))
             if save_path.is_dir() and save_path.exists():
                 save_path = save_path / default_filename
             if save_path.is_dir() and not save_path.exists():
@@ -477,6 +477,8 @@ class databrowser:
                 f"STAC catalog saved to: {save_path} "
                 f"(size: {total_size / 1024 / 1024:.2f} MB)"
             )
+        else:
+            return f"STAC catalog available at: {result.url}"
 
     @classmethod
     def count_values(
