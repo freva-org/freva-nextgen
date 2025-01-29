@@ -447,7 +447,8 @@ class databrowser:
         params: Dict[str, Any] = {
             "stac_dynamic": False if filename is not None else True
         }
-
+        kwargs.update({"stream": True,
+                       "params": params})
         stac_url = self._cfg.stac_url
         result = self._request("GET", stac_url, **kwargs)
         if result is None or result.status_code == 404:
@@ -475,7 +476,8 @@ class databrowser:
 
             return (
                 f"STAC catalog saved to: {save_path} "
-                f"(size: {total_size / 1024 / 1024:.2f} MB)"
+                f"(size: {total_size / 1024 / 1024:.2f} MB). "
+                f"Or simply download from: {result.url}"
             )
         else:
             return f"STAC catalog available at: {result.url}"
