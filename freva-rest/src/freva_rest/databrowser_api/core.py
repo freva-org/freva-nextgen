@@ -1686,7 +1686,6 @@ class STAC(Solr):
             .replace(".", "-")
             .strip()
         )
-        logger.critical(f"result: {result.get("bbox")}")
         bbox = result.get("bbox")
         if bbox:
             try:
