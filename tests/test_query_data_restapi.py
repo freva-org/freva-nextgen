@@ -104,7 +104,7 @@ def test_bbox_selection(test_server: str) -> None:
         f"{test_server}/databrowser/data-search/freva/file",
         params={"bbox": "-10,10 by -10,10"},
     )
-    print(len(res1.text.split()))
+    assert len(res1.text.split()) == 61
     res2 = requests.get(
         f"{test_server}/databrowser/data-search/freva/file",
         params={"bbox": "-10,10 by -10,10", "bbox_select": "foo"},
