@@ -47,7 +47,7 @@ class Flavours(str, Enum):
     user = "user"
 
 
-class TimeSelect(str, Enum):
+class SelectMethod(str, Enum):
     """Literal implementation for the cli."""
 
     strict = "strict"
@@ -55,18 +55,44 @@ class TimeSelect(str, Enum):
     file = "file"
 
     @staticmethod
-    def get_help() -> str:
-        """Generate the help string."""
+    def get_help(context: str = "time") -> str:
+        """Generate the help string for time or bbox selection methods.
+
+        Parameters
+        ----------
+        context: str, default: "time"
+            Either "time" or "bbox" to generate appropriate help text.
+        """
+        examples = {
+            "time": ("2000 to 2012", "2010 to 2020"),
+            "bbox": ("-10,10 by -10,10", "0,5 by 0,5")
+        }
+        descriptions = {
+            "time": {
+                "unit": "time period",
+                "start_end": "start or end period",
+                "subset": "time period"
+            },
+            "bbox": {
+                "unit": "spatial extent",
+                "start_end": "any part of the extent",
+                "subset": "spatial extent"
+            }
+        }
+
+        context_info = descriptions.get(context, descriptions["time"])
+        example = examples.get(context, examples["time"])
+
         return (
-            "Operator that specifies how the time period is selected. "
+            f"Operator that specifies how the {context_info['unit']} is selected. "
             "Choose from flexible (default), strict or file. "
             "``strict`` returns only those files that have the *entire* "
-            "time period covered. The time search ``2000 to 2012`` will "
-            "not select files containing data from 2010 to 2020 with "
-            "the ``strict`` method. ``flexible`` will select those files "
-            "as  ``flexible`` returns those files that have either start "
-            "or end period covered. ``file`` will only return files where "
-            "the entire time period is contained within *one single* file."
+            f"{context_info['unit']} covered. The {context} search ``{example[0]}`` "
+            f"will not select files containing data from {example[1]} with "
+            "the ``strict`` method. ``flexible`` will select those files as "
+            f"``flexible`` returns those files that have {context_info['start_end']} "
+            f"covered. ``file`` will only return files where the entire "
+            f"{context_info['subset']} is contained within *one single* file."
         )
 
 
@@ -124,11 +150,11 @@ def metadata_search(
             "of climate datasets to query."
         ),
     ),
-    time_select: TimeSelect = typer.Option(
+    time_select: SelectMethod = typer.Option(
         "flexible",
         "-ts",
         "--time-select",
-        help=TimeSelect.get_help(),
+        help=SelectMethod.get_help(),
     ),
     time: Optional[str] = typer.Option(
         None,
@@ -143,6 +169,26 @@ def metadata_search(
             "string format to subset time steps ``%Y``, ``%Y-%m`` etc are also"
             " valid."
         ),
+    ),
+    bbox: Optional[str] = typer.Option(
+        None,
+        "-b",
+        "--bbox",
+        help=(
+            "Special search facet to refine/subset search results by spatial "
+            "extent. This can be a string representation of a bounding box. "
+            "The bounding box has to follow the format ``min_lon,min_lat by "
+            "max_lon,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
+            "``0,5 by 0,5``. **Note**: You don't have to give the full string "
+            "format to subset the bounding box ``min_lon,min_lat`` etc are "
+            "also valid."
+        ),
+    ),
+    bbox_select: SelectMethod = typer.Option(
+        "flexible",
+        "-bs",
+        "--bbox-select",
+        help=SelectMethod.get_help("bbox"),
     ),
     extended_search: bool = typer.Option(
         False,
@@ -189,6 +235,8 @@ def metadata_search(
         *(facets or []),
         time=time or "",
         time_select=cast(Literal["file", "flexible", "strict"], time_select.value),
+        bbox=bbox or "",
+        bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select.value),
         flavour=cast(
             Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
             flavour.value,
@@ -246,11 +294,11 @@ def data_search(
             "of climate datasets to query."
         ),
     ),
-    time_select: TimeSelect = typer.Option(
+    time_select: SelectMethod = typer.Option(
         "flexible",
         "-ts",
         "--time-select",
-        help=TimeSelect.get_help(),
+        help=SelectMethod.get_help(),
     ),
     zarr: bool = typer.Option(False, "--zarr", help="Create zarr stream files."),
     access_token: Optional[str] = typer.Option(
@@ -274,6 +322,26 @@ def data_search(
             "string format to subset time steps ``%Y``, ``%Y-%m`` etc are also"
             " valid."
         ),
+    ),
+    bbox: Optional[str] = typer.Option(
+        None,
+        "-b",
+        "--bbox",
+        help=(
+            "Special search facet to refine/subset search results by spatial "
+            "extent. This can be a string representation of a bounding box. "
+            "The bounding box has to follow the format ``min_lon,min_lat by "
+            "max_lon,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
+            "``0,5 by 0,5``. **Note**: You don't have to give the full string "
+            "format to subset the bounding box ``min_lon,min_lat`` etc are "
+            "also valid."
+        ),
+    ),
+    bbox_select: SelectMethod = typer.Option(
+        "flexible",
+        "-bs",
+        "--bbox-select",
+        help=SelectMethod.get_help("bbox"),
     ),
     parse_json: bool = typer.Option(
         False, "-j", "--json", help="Parse output in json format."
@@ -312,6 +380,8 @@ def data_search(
         *(facets or []),
         time=time or "",
         time_select=cast(Literal["file", "flexible", "strict"], time_select),
+        bbox=bbox or "",
+        bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
         flavour=cast(
             Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
             flavour.value,
@@ -372,11 +442,11 @@ def intake_catalogue(
             "of climate datasets to query."
         ),
     ),
-    time_select: TimeSelect = typer.Option(
+    time_select: SelectMethod = typer.Option(
         "flexible",
         "-ts",
         "--time-select",
-        help=TimeSelect.get_help(),
+        help=SelectMethod.get_help(),
     ),
     time: Optional[str] = typer.Option(
         None,
@@ -391,6 +461,26 @@ def intake_catalogue(
             "string format to subset time steps ``%Y``, ``%Y-%m`` etc are also"
             " valid."
         ),
+    ),
+    bbox: Optional[str] = typer.Option(
+        None,
+        "-b",
+        "--bbox",
+        help=(
+            "Special search facet to refine/subset search results by spatial "
+            "extent. This can be a string representation of a bounding box. "
+            "The bounding box has to follow the format ``min_lon,min_lat by "
+            "max_lon,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
+            "``0,5 by 0,5``. **Note**: You don't have to give the full string "
+            "format to subset the bounding box ``min_lon,min_lat`` etc are "
+            "also valid."
+        ),
+    ),
+    bbox_select: SelectMethod = typer.Option(
+        "flexible",
+        "-bs",
+        "--bbox-select",
+        help=SelectMethod.get_help("bbox"),
     ),
     zarr: bool = typer.Option(
         False, "--zarr", help="Create zarr stream files, as catalogue targets."
@@ -443,6 +533,8 @@ def intake_catalogue(
         *(facets or []),
         time=time or "",
         time_select=cast(Literal["file", "flexible", "strict"], time_select),
+        bbox=bbox or "",
+        bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
         flavour=cast(
             Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
             flavour.value,
@@ -503,11 +595,11 @@ def stac_catalogue(
             "of climate datasets to query."
         ),
     ),
-    time_select: TimeSelect = typer.Option(
+    time_select: SelectMethod = typer.Option(
         "flexible",
         "-ts",
         "--time-select",
-        help=TimeSelect.get_help(),
+        help=SelectMethod.get_help(),
     ),
     time: Optional[str] = typer.Option(
         None,
@@ -522,6 +614,26 @@ def stac_catalogue(
             "string format to subset time steps ``%Y``, ``%Y-%m`` etc are also"
             " valid."
         ),
+    ),
+    bbox: Optional[str] = typer.Option(
+        None,
+        "-b",
+        "--bbox",
+        help=(
+            "Special search facet to refine/subset search results by spatial "
+            "extent. This can be a string representation of a bounding box. "
+            "The bounding box has to follow the format ``min_lon,min_lat by "
+            "max_lon,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
+            "``0,5 by 0,5``. **Note**: You don't have to give the full string "
+            "format to subset the bounding box ``min_lon,min_lat`` etc are "
+            "also valid."
+        ),
+    ),
+    bbox_select: SelectMethod = typer.Option(
+        "flexible",
+        "-bs",
+        "--bbox-select",
+        help=SelectMethod.get_help("bbox"),
     ),
     host: Optional[str] = typer.Option(
         None,
@@ -565,6 +677,8 @@ def stac_catalogue(
         *(facets or []),
         time=time or "",
         time_select=cast(Literal["file", "flexible", "strict"], time_select),
+        bbox=bbox or "",
+        bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
         flavour=cast(
             Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
             flavour.value,
@@ -613,11 +727,11 @@ def count_values(
             "of climate datasets to query."
         ),
     ),
-    time_select: TimeSelect = typer.Option(
+    time_select: SelectMethod = typer.Option(
         "flexible",
         "-ts",
         "--time-select",
-        help=TimeSelect.get_help(),
+        help=SelectMethod.get_help(),
     ),
     time: Optional[str] = typer.Option(
         None,
@@ -632,6 +746,26 @@ def count_values(
             "string format to subset time steps ``%Y``, ``%Y-%m`` etc are also"
             " valid."
         ),
+    ),
+    bbox: Optional[str] = typer.Option(
+        None,
+        "-b",
+        "--bbox",
+        help=(
+            "Special search facet to refine/subset search results by spatial "
+            "extent. This can be a string representation of a bounding box. "
+            "The bounding box has to follow the format ``min_lon,min_lat by "
+            "max_lon,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
+            "``0,5 by 0,5``. **Note**: You don't have to give the full string "
+            "format to subset the bounding box ``min_lon,min_lat`` etc are "
+            "also valid."
+        ),
+    ),
+    bbox_select: SelectMethod = typer.Option(
+        "flexible",
+        "-bs",
+        "--bbox-select",
+        help=SelectMethod.get_help("bbox"),
     ),
     extended_search: bool = typer.Option(
         False,
@@ -677,12 +811,15 @@ def count_values(
     result: Union[int, Dict[str, Dict[str, int]]] = 0
     search_kws = parse_cli_args(search_keys or [])
     time = cast(str, time or search_kws.pop("time", ""))
+    bbox = cast(str, bbox or search_kws.pop("bbox", ""))
     facets = facets or []
     if detail:
         result = databrowser.count_values(
             *facets,
             time=time or "",
             time_select=cast(Literal["file", "flexible", "strict"], time_select),
+            bbox=bbox or "",
+            bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
             flavour=cast(
                 Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
                 flavour.value,
@@ -699,6 +836,8 @@ def count_values(
                 *facets,
                 time=time or "",
                 time_select=cast(Literal["file", "flexible", "strict"], time_select),
+                bbox=bbox or "",
+                bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
                 flavour=cast(
                     Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
                     flavour.value,

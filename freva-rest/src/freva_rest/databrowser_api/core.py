@@ -171,6 +171,7 @@ class Translator:
             "rcm_version": "secondary",
             "dataset": "secondary",
             "time": "secondary",
+            "bbox": "secondary",
             "user": "secondary",
         }
 
@@ -189,6 +190,7 @@ class Translator:
             "realm": "realm",
             "variable": "variable",
             "time": "time",
+            "bbox": "bbox",
             "time_aggregation": "time_aggregation",
             "time_frequency": "time_frequency",
             "cmor_table": "cmor_table",
@@ -216,6 +218,7 @@ class Translator:
             "realm": "realm",
             "variable": "variable_id",
             "time": "time",
+            "bbox": "bbox",
             "time_aggregation": "time_aggregation",
             "time_frequency": "frequency",
             "cmor_table": "table_id",
@@ -243,6 +246,7 @@ class Translator:
             "realm": "realm",
             "variable": "variable",
             "time": "time",
+            "bbox": "bbox",
             "time_aggregation": "time_aggregation",
             "time_frequency": "time_frequency",
             "cmor_table": "cmor_table",
@@ -270,6 +274,7 @@ class Translator:
             "realm": "realm",
             "variable": "variable_id",
             "time": "time",
+            "bbox": "bbox",
             "time_aggregation": "time_reduction",
             "time_frequency": "time_frequency",
             "cmor_table": "cmor_table",
@@ -429,6 +434,10 @@ class Solr:
             self.time = self.adjust_time_string(
                 query.pop("time", [""])[0],
                 query.pop("time_select", ["flexible"])[0],
+            )
+            self.bbox = self.adjust_bbox_string(
+                query.pop("bbox", [""])[0],
+                query.pop("bbox_select", ["flexible"])[0],
             )
         except ValueError as err:
             raise HTTPException(status_code=500, detail=str(err)) from err
@@ -632,7 +641,8 @@ class Solr:
             key = key.lower().replace("_not_", "")
             if (
                 key not in translator.valid_facets
-                and key not in ("time_select", "stac_dynamic") + cls.uniq_keys
+                and key not in ("time_select", "bbox_select", "stac_dynamic")
+                + cls.uniq_keys
             ):
                 raise HTTPException(status_code=422, detail="Could not validate input.")
         return Solr(
@@ -699,6 +709,65 @@ class Solr:
         except ParserError as exc:
             raise ValueError(exc) from exc
         return [f"{{!field f=time op={solr_select}}}[{start} TO {end}]"]
+
+    @staticmethod
+    def adjust_bbox_string(
+        bbox: str,
+        bbox_select: str = "flexible",
+    ) -> List[str]:
+        """Adjust the bbox select keys to a solr spatial query using RPT
+        (Recursive Prefix Tree)
+
+        Parameters
+        ----------
+
+        bbox: str, default: ""
+            Special search facet to refine/subset search results by spatial extent.
+            This can be a string representation of a bounding box or a WKT polygon.
+            Valid strings are ``min_lon,max_lon by min_lat,max_lat`` for bounding
+            boxes and Well-Known Text (WKT) format for polygons. **Note**: Longitude
+            values must be between -180 and 180, latitude values between -90 and 90.
+        bbox_select: str, default: flexible
+            Operator that specifies how the spatial extent is selected. Choose from
+            flexible (default), strict or file. ``strict`` returns only those files
+            that fully contain the query extent. The bbox search ``-10,10 by -10,10``
+            will not select files covering only ``0,5 by 0,5`` with the ``strict``
+            method. ``flexible`` will select those files as it returns files that
+            have any overlap with the query extent. ``file`` will only return files
+            where the entire spatial extent is contained by the query geometry.
+
+        Raises
+        ------
+        ValueError: If parsing the coordinates failed or if bbox_select is invalid.
+        """
+        if not bbox:
+            return []
+        bbox = "".join(part.strip() for part in bbox.split())
+        select_methods: dict[str, str] = {
+            "strict": "Within",
+            "flexible": "Intersects",
+            "file": "Contains",
+        }
+        try:
+            solr_select = select_methods[bbox_select.lower()]
+        except KeyError as exc:
+            methods = ", ".join(select_methods.keys())
+            raise ValueError(f"Choose `bbox_select` from {methods}") from exc
+
+        try:
+            lon_part, lat_part = bbox.lower().split("by")
+            min_lon, max_lon = map(float, lon_part.split(","))
+            min_lat, max_lat = map(float, lat_part.split(","))
+
+            if not (-180 <= min_lon <= 180 and -180 <= max_lon <= 180):
+                raise ValueError("Longitude must be between -180 and 180")
+            if not (-90 <= min_lat <= 90 and -90 <= max_lat <= 90):
+                raise ValueError("Latitude must be between -90 and 90")
+
+            bbox_str = f"ENVELOPE({min_lon},{max_lon},{max_lat},{min_lat})"
+            return [f'bbox:"{solr_select}({bbox_str})"']
+        except ValueError as exc:
+            raise ValueError(f"Failed to parse bbox string: {exc}") from exc
 
     async def _create_intake_catalogue(self, *facets: str) -> IntakeType:
         var_name = self.translator.forward_lookup["variable"]
@@ -1029,13 +1098,21 @@ class Solr:
                 query.append(f"-{key}:({query_neg})")
         # Cause we are adding a new query which effects
         # all queries, it might be a neckbottle of performance
-        if self.translator.flavour == "user":
-            user_query = "user:*"
-        else:
-            user_query = "{!ex=userTag}-user:*"
+        user_query = (
+            "user:*" if self.translator.flavour == "user" else "{!ex=userTag}-user:*"
+        )
+        base_query = "*:*" if not (self.time or self.bbox) else None
+        joined_query = " AND ".join(query) if query else base_query
+
+        filter_queries = [
+            *self.time,
+            *self.bbox,
+            user_query,
+            joined_query,
+        ]
         return url, {
             "q": "*:*",
-            "fq": self.time + ["", user_query, " AND ".join(query) or "*:*"],
+            "fq": [q for q in filter_queries if q],
         }
 
     @property

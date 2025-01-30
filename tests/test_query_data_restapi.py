@@ -98,6 +98,24 @@ def test_time_selection(test_server: str) -> None:
     )
     assert res3.status_code == 500
 
+def test_bbox_selection(test_server: str) -> None:
+    """Test the bbox select functionality of the API."""
+    res1 = requests.get(
+        f"{test_server}/databrowser/data-search/freva/file",
+        params={"bbox": "-10,10 by -10,10"},
+    )
+    print(len(res1.text.split()))
+    res2 = requests.get(
+        f"{test_server}/databrowser/data-search/freva/file",
+        params={"bbox": "-10,10 by -10,10", "bbox_select": "foo"},
+    )
+    assert res2.status_code == 500
+    res3 = requests.get(
+        f"{test_server}/databrowser/data-search/freva/file",
+        params={"bbox": "fx"},
+    )
+    assert res3.status_code == 500
+
 
 def test_primary_facets(test_server: str) -> None:
     """Test the functionality of primary facet definitions."""

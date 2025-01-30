@@ -64,8 +64,10 @@ class databrowser:
         timestamp. The timestamps has to follow ISO-8601. Valid strings are
         ``%Y-%m-%dT%H:%M to %Y-%m-%dT%H:%M`` for time ranges or
         ``%Y-%m-%dT%H:%M`` for single time stamps.
-        **Note**: You don't have to give the full string format to subset
-        time steps: `%Y`, `%Y-%m` etc are also valid.
+
+        .. note:: You don't have to give the full string format to subset time
+                steps ``%Y``, ``%Y-%m`` etc are also valid.
+
     time_select: str, default: flexible
         Operator that specifies how the time period is selected. Choose from
         flexible (default), strict or file. ``strict`` returns only those files
@@ -75,6 +77,23 @@ class databrowser:
         ``flexible`` returns those files that have either start or end period
         covered. ``file`` will only return files where the entire time
         period is contained within `one single` file.
+    bbox: str, default: ""
+        Special search facet to refine/subset search results by spatial extent.
+        This can be a string representation of a bounding box or a WKT polygon.
+        Valid strings are ``min_lon,max_lon by min_lat,max_lat`` for bounding
+        boxes and Well-Known Text (WKT) format for polygons.
+
+        .. note:: Longitude values must be between -180 and 180, latitude values
+                    between -90 and 90.
+
+    bbox_select: str, default: flexible
+        Operator that specifies how the spatial extent is selected. Choose from
+        flexible (default), strict or file. ``strict`` returns only those files
+        that fully contain the query extent. The bbox search ``-10,10 by -10,10``
+        will not select files covering only ``0,5 by 0,5`` with the ``strict``
+        method. ``flexible`` will select those files as it returns files that
+        have any overlap with the query extent. ``file`` will only return files
+        where the entire spatial extent is contained by the query geometry.
     uniq_key: str, default: file
         Chose if the solr search query should return paths to files or
         uris, uris will have the file path along with protocol of the storage
@@ -215,6 +234,8 @@ class databrowser:
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
+        bbox: Optional[str] = None,
+        bbox_select: Literal["flexible", "strict", "file"] = "flexible",
         stream_zarr: bool = False,
         multiversion: bool = False,
         fail_on_error: bool = False,
@@ -239,6 +260,9 @@ class databrowser:
         if time:
             self._params["time"] = time
             self._params["time_select"] = time_select
+        if bbox:
+            self._params["bbox"] = bbox
+            self._params["bbox_select"] = bbox_select
         if facets:
             self._add_search_keyword_args_from_facet(facets, facet_search)
 
@@ -492,6 +516,8 @@ class databrowser:
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
+        bbox: Optional[str] = None,
+        bbox_select: Literal["flexible", "strict", "file"] = "flexible",
         multiversion: bool = False,
         fail_on_error: bool = False,
         extended_search: bool = False,
@@ -515,8 +541,11 @@ class databrowser:
             This can be a string representation of a time range or a single
             timestamp. The timestamp has to follow ISO-8601. Valid strings are
             ``%Y-%m-%dT%H:%M`` to ``%Y-%m-%dT%H:%M`` for time ranges and
-            ``%Y-%m-%dT%H:%M``. **Note**: You don't have to give the full string
-            format to subset time steps ``%Y``, ``%Y-%m`` etc are also valid.
+            ``%Y-%m-%dT%H:%M``.
+
+            .. note:: You don't have to give the full string format to subset time
+                    steps ``%Y``, ``%Y-%m`` etc are also valid.
+
         time_select: str, default: flexible
             Operator that specifies how the time period is selected. Choose from
             flexible (default), strict or file. ``strict`` returns only those files
@@ -526,6 +555,23 @@ class databrowser:
             ``flexible`` returns those files that have either start or end period
             covered. ``file`` will only return files where the entire time
             period is contained within `one single` file.
+        bbox: str, default: ""
+            Special search facet to refine/subset search results by spatial extent.
+            This can be a string representation of a bounding box or a WKT polygon.
+            Valid strings are ``min_lon,max_lon by min_lat,max_lat`` for bounding
+            boxes and Well-Known Text (WKT) format for polygons.
+
+            .. note:: Longitude values must be between -180 and 180, latitude values
+                        between -90 and 90.
+
+        bbox_select: str, default: flexible
+            Operator that specifies how the spatial extent is selected. Choose from
+            flexible (default), strict or file. ``strict`` returns only those files
+            that fully contain the query extent. The bbox search ``-10,10 by -10,10``
+            will not select files covering only ``0,5 by 0,5`` with the ``strict``
+            method. ``flexible`` will select those files as it returns files that
+            have any overlap with the query extent. ``file`` will only return files
+            where the entire spatial extent is contained by the query geometry.
         extended_search: bool, default: False
             Retrieve information on additional search keys.
         host: str, default: None
@@ -577,6 +623,8 @@ class databrowser:
             flavour=flavour,
             time=time,
             time_select=time_select,
+            bbox=bbox,
+            bbox_select=bbox_select,
             host=host,
             multiversion=multiversion,
             fail_on_error=fail_on_error,
@@ -625,6 +673,8 @@ class databrowser:
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
+        bbox: Optional[str] = None,
+        bbox_select: Literal["flexible", "strict", "file"] = "flexible",
         multiversion: bool = False,
         fail_on_error: bool = False,
         extended_search: bool = False,
@@ -651,8 +701,11 @@ class databrowser:
             This can be a string representation of a time range or a single
             timestamp. The timestamp has to follow ISO-8601. Valid strings are
             ``%Y-%m-%dT%H:%M`` to ``%Y-%m-%dT%H:%M`` for time ranges and
-            ``%Y-%m-%dT%H:%M``. **Note**: You don't have to give the full string
-            format to subset time steps ``%Y``, ``%Y-%m`` etc are also valid.
+            ``%Y-%m-%dT%H:%M``.
+
+            .. note:: You don't have to give the full string format to subset time
+                    steps ``%Y``, ``%Y-%m`` etc are also valid.
+
         time_select: str, default: flexible
             Operator that specifies how the time period is selected. Choose from
             flexible (default), strict or file. ``strict`` returns only those files
@@ -662,6 +715,23 @@ class databrowser:
             ``flexible`` returns those files that have either start or end period
             covered. ``file`` will only return files where the entire time
             period is contained within *one single* file.
+        bbox: str, default: ""
+            Special search facet to refine/subset search results by spatial extent.
+            This can be a string representation of a bounding box or a WKT polygon.
+            Valid strings are ``min_lon,max_lon by min_lat,max_lat`` for bounding
+            boxes and Well-Known Text (WKT) format for polygons.
+
+            .. note:: Longitude values must be between -180 and 180, latitude values
+                            between -90 and 90.
+
+        bbox_select: str, default: flexible
+            Operator that specifies how the spatial extent is selected. Choose from
+            flexible (default), strict or file. ``strict`` returns only those files
+            that fully contain the query extent. The bbox search ``-10,10 by -10,10``
+            will not select files covering only ``0,5 by 0,5`` with the ``strict``
+            method. ``flexible`` will select those files as it returns files that
+            have any overlap with the query extent. ``file`` will only return files
+            where the entire spatial extent is contained by the query geometry.
         extended_search: bool, default: False
             Retrieve information on additional search keys.
         multiversion: bool, default: False
@@ -736,6 +806,8 @@ class databrowser:
             flavour=flavour,
             time=time,
             time_select=time_select,
+            bbox=bbox,
+            bbox_select=bbox_select,
             host=host,
             multiversion=multiversion,
             fail_on_error=fail_on_error,

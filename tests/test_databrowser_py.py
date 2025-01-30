@@ -173,6 +173,7 @@ def test_zarr_stream(test_server: str, auth_instance: Auth) -> None:
             files = list(db)
         _ = authenticate(username="janedoe", host=test_server)
         files = list(db)
+        print(files)
         assert len(files) == 2
     finally:
         auth_instance._auth_token = token
