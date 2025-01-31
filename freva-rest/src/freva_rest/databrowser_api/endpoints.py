@@ -273,7 +273,7 @@ async def stac_catalogue(
         raise HTTPException(status_code=413, detail="Result stream too big.")
     collection_id = f"{flavour}-{str(uuid.uuid4())}"
     if stac_dynamic:
-        logger.critical(server_config.stacbrowser_port)
+        await stac_instance.stacapi_availability()
 
         async def run_stac_creation() -> None:
             """Execute the STAC catalogue creation background task

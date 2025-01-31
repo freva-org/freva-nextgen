@@ -1921,7 +1921,6 @@ class STAC(Solr):
         self.query["fl"] += ["time", "bbox"]
         async with self._session_get() as res:
             search_status, search = res
-        await self.stacapi_availability()
         total_count = int(search.get("response", {}).get("numFound", 0))
         return search_status, total_count
 

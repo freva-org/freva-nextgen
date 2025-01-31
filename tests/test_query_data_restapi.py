@@ -286,14 +286,12 @@ def test_stac_catalogue(test_server: str) -> None:
     redirect_url = res.headers['Location']
     assert redirect_url.startswith(('http://', 'https://'))
     assert '/collections/' in redirect_url
-    
-    print(f"Test passed: Redirect URL: {redirect_url}")
 
     # 500 no stacapi service is running
     with mock.patch("freva_rest.rest.server_config.stacapi_host", "foo.bar"):
         res2 = requests.get(
             f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
-            params={"activity_id": "cmip", "multi-version": True},
+            params={"activity_id": "cmip", "multi-version": True, "stac_dynamic": True},
         )
         assert res2.status_code == 503
     # 413 Request Entity Too Large
@@ -319,7 +317,7 @@ def test_stac_catalogue(test_server: str) -> None:
         mock.patch("freva_rest.rest.server_config.stacapi_password", ""):
             res_no_creds = requests.get(
                 f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
-                params={"activity_id": "cmip", "multi-version": True},
+                params={"activity_id": "cmip", "multi-version": True, "stac_dynamic": True},
             )
             assert res_no_creds.status_code == 500
 def test_bad_intake_request(test_server: str) -> None:
