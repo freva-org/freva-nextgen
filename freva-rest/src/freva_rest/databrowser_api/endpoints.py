@@ -292,12 +292,8 @@ async def stac_catalogue(
 
         background_tasks.add_task(run_stac_creation)
 
-        host = str(server_config.stacbrowser_host)
-        if not host.startswith(('http://', 'https://')):
-            host = f'http://{host}'
-
         redirect_url = (
-            f"{host}:{str(server_config.stacbrowser_port)}"
+            f"{server_config.stacbrowser_host}"
             f"/collections/{collection_id}"
         )
         return RedirectResponse(

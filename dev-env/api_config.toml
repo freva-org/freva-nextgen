@@ -3,7 +3,6 @@
 [restAPI]
 services = ["databrowser", "zarr-stream"]
 proxy = ""
-stac_dynamic = true
 
 [solr]
 hostname = "localhost"
@@ -33,15 +32,9 @@ client_secret = ""
 
 # Attention: The followinng `stacapi` and `stacbrowser`
 # configurations are aoptional and would be activated 
-# if the `stac_dynamic` set to `true`.
+# if the `stac_dynamic` set to `true` in your search
+# params.
 
-[stacapi]
-hostname = "localhost"
-port = 8083
-user = "stac"
-password = "secret"
-
-
-[stacbrowser]
-hostname = "localhost"
-port = 8085
+[stac]
+api_hostname = "http://stac:secret@localhost:8083"
+browser_hostname = "http://localhost:8085"

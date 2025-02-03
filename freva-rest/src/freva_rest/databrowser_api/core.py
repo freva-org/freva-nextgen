@@ -1466,6 +1466,7 @@ class STAC(Solr):
             _translator=_translator,
             **query
         )
+        self.config = config
         self.buffer = io.BytesIO()
         self.tar = tarfile.open(fileobj=self.buffer, mode='w:gz')
         self.spatial_extent = {
@@ -1949,9 +1950,12 @@ class STAC(Solr):
         logger.info("Creating STAC Catalogue for %s", collection_id)
         try:
             self.assets_prereqs = {
-                "base_url": str(request.base_url),
-                "full_endpoint": f"{str(request.url)}?{str(request.query_params)}",
-                "only_params": str(request.query_params),
+                "base_url": str(self.config.proxy) + "/",
+                "full_endpoint": (
+                    f"{self.config.proxy}/"
+                    f"{str(request.url).split(str(request.base_url))[-1]}"
+                ),
+                "only_params": str(request.query_params)
             }
 
             if stac_dynamic:
@@ -2015,7 +2019,7 @@ class STAC(Solr):
         HTTPException
             If ingestion fails or server returns non-201 status.
         """
-        url = self._config.get_stac_url("items", items[0].collection_id)
+        url = self._config.get_stacapi_url("items", items[0].collection_id)
         items_dict = {
             "items": {item.id: item.to_dict() for item in items},
             "method": "upsert",
@@ -2037,7 +2041,7 @@ class STAC(Solr):
         HTTPException
             If ingestion fails or server returns non-201 status.
         """
-        url = self._config.get_stac_url("collections")
+        url = self._config.get_stacapi_url("collections")
         async with self._session_post(url, collection.to_dict()):
             pass
 
@@ -2055,7 +2059,7 @@ class STAC(Solr):
         HTTPException
             If update fails or server returns non-200 status.
         """
-        url = f"{self._config.get_stac_url('collections')}/{collection.id}"
+        url = f"{self._config.get_stacapi_url('collections')}/{collection.id}"
         async with self._session_put(url, collection.to_dict()):
             pass
 
@@ -2074,7 +2078,7 @@ class STAC(Solr):
             If server is unreachable or returns non-200 status.
         """
         original_url = getattr(self, "url", None)
-        self.url = self._config.get_stac_url("ping")
+        self.url = self._config.get_stacapi_url("ping")
         try:
             async with self._session_get() as res:
                 return res[0] == 200
