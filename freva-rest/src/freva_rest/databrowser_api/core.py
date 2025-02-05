@@ -1684,12 +1684,14 @@ class STAC(Solr):
                 title="STAC Static Catalogue",
                 description=stac_static_desc,
                 roles=["metadata"],
+                media_type="application/geopackage+sqlite3",
             ),
             "local-access": pystac.Asset(
                 href=str(self.assets_prereqs.get("full_endpoint")),
                 title="Access data locally",
                 description=local_access_desc,
-                roles=["metadata"],
+                roles=["data"],
+                media_type="application/netcdf",
             ),
             "zarr-access": pystac.Asset(
                 href=(
@@ -2041,6 +2043,7 @@ class STAC(Solr):
                 ),
                 title="Access data locally",
                 description=local_access_desc,
+                roles=["data"],
                 media_type="application/netcdf"
             ),
         }
@@ -2106,18 +2109,44 @@ class STAC(Solr):
         total_count = int(search.get("response", {}).get("numFound", 0))
         return search_status, total_count
 
-    async def init_stac_collection(
+    async def init_stac_catalogue(
         self,
         request: Request,
+    ) -> None:
+        filtered_params = dict(request.query_params)
+        filtered_params.pop('translate', None)
+        filtered_params.pop('stac_dynamic', None)
+        self.assets_prereqs = {
+            "base_url": str(self.config.proxy) + "/",
+            "full_endpoint": (
+                f"{self.config.proxy}/"
+                f"{str(request.url).split(str(request.base_url))[-1]}"
+            ),
+            "only_params": str(filtered_params) if filtered_params != {} else "",
+        }
+
+    async def init_stac_dynamic_collection(
+        self,
+        collection_id: str
+    ) -> None:
+        try:
+            self.collection = await self._create_stac_collection(collection_id)
+            await self.ingest_stac_collection(self.collection)
+        except Exception as e:
+            logger.error(
+                f"STAC collection creation failed for {collection_id}: {str(e)}"
+            )
+            raise
+
+    async def stream_stac_catalogue(
+        self,
         collection_id: str,
         stac_dynamic: bool,
     ) -> AsyncIterator[bytes]:
-        """Initialize and stream a STAC collection from Databrowser search results.
+        """Initialize and stream a STAC catalogue from Databrowser search results.
 
         Parameters
         ----------
-        request : Request
-            FastAPI request object containing base URL and query parameters
         collection_id : str
             Unique identifier for the STAC collection
         stac_dynamic : bool
@@ -2128,23 +2157,9 @@ class STAC(Solr):
         bytes
             Chunks of the tar.gz archive when stac_dynamic is False
         """
-        logger.info("Creating STAC Catalogue for %s", collection_id)
-        filtered_params = dict(request.query_params)
-        filtered_params.pop('translate', None)
-        filtered_params.pop('stac_dynamic', None)
+        logger.info("Streaming STAC Catalogue for %s", collection_id)
         try:
-            self.assets_prereqs = {
-                "base_url": str(self.config.proxy) + "/",
-                "full_endpoint": (
-                    f"{self.config.proxy}/"
-                    f"{str(request.url).split(str(request.base_url))[-1]}"
-                ),
-                "only_params": str(filtered_params) if filtered_params != {} else "",
-            }
-
             if stac_dynamic:
-                self.collection = await self._create_stac_collection(collection_id)
-                await self.ingest_stac_collection(self.collection)
                 async for item_batch in self._iter_stac_items():
                     await self.ingest_stac_item(item_batch)
                 self.finalize_stac_collection()

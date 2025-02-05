@@ -1,6 +1,5 @@
 """Main script that runs the rest API."""
 
-import asyncio
 import uuid
 from typing import Annotated, Any, Dict, List, Literal, Union
 
@@ -274,8 +273,14 @@ async def stac_catalogue(
         raise HTTPException(status_code=413, detail="Result stream too big.")
 
     collection_id = f"Dataset-{(f'{flavour}-{str(uuid.uuid4())}')[:18]}"
+    await stac_instance.init_stac_catalogue(request)
     if stac_dynamic:
         await stac_instance.stacapi_availability()
+        # following function has been moved here to create a collection
+        # before the background task is started to hand a non-404 redirect
+        # url to the client; otherwise the client would have to reload the
+        # delivered endpoint to see the content, which doesn't look appealing!
+        await stac_instance.init_stac_dynamic_collection(collection_id)
 
         async def run_stac_creation() -> None:
             """Execute the STAC catalogue creation background task
@@ -284,24 +289,19 @@ async def stac_catalogue(
             handle and deliver status without blocking the client
             response."""
             try:
-                async for _ in stac_instance.init_stac_collection(
-                    request, collection_id, stac_dynamic
+                async for _ in stac_instance.stream_stac_catalogue(
+                    collection_id, stac_dynamic
                 ):
                     pass
             except Exception as e:
                 logger.error(f"Error in background task: {str(e)}", exc_info=True)
                 raise
-
         background_tasks.add_task(run_stac_creation)
 
         redirect_url = (
             f"{server_config.stacbrowser_host}"
             f"/collections/{collection_id}"
         )
-        # IMPORTANT: wait for the background task to start.
-        # Otherwise the client will get a 404 error and
-        # has to reload the page to see the STAC collection.
-        await asyncio.sleep(1)
         return RedirectResponse(
             url=redirect_url,
             status_code=303
@@ -309,7 +309,7 @@ async def stac_catalogue(
     else:
         file_name = f"stac-catalog-{collection_id}-{uniq_key}.tar.gz"
         return StreamingResponse(
-            stac_instance.init_stac_collection(request, collection_id, stac_dynamic),
+            stac_instance.stream_stac_catalogue(collection_id, stac_dynamic),
             media_type="application/x-tar+gzip",
             headers={
                 "Content-Disposition": f'attachment; filename="{file_name}"'
