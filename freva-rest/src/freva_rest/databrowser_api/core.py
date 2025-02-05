@@ -1846,28 +1846,6 @@ class STAC(Solr):
         --------
             pystac.Item: Created STAC item
         """
-        intake_desc = dedent(
-            f"""
-            # Installing Intake-ESM
-            ```bash
-            # Method 1: Using pip
-            pip install intake-esm
-            # Method 2: Using conda (recommended)
-            conda install -c conda-forge intake-esm
-            ```
-            # Quick Guide: INTAKE-ESM Catalog (Python)
-            ```python
-            import intake
-            # create a catalog object from a EMS JSON file containing dataset metadata
-            cat = intake.open_esm_datastore('{
-                str(self.assets_prereqs.get("full_endpoint")).replace(
-                    "stac-catalogue",
-                    "intake-catalogue"
-                )
-            }')
-            ```
-            """
-        )
         id = result.get(self.uniq_key, "")
         params_dict = (
             ast.literal_eval(str(self.assets_prereqs.get("only_params")))
@@ -1889,6 +1867,29 @@ class STAC(Solr):
             f"{k}={v}" for k, v in params_dict.items()
             if k not in ("translate", "stac_dynamic", "start")
         )
+        intake_desc = dedent(
+            f"""
+            # Installing Intake-ESM
+            ```bash
+            # Method 1: Using pip
+            pip install intake-esm
+            # Method 2: Using conda (recommended)
+            conda install -c conda-forge intake-esm
+            ```
+            # Quick Guide: INTAKE-ESM Catalog (Python)
+            ```python
+            import intake
+            # create a catalog object from a EMS JSON file containing dataset metadata
+            cat = intake.open_esm_datastore('{
+                str(self.assets_prereqs.get("full_endpoint")).replace(
+                    "stac-catalogue",
+                    "intake-catalogue"
+                ) + f"&{self.uniq_key}={id}"
+            }')
+            ```
+            """
+        )
+
         zarr_desc = dedent(
             f"""
             # Accessing Zarr Data
@@ -1918,7 +1919,7 @@ class STAC(Solr):
             curl -X GET {self.assets_prereqs.get('base_url')}api/ \\
             freva-nextgen/databrowser/load/\\
             {self.translator.flavour}?{api_params}\\
-            {self.uniq_key}={id} \\
+            &{self.uniq_key}={id} \\
               -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
             ```
             💡: Read more about the
@@ -2002,7 +2003,7 @@ class STAC(Solr):
                 href=(
                     f"{self.assets_prereqs.get('base_url')}databrowser/?"
                     f"{api_params}"
-                    f"{self.uniq_key}={id}"
+                    f"&{self.uniq_key}={id}"
                 ),
                 title="Freva Web DataBrowser",
                 description=(
@@ -2016,7 +2017,7 @@ class STAC(Solr):
                     str(self.assets_prereqs.get("full_endpoint")).replace(
                         "stac-catalogue", "intake-catalogue"
                     )
-                    + f"{self.uniq_key}={id}"
+                    + f"&{self.uniq_key}={id}"
                 ),
                 title="Intake Catalogue",
                 description=intake_desc,
@@ -2027,7 +2028,7 @@ class STAC(Solr):
                 href=(
                     f"{self.assets_prereqs.get('base_url')}api/freva-nextgen/"
                     f"databrowser/load/{self.translator.flavour}?"
-                    f"{api_params}{self.uniq_key}={id}"
+                    f"{api_params}&{self.uniq_key}={id}"
                 ),
                 title="Stream Zarr Data",
                 description=zarr_desc,
@@ -2049,7 +2050,7 @@ class STAC(Solr):
                     f"databrowser/data-search/{self.translator.flavour}/"
                     f"{self.uniq_key}?"
                     f"{api_params}"
-                    f"{self.uniq_key}={id}"
+                    f"&{self.uniq_key}={id}"
                 ),
                 title="Access data locally",
                 description=local_access_desc,
