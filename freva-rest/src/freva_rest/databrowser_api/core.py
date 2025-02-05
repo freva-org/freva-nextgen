@@ -1528,7 +1528,7 @@ class STAC(Solr):
 
             **`Attention`:** _Item ingestion in progress. The STAC collection
             is currently being populated with items. This collection will be
-            ready for use when this notice disappears upon refresh.__
+            ready for use when this notice disappears upon refresh._
 
             ___
             ℹ️ Contact the Freva team at [freva@dkrz.de](mailto:freva@dkrz.de)
