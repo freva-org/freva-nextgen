@@ -1593,6 +1593,10 @@ class STAC(Solr):
             f"{k}={v}" for k, v in params_dict.items()
             if k not in ("translate", "stac_dynamic")
         )
+        api_params = "&".join(
+            f"{k}={v}" for k, v in params_dict.items()
+            if k not in ("translate", "stac_dynamic")
+        )
 
         zarr_desc = dedent(
             f"""
@@ -1622,7 +1626,7 @@ class STAC(Solr):
             ```bash
             curl -X GET {self.assets_prereqs.get('base_url')}api/ \\
             freva-nextgen/databrowser/load/\\
-            {self.translator.flavour}?{self.assets_prereqs.get('only_params')} \\
+            {self.translator.flavour}?{api_params} \\
             -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
             ```
             💡: Read more about the
@@ -1658,9 +1662,9 @@ class STAC(Solr):
             "freva-databrowser": pystac.Asset(
                 href=(
                     f"{self.assets_prereqs.get('base_url')}databrowser/?"
-                    f"{self.assets_prereqs.get('only_params')}"
+                    f"{api_params}"
                 ),
-                title="Freva Web DataBrowser",
+                title="Freva Web Data-Browser",
                 description=(
                     "Interactive web interface for data exploration and analysis. "
                     "Access through any browser."
@@ -1687,7 +1691,9 @@ class STAC(Solr):
                 media_type="application/geopackage+sqlite3",
             ),
             "local-access": pystac.Asset(
-                href=str(self.assets_prereqs.get("full_endpoint")),
+                href=str(self.assets_prereqs.get("full_endpoint")).replace(
+                    "stac-catalogue", "data-search"
+                ),
                 title="Access data locally",
                 description=local_access_desc,
                 roles=["data"],
@@ -1697,7 +1703,7 @@ class STAC(Solr):
                 href=(
                     f"{self.assets_prereqs.get('base_url')}api/freva-nextgen/"
                     f"databrowser/load/{self.translator.flavour}?"
-                    f"{self.assets_prereqs.get('only_params')}"
+                    f"{api_params}"
                 ),
                 title="Stream Zarr Dataset",
                 description=zarr_desc,
@@ -1871,14 +1877,18 @@ class STAC(Solr):
         python_params = " ".join(
             f"{k}={v},"
             for k, v in params_dict.items()
-            if k not in ("translate", "stac_dynamic")
-        ) + f" {self.uniq_key}={id}"
+            if k not in ("translate", "stac_dynamic", "start")
+        )
 
         cli_params = " ".join(
             f"{k}={v}" for k, v in params_dict.items()
-            if k not in ("translate", "stac_dynamic")
-        ) + f" {self.uniq_key}={id}"
+            if k not in ("translate", "stac_dynamic", "start")
+        )
 
+        api_params = "&".join(
+            f"{k}={v}" for k, v in params_dict.items()
+            if k not in ("translate", "stac_dynamic", "start")
+        )
         zarr_desc = dedent(
             f"""
             # Accessing Zarr Data
@@ -1907,8 +1917,8 @@ class STAC(Solr):
             ```bash
             curl -X GET {self.assets_prereqs.get('base_url')}api/ \\
             freva-nextgen/databrowser/load/\\
-            {self.translator.flavour}?{self.assets_prereqs.get('only_params')}\\
-            &{self.uniq_key}={id} \\
+            {self.translator.flavour}?{api_params}\\
+            {self.uniq_key}={id} \\
               -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
             ```
             💡: Read more about the
@@ -1991,8 +2001,8 @@ class STAC(Solr):
             "freva-databrowser": pystac.Asset(
                 href=(
                     f"{self.assets_prereqs.get('base_url')}databrowser/?"
-                    f"{self.assets_prereqs.get('only_params')}"
-                    f"&{self.uniq_key}={id}"
+                    f"{api_params}"
+                    f"{self.uniq_key}={id}"
                 ),
                 title="Freva Web DataBrowser",
                 description=(
@@ -2006,7 +2016,7 @@ class STAC(Solr):
                     str(self.assets_prereqs.get("full_endpoint")).replace(
                         "stac-catalogue", "intake-catalogue"
                     )
-                    + f"&{self.uniq_key}={id}"
+                    + f"{self.uniq_key}={id}"
                 ),
                 title="Intake Catalogue",
                 description=intake_desc,
@@ -2017,7 +2027,7 @@ class STAC(Solr):
                 href=(
                     f"{self.assets_prereqs.get('base_url')}api/freva-nextgen/"
                     f"databrowser/load/{self.translator.flavour}?"
-                    f"{self.assets_prereqs.get('only_params')}&{self.uniq_key}={id}"
+                    f"{api_params}{self.uniq_key}={id}"
                 ),
                 title="Stream Zarr Data",
                 description=zarr_desc,
@@ -2038,8 +2048,8 @@ class STAC(Solr):
                     f"{self.assets_prereqs.get('base_url')}api/freva-nextgen/"
                     f"databrowser/data-search/{self.translator.flavour}/"
                     f"{self.uniq_key}?"
-                    f"{self.assets_prereqs.get('only_params')}"
-                    f"&{self.uniq_key}={id}"
+                    f"{api_params}"
+                    f"{self.uniq_key}={id}"
                 ),
                 title="Access data locally",
                 description=local_access_desc,
@@ -2116,6 +2126,8 @@ class STAC(Solr):
         filtered_params = dict(request.query_params)
         filtered_params.pop('translate', None)
         filtered_params.pop('stac_dynamic', None)
+        filtered_params.pop('start', None)
+
         self.assets_prereqs = {
             "base_url": str(self.config.proxy) + "/",
             "full_endpoint": (
