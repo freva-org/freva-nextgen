@@ -1,5 +1,6 @@
 """The core functionality to interact with the apache solr search system."""
 
+import ast
 import asyncio
 import io
 import json
@@ -1553,9 +1554,98 @@ class STAC(Solr):
             ```
         """
         )
+
+        stac_static_desc = dedent(
+            f"""
+            # STAC Static Catalog Setup
+            ```bash
+            pip install pystac
+            ```
+            # Load the STAC Catalog
+            ```python
+            import pystac
+            import tarfile
+            import tempfile
+            import os
+            temp_dir = tempfile.mkdtemp(dir='/tmp')
+            with tarfile.open('stac-catalog-{collection_id}-{self.uniq_key}.tar.gz',
+                            mode='r:gz') as tar:
+                tar.extractall(path=temp_dir)
+            cat = pystac.Catalog.from_file(os.path.join(temp_dir, 'catalog.json'))
+            ```
+            💡: This has been desigend to work with the data locally. So you
+            can copy the catalog link from here and download and load the catalog
+            locally via the provided script.
+            """
+        )
+
+        params_dict = (
+            ast.literal_eval(str(self.assets_prereqs.get("only_params")))
+            if self.assets_prereqs.get("only_params", "")
+            else {}
+        )
+        python_params = " ".join(
+            f"{k}={v},"
+            for k, v in params_dict.items()
+            if k not in ("translate", "stac_dynamic")
+        )
+        cli_params = " ".join(
+            f"{k}={v}" for k, v in params_dict.items()
+            if k not in ("translate", "stac_dynamic")
+        )
+
+        zarr_desc = dedent(
+            f"""
+            # Accessing Zarr Data
+            1. Install freva-client
+            ```bash
+            pip install freva-client
+            ```
+            2. Get the auth token and access the zarr data (Python) - recommended
+            ```python
+            from freva_client import authenticate, databrowser
+            import xarray as xr
+            token_info = authenticate(username=<your_username>,\\
+                                    host='{self.config.proxy}')
+            db = databrowser({python_params} stream_zarr=True,\\
+                                host='{self.config.proxy}')
+            xarray_dataset = xr.open_mfdataset(list(db))
+            ```
+            3. Get the auth token and access the zarr data (CLI)
+            ```bash
+            token=$(freva-client auth -u <username> --host {self.config.proxy}\\
+                                                        |jq -r .access_token)
+            freva-client databrowser {cli_params} --stream-zarr\\
+                            --host {self.config.proxy}
+            ```
+            4. Access the zarr data directly (API - language agnostic)
+            ```bash
+            curl -X GET {self.assets_prereqs.get('base_url')}api/ \\
+            freva-nextgen/databrowser/load/\\
+            {self.translator.flavour}?{self.assets_prereqs.get('only_params')} \\
+            -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+            ```
+            💡: Read more about the
+            [freva-client](https://freva-clint.github.io/freva-nextgen/)
+            """
+        )
+
+        local_access_desc = dedent(
+            f"""
+            # Accessing data locally where the data is stored
+
+            ```python
+            import xarray as xr
+            ds = xr.open_mfdataset(list('{str(self.assets_prereqs.get("full_endpoint"))
+                                          .replace("stac-catalogue", "data-search")}'))
+            ```
+
+            💡: Please make sure to have the required xarray packages installed.
+            """
+        )
         collection = pystac.Collection(
             id=collection_id,
-            title=f"Dataset {collection_id[:13]}",
+            title=collection_id,
             description=usage_desc.strip(),
             extent=pystac.Extent(
                 # We need to define an initial temporal and spatial extent,
@@ -1587,14 +1677,28 @@ class STAC(Solr):
                 roles=["metadata"],
                 media_type="application/json",
             ),
+            "stac-static-catalogue": pystac.Asset(
+                href=str(self.assets_prereqs.get("full_endpoint")).replace(
+                    "stac_dynamic=true", "stac_dynamic=false"
+                ),
+                title="STAC Static Catalogue",
+                description=stac_static_desc,
+                roles=["metadata"],
+            ),
+            "local-access": pystac.Asset(
+                href=str(self.assets_prereqs.get("full_endpoint")),
+                title="Access data locally",
+                description=local_access_desc,
+                roles=["metadata"],
+            ),
             "zarr-access": pystac.Asset(
                 href=(
                     f"{self.assets_prereqs.get('base_url')}api/freva-nextgen/"
                     f"databrowser/load/{self.translator.flavour}?"
                     f"{self.assets_prereqs.get('only_params')}"
                 ),
-                title="Download Zarr Dataset",
-                description="Direct access to data in Zarr format.",
+                title="Stream Zarr Dataset",
+                description=zarr_desc,
                 roles=["data"],
                 media_type="application/vnd+zarr",
                 extra_fields={
@@ -1757,6 +1861,70 @@ class STAC(Solr):
             """
         )
         id = result.get(self.uniq_key, "")
+        params_dict = (
+            ast.literal_eval(str(self.assets_prereqs.get("only_params")))
+            if self.assets_prereqs.get("only_params", "")
+            else {}
+        )
+        python_params = " ".join(
+            f"{k}={v},"
+            for k, v in params_dict.items()
+            if k not in ("translate", "stac_dynamic")
+        ) + f" {self.uniq_key}={id}"
+
+        cli_params = " ".join(
+            f"{k}={v}" for k, v in params_dict.items()
+            if k not in ("translate", "stac_dynamic")
+        ) + f" {self.uniq_key}={id}"
+
+        zarr_desc = dedent(
+            f"""
+            # Accessing Zarr Data
+            1. Install freva-client
+            ```bash
+            pip install freva-client
+            ```
+            2. Get the auth token and access the zarr data (Python) - recommended
+            ```python
+            from freva_client import authenticate, databrowser
+            import xarray as xr
+            token_info = authenticate(username=<your_username>, \\
+                host='{self.config.proxy}')
+            db = databrowser({python_params} {self.uniq_key}={id}, \\
+                            stream_zarr=True, host='{self.config.proxy}')
+            xarray_dataset = xr.open_mfdataset(list(db))
+            ```
+            3. Get the auth token and access the zarr data (CLI)
+            ```bash
+            token=$(freva-client auth -u <username> --host {self.config.proxy}\\
+                                                        |jq -r .access_token)
+            freva-client databrowser {cli_params} {self.uniq_key}={id} \\
+                --stream-zarr --host {self.config.proxy}
+            ```
+            4. Access the zarr data directly (API - language agnostic)
+            ```bash
+            curl -X GET {self.assets_prereqs.get('base_url')}api/ \\
+            freva-nextgen/databrowser/load/\\
+            {self.translator.flavour}?{self.assets_prereqs.get('only_params')}\\
+            &{self.uniq_key}={id} \\
+              -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+            ```
+            💡: Read more about the
+            [freva-client](https://freva-clint.github.io/freva-nextgen/)
+            """
+        )  # noqa: E501
+
+        local_access_desc = dedent(
+            f"""
+            # Accessing data locally where the data is stored
+            ```python
+            import xarray as xr
+            ds = xr.open_mfdataset('{id}')
+            ```
+            💡: Please make sure to have the required xarray packages installed.
+            """
+        )
+
         normalized_id = (
             id.replace("https://", "")
             .replace("http://", "")
@@ -1822,8 +1990,9 @@ class STAC(Solr):
                 href=(
                     f"{self.assets_prereqs.get('base_url')}databrowser/?"
                     f"{self.assets_prereqs.get('only_params')}"
+                    f"&{self.uniq_key}={id}"
                 ),
-                title="Freva Web DaaBrowser",
+                title="Freva Web DataBrowser",
                 description=(
                     "Access the Freva web interface for data exploration and analysis"
                 ),
@@ -1835,7 +2004,7 @@ class STAC(Solr):
                     str(self.assets_prereqs.get("full_endpoint")).replace(
                         "stac-catalogue", "intake-catalogue"
                     )
-                    + f"?{self.uniq_key}={id}"
+                    + f"&{self.uniq_key}={id}"
                 ),
                 title="Intake Catalogue",
                 description=intake_desc,
@@ -1849,7 +2018,7 @@ class STAC(Solr):
                     f"{self.assets_prereqs.get('only_params')}&{self.uniq_key}={id}"
                 ),
                 title="Stream Zarr Data",
-                description="Download the data in Zarr format",
+                description=zarr_desc,
                 roles=["data"],
                 media_type="application/vnd+zarr",
                 extra_fields={
@@ -1861,6 +2030,18 @@ class STAC(Solr):
                         ),
                     },
                 },
+            ),
+            "local-access": pystac.Asset(
+                href=(
+                    f"{self.assets_prereqs.get('base_url')}api/freva-nextgen/"
+                    f"databrowser/data-search/{self.translator.flavour}/"
+                    f"{self.uniq_key}?"
+                    f"{self.assets_prereqs.get('only_params')}"
+                    f"&{self.uniq_key}={id}"
+                ),
+                title="Access data locally",
+                description=local_access_desc,
+                media_type="application/netcdf"
             ),
         }
 
@@ -1948,6 +2129,9 @@ class STAC(Solr):
             Chunks of the tar.gz archive when stac_dynamic is False
         """
         logger.info("Creating STAC Catalogue for %s", collection_id)
+        filtered_params = dict(request.query_params)
+        filtered_params.pop('translate', None)
+        filtered_params.pop('stac_dynamic', None)
         try:
             self.assets_prereqs = {
                 "base_url": str(self.config.proxy) + "/",
@@ -1955,7 +2139,7 @@ class STAC(Solr):
                     f"{self.config.proxy}/"
                     f"{str(request.url).split(str(request.base_url))[-1]}"
                 ),
-                "only_params": str(request.query_params)
+                "only_params": str(filtered_params) if filtered_params != {} else "",
             }
 
             if stac_dynamic:

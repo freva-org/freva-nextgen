@@ -271,7 +271,8 @@ async def stac_catalogue(
         raise HTTPException(status_code=404, detail="No results found.")
     if total_count > max_results and max_results > 0:
         raise HTTPException(status_code=413, detail="Result stream too big.")
-    collection_id = f"{flavour}-{str(uuid.uuid4())}"
+
+    collection_id = f"Dataset-{(f'{flavour}-{str(uuid.uuid4())}')[:18]}"
     if stac_dynamic:
         await stac_instance.stacapi_availability()
 
