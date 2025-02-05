@@ -1,5 +1,6 @@
 """Main script that runs the rest API."""
 
+import asyncio
 import uuid
 from typing import Annotated, Any, Dict, List, Literal, Union
 
@@ -20,7 +21,7 @@ from fastapi.responses import (
     StreamingResponse,
 )
 from pydantic import BaseModel, Field
-import asyncio
+
 from freva_rest.auth import TokenPayload, auth
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
@@ -297,10 +298,10 @@ async def stac_catalogue(
             f"{server_config.stacbrowser_host}"
             f"/collections/{collection_id}"
         )
-        # IMPORTANT: wait for the background task to start. 
-        # Otherwise the client will get a 404 error and 
+        # IMPORTANT: wait for the background task to start.
+        # Otherwise the client will get a 404 error and
         # has to reload the page to see the STAC collection.
-        await asyncio.sleep(1) 
+        await asyncio.sleep(1)
         return RedirectResponse(
             url=redirect_url,
             status_code=303
