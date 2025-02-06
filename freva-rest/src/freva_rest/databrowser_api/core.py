@@ -2113,8 +2113,8 @@ class STAC(Solr):
     async def validate_stac(self) -> Tuple[int, int]:
         """Validate STAC API availability and get result counts."""
         self._set_catalogue_queries()
-        self.query["facet.field"] += ["time", "bbox"]
-        self.query["fl"] += ["time", "bbox"]
+        self.query["facet.field"] = self._config.solr_fields
+        self.query["fl"] = [self.uniq_key] + self._config.solr_fields
         async with self._session_get() as res:
             search_status, search = res
         total_count = int(search.get("response", {}).get("numFound", 0))
