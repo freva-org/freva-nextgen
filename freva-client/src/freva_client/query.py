@@ -21,7 +21,6 @@ from typing import (
 )
 
 import intake
-import intake_esm
 import requests
 import xarray as xr
 import yaml
@@ -383,7 +382,7 @@ class databrowser:
         except Exception as error:
             raise ValueError(f"Couldn't write catalogue content: {error}") from None
 
-    def intake_catalogue(self) -> intake_esm.core.esm_datastore:
+    def intake_catalogue(self) -> Any:
         """Create an intake esm catalogue object from the search.
 
         This method creates a intake-esm catalogue from the current object
