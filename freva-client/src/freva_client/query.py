@@ -82,9 +82,6 @@ class databrowser:
         Valid strings are ``min_lon,max_lon by min_lat,max_lat`` for bounding
         boxes and Well-Known Text (WKT) format for polygons.
 
-        .. note:: Longitude values must be between -180 and 180, latitude values
-                    between -90 and 90.
-
     bbox_select: str, default: flexible
         Operator that specifies how the spatial extent is selected. Choose from
         flexible (default), strict or file. ``strict`` returns only those files
@@ -560,9 +557,6 @@ class databrowser:
             Valid strings are ``min_lon,max_lon by min_lat,max_lat`` for bounding
             boxes and Well-Known Text (WKT) format for polygons.
 
-            .. note:: Longitude values must be between -180 and 180, latitude values
-                        between -90 and 90.
-
         bbox_select: str, default: flexible
             Operator that specifies how the spatial extent is selected. Choose from
             flexible (default), strict or file. ``strict`` returns only those files
@@ -719,9 +713,6 @@ class databrowser:
             This can be a string representation of a bounding box or a WKT polygon.
             Valid strings are ``min_lon,max_lon by min_lat,max_lat`` for bounding
             boxes and Well-Known Text (WKT) format for polygons.
-
-            .. note:: Longitude values must be between -180 and 180, latitude values
-                            between -90 and 90.
 
         bbox_select: str, default: flexible
             Operator that specifies how the spatial extent is selected. Choose from

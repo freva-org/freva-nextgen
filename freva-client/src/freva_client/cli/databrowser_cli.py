@@ -177,11 +177,9 @@ def metadata_search(
         help=(
             "Special search facet to refine/subset search results by spatial "
             "extent. This can be a string representation of a bounding box. "
-            "The bounding box has to follow the format ``min_lon,min_lat by "
-            "max_lon,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
-            "``0,5 by 0,5``. **Note**: You don't have to give the full string "
-            "format to subset the bounding box ``min_lon,min_lat`` etc are "
-            "also valid."
+            "The bounding box has to follow the format ``min_lon,max_lon by "
+            "min_lat,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
+            "``0,5 by 0,5``."
         ),
     ),
     bbox_select: SelectMethod = typer.Option(
@@ -330,11 +328,9 @@ def data_search(
         help=(
             "Special search facet to refine/subset search results by spatial "
             "extent. This can be a string representation of a bounding box. "
-            "The bounding box has to follow the format ``min_lon,min_lat by "
-            "max_lon,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
-            "``0,5 by 0,5``. **Note**: You don't have to give the full string "
-            "format to subset the bounding box ``min_lon,min_lat`` etc are "
-            "also valid."
+            "The bounding box has to follow the format ``min_lon,max_lon by "
+            "min_lat,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
+            "``0,5 by 0,5``."
         ),
     ),
     bbox_select: SelectMethod = typer.Option(
@@ -469,11 +465,9 @@ def intake_catalogue(
         help=(
             "Special search facet to refine/subset search results by spatial "
             "extent. This can be a string representation of a bounding box. "
-            "The bounding box has to follow the format ``min_lon,min_lat by "
-            "max_lon,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
-            "``0,5 by 0,5``. **Note**: You don't have to give the full string "
-            "format to subset the bounding box ``min_lon,min_lat`` etc are "
-            "also valid."
+            "The bounding box has to follow the format ``min_lon,max_lon by "
+            "min_lat,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
+            "``0,5 by 0,5``."
         ),
     ),
     bbox_select: SelectMethod = typer.Option(
@@ -622,11 +616,9 @@ def stac_catalogue(
         help=(
             "Special search facet to refine/subset search results by spatial "
             "extent. This can be a string representation of a bounding box. "
-            "The bounding box has to follow the format ``min_lon,min_lat by "
-            "max_lon,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
-            "``0,5 by 0,5``. **Note**: You don't have to give the full string "
-            "format to subset the bounding box ``min_lon,min_lat`` etc are "
-            "also valid."
+            "The bounding box has to follow the format ``min_lon,max_lon by "
+            "min_lat,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
+            "``0,5 by 0,5``."
         ),
     ),
     bbox_select: SelectMethod = typer.Option(
@@ -754,11 +746,9 @@ def count_values(
         help=(
             "Special search facet to refine/subset search results by spatial "
             "extent. This can be a string representation of a bounding box. "
-            "The bounding box has to follow the format ``min_lon,min_lat by "
-            "max_lon,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
-            "``0,5 by 0,5``. **Note**: You don't have to give the full string "
-            "format to subset the bounding box ``min_lon,min_lat`` etc are "
-            "also valid."
+            "The bounding box has to follow the format ``min_lon,max_lon by "
+            "min_lat,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
+            "``0,5 by 0,5``."
         ),
     ),
     bbox_select: SelectMethod = typer.Option(

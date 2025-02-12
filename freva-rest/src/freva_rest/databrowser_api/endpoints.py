@@ -276,18 +276,10 @@ async def stac_catalogue(
     await stac_instance.init_stac_catalogue(request)
     if stac_dynamic:
         await stac_instance.stacapi_availability()
-        # following function has been moved here to create a collection
-        # before the background task is started to hand a non-404 redirect
-        # url to the client; otherwise the client would have to reload the
-        # delivered endpoint to see the content, which doesn't look appealing!
         await stac_instance.init_stac_dynamic_collection(collection_id)
 
         async def run_stac_creation() -> None:
-            """Execute the STAC catalogue creation background task
-            in a seperate fucntion to avoid blocking the main request
-            thread and have more control over the background task to
-            handle and deliver status without blocking the client
-            response."""
+            """Execute the STAC catalogue creation background task"""
             try:
                 async for _ in stac_instance.stream_stac_catalogue(
                     collection_id, stac_dynamic
