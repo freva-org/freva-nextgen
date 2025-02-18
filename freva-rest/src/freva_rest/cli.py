@@ -73,13 +73,15 @@ from .logger import logger
 
 
 class VersionAction(argparse._VersionAction):
+    """Custom Action for displaying the programm versions."""
+
     def __call__(
         self,
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: Any,
-        option_string=None,
-    ):
+        option_string: Optional[str] = None,
+    ) -> None:
         version = self.version or "%(prog)s"
         pprint(version % {"prog": parser.prog or sys.argv[1]})
         parser.exit()
