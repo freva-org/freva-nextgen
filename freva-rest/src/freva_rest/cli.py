@@ -160,7 +160,7 @@ def get_cert_file(
 def cli(argv: Optional[List[str]] = None) -> None:
     """Start the freva rest API."""
     cfg = ServerConfig()
-    parser = create_arg_parser(cfg.__fields__, ["api-services"])
+    parser = create_arg_parser(cfg.model_fields, ["api-services"])
     parser.add_argument(
         "--dev", action="store_true", help="Enable development mode"
     )

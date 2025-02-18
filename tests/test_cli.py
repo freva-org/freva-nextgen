@@ -133,6 +133,7 @@ def test_rest_cli(mocker: MockerFixture) -> None:
                 workers=8,
                 env_file=str(Path(temp_dir) / "foo.txt"),
             )
+            cli(["-V"])
 
 
 def test_auth(
