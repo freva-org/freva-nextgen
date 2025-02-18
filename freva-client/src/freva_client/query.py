@@ -1,6 +1,5 @@
 """Query climate data sets by using-key value pair search queries."""
 
-
 import sys
 from collections import defaultdict
 from fnmatch import fnmatch
@@ -246,7 +245,8 @@ class databrowser:
         self, facets: Tuple[str, ...], search_kw: Dict[str, List[str]]
     ) -> None:
         metadata = {
-            k: v[::2] for (k, v) in self._facet_search(extended_search=True).items()
+            k: v[::2]
+            for (k, v) in self._facet_search(extended_search=True).items()
         }
         primary_key = list(metadata.keys() or ["project"])[0]
         num_facets = 0
@@ -304,7 +304,9 @@ class databrowser:
 
         # Create a table-like structure for available flavors and search facets
         style = 'style="text-align: left"'
-        facet_heading = f"Available search facets for <em>{self._flavour}</em> flavour"
+        facet_heading = (
+            f"Available search facets for <em>{self._flavour}</em> flavour"
+        )
         html_repr = (
             "<table>"
             f"<tr><th colspan='2' {style}>{self.__class__.__name__}"
@@ -345,7 +347,9 @@ class databrowser:
         if self._stream_zarr:
             token = self._auth.check_authentication(auth_url=self._cfg.auth_url)
             url = self._cfg.zarr_loader_url
-            kwargs["headers"] = {"Authorization": f"Bearer {token['access_token']}"}
+            kwargs["headers"] = {
+                "Authorization": f"Bearer {token['access_token']}"
+            }
             kwargs["params"] = {"catalogue-type": "intake"}
         result = self._request("GET", url, **kwargs)
         if result is None:
@@ -357,7 +361,9 @@ class databrowser:
                 for content in result.iter_content(decode_unicode=False):
                     stream.write(content)
         except Exception as error:
-            raise ValueError(f"Couldn't write catalogue content: {error}") from None
+            raise ValueError(
+                f"Couldn't write catalogue content: {error}"
+            ) from None
 
     def intake_catalogue(self) -> intake_esm.core.esm_datastore:
         """Create an intake esm catalogue object from the search.
@@ -388,7 +394,10 @@ class databrowser:
         """
         with NamedTemporaryFile(suffix=".json") as temp_f:
             self._create_intake_catalogue_file(temp_f.name)
-            return intake.open_esm_datastore(temp_f.name)
+            return cast(
+                intake_esm.core.esm_datastore,
+                intake.open_esm_datastore(temp_f.name),
+            )
 
     @classmethod
     def count_values(
@@ -495,7 +504,9 @@ class databrowser:
         result = this._facet_search(extended_search=extended_search)
         counts = {}
         for facet, value_counts in result.items():
-            counts[facet] = dict(zip(value_counts[::2], map(int, value_counts[1::2])))
+            counts[facet] = dict(
+                zip(value_counts[::2], map(int, value_counts[1::2]))
+            )
         return counts
 
     @cached_property
@@ -520,7 +531,8 @@ class databrowser:
 
         """
         return {
-            k: v[::2] for (k, v) in self._facet_search(extended_search=True).items()
+            k: v[::2]
+            for (k, v) in self._facet_search(extended_search=True).items()
         }
 
     @classmethod
@@ -653,7 +665,9 @@ class databrowser:
         )
         return {
             k: v[::2]
-            for (k, v) in this._facet_search(extended_search=extended_search).items()
+            for (k, v) in this._facet_search(
+                extended_search=extended_search
+            ).items()
         }
 
     @classmethod
@@ -856,7 +870,7 @@ class databrowser:
         method: Literal["GET", "POST", "PUT", "PATCH", "DELETE"],
         url: str,
         data: Optional[Dict[str, Any]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Optional[requests.models.Response]:
         """Request method to handle CRUD operations (GET, POST, PUT, PATCH, DELETE)."""
         method_upper = method.upper()
@@ -864,8 +878,13 @@ class databrowser:
         params = kwargs.pop("params", {})
         stream = kwargs.pop("stream", False)
 
-        logger.debug("%s request to %s with data: %s and parameters: %s",
-                     method_upper, url, data, {**self._params, **params})
+        logger.debug(
+            "%s request to %s with data: %s and parameters: %s",
+            method_upper,
+            url,
+            data,
+            {**self._params, **params},
+        )
 
         try:
             req = requests.Request(
@@ -873,7 +892,7 @@ class databrowser:
                 url=url,
                 params={**self._params, **params},
                 json=None if method_upper in "GET" else data,
-                **kwargs
+                **kwargs,
             )
             with requests.Session() as session:
                 prepared = session.prepare_request(req)
@@ -883,8 +902,10 @@ class databrowser:
 
         except KeyboardInterrupt:
             pprint("[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr)
-        except (requests.exceptions.ConnectionError,
-                requests.exceptions.HTTPError) as error:
+        except (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.HTTPError,
+        ) as error:
             msg = f"{method_upper} request failed with {error}"
             if self._fail_on_error:
                 raise ValueError(msg) from None
