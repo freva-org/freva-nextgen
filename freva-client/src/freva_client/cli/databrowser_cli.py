@@ -51,7 +51,7 @@ class TimeSelect(str, Enum):
     """Literal implementation for the cli."""
 
     strict = "strict"
-    flexibe = "flexible"
+    flexible = "flexible"
     file = "file"
 
     @staticmethod
