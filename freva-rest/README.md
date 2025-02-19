@@ -49,13 +49,20 @@ The container supports several startup modes on `AMD64` and `ARM64`:
 
 ```console
 # Default mode - starts the freva-rest service
-docker run ghcr.io/freva-clint/freva-rest:latest
+docker run \
+    -e API_OIDC_DISCOVERY_URL=https://example-oicd.org/.well-known/openid-configuration \
+    -p 7777:7777 \
+    ghcr.io/freva-clint/freva-rest:latest
 
-# Start with custom freva-rest flags
-docker run ghcr.io/freva-clint/freva-rest:latest -p 8000
+# Start with custom freva-rest flags and access
+docker run \
+        -e API_OIDC_DISCOVERY_URL=https://example-oicd.org/.well-known/openid-configuration \
+        -p 8000:8000
+       ghcr.io/freva-clint/freva-rest:latest -p 8000
+
 ```
 
-You can adjust the server settings by either overriding the default flags or 
+You can adjust the server settings by either overriding the default flags or
 setting environment variables in the container.
 
 ### Available Environment Variables
@@ -92,21 +99,24 @@ API_OIDC_CLIENT_ID=freva     #Name of the client (app) that is used to create th
 API_OIDC_CLIENT_SECRET=      # Optional: Set if your OIDC instance uses a client secret
 
 # Service activation flags
-# Set to 1 to enable, 0 to disable the service
+# Set to 1 to enable, 0 to disable the service (default)
 USE_MONGODB=0  # Controls MongoDB initialization
 USE_SOLR=0     # Controls Apache Solr initialization
+USE_REDIS=0    # Set up a redis distributed cache
+USE_MYSQL=0    # Set up a mysql server
 ```
 
 ### Required Volumes
-The container requires several persistent volumes that should be mounted:
+The container can use several persistent volumes that should be mounted:
 
 ```console
 docker run -d \
   --name freva-rest \
-  -e {above envs} \ # or after saving them in .env file, call them via `--env-file .env`
+  -e {above envs} \
   -v $(pwd)/mongodb_data:/data/db \
   -v $(pwd)/solr_data:/var/solr \
   -v $(pwd)/certs:/certs:ro \
+  -v $(pwd)/logs:/logs \
   -p 7777:7777 \
   -p 27017:27017 \
   -p 8983:8983 \
