@@ -30,10 +30,11 @@ COPY --from=builder /opt/app/dist /opt/app/dist
 COPY src/freva_rest/api_config.toml $API_CONFIG
 ENV PATH=/opt/conda/bin:$PATH
 RUN mkdir -p /docker-entrypoint-initdb.d && \
-    mamba install -y -q -c conda-forge --override-channels curl freva-rest-server && \
+    mamba install -y -q -c conda-forge --override-channels freva-rest-server && \
     python3 -m pip install --no-cache-dir /opt/app/dist/freva_rest*.whl
 
 COPY entrypoint.sh /docker-entrypoint-initdb.d/entrypoint.sh
-RUN chmod +x /docker-entrypoint-initdb.d/entrypoint.sh
+RUN chmod +x /docker-entrypoint-initdb.d/entrypoint.sh &&\
+             mkdir -p /logs && chmod -R 666 /logs
 
 ENTRYPOINT ["/docker-entrypoint-initdb.d/entrypoint.sh"]
