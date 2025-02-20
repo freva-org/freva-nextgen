@@ -33,7 +33,7 @@ jobs:
           echo "${{ steps.check-prerelease.outputs.is_prerelease }}" > is_prerelease.txt
 
       - name: Upload Outputs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: release-metadata
           path: |
