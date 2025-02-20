@@ -39,4 +39,4 @@ COPY docker-scripts/logging.sh /usr/local/lib/logging.sh
 RUN mkdir -p /logs && chmod -R 2666 /logs
 
 ENTRYPOINT ["/docker-entrypoint-initdb.d/entrypoint.sh"]
-CMD python3 -m freva_rest.cli
+CMD ["freva-rest-server"]

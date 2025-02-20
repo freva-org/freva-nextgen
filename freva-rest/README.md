@@ -47,7 +47,7 @@ You can pull the container from the GitHub container registry:
 docker pull ghcr.io/freva-clint/freva-rest:latest
 ```
 
-By default the container starts with the ``freva-rest-service`` command.
+By default the container starts with the ``freva-rest-server`` command.
 See the `freva-rest-server --help` command for configure options.
 
 ### Server Startup Options
