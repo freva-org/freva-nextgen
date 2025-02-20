@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+source /usr/local/lib/logging.sh
+
+# Allowed services
+VALID_SERVICES=("mysql" "mongodb" "redis" "solr")
+
+logs=()
+for service in "$@"; do
+    service_lower=$(echo "$service" | tr '[:upper:]' '[:lower:]')
+    if [[ " ${VALID_SERVICES[*]} " =~ " $service_lower " ]]; then
+        log_file="/logs/${service_lower}.log"
+        if [[ -f "$log_file" ]]; then
+            logs+=("$log_file")
+        else
+            log_warn Log file for '$service_lower' does not exist: $log_file"
+        fi
+    else
+        log_error "Error: '$service' is not a valid service. Allowed: ${VALID_SERVICES[*]}"
+        exit 1
+    fi
+done
+if [[ ${#logs[@]} -eq 0 ]]; then
+    log_error "No valid services provided. Allowed: ${VALID_SERVICES[*]}"
+    exit 1
+fi
+
+tail -f "${logs[@]}"
