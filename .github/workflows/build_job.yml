@@ -25,9 +25,9 @@ jobs:
         run: |
           TAG="${{ steps.get-tag.outputs.tag }}"
           if [[ "$TAG" == *"-dev"* || "$TAG" == *"-beta"* || "$TAG" == *"-alpha"* ]]; then
-            echo "image=ghcr.io/freva-clint/freva-rest-api-dev" >> image.txt
+            echo "ghcr.io/freva-clint/freva-rest-api-dev" > image.txt
           else
-            echo "image=ghcr.io/freva-clint/freva-rest-api" >> image.txt
+            echo "ghcr.io/freva-clint/freva-rest-api" > image.txt
           fi
           echo "${{ steps.get-tag.outputs.tag }}" > tag.txt
           echo "${{ steps.check-prerelease.outputs.is_prerelease }}" > is_prerelease.txt
