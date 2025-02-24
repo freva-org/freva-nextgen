@@ -253,7 +253,7 @@ class Translator:
     def _nextgems_lookup(self) -> Dict[str, str]:
         """Define the search facets for the cmip5 standard."""
         return {
-            "experiment": "experiment",
+            "experiment": "simulation_id",
             "ensemble": "member_id",
             "fs_type": "fs_type",
             "grid_label": "grid_label",
