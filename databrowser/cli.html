@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>The databrowser command line interface &#8212; Freva Databrowser 2411.0.0 documentation</title>
+    <title>The databrowser command line interface &#8212; Freva Databrowser 2502.0.0 documentation</title>
   
   
   
@@ -16,8 +16,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!-- 
-    this give us a css class that will be invisible only if js is disabled 
+  <!--
+    this give us a css class that will be invisible only if js is disabled
   -->
   <noscript>
     <style>
@@ -27,21 +27,21 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
     <link rel="stylesheet" type="text/css" href="../_static/code-tabs.css?v=1bc26e2f" />
   
   <!-- So that users can add custom icons -->
-  <script src="../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=6ca234d0"></script>
+    <script src="../_static/documentation_options.js?v=3f44df0f"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -127,8 +127,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2411.0.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2411.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2502.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2502.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -332,9 +332,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -401,11 +406,11 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  data-count        Count the databrowser search results
   data-overview     Get an overview over what is available in the...
+  metadata-search   Search databrowser for metadata (facets).
   data-search       Search the databrowser for datasets.
   intake-catalogue  Create an intake catalogue from the search.
-  metadata-search   Search databrowser for metadata (facets).
+  data-count        Count the databrowser search results
   user-data         Add or delete user data.
 
 </pre></div>
@@ -497,30 +502,30 @@ variables available that satisfies a certain constraint (e.g. sampled
 </div>
 <p><span class="caption-text">Results</span></p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>https://swift.dkrz.de/v1/dkrz_a32dc0e8-2299-4239-a47d-6bf45c8b0160/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609022330.zarr
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022100-201609022130.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022000-201609022030.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021900-201609021930.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021800-201609021830.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021700-201609021730.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021600-201609021630.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021500-201609021530.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021400-201609021430.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021300-201609021330.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021200-201609021230.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021100-201609021130.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021000-201609021030.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020900-201609020930.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020800-201609020830.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020700-201609020730.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020600-201609020630.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020500-201609020530.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020400-201609020430.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020300-201609020330.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020200-201609020230.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020100-201609020130.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609020030.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022100-201609022130.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022000-201609022030.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021900-201609021930.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021800-201609021830.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021700-201609021730.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021600-201609021630.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021500-201609021530.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021400-201609021430.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021300-201609021330.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021200-201609021230.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021100-201609021130.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021000-201609021030.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020900-201609020930.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020800-201609020830.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020700-201609020730.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020600-201609020630.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020500-201609020530.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020400-201609020430.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020300-201609020330.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020200-201609020230.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020100-201609020130.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609020030.nc
 /arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
 /arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
 /arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022100-201609022130.nc
@@ -642,8 +647,8 @@ see also the <a class="reference internal" href="../auth/index.html#auth"><span 
 </div>
 <p><span class="caption-text">Results</span></p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Give password for server authentication:  *****
-http://localhost:7777/api/freva-data-portal/zarr/c48f9024-f61e-5682-9651-7b9a21d81048.zarr
-http://localhost:7777/api/freva-data-portal/zarr/ff8b9acf-b652-5ce3-a26c-58f9bc4884a3.zarr
+http://fv-az788-223:7777/api/freva-nextgen/data-portal/zarr/b5f98d86-b658-5c92-b879-9aeddf6e2f19.zarr
+http://fv-az788-223:7777/api/freva-nextgen/data-portal/zarr/0fcbbf0c-f054-5085-a547-7374189ad7a0.zarr
 
 </pre></div>
 </div>
@@ -658,9 +663,9 @@ ranges:</p>
 </div>
 <p><span class="caption-text">Results</span></p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>https://swift.dkrz.de/v1/dkrz_a32dc0e8-2299-4239-a47d-6bf45c8b0160/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609022330.zarr
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/CLMcom/MPI-M-MPI-ESM-LR/historical/r0i0p0/CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_fx.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/CLMcom/MPI-M-MPI-ESM-LR/historical/r0i0p0/CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_fx.nc
 /arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
 /arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
 
@@ -676,7 +681,7 @@ start of the time period:</p>
 </pre></div>
 </div>
 <p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
 /arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
 
 </pre></div>
@@ -687,10 +692,10 @@ start of the time period:</p>
 </div>
 <p><span class="caption-text">Results</span></p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>https://swift.dkrz.de/v1/dkrz_a32dc0e8-2299-4239-a47d-6bf45c8b0160/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609022330.zarr
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/random/test.json
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/CLMcom/MPI-M-MPI-ESM-LR/historical/r0i0p0/CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_fx.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/random/test.json
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
+/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/CLMcom/MPI-M-MPI-ESM-LR/historical/r0i0p0/CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_fx.nc
 /arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
 /arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
 /arch/bb1203/freva_test/model/global/cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/r2i1p1f1/Amon/ua/gn/v20190815/ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_197901-199812.nc
@@ -1094,7 +1099,7 @@ are associated with files on the tape archive.</p>
 <p>To add your data to the databrowser, use the <cite>user-data add</cite> command. You’ll need to provide the paths to your data files, and any metadata you’d like to associate with your data.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">token=$(freva-client auth -u janedoe | jq -r .access_token)</span>
 <span class="go">freva-client databrowser user-data add \</span>
-<span class="go">    --path freva-rest/src/databrowser_api/mock/ \</span>
+<span class="go">    --path freva-rest/src/freva_rest/databrowser_api/mock/ \</span>
 <span class="go">    --facet project=cordex \</span>
 <span class="go">    --facet experiment=rcp85 \</span>
 <span class="go">    --facet model=mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1 \</span>
@@ -1103,18 +1108,8 @@ are associated with files on the tape archive.</p>
 </pre></div>
 </div>
 <p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>STDOUT: [2024-11-02T21:44:17] ERROR    freva-client: Failed to open data file           
-                               /home/runner/work/freva-nextgen/freva-nextgen/doc
-                               s/../freva-rest/src/databrowser_api/mock/data/mod
-                               el/obs/reanalysis/reanalysis/NOAA/NODC/OC5/mon/oc
-                               ean/Omon/r1i1p1/v20200101/hc700/hc700_mon_NODC_OC
-                               5_r1i1p1_201201-201212.nc: Failed to decode      
-                               variable &#39;time&#39;: unable to decode time units     
-                               &#39;months since 1955-01-01 00:00:00&#39; with &quot;calendar
-                               &#39;standard&#39;&quot;. Try opening your dataset with       
-                               decode_times=False or installing cftime if it is 
-                               not installed.                                   
-                      WARNING  freva-client: Error getting metadata: {}         
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>8 have been successfully added to the databrowser. 0 files were duplicates and 
+not added.
 
 </pre></div>
 </div>
@@ -1210,8 +1205,8 @@ are associated with files on the tape archive.</p>
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1222,7 +1217,7 @@ are associated with files on the tape archive.</p>
 
   <p class="copyright">
     
-      © Copyright 2024, DKRZ.
+      © Copyright 2025, DKRZ.
       <br/>
     
   </p>
@@ -1231,7 +1226,7 @@ are associated with files on the tape archive.</p>
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.1.
     <br/>
   </p>
 </div>
@@ -1244,7 +1239,8 @@ are associated with files on the tape archive.</p>
       
         <div class="footer-item">
 <p class="theme-version">
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
 </p></div>
       
     </div>
