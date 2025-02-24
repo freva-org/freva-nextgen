@@ -11,6 +11,8 @@ jobs:
   release-type-determination:
     name: Determine if tag is pre-released or not
     runs-on: ubuntu-latest
+    outputs:
+      is_prerelease: ${{ steps.check-prerelease.outputs.is_prerelease }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
