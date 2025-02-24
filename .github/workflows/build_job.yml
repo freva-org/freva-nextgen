@@ -11,9 +11,6 @@ jobs:
   release-type-determination:
     name: Determine if tag is pre-released or not
     runs-on: ubuntu-latest
-    outputs:
-      is_prerelease: ${{ steps.check-prerelease.outputs.is_prerelease }}
-      tag: ${{ steps.get-tag.outputs.tag }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -21,19 +18,28 @@ jobs:
       - name: Get tag
         id: get-tag
         run: |
-          echo "tag=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          echo "tag=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
 
       - name: Check if tag is a pre-release
         id: check-prerelease
         run: |
           TAG="${{ steps.get-tag.outputs.tag }}"
           if [[ "$TAG" == *"-dev"* || "$TAG" == *"-beta"* || "$TAG" == *"-alpha"* ]]; then
-            echo "This is a pre-release tag."
-            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "ghcr.io/freva-clint/freva-rest-api-dev" > image.txt
           else
-            echo "This is not a pre-release tag."
-            echo "is_prerelease=false" >> $GITHUB_OUTPUT
-          fi  
+            echo "ghcr.io/freva-clint/freva-rest-api" > image.txt
+          fi
+          echo "${{ steps.get-tag.outputs.tag }}" > tag.txt
+          echo "${{ steps.check-prerelease.outputs.is_prerelease }}" > is_prerelease.txt
+
+      - name: Upload Outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-metadata
+          path: |
+            image.txt
+            tag.txt
+            is_prerelease.txt
   tests:
     uses: ./.github/workflows/ci_job.yml
 
@@ -91,14 +97,22 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Set up Python 3
-        uses: actions/setup-python@v4
+      - name: Download Release Metadata
+        uses: actions/download-artifact@v4
         with:
-          python-version: "3.X"
+          name: release-metadata
 
-      - name: Get tag
-        run: echo "tag=${{ needs.release-type-determination.outputs.tag }}" >> $GITHUB_OUTPUT
-        shell: bash
+      - name: Read Metadata
+        run: |
+          IMAGE=$(cat image.txt)
+          TAG=$(cat tag.txt)
+          IS_PRERELEASE=$(cat is_prerelease.txt)
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_ENV
+          echo "DEBUG: IMAGE=$IMAGE"
+          echo "DEBUG: TAG=$TAG"
+          echo "DEBUG: IS_PRERELEASE=$IS_PRERELEASE"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -118,13 +132,13 @@ jobs:
         with:
           context: freva-rest
           file: freva-rest/Dockerfile
-          build-args: VERSION=${{ needs.release-type-determination.outputs.tag }}
-          platforms: linux/amd64, linux/arm64
+          build-args: VERSION=${{ env.TAG }}
+          platforms: linux/amd64, linux/arm64, linux/ppc64le
           push: true
+          no-cache: true
           tags: |
-            ghcr.io/freva-clint/freva-rest-api:${{ needs.release-type-determination.outputs.tag }}
-            ghcr.io/freva-clint/freva-rest-api:${{ needs.release-type-determination.outputs.is_prerelease == 'false' && 'latest' || needs.release-type-determination.outputs.tag }}
-
+            ${{ env.IMAGE }}:${{ env.TAG }}
+            ${{ env.IMAGE }}:${{ env.IS_PRERELEASE == 'false' && 'latest' || env.TAG }}
 
   pypi:
     name: Create Pip package

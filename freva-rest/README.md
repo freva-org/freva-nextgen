@@ -1,4 +1,4 @@
-# Freva server - client structure
+# Freva Rest API
 
 [![License](https://img.shields.io/badge/License-BSD-purple.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12-red.svg)](https://www.python.org/downloads/release/python-312/)
@@ -12,6 +12,13 @@ services that provide command line interfaces and python libraries for their
 rest service counterparts.
 
 ## Installation
+You can install the Freva rest server via [conda-forge](https://conda-forge.org):
+
+```console
+conda install -c conda-forge freva-rest-server
+```
+
+### Development installation
 
 1. Make sure you have Python 3.11+ installed.
 2. Clone this repository:
@@ -40,22 +47,29 @@ You can pull the container from the GitHub container registry:
 docker pull ghcr.io/freva-clint/freva-rest:latest
 ```
 
-By default the container starts with the ``freva-rest-service`` command.
+By default the container starts with the ``freva-rest-server`` command.
 See the `freva-rest-server --help` command for configure options.
 
-### Service Startup Options
+### Server Startup Options
 
-The container supports several startup modes on `AMD64` and `ARM64`:
+The container supports several startup modes:
 
 ```console
 # Default mode - starts the freva-rest service
-docker run ghcr.io/freva-clint/freva-rest:latest
+docker run \
+    -e API_OIDC_DISCOVERY_URL=https://example-oicd.org/.well-known/openid-configuration \
+    -p 7777:7777 \
+    ghcr.io/freva-clint/freva-rest:latest
 
-# Start with custom freva-rest flags
-docker run ghcr.io/freva-clint/freva-rest:latest -p 8000
+# Start with custom freva-rest flags and access
+docker run \
+        -e API_OIDC_DISCOVERY_URL=https://example-oicd.org/.well-known/openid-configuration \
+        -p 8000:8000
+       ghcr.io/freva-clint/freva-rest:latest -p 8000
+
 ```
 
-You can adjust the server settings by either overriding the default flags or 
+You can adjust the server settings by either overriding the default flags or
 setting environment variables in the container.
 
 ### Available Environment Variables
@@ -91,22 +105,46 @@ API_OIDC_DISCOVERY_URL=http://keycloak:8080/realms/freva/.well-known/openid-conf
 API_OIDC_CLIENT_ID=freva     #Name of the client (app) that is used to create the access tokens, defaults to freva
 API_OIDC_CLIENT_SECRET=      # Optional: Set if your OIDC instance uses a client secret
 
+# MYSQL Server (for legacy freva)
+MYSQL_USER=
+MYSQL_PASSWORD=
+MYSQL_ROOT_PASSWORD=
+MYSQL_DATABASE= # Database name for legacy freva
+
 # Service activation flags
-# Set to 1 to enable, 0 to disable the service
+# Set to 1 to enable, 0 to disable the service (default)
 USE_MONGODB=0  # Controls MongoDB initialization
 USE_SOLR=0     # Controls Apache Solr initialization
+USE_REDIS=0    # Set up a redis distributed cache
+USE_MYSQL=0    # Set up a mysql server
 ```
 
+> [!TIP]
+> To start any services the rest API needs in the background you can
+> set any of the `USE_MONGODB`, `USE_SOLR`, `USE_REDIS`, `USE_MYSQL` environment
+> variables to `1`. The service(s) will be automatically configured for usage
+> with freva.
+> If you only whish to start a service and follow their log you can use the
+> `follow` command in the container e.g:
+> ```console
+> docker run -e USE_MYSQL=1 \
+> -e MYSQL_USER=foo \
+> -e MYSQL_PASSWORD=my-pass \
+> -e MYSQL_ROOT_PASSWORD=my-root-pass \
+> -e MYSQL_DATABASE=bar \
+> ghcr.io/freva-clint/freva-rest:latest follow mysql
+
 ### Required Volumes
-The container requires several persistent volumes that should be mounted:
+The container can use several persistent volumes that should be mounted:
 
 ```console
 docker run -d \
   --name freva-rest \
-  -e {above envs} \ # or after saving them in .env file, call them via `--env-file .env`
+  -e {above envs} \
   -v $(pwd)/mongodb_data:/data/db \
   -v $(pwd)/solr_data:/var/solr \
   -v $(pwd)/certs:/certs:ro \
+  -v $(pwd)/logs:/logs \
   -p 7777:7777 \
   -p 27017:27017 \
   -p 8983:8983 \

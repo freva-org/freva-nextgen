@@ -20,27 +20,24 @@ dynamic = ["version"]
 requires-python = ">=3.9"
 dependencies = [
 "aiohttp",
+"cloudpickle",
 "email-validator",
 "fastapi",
 "fastapi-third-party-auth",
-"dask",
+"motor",
 "pyjwt",
-"uvicorn",
 "python-dotenv",
 "python-dateutil",
 "python-multipart",
-"tomli",
 "rich",
 "rich-argparse",
-"motor",
 "requests",
 "redis",
-"pika",
-"paramiko",
-"watchfiles",
 "uuid",
+"tomli",
 "typing_extensions",
-"zarr",
+"uvicorn",
+"zarr<3",
 ]
 [project.scripts]
 freva-rest-server = "freva_rest.cli:cli"
