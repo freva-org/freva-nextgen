@@ -24,13 +24,16 @@ jobs:
         id: check-prerelease
         run: |
           TAG="${{ steps.get-tag.outputs.tag }}"
+          IS_PRERELEASE="false"
           if [[ "$TAG" == *"-dev"* || "$TAG" == *"-beta"* || "$TAG" == *"-alpha"* ]]; then
             echo "ghcr.io/freva-clint/freva-rest-api-dev" > image.txt
+            IS_PRERELEASE="true"
           else
             echo "ghcr.io/freva-clint/freva-rest-api" > image.txt
           fi
           echo "${{ steps.get-tag.outputs.tag }}" > tag.txt
-          echo "${{ steps.check-prerelease.outputs.is_prerelease }}" > is_prerelease.txt
+          echo "$IS_PRERELEASE" > is_prerelease.txt
+          echo "is_prerelease=$IS_PRERELEASE" >> "$GITHUB_OUTPUT"
 
       - name: Upload Outputs
         uses: actions/upload-artifact@v4
