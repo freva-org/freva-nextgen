@@ -91,9 +91,7 @@ async def metadata_search(
     uniq_key: Literal["file", "uri"],
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
-    facets: Annotated[
-        Union[List[str], None], SolrSchema.params["facets"]
-    ] = None,
+    facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
     request: Request = Required,
 ) -> JSONResponse:
     """Query the available metadata.
@@ -232,9 +230,7 @@ async def extended_search(
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     max_results: Annotated[int, SolrSchema.params["batch_size"]] = 150,
-    facets: Annotated[
-        Union[List[str], None], SolrSchema.params["facets"]
-    ] = None,
+    facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
     request: Request = Required,
 ) -> JSONResponse:
     """This endpoint is used by the databrowser web ui client."""
@@ -276,8 +272,7 @@ async def load_data(
             title="Catalogue type",
             alias="catalogue-type",
             description=(
-                "Set the type of catalogue you want to create from this"
-                "query"
+                "Set the type of catalogue you want to create from this" "query"
             ),
         ),
     ] = None,
@@ -345,10 +340,8 @@ async def post_user_data(
     solr_instance = Solr(server_config)
     try:
         try:
-            validated_user_metadata = (
-                await solr_instance._validate_user_metadata(
-                    request.user_metadata
-                )
+            validated_user_metadata = await solr_instance._validate_user_metadata(
+                request.user_metadata
             )
         except HTTPException as error:
             raise HTTPException(

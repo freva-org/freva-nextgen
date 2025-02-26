@@ -311,9 +311,7 @@ class Translator:
                 if v == "primary"
             ]
         else:
-            _keys = [
-                k for (k, v) in self._freva_facets.items() if v == "primary"
-            ]
+            _keys = [k for (k, v) in self._freva_facets.items() if v == "primary"]
         if self.flavour in ("cordex",):
             for key in self.cordex_keys:
                 _keys.append(key)
@@ -535,9 +533,7 @@ class Solr:
         )
         async with aiohttp.ClientSession(timeout=self.timeout) as session:
             try:
-                async with session.post(
-                    self._post_url, json=self.payload
-                ) as res:
+                async with session.post(self._post_url, json=self.payload) as res:
                     try:
                         await self.check_for_status(res)
                         logger.info(
@@ -546,9 +542,7 @@ class Solr:
                         )
                         response_data = await res.json()
                     except HTTPException:  # pragma: no cover
-                        logger.error(
-                            "POST request failed: %s", await res.text()
-                        )
+                        logger.error("POST request failed: %s", await res.text())
                         response_data = {}
             except Exception as error:
                 logger.error("Connection to %s failed: %s", self.url, error)
@@ -592,10 +586,13 @@ class Solr:
             Translate the output to the required DRS flavour.
         """
         translator = Translator(flavour, translate)
+        valid_facets = translator.valid_facets
+        if multi_version:
+            valid_facets = translator.valid_facets + ["version"]
         for key in query:
             key = key.lower().replace("_not_", "")
             if (
-                key not in translator.valid_facets
+                key not in valid_facets
                 and key not in ("time_select",) + cls.uniq_keys
             ):
                 raise HTTPException(
@@ -781,12 +778,10 @@ class Solr:
             )
         if bulk_operations:
             try:
-                result = (
-                    await self._config.mongo_collection_userdata.bulk_write(
-                        bulk_operations,
-                        ordered=False,
-                        bypass_document_validation=False,
-                    )
+                result = await self._config.mongo_collection_userdata.bulk_write(
+                    bulk_operations,
+                    ordered=False,
+                    bypass_document_validation=False,
                 )
                 successful_upsert = (
                     result.upserted_count
@@ -827,9 +822,7 @@ class Solr:
                     nMatched,
                 )
             except Exception as error:
-                logger.exception(
-                    "[MONGO] Could not insert metadata: %s", error
-                )
+                logger.exception("[MONGO] Could not insert metadata: %s", error)
 
     @ensure_future
     async def store_results(self, num_results: int, status: int) -> None:
@@ -919,7 +912,12 @@ class Solr:
         -------
         int: status code of the apache solr query.
         """
-        search_facets = [f for f in facets if f not in ("*", "all")]
+        search_facets = [f for f in facets if f not in ("*", "all")] or [
+            f for f in self._config.solr_fields
+        ]
+        if self.multi_version:
+            search_facets.append("version")
+
         self.query["facet"] = "true"
         self.query["rows"] = max_results
         self.query["facet.sort"] = "index"
@@ -927,7 +925,7 @@ class Solr:
         self.query["facet.limit"] = "-1"
         self.query["wt"] = "json"
         self.query["facet.field"] = self.translator.translate_facets(
-            search_facets or self._config.solr_fields, backwards=True
+            search_facets, backwards=True
         )
         self.query["fl"] = [self.uniq_key, "fs_type"]
         logger.info(
@@ -977,9 +975,7 @@ class Solr:
             search_status, search = res
         return search_status, search.get("response", {}).get("numFound", 0)
 
-    def _join_facet_queries(
-        self, key: str, facets: List[str]
-    ) -> Tuple[str, str]:
+    def _join_facet_queries(self, key: str, facets: List[str]) -> Tuple[str, str]:
         """Create lucene search contain and NOT contain search queries"""
 
         negative, positive = [], []
@@ -1244,9 +1240,7 @@ class Solr:
             )
             if not is_duplicate:
                 new_querie.append(metadata)
-        return [
-            dict(t) for t in {tuple(sorted(d.items())) for d in new_querie}
-        ]
+        return [dict(t) for t in {tuple(sorted(d.items())) for d in new_querie}]
 
     async def _purge_user_data(
         self, search_keys: Dict[str, Union[str, int]]
