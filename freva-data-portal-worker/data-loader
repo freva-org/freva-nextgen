@@ -96,8 +96,8 @@ if [ ! -f ${MAMBA_DIR}/bin/data-loader-worker ]; then
     rm -fr $TEMP_DIR
 fi
 
-if ([ ! -f "~/.data-portal-cluster-config.json" ] && [ "x$IS_WORKER" = x ]); then
-    TEMP_DIR=~ ${MAMBA_DIR}/bin/python ${MAMBA_DIR}/freva-data-portal-worker/run_server.py --gen-certs --script-dir ${MAMBA_DIR}/freva-data-portal-worker/setup
+if ([ ! -f "$HOME/.data-portal-cluster-config.json" ] && [ "x$IS_WORKER" = x ]); then
+    TEMP_DIR=~ ${MAMBA_DIR}/bin/python ${MAMBA_DIR}//freva-data-portal-worker/setup/config/dev-utils.py redis-config $HOME/.data-portal-cluster-config.json
 fi
 
 export PATH=${MAMBA_DIR}/bin:$PATH
