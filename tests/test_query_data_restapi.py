@@ -52,6 +52,50 @@ def test_databrowser(test_server: str) -> None:
     assert len(res2.text.split()) < len(res5.text.split())
 
 
+def test_multiversion(test_server: str) -> None:
+    """Test the behaviour for multi versions."""
+    res1 = requests.get(
+        f"{test_server}/databrowser/metadata-search/freva/file",
+        params={"multi-version": True},
+    )
+    assert res1.status_code == 200
+    assert "facets" in res1.json()
+    assert "version" in res1.json()["facets"]
+    version = res1.json()["facets"]["version"][0]
+
+    res2 = requests.get(
+        f"{test_server}/databrowser/metadata-search/freva/file",
+        params={"multi-version": False},
+    )
+    assert res2.status_code == 200
+    assert "facets" in res2.json()
+    assert "version" not in res2.json()["facets"]
+
+    res3 = requests.get(
+        f"{test_server}/databrowser/data-search/freva/file",
+        params={"multi-version": True},
+    )
+    assert res3.status_code == 200
+    res4 = requests.get(
+        f"{test_server}/databrowser/data-search/freva/file",
+        params={"multi-version": False},
+    )
+    assert res4.status_code == 200
+    assert len(list(res4.text.split())) < len(list(res3.text.split()))
+
+    res5 = requests.get(
+        f"{test_server}/databrowser/data-search/freva/file",
+        params={"multi-version": True, "version": version},
+    )
+    assert res5.status_code == 200
+
+    res6 = requests.get(
+        f"{test_server}/databrowser/data-search/freva/file",
+        params={"multi-version": False, "version": version},
+    )
+    assert res6.status_code != 200
+
+
 def test_no_solr(test_server: str) -> None:
     """Test what happens if there is no connection to the solr."""
     with mock.patch("freva_rest.rest.server_config.solr_host", "foo.bar"):
