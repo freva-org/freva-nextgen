@@ -61,7 +61,9 @@ podman-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
 This will start the required services and containers to create the development
 environment. You can now develop and test the project within this environment.
 
-After the containers are up and running you can start the REST server the following:
+After the containers are up and running you will need to
+[install the REST server](freva-rest/README.md) and start it
+doing the following:
 
 ```console
 python run_server.py --config dev-env/api_config.toml --debug --dev -p 7777 -f
