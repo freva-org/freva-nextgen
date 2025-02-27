@@ -36,7 +36,7 @@ python3 -m pip install flit
 
 ```console
 cd freva-rest
-python -m pip install -e .[dev]
+python -m pip install -e .
 ```
 
 ## Freva-rest production docker container
