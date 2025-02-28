@@ -77,8 +77,8 @@ class databrowser:
     uniq_key: str, default: file
         Chose if the solr search query should return paths to files or
         uris, uris will have the file path along with protocol of the storage
-        system. Uris can be useful if the search query result should be
-        used libraries like fsspec.
+        system. URIs are useful when working with libraries like fsspec, which
+        require protocol information.
     host: str, default: None
         Override the host name of the databrowser server. This is usually the
         url where the freva web site can be found. Such as www.freva.dkrz.de.
@@ -649,6 +649,22 @@ class databrowser:
 
             from freva_client import databrowser
             print(databrowser.metadata_search("reana*", realm="ocean", flavour="cmip6"))
+
+        In datasets with multiple versions only the `latest` version (i.e.
+        `highest` version number) is returned by default. Querying a specific
+        version from a multi versioned datasets requires the ``multiversion``
+        flag in combination with the ``version`` special attribute:
+
+        .. execute_code::
+
+            from freva_client import databrowser
+            res = databrowser.metadata_search(dataset="cmip6-fs",
+                model="access-cm2", version="v20191108", extended_search=True,
+                multiversion=True)
+            print(res)
+
+        If no particular ``version`` is requested, information of all versions
+        will be returned.
 
         """
         this = cls(

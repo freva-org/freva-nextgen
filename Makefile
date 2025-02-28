@@ -1,4 +1,4 @@
-.PHONY: all release
+.PHONY: all release docs
 all: install
 
 install: prepare
@@ -9,9 +9,14 @@ prepare:
 	mkdir -p dev-env/certs
 	python3 dev-env/config/dev-utils.py gen-certs
 
-lint:
-	tox -e lint types
+lint: types
+	tox -e lint
 
-docs: tox -e docs
+types:
+	tox -e types
 
-release: tox -e release
+docs:
+	tox -e docs
+
+release:
+	tox -e release
