@@ -235,9 +235,6 @@ def metadata_search(
         time_select=cast(Literal["file", "flexible", "strict"], time_select.value),
         bbox=bbox or None,
         bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select.value),
-        time_select=cast(
-            Literal["file", "flexible", "strict"], time_select.value
-        ),
         flavour=cast(
             Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
             flavour.value,
@@ -834,9 +831,6 @@ def count_values(
                 time_select=cast(Literal["file", "flexible", "strict"], time_select),
                 bbox=bbox or None,
                 bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
-                time_select=cast(
-                    Literal["file", "flexible", "strict"], time_select
-                ),
                 flavour=cast(
                     Literal[
                         "freva", "cmip6", "cmip5", "cordex", "nextgems", "user"

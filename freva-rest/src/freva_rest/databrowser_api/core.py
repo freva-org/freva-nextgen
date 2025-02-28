@@ -644,7 +644,7 @@ class Solr:
         for key in query:
             key = key.lower().replace("_not_", "")
             if (
-                key not in translator.valid_facets
+                key not in valid_facets
                 and key not in ("time_select", "bbox_select", "stac_dynamic")
                 + cls.uniq_keys
             ):
