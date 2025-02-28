@@ -7,7 +7,7 @@ import json
 from enum import Enum
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Dict, List, Literal, Optional, Union, cast
+from typing import Dict, List, Literal, Optional, Tuple, Union, cast
 
 import typer
 import xarray as xr
@@ -65,7 +65,7 @@ class SelectMethod(str, Enum):
         """
         examples = {
             "time": ("2000 to 2012", "2010 to 2020"),
-            "bbox": ("-10,10 by -10,10", "0,5 by 0,5")
+            "bbox": ("-10 10 -10 10", "0 5 0 5")
         }
         descriptions = {
             "time": {
@@ -170,16 +170,16 @@ def metadata_search(
             " valid."
         ),
     ),
-    bbox: Optional[str] = typer.Option(
+    bbox: Optional[Tuple[float, float, float, float]] = typer.Option(
         None,
         "-b",
         "--bbox",
         help=(
             "Special search facet to refine/subset search results by spatial "
             "extent. This can be a string representation of a bounding box. "
-            "The bounding box has to follow the format ``min_lon,max_lon by "
-            "min_lat,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
-            "``0,5 by 0,5``."
+            "The bounding box has to follow the format ``min_lon max_lon "
+            "min_lat,max_lat``. Valid strings are ``-10 10 -10 10`` to "
+            "``0 5 0 5``."
         ),
     ),
     bbox_select: SelectMethod = typer.Option(
@@ -233,7 +233,7 @@ def metadata_search(
         *(facets or []),
         time=time or "",
         time_select=cast(Literal["file", "flexible", "strict"], time_select.value),
-        bbox=bbox or "",
+        bbox=bbox or None,
         bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select.value),
         flavour=cast(
             Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
@@ -321,16 +321,16 @@ def data_search(
             " valid."
         ),
     ),
-    bbox: Optional[str] = typer.Option(
+    bbox: Optional[Tuple[float, float, float, float]] = typer.Option(
         None,
         "-b",
         "--bbox",
         help=(
             "Special search facet to refine/subset search results by spatial "
             "extent. This can be a string representation of a bounding box. "
-            "The bounding box has to follow the format ``min_lon,max_lon by "
-            "min_lat,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
-            "``0,5 by 0,5``."
+            "The bounding box has to follow the format ``min_lon max_lon "
+            "min_lat max_lat``. Valid strings are ``-10 10 -10 10`` to "
+            "``0 5 0 5``."
         ),
     ),
     bbox_select: SelectMethod = typer.Option(
@@ -376,7 +376,7 @@ def data_search(
         *(facets or []),
         time=time or "",
         time_select=cast(Literal["file", "flexible", "strict"], time_select),
-        bbox=bbox or "",
+        bbox=bbox or None,
         bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
         flavour=cast(
             Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
@@ -458,16 +458,16 @@ def intake_catalogue(
             " valid."
         ),
     ),
-    bbox: Optional[str] = typer.Option(
+    bbox: Optional[Tuple[float, float, float, float]] = typer.Option(
         None,
         "-b",
         "--bbox",
         help=(
             "Special search facet to refine/subset search results by spatial "
             "extent. This can be a string representation of a bounding box. "
-            "The bounding box has to follow the format ``min_lon,max_lon by "
-            "min_lat,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
-            "``0,5 by 0,5``."
+            "The bounding box has to follow the format ``min_lon max_lon "
+            "min_lat max_lat``. Valid strings are ``-10 10 -10 10`` to "
+            "``0 5 0 5``."
         ),
     ),
     bbox_select: SelectMethod = typer.Option(
@@ -527,7 +527,7 @@ def intake_catalogue(
         *(facets or []),
         time=time or "",
         time_select=cast(Literal["file", "flexible", "strict"], time_select),
-        bbox=bbox or "",
+        bbox=bbox or None,
         bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
         flavour=cast(
             Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
@@ -609,16 +609,16 @@ def stac_catalogue(
             " valid."
         ),
     ),
-    bbox: Optional[str] = typer.Option(
+    bbox: Optional[Tuple[float, float, float, float]] = typer.Option(
         None,
         "-b",
         "--bbox",
         help=(
             "Special search facet to refine/subset search results by spatial "
             "extent. This can be a string representation of a bounding box. "
-            "The bounding box has to follow the format ``min_lon,max_lon by "
-            "min_lat,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
-            "``0,5 by 0,5``."
+            "The bounding box has to follow the format ``min_lon max_lon "
+            "min_lat max_lat``. Valid strings are ``-10 10 -10 10`` to "
+            "``0 5 0 5``."
         ),
     ),
     bbox_select: SelectMethod = typer.Option(
@@ -669,7 +669,7 @@ def stac_catalogue(
         *(facets or []),
         time=time or "",
         time_select=cast(Literal["file", "flexible", "strict"], time_select),
-        bbox=bbox or "",
+        bbox=bbox or None,
         bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
         flavour=cast(
             Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
@@ -739,16 +739,16 @@ def count_values(
             " valid."
         ),
     ),
-    bbox: Optional[str] = typer.Option(
+    bbox: Optional[Tuple[float, float, float, float]] = typer.Option(
         None,
         "-b",
         "--bbox",
         help=(
             "Special search facet to refine/subset search results by spatial "
             "extent. This can be a string representation of a bounding box. "
-            "The bounding box has to follow the format ``min_lon,max_lon by "
-            "min_lat,max_lat``. Valid strings are ``-10,10 by -10,10`` to "
-            "``0,5 by 0,5``."
+            "The bounding box has to follow the format ``min_lon max_lon "
+            "min_lat max_lat``. Valid strings are ``-10 10 -10 10`` to "
+            "``0 5 0 5``."
         ),
     ),
     bbox_select: SelectMethod = typer.Option(
@@ -801,14 +801,15 @@ def count_values(
     result: Union[int, Dict[str, Dict[str, int]]] = 0
     search_kws = parse_cli_args(search_keys or [])
     time = cast(str, time or search_kws.pop("time", ""))
-    bbox = cast(str, bbox or search_kws.pop("bbox", ""))
+    bbox = cast(Optional[Tuple[float, float, float, float]],
+                bbox or search_kws.pop("bbox", None))
     facets = facets or []
     if detail:
         result = databrowser.count_values(
             *facets,
             time=time or "",
             time_select=cast(Literal["file", "flexible", "strict"], time_select),
-            bbox=bbox or "",
+            bbox=bbox or None,
             bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
             flavour=cast(
                 Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
@@ -826,7 +827,7 @@ def count_values(
                 *facets,
                 time=time or "",
                 time_select=cast(Literal["file", "flexible", "strict"], time_select),
-                bbox=bbox or "",
+                bbox=bbox or None,
                 bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
                 flavour=cast(
                     Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],

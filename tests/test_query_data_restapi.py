@@ -102,12 +102,12 @@ def test_bbox_selection(test_server: str) -> None:
     """Test the bbox select functionality of the API."""
     res1 = requests.get(
         f"{test_server}/databrowser/data-search/freva/file",
-        params={"bbox": "-10,10 by -10,10"},
+        params={"bbox": "-10,10,-10,10"},
     )
     assert len(res1.text.split()) == 61
     res2 = requests.get(
         f"{test_server}/databrowser/data-search/freva/file",
-        params={"bbox": "-10,10 by -10,10", "bbox_select": "foo"},
+        params={"bbox": "-10,10,-10,10", "bbox_select": "foo"},
     )
     assert res2.status_code == 500
     res3 = requests.get(
@@ -116,6 +116,17 @@ def test_bbox_selection(test_server: str) -> None:
     )
     assert res3.status_code == 500
 
+    res3 = requests.get(
+        f"{test_server}/databrowser/data-search/freva/file",
+        params={"bbox": "-181,181,-10,10"},
+    )
+    assert res3.status_code == 500
+
+    res4 = requests.get(
+        f"{test_server}/databrowser/data-search/freva/file",
+        params={"bbox": "-10,10,-91,91"},
+    )
+    assert res3.status_code == 500
 
 def test_primary_facets(test_server: str) -> None:
     """Test the functionality of primary facet definitions."""
@@ -287,6 +298,19 @@ def test_stac_catalogue(test_server: str) -> None:
     assert redirect_url.startswith(('http://', 'https://'))
     assert '/collections/' in redirect_url
 
+    # 200 OK from STAC static endpoint
+    res = requests.get(
+        f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
+        params={
+            "activity_id": "cmip", 
+            "multi-version": True, 
+            "stac_dynamic": False,
+            "max_results": 2
+        },
+        allow_redirects=False
+    )
+    assert res.status_code == 200
+    
     # 413 Request Entity Too Large
     res3 = requests.get(
         f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
@@ -311,6 +335,18 @@ def test_stac_catalogue(test_server: str) -> None:
         
         # Mock connection failure
         mock_get.return_value.__aenter__.side_effect = Exception("Connection failed")
+        
+        res2 = requests.get(
+            f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
+            params={
+                "activity_id": "cmip",
+                "multi-version": True,
+                "stac_dynamic": True
+            }
+        )
+        assert res2.status_code == 500
+    # 500 Internal Server Error, no api services
+    with mock.patch("freva_rest.rest.server_config.stacapi_host", "") as mock_get:
         
         res2 = requests.get(
             f"{test_server}/databrowser/stac-catalogue/cmip6/uri",

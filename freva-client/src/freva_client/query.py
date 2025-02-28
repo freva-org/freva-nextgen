@@ -78,15 +78,15 @@ class databrowser:
         period is contained within `one single` file.
     bbox: str, default: ""
         Special search facet to refine/subset search results by spatial extent.
-        This can be a string representation of a bounding box or a WKT polygon.
-        Valid strings are ``min_lon,max_lon by min_lat,max_lat`` for bounding
+        This can be a list representation of a bounding box or a WKT polygon.
+        Valid lists are ``min_lon max_lon min_lat max_lat`` for bounding
         boxes and Well-Known Text (WKT) format for polygons.
 
     bbox_select: str, default: flexible
         Operator that specifies how the spatial extent is selected. Choose from
         flexible (default), strict or file. ``strict`` returns only those files
-        that fully contain the query extent. The bbox search ``-10,10 by -10,10``
-        will not select files covering only ``0,5 by 0,5`` with the ``strict``
+        that fully contain the query extent. The bbox search ``-10 10 -10 10``
+        will not select files covering only ``0 5 0 5`` with the ``strict``
         method. ``flexible`` will select those files as it returns files that
         have any overlap with the query extent. ``file`` will only return files
         where the entire spatial extent is contained by the query geometry.
@@ -230,7 +230,7 @@ class databrowser:
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
-        bbox: Optional[str] = None,
+        bbox: Optional[Tuple[float, float, float, float]] = None,
         bbox_select: Literal["flexible", "strict", "file"] = "flexible",
         stream_zarr: bool = False,
         multiversion: bool = False,
@@ -257,7 +257,8 @@ class databrowser:
             self._params["time"] = time
             self._params["time_select"] = time_select
         if bbox:
-            self._params["bbox"] = bbox
+            bbox_str = ",".join(map(str, bbox))
+            self._params["bbox"] = bbox_str
             self._params["bbox_select"] = bbox_select
         if facets:
             self._add_search_keyword_args_from_facet(facets, facet_search)
@@ -480,10 +481,9 @@ class databrowser:
                 'filename=')[-1].strip('"')
 
             save_path = Path(cast(str, filename))
+
             if save_path.is_dir() and save_path.exists():
                 save_path = save_path / default_filename
-            if save_path.is_dir() and not save_path.exists():
-                save_path = Path.cwd() / default_filename
 
             save_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -512,7 +512,7 @@ class databrowser:
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
-        bbox: Optional[str] = None,
+        bbox: Optional[Tuple[float, float, float, float]] = None,
         bbox_select: Literal["flexible", "strict", "file"] = "flexible",
         multiversion: bool = False,
         fail_on_error: bool = False,
@@ -553,15 +553,15 @@ class databrowser:
             period is contained within `one single` file.
         bbox: str, default: ""
             Special search facet to refine/subset search results by spatial extent.
-            This can be a string representation of a bounding box or a WKT polygon.
-            Valid strings are ``min_lon,max_lon by min_lat,max_lat`` for bounding
+            This can be a list representation of a bounding box or a WKT polygon.
+            Valid lists are ``min_lon max_lon min_lat max_lat`` for bounding
             boxes and Well-Known Text (WKT) format for polygons.
 
         bbox_select: str, default: flexible
             Operator that specifies how the spatial extent is selected. Choose from
             flexible (default), strict or file. ``strict`` returns only those files
-            that fully contain the query extent. The bbox search ``-10,10 by -10,10``
-            will not select files covering only ``0,5 by 0,5`` with the ``strict``
+            that fully contain the query extent. The bbox search ``-10 10 -10 10``
+            will not select files covering only ``0 5 0 5`` with the ``strict``
             method. ``flexible`` will select those files as it returns files that
             have any overlap with the query extent. ``file`` will only return files
             where the entire spatial extent is contained by the query geometry.
@@ -666,7 +666,7 @@ class databrowser:
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
-        bbox: Optional[str] = None,
+        bbox: Optional[Tuple[float, float, float, float]] = None,
         bbox_select: Literal["flexible", "strict", "file"] = "flexible",
         multiversion: bool = False,
         fail_on_error: bool = False,
@@ -710,15 +710,15 @@ class databrowser:
             period is contained within *one single* file.
         bbox: str, default: ""
             Special search facet to refine/subset search results by spatial extent.
-            This can be a string representation of a bounding box or a WKT polygon.
-            Valid strings are ``min_lon,max_lon by min_lat,max_lat`` for bounding
+            This can be a list representation of a bounding box or a WKT polygon.
+            Valid lists are ``min_lon max_lon min_lat max_lat`` for bounding
             boxes and Well-Known Text (WKT) format for polygons.
 
         bbox_select: str, default: flexible
             Operator that specifies how the spatial extent is selected. Choose from
             flexible (default), strict or file. ``strict`` returns only those files
-            that fully contain the query extent. The bbox search ``-10,10 by -10,10``
-            will not select files covering only ``0,5 by 0,5`` with the ``strict``
+            that fully contain the query extent. The bbox search ``-10 10 -10 10``
+            will not select files covering only ``0 5 0 5`` with the ``strict``
             method. ``flexible`` will select those files as it returns files that
             have any overlap with the query extent. ``file`` will only return files
             where the entire spatial extent is contained by the query geometry.

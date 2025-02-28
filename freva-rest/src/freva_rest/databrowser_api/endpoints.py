@@ -280,14 +280,10 @@ async def stac_catalogue(
 
         async def run_stac_creation() -> None:
             """Execute the STAC catalogue creation background task"""
-            try:
-                async for _ in stac_instance.stream_stac_catalogue(
-                    collection_id, stac_dynamic
-                ):
-                    pass
-            except Exception as e:
-                logger.error(f"Error in background task: {str(e)}", exc_info=True)
-                raise
+            async for _ in stac_instance.stream_stac_catalogue(
+                collection_id, stac_dynamic
+            ):
+                pass  # pragma: no cover
         background_tasks.add_task(run_stac_creation)
 
         redirect_url = (
