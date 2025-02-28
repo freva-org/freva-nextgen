@@ -264,7 +264,7 @@ class Translator:
     def _nextgems_lookup(self) -> Dict[str, str]:
         """Define the search facets for the cmip5 standard."""
         return {
-            "experiment": "experiment",
+            "experiment": "simulation_id",
             "ensemble": "member_id",
             "fs_type": "fs_type",
             "grid_label": "grid_label",
@@ -638,6 +638,9 @@ class Solr:
             Translate the output to the required DRS flavour.
         """
         translator = Translator(flavour, translate)
+        valid_facets = translator.valid_facets
+        if multi_version:
+            valid_facets = translator.valid_facets + ["version"]
         for key in query:
             key = key.lower().replace("_not_", "")
             if (
@@ -1000,7 +1003,12 @@ class Solr:
         -------
         int: status code of the apache solr query.
         """
-        search_facets = [f for f in facets if f not in ("*", "all")]
+        search_facets = [f for f in facets if f not in ("*", "all")] or [
+            f for f in self._config.solr_fields
+        ]
+        if self.multi_version:
+            search_facets.append("version")
+
         self.query["facet"] = "true"
         self.query["rows"] = max_results
         self.query["facet.sort"] = "index"
@@ -1008,7 +1016,7 @@ class Solr:
         self.query["facet.limit"] = "-1"
         self.query["wt"] = "json"
         self.query["facet.field"] = self.translator.translate_facets(
-            search_facets or self._config.solr_fields, backwards=True
+            search_facets, backwards=True
         )
         self.query["fl"] = [self.uniq_key, "fs_type"]
         logger.info(

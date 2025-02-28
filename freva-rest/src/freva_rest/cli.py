@@ -53,19 +53,38 @@ import argparse
 import asyncio
 import logging
 import os
+import sys
 from enum import Enum
 from pathlib import Path
 from socket import gethostname
 from tempfile import NamedTemporaryFile
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import uvicorn
 from pydantic.fields import FieldInfo
+from rich import print as pprint
 from rich.markdown import Markdown
 from rich_argparse import ArgumentDefaultsRichHelpFormatter
 
+from freva_rest import __version__
+
 from .config import ServerConfig
 from .logger import logger
+
+
+class VersionAction(argparse._VersionAction):
+    """Custom Action for displaying the programm versions."""
+
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: Any,
+        option_string: Optional[str] = None,
+    ) -> None:
+        version = self.version or "%(prog)s"
+        pprint(version % {"prog": parser.prog or sys.argv[1]})
+        parser.exit()
 
 
 def create_arg_parser(
@@ -76,6 +95,13 @@ def create_arg_parser(
         prog="freva-rest-server",
         description=Markdown(__doc__),  # type: ignore
         formatter_class=ArgumentDefaultsRichHelpFormatter,
+    )
+    parser.add_argument(
+        "-V",
+        "--version",
+        help="Display version and exit.",
+        version=f"[b][red]%(prog)s[/red]: {__version__}[/b]",
+        action=VersionAction,
     )
     parser.add_argument(
         "--port",
@@ -134,8 +160,10 @@ def get_cert_file(
 def cli(argv: Optional[List[str]] = None) -> None:
     """Start the freva rest API."""
     cfg = ServerConfig()
-    parser = create_arg_parser(cfg.__fields__, ["api-services"])
-    parser.add_argument("--dev", action="store_true", help="Enable development mode")
+    parser = create_arg_parser(cfg.model_fields, ["api-services"])
+    parser.add_argument(
+        "--dev", action="store_true", help="Enable development mode"
+    )
     parser.add_argument(
         "--n-workers",
         "-w",

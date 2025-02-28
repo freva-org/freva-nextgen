@@ -123,6 +123,30 @@ There are many more options for defining a value for a given key:
     different meaning (normally it will try to match files with that name)
     to turn that off you can use backslash \ (key=\*) or use quotes (key='*').
 
+Searching multi-versioned datasets
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In datasets with multiple versions only the `latest` version (i.e. `highest`
+version number) is returned by default. Querying a specific version from a
+multi versioned datasets requires the ``multi-version`` flag in combination with
+the ``version`` special attribute:
+
+.. code:: console
+
+    freva-client databrowser data-search dataset=cmip6-fs model=access-cm2 --multi-version version=v20191108
+
+.. execute_code::
+   :hide_code:
+
+   from subprocess import run, PIPE
+   res = run(["freva-client", "databrowser", "data-search",
+              "dataset=cmip6-fs", "model=access-cm2", "--multi-version", 
+              "version=v20191108",
+             ], check=True, stdout=PIPE, stderr=PIPE)
+   print(res.stdout.decode())
+
+If no particular ``version`` is requested, all versions will be returned.
+
 Streaming files via zarr
 ~~~~~~~~~~~~~~~~~~~~~~~~
 Instead of getting the file locations on disk or tape, you can instruct the

@@ -74,9 +74,7 @@ class Config:
             host = f"{host}:{port}"
         return f"{scheme}://{host}"
 
-    def _read_config(
-        self, path: Path, file_type: Literal["toml", "ini"]
-    ) -> str:
+    def _read_config(self, path: Path, file_type: Literal["toml", "ini"]) -> str:
         """Read the configuration."""
         data_types = {"toml": self._read_toml, "ini": self._read_ini}
         try:
@@ -137,7 +135,9 @@ class Config:
     @property
     def search_url(self) -> str:
         """Define the data search endpoint."""
-        return f"{self.databrowser_url}/data-search/{self.flavour}/{self.uniq_key}"
+        return (
+            f"{self.databrowser_url}/data-search/{self.flavour}/{self.uniq_key}"
+        )
 
     @property
     def zarr_loader_url(self) -> str:
@@ -371,9 +371,7 @@ class UserDataHandler:
                 )
                 dt = (
                     abs(
-                        (times[1] - times[0])
-                        .astype("timedelta64[s]")
-                        .astype(int)
+                        (times[1] - times[0]).astype("timedelta64[s]").astype(int)
                     )
                     if len(times) > 1
                     else 0
@@ -387,8 +385,7 @@ class UserDataHandler:
             for var in data_vars
             if var not in coords
             and not any(
-                term in var.lower()
-                for term in ["lon", "lat", "bnds", "x", "y"]
+                term in var.lower() for term in ["lon", "lat", "bnds", "x", "y"]
             )
             and var.lower() not in ["rotated_pole", "rot_pole"]
         ]

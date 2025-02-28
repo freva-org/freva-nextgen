@@ -51,14 +51,14 @@ def get_data_loader_config() -> bytes:
     return b64encode(
         json.dumps(
             {
-                "user": os.getenv("API_REDIS_USER"),
-                "passwd": os.getenv("API_REDIS_PASSWORD"),
-                "host": os.getenv("API_REDIS_HOST"),
+                "user": os.getenv("API_REDIS_USER", ""),
+                "passwd": os.getenv("API_REDIS_PASSWORD", ""),
+                "host": os.getenv("API_REDIS_HOST", ""),
                 "ssl_cert": Path(
-                    os.getenv("API_REDIS_SSL_CERTFILE")
+                    os.getenv("API_REDIS_SSL_CERTFILE", "")
                 ).read_text(),
                 "ssl_key": Path(
-                    os.getenv("API_REDIS_SSL_KEYFILE")
+                    os.getenv("API_REDIS_SSL_KEYFILE", "")
                 ).read_text(),
             }
         ).encode("utf-8")
@@ -197,9 +197,7 @@ def invalid_eval_conf_file() -> Iterator[Path]:
     with TemporaryDirectory() as temp_dir:
         eval_file = Path(temp_dir) / "eval.conf"
         eval_file.write_text(
-            "[foo]\n"
-            "solr.host = http://localhost\n"
-            "databrowser.port = 8080"
+            "[foo]\n" "solr.host = http://localhost\n" "databrowser.port = 8080"
         )
         with mock.patch.dict(
             os.environ,
@@ -232,7 +230,7 @@ def test_server() -> Iterator[str]:
         "REDIS_SSL_CERTFILE",
     ):
         env[key] = os.getenv(f"API_{key}", "")
-    env["REDIS_PASS"] = os.getenv("API_REDIS_PASSWORD")
+    env["REDIS_PASS"] = os.getenv("API_REDIS_PASSWORD", "")
     with mock.patch.dict(os.environ, env, clear=True):
         yield from setup_server()
         asyncio.run(shutdown_data_loader())

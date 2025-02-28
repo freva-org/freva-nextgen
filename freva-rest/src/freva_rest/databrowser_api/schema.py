@@ -74,7 +74,6 @@ class SolrSchema:
         for key, param in cls.params.items():
             _ = query.pop(key, [""])
             _ = query.pop(param.alias, [""])
-
         return query
 
 

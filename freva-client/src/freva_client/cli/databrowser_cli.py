@@ -235,6 +235,9 @@ def metadata_search(
         time_select=cast(Literal["file", "flexible", "strict"], time_select.value),
         bbox=bbox or None,
         bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select.value),
+        time_select=cast(
+            Literal["file", "flexible", "strict"], time_select.value
+        ),
         flavour=cast(
             Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
             flavour.value,
@@ -685,7 +688,9 @@ def stac_catalogue(
     print(result.stac_catalogue(filename=filename))
 
 
-@databrowser_app.command(name="data-count", help="Count the databrowser search results")
+@databrowser_app.command(
+    name="data-count", help="Count the databrowser search results"
+)
 @exception_handler
 def count_values(
     search_keys: Optional[List[str]] = typer.Argument(
@@ -829,8 +834,13 @@ def count_values(
                 time_select=cast(Literal["file", "flexible", "strict"], time_select),
                 bbox=bbox or None,
                 bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
+                time_select=cast(
+                    Literal["file", "flexible", "strict"], time_select
+                ),
                 flavour=cast(
-                    Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
+                    Literal[
+                        "freva", "cmip6", "cmip5", "cordex", "nextgems", "user"
+                    ],
                     flavour.value,
                 ),
                 host=host,
@@ -910,11 +920,13 @@ def user_data_add(
         action="add",
         userdata_items=cast(List[Union[str, xr.Dataset]], paths),
         metadata=facet_dict,
-        host=host
+        host=host,
     )
 
 
-@user_data_app.command(name="delete", help="Delete user data from the databrowser.")
+@user_data_app.command(
+    name="delete", help="Delete user data from the databrowser."
+)
 @exception_handler
 def user_data_delete(
     search_keys: List[str] = typer.Option(
