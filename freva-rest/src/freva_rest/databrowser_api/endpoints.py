@@ -275,6 +275,9 @@ async def stac_catalogue(
     collection_id = f"Dataset-{(f'{flavour}-{str(uuid.uuid4())}')[:18]}"
     await stac_instance.init_stac_catalogue(request)
     if stac_dynamic:
+        if total_count > int(server_config.stacapi_max_items):
+            raise HTTPException(status_code=413,
+                                detail="Result stream too big for STAC API.")
         await stac_instance.stacapi_availability()
         await stac_instance.init_stac_dynamic_collection(collection_id)
 
@@ -285,9 +288,9 @@ async def stac_catalogue(
             ):
                 pass  # pragma: no cover
         background_tasks.add_task(run_stac_creation)
-
+        stacbrowser_url = server_config.stacbrowser_host.rstrip('/')
         redirect_url = (
-            f"{server_config.stacbrowser_host}"
+            f"{stacbrowser_url}"
             f"/collections/{collection_id}"
         )
         return RedirectResponse(

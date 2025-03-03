@@ -35,6 +35,7 @@ client_secret = ""
 # if the `stac_dynamic` set to `true` in your search
 # params.
 
-[stac]
+[stacapi]
 api_hostname = "http://stac:secret@localhost:8083"
-browser_hostname = "http://localhost:8085"
+browser_hostname = "https://radiantearth.github.io/stac-browser/#/external/http:/localhost:8083/"
+max_items = 1000

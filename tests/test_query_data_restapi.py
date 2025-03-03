@@ -377,7 +377,6 @@ def test_stac_catalogue(test_server: str) -> None:
     with mock.patch("freva_rest.rest.server_config.stacapi_host", "http://wrong:wrong@foo.bar:8083"), \
          mock.patch("freva_rest.databrowser_api.core.Solr._session_get") as mock_get:
         
-        # Mock connection failure
         mock_get.return_value.__aenter__.side_effect = Exception("Connection failed")
         
         res2 = requests.get(
@@ -400,7 +399,19 @@ def test_stac_catalogue(test_server: str) -> None:
                 "stac_dynamic": True
             }
         )
-        assert res2.status_code == 500
+        assert res2.status_code == 503
+    # 403 Forbidden, too many items
+    with mock.patch("freva_rest.rest.server_config.stacapi_max_items", 1) as mock_get:
+        
+        res2 = requests.get(
+            f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
+            params={
+                "activity_id": "cmip",
+                "multi-version": True,
+                "stac_dynamic": True
+            }
+        )
+        assert res2.status_code == 413
 def test_bad_intake_request(test_server: str) -> None:
     """Test for a wrong intake request."""
     res1 = requests.get(

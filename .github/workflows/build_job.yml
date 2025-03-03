@@ -31,11 +31,6 @@ jobs:
             echo "ghcr.io/freva-clint/freva-rest-api-dev" > image.txt
             IS_PRERELEASE="true"
           else
-<<<<<<< HEAD
-            echo "This is not a pre-release tag."
-            echo "is_prerelease=false" >> $GITHUB_OUTPUT
-          fi
-=======
             echo "ghcr.io/freva-clint/freva-rest-api" > image.txt
           fi
           echo "${{ steps.get-tag.outputs.tag }}" > tag.txt
@@ -50,7 +45,6 @@ jobs:
             image.txt
             tag.txt
             is_prerelease.txt
->>>>>>> main
   tests:
     uses: ./.github/workflows/ci_job.yml
 

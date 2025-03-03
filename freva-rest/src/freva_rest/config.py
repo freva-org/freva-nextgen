@@ -26,6 +26,7 @@ from typing import (
 
 import requests
 import tomli
+from fastapi import HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
 from pydantic import BaseModel, Field
 
@@ -198,6 +199,13 @@ class ServerConfig(BaseModel):
             ),
         ),
     ] = os.getenv("API_STACBROWSER_HOST", "")
+    stacapi_max_items: Annotated[
+        Union[int, str],
+        Field(
+            title="STAC max items",
+            description="The maximum number of items to retrieve from the STAC API.",
+        ),
+    ] = os.getenv("API_STAC_MAX_ITEMS", 1000)
 
     def _read_config(self, section: str, key: str) -> Any:
         fallback = self._fallback_config[section][key] or None
@@ -259,9 +267,12 @@ class ServerConfig(BaseModel):
         )
         self.redis_host = self.redis_host or self._read_config("cache", "hostname")
         self.stacapi_host = self.stacapi_host or \
-            self._read_config("stac", "api_hostname")
+            self._read_config("stacapi", "api_hostname")
         self.stacbrowser_host = self.stacbrowser_host or self._read_config(
-            "stac", "browser_hostname"
+            "stacapi", "browser_hostname"
+        )
+        self.stacapi_max_items = self.stacapi_max_items or self._read_config(
+            "stacapi", "max_items"
         )
 
     @staticmethod
@@ -418,12 +429,13 @@ class ServerConfig(BaseModel):
             Complete STAC URL as string
         """
         if not self.stacapi_host:
-            raise ValueError(
-                "Missing STAC API host configuration. "
-                "Please provide it either in config "
-                "or environment variable (API_STAC_HOST)"
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "STAC-API service is not set in the configuration "
+                    "of the current Freva instance."
+                ),
             )
-
         base_url = self.stacapi_host.rstrip('/')
 
         if spec == "collections":
