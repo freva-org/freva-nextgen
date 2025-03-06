@@ -48,7 +48,7 @@ WORKDIR /opt/freva-rest
 COPY --from=builder /opt/app/dist /opt/app/dist
 ############################################################################################################
 # [Temporary] after opensearch conda package is available, remove the following Run command
-RUN git clone -b opensearch-stac https://github.com/FREVA-CLINT/freva-service-config.git /opt/freva-service-config && \
+RUN git clone --recursive https://github.com/FREVA-CLINT/freva-service-config.git /opt/freva-service-config && \
     cp /opt/freva-service-config/opensearch/opensearch.yml ${OPENSEARCH_CONF_DIR}/opensearch.yml && \
     cat ${OPENSEARCH_CONF_DIR}/opensearch.yml
 ############################################################################################################
