@@ -59,11 +59,16 @@ init_mysql(){
 init_opensearch() {
     log_service "Initialising OpenSearch"
     log_info "Starting OpenSearch"
-    nohup su -s /bin/bash opensearch -c "OPENSEARCH_PATH_CONF=${OPENSEARCH_CONF_DIR} ${OPENSEARCH_HOME}/bin/opensearch" > /logs/opensearch.log 2>&1 &
+    /bin/bash /opt/conda/libexec/freva-rest-server/scripts/init-opensearch
     API_OPENSEARCH_HOST=${API_OPENSEARCH_HOST:-localhost}
-    API_OPENSEARCH_PORT=${API_OPENSEARCH_PORT:-9202}
+    API_OPENSEARCH_PORT=${API_OPENSEARCH_PORT:-9200}
+    OPENSEARCH_HOME=${OPENSEARCH_HOME:-/opt/conda/libexec/opensearch}
+    OPENSEARCH_PATH_CONF=${OPENSEARCH_PATH_CONF:-${OPENSEARCH_HOME}/config}
+    OPENSEARCH_JAVA_HOME=${OPENSEARCH_JAVA_HOME:-/opt/conda}
+    chown -R opensearch:opensearch /opt/conda/libexec/opensearch
+    nohup su -s /bin/bash opensearch -c "OPENSEARCH_JAVA_HOME=${OPENSEARCH_JAVA_HOME} OPENSEARCH_PATH_CONF=${OPENSEARCH_PATH_CONF} ${OPENSEARCH_HOME}/bin/opensearch" > /logs/opensearch.log 2>&1 &
     log_info "Waiting for OpenSearch to become available ..."
-    timeout 60 bash -c 'until curl -s http://localhost:9202;do sleep 2; done' || {
+    timeout 180 bash -c 'until curl -s http://localhost:9200;do sleep 2; done' || {
             echo "Error: OpenSearch did not start within 60 seconds." >&2
             exit 1
     }
@@ -82,7 +87,7 @@ init_stac_api() {
     export ENVIRONMENT=${ENVIRONMENT:-local}
     export WEB_CONCURRENCY=${WEB_CONCURRENCY:-10}
     export ES_HOST=${ES_HOST:-localhost}
-    export ES_PORT=${ES_PORT:-9202}
+    export ES_PORT=${ES_PORT:-9200}
     export ES_USE_SSL=${ES_USE_SSL:-false}
     export ES_VERIFY_CERTS=${ES_VERIFY_CERTS:-false}
     export BACKEND=${BACKEND:-opensearch}
