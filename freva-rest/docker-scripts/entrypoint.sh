@@ -1,6 +1,7 @@
 #!/bin/bash
 set -o nounset -Eeuo errexit -Eeuo pipefail
 source /usr/local/lib/logging.sh
+source /usr/local/lib/utils.sh
 
 check_env(){
 
@@ -59,19 +60,29 @@ init_mysql(){
 init_opensearch() {
     log_service "Initialising OpenSearch"
     log_info "Starting OpenSearch"
-    /bin/bash /opt/conda/libexec/freva-rest-server/scripts/init-opensearch
-    API_OPENSEARCH_HOST=${API_OPENSEARCH_HOST:-localhost}
-    API_OPENSEARCH_PORT=${API_OPENSEARCH_PORT:-9200}
-    OPENSEARCH_HOME=${OPENSEARCH_HOME:-/opt/conda/libexec/opensearch}
-    OPENSEARCH_PATH_CONF=${OPENSEARCH_PATH_CONF:-${OPENSEARCH_HOME}/config}
-    OPENSEARCH_JAVA_HOME=${OPENSEARCH_JAVA_HOME:-/opt/conda}
+    create_opensearch_user # check if opensearch user exists
+    source /opt/conda/libexec/freva-rest-server/scripts/init-opensearch
+    #!! THE FOLLOWING LINES LOOKS A BIT DANEROUS TO ME. BECAUSE THESE TWO DIR ARE DESINGED
+    # FOR ALL OTHER SERVICES AS WELL. BUT HERE WE ARE CHANGING THE OWNERSHIP TO OPENSEARCH
+    # WHICH I'M NOT SURE IF IT'S A GOOD IDEA. SINCE WE DON'T NEED TO STORE THE OPENSEARCH
+    # DATA ANYWHERE ELSE, AND IT WOULD BE FLUSHED AFTET CERTAIN DAYS, I THINK
+    # WE SHOULD DISMANTEL DATA_DIR OF OPENSEARCH. ALSO LOG_DIR BY DEFAULT IS
+    # /opt/conda/libexec/opensearch/logs/gc.log
+    # The main problem initiates from this point that opensearch is not able to start
+    # as a root user.
+    chown -R opensearch:opensearch /opt/conda/var/log/freva-rest-server/
+    chown -R opensearch:opensearch /opt/conda/var/freva-rest-server/
+    export LOG_DIR=/opt/conda/var/log/freva-rest-server/
+    #####################################################################
+
     chown -R opensearch:opensearch /opt/conda/libexec/opensearch
-    nohup su -s /bin/bash opensearch -c "OPENSEARCH_JAVA_HOME=${OPENSEARCH_JAVA_HOME} OPENSEARCH_PATH_CONF=${OPENSEARCH_PATH_CONF} ${OPENSEARCH_HOME}/bin/opensearch" > /logs/opensearch.log 2>&1 &
+    nohup su -s /bin/bash opensearch -c "${OPENSEARCH_HOME}/bin/opensearch" > /logs/opensearch.log 2>&1 &
     log_info "Waiting for OpenSearch to become available ..."
-    timeout 180 bash -c 'until curl -s http://localhost:9200;do sleep 2; done' || {
+    timeout 60 bash -c 'until curl -s http://localhost:9202;do sleep 2; done' || {
             echo "Error: OpenSearch did not start within 60 seconds." >&2
             exit 1
     }
+    add_opensearch_ism_remove_policy
     log_info "OpenSearch startup completed successfully"
 }
 
@@ -87,7 +98,7 @@ init_stac_api() {
     export ENVIRONMENT=${ENVIRONMENT:-local}
     export WEB_CONCURRENCY=${WEB_CONCURRENCY:-10}
     export ES_HOST=${ES_HOST:-localhost}
-    export ES_PORT=${ES_PORT:-9200}
+    export ES_PORT=${ES_PORT:-9202}
     export ES_USE_SSL=${ES_USE_SSL:-false}
     export ES_VERIFY_CERTS=${ES_VERIFY_CERTS:-false}
     export BACKEND=${BACKEND:-opensearch}

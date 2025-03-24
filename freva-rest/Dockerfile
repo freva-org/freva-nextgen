@@ -19,10 +19,6 @@ ENV API_CONFIG=/opt/freva-rest/api_config.toml \
     USE_STACAPI=0 \
     USE_OPENSEARCH=0
 
-# we need to define a user to run the opensearch service as non-root
-RUN groupadd -g 1000 opensearch && \
-    useradd -u 1000 -g opensearch -s /bin/bash -m opensearch
-
 FROM base AS builder
 WORKDIR /opt/app
 COPY . .
@@ -37,11 +33,12 @@ COPY --from=builder /opt/app/dist /opt/app/dist
 COPY src/freva_rest/api_config.toml $API_CONFIG
 ENV PATH=/opt/conda/bin:/usr/local/bin:$PATH
 RUN mkdir -p /docker-entrypoint-initdb.d && \
-    mamba install -y -q -c conda-forge --override-channels freva-rest-server && \
+    mamba install -y -q -c conda-forge --override-channels freva-rest-server=2502.0.0 && \
     python3 -m pip install --no-cache-dir /opt/app/dist/freva_rest*.whl
 
 COPY --chmod=0755 docker-scripts/entrypoint.sh /docker-entrypoint-initdb.d/entrypoint.sh
 COPY --chmod=0755 docker-scripts/follow /usr/local/bin/follow
+COPY --chmod=0755 docker-scripts/utils.sh /usr/local/lib/utils.sh
 COPY docker-scripts/logging.sh /usr/local/lib/logging.sh
 RUN mkdir -p /logs && chmod -R 2666 /logs
 

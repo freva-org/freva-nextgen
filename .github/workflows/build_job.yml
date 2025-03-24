@@ -138,9 +138,7 @@ jobs:
           context: freva-rest
           file: freva-rest/Dockerfile
           build-args: VERSION=${{ env.TAG }}
-          # Temporary we remove linux/ppc64le to be able to build the image
-          # including opensearch
-          platforms: linux/amd64, linux/arm64
+          platforms: linux/amd64, linux/arm64, linux/ppc64le
           push: true
           no-cache: true
           tags: |
