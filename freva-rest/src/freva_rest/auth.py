@@ -25,28 +25,28 @@ TIMEOUT: aiohttp.ClientTimeout = aiohttp.ClientTimeout(total=5)
 """5 seconds for timeout for key cloak interaction."""
 
 
-class CustomAuth(Auth):
+class CustomAuth:
     """Auth class to check the OICD service is available."""
 
     @staticmethod
-    def server_is_up(url: Optional[str]) -> bool:
+    def server_is_up(url: str) -> bool:
         """Check if the server is up."""
-        if url is None:
+        if not url.strip():
             return False
         timeout = httpx.Timeout(connect=2.0, read=2.0, write=2.0, pool=2.0)
         try:
             response = httpx.get(url, timeout=timeout)
-            return response.status_code < 500
+            return response.status_code < 300
         except httpx.RequestError:
             return False
 
-    def __init__(self):
+    def __init__(self, oidc_discovery_url: str):
 
         self._auth: Optional[Auth] = None
-        openid_connect_url = server_config.oidc_discovery_url
-        if self.server_is_up(openid_connect_url):
-            self._connection = True
-            self._auth = Auth(openid_connect_url or "")
+        if self.server_is_up(oidc_discovery_url):
+            self._auth = Auth(oidc_discovery_url)
+        else:
+            logger.critical("OICD auth service not available.")
 
     def required(
         self,
@@ -57,11 +57,12 @@ class CustomAuth(Auth):
     ) -> IDToken:
         """Overload the Auth.required method."""
         if self._auth is None:
+            logger.critical("OICD auth service not available.")
             raise HTTPException(502, detail="Auth server not available.")
         return self._auth.required(security_scopes, authorization_credentials)
 
 
-auth = CustomAuth()
+auth = CustomAuth(server_config.oidc_discovery_url)
 
 
 class UserInfo(BaseModel):
