@@ -1,10 +1,19 @@
 """Definition of routes for authentication."""
 
+import asyncio
 import datetime
-from typing import Annotated, Any, Dict, Literal, Optional, cast
+from typing import (
+    Annotated,
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    Literal,
+    Optional,
+    cast,
+)
 
 import aiohttp
-import httpx
 from fastapi import Depends, Form, HTTPException, Request, Security
 from fastapi.responses import RedirectResponse
 from fastapi.security import (
@@ -25,44 +34,96 @@ TIMEOUT: aiohttp.ClientTimeout = aiohttp.ClientTimeout(total=5)
 """5 seconds for timeout for key cloak interaction."""
 
 
-class CustomAuth:
-    """Auth class to check the OICD service is available."""
+class SafeAuth:
+    """
+    A wrapper around fastapi_third_party_auth.Auth that safely delays
+    initialization until the OIDC discovery URL is reachable.
 
-    @staticmethod
-    def server_is_up(url: str) -> bool:
-        """Check if the server is up."""
-        if not url.strip():
-            return False
-        timeout = httpx.Timeout(connect=2.0, read=2.0, write=2.0, pool=2.0)
-        try:
-            response = httpx.get(url, timeout=timeout)
-            return response.status_code < 300
-        except httpx.RequestError:
-            return False
+    This allows FastAPI routes to use the Auth.required() dependency without
+    failing at application startup if the OIDC server is temporarily
+    unavailable.
+    """
 
-    def __init__(self, oidc_discovery_url: str):
+    _lock: asyncio.Lock = asyncio.Lock()
 
+    def __init__(self, discovery_url: Optional[str] = None) -> None:
+        """
+        Initialize the SafeAuth wrapper.
+
+        Parameters:
+            discovery_url (str): The full URL to the OIDC discovery document,
+                                 e.g., "https://issuer/.well-known/openid-configuration"
+        """
+        self.discovery_url: str = (discovery_url or "").strip()
         self._auth: Optional[Auth] = None
-        if self.server_is_up(oidc_discovery_url):
-            self._auth = Auth(oidc_discovery_url)
-        else:
-            logger.critical("OICD auth service not available.")
 
-    def required(
+    async def _check_server_available(self) -> bool:
+        """
+        Check whether the OIDC server is reachable by requesting the
+            discovery document.
+
+        Returns
+        -------
+            bool: True if the server is up and the document is reachable,
+                  False otherwise.
+        """
+        if not self.discovery_url:
+            return False
+        try:
+            async with aiohttp.ClientSession(timeout=TIMEOUT) as session:
+                async with session.get(self.discovery_url) as response:
+                    return response.status == 200
+        except aiohttp.ClientError:
+            return False
+
+    async def _ensure_auth_initialized(self) -> None:
+        """
+        Initialize the internal Auth instance if the server is available
+        and not yet initialized.
+        """
+        async with self._lock:
+            if self._auth is None and await self._check_server_available():
+                self._auth = Auth(self.discovery_url)
+
+    def required_dependency(
         self,
-        security_scopes: SecurityScopes,
-        authorization_credentials: Optional[
-            HTTPAuthorizationCredentials
-        ] = Depends(HTTPBearer),
-    ) -> IDToken:
-        """Overload the Auth.required method."""
-        if self._auth is None:
-            logger.critical("OICD auth service not available.")
-            raise HTTPException(502, detail="Auth server not available.")
-        return self._auth.required(security_scopes, authorization_credentials)
+    ) -> Callable[
+        [SecurityScopes, Optional[HTTPAuthorizationCredentials]],
+        Awaitable[IDToken],
+    ]:
+        """
+        Return a FastAPI dependency function to validate a token.
+
+        Returns
+        -------
+            Callable: A dependency function to use with `Security(...)` in
+                      FastAPI routes.
+
+        Raises
+        ------
+        HTTPException: 503 if the auth server is not available
+        """
+
+        async def dependency(
+            security_scopes: SecurityScopes,
+            authorization_credentials: Optional[
+                HTTPAuthorizationCredentials
+            ] = Depends(HTTPBearer()),
+        ) -> IDToken:
+            await self._ensure_auth_initialized()
+
+            if self._auth is None:
+                raise HTTPException(
+                    status_code=503,
+                    detail="OIDC server unavailable, cannot validate token.",
+                )
+
+            return self._auth.required(security_scopes, authorization_credentials)
+
+        return dependency
 
 
-auth = CustomAuth(server_config.oidc_discovery_url)
+auth = SafeAuth(server_config.oidc_discovery_url)
 
 
 class UserInfo(BaseModel):
@@ -95,7 +156,7 @@ class Token(BaseModel):
 
 @app.get("/api/freva-nextgen/auth/v2/status", tags=["Authentication"])
 async def get_token_status(
-    id_token: IDToken = Security(auth.required),
+    id_token: IDToken = Security(auth.required_dependency()),
 ) -> TokenPayload:
     """Check the status of an access token."""
     return cast(TokenPayload, id_token)
@@ -103,7 +164,8 @@ async def get_token_status(
 
 @app.get("/api/freva-nextgen/auth/v2/userinfo", tags=["Authentication"])
 async def userinfo(
-    id_token: IDToken = Security(auth.required), request: Request = Required
+    id_token: IDToken = Security(auth.required_dependency()),
+    request: Request = Required,
 ) -> UserInfo:
     """Get userinfo for the current token."""
     token_data = {k.lower(): str(v) for (k, v) in dict(id_token).items()}
