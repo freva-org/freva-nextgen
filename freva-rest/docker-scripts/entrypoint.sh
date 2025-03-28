@@ -24,6 +24,22 @@ init_mongodb() {
         API_LOG_DIR=/var/log/mongodb\
         API_CONFIG_DIR=/tmp/mongodb /bin/bash /opt/conda/libexec/freva-rest-server/scripts/init-mongo
     log_info "Starting MongoDB with authentication..."
+    TRY=0
+    MAX_TRIES=10
+    while [ -f /tmp/mongodb/mongod.pid ]; do
+        PID=$(cat /tmp/mongodb/mongod.pid)
+        echo $PID $(ps $PID) foo
+        if [ -z "$PID" ] || [ -z "$(ps -p $PID --no-headers)" ];then
+            break
+        fi
+        if [ "$TRY" -ge "$MAX_TRIES" ]; then
+            log_error "Timeout: MongoDB didn't stop properly."
+            exit 1
+        fi
+        let TRY=TRY+1
+        log_info "Waiting for init mongod to shut down..."
+        sleep 1
+    done
     /opt/conda/bin/mongod \
         -f /tmp/mongodb/mongod.yaml \
         --auth \
