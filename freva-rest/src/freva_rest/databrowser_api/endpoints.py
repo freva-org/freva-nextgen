@@ -3,7 +3,11 @@
 from typing import Annotated, Any, Dict, List, Literal, Union
 
 from fastapi import Body, Depends, HTTPException, Query, Request, status
-from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
+from fastapi.responses import (
+    JSONResponse,
+    PlainTextResponse,
+    StreamingResponse,
+)
 from pydantic import BaseModel, Field
 
 from freva_rest.auth import TokenPayload, auth
