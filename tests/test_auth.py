@@ -4,12 +4,14 @@ from copy import deepcopy
 from datetime import datetime, timezone
 from typing import Dict
 
+import mock
 import pytest
 import requests
+from fastapi.exceptions import HTTPException
 from pytest_mock import MockFixture
 
 from freva_client.auth import Auth, authenticate
-from freva_rest.auth import CustomAuth
+from freva_rest.auth import SafeAuth
 
 
 def raise_for_status() -> None:
@@ -17,17 +19,18 @@ def raise_for_status() -> None:
     raise requests.HTTPError("Invalid")
 
 
-def test_missing_ocid_server() -> None:
+def test_missing_ocid_server(test_server: str) -> None:
     """Test the behviour of a missing ocid server."""
-    wrong_auth = CustomAuth("")
-    assert wrong_auth._auth is None
-    with pytest.raises():
-        wrong_auth.required("")
-
-    wrong_auth = CustomAuth("http://example.org/bar")
-    assert wrong_auth._auth is None
-    with pytest.raises():
-        wrong_auth.required("")
+    for url in ("", "http://example.org/foo", "http://muhah.zupap"):
+        with mock.patch(
+            "freva_rest.auth.auth.discovery_url",
+            url,
+        ):
+            res = requests.get(
+                f"{test_server}/auth/v2/status",
+                headers={"Authorization": "Bearer foo"},
+            )
+            assert res.status_code == 503
 
 
 def test_authenticate_with_password(
