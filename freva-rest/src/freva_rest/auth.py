@@ -4,8 +4,14 @@ import datetime
 from typing import Annotated, Any, Dict, Literal, Optional, cast
 
 import aiohttp
-from fastapi import Form, HTTPException, Request, Security
+import httpx
+from fastapi import Depends, Form, HTTPException, Request, Security
 from fastapi.responses import RedirectResponse
+from fastapi.security import (
+    HTTPAuthorizationCredentials,
+    HTTPBearer,
+    SecurityScopes,
+)
 from fastapi_third_party_auth import Auth, IDToken
 from pydantic import BaseModel, Field, ValidationError
 
@@ -13,12 +19,49 @@ from .logger import logger
 from .rest import app, server_config
 from .utils import get_userinfo
 
-auth = Auth(openid_connect_url=server_config.oidc_discovery_url)
-
 Required: Any = Ellipsis
 
 TIMEOUT: aiohttp.ClientTimeout = aiohttp.ClientTimeout(total=5)
 """5 seconds for timeout for key cloak interaction."""
+
+
+class CustomAuth(Auth):
+    """Auth class to check the OICD service is available."""
+
+    @staticmethod
+    def server_is_up(url: Optional[str]) -> bool:
+        """Check if the server is up."""
+        if url is None:
+            return False
+        timeout = httpx.Timeout(connect=2.0, read=2.0, write=2.0, pool=2.0)
+        try:
+            response = httpx.get(url, timeout=timeout)
+            return response.status_code < 500
+        except httpx.RequestError:
+            return False
+
+    def __init__(self):
+
+        self._auth: Optional[Auth] = None
+        openid_connect_url = server_config.oidc_discovery_url
+        if self.server_is_up(openid_connect_url):
+            self._connection = True
+            self._auth = Auth(openid_connect_url or "")
+
+    def required(
+        self,
+        security_scopes: SecurityScopes,
+        authorization_credentials: Optional[
+            HTTPAuthorizationCredentials
+        ] = Depends(HTTPBearer),
+    ) -> IDToken:
+        """Overload the Auth.required method."""
+        if self._auth is None:
+            raise HTTPException(502, detail="Auth server not available.")
+        return self._auth.required(security_scopes, authorization_credentials)
+
+
+auth = CustomAuth()
 
 
 class UserInfo(BaseModel):
