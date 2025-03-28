@@ -23,7 +23,7 @@ from typing import (
     cast,
 )
 
-import httpx
+import requests
 import tomli
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
 from pydantic import BaseModel, Field
@@ -44,7 +44,9 @@ class ServerConfig(BaseModel):
         Union[str, Path],
         Field(
             title="API Config",
-            description=("Path to a .toml file holding the API" "configuration"),
+            description=(
+                "Path to a .toml file holding the API" "configuration"
+            ),
         ),
     ] = os.getenv("API_CONFIG", Path(__file__).parent / "api_config.toml")
     proxy: Annotated[
@@ -228,12 +230,16 @@ class ServerConfig(BaseModel):
         self.mongo_host = self.mongo_host or self._read_config(
             "mongo_db", "hostname"
         )
-        self.mongo_user = self.mongo_user or self._read_config("mongo_db", "user")
+        self.mongo_user = self.mongo_user or self._read_config(
+            "mongo_db", "user"
+        )
         self.mongo_password = self.mongo_password or self._read_config(
             "mongo_db", "password"
         )
         self.mongo_db = self.mongo_db or self._read_config("mongo_db", "name")
-        self.solr_host = self.solr_host or self._read_config("solr", "hostname")
+        self.solr_host = self.solr_host or self._read_config(
+            "solr", "hostname"
+        )
         self.solr_core = self.solr_core or self._read_config("solr", "core")
         self.redis_user = self.redis_user or self._read_config("cache", "user")
         self.redis_password = self.redis_password or self._read_config(
@@ -264,7 +270,9 @@ class ServerConfig(BaseModel):
     @property
     def services(self) -> Set[str]:
         """Define the services that are served."""
-        return set(s.strip() for s in self.api_services.split(",") if s.strip())
+        return set(
+            s.strip() for s in self.api_services.split(",") if s.strip()
+        )
 
     @property
     def redis_url(self) -> str:
@@ -318,7 +326,7 @@ class ServerConfig(BaseModel):
         """Query the url overview from OIDC Service."""
         if self._oidc_overview is not None:
             return self._oidc_overview
-        res = httpx.get(self.oidc_discovery_url, verify=False, timeout=3)
+        res = requests.get(self.oidc_discovery_url, verify=False, timeout=3)
         res.raise_for_status()
         self._oidc_overview = res.json()
         return self._oidc_overview
@@ -378,12 +386,14 @@ class ServerConfig(BaseModel):
     def _get_solr_fields(self) -> Iterator[str]:
         url = f"{self.get_core_url(self.solr_cores[-1])}/schema/fields"
         try:
-            for entry in httpx.get(url, timeout=5).json().get("fields", []):
+            for entry in requests.get(url, timeout=5).json().get("fields", []):
                 if entry["type"] in ("extra_facet", "text_general") and entry[
                     "name"
                 ] not in ("file_name", "file", "file_no_version"):
                     yield entry["name"]
-        except httpx.RequestError as error:  # pragma: no cover
+        except (
+            requests.exceptions.ConnectionError
+        ) as error:  # pragma: no cover
             logger.error(
                 "Connection to %s failed: %s", url, error
             )  # pragma: no cover
