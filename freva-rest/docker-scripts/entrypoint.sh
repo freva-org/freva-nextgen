@@ -21,10 +21,11 @@ init_mongodb() {
     done
     mkdir -p /var/data/mongodb /var/log/mongodb
     API_DATA_DIR=/var/data/mongodb\
-        API_LOG_DIR=/var/log/mongodb /bin/bash /opt/conda/libexec/freva-rest-server/scripts/init-mongo
+        API_LOG_DIR=/var/log/mongodb\
+        API_CONFIG_DIR=/tmp/mongodb /bin/bash /opt/conda/libexec/freva-rest-server/scripts/init-mongo
     log_info "Starting MongoDB with authentication..."
     /opt/conda/bin/mongod \
-        -f /opt/conda/share/freva-rest-server/mongodb/mongod.yaml \
+        -f /tmp/mongodb/mongod.yaml \
         --auth \
         --cpu 1> /dev/null 2> /var/log/mongodb/mongodb.err.log &
 }
@@ -33,6 +34,7 @@ init_solr() {
     log_service "Initialising Solr"
     ulimit -n 65000 || echo "Warning: Unable to set ulimit -n 65000"
     mkdir -p /var/data/solr /var/log/solr
+    export SOLR_LOGS_DIR=/var/log/solr
     API_DATA_DIR=/var/data/solr /opt/conda/libexec/freva-rest-server/scripts/init-solr
     log_info "Starting solr service"
     nohup /opt/conda/bin/solr start -force -Dsolr.log.dir=/var/log/solr 1> /dev/null 2> /var/log/solr/solr.err &
