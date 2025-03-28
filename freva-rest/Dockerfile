@@ -8,6 +8,8 @@ ENV API_CONFIG=/opt/freva-rest/api_config.toml \
     CONDA_PREFIX=/opt/conda \
     API_SOLR_CORE=files \
     API_PORT=7777 \
+    API_REDIS_SSL_CERTFILE=/certs/client-cert.pem \
+    API_REDIS_SSL_KEYFILE=/certs/client-key.pem \
     API_SOLR_HOST=localhost:8983 \
     API_MONGO_HOST=localhost:27017 \
     API_OIDC_CLIENT_ID=freva \
@@ -15,7 +17,9 @@ ENV API_CONFIG=/opt/freva-rest/api_config.toml \
     USE_MONGODB=0 \
     USE_SOLR=0 \
     USE_REDIS=0 \
-    USE_MYSQL=0
+    USE_MYSQL=0 \
+    API_LOGDIR=/var/log/freva-rest-server
+
 
 FROM base AS builder
 WORKDIR /opt/app
@@ -29,6 +33,7 @@ WORKDIR /opt/freva-rest
 COPY --from=builder /opt/app/dist /opt/app/dist
 COPY src/freva_rest/api_config.toml $API_CONFIG
 ENV PATH=/opt/conda/bin:/usr/local/bin:$PATH
+
 RUN mkdir -p /docker-entrypoint-initdb.d && \
     mamba install -y -q -c conda-forge --override-channels freva-rest-server && \
     python3 -m pip install --no-cache-dir /opt/app/dist/freva_rest*.whl
@@ -36,7 +41,7 @@ RUN mkdir -p /docker-entrypoint-initdb.d && \
 COPY --chmod=0755 docker-scripts/entrypoint.sh /docker-entrypoint-initdb.d/entrypoint.sh
 COPY --chmod=0755 docker-scripts/follow /usr/local/bin/follow
 COPY docker-scripts/logging.sh /usr/local/lib/logging.sh
-RUN mkdir -p /logs && chmod -R 2666 /logs
+RUN mkdir -p /var/data /var/log/freva-rest-server && chmod -R 2666 /var/log /var/data
 
 ENTRYPOINT ["/docker-entrypoint-initdb.d/entrypoint.sh"]
 CMD ["freva-rest-server"]
