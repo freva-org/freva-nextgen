@@ -53,8 +53,8 @@ init_solr() {
     export SOLR_LOGS_DIR=/var/log/solr
     export SOLR_HEAP=${SOLR_HEAP:-4g}
     export SOLR_PID_DIR=/tmp
-    export SOLR_JETTY_HOST=0.0.0.0
-    export SOLR_PORT=8983
+    export SOLR_JETTY_HOST=${SOLR_HOST:-0.0.0.0}
+    export SOLR_PORT=${SOLR_PORT:-8983}
     API_DATA_DIR=/var/data/solr /opt/conda/libexec/freva-rest-server/scripts/init-solr
     log_info "Starting solr service"
     nohup /opt/conda/bin/solr start -force -s /var/data/solr  1> /dev/null 2> /var/log/solr/solr.err &
