@@ -51,10 +51,13 @@ init_solr() {
     ulimit -n 65000 || echo "Warning: Unable to set ulimit -n 65000"
     mkdir -p /var/data/solr /var/log/solr
     export SOLR_LOGS_DIR=/var/log/solr
+    export SOLR_HEAP=${SOLR_HEAP:-4g}
+    export SOLR_PID_DIR=/tmp
+    export SOLR_JETTY_HOST=0.0.0.0
+    export SOLR_PORT=8983
     API_DATA_DIR=/var/data/solr /opt/conda/libexec/freva-rest-server/scripts/init-solr
     log_info "Starting solr service"
-    nohup /opt/conda/bin/solr start -force -Dsolr.log.dir=/var/log/solr 1> /dev/null 2> /var/log/solr/solr.err &
-    SOLR_PORT=${API_SOLR_PORT:-8983}
+    nohup /opt/conda/bin/solr start -force -s /var/data/solr  1> /dev/null 2> /var/log/solr/solr.err &
     timeout 60 bash -c 'until curl -s http://localhost:'"$SOLR_PORT"'/solr/admin/ping;do sleep 2; done' || {
             echo "Error: Solr did not start within 60 seconds." >&2
             exit 1
