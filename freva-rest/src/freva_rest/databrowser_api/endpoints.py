@@ -4,7 +4,6 @@ import uuid
 from typing import Annotated, Any, Dict, List, Literal, Union
 
 from fastapi import (
-    BackgroundTasks,
     Body,
     Depends,
     HTTPException,
@@ -16,7 +15,6 @@ from fastapi import (
 from fastapi.responses import (
     JSONResponse,
     PlainTextResponse,
-    RedirectResponse,
     StreamingResponse,
 )
 from pydantic import BaseModel, Field
@@ -229,7 +227,6 @@ async def intake_catalogue(
     tags=["Data search"],
     status_code=200,
     responses={
-        303: {"description": "See Other - Redirected to STAC-Browser"},
         413: {"description": "Result stream too big."},
         422: {"description": "Invalid flavour or search keys."},
         503: {"description": "Search backend error"},
@@ -244,17 +241,15 @@ async def stac_catalogue(
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     max_results: Annotated[int, SolrSchema.params["max_results"]] = -1,
-    stac_dynamic: bool = False,
     request: Request = Required,
-    background_tasks: BackgroundTasks = Required,
 ) -> Response:
     """Create a STAC catalogue from a freva search.
 
-    This endpoint transforms Freva databrowser search results into a dynamic
-    and STATIC SpatioTemporal Asset Catalog (STAC). STAC is an open standard
-    for geospatial data catalouging, enabling consistent discovery and access
-    of climate datasets, satellite imagery and spatiotemporal data. It provides
-    a common language for describing geospatial information and related metadata.
+    This endpoint transforms Freva databrowser search results into a Static
+    SpatioTemporal Asset Catalog (STAC). STAC is an open standard for geospatial
+    data catalouging, enabling consistent discovery and access of climate
+    datasets, satellite imagery and spatiotemporal data. It provides a
+    common language for describing geospatial information and related metadata.
     """
     stac_instance = await STAC.validate_parameters(
         server_config,
@@ -274,38 +269,14 @@ async def stac_catalogue(
 
     collection_id = f"Dataset-{(f'{flavour}-{str(uuid.uuid4())}')[:18]}"
     await stac_instance.init_stac_catalogue(request)
-    if stac_dynamic:
-        if total_count > int(server_config.stacapi_max_items):
-            raise HTTPException(status_code=413,
-                                detail="Result stream too big for STAC API.")
-        await stac_instance.stacapi_availability()
-        await stac_instance.init_stac_dynamic_collection(collection_id)
-
-        async def run_stac_creation() -> None:
-            """Execute the STAC catalogue creation background task"""
-            async for _ in stac_instance.stream_stac_catalogue(
-                collection_id, stac_dynamic
-            ):
-                pass  # pragma: no cover
-        background_tasks.add_task(run_stac_creation)
-        stacbrowser_url = server_config.stacbrowser_host.rstrip('/')
-        redirect_url = (
-            f"{stacbrowser_url}"
-            f"/collections/{collection_id}"
-        )
-        return RedirectResponse(
-            url=redirect_url,
-            status_code=303
-        )
-    else:
-        file_name = f"stac-catalog-{collection_id}-{uniq_key}.tar.gz"
-        return StreamingResponse(
-            stac_instance.stream_stac_catalogue(collection_id, stac_dynamic),
-            media_type="application/x-tar+gzip",
-            headers={
-                "Content-Disposition": f'attachment; filename="{file_name}"'
-            }
-        )
+    file_name = f"stac-catalog-{collection_id}-{uniq_key}.tar.gz"
+    return StreamingResponse(
+        stac_instance.stream_stac_catalogue(collection_id),
+        media_type="application/x-tar+gzip",
+        headers={
+            "Content-Disposition": f'attachment; filename="{file_name}"'
+        }
+    )
 
 
 @app.get(

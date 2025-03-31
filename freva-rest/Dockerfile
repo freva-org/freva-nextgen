@@ -15,9 +15,7 @@ ENV API_CONFIG=/opt/freva-rest/api_config.toml \
     USE_MONGODB=0 \
     USE_SOLR=0 \
     USE_REDIS=0 \
-    USE_MYSQL=0 \
-    USE_STACAPI=0 \
-    USE_OPENSEARCH=0
+    USE_MYSQL=0
 
 FROM base AS builder
 WORKDIR /opt/app

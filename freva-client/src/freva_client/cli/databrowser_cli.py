@@ -654,10 +654,9 @@ def stac_catalogue(
         "--filename",
         help=(
             "Path to the file where the static STAC catalogue,"
-            "should be written to. If you enter and the path is "
+            "should be written to. If you don't specify or the path "
             "does not exist, the file will be created in the current "
-            "working directory. If you don't enter a path, the STAC API"
-            "dynamic catalogue link will be printed to stdout."
+            "working directory. "
         ),
     ),
 ) -> None:

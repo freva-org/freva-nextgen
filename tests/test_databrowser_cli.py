@@ -3,13 +3,15 @@
 import json
 from copy import deepcopy
 from tempfile import NamedTemporaryFile
-
+import tempfile
+import subprocess
 from pytest import LogCaptureFixture
 from typer.testing import CliRunner
-
+import os
+import shutil
 from freva_client.auth import Auth, authenticate
 from freva_client.cli.databrowser_cli import databrowser_app as app
-
+import tarfile
 
 def test_overview(cli_runner: CliRunner, test_server: str) -> None:
     """Test the overview sub command."""
@@ -111,11 +113,26 @@ def test_stac_catalogue(
     cli_runner: CliRunner, test_server: str
 ) -> None:
     """Test STAC Catalogue"""
-
-    # sucessful test with static STAC catalogue
-    res = cli_runner.invoke(app, ["stac-catalogue", "--host", test_server, "--filename", "/tmp/something.tar.gz"])
-    assert res.exit_code == 0
-    assert res.stdout
+    output_file = "/tmp/something.tar.gz"
+    temp_dir = tempfile.mkdtemp()
+    # we check the STAC items in the output file
+    try:
+        res = cli_runner.invoke(app, ["stac-catalogue", "--host", test_server, "--filename", output_file])
+        assert res.exit_code == 0
+        with tarfile.open(output_file, "r:gz") as tar:
+            for member in tar.getmembers():
+                if "/items/" in member.name and member.name.endswith(".json"):
+                    item_content = tar.extractfile(member).read()
+                    temp_item_path = os.path.join(temp_dir, "test_item.json")
+                    with open(temp_item_path, "wb") as f:
+                        f.write(item_content)
+                    subprocess.run(["stac-check", temp_item_path], check=True)
+                    break
+    finally:
+        if os.path.exists(output_file):
+            os.remove(output_file)
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
 
     # failed test with static STAC catalogue - wrong output
     res = cli_runner.invoke(app, ["stac-catalogue", "--host", test_server, "--filename", "/foo/bar"])
@@ -127,15 +144,7 @@ def test_stac_catalogue(
     assert res.exit_code == 1
     assert not res.stdout
 
-    # Successful test with dynamic STAC catalogue
-    res = cli_runner.invoke(app, ["stac-catalogue", "--host", test_server])
-    assert res.exit_code == 0
-    assert res.stdout
-
-    # failed test with dynamic STAC catalogue
-    res = cli_runner.invoke(app, ["stac-catalogue", "--host", test_server, "foo=b"])
-    assert res.exit_code == 1
-    assert not res.stdout
+    # TODO: add a test to validate the output of the stactic STAC catalogue
 
 def test_intake_files_zarr(
     cli_runner: CliRunner, test_server: str, auth_instance: Auth

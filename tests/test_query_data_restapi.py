@@ -324,23 +324,6 @@ def test_intake_search(test_server: str) -> None:
 
 def test_stac_catalogue(test_server: str) -> None:
     """Test the creation of STAC Catalogue."""
-    # 303 redirect means 200 OK from freva-rest api endpoint
-    res = requests.get(
-        f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
-        params={
-            "activity_id": "cmip", 
-            "multi-version": True, 
-            "stac_dynamic": True
-        },
-        allow_redirects=False
-    )
-    
-    assert res.status_code == 303
-
-    assert 'Location' in res.headers
-    redirect_url = res.headers['Location']
-    assert redirect_url.startswith(('http://', 'https://'))
-    assert '/collections/' in redirect_url
 
     # 200 OK from STAC static endpoint
     res = requests.get(
@@ -348,7 +331,6 @@ def test_stac_catalogue(test_server: str) -> None:
         params={
             "activity_id": "cmip", 
             "multi-version": True, 
-            "stac_dynamic": False,
             "max_results": 2
         },
         allow_redirects=False
@@ -373,45 +355,7 @@ def test_stac_catalogue(test_server: str) -> None:
         params={"activity_id": "cmip3", "multi-version": False},
     )
     assert res5.status_code == 404
-    # 500 Internal Server Error, no crendentials or server is no running
-    with mock.patch("freva_rest.rest.server_config.stacapi_host", "http://wrong:wrong@foo.bar:8083"), \
-         mock.patch("freva_rest.databrowser_api.core.Solr._session_get") as mock_get:
-        
-        mock_get.return_value.__aenter__.side_effect = Exception("Connection failed")
-        
-        res2 = requests.get(
-            f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
-            params={
-                "activity_id": "cmip",
-                "multi-version": True,
-                "stac_dynamic": True
-            }
-        )
-        assert res2.status_code == 500
-    # 500 Internal Server Error, no api services
-    with mock.patch("freva_rest.rest.server_config.stacapi_host", "") as mock_get:
-        
-        res2 = requests.get(
-            f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
-            params={
-                "activity_id": "cmip",
-                "multi-version": True,
-                "stac_dynamic": True
-            }
-        )
-        assert res2.status_code == 503
-    # 403 Forbidden, too many items
-    with mock.patch("freva_rest.rest.server_config.stacapi_max_items", 1) as mock_get:
-        
-        res2 = requests.get(
-            f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
-            params={
-                "activity_id": "cmip",
-                "multi-version": True,
-                "stac_dynamic": True
-            }
-        )
-        assert res2.status_code == 413
+
 def test_bad_intake_request(test_server: str) -> None:
     """Test for a wrong intake request."""
     res1 = requests.get(

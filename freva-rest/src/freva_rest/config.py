@@ -16,7 +16,6 @@ from typing import (
     Dict,
     Iterator,
     List,
-    Literal,
     Optional,
     Set,
     Tuple,
@@ -26,7 +25,6 @@ from typing import (
 
 import requests
 import tomli
-from fastapi import HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
 from pydantic import BaseModel, Field
 
@@ -179,33 +177,6 @@ class ServerConfig(BaseModel):
             description="The OIDC client secret, if any, used for authentication.",
         ),
     ] = os.getenv("API_OIDC_CLIENT_SECRET", "")
-    stacapi_host: Annotated[
-        str,
-        Field(
-            title="STAC host",
-            description=(
-                "Set the <USERNAME>:<PASSWORD>@<HOSTNAME>:<PORT>/<ROO_PATH> "
-                "to the STAC service."
-            ),
-        ),
-    ] = os.getenv("API_STAC_HOST", "")
-    stacbrowser_host: Annotated[
-        str,
-        Field(
-            title="STAC browser host",
-            description=(
-                "Set the <HOSTNAME>:<PORT>/<PREFIX> tp the STAC "
-                "browser service."
-            ),
-        ),
-    ] = os.getenv("API_STACBROWSER_HOST", "")
-    stacapi_max_items: Annotated[
-        Union[int, str],
-        Field(
-            title="STAC max items",
-            description="The maximum number of items to retrieve from the STAC API.",
-        ),
-    ] = os.getenv("API_STAC_MAX_ITEMS", 1000)
 
     def _read_config(self, section: str, key: str) -> Any:
         fallback = self._fallback_config[section][key] or None
@@ -266,14 +237,6 @@ class ServerConfig(BaseModel):
             "cache", "cert_file"
         )
         self.redis_host = self.redis_host or self._read_config("cache", "hostname")
-        self.stacapi_host = self.stacapi_host or \
-            self._read_config("stacapi", "api_hostname")
-        self.stacbrowser_host = self.stacbrowser_host or self._read_config(
-            "stacapi", "browser_hostname"
-        )
-        self.stacapi_max_items = self.stacapi_max_items or self._read_config(
-            "stacapi", "max_items"
-        )
 
     @staticmethod
     def get_url(url: str, default_port: Union[str, int]) -> str:
@@ -411,41 +374,3 @@ class ServerConfig(BaseModel):
         except requests.exceptions.ConnectionError as error:  # pragma: no cover
             logger.error("Connection to %s failed: %s", url, error)  # pragma: no cover
             yield ""  # pragma: no cover
-
-    def get_stacapi_url(
-        self,
-        spec: Literal["collections", "items", "ping"],
-        collection: Optional[str] = None,
-    ) -> str:
-        """Get the url of the STAC for transaction.
-
-        Parameters:
-        -----------
-            spec: Literal["collections", "items", "ping"]: Spec type
-            collection: Optional collection name, required for "items" spec
-
-        Returns:
-        --------
-            Complete STAC URL as string
-        """
-        if not self.stacapi_host:
-            raise HTTPException(
-                status_code=503,
-                detail=(
-                    "STAC-API service is not set in the configuration "
-                    "of the current Freva instance."
-                ),
-            )
-        base_url = self.stacapi_host.rstrip('/')
-
-        if spec == "collections":
-            return f"{base_url}/{spec}"
-        if spec == "items":
-            logger.debug("Collection: %s", collection)
-            if collection is None:
-                raise ValueError(
-                    "Collection name is required for 'items' spec"
-                )  # pragma: no cover
-            return f"{base_url}/collections/{collection}/bulk_items"
-        if spec == "ping":
-            return f"{base_url}/_mgmt/{spec}"

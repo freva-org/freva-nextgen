@@ -136,10 +136,6 @@ def test_intake_without_zarr(test_server: str) -> None:
 
 def test_stac_catalogue(test_server: str) -> None:
     """Test the STAC Catalogue functionality."""
-    # dynamic STAC catalogue
-    db = databrowser(host=test_server, dataset="cmip6-fs")
-    res = db.stac_catalogue()
-    assert "STAC catalog available at: " in res
 
     # static STAC catalogue
     db = databrowser(host=test_server, dataset="cmip6-fs")
@@ -185,7 +181,6 @@ def test_zarr_stream(test_server: str, auth_instance: Auth) -> None:
             files = list(db)
         _ = authenticate(username="janedoe", host=test_server)
         files = list(db)
-        print(files)
         assert len(files) == 2
     finally:
         auth_instance._auth_token = token

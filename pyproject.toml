@@ -73,9 +73,10 @@ deps = -e ./freva-rest
        pytest-env
        setuptools
        xarray
+       stac-check
 
 commands =
-    pytest -vv --cov=freva-rest --cov=freva-client --cov=freva-data-portal-worker --cov-report=html:coverage_report --junitxml report.xml --cov-report xml tests
+    pytest -vv --cov=freva-rest --cov=freva-client --cov=freva-data-portal-worker --cov-report=html:coverage_report --junitxml report.xml --cov-report xml tests/
     python3 -m coverage report --fail-under=98.5 --precision=2
 [testenv:docs]
 description = "Create the documentation."

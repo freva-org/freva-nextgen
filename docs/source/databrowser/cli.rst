@@ -265,7 +265,7 @@ the data via zarr.
 
 Creating STAC Catalogue
 --------------------------
-The ``stac-catalogue`` sub command allows you to create an static or dynamic 
+The ``stac-catalogue`` sub command allows you to create an static  
 `SpatioTemporal Asset Catalog (STAC) <https://stacspec.org/en/about/stac-spec/>_ `
 from the current search. This can be useful for creating, sharing and using 
 standardized geospatial data catalogs and enabling interoperability between 
@@ -289,15 +289,9 @@ To get an static STAC catalogue you can use the following command:
 
     freva-client databrowser stac-catalogue --filename /path/to/output
 
-and if the specified filename directory doesn't exist or not provided, 
+and if the specified filename directory doesn't specify or not existed or not provided, 
 the STAC catalogue will be saved in the current directory. It can be 
 only a directory or a full path with the filename. 
-
-And to get a dynamic STAC catalogue there is no need to specify the output directory or any other options:
-
-.. code:: console
-
-    freva-client databrowser stac-catalogue
 
 The STAC Catalogue provides multiple ways to access and interact with the data:
  - Access your climate data through the intake-esm data catalog specification

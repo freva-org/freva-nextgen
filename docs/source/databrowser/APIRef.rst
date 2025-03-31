@@ -547,7 +547,7 @@ Generating a STAC Catalogue
 
 .. http:get:: /api/freva-nextgen/databrowser/stac-catalogue/(str:flavour)/(str:uniq_key)
 
-    This endpoint transforms Freva databrowser search results into either a dynamic or static SpatioTemporal Asset Catalog (STAC). 
+    This endpoint transforms Freva databrowser search results into either a static SpatioTemporal Asset Catalog (STAC). 
     STAC is an open standard for geospatial data cataloguing, enabling consistent discovery and access of climate datasets, 
     satellite imagery and spatiotemporal data. It provides a common language for describing geospatial information and related metadata.
 
@@ -573,57 +573,34 @@ Generating a STAC Catalogue
     :query translate: Translate the metadata output to the required DRS flavour.
                      Default is true.
     :type translate: bool
-    :query stac_dynamic: Generate a dynamic STAC catalog that can be viewed in
-                    the STAC Browser. If false, returns a static catalog as
-                    a downloadable archive. Default is true.
-    :type stac_dynamic: bool
     :query \**search_facets: With any other query parameters you refine your
                     data search. Query parameters could be, depending
                     on the DRS standard flavour ``product``, ``project``
                     ``model`` etc.
     :type \**search_facets: str, list[str]
 
-    :statuscode 200: Static STAC catalog creation successful (when stac_dynamic=false)
-    :statuscode 303: See Other - Redirected to STAC-Browser (when stac_dynamic=true)
+    :statuscode 200: Static STAC catalog creation successful
     :statuscode 404: No entries found for this query
     :statuscode 413: Result stream too big
     :statuscode 422: Invalid flavour or search keys
     :statuscode 500: Internal server error
     :statuscode 503: Search backend error
-    :resheader Content-Type: ``application/json`` or ``application/x-tar+gzip`` depending on stac_dynamic parameter
+    :resheader Content-Type: ``application/x-tar+gzip``
 
-    Example Request for Dynamic STAC
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    Here's an example of how to create a dynamic STAC collection that follows the
+    Example Request
+    ~~~~~~~~~~~~~~~~~
+    Here's an example of how to create a static STAC catalog that follows the
     `freva` DRS standard and points to data files rather than URIs.
     We're specifically looking for datasets from the ``EUR-11`` ``product``.
-
-    .. sourcecode:: http
-
-        GET /api/freva-nextgen/databrowser/stac-collection/freva/file?product=EUR-11&stac_dynamic=true HTTP/1.1
-        Host: www.freva.dkrz.de
-
-    Example Response (Dynamic STAC)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    .. sourcecode:: http
-
-        HTTP/1.1 303 See Other
-        Location: https://www.freva.dkrz.de:8080/collections/freva-550e8400-e29b-41d4-a716-446655440000
-
-    Example Request for Static STAC
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
     Here's how to request a static STAC catalog as a downloadable archive:
 
     .. sourcecode:: http
 
-        GET /api/freva-nextgen/databrowser/stac-collection/freva/file?product=EUR-11&stac_dynamic=false HTTP/1.1
+        GET /api/freva-nextgen/databrowser/stac-collection/freva/file?product=EUR-11 HTTP/1.1
         Host: www.freva.dkrz.de
 
-    Example Response (Static STAC)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Example Response
+    ~~~~~~~~~~~~~~~~~~
 
     .. sourcecode:: http
 
@@ -631,7 +608,7 @@ Generating a STAC Catalogue
         Content-Type: application/x-tar+gzip
         Content-Disposition: attachment; filename="stac-catalog-freva-550e8400-e29b-41d4-a716-446655440000-file.tar.gz"
 
-        [Binary content of the tar.gz archive]
+        [Json content of the tar.gz archive]
 
     Example
     ~~~~~~~
@@ -643,13 +620,8 @@ Generating a STAC Catalogue
         .. code-tab:: bash
             :caption: Shell
 
-            # For dynamic STAC
-            curl -L -X GET \
-            'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file?product=EUR-11&stac_dynamic=true'
-
-            # For static STAC
             curl -X GET \
-            'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file?product=EUR-11&stac_dynamic=false' \
+            'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file?product=EUR-11' \
             --output stac-catalog.tar.gz
 
         .. code-tab:: python
@@ -657,18 +629,9 @@ Generating a STAC Catalogue
 
             import requests
 
-            # For dynamic STAC
             response = requests.get(
                 "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file",
-                params={"product": "EUR-11", "stac_dynamic": True},
-                allow_redirects=True
-            )
-            stac_browser_url = response.url
-
-            # For static STAC
-            response = requests.get(
-                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file",
-                params={"product": "EUR-11", "stac_dynamic": False},
+                params={"product": "EUR-11"},
                 stream=True
             )
             with open("stac-catalog.tar.gz", "wb") as f:
@@ -680,18 +643,10 @@ Generating a STAC Catalogue
 
             library(httr)
 
-            # For dynamic STAC
-            response <- GET(
-                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file",
-                query = list(product = "EUR-11", stac_dynamic = TRUE),
-                follow_redirects = TRUE
-            )
-            stac_browser_url <- response$url
-
             # For static STAC
             response <- GET(
                 "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file",
-                query = list(product = "EUR-11", stac_dynamic = FALSE),
+                query = list(product = "EUR-11"),
                 write_disk("stac-catalog.tar.gz", overwrite = TRUE)
             )
 
@@ -701,18 +656,9 @@ Generating a STAC Catalogue
             using HTTP
             using JSON
 
-            # For dynamic STAC
             response = HTTP.get(
                 "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file",
-                query = Dict("product" => "EUR-11", "stac_dynamic" => "true"),
-                redirect = true
-            )
-            stac_browser_url = response.request.uri
-
-            # For static STAC
-            response = HTTP.get(
-                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file",
-                query = Dict("product" => "EUR-11", "stac_dynamic" => "false")
+                query = Dict("product" => "EUR-11")
             )
             open("stac-catalog.tar.gz", "w") do f
                 write(f, response.body)
@@ -731,14 +677,7 @@ Generating a STAC Catalogue
 
                 curl = curl_easy_init();
                 if (curl) {
-                    // For dynamic STAC
-                    char dynamic_url[] = "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file?product=EUR-11&stac_dynamic=true";
-                    curl_easy_setopt(curl, CURLOPT_URL, dynamic_url);
-                    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-                    res = curl_easy_perform(curl);
-
-                    // For static STAC
-                    char static_url[] = "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file?product=EUR-11&stac_dynamic=false";
+                    char static_url[] = "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file?product=EUR-11";
                     fp = fopen("stac-catalog.tar.gz", "wb");
                     curl_easy_setopt(curl, CURLOPT_URL, static_url);
                     curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);

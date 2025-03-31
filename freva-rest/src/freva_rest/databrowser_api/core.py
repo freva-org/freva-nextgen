@@ -442,7 +442,6 @@ class Solr:
             )
         except ValueError as err:
             raise HTTPException(status_code=500, detail=str(err)) from err
-        self.stac_dynamic = bool(query.pop("stac_dynamic", [True])[0])
         self.facets = self.translator.translate_query(query, backwards=True)
         self.url, self.query = self._get_url()
         self.query["start"] = start
@@ -571,39 +570,6 @@ class Solr:
                 )
             yield response.status_code, response_data
 
-    @asynccontextmanager
-    async def _session_put(
-        self,
-        url: str,
-        payload: Dict[str, Any],
-    ) -> AsyncIterator[Tuple[int, Dict[str, Any]]]:
-        """Wrap the put request round a try and catch statement."""
-        logger.info(
-            "Sending PUT request to %s: with payload: %s",
-            url,
-            payload,
-        )
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
-            try:
-                response = await client.put(url, json=payload)
-                try:
-                    await self.check_for_status(response)
-                    logger.info(
-                        "PUT request successful with status: %d",
-                        response.status_code,
-                    )
-                    response_data = response.json()
-                except HTTPException:  # pragma: no cover
-                    logger.error("PUT request failed: %s", response.text)
-                    response_data = {}
-            except ConnectionError:  # pragma: no cover
-                logger.exception("Connection to %s failed", url)
-                raise HTTPException(
-                    status_code=503,
-                    detail="Could not connect to the instance",
-                )
-            yield response.status_code, response_data
-
     @classmethod
     async def validate_parameters(
         cls,
@@ -645,7 +611,7 @@ class Solr:
             key = key.lower().replace("_not_", "")
             if (
                 key not in valid_facets
-                and key not in ("time_select", "bbox_select", "stac_dynamic")
+                and key not in ("time_select", "bbox_select")
                 + cls.uniq_keys
             ):
                 raise HTTPException(status_code=422, detail="Could not validate input.")
@@ -1450,7 +1416,7 @@ class Solr:
 
 
 class STAC(Solr):
-    """STAC class to create static and dynamic STAC catalogues."""
+    """STAC class to create static STAC catalogues."""
 
     def __init__(
         self,
@@ -1592,17 +1558,17 @@ class STAC(Solr):
             else {}
         )
         python_params = " ".join(
-            f"{k}={v},"
+            f"{k}='{v}','"
             for k, v in params_dict.items()
-            if k not in ("translate", "stac_dynamic")
+            if k not in ("translate")
         )
         cli_params = " ".join(
             f"{k}={v}" for k, v in params_dict.items()
-            if k not in ("translate", "stac_dynamic")
+            if k not in ("translate")
         )
         api_params = "&".join(
             f"{k}={v}" for k, v in params_dict.items()
-            if k not in ("translate", "stac_dynamic")
+            if k not in ("translate")
         )
 
         zarr_desc = dedent(
@@ -1626,8 +1592,8 @@ class STAC(Solr):
             ```bash
             token=$(freva-client auth -u <username> --host {self.config.proxy}\\
                                                         |jq -r .access_token)
-            freva-client databrowser {cli_params} --stream-zarr\\
-                            --host {self.config.proxy}
+            freva-client databrowser data-search {cli_params} --zarr\\
+                            --host {self.config.proxy} --access-token $token
             ```
             4. Access the zarr data directly (API - language agnostic)
             ```bash
@@ -1689,9 +1655,7 @@ class STAC(Solr):
                 media_type="application/json",
             ),
             "stac-static-catalogue": pystac.Asset(
-                href=str(self.assets_prereqs.get("full_endpoint")).replace(
-                    "stac_dynamic=true", "stac_dynamic=false"
-                ),
+                href=str(self.assets_prereqs.get("full_endpoint")),
                 title="STAC Static Catalogue",
                 description=stac_static_desc,
                 roles=["metadata"],
@@ -1860,19 +1824,19 @@ class STAC(Solr):
             else {}
         )
         python_params = " ".join(
-            f"{k}={v},"
+            f"{k}='{v}',"
             for k, v in params_dict.items()
-            if k not in ("translate", "stac_dynamic", "start")
+            if k not in ("translate", "start")
         )
 
         cli_params = " ".join(
             f"{k}={v}" for k, v in params_dict.items()
-            if k not in ("translate", "stac_dynamic", "start")
+            if k not in ("translate", "start")
         )
 
         api_params = "&".join(
             f"{k}={v}" for k, v in params_dict.items()
-            if k not in ("translate", "stac_dynamic", "start")
+            if k not in ("translate", "start")
         )
         intake_desc = dedent(
             f"""
@@ -1910,7 +1874,7 @@ class STAC(Solr):
             import xarray as xr
             token_info = authenticate(username=<your_username>, \\
                 host='{self.config.proxy}')
-            db = databrowser({python_params} {self.uniq_key}={id}, \\
+            db = databrowser({python_params} {self.uniq_key}='{id}', \\
                             stream_zarr=True, host='{self.config.proxy}')
             xarray_dataset = xr.open_mfdataset(list(db))
             ```
@@ -1918,8 +1882,8 @@ class STAC(Solr):
             ```bash
             token=$(freva-client auth -u <username> --host {self.config.proxy}\\
                                                         |jq -r .access_token)
-            freva-client databrowser {cli_params} {self.uniq_key}={id} \\
-                --stream-zarr --host {self.config.proxy}
+            freva-client databrowser data-search {cli_params} {self.uniq_key}={id} \\
+                --zarr --host {self.config.proxy} --access-token $token
             ```
             4. Access the zarr data directly (API - language agnostic)
             ```bash
@@ -1950,6 +1914,7 @@ class STAC(Solr):
             .replace("http://", "")
             .replace("/", "-")
             .replace(".", "-")
+            .lower()
             .strip()
         )
         bbox = result.get("bbox")
@@ -2005,6 +1970,45 @@ class STAC(Solr):
         if start_time and end_time:
             item.common_metadata.start_datetime = start_time
             item.common_metadata.end_datetime = end_time
+
+        # Necessary item links to make the STAC item valid
+        links_to_add = [
+            {
+                "rel": "self",
+                "target": f"./{normalized_id}.json",
+                "media_type": "application/json"
+            },
+            {
+                "rel": "root",
+                "target": "../../catalog.json",
+                "media_type": "application/json"
+            },
+            {
+                "rel": "parent",
+                "target": "../../catalog.json",
+                "media_type": "application/json"
+            },
+            {
+                "rel": "collection",
+                "target": "../collection.json",
+                "media_type": "application/json"
+            }
+        ]
+
+        for link_info in links_to_add:
+            # Since in some cases it adds `rel`, so we need to check if
+            # it's already there
+            if not any(link.rel == link_info["rel"] for link in item.links):
+                link = pystac.Link(
+                    rel=link_info["rel"],
+                    target=link_info["target"],
+                    media_type=link_info["media_type"]
+                )
+                # Set this link to not auto-resolve
+                link.extra_fields["noresolve"] = True
+                # Add to the item
+                item.links.append(link)
+
         assets = {
             "freva-databrowser": pystac.Asset(
                 href=(
@@ -2133,7 +2137,6 @@ class STAC(Solr):
     ) -> None:
         filtered_params = dict(request.query_params)
         filtered_params.pop('translate', None)
-        filtered_params.pop('stac_dynamic', None)
         filtered_params.pop('start', None)
 
         self.assets_prereqs = {
@@ -2145,17 +2148,9 @@ class STAC(Solr):
             "only_params": str(filtered_params) if filtered_params != {} else "",
         }
 
-    async def init_stac_dynamic_collection(
-        self,
-        collection_id: str
-    ) -> None:
-        self.collection = await self._create_stac_collection(collection_id)
-        await self.ingest_stac_collection(self.collection)
-
     async def stream_stac_catalogue(
         self,
         collection_id: str,
-        stac_dynamic: bool,
     ) -> AsyncIterator[bytes]:
         """Initialize and stream a STAC catalogue from Databrowser search results.
 
@@ -2163,143 +2158,52 @@ class STAC(Solr):
         ----------
         collection_id : str
             Unique identifier for the STAC collection
-        stac_dynamic : bool
-            If True, use dynamic STAC API, if False create static catalog
 
         Yields
         ------
         bytes
-            Chunks of the tar.gz archive when stac_dynamic is False
+            Chunks of the tar.gz archive
         """
         logger.info("Streaming STAC Catalogue for %s", collection_id)
         try:
-            if stac_dynamic:
-                async for item_batch in self._iter_stac_items():
-                    await self.ingest_stac_item(item_batch)
-                self.finalize_stac_collection()
-                await self.update_stac_collection(self.collection)
-            else:
-                # STAC-Catalog
-                async for chunk in self.stream_catalog(collection_id):
-                    yield chunk
+            # STAC-Catalog
+            async for chunk in self.stream_catalog(collection_id):
+                yield chunk
 
-                # intial STAC-Collection
-                self.collection = await self._create_stac_collection(collection_id)
-                async for chunk in self.stream_collection(
-                    self.collection.to_dict(),
-                    collection_id
-                ):
-                    yield chunk  # pragma: no cover
+            # intial STAC-Collection
+            self.collection = await self._create_stac_collection(collection_id)
+            async for chunk in self.stream_collection(
+                self.collection.to_dict(),
+                collection_id
+            ):
+                yield chunk  # pragma: no cover
 
-                # STAC-Items
-                async for item_batch in self._iter_stac_items():
-                    for item in item_batch:
-                        async for chunk in self.stream_item(
-                            item.to_dict(),
-                            collection_id
-                        ):
-                            yield chunk  # pragma: no cover
+            # STAC-Items
+            async for item_batch in self._iter_stac_items():
+                for item in item_batch:
+                    async for chunk in self.stream_item(
+                        item.to_dict(),
+                        collection_id
+                    ):
+                        yield chunk  # pragma: no cover
 
-                # updated STAC-Collection
-                self.finalize_stac_collection()
-                async for chunk in self.stream_collection(
-                    self.collection.to_dict(),
-                    collection_id
-                ):
-                    yield chunk  # pragma: no cover
+            # updated STAC-Collection
+            self.finalize_stac_collection()
+            async for chunk in self.stream_collection(
+                self.collection.to_dict(),
+                collection_id
+            ):
+                yield chunk  # pragma: no cover
 
-                final_chunk = await self.close()
-                if final_chunk:
-                    yield final_chunk
+            final_chunk = await self.close()
+            if final_chunk:
+                yield final_chunk
 
         except Exception as e:  # pragma: no cover
             logger.error(
                 f"STAC collection creation failed for {collection_id}: {str(e)}"
             )
             raise
-
-    async def ingest_stac_item(self, items: list[pystac.Item]) -> None:
-        """
-        Ingest bulk STAC Items into the catalog via API.
-
-        Parameters
-        ----------
-        items: list[pystac.Item]
-            List of STAC Items to be ingested using upsert method.
-
-        Raises
-        ------
-        HTTPException
-            If ingestion fails or server returns non-201 status.
-        """
-        url = self._config.get_stacapi_url("items", items[0].collection_id)
-        items_dict = {
-            "items": {item.id: item.to_dict() for item in items},
-            "method": "upsert",
-        }
-        async with self._session_post(url, items_dict):
-            pass
-
-    async def ingest_stac_collection(self, collection: pystac.Collection) -> None:
-        """
-        Ingest a STAC Collection into the STAC-API Catalog.
-
-        Parameters
-        ----------
-        collection: pystac.Collection
-            STAC Collection to be ingested.
-
-        Raises
-        ------
-        HTTPException
-            If ingestion fails or server returns non-201 status.
-        """
-        url = self._config.get_stacapi_url("collections")
-        async with self._session_post(url, collection.to_dict()):
-            pass
-
-    async def update_stac_collection(self, collection: pystac.Collection) -> None:
-        """
-        Update existing STAC Collection in the STAC_API Catalogue.
-
-        Parameters
-        ----------
-        collection: pystac.Collection
-            STAC Collection with updated data.
-
-        Raises
-        ------
-        HTTPException
-            If update fails or server returns non-200 status.
-        """
-        url = f"{self._config.get_stacapi_url('collections')}/{collection.id}"
-        async with self._session_put(url, collection.to_dict()):
-            pass
-
-    async def stacapi_availability(self) -> bool:
-        """
-        Check STAC API server availability via ping/pong endpoint.
-
-        Returns
-        -------
-        bool
-            True if server is available and returns 200 status.
-
-        Raises
-        ------
-        HTTPException
-            If server is unreachable or returns non-200 status.
-        """
-        original_url = getattr(self, "url", None)
-        self.url = self._config.get_stacapi_url("ping")
-        try:
-            async with self._session_get() as res:
-                return res[0] == 200
-        except Exception as error:
-            logger.error("STAC server connection failed: %s", error)
-            raise HTTPException(status_code=503, detail="STAC server unreachable")
-        finally:
-            self.url = original_url or ""
 
     def add_object(
             self, name: str,
