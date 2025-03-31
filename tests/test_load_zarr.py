@@ -18,7 +18,7 @@ def test_auth(test_server: str) -> None:
         f"{test_server}/auth/v2/token",
         data={"username": "foo", "password": "bar"},
     )
-    assert res1.status_code == 404
+    assert res1.status_code == 401
     res2 = requests.post(
         f"{test_server}/auth/v2/token",
         data={

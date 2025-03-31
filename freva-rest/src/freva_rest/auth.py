@@ -162,6 +162,30 @@ async def get_token_status(
     return cast(TokenPayload, id_token)
 
 
+async def oicd_request(
+    method: Literal["GET", "POST"],
+    endpoint: str,
+    headers: Optional[Dict[str, str]] = None,
+    json: Optional[Dict[str, str]] = None,
+    data: Optional[Dict[str, str]] = None,
+) -> aiohttp.client_reqrep.ClientResponse:
+    """Make a request to the openID connect server."""
+    async with aiohttp.ClientSession(
+        timeout=TIMEOUT, raise_for_status=True
+    ) as client:
+        try:
+            url = server_config.oidc_overview[endpoint]
+            return await client.request(
+                method, url, headers=headers, json=json, data=data
+            )
+        except aiohttp.client_exceptions.ClientResponseError as error:
+            logger.error(error)
+            raise HTTPException(status_code=401) from error
+        except Exception as error:
+            logger.error("Could not connect ot OIDC server")
+            raise HTTPException(status_code=503) from error
+
+
 @app.get("/api/freva-nextgen/auth/v2/userinfo", tags=["Authentication"])
 async def userinfo(
     id_token: IDToken = Security(auth.required_dependency()),
@@ -173,22 +197,20 @@ async def userinfo(
         return UserInfo(**get_userinfo(token_data))
     except ValidationError:
         authorization = dict(request.headers)["authorization"]
+        response = await oicd_request(
+            "GET",
+            "userinfo_endpoint",
+            headers={"Authorization": authorization},
+        )
+        token_data = await response.json()
         try:
-            async with aiohttp.ClientSession(timeout=TIMEOUT) as client:
-                response = await client.get(
-                    server_config.oidc_overview["userinfo_endpoint"],
-                    headers={"Authorization": authorization},
+            return UserInfo(
+                **get_userinfo(
+                    {k.lower(): str(v) for (k, v) in token_data.items()}
                 )
-                response.raise_for_status()
-                token_data = await response.json()
-                return UserInfo(
-                    **get_userinfo(
-                        {k.lower(): str(v) for (k, v) in token_data.items()}
-                    )
-                )
-        except Exception as error:
-            logger.error(error)
-            raise HTTPException(status_code=404) from error
+            )
+        except ValidationError:
+            raise HTTPException(status_code=404)
 
 
 @app.get(
@@ -262,32 +284,27 @@ async def fetch_or_refresh_token(
         data["username"] = username
     else:
         data["refresh_token"] = refresh_token
-    async with aiohttp.ClientSession(timeout=TIMEOUT) as client:
-        try:
-            response = await client.post(
-                server_config.oidc_overview["token_endpoint"],
-                data={k: v for (k, v) in data.items() if v},
-            )
-            response.raise_for_status()
-        except Exception as error:
-            logger.error(error)
-            raise HTTPException(status_code=404) from None
-        token_data = await response.json()
-        expires_at = (
-            token_data.get("exp")
-            or token_data.get("expires")
-            or token_data.get("expires_at")
-        )
-        now = datetime.datetime.now(datetime.timezone.utc).timestamp()
-        refresh_expires_at = (
-            token_data.get("refresh_exp")
-            or token_data.get("refresh_expires")
-            or token_data.get("refresh_expires_at")
-        )
-        expires_at = expires_at or now + token_data.get("expires_in", 180)
-        refresh_expires_at = refresh_expires_at or now + token_data.get(
-            "refresh_expires_in", 180
-        )
+    response = await oicd_request(
+        "POST",
+        "token_endpoint",
+        data={k: v for (k, v) in data.items() if v},
+    )
+    token_data = await response.json()
+    expires_at = (
+        token_data.get("exp")
+        or token_data.get("expires")
+        or token_data.get("expires_at")
+    )
+    now = datetime.datetime.now(datetime.timezone.utc).timestamp()
+    refresh_expires_at = (
+        token_data.get("refresh_exp")
+        or token_data.get("refresh_expires")
+        or token_data.get("refresh_expires_at")
+    )
+    expires_at = expires_at or now + token_data.get("expires_in", 180)
+    refresh_expires_at = refresh_expires_at or now + token_data.get(
+        "refresh_expires_in", 180
+    )
     return Token(
         access_token=token_data["access_token"],
         token_type=token_data["token_type"],
