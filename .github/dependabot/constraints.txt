@@ -1,9 +1,9 @@
-aiohttp==3.11.13
-fastapi==0.115.9
+aiohttp==3.11.14
+fastapi==0.115.12
 python-dateutil==2.9.0.post0
-python-dotenv==1.0.1
+python-dotenv==1.1.0
 requests==2.32.3
-types-requests==2.32.0.20241016
+types-requests==2.32.0.20250328
 rich==13.9.4
 typer==0.15.2
 uvicorn==0.34.0
