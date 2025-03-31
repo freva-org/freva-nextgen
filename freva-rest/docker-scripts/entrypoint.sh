@@ -8,7 +8,7 @@ check_env(){
     shift
     local service_name=$@
     if [[ -z ${!var_name:-} ]];then
-        log_error "In order to set up $service_name you must set the '\$${var_name:-}' environment variable." >&2
+        log_error "In order to set up $service_name you must set the '\$${var_name:-}' environment variable."
         exit 1
     fi
 }
