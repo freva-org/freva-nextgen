@@ -76,7 +76,8 @@ def test_load_files_success(test_server: str, auth: Dict[str, str]) -> None:
         files[0],
         engine="zarr",
         storage_options={"headers": {"Authorization": f"Bearer {token}"}},
-    ).load()
+    )
+    dset.load()
     assert "ua" in dset
     data = requests.get(
         f"{files[0]}/.zattrs",

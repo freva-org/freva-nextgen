@@ -36,7 +36,6 @@ dependencies = [
 "rioxarray",
 "watchfiles",
 "xarray",
-"xpublish",
 "zarr<3",
 ]
 [project.scripts]
