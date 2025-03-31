@@ -28,7 +28,6 @@ init_mongodb() {
     MAX_TRIES=10
     while [ -f /tmp/mongodb/mongod.pid ]; do
         PID=$(cat /tmp/mongodb/mongod.pid)
-        echo $PID $(ps $PID) foo
         if [ -z "$PID" ] || [ -z "$(ps -p $PID --no-headers)" ];then
             break
         fi
@@ -79,7 +78,7 @@ init_mysql(){
     done
     mkdir -p /var/data/mysqldb /var/log/mysqldb
     API_DATA_DIR=/var/data/mysqldb \
-        LOG_DIR=/var/log/mysqldb /opt/conda/libexec/freva-rest-server/scripts/init-mysql
+        API_LOG_DIR=/var/log/mysqldb /opt/conda/libexec/freva-rest-server/scripts/init-mysql
     log_info "Starting mysql service"
     nohup /opt/conda/bin/mysqld --user=$(whoami) --no-defaults --datadir=/var/data/mysqldb > /var/log/myslqdb/mysqld.log 2>&1 &
 }
