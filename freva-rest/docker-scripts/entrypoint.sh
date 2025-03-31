@@ -79,8 +79,20 @@ init_mysql(){
     mkdir -p /var/data/mysqldb /var/log/mysqldb
     API_DATA_DIR=/var/data/mysqldb \
         API_LOG_DIR=/var/log/mysqldb /opt/conda/libexec/freva-rest-server/scripts/init-mysql
+    TRY=0
+    MAX_TRIES=10
+    while [ -z "$(ps aux |grep mysqld|grep -v grep)" ]; do
+        if [ "$TRY" -ge "$MAX_TRIES" ]; then
+            log_error "Timeout: MySQL server didn't stop properly."
+            exit 1
+        fi
+        let TRY=TRY+1
+        log_info "Waiting for init MySQL to shut down..."
+        sleep 1
+    done
+    sleep 3
     log_info "Starting mysql service"
-    nohup /opt/conda/bin/mysqld --user=$(whoami) --no-defaults --datadir=/var/data/mysqldb > /var/log/myslqdb/mysqld.log 2>&1 &
+    nohup /opt/conda/bin/mysqld --user=$(whoami) --bind-address=0.0.0.0 --datadir=/var/data/mysqldb > /var/log/mysqldb/mysqld.log 2>&1 &
 }
 
 init() {
