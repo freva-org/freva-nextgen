@@ -1,13 +1,14 @@
 """Utilities for working with zarr storages."""
 
 from copy import deepcopy
-from typing import Any, Dict, Literal, Optional, Union, cast
+from typing import Any, Dict, Optional, Union, cast
 
 import dask.array
 import numpy as np
 import xarray as xr
 from numcodecs.abc import Codec
 from numcodecs.compat import ensure_ndarray
+from packaging.version import Version
 from xarray.backends.zarr import (
     DIMENSION_KEY,
     encode_zarr_attr_value,
@@ -123,13 +124,13 @@ def create_zmetadata(dataset: xr.Dataset) -> Dict[str, Any]:
     }
     zmeta["metadata"][group_meta_key] = {"zarr_format": ZARR_FORMAT}
     zmeta["metadata"][attrs_key] = extract_dataset_zattrs(dataset)
-
+    extra_kw = {}
+    if Version(xr.__version__) >= Version("2025.3.0"):
+        extra_kw["zarr_format"] = ZARR_FORMAT  # pragma: no cover
     for key, dvar in dataset.variables.items():
         da = dataset[key]
         encoded_da = encode_zarr_variable(dvar, name=key)
-        encoding = extract_zarr_variable_encoding(
-            dvar, zarr_format=cast(Literal[2, 3], ZARR_FORMAT)
-        )
+        encoding = extract_zarr_variable_encoding(dvar, **extra_kw)  # type: ignore
         zattrs = extract_dataarray_zattrs(encoded_da)
         zattrs = extract_dataarray_coords(da, zattrs)
         zmeta["metadata"][f"{key}/{attrs_key}"] = zattrs
