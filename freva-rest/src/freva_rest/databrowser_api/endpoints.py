@@ -337,7 +337,7 @@ async def load_data(
         ),
     ] = None,
     request: Request = Required,
-    current_user: TokenPayload = Depends(auth.required),
+    current_user: TokenPayload = Depends(auth.required_dependency()),
 ) -> StreamingResponse:
     """Search for datasets and stream the results as zarr.
 
@@ -386,7 +386,7 @@ async def load_data(
 )
 async def post_user_data(
     request: Annotated[AddUserDataRequestBody, Body(...)],
-    current_user: TokenPayload = Depends(auth.required),
+    current_user: TokenPayload = Depends(auth.required_dependency()),
 ) -> Dict[str, str]:
     """Index your own metadata and make it searchable.
 
@@ -445,7 +445,7 @@ async def delete_user_data(
             }
         ],
     ),
-    current_user: TokenPayload = Depends(auth.required),
+    current_user: TokenPayload = Depends(auth.required_dependency()),
 ) -> Dict[str, str]:
     """This endpoint lets you delete metadata that has been indexed."""
 

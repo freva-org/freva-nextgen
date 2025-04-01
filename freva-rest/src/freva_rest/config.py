@@ -217,7 +217,13 @@ class ServerConfig(BaseModel):
         self.oidc_client_id = self.oidc_client_id or self._read_config(
             "oidc", "client_id"
         )
+<<<<<<< HEAD
         self.mongo_host = self.mongo_host or self._read_config("mongo_db", "hostname")
+=======
+        self.mongo_host = self.mongo_host or self._read_config(
+            "mongo_db", "hostname"
+        )
+>>>>>>> main
         self.mongo_user = self.mongo_user or self._read_config("mongo_db", "user")
         self.mongo_password = self.mongo_password or self._read_config(
             "mongo_db", "password"
@@ -371,6 +377,16 @@ class ServerConfig(BaseModel):
                     "name"
                 ] not in ("file_name", "file", "file_no_version"):
                     yield entry["name"]
+<<<<<<< HEAD
         except requests.exceptions.ConnectionError as error:  # pragma: no cover
             logger.error("Connection to %s failed: %s", url, error)  # pragma: no cover
+=======
+        except (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.JSONDecodeError,
+        ) as error:  # pragma: no cover
+            logger.error(
+                "Connection to %s failed: %s", url, error
+            )  # pragma: no cover
+>>>>>>> main
             yield ""  # pragma: no cover

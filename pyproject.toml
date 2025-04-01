@@ -17,6 +17,8 @@ env = [
     "API_CONFIG={PWD}/freva-rest/src/freva_rest/api_config.toml",
 
 ]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 filterwarnings = ["ignore::UserWarning"]
 [tool.flake8]
 ignore = ["F405", "F403"]

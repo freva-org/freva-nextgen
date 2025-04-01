@@ -18,7 +18,7 @@ def test_auth(test_server: str) -> None:
         f"{test_server}/auth/v2/token",
         data={"username": "foo", "password": "bar"},
     )
-    assert res1.status_code == 404
+    assert res1.status_code == 401
     res2 = requests.post(
         f"{test_server}/auth/v2/token",
         data={
@@ -76,7 +76,8 @@ def test_load_files_success(test_server: str, auth: Dict[str, str]) -> None:
         files[0],
         engine="zarr",
         storage_options={"headers": {"Authorization": f"Bearer {token}"}},
-    ).load()
+    )
+    dset.load()
     assert "ua" in dset
     data = requests.get(
         f"{files[0]}/.zattrs",
