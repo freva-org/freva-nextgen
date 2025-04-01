@@ -38,7 +38,6 @@ RUN /opt/conda/bin/python3 -m pip install -I --no-deps --no-cache-dir /tmp/app/d
 
 COPY --chmod=0755 docker-scripts/entrypoint.sh /docker-entrypoint-initdb.d/entrypoint.sh
 COPY --chmod=0755 docker-scripts/follow /usr/local/bin/follow
-COPY --chmod=0755 docker-scripts/utils.sh /usr/local/lib/utils.sh
 COPY docker-scripts/logging.sh /usr/local/lib/logging.sh
 RUN mkdir -p /var/data /var/log/freva-rest-server && \
     chmod -R 2777 /var/log /var/data &&\

@@ -1,16 +1,12 @@
 """The core functionality to interact with the apache solr search system."""
 
-import ast
 import asyncio
-import io
 import json
-import tarfile
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from functools import cached_property, wraps
-from textwrap import dedent
 from typing import (
     Any,
     AsyncIterator,
@@ -21,7 +17,6 @@ from typing import (
     Iterable,
     List,
     Literal,
-    Optional,
     Sequence,
     Sized,
     Tuple,
@@ -31,18 +26,17 @@ from typing import (
 
 import httpx
 import pystac
-from dateutil import parser
 from dateutil.parser import ParserError, parse
-from fastapi import HTTPException, Request
+from fastapi import HTTPException
 from pydantic import BaseModel
 from pymongo import UpdateOne, errors
 from typing_extensions import TypedDict
 
 from freva_rest import __version__
 from freva_rest.config import ServerConfig
+from freva_rest.exceptions import ValidationError
 from freva_rest.logger import logger
 from freva_rest.utils import create_redis_connection
-from freva_rest.exceptions import ValidationError
 
 FlavourType = Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"]
 IntakeType = TypedDict(
@@ -1415,5 +1409,3 @@ class Solr:
         search_keys["user"] = user_name
         await self._purge_user_data(search_keys)
         logger.info("Deleted files from Solr and MongoDB with keys: %s", search_keys)
-
-

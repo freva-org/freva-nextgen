@@ -23,8 +23,9 @@ from freva_rest.auth import TokenPayload, auth
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 
-from .core import STAC, FlavourType, SearchResult, Solr, Translator
+from .core import FlavourType, SearchResult, Solr, Translator
 from .schema import Required, SearchFlavours, SolrSchema
+from .stac import STAC
 
 
 class AddUserDataRequestBody(BaseModel):

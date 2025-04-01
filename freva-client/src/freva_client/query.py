@@ -416,7 +416,10 @@ class databrowser:
         """
         with NamedTemporaryFile(suffix=".json") as temp_f:
             self._create_intake_catalogue_file(temp_f.name)
-            return intake.open_esm_datastore(temp_f.name)
+            return cast(
+                intake_esm.core.esm_datastore,
+                intake.open_esm_datastore(temp_f.name),
+            )
 
     def stac_catalogue(
         self,
