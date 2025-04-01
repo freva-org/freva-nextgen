@@ -146,6 +146,7 @@ def test_auth(
         )
         assert res.exit_code == 0
         assert res.stdout
+        print(res.stdout)
         assert "access_token" in json.loads(res.stdout)
     finally:
         auth_instance._auth_token = old_token

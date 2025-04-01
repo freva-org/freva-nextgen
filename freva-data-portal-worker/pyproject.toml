@@ -30,13 +30,13 @@ dependencies = [
 "dask[distributed,diagnostics]",
 "h5netcdf",
 "jupyter-server-proxy",
+"packaging",
 "netcdf4",
 "rasterio",
 "redis",
 "rioxarray",
 "watchfiles",
 "xarray",
-"xpublish",
 "zarr<3",
 ]
 [project.scripts]
