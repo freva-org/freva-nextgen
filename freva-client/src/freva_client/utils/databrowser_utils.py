@@ -52,10 +52,8 @@ class Config:
         ini_parser = ConfigParser(interpolation=ExtendedInterpolation())
         ini_parser.read_string(path.read_text())
         config = ini_parser["evaluation_system"]
-        scheme, host = self._split_url(
-            cast(str, config.get("databrowser.host"))
-            or cast(str, config.get("solr.host"))
-        )
+        scheme, host = self._split_url(config.get("databrowser.host", 
+                                    config.get("solr.host", "")))
         host, _, port = (host or "").partition(":")
         port = port or config.get("databrowser.port", "")
         if port:

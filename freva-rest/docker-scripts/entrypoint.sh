@@ -1,7 +1,6 @@
 #!/bin/bash
 set -o nounset -Eeuo errexit -Eeuo pipefail
 source /usr/local/lib/logging.sh
-source /usr/local/lib/utils.sh
 
 check_env(){
 

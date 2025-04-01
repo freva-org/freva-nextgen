@@ -55,7 +55,7 @@ class SelectMethod(str, Enum):
     file = "file"
 
     @staticmethod
-    def get_help(context: str = "time") -> str:
+    def get_help(context: str) -> str:
         """Generate the help string for time or bbox selection methods.
 
         Parameters
@@ -154,7 +154,7 @@ def metadata_search(
         "flexible",
         "-ts",
         "--time-select",
-        help=SelectMethod.get_help(),
+        help=SelectMethod.get_help("time"),
     ),
     time: Optional[str] = typer.Option(
         None,
@@ -296,7 +296,7 @@ def data_search(
         "flexible",
         "-ts",
         "--time-select",
-        help=SelectMethod.get_help(),
+        help=SelectMethod.get_help("time"),
     ),
     zarr: bool = typer.Option(False, "--zarr", help="Create zarr stream files."),
     access_token: Optional[str] = typer.Option(
@@ -442,7 +442,7 @@ def intake_catalogue(
         "flexible",
         "-ts",
         "--time-select",
-        help=SelectMethod.get_help(),
+        help=SelectMethod.get_help("time"),
     ),
     time: Optional[str] = typer.Option(
         None,
@@ -593,7 +593,7 @@ def stac_catalogue(
         "flexible",
         "-ts",
         "--time-select",
-        help=SelectMethod.get_help(),
+        help=SelectMethod.get_help("time"),
     ),
     time: Optional[str] = typer.Option(
         None,
@@ -724,7 +724,7 @@ def count_values(
         "flexible",
         "-ts",
         "--time-select",
-        help=SelectMethod.get_help(),
+        help=SelectMethod.get_help("time"),
     ),
     time: Optional[str] = typer.Option(
         None,
