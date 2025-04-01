@@ -1,8 +1,8 @@
 """Read test entries from a databrowser."""
-
 from pathlib import Path
 
 import httpx
+
 
 async def read_data(core: str, uri: str) -> None:
     """Read mock databrowser data."""
@@ -11,5 +11,5 @@ async def read_data(core: str, uri: str) -> None:
     url = f"{uri}/solr/{core}/update/json?commit=true"
     headers = {"content-type": "application/json"}
     async with httpx.AsyncClient(timeout=5.0) as client:
-        res = await client.post(url, data=data_json, headers=headers)
+        res = await client.post(url, content=data_json, headers=headers)
         res.raise_for_status()

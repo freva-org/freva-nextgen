@@ -229,10 +229,6 @@ class STAC(Solr):
                 temporal=pystac.TemporalExtent([[None, None]]),  # type: ignore
             ),
         )
-        collection.extra_fields["conformsTo"] = [
-            "https://api.stac.io/1.0.0/core",
-            "https://stac-extensions.github.io/version/v1.0.0/schema.json"
-        ]
         assets = {
             "freva-databrowser": pystac.Asset(
                 href=(
@@ -722,7 +718,7 @@ class STAC(Solr):
             logger.error(f"Collection validation failed: {e}")
 
     async def validate_stac(self) -> Tuple[int, int]:
-        """Validate STAC API availability and get result counts."""
+        """Validate search and get result counts."""
         self._set_catalogue_queries()
         self.query["facet.field"] = self._config.solr_fields + ["time", "bbox"]
         self.query["fl"] = [self.uniq_key] + self._config.solr_fields + ["time", "bbox"]
@@ -832,9 +828,6 @@ class STAC(Solr):
             "stac_version": "1.0.0",
             "id": "static-catalog",
             "description": "Static STAC catalog for Freva databrowser search",
-            "conformsTo": [
-                "https://api.stac.io/1.0.0/core"
-            ],
             "links": [
                 {
                     "rel": "root",
@@ -873,7 +866,7 @@ class STAC(Solr):
             },
             {
                 "rel": "items",
-                "href": "./items",
+                "href": "./items/*.json",
                 "type": "application/json"
             }
         ]
