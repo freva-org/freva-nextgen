@@ -2172,11 +2172,7 @@ class STAC(Solr):
 
             # # intial STAC-Collection
             self.collection = await self._create_stac_collection(collection_id)
-            # async for chunk in self.stream_collection(
-            #     self.collection.to_dict(),
-            #     collection_id
-            # ):
-            #     yield chunk  # pragma: no cover
+ 
 
             # STAC-Items
             async for item_batch in self._iter_stac_items():
