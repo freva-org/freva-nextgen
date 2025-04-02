@@ -3,7 +3,6 @@
 import ast
 import io
 import json
-import tarfile
 from datetime import datetime
 from textwrap import dedent
 from typing import (
@@ -26,7 +25,43 @@ from freva_rest.logger import logger
 
 from .core import FlavourType, Solr, Translator
 
+import io
+from datetime import datetime
+from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 
+class ZipStream(io.RawIOBase):
+    """Custom unseekable stream that buffers writes and 
+    can flush its content.
+    
+    In spite of having simillar libraries for this purpose,
+    we designed this lean class to have a better control
+    on memory usage and to have a better understanding
+    of the underlying mechanism. Most of existing libraries
+    due to the nature of their design, they consume a certain
+    amount of memory which doesn't make them suitable for 
+    Freva case.
+    """
+    def __init__(self):
+        self._buffer = bytearray()
+        self._closed = False
+
+    def close(self):
+        self._closed = True
+
+    def write(self, b):
+        """ Write the small buffer into the stream """
+        if self._closed:
+            raise ValueError("Can't write to a closed stream")
+        self._buffer += b
+        return len(b)
+
+    def flush_and_read(self):
+        """ Flush the buffer and return the chunk """
+        chunk = bytes(self._buffer)
+        self._buffer.clear()
+        return chunk
+
+# TODO: drop pystac completely and use the custom implementation
 class STAC(Solr):
     """STAC class to create static STAC catalogues."""
 
@@ -53,8 +88,8 @@ class STAC(Solr):
             **query
         )
         self.config = config
-        self.buffer = io.BytesIO()
-        self.tar = tarfile.open(fileobj=self.buffer, mode='w:gz')
+        self._zip_stream = Stream()
+        self._zip = ZipFile(self._zip_stream, mode="w", compression=ZIP_DEFLATED)
         self.spatial_extent = {
             "minx": float("-180"),
             "miny": float("-90"),
@@ -744,83 +779,28 @@ class STAC(Solr):
             "only_params": str(filtered_params) if filtered_params != {} else "",
         }
 
-    async def stream_stac_catalogue(
-        self,
-        collection_id: str,
-    ) -> AsyncIterator[bytes]:
-        """Initialize and stream a STAC catalogue from Databrowser search results.
+    def _add_object(self, name: str, content: str, mtime=None) -> bytes:
+        content_bytes = content.encode("utf-8")
+        info = ZipInfo(filename=name)
+        ts = datetime.fromtimestamp(mtime) if mtime else datetime.now()
+        info.date_time = ts.timetuple()[:6]
+        info.compress_type = ZIP_DEFLATED
 
-        Parameters
-        ----------
-        collection_id : str
-            Unique identifier for the STAC collection
+        with self._zip.open(info, mode="w") as fp:
+            fp.write(content_bytes)
+        return self._zip_stream.flush_and_read()
 
-        Yields
-        ------
-        bytes
-            Chunks of the tar.gz archive
-        """
-        logger.info("Streaming STAC Catalogue for %s", collection_id)
-        try:
-            # STAC-Catalog
-            async for chunk in self.stream_catalog(collection_id):
-                yield chunk
+    async def add_object_async(self, name: str, content: str, mtime=None) -> AsyncIterator[bytes]:
+        chunk = self._add_object(name, content, mtime)
+        yield chunk
 
-            # # intial STAC-Collection
-            self.collection = await self._create_stac_collection(collection_id)
-
-            # STAC-Items
-            async for item_batch in self._iter_stac_items():
-                for item in item_batch:
-                    async for chunk in self.stream_item(
-                        item.to_dict(),
-                        collection_id
-                    ):
-                        yield chunk  # pragma: no cover
-
-            # updated STAC-Collection
-            self.finalize_stac_collection()
-            async for chunk in self.stream_collection(
-                self.collection.to_dict(),
-                collection_id
-            ):
-                yield chunk  # pragma: no cover
-
-            final_chunk = await self.close()
-            if final_chunk:
-                yield final_chunk
-
-        except Exception as e:  # pragma: no cover
-            logger.error(
-                f"STAC collection creation failed for {collection_id}: {str(e)}"
-            )
-            raise
-
-    def add_object(
-            self, name: str,
-            content: str,
-            mtime: Optional[float] = None) -> bytes:
-        """Add an object of STAC such as Catalog, Collection or Item
-        to the tgz archive and return the bytes."""
-        content_bytes = content.encode('utf-8')
-        info = tarfile.TarInfo(name=name)
-        info.size = len(content_bytes)
-        info.mtime = mtime or datetime.now().timestamp()
-
-        content_io = io.BytesIO(content_bytes)
-        self.tar.addfile(info, content_io)
-
-        chunk = self.buffer.getvalue()
-        self.buffer.seek(0)
-        self.buffer.truncate()
-        return chunk
-
-    async def finalize_tar(self) -> bytes:
-        """Close the tgz file and return final bytes."""
-        self.tar.close()
-        final_chunk = self.buffer.getvalue()
-        self.buffer.close()
-        return final_chunk
+    async def finalize_zip(self) -> AsyncIterator[bytes]:
+        self._zip.close()
+        while True:
+            chunk = self._zip_stream.flush_and_read()
+            if not chunk:
+                break
+            yield chunk
 
     async def stream_catalog(self, collection_id: str) -> AsyncIterator[bytes]:
         catalog = {
@@ -829,65 +809,52 @@ class STAC(Solr):
             "id": "static-catalog",
             "description": "Static STAC catalog for Freva databrowser search",
             "links": [
-                {
-                    "rel": "root",
-                    "href": "./catalog.json",
-                    "type": "application/json"
-                },
-                {
-                    "rel": "child",
-                    "href": f"./collections/{collection_id}/collection.json",
-                    "type": "application/json"
-                }
+                {"rel": "root", "href": "./catalog.json", "type": "application/json"},
+                {"rel": "child", "href": f"./collections/{collection_id}/collection.json", "type": "application/json"},
             ]
         }
-        chunk = self.add_object(
-            "stac-catalog/catalog.json",
-            json.dumps(catalog, indent=2)
-        )
-        if chunk:
+        async for chunk in self.add_object_async("stac-catalog/catalog.json", json.dumps(catalog, indent=2)):
             yield chunk
 
-    async def stream_collection(
-        self,
-        collection: Dict[str, Any],
-        collection_id: str
-    ) -> AsyncIterator[bytes]:
+    async def stream_collection(self, collection: Dict[str, Any], collection_id: str) -> AsyncIterator[bytes]:
         collection["links"] = [
-            {
-                "rel": "root",
-                "href": "../../catalog.json",
-                "type": "application/json"
-            },
-            {
-                "rel": "parent",
-                "href": "../../catalog.json",
-                "type": "application/json"
-            },
-            {
-                "rel": "items",
-                "href": "./items/*.json",
-                "type": "application/json"
-            }
+            {"rel": "root", "href": "../../catalog.json", "type": "application/json"},
+            {"rel": "parent", "href": "../../catalog.json", "type": "application/json"},
+            {"rel": "items", "href": "./items/*.json", "type": "application/json"}
         ]
+        async for chunk in self.add_object_async(f"stac-catalog/collections/{collection_id}/collection.json",
+                                                  json.dumps(collection, indent=2)):
+            yield chunk
 
-        chunk = self.add_object(
-            f"stac-catalog/collections/{collection_id}/collection.json",
-            json.dumps(collection, indent=2)
-        )
-        if chunk:
-            yield chunk  # pragma: no cover
+    async def stream_item(self, item: Dict[str, Any], collection_id: str) -> AsyncIterator[bytes]:
+        async for chunk in self.add_object_async(f"stac-catalog/collections/{collection_id}/items/{item['id']}.json",
+                                                  json.dumps(item, indent=2)):
+            yield chunk
 
-    async def stream_item(
-        self, item: Dict[str, Any], collection_id: str
-    ) -> AsyncIterator[bytes]:
-        chunk = self.add_object(
-            f"stac-catalog/collections/{collection_id}/items/{item['id']}.json",
-            json.dumps(item, indent=2)
-        )
-        if chunk:
-            yield chunk  # pragma: no cover
+    async def close(self) -> AsyncIterator[bytes]:
+        async for chunk in self.finalize_zip():
+            yield chunk
 
-    async def close(self) -> bytes:
-        """Close the tgz archive and return final bytes."""
-        return await self.finalize_tar()
+    async def stream_stac_catalogue(self, collection_id: str) -> AsyncIterator[bytes]:
+        logger.info("Streaming STAC Catalogue for %s", collection_id)
+        try:
+            async for chunk in self.stream_catalog(collection_id):
+                yield chunk
+
+            self.collection = await self._create_stac_collection(collection_id)
+
+            async for item_batch in self._iter_stac_items():
+                for item in item_batch:
+                    async for chunk in self.stream_item(item.to_dict(), collection_id):
+                        yield chunk
+
+            self.finalize_stac_collection()
+            async for chunk in self.stream_collection(self.collection.to_dict(), collection_id):
+                yield chunk
+
+            async for chunk in self.close():
+                yield chunk
+
+        except Exception as e:
+            logger.error(f"STAC collection creation failed for {collection_id}: {e}")
+            raise

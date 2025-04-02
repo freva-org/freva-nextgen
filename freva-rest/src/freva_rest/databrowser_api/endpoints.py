@@ -270,10 +270,10 @@ async def stac_catalogue(
 
     collection_id = f"Dataset-{(f'{flavour}-{str(uuid.uuid4())}')[:18]}"
     await stac_instance.init_stac_catalogue(request)
-    file_name = f"stac-catalog-{collection_id}-{uniq_key}.tar.gz"
+    file_name = f"stac-catalog-{collection_id}-{uniq_key}.zip"
     return StreamingResponse(
         stac_instance.stream_stac_catalogue(collection_id),
-        media_type="application/x-tar+gzip",
+        media_type="application/zip",
         headers={
             "Content-Disposition": f'attachment; filename="{file_name}"'
         }
