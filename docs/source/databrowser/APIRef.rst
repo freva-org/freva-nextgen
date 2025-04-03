@@ -585,7 +585,7 @@ Generating a STAC Catalogue
     :statuscode 422: Invalid flavour or search keys
     :statuscode 500: Internal server error
     :statuscode 503: Search backend error
-    :resheader Content-Type: ``application/x-tar+gzip``
+    :resheader Content-Type: ``application/zip``
 
     Example Request
     ~~~~~~~~~~~~~~~~~
@@ -605,10 +605,10 @@ Generating a STAC Catalogue
     .. sourcecode:: http
 
         HTTP/1.1 200 OK
-        Content-Type: application/x-tar+gzip
-        Content-Disposition: attachment; filename="stac-catalog-freva-550e8400-e29b-41d4-a716-446655440000-file.tar.gz"
+        Content-Type: application/zip
+        Content-Disposition: attachment; filename="stac-catalog-freva-550e8400-e29b-41d4-a716-446655440000-file..zip"
 
-        [Json content of the tar.gz archive]
+        [Json content of the zip archive]
 
     Example
     ~~~~~~~
@@ -622,7 +622,7 @@ Generating a STAC Catalogue
 
             curl -X GET \
             'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file?product=EUR-11' \
-            --output stac-catalog.tar.gz
+            --output stac-catalog.zip
 
         .. code-tab:: python
             :caption: Python
@@ -634,7 +634,7 @@ Generating a STAC Catalogue
                 params={"product": "EUR-11"},
                 stream=True
             )
-            with open("stac-catalog.tar.gz", "wb") as f:
+            with open("stac-catalog.zip", "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
 
@@ -647,7 +647,7 @@ Generating a STAC Catalogue
             response <- GET(
                 "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file",
                 query = list(product = "EUR-11"),
-                write_disk("stac-catalog.tar.gz", overwrite = TRUE)
+                write_disk("stac-catalog.zip", overwrite = TRUE)
             )
 
         .. code-tab:: julia
@@ -660,7 +660,7 @@ Generating a STAC Catalogue
                 "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file",
                 query = Dict("product" => "EUR-11")
             )
-            open("stac-catalog.tar.gz", "w") do f
+            open("stac-catalog.zip", "w") do f
                 write(f, response.body)
             end
 
@@ -678,7 +678,7 @@ Generating a STAC Catalogue
                 curl = curl_easy_init();
                 if (curl) {
                     char static_url[] = "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file?product=EUR-11";
-                    fp = fopen("stac-catalog.tar.gz", "wb");
+                    fp = fopen("stac-catalog.zip", "wb");
                     curl_easy_setopt(curl, CURLOPT_URL, static_url);
                     curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
                     res = curl_easy_perform(curl);

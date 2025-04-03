@@ -441,7 +441,7 @@ class databrowser:
         Returns
         ~~~~~~~
         BinaryIO
-        A tar.gz file stream
+        A zip file stream
 
         Raises
         ~~~~~~
@@ -454,7 +454,7 @@ class databrowser:
         .. execute_code::
 
             from tempfile import mktemp
-            temp_path = mktemp(suffix=".tar.gz")
+            temp_path = mktemp(suffix=".zip")
 
             from freva_client import databrowser
             db = databrowser(dataset="cmip6-hsm")

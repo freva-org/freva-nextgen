@@ -139,8 +139,8 @@ def test_stac_catalogue(test_server: str) -> None:
 
     # static STAC catalogue
     db = databrowser(host=test_server, dataset="cmip6-fs")
-    res = db.stac_catalogue(filename="/tmp/something.tar.gz")
-    assert "STAC catalog saved to: /tmp/something.tar.gz" in res
+    res = db.stac_catalogue(filename="/tmp/something.zip")
+    assert "STAC catalog saved to: /tmp/something.zip" in res
 
     # static STAC catalogue with non-existing directory
     db = databrowser(host=test_server, dataset="cmip6-fs")
