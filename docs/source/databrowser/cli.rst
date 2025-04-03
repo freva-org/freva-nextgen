@@ -295,7 +295,7 @@ only a directory or a fully qualified filename.
 
 The STAC Catalogue provides multiple ways to access and interact with the data:
  - Access your climate data through the intake-esm data catalog specification
- - Download and access search results as Zarr files, available as STAC Assets at both collection and item levels
+ - Access search results as Zarr files, available as STAC Assets at both collection and item levels
  - Browse and explore your search results directly through the Freva DataBrowser web interface
 Each of these access methods is encoded as STAC Assets, making them easily discoverable and accessible through any STAC-compatible tool.
 

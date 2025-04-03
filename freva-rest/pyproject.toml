@@ -37,7 +37,6 @@ dependencies = [
 "tomli",
 "typing_extensions",
 "zarr<3",
-"pystac",
 "httpx",
 "uvicorn",
 ]

@@ -150,7 +150,7 @@ class Config:
 
     @property
     def stac_url(self) -> str:
-        """Define the url for creating stac collection."""
+        """Define the url for creating stac catalogue."""
         return f"{self.databrowser_url}/stac-catalogue/{self.flavour}/{self.uniq_key}"
 
     @property

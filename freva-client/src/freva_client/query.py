@@ -426,15 +426,15 @@ class databrowser:
         filename: Optional[Union[str, Path, None]] = None,
         **kwargs: Any,
     ) -> str:
-        """Create an static STAC API catalogue endpoint
-        from the search. This method creates a STAC API collection
-        endpoint from the current object search.
+        """Create a static STAC API catalogue endpoint
+        from the search.
 
         Parameters
         ~~~~~~~~~~
         filename: str, default: None
-            The filename of the STAC catalogue. If not given the STAC catalogue
-            will be saved to the current working directory.
+            The filename of the STAC catalogue. If not given
+            or doesn't exist the STAC catalogue will be saved
+            to the current working directory.
         **kwargs: Any
             Additional keyword arguments to be passed to the request.
 

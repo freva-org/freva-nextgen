@@ -25,7 +25,6 @@ from typing import (
 )
 
 import httpx
-import pystac
 from dateutil.parser import ParserError, parse
 from fastapi import HTTPException
 from pydantic import BaseModel
@@ -536,7 +535,6 @@ class Solr:
         url: str,
         payload: Union[
             Dict[str, Any],
-            Dict[str, pystac.Collection],
             List[Dict[Any, Any]],
         ],
     ) -> AsyncIterator[Tuple[int, Dict[str, Any]]]:

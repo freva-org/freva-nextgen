@@ -550,7 +550,7 @@ def intake_catalogue(
 
 @databrowser_app.command(
     name="stac-catalogue",
-    help="Create a dynamic or static STAC catalogue from the search."
+    help="Create a static STAC catalogue from the search."
 )
 @exception_handler
 def stac_catalogue(
@@ -653,7 +653,7 @@ def stac_catalogue(
         "-o",
         "--filename",
         help=(
-            "Path to the file where the static STAC catalogue,"
+            "Path to the file where the static STAC catalogue, "
             "should be written to. If you don't specify or the path "
             "does not exist, the file will be created in the current "
             "working directory. "

@@ -547,7 +547,7 @@ Generating a STAC Catalogue
 
 .. http:get:: /api/freva-nextgen/databrowser/stac-catalogue/(str:flavour)/(str:uniq_key)
 
-    This endpoint transforms Freva databrowser search results into either a static SpatioTemporal Asset Catalog (STAC). 
+    This endpoint transforms Freva databrowser search results into a static SpatioTemporal Asset Catalog (STAC). 
     STAC is an open standard for geospatial data cataloguing, enabling consistent discovery and access of climate datasets, 
     satellite imagery and spatiotemporal data. It provides a common language for describing geospatial information and related metadata.
 
@@ -589,14 +589,13 @@ Generating a STAC Catalogue
 
     Example Request
     ~~~~~~~~~~~~~~~~~
-    Here's an example of how to create a static STAC catalog that follows the
+    Here's an example of how to create a static STAC catalog as a downloadable archive that follows the
     `freva` DRS standard and points to data files rather than URIs.
     We're specifically looking for datasets from the ``EUR-11`` ``product``.
-    Here's how to request a static STAC catalog as a downloadable archive:
 
     .. sourcecode:: http
 
-        GET /api/freva-nextgen/databrowser/stac-collection/freva/file?product=EUR-11 HTTP/1.1
+        GET /api/freva-nextgen/databrowser/stac-catalogue/freva/file?product=EUR-11 HTTP/1.1
         Host: www.freva.dkrz.de
 
     Example Response
@@ -606,14 +605,13 @@ Generating a STAC Catalogue
 
         HTTP/1.1 200 OK
         Content-Type: application/zip
-        Content-Disposition: attachment; filename="stac-catalog-freva-550e8400-e29b-41d4-a716-446655440000-file..zip"
+        Content-Disposition: attachment; filename="stac-catalog-Dataset-freva-674ff427-2e2-file.zip"
 
         [Json content of the zip archive]
 
     Example
     ~~~~~~~
-    Below you can find example usages of this request in different scripting and
-    programming languages.
+    Below you can find example usages of this request in different scripting and programming languages.
 
     .. tabs::
 
@@ -621,7 +619,7 @@ Generating a STAC Catalogue
             :caption: Shell
 
             curl -X GET \
-            'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file?product=EUR-11' \
+            'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-catalogue/freva/file?product=EUR-11' \
             --output stac-catalog.zip
 
         .. code-tab:: python
@@ -630,7 +628,7 @@ Generating a STAC Catalogue
             import requests
 
             response = requests.get(
-                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file",
+                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-catalogue/freva/file",
                 params={"product": "EUR-11"},
                 stream=True
             )
@@ -645,7 +643,7 @@ Generating a STAC Catalogue
 
             # For static STAC
             response <- GET(
-                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file",
+                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-catalogue/freva/file",
                 query = list(product = "EUR-11"),
                 write_disk("stac-catalog.zip", overwrite = TRUE)
             )
@@ -657,7 +655,7 @@ Generating a STAC Catalogue
             using JSON
 
             response = HTTP.get(
-                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file",
+                "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-catalogue/freva/file",
                 query = Dict("product" => "EUR-11")
             )
             open("stac-catalog.zip", "w") do f
@@ -677,7 +675,7 @@ Generating a STAC Catalogue
 
                 curl = curl_easy_init();
                 if (curl) {
-                    char static_url[] = "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-collection/freva/file?product=EUR-11";
+                    char static_url[] = "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-catalogue/freva/file?product=EUR-11";
                     fp = fopen("stac-catalog.zip", "wb");
                     curl_easy_setopt(curl, CURLOPT_URL, static_url);
                     curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
