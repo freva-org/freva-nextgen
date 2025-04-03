@@ -423,7 +423,7 @@ class databrowser:
 
     def stac_catalogue(
         self,
-        filename: Optional[Union[str, Path]] = None,
+        filename: Optional[Union[str, Path, None]] = None,
         **kwargs: Any,
     ) -> str:
         """Create an static STAC API catalogue endpoint
@@ -465,6 +465,7 @@ class databrowser:
 
         kwargs.update({"stream": True})
         stac_url = self._cfg.stac_url
+        pprint("[b][green]Downloading the STAC catalog started ...[green][b]")
         result = self._request("GET", stac_url, **kwargs)
         if result is None or result.status_code == 404:
             raise ValueError(  # pragma: no cover
@@ -473,8 +474,10 @@ class databrowser:
         default_filename = result.headers.get('Content-Disposition', '').split(
             'filename=')[-1].strip('"')
 
-        save_path = Path(cast(str, filename))
-
+        if filename is None:
+            save_path = Path.cwd() / default_filename
+        else:
+            save_path = Path(cast(str, filename))
         if save_path.is_dir() and save_path.exists():
             save_path = save_path / default_filename
 

@@ -436,7 +436,9 @@ class Solr:
                 query.pop("bbox_select", ["flexible"])[0],
             )
         except ValueError as err:
-            raise HTTPException(status_code=500, detail=str(err)) from err
+            raise HTTPException(
+                status_code=500, detail=str(err)
+            ) from err  # pragma: no cover
         self.facets = self.translator.translate_query(query, backwards=True)
         self.url, self.query = self._get_url()
         self.query["start"] = start

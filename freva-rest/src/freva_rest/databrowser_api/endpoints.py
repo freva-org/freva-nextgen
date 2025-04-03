@@ -272,7 +272,7 @@ async def stac_catalogue(
     await stac_instance.init_stac_catalogue(request)
     file_name = f"stac-catalog-{collection_id}-{uniq_key}.zip"
     return StreamingResponse(
-        stac_instance.stream_stac_catalogue(collection_id),
+        stac_instance.stream_stac_catalogue(collection_id, total_count),
         media_type="application/zip",
         headers={
             "Content-Disposition": f'attachment; filename="{file_name}"'
