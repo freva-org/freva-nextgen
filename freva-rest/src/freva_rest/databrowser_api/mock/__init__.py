@@ -1,6 +1,7 @@
 """Read test entries from a databrowser."""
-from pathlib import Path
 
+from pathlib import Path
+import asyncio
 import httpx
 
 
@@ -12,4 +13,10 @@ async def read_data(core: str, uri: str) -> None:
     headers = {"content-type": "application/json"}
     async with httpx.AsyncClient(timeout=5.0) as client:
         res = await client.post(url, content=data_json, headers=headers)
-        res.raise_for_status()
+        try:
+            res.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 503:
+                await asyncio.sleep(1)
+            else:
+                raise
