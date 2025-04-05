@@ -16,7 +16,7 @@ async def read_data(core: str, uri: str) -> None:
         res = await client.post(url, content=data_json, headers=headers)
         try:
             res.raise_for_status()
-        except httpx.HTTPStatusError as e:
+        except httpx.HTTPStatusError as e:  # pragma: no cover
             if e.response.status_code == 503:
                 await asyncio.sleep(1)
             else:
