@@ -1,7 +1,8 @@
 """Read test entries from a databrowser."""
 
-from pathlib import Path
 import asyncio
+from pathlib import Path
+
 import httpx
 
 
