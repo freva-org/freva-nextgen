@@ -29,7 +29,6 @@ except ImportError:  # pragma: no cover
         default_compressor = Zlib()
     except ImportError:
         default_compressor = None
-from zarr.core.common import ZARRAY_JSON, ZATTRS_JSON, ZGROUP_JSON
 
 from .utils import data_logger
 
@@ -37,6 +36,9 @@ DaskArrayType = dask.array.Array
 ZARR_FORMAT = 2
 ZARR_CONSOLIDATED_FORMAT = 1
 ZARR_METADATA_KEY = ".zmetadata"
+ZARRAY_JSON = ".zarray"
+ZATTRS_JSON = ".zattrs"
+ZGROUP_JSON = ".zgroup"
 
 
 def extract_dataarray_zattrs(da: xr.DataArray) -> Dict[str, Any]:

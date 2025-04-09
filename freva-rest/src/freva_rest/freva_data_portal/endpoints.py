@@ -8,11 +8,14 @@ import cloudpickle
 from fastapi import Depends, Path, Query, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse, Response
-from zarr.core.common import ZARRAY_JSON, ZATTRS_JSON, ZGROUP_JSON
 
 from freva_rest.auth import TokenPayload, auth
 from freva_rest.rest import app
 from freva_rest.utils import create_redis_connection
+
+ZARRAY_JSON = ".zarray"
+ZGROUP_JSON = ".zgroup"
+ZATTRS_JSON = ".zattrs"
 
 
 async def read_redis_data(

@@ -11,7 +11,6 @@ import redis
 import xarray as xr
 from dask.distributed import Client, LocalCluster
 from xarray.backends.zarr import encode_zarr_variable
-from zarr.core.common import ZARRAY_JSON
 
 from .backends import load_data
 from .utils import data_logger, str_to_int
@@ -24,6 +23,7 @@ from .zarr_utils import (
 
 ZARR_CONSOLIDATED_FORMAT = 1
 ZARR_FORMAT = 2
+ZARRAY_JSON = ".zarray"
 
 CLIENT: Optional[Client] = None
 LoadDict = TypedDict(
