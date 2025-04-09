@@ -37,7 +37,7 @@ dependencies = [
 "tomli",
 "typing_extensions",
 "uvicorn",
-"zarr<3",
+"zarr",
 ]
 [project.scripts]
 freva-rest-server = "freva_rest.cli:cli"

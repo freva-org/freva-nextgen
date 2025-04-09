@@ -11,7 +11,6 @@ import redis
 import xarray as xr
 from dask.distributed import Client, LocalCluster
 from xarray.backends.zarr import encode_zarr_variable
-from zarr.storage import array_meta_key
 
 from .backends import load_data
 from .utils import data_logger, str_to_int
@@ -24,6 +23,7 @@ from .zarr_utils import (
 
 ZARR_CONSOLIDATED_FORMAT = 1
 ZARR_FORMAT = 2
+ZARRAY_JSON = ".zarray"
 
 CLIENT: Optional[Client] = None
 LoadDict = TypedDict(
@@ -229,7 +229,7 @@ class DataLoadFactory:
         """Read the zarr metadata from the cache."""
         pickle_data, dset = self.load_object(key)
         meta = cast(Dict[str, Any], pickle_data["meta"])
-        arr_meta = meta["metadata"][f"{variable}/{array_meta_key}"]
+        arr_meta = meta["metadata"][f"{variable}/{ZARRAY_JSON}"]
         data = encode_chunk(
             get_data_chunk(
                 encode_zarr_variable(

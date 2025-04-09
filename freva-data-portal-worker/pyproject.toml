@@ -37,7 +37,7 @@ dependencies = [
 "rioxarray",
 "watchfiles",
 "xarray",
-"zarr<3",
+"zarr",
 ]
 [project.scripts]
 data-loader-worker = "data_portal_worker:cli.run_data_loader"

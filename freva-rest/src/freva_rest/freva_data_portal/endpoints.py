@@ -8,11 +8,14 @@ import cloudpickle
 from fastapi import Depends, Path, Query, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse, Response
-from zarr.storage import array_meta_key, attrs_key, group_meta_key
 
 from freva_rest.auth import TokenPayload, auth
 from freva_rest.rest import app
 from freva_rest.utils import create_redis_connection
+
+ZARRAY_JSON = ".zarray"
+ZGROUP_JSON = ".zgroup"
+ZATTRS_JSON = ".zattrs"
 
 
 async def read_redis_data(
@@ -285,14 +288,14 @@ async def chunk_data(
 
     This method reads the zarr data."""
 
-    if array_meta_key in chunk or attrs_key in chunk:
+    if ZARRAY_JSON in chunk or ZATTRS_JSON in chunk:
         json_meta: Dict[str, Any] = await read_redis_data(
             uuid5, "json_meta", timeout=timeout
         )
-        if attrs_key in chunk:
-            key = f"{variable}/{attrs_key}"
+        if ZATTRS_JSON in chunk:
+            key = f"{variable}/{ZATTRS_JSON}"
         else:
-            key = f"{variable}/{array_meta_key}"
+            key = f"{variable}/{ZARRAY_JSON}"
         try:
             content = json_meta["metadata"][key]
         except KeyError as error:
@@ -301,7 +304,7 @@ async def chunk_data(
             content=content,
             status_code=status.HTTP_200_OK,
         )
-    if group_meta_key in chunk:
+    if ZGROUP_JSON in chunk:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Sub groups are not supported.",
