@@ -1,7 +1,8 @@
 """Utilities for working with zarr storages."""
 
+import base64
 from copy import deepcopy
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import dask.array
 import numpy as np
@@ -15,14 +16,20 @@ from xarray.backends.zarr import (
     encode_zarr_variable,
     extract_zarr_variable_encoding,
 )
-from zarr.meta import encode_fill_value
-from zarr.storage import (
-    array_meta_key,
-    attrs_key,
-    default_compressor,
-    group_meta_key,
-)
-from zarr.util import normalize_shape
+
+try:  # pragma: no cover
+    # noinspection PyUnresolvedReferences
+    from numcodecs import Blosc
+
+    default_compressor = Blosc()
+except ImportError:  # pragma: no cover
+    try:
+        from numcodecs import Zlib
+
+        default_compressor = Zlib()
+    except ImportError:
+        default_compressor = None
+from zarr.core.common import ZARRAY_JSON, ZATTRS_JSON, ZGROUP_JSON
 
 from .utils import data_logger
 
@@ -83,7 +90,6 @@ def extract_zarray(
         """helper function to extract fill value from DataArray."""
         fill_value = da.attrs.pop("_FillValue", None)
         return encode_fill_value(fill_value, dtype)
-
     meta = {
         "compressor": encoding.get(
             "compressor", da.encoding.get("compressor", default_compressor)
@@ -97,7 +103,7 @@ def extract_zarray(
         "zarr_format": ZARR_FORMAT,
     }
 
-    if meta["chunks"] is None:
+    if meta["chunks"] is None or meta["chunks"] == 'auto':
         meta["chunks"] = da.shape
 
     # validate chunks
@@ -122,8 +128,8 @@ def create_zmetadata(dataset: xr.Dataset) -> Dict[str, Any]:
         "zarr_consolidated_format": ZARR_CONSOLIDATED_FORMAT,
         "metadata": {},
     }
-    zmeta["metadata"][group_meta_key] = {"zarr_format": ZARR_FORMAT}
-    zmeta["metadata"][attrs_key] = extract_dataset_zattrs(dataset)
+    zmeta["metadata"][ZGROUP_JSON] = {"zarr_format": ZARR_FORMAT}
+    zmeta["metadata"][ZATTRS_JSON] = extract_dataset_zattrs(dataset)
     extra_kw = {}
     if Version(xr.__version__) >= Version("2025.3.0"):
         extra_kw["zarr_format"] = ZARR_FORMAT  # pragma: no cover
@@ -133,8 +139,8 @@ def create_zmetadata(dataset: xr.Dataset) -> Dict[str, Any]:
         encoding = extract_zarr_variable_encoding(dvar, **extra_kw)  # type: ignore
         zattrs = extract_dataarray_zattrs(encoded_da)
         zattrs = extract_dataarray_coords(da, zattrs)
-        zmeta["metadata"][f"{key}/{attrs_key}"] = zattrs
-        zmeta["metadata"][f"{key}/{array_meta_key}"] = extract_zarray(
+        zmeta["metadata"][f"{key}/{ZATTRS_JSON}"] = zattrs
+        zmeta["metadata"][f"{key}/{ZARRAY_JSON}"] = extract_zarray(
             encoded_da,
             encoding,
             encoded_da.dtype,
@@ -155,12 +161,12 @@ def jsonify_zmetadata(
 
     for key in list(dataset.variables):
         # convert compressor to dict
-        compressor = zjson["metadata"][f"{key}/{array_meta_key}"]["compressor"]
-        if compressor is not None:
-            compressor_config = zjson["metadata"][f"{key}/{array_meta_key}"][
+        compressor = zjson["metadata"][f"{key}/{ZARRAY_JSON}"]["compressor"]
+        if compressor is not None:  # pragma: no cover
+            compressor_config = zjson["metadata"][f"{key}/{ZARRAY_JSON}"][
                 "compressor"
             ].get_config()
-            zjson["metadata"][f"{key}/{array_meta_key}"][
+            zjson["metadata"][f"{key}/{ZARRAY_JSON}"][
                 "compressor"
             ] = compressor_config
 
@@ -226,3 +232,60 @@ def get_data_chunk(
         return cast(np.typing.NDArray[Any], new_chunk)
     else:
         return cast(np.typing.NDArray[Any], chunk_data)
+
+
+def encode_fill_value(v: Any, dtype: np.dtype[Any], object_codec: Any = None) -> Any:
+    """Encode fill value for zarr array."""
+    # early out
+    if v is None:
+        return v
+    if dtype.kind == 'V' and dtype.hasobject:
+        if object_codec is None:
+            raise ValueError('missing object_codec for object array')
+        v = object_codec.encode(v)
+        v = str(base64.standard_b64encode(v), 'ascii')
+        return v
+    if dtype.kind == 'f':
+        if np.isnan(v):
+            return 'NaN'
+        elif np.isposinf(v):
+            return 'Infinity'
+        elif np.isneginf(v):
+            return '-Infinity'
+        else:
+            return float(v)
+    elif dtype.kind in 'ui':
+        return int(v)
+    elif dtype.kind == 'b':
+        return bool(v)
+    elif dtype.kind in 'c':
+        c = cast(np.complex128, np.dtype(complex).type())
+        v = (
+            encode_fill_value(v.real, c.real.dtype, object_codec),
+            encode_fill_value(v.imag, c.imag.dtype, object_codec),
+        )
+        return v
+    elif dtype.kind in 'SV':
+        v = str(base64.standard_b64encode(v), 'ascii')
+        return v
+    elif dtype.kind == 'U':
+        return v
+    elif dtype.kind in 'mM':
+        return int(v.view('i8'))
+    else:
+        return v
+
+
+def normalize_shape(shape: Union[int, Tuple[int, ...], None]) -> Tuple[int, ...]:
+    """Convenience function to normalize the `shape` argument."""
+
+    if shape is None:
+        raise TypeError("shape is None")
+
+    # handle 1D convenience form
+    if isinstance(shape, int):
+        shape = (int(shape),)
+
+    # normalize
+    shape = tuple(int(s) for s in shape)
+    return shape
