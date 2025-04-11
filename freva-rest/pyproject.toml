@@ -38,6 +38,7 @@ dependencies = [
 "typing_extensions",
 "uvicorn",
 "zarr",
+"httpx",
 ]
 [project.scripts]
 freva-rest-server = "freva_rest.cli:cli"
