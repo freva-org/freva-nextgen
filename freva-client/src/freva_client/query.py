@@ -426,7 +426,7 @@ class databrowser:
         filename: Optional[Union[str, Path]] = None,
         **kwargs: Any,
     ) -> str:
-        """Create a static STAC catalogue from 
+        """Create a static STAC catalogue from
         the search.
 
         Parameters
