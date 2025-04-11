@@ -423,11 +423,11 @@ class databrowser:
 
     def stac_catalogue(
         self,
-        filename: Optional[Union[str, Path, None]] = None,
+        filename: Optional[Union[str, Path]] = None,
         **kwargs: Any,
     ) -> str:
-        """Create a static STAC API catalogue endpoint
-        from the search.
+        """Create a static STAC catalogue from 
+        the search.
 
         Parameters
         ~~~~~~~~~~
