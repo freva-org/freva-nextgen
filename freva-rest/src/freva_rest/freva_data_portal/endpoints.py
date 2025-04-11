@@ -144,9 +144,7 @@ async def zemtadata(
     data within the particular zarr store in question.
     """
 
-    meta: Dict[str, Any] = await read_redis_data(
-        uuid5, "json_meta", timeout=timeout
-    )
+    meta: Dict[str, Any] = await read_redis_data(uuid5, "json_meta", timeout=timeout)
     return JSONResponse(
         content=meta,
         status_code=status.HTTP_200_OK,
@@ -191,9 +189,7 @@ async def zgroup(
     organizing and managing the structure of data within a Zarr group,
     allowing users to access and manipulate arrays and subgroups efficiently.
     """
-    meta: Dict[str, Any] = await read_redis_data(
-        uuid5, "json_meta", timeout=timeout
-    )
+    meta: Dict[str, Any] = await read_redis_data(uuid5, "json_meta", timeout=timeout)
     return JSONResponse(
         content=meta["metadata"][".zgroup"],
         status_code=status.HTTP_200_OK,
@@ -236,9 +232,7 @@ async def zattrs(
     or arrays, such as descriptions, units, creation dates, or any other
     custom metadata relevant to the data.
     """
-    meta: Dict[str, Any] = await read_redis_data(
-        uuid5, "json_meta", timeout=timeout
-    )
+    meta: Dict[str, Any] = await read_redis_data(uuid5, "json_meta", timeout=timeout)
     return JSONResponse(
         content=meta["metadata"][".zattrs"], status_code=status.HTTP_200_OK
     )
