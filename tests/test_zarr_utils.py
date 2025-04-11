@@ -11,8 +11,13 @@ from data_portal_worker.zarr_utils import (
     encode_chunk,
     extract_dataarray_coords,
     get_data_chunk,
+    encode_fill_value,
+    normalize_shape,
 )
-
+import base64
+import numpy as np
+import pytest
+from unittest.mock import MagicMock
 
 class DummyCodec:
     """Dummy codec class to test the coding."""
@@ -180,3 +185,42 @@ def test_extract_with_no_coords() -> None:
 
     result = extract_dataarray_coords(da, {"foo": "bar"})
     assert result == {"foo": "bar"}
+
+
+def test_encode_fill_value_datetime() -> None:
+    assert encode_fill_value(None, np.dtype('f8')) is None
+    assert encode_fill_value(3.14, np.dtype('f8')) == 3.14 and isinstance(encode_fill_value(3.14, np.dtype('f8')), float)
+    assert encode_fill_value(42, np.dtype('i4')) == 42 and isinstance(encode_fill_value(42, np.dtype('i4')), int)
+    assert encode_fill_value(True, np.dtype('bool')) is True and encode_fill_value(False, np.dtype('bool')) is False
+    
+    assert encode_fill_value(np.nan, np.dtype('f8')) == 'NaN'
+    assert encode_fill_value(np.inf, np.dtype('f8')) == 'Infinity'
+    assert encode_fill_value(-np.inf, np.dtype('f8')) == '-Infinity'
+    
+    c_result = encode_fill_value(complex(1.0, 2.0), np.dtype('complex128'))
+    assert isinstance(c_result, tuple) and c_result == (1.0, 2.0)
+    assert encode_fill_value(complex(np.inf, np.nan), np.dtype('complex128')) == ('Infinity', 'NaN')
+    
+    test_bytes = b'freva'
+    assert encode_fill_value(test_bytes, np.dtype('S5')) == str(base64.standard_b64encode(test_bytes), 'ascii')
+    assert encode_fill_value('freva', np.dtype('U5')) == 'freva'
+    assert isinstance(encode_fill_value(np.datetime64('2022-01-01'), np.dtype('datetime64[ns]')), int)
+    assert encode_fill_value(object(), np.dtype('O')) is not None
+
+    class MockCodec:
+        def encode(self, value):
+            return b'encoded'
+    object_dtype = np.dtype([('f', 'O')])
+    assert object_dtype.hasobject
+    mock_codec = MockCodec()
+    result = encode_fill_value("test_obj", object_dtype, mock_codec)
+    assert result == str(base64.standard_b64encode(b'encoded'), 'ascii')
+    with pytest.raises(ValueError, match='missing object_codec for object array'):
+        encode_fill_value("test_obj", object_dtype)
+
+
+def test_normalize_shape() -> None:
+    assert normalize_shape(5) == (5,)
+    assert normalize_shape(()) == ()
+    with pytest.raises(TypeError, match="shape is None"):
+        normalize_shape(None)

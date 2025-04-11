@@ -43,7 +43,7 @@ def create_rasterio_file(temp_dir: str) -> str:
 def create_zarr_file(temp_dir: str) -> str:
     """Create a zarr dataset."""
     temp = os.path.join(temp_dir, "out.zarr")
-    zarr.convenience.save(temp, [1, 2, 3, 4])
+    zarr.save(temp, np.array([1, 2, 3, 4]))
     return temp
 
 

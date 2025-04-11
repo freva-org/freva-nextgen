@@ -137,3 +137,4 @@ dev-env/certs
 *keycloakdb.lock.db
 *keycloakdb.*
 stac-catalog-*
+.DS_Store
