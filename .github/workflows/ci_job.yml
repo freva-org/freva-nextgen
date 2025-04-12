@@ -105,6 +105,15 @@ jobs:
           no-cache: true
           tags: freva-rest:latest
 
+      - name: Build and push freva-data-loader image
+        uses: docker/build-push-action@v4
+        with:
+          context: freva-data-portal-worker
+          file: freva-data-portal-worker/Dockerfile
+          platforms: linux/amd64
+          push: false
+          no-cache: true
+
       - name: Waiting for keycloak
         run: >
           python dev-env/config/dev-utils.py oidc

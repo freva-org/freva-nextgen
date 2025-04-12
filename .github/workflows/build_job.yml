@@ -145,6 +145,21 @@ jobs:
             ${{ env.IMAGE }}:${{ env.TAG }}
             ${{ env.IMAGE }}:${{ env.IS_PRERELEASE == 'false' && 'latest' || env.TAG }}
 
+      - name: Build and push freva-data-loader image
+        uses: docker/build-push-action@v4
+        if: env.IS_PRERELEASE == 'false'
+        with:
+          context: freva-data-portal-worker
+          file: freva-data-portal-worker/Dockerfile
+          build-args: VERSION=${{ env.TAG }}
+          platforms: linux/amd64, linux/arm64, linux/ppc64le
+          push: true
+          no-cache: true
+          tags: |
+            ghcr.io/freva-clint/freva-data-loader:${{ env.TAG }}
+            ghcr.io/freva-clint/freva-data-loader:latest
+
+
   pypi:
     name: Create Pip package
     needs: [tests, build-and-push-image, docs, release-type-determination]
