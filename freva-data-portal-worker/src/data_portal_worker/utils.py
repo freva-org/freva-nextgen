@@ -24,10 +24,11 @@ logging.basicConfig(
 data_logger = logging.getLogger(BASE_NAME)
 
 data_logger.setLevel(logging.INFO)
-log_dir = Path(
-    "/var/log" if os.access("/var/log", os.W_OK) else platformdirs.user_log_dir()
+log_dir = os.path.join(
+    "/var/log" if os.access("/var/log", os.W_OK) else platformdirs.user_log_dir(),
+    "data-loader",
 )
-log_dir /= "data-loader"
+log_dir = Path(os.getenv("API_LOGDIR") or log_dir)
 log_dir.mkdir(exist_ok=True, parents=True)
 logger_file_handle = RotatingFileHandler(
     log_dir / "data-loader.log",

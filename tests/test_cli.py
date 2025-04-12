@@ -1,6 +1,7 @@
 """Test the command line interface cli."""
 
 import json
+import os
 from copy import deepcopy
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -84,6 +85,10 @@ def test_data_loader_cli(mocker: MockerFixture, loader_config: bytes) -> None:
                 exp=20,
                 redis_host="redis://example.com:1234",
                 dev=True,
+                redis_password="secret",
+                redis_ssl_certfile=Path(os.getenv("API_REDIS_SSL_CERTFILE", "")),
+                redis_ssl_keyfile=Path(os.getenv("API_REDIS_SSL_KEYFILE", "")),
+                redis_user="redis",
             ),
         )
         run_data_loader(
@@ -104,6 +109,10 @@ def test_data_loader_cli(mocker: MockerFixture, loader_config: bytes) -> None:
             exp=10,
             redis_host="redis://example.com:1234",
             dev=False,
+            redis_password="secret",
+            redis_ssl_certfile=Path(os.getenv("API_REDIS_SSL_CERTFILE", "")),
+            redis_ssl_keyfile=Path(os.getenv("API_REDIS_SSL_KEYFILE", "")),
+            redis_user="redis",
         )
 
 
