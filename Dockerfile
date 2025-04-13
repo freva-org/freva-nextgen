@@ -1,0 +1,41 @@
+FROM quay.io/condaforge/mambaforge
+ARG VERSION
+ARG CMD=frea-rest-server
+LABEL org.freva.service="$CMD"
+LABEL org.opencontainers.image.authors="DRKZ-CLINT"
+LABEL org.opencontainers.image.source="https://github.com/FREVA-CLINT/freva-nextgen/freva-rest"
+LABEL org.opencontainers.image.version="$VERSION"
+ENV    PYTHONUNBUFFERED=1 \
+       API_LOGDIR=/opt/${CMD}/logs
+
+
+RUN mkdir -p /docker-entrypoint-initdb.d
+WORKDIR /tmp/app
+COPY freva-rest /tmp/app/freva-rest
+COPY freva-data-portal-worker /tmp/app/freva-data-portal-worker
+RUN  set -xe  && \
+    mkdir -p /opt/${CMD}/config $API_LOGDIR /certs && \
+    if [ "${CMD}" = "data-loader-worker" ];then\
+        PKGNAME=freva-data-portal-worker && \
+        mamba install -y -q -c conda-forge --override-channels zarr cfgrib jq; \
+    elif [ "${CMD}" = "freva-rest-server" ];then\
+        PKGNAME=freva-rest && \
+        cp /tmp/app/${PKGNAME}/src/freva_rest/api_config.toml /opt/${CMD}/config && \
+        mamba install -y -q -c conda-forge --override-channels jq; \
+    else \
+        echo "Invalid CMD argument: $CMD" && exit 1; \
+    fi &&\
+    python3 -m pip install -q --no-color --root-user-action ignore --no-cache-dir ./$PKGNAME &&\
+    python3 -m pip cache purge -q --no-input && \
+    chmod -R 2777 $API_LOGDIR /opt/${CMD}/config /certs && \
+    mamba clean -y -i -t -l -f
+
+WORKDIR /opt/${CMD}
+RUN rm -fr /tmp/app
+
+COPY --chmod=0755 docker-scripts/entrypoint.sh /docker-entrypoint-initdb.d/entrypoint.sh
+COPY docker-scripts/logging.sh /usr/local/lib/logging.sh
+COPY docker-scripts/${CMD}-env.sh /etc/profile.d/env-vars.sh
+
+ENTRYPOINT ["/docker-entrypoint-initdb.d/entrypoint.sh"]
+CMD ["${CMD}"]
