@@ -18,7 +18,7 @@ RUN  mkdir -p /opt/data-loader/config /opt/data-loader/log && \
      chmod -R 2777 /opt/data-loader &&\
      mamba install -y -q -c conda-forge --override-channels zarr cfgrib && \
      python3 -m pip install -q --no-color --root-user-action ignore --no-cache-dir . &&\
-     python3 -m pip cache purge && \
+     python3 -m pip cache purge -q --no-input && \
      mamba clean -y -i -t -l -f
 
 WORKDIR /opt/data-loader

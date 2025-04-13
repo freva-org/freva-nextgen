@@ -1,4 +1,4 @@
-FROM python:3-slim
+FROM quay.io/condaforge/mambaforge
 ARG VERSION
 LABEL org.opencontainers.image.authors="DRKZ-CLINT"
 LABEL org.opencontainers.image.source="https://github.com/FREVA-CLINT/freva-nextgen/freva-rest"
