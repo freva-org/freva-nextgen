@@ -97,8 +97,9 @@ jobs:
       - name: Build freva-storage-service image
         uses: docker/build-push-action@v4
         with:
-          context: freva-rest
-          file: freva-rest/Dockerfile
+          context: .
+          file: Dockerfile
+          build-args: CMD=freva-rest-server
           platforms: linux/amd64
           push: false
           load: true
@@ -108,8 +109,9 @@ jobs:
       - name: Build and push freva-data-loader image
         uses: docker/build-push-action@v4
         with:
-          context: freva-data-portal-worker
-          file: freva-data-portal-worker/Dockerfile
+          context: .
+          build-args: CMD=data-loader-worker
+          file: Dockerfile
           platforms: linux/amd64
           push: false
           no-cache: true

@@ -135,9 +135,11 @@ jobs:
       - name: Build and push freva-rest API image
         uses: docker/build-push-action@v4
         with:
-          context: freva-rest
-          file: freva-rest/Dockerfile
-          build-args: VERSION=${{ env.TAG }}
+          context: .
+          file: Dockerfile
+          build-args: |
+            VERSION=${{ env.TAG }}
+            CMD=freva-rest-server
           platforms: linux/amd64, linux/arm64, linux/ppc64le
           push: true
           no-cache: true
@@ -149,9 +151,11 @@ jobs:
         uses: docker/build-push-action@v4
         if: env.IS_PRERELEASE == 'false'
         with:
-          context: freva-data-portal-worker
-          file: freva-data-portal-worker/Dockerfile
-          build-args: VERSION=${{ env.TAG }}
+          context: .
+          file: Dockerfile
+          build-args: |
+            VERSION=${{ env.TAG }}
+            CMD=data-loader-worker
           platforms: linux/amd64, linux/arm64, linux/ppc64le
           push: true
           no-cache: true
