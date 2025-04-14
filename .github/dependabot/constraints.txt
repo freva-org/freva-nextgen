@@ -6,4 +6,4 @@ requests==2.32.3
 types-requests==2.32.0.20250328
 rich==13.9.4
 typer==0.15.2
-uvicorn==0.34.0
+uvicorn==0.34.1
