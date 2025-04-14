@@ -38,4 +38,4 @@ COPY docker-scripts/logging.sh /usr/local/lib/logging.sh
 COPY docker-scripts/${CMD}-env.sh /etc/profile.d/env-vars.sh
 
 ENTRYPOINT ["/docker-entrypoint-initdb.d/entrypoint.sh"]
-CMD ["${CMD}"]
+CMD []

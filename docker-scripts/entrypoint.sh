@@ -33,7 +33,7 @@ run_data_loader() {
 }
 
 dispatch_command() {
-    local command="${1:-}"
+    local command="${1:-$CONTAINER}"
     shift || true
 
     case "$command" in
