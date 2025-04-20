@@ -120,6 +120,7 @@ class STACAPI:
         """Get all project facets from Solr."""
         await self._set_solr_query()
         self.solr_query["facet.field"] = "project"
+        self.solr_query["rows"] = self.batch_size
         async with self.solr_object._session_get() as res:
             _, search = res
         project_facets = (
@@ -153,7 +154,7 @@ class STACAPI:
             "links": [
                 {
                     "rel": "self",
-                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/",
+                    "href": self.config.proxy + "/api/freva-nextgen/stacapi",
                     "type": "application/json",
                     "title": "Landing Page"
                 },
@@ -161,7 +162,7 @@ class STACAPI:
                     "rel": "conformance",
                     "href": (
                         self.config.proxy
-                        + "/api/freva-nextgen/stacapi/conformance/"
+                        + "/api/freva-nextgen/stacapi/conformance"
                     ),
                     "type": "application/json",
                     "title": "Conformance Classes"
@@ -170,28 +171,28 @@ class STACAPI:
                     "rel": "data",
                     "href": (
                         self.config.proxy
-                        + "/api/freva-nextgen/stacapi/collections/"
+                        + "/api/freva-nextgen/stacapi/collections"
                     ),
                     "type": "application/json",
                     "title": "Data Collections"
                 },
                 {
                     "rel": "search",
-                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/search/",
+                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/search",
                     "type": "application/json",
                     "title": "Post Search Method",
                     "method": "POST"
                 },
                 {
                     "rel": "search",
-                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/search/",
+                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/search",
                     "type": "application/json",
                     "title": "GET Search Method",
                     "method": "GET"
                 },
                 {
                     "rel": "queryable",
-                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/queryable/",
+                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/queryable",
                     "type": "application/json",
                     "title": "Queryable API"
                 },
@@ -217,7 +218,7 @@ class STACAPI:
                         "href": (
                             self.config.proxy
                             + "/api/freva-nextgen/stacapi/collections/"
-                            + collection_id + "/"
+                            + collection_id
                         ),
                         "type": "application/json",
                     }
@@ -266,7 +267,6 @@ class STACAPI:
                         self.config.proxy
                         + "/api/freva-nextgen/stacapi"
                         + "/collections/" + collection_id
-                        + "/"
                     ),
                     type="application/json",
                     title="Collection",
@@ -289,7 +289,7 @@ class STACAPI:
                         self.config.proxy
                         + "/api/freva-nextgen/stacapi"
                         + "/collections/" + collection_id
-                        + "/items/"),
+                        + "/items"),
                     type="application/geo+json",
                     title="Items",
                 ),
@@ -325,19 +325,19 @@ class STACAPI:
         links = [
             STACLinks(
                 rel="self",
-                href=f"{self.config.proxy}/api/freva-nextgen/stacapi/collections/",
+                href=f"{self.config.proxy}/api/freva-nextgen/stacapi/collections",
                 type="application/json",
                 title="Collections",
             ),
             STACLinks(
                 rel="parent",
-                href=f"{self.config.proxy}/api/freva-nextgen/stacapi/",
+                href=f"{self.config.proxy}/api/freva-nextgen/stacapi",
                 type="application/json",
                 title="Landing Page",
             ),
             STACLinks(
                 rel="root",
-                href=f"{self.config.proxy}/api/freva-nextgen/stacapi/",
+                href=f"{self.config.proxy}/api/freva-nextgen/stacapi",
                 type="application/json",
                 title="Root",
             )
@@ -450,19 +450,19 @@ class STACAPI:
             item.properties["start_datetime"] = start_time.isoformat() + "Z"
             item.properties["end_datetime"] = end_time.isoformat() + "Z"
             item.properties["datetime"] = start_time.isoformat() + "Z"
-        base_url = f"{self.config.proxy}/api/freva-nextgen/stacapi/"
+        base_url = f"{self.config.proxy}/api/freva-nextgen/stacapi"
         links_to_add = [
             {"rel": "self",
-             "target": f"{base_url}collections/{collection_id}/items/{item_id}/",
+             "target": f"{base_url}collections/{collection_id}/items/{item_id}",
              "media_type": "application/json"},
             {"rel": "root",
              "target": base_url,
              "media_type": "application/json"},
             {"rel": "parent",
-             "target": f"{base_url}collections/{collection_id}/",
+             "target": f"{base_url}collections/{collection_id}",
              "media_type": "application/json"},
             {"rel": "collection",
-             "target": f"{base_url}collections/{collection_id}/",
+             "target": f"{base_url}collections/{collection_id}",
              "media_type": "application/json"}
         ]
         for link_info in links_to_add:
