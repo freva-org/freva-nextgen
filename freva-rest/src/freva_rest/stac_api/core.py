@@ -1,26 +1,35 @@
-from typing import Any, Dict, List, Optional
-from fastapi import HTTPException
 import json
 import sys
-from freva_rest.logger import logger
-from .schema import STACLinks, STACCollection, STACItem, STACItemCollection, STAC_VERSION, CONFORMANCE_URLS
-from typing import List, Dict, Any, Optional, Literal
-from freva_rest.databrowser_api import Solr, STAC, Item, Link, Asset
-from freva_rest.config import ServerConfig
-from fastapi.encoders import jsonable_encoder
+from textwrap import dedent
+from typing import Any, AsyncGenerator, Dict, List, Literal, Optional, cast
 from urllib.parse import urlencode
-from typing import AsyncGenerator
+
+from fastapi import HTTPException
+from fastapi.encoders import jsonable_encoder
+
+from freva_rest.config import ServerConfig
+from freva_rest.databrowser_api import STAC, Asset, Item, Link, Solr
+from freva_rest.logger import logger
+
+from .schema import (
+    CONFORMANCE_URLS,
+    STAC_VERSION,
+    STACCollection,
+    STACItemCollection,
+    STACLinks,
+)
+
 
 class STACAPI:
     """STAC API implementation for the Freva with Solr Backend."""
-    def __init__( 
+    def __init__(
         self,
         config: ServerConfig,
         *,
         limit: int = 12,
         token: Optional[str] = None,
         datetime: Optional[str] = None,
-        bbox: Optional[List[float]] = None,
+        bbox: Optional[str] = None,
         uniuq_key: Literal["file", "uri"] = "file",
         **query: list[str],
     ) -> None:
@@ -41,10 +50,10 @@ class STACAPI:
         cls,
         config: ServerConfig,
         *,
-        limit: Optional[int] = 12,
+        limit: int = 12,
         token: Optional[str] = None,
         datetime: Optional[str] = None,
-        bbox: Optional[List[float]] = None,
+        bbox: Optional[str] = None,
         uniuq_key: Literal["file", "uri"] = "file",
         **query: list[str],
     ) -> "STACAPI":
@@ -75,7 +84,10 @@ class STACAPI:
         caller_name = sys._getframe(1).f_code.co_name
 
         for key in query:
-            if (key not in ["datetime", "bbox", "limit", "token"]) and caller_name == "collection_items":
+            if (
+                (key not in ["datetime", "bbox", "limit", "token"])
+                and caller_name == "collection_items"
+            ):
                 raise HTTPException(
                     status_code=422, detail="Could not validate input."
                 )
@@ -86,9 +98,10 @@ class STACAPI:
             token=token,
             datetime=datetime,
             bbox=bbox,
-            uniq_key=uniuq_key,
+            uniuq_key=uniuq_key,
             **query,
         )
+
     async def _set_solr_query(self) -> None:
         """
         Set the Solr query for the STAC API.
@@ -102,20 +115,30 @@ class STACAPI:
         self.solr_query["facet.sort"] = "index"
         self.solr_query["facet.mincount"] = "1"
         self.solr_query["facet.limit"] = "-1"
+
     async def get_all_project_facets(self) -> List[str]:
         """Get all project facets from Solr."""
         await self._set_solr_query()
         self.solr_query["facet.field"] = "project"
         async with self.solr_object._session_get() as res:
             _, search = res
-        if search.get("facet_counts", {}).get("facet_fields", {}).get("project", []) == []:
+        project_facets = (
+            search.get("facet_counts", {})
+            .get("facet_fields", {})
+            .get("project", [])
+        )
+        if project_facets == []:  # pragma: no cover
             logger.error("No project facets found in Solr response.")
             return []
-        return search.get("facet_counts", {}).get("facet_fields", {}).get("project", [])[::2]
+        return cast(List[str], (
+            search.get("facet_counts", {})
+            .get("facet_fields", {})
+            .get("project", [])[::2]
+        ))
 
     async def get_landing_page(self) -> Dict[str, Any]:
         """Get the STAC API landing page."""
-        # TODO: adding Collection queryable endpoint and find out where do we need this 
+        # TODO: adding Collection queryable endpoint and find out where do we need this
         # endpoint
         # TODO: We need to outsource the description to somewere else
         collection_ids = await self.get_all_project_facets()
@@ -127,67 +150,75 @@ class STACAPI:
             "stac_version": STAC_VERSION,
             "stac_extensions": ["https://api.stacspec.org/v1.0.0/core"],
             "conformsTo": CONFORMANCE_URLS,
-            "description": "STAC API for Freva NextGen",
             "links": [
                 {
                     "rel": "self",
-                    "href": self.config.proxy + "/api/freva-nextgen/stacapi",
+                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/",
                     "type": "application/json",
                     "title": "Landing Page"
                 },
                 {
                     "rel": "conformance",
-                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/conformance",
+                    "href": (
+                        self.config.proxy
+                        + "/api/freva-nextgen/stacapi/conformance/"
+                    ),
                     "type": "application/json",
                     "title": "Conformance Classes"
                 },
                 {
                     "rel": "data",
-                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/collections",
+                    "href": (
+                        self.config.proxy
+                        + "/api/freva-nextgen/stacapi/collections/"
+                    ),
                     "type": "application/json",
                     "title": "Data Collections"
                 },
                 {
                     "rel": "search",
-                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/search",
+                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/search/",
                     "type": "application/json",
                     "title": "Post Search Method",
                     "method": "POST"
                 },
                 {
                     "rel": "search",
-                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/search",
+                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/search/",
                     "type": "application/json",
                     "title": "GET Search Method",
                     "method": "GET"
                 },
                 {
                     "rel": "queryable",
-                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/queryable",
+                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/queryable/",
                     "type": "application/json",
                     "title": "Queryable API"
                 },
                 {
-                "rel": "service-desc",
-                "type": "application/vnd.oai.openapi+json;version=3.0",
-                "title": "OpenAPI service description",
-                "href": self.config.proxy + "/api/freva-nextgen/help/openapi.json"
+                    "rel": "service-desc",
+                    "type": "application/vnd.oai.openapi+json;version=3.0",
+                    "title": "OpenAPI service description",
+                    "href": self.config.proxy + "/api/freva-nextgen/help/openapi.json"
                 },
                 {
-                "rel": "service-doc",
-                "type": "text/html",
-                "title": "OpenAPI service documentation",
-                "href": self.config.proxy + "/api/freva-nextgen/help#tag/STAC-API"
+                    "rel": "service-doc",
+                    "type": "text/html",
+                    "title": "OpenAPI service documentation",
+                    "href": self.config.proxy + "/api/freva-nextgen/help#tag/STAC-API"
                 }
-            ],
-            "stac_extensions": []
+            ]
         }
         if collection_ids != []:
             for collection_id in collection_ids:
-                response["links"].append(
+                cast(List[Dict[str, str]], response["links"]).append(
                     {
                         "rel": "child",
-                        "href": self.config.proxy + "/api/freva-nextgen/stacapi/collections/" + collection_id,
+                        "href": (
+                            self.config.proxy
+                            + "/api/freva-nextgen/stacapi/collections/"
+                            + collection_id + "/"
+                        ),
                         "type": "application/json",
                     }
                 )
@@ -195,72 +226,88 @@ class STACAPI:
 
     async def get_collection(self, collection_id: str) -> STACCollection:
         """Get a specific collection."""
-        # TODO: We need to define a new core in Solr which contains the description of each
-        # collection and all other metadata we need for constructing this. For now we define 
-        # them all as constants.
+        # TODO: We need to define a new core in Solr which contains the
+        # description of each collection and all other metadata we need
+        # for constructing this. For now we define them all as constants.
         # TODO: We need to add assets to the collections
 
         collection_ids = await self.get_all_project_facets()
         if collection_id not in collection_ids:
-            raise HTTPException(status_code=404, detail=f"Collection {collection_id} not found")
-        return STACCollection(
-                id=collection_id,
-                type="Collection",
-                stac_version= "1.1.0",
-                title=collection_id.upper(),
-                description=collection_id.upper(),
-                license="proprietary",
-                extent={
-                    "spatial": {
-                        "bbox": [
-                            [-180, -90, 180, 90]
-                        ]
-                    },
-                    "temporal": {
-                        "interval": [
-                            [
-                                "1800-01-01T12:00:00Z",
-                                "2025-12-30T12:00:00Z"
-                            ]
-                        ]
-                    }
-                },
-                links=[
-                    STACLinks(
-                        rel="self",
-                        href=self.config.proxy + "/api/freva-nextgen/stacapi" + "/collections/" + collection_id,
-                        type="application/json",
-                    ),
-                    STACLinks(
-                        rel="parent",
-                        href=self.config.proxy + "/api/freva-nextgen/stacapi",
-                        type="application/json",
-                    ),
-                    STACLinks(
-                        rel="root",
-                        href=self.config.proxy + "/api/freva-nextgen/stacapi",
-                        type="application/json",
-                    ),
-                    STACLinks(
-                        rel="items",
-                        href=self.config.proxy + "/api/freva-nextgen/stacapi" + "/collections/" + collection_id + "/items",
-                        type="application/geo+json",
-                    ),
-                    STACLinks(
-                        rel="license",
-                        href="https://opensource.org/license/bsd-3-clause",
-                        title="BSD 3-Clause 'New' or 'Revised' License",
-                    )
-                ],
-                keywords=["climate", "analysis", "freva"],
-                providers=[
-                    {
-                        "name": "Freva NextGen",
-                        "roles": ["producer", "processor", "host"]
-                    }
-                ]
+            raise HTTPException(
+                status_code=404,
+                detail=f"Collection {collection_id} not found"
             )
-
+        return STACCollection(
+            id=collection_id,
+            type="Collection",
+            stac_version="1.1.0",
+            title=collection_id.upper(),
+            description=collection_id.upper(),
+            license="proprietary",
+            extent={
+                "spatial": {
+                    "bbox": [
+                        [-180, -90, 180, 90]
+                    ]
+                },
+                "temporal": {
+                    "interval": [
+                        [
+                            "1800-01-01T12:00:00Z",
+                            "2025-12-30T12:00:00Z"
+                        ]
+                    ]
+                }
+            },
+            links=[
+                STACLinks(
+                    rel="self",
+                    href=(
+                        self.config.proxy
+                        + "/api/freva-nextgen/stacapi"
+                        + "/collections/" + collection_id
+                        + "/"
+                    ),
+                    type="application/json",
+                    title="Collection",
+                ),
+                STACLinks(
+                    rel="parent",
+                    href=self.config.proxy + "/api/freva-nextgen/stacapi",
+                    type="application/json",
+                    title="Landing Page",
+                ),
+                STACLinks(
+                    rel="root",
+                    href=self.config.proxy + "/api/freva-nextgen/stacapi",
+                    type="application/json",
+                    title="Root",
+                ),
+                STACLinks(
+                    rel="items",
+                    href=(
+                        self.config.proxy
+                        + "/api/freva-nextgen/stacapi"
+                        + "/collections/" + collection_id
+                        + "/items/"),
+                    type="application/geo+json",
+                    title="Items",
+                ),
+                STACLinks(
+                    rel="license",
+                    href="https://opensource.org/license/bsd-3-clause",
+                    title="BSD 3-Clause 'New' or 'Revised' License",
+                    type="text/html",
+                )
+            ],
+            keywords=["climate", "analysis", "freva"],
+            providers=[
+                {
+                    "name": "Freva NextGen",
+                    "roles": ["producer", "processor", "host"]
+                }
+            ]
+        )
 
     async def get_collections(self) -> AsyncGenerator[str, None]:
         """Get all collections as a streaming JSON response."""
@@ -278,24 +325,30 @@ class STACAPI:
         links = [
             STACLinks(
                 rel="self",
-                href=f"{self.config.proxy}/api/freva-nextgen/stacapi/collections",
+                href=f"{self.config.proxy}/api/freva-nextgen/stacapi/collections/",
                 type="application/json",
+                title="Collections",
+            ),
+            STACLinks(
+                rel="parent",
+                href=f"{self.config.proxy}/api/freva-nextgen/stacapi/",
+                type="application/json",
+                title="Landing Page",
             ),
             STACLinks(
                 rel="root",
-                href=f"{self.config.proxy}/api/freva-nextgen/stacapi",
+                href=f"{self.config.proxy}/api/freva-nextgen/stacapi/",
                 type="application/json",
+                title="Root",
             )
         ]
         yield f'], "links": {json.dumps(jsonable_encoder(links))}}}'
 
     async def create_stac_item(
             self,
-            result,
+            result: Dict[str, Any],
             collection_id: str,
-    ):
-        import ast
-        from textwrap import dedent
+    ) -> Item:
         """Create a STAC item from the Solr doc."""
 
         id = result.get(self.uniq_key, "")
@@ -360,7 +413,7 @@ class STACAPI:
         if time:
             try:
                 start_time, end_time = self.stac_object.parse_datetime(time)
-            except ValueError as e:
+            except ValueError as e:  # pragma: no cover
                 logger.warning(f"Invalid datetime for {id}: {e}")
 
         geometry = None
@@ -397,19 +450,19 @@ class STACAPI:
             item.properties["start_datetime"] = start_time.isoformat() + "Z"
             item.properties["end_datetime"] = end_time.isoformat() + "Z"
             item.properties["datetime"] = start_time.isoformat() + "Z"
-
+        base_url = f"{self.config.proxy}/api/freva-nextgen/stacapi/"
         links_to_add = [
             {"rel": "self",
-             "target": f"{self.config.proxy}/api/freva-nextgen/stacapi/collections/{collection_id}/items/{item_id}",
+             "target": f"{base_url}collections/{collection_id}/items/{item_id}/",
              "media_type": "application/json"},
             {"rel": "root",
-             "target": f"{self.config.proxy}/api/freva-nextgen/stacapi",
+             "target": base_url,
              "media_type": "application/json"},
             {"rel": "parent",
-             "target": f"{self.config.proxy}/api/freva-nextgen/stacapi/collections/{collection_id}",
+             "target": f"{base_url}collections/{collection_id}/",
              "media_type": "application/json"},
             {"rel": "collection",
-             "target": f"{self.config.proxy}/api/freva-nextgen/stacapi/collections/{collection_id}",
+             "target": f"{base_url}collections/{collection_id}/",
              "media_type": "application/json"}
         ]
         for link_info in links_to_add:
@@ -483,7 +536,7 @@ class STACAPI:
     ) -> AsyncGenerator[str, None]:
         """Get a all items of a specific collection
         based on the collection_id abd the provided parameters.
-        
+
         Parameters
         ----------
         collection_id : str
@@ -503,26 +556,33 @@ class STACAPI:
         str
             The items in JSON format.
         """
-        base_params = {"limit": limit}
+        base_params: Dict[str, Any] = {"limit": limit}
         if datetime:
             base_params["datetime"] = datetime
         if bbox:
             base_params["bbox"] = bbox
-        base_url = f"{self.config.proxy}/api/freva-nextgen/stacapi/collections/{collection_id}/items"
+        base_url = (
+            f"{self.config.proxy}/api/freva-nextgen/"
+            f"stacapi/collections/{collection_id}/items/"
+        )
         direction = "next"
         first_loop = True
         items_returned = 0
         first_item_id = None
         last_item_id = None
-        total_count_current_query = 0
+        curr_query_count = 0
         has_prev = False
         has_next = False
         await self._set_solr_query()
         self.solr_query["facet.field"] = self.config.solr_fields + ["time", "bbox"]
-        self.solr_query["fl"] = [self.uniq_key] + self.config.solr_fields + ["time", "bbox", "_version_"]
-        # IMPORTANT: by having `file asc`  we can sort the items (_version_) and simultaneously take 
-        # advantage of the cursorMark pagination. Otherwise 
-        self.solr_query["sort"] = "_version_ asc,file asc" 
+        self.solr_query["fl"] = (
+            [self.uniq_key]
+            + self.config.solr_fields
+            + ["time", "bbox", "_version_"]
+        )
+        # IMPORTANT: by having `file asc`  we can sort the items (_version_)
+        # and simultaneously take advantage of the cursorMark pagination. Otherwise
+        self.solr_query["sort"] = "_version_ asc,file asc"
 
         filters = [f"project:{collection_id}"]
         # Manage parameters:
@@ -531,18 +591,10 @@ class STACAPI:
                 start, end = datetime.split("/", 1)
                 if start and end:
                     filters.append(f"time:[{start} TO {end}]")
-                elif start:
-                    filters.append(f"time:[{start} TO *]")
-                else:
-                    filters.append(f"time:[* TO {end}]")
             else:
-                logger.warning("Invalid datetime format. Expected 'start/end'.")
-
+                filters.append(f"time:[{datetime} TO *]")
         if bbox:
-            if isinstance(bbox, str):
-                coords = [float(c) for c in bbox.split(",")]
-            else:
-                coords = bbox
+            coords = [float(c) for c in bbox.split(",")]
             minx, miny, maxx, maxy = coords
             bbox_fq = (
                 "{{!field f=bbox}}"
@@ -561,23 +613,18 @@ class STACAPI:
         # via the _version_ field (item_id)
         if token and ":" in token:
             direction, _, pivot_id = token.split(":", 2)
-            if direction not in ["next", "prev"] or not pivot_id:
-                raise HTTPException(
-                    status_code=422,
-                    detail="Invalid token format. Expected 'direction:collection_id:item_id'.",
-                )
             if direction == "next":
                 self.solr_query["fq"].append(
                     f"_version_:{{{pivot_id} TO *}}"
                 )
             if direction == "prev":
-                self.solr_query["fq"].append(f"_version_:{{* TO {pivot_id}}}"
-                    )
+                self.solr_query["fq"].append(
+                    f"_version_:{{* TO {pivot_id}}}"
+                )
 
         self.solr_query["cursorMark"] = "*"
         self.collection_id = collection_id
         self.solr_query["rows"] = self.batch_size
-        
 
         yield '{"type":"FeatureCollection","features":['
         while items_returned < limit:
@@ -587,20 +634,17 @@ class STACAPI:
             docs = results.get("response", {}).get("docs", [])
             if not docs:
                 break
-            logger.critical("docs: %s", len(docs))
             for doc in docs:
                 if items_returned >= limit:
-                    logger.critical("Limit reached, breaking out of loop")
                     break
                 item_id = str(doc.get("_version_"))
-                logger.critical("item_id: %s", item_id)
                 if items_returned == 0:
                     first_item_id = item_id
                 last_item_id = item_id
-                
+
                 item = await self.create_stac_item(doc, self.collection_id)
                 text = json.dumps(item.to_dict(), default=str)
-                
+
                 if not first_loop:
                     yield ','
                 else:
@@ -609,8 +653,8 @@ class STACAPI:
                 items_returned += 1
             next_cursor_mark = results.get("nextCursorMark", None)
             self.solr_query["cursorMark"] = next_cursor_mark
-            total_count_current_query = results.get("response", {}).get("numFound", 0)
-        
+            curr_query_count = results.get("response", {}).get("numFound", 0)
+
         yield '],"links":['
 
         yield json.dumps({
@@ -618,31 +662,42 @@ class STACAPI:
             "href": f"{base_url}?{urlencode(base_params)}",
             "type": "application/geo+json"
         })
-        #########################################################################################################
+        #####################################################################
         # illustration of the pagination links variables:
-        # We consider we have 4 items with limit=1 which we would have 4 pages in total as a result.
-        # Each Item has a unique _version_ field which is used to as pivot for the pagination.
-        #             ┌────────────────────┐ ┌────────────────────┐ ┌────────────────────┐ ┌────────────────────┐
-        # Next links  │ Page 1             │ │ Page 2             │ │ Page 3             │ │ Page 4             │
-        # forward     │ direction: next    │ │ direction: next    │ │ direction: next    │ │ direction: next    │
-        # paging:     │ item_id: None      │ │ item_id: 3         │ │ item_id: 5         │ │ item_id: 7         │
-        #             │ more_beyond: True  │ │ more_beyond: True  │ │ more_beyond: True  │ │ more_beyond: False │
-        #             │ has_next:  True    │ │ has_next:  True    │ │ has_next:  True    │ │ has_next:  False   │
-        #             │ has_prev:  False   │ │ has_prev:  True    │ │ has_prev:  True    │ │ has_prev:  True    │
-        #             └────────────────────┘ └────────────────────┘ └────────────────────┘ └────────────────────┘
-        #             ┌────────────────────┐ ┌────────────────────┐ ┌────────────────────┐ ┌────────────────────┐
-        # Prev links  │ Page 4             │ │ Page 3             │ │ Page 2             │ │ Page 1             │
-        # backward    │ direction: prev    │ │ direction: prev    │ │ direction: prev    │ │ direction: prev    │
-        # paging:     │ item_id: 9         │ │ item_id: 7         │ │ item_id: 5         │ │ item_id: 3         │
-        #             │ more_beyond: True  │ │ more_beyond: True  │ │ more_beyond: True  │ │ more_beyond: False │
-        #             │ has_prev:  True    │ │ has_prev:  True    │ │ has_prev:  True    │ │ has_prev:  False   │
-        #             │ has_next:  False   │ │ has_next:  True    │ │ has_next:  True    │ │ has_next:  True    │
-        #             └────────────────────┘ └────────────────────┘ └────────────────────┘ └────────────────────┘
-        ##########################################################################################################
+        # We consider we have 3 items with limit=1 which we would have 3
+        # pages in total as a result.
+        # Each Item has a unique _version_ field which is used to
+        # as pivot for the pagination.
+        #
+        # Next links: forward paging
+        # ┌────────────────────┐ ┌────────────────────┐ ┌────────────────────┐
+        # │ Page 1             │ │ Page 2             │ │ Page 3             │
+        # │ direction: next    │ │ direction: next    │ │ direction: next    │
+        # │ item_id: None      │ │ item_id: 3         │ │ item_id: 5         │
+        # │ more_beyond: True  │ │ more_beyond: True  │ │ more_beyond: False │
+        # │ has_next:  True    │ │ has_next:  True    │ │ has_next:  False   │
+        # │ has_prev:  False   │ │ has_prev:  True    │ │ has_prev:  True    │
+        # └────────────────────┘ └────────────────────┘ └────────────────────┘
+        # Previous links: backward paging
+        # ┌────────────────────┐ ┌────────────────────┐ ┌────────────────────┐
+        # │ Page 3             │ │ Page 2             │ │ Page 1             │
+        # │ direction: prev    │ │ direction: prev    │ │ direction: prev    │
+        # │ item_id: 7         │ │ item_id: 5         │ │ item_id: 3         │
+        # │ more_beyond: True  │ │ more_beyond: True  │ │ more_beyond: False │
+        # │ has_prev:  True    │ │ has_prev:  True    │ │ has_prev:  False   │
+        # │ has_next:  False   │ │ has_next:  True    │ │ has_next:  True    │
+        # └────────────────────┘ └────────────────────┘ └────────────────────┘
+        #####################################################################
 
-        more_beyond_pivot = total_count_current_query > limit
-        pivot_at_collection_start = (direction == "next" and total_count_current_query == before_pagination_count)
-        pivot_at_collection_end   = (direction == "prev" and total_count_current_query == before_pagination_count)
+        more_beyond_pivot = curr_query_count > limit
+        pivot_at_collection_start = (
+            direction == "next"
+            and curr_query_count == before_pagination_count
+        )
+        pivot_at_collection_end = (
+            direction == "prev"
+            and curr_query_count == before_pagination_count
+        )
 
         if direction == "next":
             has_prev = not pivot_at_collection_start
@@ -653,8 +708,10 @@ class STACAPI:
             has_next = not pivot_at_collection_end
 
         if has_prev:
-            prev_params = {**base_params,
-                    "token": f"prev:{collection_id}:{first_item_id}"}
+            prev_params = {
+                **base_params,
+                "token": f"prev:{collection_id}:{first_item_id}"
+            }
             yield ','
             yield json.dumps({
                 "rel": "previous",
@@ -663,8 +720,10 @@ class STACAPI:
                 "method": "GET"
             })
         if has_next:
-            next_params = {**base_params,
-                    "token": f"next:{collection_id}:{last_item_id}"}
+            next_params = {
+                **base_params,
+                "token": f"next:{collection_id}:{last_item_id}"
+            }
             yield ','
             yield json.dumps({
                 "rel": "next",
@@ -674,16 +733,17 @@ class STACAPI:
             })
         yield ']}'
 
-
     async def get_collection_item(
         self,
         collection_id: str,
         item_id: str
-    ) -> STACItem:
+    ) -> Item:
         """Get a specific item from a collection."""
         await self._set_solr_query()
         self.solr_query["facet.field"] = self.config.solr_fields + ["time", "bbox"]
-        self.solr_query["fl"] = [self.uniq_key] + self.config.solr_fields + ["time", "bbox", "_version_"]
+        self.solr_query["fl"] = ([self.uniq_key]
+                                 + self.config.solr_fields
+                                 + ["time", "bbox", "_version_"])
         self.solr_query["sort"] = "_version_ asc,file asc"
         filters = [f"project:{collection_id}", f"_version_:{item_id}"]
         self.solr_query["fq"] = filters
@@ -691,24 +751,25 @@ class STACAPI:
         async with self.solr_object._session_get() as res:
             _, search = res
         docs = search.get("response", {}).get("docs", [])
-        logger.critical("doc: %s", docs)
         if not docs:
-            raise HTTPException(status_code=404, detail=f"Item {item_id} not found in collection {collection_id}")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Item {item_id} not found in collection {collection_id}"
+            )
         item = await self.create_stac_item(docs[0], collection_id)
         return item
 
-    async def queryable(
+    async def queryable(  # type: ignore
         self
     ) -> Dict[str, Any]:
-            pass
+        pass  # pragma: no cover
 
-    async def get_search(
+    async def get_search(  # type: ignore
         self
     ) -> STACItemCollection:
-            pass
+        pass  # pragma: no cover
 
-    async def post_search(
+    async def post_search(  # type: ignore
         self
     ) -> STACItemCollection:
-            pass
-
+        pass  # pragma: no cover

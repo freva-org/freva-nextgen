@@ -1,7 +1,9 @@
 from typing import Any, Dict, List, Optional
+from urllib.parse import parse_qs
+
+from fastapi import Query, Request
 from pydantic import BaseModel, Field
 
-# Constants for STAC API conformance
 STAC_VERSION = "1.1.0"
 
 CONFORMANCE_URLS = [
@@ -9,16 +11,11 @@ CONFORMANCE_URLS = [
     "http://www.opengis.net/spec/cql2/1.0/conf/basic-cql2",
     "http://www.opengis.net/spec/cql2/1.0/conf/cql2-json",
     "http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/filter",
-    "https://api.stacspec.org/v1.0.0/item-search#fields",
     "https://api.stacspec.org/v1.0.0/ogcapi-features",
-    "https://api.stacspec.org/v1.0.0-rc.2/item-search#filter",
     "https://api.stacspec.org/v1.0.0/collections",
     "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
-    "https://api.stacspec.org/v1.0.0/item-search#sort",
     "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson",
     "https://api.stacspec.org/v1.0.0/core",
-    "https://api.stacspec.org/v1.0.0/item-search#query",
-    "https://api.stacspec.org/v1.0.0/item-search",
     "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30"
 ]
 
@@ -29,7 +26,7 @@ class CONFORMANCE(BaseModel):
         default=CONFORMANCE_URLS,
         description="List of conformance URLs"
     )
-    
+
 
 class STACLinks(BaseModel):
     """STAC Links for navigation."""
@@ -52,10 +49,14 @@ class STACCollection(BaseModel):
     title: Optional[str] = Field(None, description="Collection title")
     description: str = Field(..., description="Collection description")
     license: str = Field("proprietary", description="Collection license")
-    extent: Dict[str, Any] = Field(..., description="Collection spatial and temporal extent")
+    extent: Dict[str, Any] = Field(
+        ..., description="Collection spatial and temporal extent"
+    )
     links: List[STACLinks] = Field(..., description="Collection links")
     keywords: Optional[List[str]] = Field(None, description="Collection keywords")
-    providers: Optional[List[Dict[str, Any]]] = Field(None, description="Collection providers")
+    providers: Optional[List[Dict[str, Any]]] = Field(
+        None, description="Collection providers"
+    )
 
 
 class STACCollections(BaseModel):
@@ -69,7 +70,9 @@ class STACItem(BaseModel):
     id: str = Field(..., description="Item identifier")
     type: str = Field("Feature", description="GeoJSON type")
     geometry: Dict[str, Any] = Field(..., description="GeoJSON geometry")
-    properties: Dict[str, Any] = Field(..., description="Item properties including datetime")
+    properties: Dict[str, Any] = Field(
+        ..., description="Item properties including datetime"
+    )
     links: List[STACLinks] = Field(..., description="Item links")
     assets: Dict[str, Any] = Field(..., description="Item assets")
     collection: str = Field(..., description="Collection this item belongs to")
@@ -80,25 +83,6 @@ class STACItemCollection(BaseModel):
     type: str = Field("FeatureCollection", description="GeoJSON type")
     features: List[STACItem] = Field(..., description="List of STAC items")
     links: List[STACLinks] = Field(..., description="Navigation links")
-
-
-
-"""Schema definitions for the FastAPI endpoints."""
-
-from typing import Any, Dict, List, Union
-from urllib.parse import parse_qs
-
-from fastapi import Query, Request
-from pydantic import BaseModel
-
-
-Required: Any = Ellipsis
-
-
-class LoadFiles(BaseModel):
-    """Schema for the load file endpoint response."""
-
-    urls: List[str]
 
 
 class STACAPISchema:

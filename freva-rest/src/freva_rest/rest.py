@@ -57,6 +57,17 @@ metadata_tags = [
         ),
     },
     {
+        "name": "STAC API",
+        "description": (
+            "The SpatioTemporal Asset Catalog (STAC) family of specifications"
+            " is a community-driven effort to make geospatial data more discoverable"
+            " and usable. The STAC API is a standard for building APIs that "
+            "provide access to STAC items and collections. The STAC API is "
+            "designed to be simple and easy to use, while also being powerful "
+            "and flexible enough to support a wide range of use cases."
+        ),
+    },
+    {
         "name": "Authentication",
         "description": "These endpoints are for authentication.",
     },
