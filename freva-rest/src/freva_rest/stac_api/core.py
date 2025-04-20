@@ -453,16 +453,16 @@ class STACAPI:
         base_url = f"{self.config.proxy}/api/freva-nextgen/stacapi"
         links_to_add = [
             {"rel": "self",
-             "target": f"{base_url}collections/{collection_id}/items/{item_id}",
+             "target": f"{base_url}/collections/{collection_id}/items/{item_id}",
              "media_type": "application/json"},
             {"rel": "root",
              "target": base_url,
              "media_type": "application/json"},
             {"rel": "parent",
-             "target": f"{base_url}collections/{collection_id}",
+             "target": f"{base_url}/collections/{collection_id}",
              "media_type": "application/json"},
             {"rel": "collection",
-             "target": f"{base_url}collections/{collection_id}",
+             "target": f"{base_url}/collections/{collection_id}",
              "media_type": "application/json"}
         ]
         for link_info in links_to_add:
