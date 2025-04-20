@@ -32,10 +32,8 @@ app.add_middleware(
     "/api/freva-nextgen/stacapi/",
     tags=["STAC API"],
     status_code=200,
-    responses={
-        503: {"description": "Search backend error"}
-    },
-    response_class=JSONResponse
+    responses={503: {"description": "Search backend error"}},
+    response_class=JSONResponse,
 )
 async def landing_page() -> JSONResponse:
     """STAC API landing page declaration.
@@ -56,10 +54,8 @@ async def landing_page() -> JSONResponse:
     "/api/freva-nextgen/stacapi/conformance",
     tags=["STAC API"],
     status_code=200,
-    responses={
-        503: {"description": "Search backend error"}
-    },
-    response_class=JSONResponse
+    responses={503: {"description": "Search backend error"}},
+    response_class=JSONResponse,
 )
 async def conformance() -> JSONResponse:
     """STAC API conformance declaration.
@@ -68,9 +64,7 @@ async def conformance() -> JSONResponse:
     implementation conforms to. It provides information about the
     supported features and capabilities of the API.
     """
-    response = {
-        "conformsTo": CONFORMANCE_URLS
-    }
+    response = {"conformsTo": CONFORMANCE_URLS}
     return JSONResponse(response)
 
 
@@ -78,9 +72,7 @@ async def conformance() -> JSONResponse:
     "/api/freva-nextgen/stacapi/collections",
     tags=["STAC API"],
     status_code=200,
-    responses={
-        503: {"description": "Search backend error"}
-    },
+    responses={503: {"description": "Search backend error"}},
     response_class=PlainTextResponse,
 )
 async def collections() -> StreamingResponse:
@@ -105,7 +97,7 @@ async def collections() -> StreamingResponse:
     status_code=200,
     responses={
         404: {"description": "Collection not found"},
-        503: {"description": "Search backend error"}
+        503: {"description": "Search backend error"},
     },
     response_class=JSONResponse,
 )
@@ -117,8 +109,9 @@ async def collection(collection_id: str) -> JSONResponse:
     """
     stacapi_instance = STACAPI(server_config)
     collection = await stacapi_instance.get_collection(collection_id)
-    return JSONResponse(collection.dict(exclude_none=True),
-                        media_type="application/json")
+    return JSONResponse(
+        collection.dict(exclude_none=True), media_type="application/json"
+    )
 
 
 @app.get(
@@ -140,7 +133,7 @@ async def collection_items(
         title="Token",
         description="Pagination token in format direction:collection_id:item_id, \
                     where direction is 'next' or 'prev'.",
-        regex=r"^(?:next|prev):[A-Za-z0-9_-]+:[A-Za-z0-9_-]+$",
+        regex=r"^(?:next|prev):[^:]+:[^:]+$",
     ),
     datetime: Optional[str] = Query(
         None,
@@ -151,11 +144,12 @@ async def collection_items(
         regex=(
             r"^"
             r"\d{4}-\d{2}-\d{2}"
-            r"(?:T\d{2}:\d{2}:\d{2}Z)?"
+            r"(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)?"
             r"(?:/"
             r"\d{4}-\d{2}-\d{2}"
-            r"(?:T\d{2}:\d{2}:\d{2}Z)?"
-            r")?$"
+            r"(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)?"
+            r")?"
+            r"$"
         ),
     ),
     bbox: Optional[str] = Query(
@@ -163,13 +157,9 @@ async def collection_items(
         title="Bounding Box",
         description="minx,miny,maxx,maxy",
         regex=(
-            r"^-?\d+(\.\d+)?,"
-            r"-?\d+(\.\d+)?,"
-            r"-?\d+(\.\d+)?,"
-            r"-?\d+(\.\d+)?$"
+            r"^-?\d+(\.\d+)?," r"-?\d+(\.\d+)?," r"-?\d+(\.\d+)?," r"-?\d+(\.\d+)?$"
         ),
     ),
-
 ) -> StreamingResponse:
     """Get items from a specific collection.
 
@@ -199,7 +189,7 @@ async def collection_items(
     status_code=200,
     responses={
         404: {"description": "Item not found"},
-        503: {"description": "Search backend error"}
+        503: {"description": "Search backend error"},
     },
     response_class=JSONResponse,
 )
