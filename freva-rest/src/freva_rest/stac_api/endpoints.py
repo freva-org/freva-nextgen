@@ -15,7 +15,16 @@ from .core import STACAPI
 
 # TODO: adding the description of each endpoint
 
+from fastapi.middleware.cors import CORSMiddleware
 
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],              # or ["http://localhost:3000"] for tighter control
+    allow_credentials=True,
+    allow_methods=["*"],              # GET, POST, OPTIONS, etc.
+    allow_headers=["*"],              # Content‑Type, Authorization, etc.
+)
 @app.get(
     "/api/freva-nextgen/stacapi/",
     tags=["STAC API"],

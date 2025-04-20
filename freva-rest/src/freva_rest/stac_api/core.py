@@ -120,6 +120,10 @@ class STACAPI:
         # TODO: We need to outsource the description to somewere else
         collection_ids = await self.get_all_project_facets()
         response = {
+            "type": "Catalog",
+            "id": "freva-nextgen",
+            "title": "I'm a STAC API",
+            "description": "FAIR data for the Freva NextGen",
             "stac_version": STAC_VERSION,
             "stac_extensions": ["https://api.stacspec.org/v1.0.0/core"],
             "conformsTo": CONFORMANCE_URLS,
@@ -175,7 +179,8 @@ class STACAPI:
                 "title": "OpenAPI service documentation",
                 "href": self.config.proxy + "/api/freva-nextgen/help#tag/STAC-API"
                 }
-            ]
+            ],
+            "stac_extensions": []
         }
         if collection_ids != []:
             for collection_id in collection_ids:
@@ -201,6 +206,7 @@ class STACAPI:
         return STACCollection(
                 id=collection_id,
                 type="Collection",
+                stac_version= "1.1.0",
                 title=collection_id.upper(),
                 description=collection_id.upper(),
                 license="proprietary",
@@ -227,7 +233,7 @@ class STACAPI:
                     ),
                     STACLinks(
                         rel="parent",
-                        href=self.config.proxy + "/api/freva-nextgen/stacapi" + "/collections",
+                        href=self.config.proxy + "/api/freva-nextgen/stacapi",
                         type="application/json",
                     ),
                     STACLinks(
@@ -238,7 +244,7 @@ class STACAPI:
                     STACLinks(
                         rel="items",
                         href=self.config.proxy + "/api/freva-nextgen/stacapi" + "/collections/" + collection_id + "/items",
-                        type="application/json",
+                        type="application/geo+json",
                     ),
                     STACLinks(
                         rel="license",
@@ -285,7 +291,8 @@ class STACAPI:
 
     async def create_stac_item(
             self,
-            result
+            result,
+            collection_id: str,
     ):
         import ast
         from textwrap import dedent
@@ -339,7 +346,7 @@ class STACAPI:
             💡: Ensure required xarray packages are installed.
             """
         )
-        item_id = result.get("_version_")
+        item_id = str(result.get("_version_"))
         bbox = result.get("bbox")
         if bbox:
             try:
@@ -381,7 +388,7 @@ class STACAPI:
         }
         item = Item(
             id=item_id,
-            collection=self.collection_id,
+            collection=collection_id,
             geometry=geometry,
             properties=properties,
             bbox=bbox,
@@ -393,16 +400,16 @@ class STACAPI:
 
         links_to_add = [
             {"rel": "self",
-             "target": f"{self.config.proxy}/api/freva-nextgen/stacapi/collections/{self.collection_id}/items/{item_id}",
+             "target": f"{self.config.proxy}/api/freva-nextgen/stacapi/collections/{collection_id}/items/{item_id}",
              "media_type": "application/json"},
             {"rel": "root",
              "target": f"{self.config.proxy}/api/freva-nextgen/stacapi",
              "media_type": "application/json"},
             {"rel": "parent",
-             "target": f"{self.config.proxy}/api/freva-nextgen/stacapi/collections/{self.collection_id}",
+             "target": f"{self.config.proxy}/api/freva-nextgen/stacapi/collections/{collection_id}",
              "media_type": "application/json"},
             {"rel": "collection",
-             "target": f"{self.config.proxy}/api/freva-nextgen/stacapi/collections/{self.collection_id}",
+             "target": f"{self.config.proxy}/api/freva-nextgen/stacapi/collections/{collection_id}",
              "media_type": "application/json"}
         ]
         for link_info in links_to_add:
@@ -418,7 +425,7 @@ class STACAPI:
         assets = {
             "freva-databrowser": Asset(
                 href=(
-                    f"{self.config.proxy}databrowser/?"
+                    f"{self.config.proxy}/databrowser/?"
                     f"{self.uniq_key}={id}"
                 ),
                 media_type="text/html",
@@ -430,7 +437,7 @@ class STACAPI:
             ),
             "zarr-access": Asset(
                 href=(
-                    f"{self.config.proxy}api/freva-nextgen/"
+                    f"{self.config.proxy}/api/freva-nextgen/"
                     f"databrowser/load/freva?"
                     f"{self.uniq_key}={id}"
                 ),
@@ -450,7 +457,7 @@ class STACAPI:
             ),
             "local-access": Asset(
                 href=(
-                    f"{self.config.proxy}api/freva-nextgen/"
+                    f"{self.config.proxy}/api/freva-nextgen/"
                     f"databrowser/data-search/freva/"
                     f"{self.uniq_key}?"
                     f"{self.uniq_key}={id}"
@@ -585,12 +592,13 @@ class STACAPI:
                 if items_returned >= limit:
                     logger.critical("Limit reached, breaking out of loop")
                     break
-                item_id = doc.get("_version_")
+                item_id = str(doc.get("_version_"))
+                logger.critical("item_id: %s", item_id)
                 if items_returned == 0:
                     first_item_id = item_id
                 last_item_id = item_id
                 
-                item = await self.create_stac_item(doc)
+                item = await self.create_stac_item(doc, self.collection_id)
                 text = json.dumps(item.to_dict(), default=str)
                 
                 if not first_loop:
@@ -686,7 +694,7 @@ class STACAPI:
         logger.critical("doc: %s", docs)
         if not docs:
             raise HTTPException(status_code=404, detail=f"Item {item_id} not found in collection {collection_id}")
-        item = await self.create_stac_item(docs[0])
+        item = await self.create_stac_item(docs[0], collection_id)
         return item
 
     async def queryable(

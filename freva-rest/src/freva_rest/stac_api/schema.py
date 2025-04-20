@@ -2,8 +2,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 # Constants for STAC API conformance
-STAC_API_VERSION = "1.0.0"
-STAC_VERSION = "1.0.0"
+STAC_VERSION = "1.1.0"
 
 CONFORMANCE_URLS = [
     "http://www.opengis.net/spec/cql2/1.0/conf/cql2-text",
@@ -48,6 +47,7 @@ class STACConformance(BaseModel):
 class STACCollection(BaseModel):
     """STAC Collection model."""
     id: str = Field(..., description="Collection identifier")
+    stac_version: str = Field(STAC_VERSION, description="STAC version")
     type: str = Field("Collection", description="Collection type")
     title: Optional[str] = Field(None, description="Collection title")
     description: str = Field(..., description="Collection description")
