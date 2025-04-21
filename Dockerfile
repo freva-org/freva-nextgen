@@ -14,8 +14,13 @@ RUN mkdir -p /docker-entrypoint-initdb.d
 WORKDIR /tmp/app
 COPY freva-rest /tmp/app/freva-rest
 COPY freva-data-portal-worker /tmp/app/freva-data-portal-worker
+COPY docker-scripts  /tmp/app/docker-scripts
 RUN  set -xe  && \
-    mkdir -p /opt/${CMD}/config $API_LOGDIR /certs && \
+    mkdir -p /opt/${CMD}/config $API_LOGDIR /certs /etc/profile.d /usr/local/{lib,bin} && \
+    cp docker-scripts/${CMD}-env.sh /etc/profile.d/env-vars.sh && \
+    cp docker-scripts/logging.sh /usr/local/lib/logging.sh && \
+    cp docker-scripts/entrypoint.sh /usr/local/bin/entrypoint.sh && \
+    chmod +x /usr/local/bin/entrypoint.sh && \
     micromamba install -y -q -c conda-forge --override-channels python && \
     if [ "${CMD}" = "data-loader-worker" ];then\
         PKGNAME=freva-data-portal-worker && \
@@ -53,9 +58,6 @@ RUN  set -xe  && \
 WORKDIR /opt/${CMD}
 RUN rm -fr /tmp/app
 
-COPY --chmod=0755 docker-scripts/entrypoint.sh /docker-entrypoint-initdb.d/entrypoint.sh
-COPY docker-scripts/logging.sh /usr/local/lib/logging.sh
-COPY docker-scripts/${CMD}-env.sh /etc/profile.d/env-vars.sh
 
-ENTRYPOINT ["/docker-entrypoint-initdb.d/entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD []
