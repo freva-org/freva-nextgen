@@ -1,4 +1,5 @@
-FROM quay.io/condaforge/mambaforge
+FROM docker.io/mambaorg/micromamba
+USER root
 ARG VERSION
 ARG CMD=freva-rest-server
 LABEL org.freva.service="$CMD"
@@ -17,18 +18,18 @@ RUN  set -xe  && \
     mkdir -p /opt/${CMD}/config $API_LOGDIR /certs && \
     if [ "${CMD}" = "data-loader-worker" ];then\
         PKGNAME=freva-data-portal-worker && \
-        mamba install -y -q -c conda-forge --override-channels zarr cfgrib jq; \
+        micromamba install -y -q -c conda-forge --override-channels zarr cfgrib jq; \
     elif [ "${CMD}" = "freva-rest-server" ];then\
         PKGNAME=freva-rest && \
         cp /tmp/app/${PKGNAME}/src/freva_rest/api_config.toml /opt/${CMD}/config && \
-        mamba install -y -q -c conda-forge --override-channels jq; \
+        micromamba install -y -q -c conda-forge --override-channels jq; \
     else \
         echo "Invalid CMD argument: $CMD" && exit 1; \
     fi &&\
     python3 -m pip install -q --no-color --root-user-action ignore --no-cache-dir ./$PKGNAME &&\
     python3 -m pip cache purge -q --no-input && \
     chmod -R 2777 $API_LOGDIR /opt/${CMD}/config /certs && \
-    mamba clean -y -i -t -l -f
+    micromamba clean -y -i -t -l -f
 
 WORKDIR /opt/${CMD}
 RUN rm -fr /tmp/app
