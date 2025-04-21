@@ -16,6 +16,7 @@ COPY freva-rest /tmp/app/freva-rest
 COPY freva-data-portal-worker /tmp/app/freva-data-portal-worker
 RUN  set -xe  && \
     mkdir -p /opt/${CMD}/config $API_LOGDIR /certs && \
+    micromamba install -y -q -c condao-forge --override-channels python
     if [ "${CMD}" = "data-loader-worker" ];then\
         PKGNAME=freva-data-portal-worker && \
         micromamba install -y -q -c conda-forge --override-channels zarr cfgrib jq; \
