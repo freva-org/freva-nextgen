@@ -100,7 +100,7 @@ jobs:
           context: .
           file: Dockerfile
           build-args: CMD=freva-rest-server
-          platforms: linux/amd64
+          platforms: linux/amd64, linux/arm64, linux/ppc64le
           push: false
           load: true
           no-cache: true
@@ -112,7 +112,7 @@ jobs:
           context: .
           build-args: CMD=data-loader-worker
           file: Dockerfile
-          platforms: linux/amd64
+          platforms: linux/amd64, linux/arm64, linux/ppc64le
           push: false
           no-cache: true
 
