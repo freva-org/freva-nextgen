@@ -1,6 +1,6 @@
 FROM quay.io/condaforge/mambaforge
 ARG VERSION
-ARG CMD=frea-rest-server
+ARG CMD=freva-rest-server
 LABEL org.freva.service="$CMD"
 LABEL org.opencontainers.image.authors="DRKZ-CLINT"
 LABEL org.opencontainers.image.source="https://github.com/FREVA-CLINT/freva-nextgen/freva-rest"
