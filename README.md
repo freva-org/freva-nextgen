@@ -120,6 +120,12 @@ This repository defines two docker images that can be used for production
 These images are automatically build via the GitHub CI pipeline.
 Yet for debugging they can be built using the following commands:
 
+- First setup mulitarch build:
+```console
+docker run --rm --privileged multiarch/qemu-user-static --reset -p yes && \
+ docker buildx create --name multiarch --use && \
+ docker buildx inspect --bootstrap
+```
 
 - Build for the `data-loader-worker` image for the target platforms
 ```console
@@ -139,7 +145,9 @@ docker buildx build --no-cache --platform linux/amd64,linux/arm64,linux/ppc64le\
     --build-arg=CMD=freva-rest-server .
 ```
 
-> If you are using podman you can replace the `docker` commands with `podman`.
+> If you are using podman make sure
+> [buildah and qemu are set up for your OS.](https://danmanners.com/posts/2022-01-buildah-multi-arch/).
+> You can then replace the `docker buildx` commands with `buildah`.
 
 ### Creating a new release.
 
