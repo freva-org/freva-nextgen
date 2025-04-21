@@ -19,16 +19,34 @@ RUN  set -xe  && \
     micromamba install -y -q -c conda-forge --override-channels python && \
     if [ "${CMD}" = "data-loader-worker" ];then\
         PKGNAME=freva-data-portal-worker && \
-        micromamba install -y -q -c conda-forge --override-channels zarr cfgrib jq; \
+        micromamba install -y -q -c conda-forge --override-channels \
+        zarr \
+        cfgrib \
+        jq \
+        numpy \
+        distributed \
+        dask \
+        netcdf4 \
+        xarray \
+        rioxarray \
+        jupyter-server-proxy \
+        bokeh \
+        asyncssh \
+        requests \
+        appdirs \
+        rasterio \
+        cloudpickle\
+        redis-py\
+        cryptography; \
     elif [ "${CMD}" = "freva-rest-server" ];then\
         PKGNAME=freva-rest && \
         cp /tmp/app/${PKGNAME}/src/freva_rest/api_config.toml /opt/${CMD}/config && \
-        micromamba install -y -q -c conda-forge --override-channels jq; \
+        micromamba install -y -q -c conda-forge --override-channels jq cryptography zarr; \
     else \
         echo "Invalid CMD argument: $CMD" && exit 1; \
     fi &&\
-    python3 -m pip install -q --no-color --root-user-action ignore --no-cache-dir ./$PKGNAME &&\
-    python3 -m pip cache purge -q --no-input && \
+    $MAMBA_ROOT_PREFIX/bin/python -m pip install -q --no-color --root-user-action ignore --no-cache-dir ./$PKGNAME &&\
+    $MAMBA_ROOT_PREFIX/bin/python -m pip cache purge -q --no-input && \
     chmod -R 2777 $API_LOGDIR /opt/${CMD}/config /certs && \
     micromamba clean -y -i -t -l -f
 
