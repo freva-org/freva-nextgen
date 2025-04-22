@@ -79,7 +79,7 @@ jobs:
       matrix:
         image:
           - freva-rest-server
-          - freva-data-loader
+          - data-loader-worker
         platform:
           - linux/amd64
           - linux/arm64
