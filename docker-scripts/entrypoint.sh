@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -o nounset -Eeuo pipefail
+export PATH=/opt/conda/bin:/opt/conda/condabin:$PATH
 source /etc/profile.d/env-vars.sh
 source /usr/local/lib/logging.sh
 
@@ -21,7 +22,7 @@ run_freva_rest() {
         export $API_REDIS_USER=$(echo $CACHE_CONFIG | base64 --decode | jq -r .user)
         export $API_REDIS_PASSWORD=$(echo $CACHE_CONFIG | base64 --decode | jq -r .passwd)
     fi
-    exec python3 -m freva_rest.cli "$@"
+    python3 -m freva_rest.cli "$@"
 }
 
 run_data_loader() {
@@ -29,7 +30,7 @@ run_data_loader() {
     if [ "${CACHE_CONFIG:-}" ];then
         echo "${CACHE_CONFIG}" > $API_CONFIG
     fi
-    exec python3 -m data_portal_worker "$@"
+    python3 -m data_portal_worker "$@"
 }
 
 dispatch_command() {
@@ -45,7 +46,7 @@ dispatch_command() {
             ;;
         ""|sh|bash|zsh)
             log_info "Starting container shell..."
-            exec "${command:-bash}" "$@"
+            "${command:-bash}" "$@"
             ;;
         exec)
             if [ $# -eq 0 ]; then
@@ -53,7 +54,7 @@ dispatch_command() {
                 exit 1
             fi
             log_info "Executing custom command..."
-            exec "$@"
+            "$@"
             ;;
         -*)
             # Assume CLI flags for freva_rest by default
@@ -65,7 +66,7 @@ dispatch_command() {
             ;;
         *)
             log_info "Starting custom command: $command"
-            exec "$command" "$@"
+            "$command" "$@"
             ;;
     esac
 }

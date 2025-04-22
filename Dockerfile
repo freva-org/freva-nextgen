@@ -17,9 +17,9 @@ COPY freva-data-portal-worker /tmp/app/freva-data-portal-worker
 COPY docker-scripts  /tmp/app/docker-scripts
 RUN  set -xe  && \
     mkdir -p /opt/${CMD}/config $API_LOGDIR /certs /etc/profile.d /usr/local/{lib,bin} && \
-    cp docker-scripts/${CMD}-env.sh /etc/profile.d/env-vars.sh && \
-    cp docker-scripts/logging.sh /usr/local/lib/logging.sh && \
-    cp docker-scripts/entrypoint.sh /usr/local/bin/entrypoint.sh && \
+    cp /tmp/app/docker-scripts/${CMD}-env.sh /etc/profile.d/env-vars.sh && \
+    cp /tmp/app/docker-scripts/logging.sh /usr/local/lib/logging.sh && \
+    cp /tmp/app/docker-scripts/entrypoint.sh /usr/local/bin/entrypoint.sh && \
     chmod +x /usr/local/bin/entrypoint.sh && \
     micromamba install -y -q -c conda-forge --override-channels python && \
     if [ "${CMD}" = "data-loader-worker" ];then\
