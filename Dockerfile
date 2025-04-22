@@ -15,7 +15,7 @@ WORKDIR /tmp/app
 COPY freva-rest /tmp/app/freva-rest
 COPY freva-data-portal-worker /tmp/app/freva-data-portal-worker
 COPY docker-scripts  /tmp/app/docker-scripts
-RUN set -xe && pwd && ls -l /tmp/app/ && /tmp/app/docker-scripts
+RUN set -xe && pwd && ls -l /tmp/app/ && ls -l /tmp/app/docker-scripts
 RUN  set -xe  && \
     mkdir -p /opt/${CMD}/config $API_LOGDIR /certs /etc/profile.d /usr/local/{lib,bin} && \
     cp /tmp/app/docker-scripts/${CMD}-env.sh /etc/profile.d/env-vars.sh && \
