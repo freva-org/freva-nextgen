@@ -23,7 +23,7 @@ RUN  set -xe  && \
     chmod +x /usr/local/bin/entrypoint.sh && \
     micromamba install -y -q -c conda-forge --override-channels python && \
     if [ "${CMD}" = "data-loader-worker" ];then\
-        export PKGNAME=freva-data-portal-worker && \
+        PKGNAME=freva-data-portal-worker && \
         micromamba install -y -q -c conda-forge --override-channels \
         zarr \
         cfgrib \
@@ -44,7 +44,7 @@ RUN  set -xe  && \
         redis-py\
         cryptography; \
     elif [ "${CMD}" = "freva-rest-server" ];then\
-        export PKGNAME=freva-rest && \
+        PKGNAME=freva-rest && \
         cp /tmp/app/${PKGNAME}/src/freva_rest/api_config.toml /opt/${CMD}/config && \
         micromamba install -y -q -c conda-forge --override-channels jq cryptography zarr; \
     else \
@@ -53,6 +53,11 @@ RUN  set -xe  && \
     chmod -R 2777 $API_LOGDIR /opt/${CMD}/config /certs && \
     micromamba clean -y -i -t -l -f
 RUN set -ex && \
+    if [ "${CMD}" = "data-loader-worker" ];then\
+        PKGNAME=freva-data-portal-worker; \
+    else \
+        PKGNAME=freva-rest; \
+    fi &&\
     $MAMBA_ROOT_PREFIX/bin/python -m pip install --no-color --root-user-action ignore --no-cache-dir ./$PKGNAME &&\
     $MAMBA_ROOT_PREFIX/bin/python -m pip cache purge -q --no-input && \
 
