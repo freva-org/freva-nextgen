@@ -150,12 +150,12 @@ jobs:
 
       - name: Running pip check for data-loader
         run: >
-          docker run -it -v freva-data-portal-worker:/opt/lib:ro -w /opt/lib
+          docker run -v ./freva-data-portal-worker:/opt/lib:ro -w /opt/lib
           data-loader:latest python -m pip check
 
       - name: Running pip check for freva-rest-server
         run: >
-          docker run -it -v freva-rest:/opt/lib:ro -w /opt/lib
+          docker run -v ./freva-rest:/opt/lib:ro -w /opt/lib
           freva-rest:latest python -m pip check
 
       - name: Waiting for keycloak
