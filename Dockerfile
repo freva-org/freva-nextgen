@@ -46,7 +46,31 @@ RUN  set -xe  && \
     elif [ "${CMD}" = "freva-rest-server" ];then\
         PKGNAME=freva-rest && \
         cp /tmp/app/${PKGNAME}/src/freva_rest/api_config.toml /opt/${CMD}/config && \
-        micromamba install -y -q -c conda-forge --override-channels jq cryptography zarr; \
+        micromamba install -y -q -c conda-forge --override-channels \
+        jq \
+        httpx \
+        aiohttp \
+        cloudpickle \
+        email-validator \
+        fastapi \
+        fastapi-third-party-auth \
+        motor >= 3.6 \
+        pyjwt
+        pymongo >= 4.9 \
+        python-dotenv \
+        python-dateutil \
+        python-multipart \
+        redis-py \
+        requests \
+        rich \
+        rich-argparse \
+        setuptools \
+        tomli \
+        typing_extensions \
+        uvicorn
+        tomli \
+        cryptography
+        zarr; \
     else \
         echo "Invalid CMD argument: $CMD" && exit 1; \
     fi &&\
@@ -58,8 +82,8 @@ RUN set -ex && \
     else \
         PKGNAME=freva-rest; \
     fi &&\
-    $MAMBA_ROOT_PREFIX/bin/python -m pip install --no-color --root-user-action ignore --no-cache-dir ./$PKGNAME &&\
-    $MAMBA_ROOT_PREFIX/bin/python -m pip cache purge -q --no-input && \
+    $MAMBA_ROOT_PREFIX/bin/python -m pip install --no-dpes --no-color --root-user-action ignore --no-cache-dir ./$PKGNAME &&\
+    $MAMBA_ROOT_PREFIX/bin/python -m pip cache purge -q --no-input
 
 WORKDIR /opt/${CMD}
 RUN rm -fr /tmp/app
