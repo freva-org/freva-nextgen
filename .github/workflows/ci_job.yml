@@ -137,6 +137,27 @@ jobs:
           no-cache: true
           tags: freva-rest:latest
 
+      - name: Build data-loader image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile
+          build-args: CMD=data-loader-worker
+          push: false
+          load: true
+          no-cache: true
+          tags: data-loader:latest
+
+      - name: Running pip check for data-loader
+        run: >
+          docker run -it -v freva-data-portal-worker:/opt/lib:ro -w /opt/lib
+          data-loader:latest python -m pip check
+
+      - name: Running pip check for freva-rest-server
+        run: >
+          docker run -it -v freva-rest:/opt/lib:ro -w /opt/lib
+          freva-rest:latest python -m pip check
+
       - name: Waiting for keycloak
         run: >
           python dev-env/config/dev-utils.py oidc

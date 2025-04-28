@@ -25,38 +25,41 @@ RUN  set -xe  && \
     if [ "${CMD}" = "data-loader-worker" ];then\
         PKGNAME=freva-data-portal-worker && \
         micromamba install -y -q -c conda-forge --override-channels \
-        zarr \
-        cfgrib \
-        jq \
-        numpy \
-        distributed \
-        dask \
-        netcdf4 \
-        xarray \
-        rioxarray \
-        jupyter-server-proxy \
-        bokeh \
-        asyncssh \
-        requests \
         appdirs \
+        asyncssh \
+        cfgrib \
+        cloudpickle \
+        cryptography \
+        bokeh \
+        dask \
+        distributed \
+        h5netcdf \
+        jq \
+        jupyter-server-proxy \
+        netcdf4 \
+        numpy \
         rasterio \
-        cloudpickle\
-        redis-py\
-        cryptography; \
+        redis-py \
+        requests \
+        rioxarray \
+        watchfiles \
+        xarray \
+        zarr; \
     elif [ "${CMD}" = "freva-rest-server" ];then\
         PKGNAME=freva-rest && \
         cp /tmp/app/${PKGNAME}/src/freva_rest/api_config.toml /opt/${CMD}/config && \
         micromamba install -y -q -c conda-forge --override-channels \
-        jq \
-        httpx \
         aiohttp \
         cloudpickle \
-        email-validator \
+        cryptography \
         fastapi \
         fastapi-third-party-auth \
-        motor >= 3.6 \
-        pyjwt
-        pymongo >= 4.9 \
+        email-validator \
+        httpx \
+        jq \
+        motor>=3.6 \
+        pyjwt \
+        pymongo>=4.9 \
         python-dotenv \
         python-dateutil \
         python-multipart \
@@ -67,9 +70,8 @@ RUN  set -xe  && \
         setuptools \
         tomli \
         typing_extensions \
-        uvicorn
+        uvicorn \
         tomli \
-        cryptography
         zarr; \
     else \
         echo "Invalid CMD argument: $CMD" && exit 1; \
@@ -82,7 +84,7 @@ RUN set -ex && \
     else \
         PKGNAME=freva-rest; \
     fi &&\
-    $MAMBA_ROOT_PREFIX/bin/python -m pip install --no-dpes --no-color --root-user-action ignore --no-cache-dir ./$PKGNAME &&\
+    $MAMBA_ROOT_PREFIX/bin/python -m pip install --no-deps --no-color --root-user-action ignore --no-cache-dir ./$PKGNAME &&\
     $MAMBA_ROOT_PREFIX/bin/python -m pip cache purge -q --no-input
 
 WORKDIR /opt/${CMD}
