@@ -115,6 +115,16 @@ def setup_server() -> Iterator[str]:
     yield f"http://localhost:{port}/api/freva-nextgen"
 
 
+@pytest.fixture(scope="function")
+def temp_dir() -> Iterator[Path]:
+    """Create a temporary directory."""
+    cwd = Path.cwd()
+    with TemporaryDirectory() as temp_dir:
+        os.chdir(temp_dir)
+        yield Path(temp_dir)
+    os.chdir(cwd)
+
+
 @pytest.fixture(scope="session")
 def loader_config() -> Iterator[bytes]:
     """Fixture to provide the data-loader config."""

@@ -109,6 +109,46 @@ environment use:
 python -m pip install -e freva-rest[tests] freva-client freva-data-portal-worker
 pytest -vv ./tests
 ```
+
+### Creating a test docker container for freva-rest-api and data-loader-worker
+This repository defines two docker images that can be used for production
+
+- `freva-rest-api` (restAPI)
+- `data-loader-worker` (zarr streaming)
+
+
+These images are automatically build via the GitHub CI pipeline.
+Yet for debugging they can be built using the following commands:
+
+- First setup mulitarch build:
+```console
+docker run --rm --privileged multiarch/qemu-user-static --reset -p yes && \
+ docker buildx create --name multiarch --use && \
+ docker buildx inspect --bootstrap
+```
+
+- Build for the `data-loader-worker` image for the target platforms
+```console
+docker buildx build --no-cache --platform linux/amd64,linux/arm64,linux/ppc64le\
+    -t ghcr.io/freva-clint/freva-data-loader:latest  \
+    -t ghcr.io/freva-clint/freva-data-loader:<VERSION> \
+    --build-arg=VERSION=<VERSION> \
+    --build-arg=CMD=data-loader-worker .
+```
+
+- Build for the `freva-rest-api` image for the target platforms
+```console
+docker buildx build --no-cache --platform linux/amd64,linux/arm64,linux/ppc64le\
+    -t ghcr.io/freva-clint/freva-rest-api:latest  \
+    -t ghcr.io/freva-clint/freva-rest-api:<VERSION> \
+    --build-arg=VERSION=<VERSION> \
+    --build-arg=CMD=freva-rest-server .
+```
+
+> If you are using podman make sure
+> [buildah and qemu are set up for your OS.](https://danmanners.com/posts/2022-01-buildah-multi-arch/).
+> You can then replace the `docker buildx` commands with `buildah`.
+
 ### Creating a new release.
 
 Once the development is finished and you decide that it's time for a new

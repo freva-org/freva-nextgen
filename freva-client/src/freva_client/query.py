@@ -471,8 +471,11 @@ class databrowser:
             raise ValueError(  # pragma: no cover
                 "No STAC catalog found. Please check if you have any search results."
             )
-        default_filename = result.headers.get('Content-Disposition', '').split(
-            'filename=')[-1].strip('"')
+        default_filename = (
+            result.headers.get("Content-Disposition", "")
+            .split("filename=")[-1]
+            .strip('"')
+        )
 
         if filename is None:
             save_path = Path.cwd() / default_filename
@@ -484,7 +487,7 @@ class databrowser:
         save_path.parent.mkdir(parents=True, exist_ok=True)
 
         total_size = 0
-        with open(save_path, 'wb') as f:
+        with open(save_path, "wb") as f:
             for chunk in result.iter_content(chunk_size=8192):
                 if chunk:
                     f.write(chunk)

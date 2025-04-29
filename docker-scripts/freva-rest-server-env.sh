@@ -1,0 +1,10 @@
+export API_CONFIG=${API_CONFIG:-/opt/freva-rest-server/config/api_config.toml}
+export API_SOLR_CORE=${API_SOLR_CORE:-files}
+export API_PORT=${API_PORT:-7777}
+export API_REDIS_SSL_CERTFILE=${API_REDIS_SSL_CERTFILE:-/certs/client-cert.pem}
+export API_REDIS_SSL_KEYFILE=${API_REDIS_SSL_KEYFILE:-/certs/client-key.pem}
+export API_SOLR_HOST=${API_SOLR_HOST:-localhost:8983}
+export API_MONGO_HOST=${API_MONGO_HOST:-localhost:27017}
+export API_OIDC_CLIENT_ID=${API_OIDC_CLIENT_ID:-freva}
+export API_MONGO_DB=${API_MONGO_HOST:-search_stats}
+export CONTAINER=freva-rest-server
