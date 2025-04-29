@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>The databrowser command line interface &#8212; Freva Databrowser 2502.0.0 documentation</title>
+    <title>The databrowser command line interface &#8212; Freva Databrowser 2505.0.0 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=3f44df0f"></script>
+    <script src="../_static/documentation_options.js?v=a087691e"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -51,7 +51,6 @@
     <script>let toggleOpenOnPrint = 'true';</script>
     <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
     <script src="../_static/code-tabs.js?v=c983d12e"></script>
-    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'databrowser/cli';</script>
     <link rel="canonical" href="http://127.0.0.1:8000/databrowser/cli.html" />
@@ -127,8 +126,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2502.0.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2502.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2505.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2505.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -410,6 +409,7 @@ Commands:
   metadata-search   Search databrowser for metadata (facets).
   data-search       Search the databrowser for datasets.
   intake-catalogue  Create an intake catalogue from the search.
+  stac-catalogue    Create a static STAC catalogue from the search.
   data-count        Count the databrowser search results
   user-data         Add or delete user data.
 
@@ -458,11 +458,11 @@ Options:
                                   2012`` will not select files containing data
                                   from 2010 to 2020 with the ``strict``
                                   method. ``flexible`` will select those files
-                                  as  ``flexible`` returns those files that
-                                  have either start or end period covered.
-                                  ``file`` will only return files where the
-                                  entire time period is contained within *one
-                                  single* file.  [default: flexible]
+                                  as ``flexible`` returns those files that
+                                  have start or end period covered. ``file``
+                                  will only return files where the entire time
+                                  period is contained within *one single*
+                                  file.  [default: flexible]
   --zarr                          Create zarr stream files.
   --access-token TEXT             Use this access token for authentication
                                   when creating a zarr stream files.
@@ -476,6 +476,29 @@ Options:
                                   **Note**: You don&#39;t have to give the full
                                   string format to subset time steps ``%Y``,
                                   ``%Y-%m`` etc are also valid.
+  -b, --bbox &lt;FLOAT FLOAT FLOAT FLOAT&gt;...
+                                  Special search facet to refine/subset search
+                                  results by spatial extent. This can be a
+                                  string representation of a bounding box. The
+                                  bounding box has to follow the format
+                                  ``min_lon max_lon min_lat max_lat``. Valid
+                                  strings are ``-10 10 -10 10`` to ``0 5 0
+                                  5``.
+  -bs, --bbox-select [strict|flexible|file]
+                                  Operator that specifies how the spatial
+                                  extent is selected. Choose from flexible
+                                  (default), strict or file. ``strict``
+                                  returns only those files that have the
+                                  *entire* spatial extent covered. The bbox
+                                  search ``-10 10 -10 10`` will not select
+                                  files containing data from 0 5 0 5 with the
+                                  ``strict`` method. ``flexible`` will select
+                                  those files as ``flexible`` returns those
+                                  files that have any part of the extent
+                                  covered. ``file`` will only return files
+                                  where the entire spatial extent is contained
+                                  within *one single* file.  [default:
+                                  flexible]
   -j, --json                      Parse output in json format.
   --host TEXT                     Set the hostname of the databrowser, if not
                                   set (default) the hostname is read from a
@@ -629,6 +652,22 @@ value1 nor value2</p></td>
 different meaning (normally it will try to match files with that name)
 to turn that off you can use backslash (key=*) or use quotes (key=’*’).</p>
 </div>
+<section id="searching-multi-versioned-datasets">
+<h3>Searching multi-versioned datasets<a class="headerlink" href="#searching-multi-versioned-datasets" title="Link to this heading">#</a></h3>
+<p>In datasets with multiple versions only the <cite>latest</cite> version (i.e. <cite>highest</cite>
+version number) is returned by default. Querying a specific version from a
+multi versioned datasets requires the <code class="docutils literal notranslate"><span class="pre">multi-version</span></code> flag in combination with
+the <code class="docutils literal notranslate"><span class="pre">version</span></code> special attribute:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser data-search dataset=cmip6-fs model=access-cm2 --multi-version version=v20191108</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/model/global/cmip6/CMIP6/CMIP/CSIRO-ARCCSS/ACCESS-CM2/amip/r1i1p1f1/Amon/ua/gn/v20191108/ua_Amon_ACCESS-CM2_amip_r1i1p1f1_gn_197901-201412.nc
+
+</pre></div>
+</div>
+<p>If no particular <code class="docutils literal notranslate"><span class="pre">version</span></code> is requested, all versions will be returned.</p>
+</section>
 <section id="streaming-files-via-zarr">
 <h3>Streaming files via zarr<a class="headerlink" href="#streaming-files-via-zarr" title="Link to this heading">#</a></h3>
 <p>Instead of getting the file locations on disk or tape, you can instruct the
@@ -647,8 +686,8 @@ see also the <a class="reference internal" href="../auth/index.html#auth"><span 
 </div>
 <p><span class="caption-text">Results</span></p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Give password for server authentication:  *****
-http://fv-az788-223:7777/api/freva-nextgen/data-portal/zarr/b5f98d86-b658-5c92-b879-9aeddf6e2f19.zarr
-http://fv-az788-223:7777/api/freva-nextgen/data-portal/zarr/0fcbbf0c-f054-5085-a547-7374189ad7a0.zarr
+http://fv-az816-966:7777/api/freva-nextgen/data-portal/zarr/b5f98d86-b658-5c92-b879-9aeddf6e2f19.zarr
+http://fv-az816-966:7777/api/freva-nextgen/data-portal/zarr/0fcbbf0c-f054-5085-a547-7374189ad7a0.zarr
 
 </pre></div>
 </div>
@@ -756,11 +795,11 @@ Options:
                                   2012`` will not select files containing data
                                   from 2010 to 2020 with the ``strict``
                                   method. ``flexible`` will select those files
-                                  as  ``flexible`` returns those files that
-                                  have either start or end period covered.
-                                  ``file`` will only return files where the
-                                  entire time period is contained within *one
-                                  single* file.  [default: flexible]
+                                  as ``flexible`` returns those files that
+                                  have start or end period covered. ``file``
+                                  will only return files where the entire time
+                                  period is contained within *one single*
+                                  file.  [default: flexible]
   -t, --time TEXT                 Special search facet to refine/subset search
                                   results by time. This can be a string
                                   representation of a time range or a single
@@ -771,6 +810,29 @@ Options:
                                   **Note**: You don&#39;t have to give the full
                                   string format to subset time steps ``%Y``,
                                   ``%Y-%m`` etc are also valid.
+  -b, --bbox &lt;FLOAT FLOAT FLOAT FLOAT&gt;...
+                                  Special search facet to refine/subset search
+                                  results by spatial extent. This can be a
+                                  string representation of a bounding box. The
+                                  bounding box has to follow the format
+                                  ``min_lon max_lon min_lat max_lat``. Valid
+                                  strings are ``-10 10 -10 10`` to ``0 5 0
+                                  5``.
+  -bs, --bbox-select [strict|flexible|file]
+                                  Operator that specifies how the spatial
+                                  extent is selected. Choose from flexible
+                                  (default), strict or file. ``strict``
+                                  returns only those files that have the
+                                  *entire* spatial extent covered. The bbox
+                                  search ``-10 10 -10 10`` will not select
+                                  files containing data from 0 5 0 5 with the
+                                  ``strict`` method. ``flexible`` will select
+                                  those files as ``flexible`` returns those
+                                  files that have any part of the extent
+                                  covered. ``file`` will only return files
+                                  where the entire spatial extent is contained
+                                  within *one single* file.  [default:
+                                  flexible]
   --zarr                          Create zarr stream files, as catalogue
                                   targets.
   --access-token TEXT             Use this access token for authentication
@@ -793,6 +855,122 @@ Options:
 file or pipe the catalogue to stdout (default). Just like for the <code class="docutils literal notranslate"><span class="pre">data-search</span></code>
 sub command you can instruct the system to create zarr file streams to access
 the data via zarr.</p>
+</section>
+<section id="creating-stac-catalogue">
+<h2>Creating STAC Catalogue<a class="headerlink" href="#creating-stac-catalogue" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">stac-catalogue</span></code> sub command allows you to create a static
+<a href="#id1"><span class="problematic" id="id2">`</span></a>SpatioTemporal Asset Catalog (STAC) &lt;<a class="reference external" href="https://stacspec.org/en/about/stac-spec/">https://stacspec.org/en/about/stac-spec/</a>&gt;_ `
+from the current search. This can be useful for creating, sharing and using
+standardized geospatial data catalogs and enabling interoperability between
+different data systems.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser stac-catalogue --help</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Usage: freva-client databrowser stac-catalogue [OPTIONS] [SEARCH_KEYS]...
+
+  Create a static STAC catalogue from the search.
+
+Arguments:
+  [SEARCH_KEYS]...  Refine your data search with this `key=value` pair search
+                    parameters. The parameters could be, depending on the DRS
+                    standard, flavour product, project model etc.
+
+Options:
+  --facet TEXT                    If you are not sure about the correct search
+                                  key&#39;s you can use the ``--facet`` flag to
+                                  search of any matching entries. For example
+                                  --facet &#39;era5&#39; would allow you to search for
+                                  any entries containing era5, regardless of
+                                  project, product etc.
+  -u, --uniq-key [file|uri]       The type of search result, which can be
+                                  either “file” or “uri”. This parameter
+                                  determines whether the search will be based
+                                  on file paths or Uniform Resource
+                                  Identifiers  [default: file]
+  -f, --flavour [freva|cmip6|cmip5|cordex|nextgems|user]
+                                  The Data Reference Syntax (DRS) standard
+                                  specifying the type of climate datasets to
+                                  query.  [default: freva]
+  -ts, --time-select [strict|flexible|file]
+                                  Operator that specifies how the time period
+                                  is selected. Choose from flexible (default),
+                                  strict or file. ``strict`` returns only
+                                  those files that have the *entire* time
+                                  period covered. The time search ``2000 to
+                                  2012`` will not select files containing data
+                                  from 2010 to 2020 with the ``strict``
+                                  method. ``flexible`` will select those files
+                                  as ``flexible`` returns those files that
+                                  have start or end period covered. ``file``
+                                  will only return files where the entire time
+                                  period is contained within *one single*
+                                  file.  [default: flexible]
+  -t, --time TEXT                 Special search facet to refine/subset search
+                                  results by time. This can be a string
+                                  representation of a time range or a single
+                                  time step. The time steps have to follow
+                                  ISO-8601. Valid strings are
+                                  ``%Y-%m-%dT%H:%M`` to ``%Y-%m-%dT%H:%M`` for
+                                  time ranges and ``%Y-%m-%dT%H:%M``.
+                                  **Note**: You don&#39;t have to give the full
+                                  string format to subset time steps ``%Y``,
+                                  ``%Y-%m`` etc are also valid.
+  -b, --bbox &lt;FLOAT FLOAT FLOAT FLOAT&gt;...
+                                  Special search facet to refine/subset search
+                                  results by spatial extent. This can be a
+                                  string representation of a bounding box. The
+                                  bounding box has to follow the format
+                                  ``min_lon max_lon min_lat max_lat``. Valid
+                                  strings are ``-10 10 -10 10`` to ``0 5 0
+                                  5``.
+  -bs, --bbox-select [strict|flexible|file]
+                                  Operator that specifies how the spatial
+                                  extent is selected. Choose from flexible
+                                  (default), strict or file. ``strict``
+                                  returns only those files that have the
+                                  *entire* spatial extent covered. The bbox
+                                  search ``-10 10 -10 10`` will not select
+                                  files containing data from 0 5 0 5 with the
+                                  ``strict`` method. ``flexible`` will select
+                                  those files as ``flexible`` returns those
+                                  files that have any part of the extent
+                                  covered. ``file`` will only return files
+                                  where the entire spatial extent is contained
+                                  within *one single* file.  [default:
+                                  flexible]
+  --host TEXT                     Set the hostname of the databrowser, if not
+                                  set (default) the hostname is read from a
+                                  config file
+  -v                              Increase verbosity  [default: 0]
+  --multi-version                 Select all versions and not just the latest
+                                  version (default).
+  -V, --version                   Show version an exit
+  -o, --filename PATH             Path to the file where the static STAC
+                                  catalogue, should be written to. If you
+                                  don&#39;t specify or the path does not exist,
+                                  the file will be created in the current
+                                  working directory.
+  --help                          Show this message and exit.
+
+</pre></div>
+</div>
+<p>To get an static STAC catalogue you can use the following command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser stac-catalogue --filename /path/to/output</span>
+</pre></div>
+</div>
+<p>and if the specified filename directory doesn’t specify or not existed or not provided,
+the STAC catalogue will be saved in the current directory. It can be
+only a directory or a fully qualified filename.</p>
+<dl class="simple">
+<dt>The STAC Catalogue provides multiple ways to access and interact with the data:</dt><dd><ul class="simple">
+<li><p>Access your climate data through the intake-esm data catalog specification</p></li>
+<li><p>Access search results as Zarr files, available as STAC Assets at both collection and item levels</p></li>
+<li><p>Browse and explore your search results directly through the Freva DataBrowser web interface</p></li>
+</ul>
+</dd>
+</dl>
+<p>Each of these access methods is encoded as STAC Assets, making them easily discoverable and accessible through any STAC-compatible tool.</p>
 </section>
 <section id="query-the-number-of-occurrences">
 <h2>Query the number of occurrences<a class="headerlink" href="#query-the-number-of-occurrences" title="Link to this heading">#</a></h2>
@@ -834,11 +1012,11 @@ Options:
                                   2012`` will not select files containing data
                                   from 2010 to 2020 with the ``strict``
                                   method. ``flexible`` will select those files
-                                  as  ``flexible`` returns those files that
-                                  have either start or end period covered.
-                                  ``file`` will only return files where the
-                                  entire time period is contained within *one
-                                  single* file.  [default: flexible]
+                                  as ``flexible`` returns those files that
+                                  have start or end period covered. ``file``
+                                  will only return files where the entire time
+                                  period is contained within *one single*
+                                  file.  [default: flexible]
   -t, --time TEXT                 Special search facet to refine/subset search
                                   results by time. This can be a string
                                   representation of a time range or a single
@@ -849,6 +1027,29 @@ Options:
                                   **Note**: You don&#39;t have to give the full
                                   string format to subset time steps ``%Y``,
                                   ``%Y-%m`` etc are also valid.
+  -b, --bbox &lt;FLOAT FLOAT FLOAT FLOAT&gt;...
+                                  Special search facet to refine/subset search
+                                  results by spatial extent. This can be a
+                                  string representation of a bounding box. The
+                                  bounding box has to follow the format
+                                  ``min_lon max_lon min_lat max_lat``. Valid
+                                  strings are ``-10 10 -10 10`` to ``0 5 0
+                                  5``.
+  -bs, --bbox-select [strict|flexible|file]
+                                  Operator that specifies how the spatial
+                                  extent is selected. Choose from flexible
+                                  (default), strict or file. ``strict``
+                                  returns only those files that have the
+                                  *entire* spatial extent covered. The bbox
+                                  search ``-10 10 -10 10`` will not select
+                                  files containing data from 0 5 0 5 with the
+                                  ``strict`` method. ``flexible`` will select
+                                  those files as ``flexible`` returns those
+                                  files that have any part of the extent
+                                  covered. ``file`` will only return files
+                                  where the entire spatial extent is contained
+                                  within *one single* file.  [default:
+                                  flexible]
   -e, --extended-search           Retrieve information on additional search
                                   keys.
   --multi-version                 Select all versions and not just the latest
@@ -930,11 +1131,11 @@ Options:
                                   2012`` will not select files containing data
                                   from 2010 to 2020 with the ``strict``
                                   method. ``flexible`` will select those files
-                                  as  ``flexible`` returns those files that
-                                  have either start or end period covered.
-                                  ``file`` will only return files where the
-                                  entire time period is contained within *one
-                                  single* file.  [default: flexible]
+                                  as ``flexible`` returns those files that
+                                  have start or end period covered. ``file``
+                                  will only return files where the entire time
+                                  period is contained within *one single*
+                                  file.  [default: flexible]
   -t, --time TEXT                 Special search facet to refine/subset search
                                   results by time. This can be a string
                                   representation of a time range or a single
@@ -945,6 +1146,29 @@ Options:
                                   **Note**: You don&#39;t have to give the full
                                   string format to subset time steps ``%Y``,
                                   ``%Y-%m`` etc are also valid.
+  -b, --bbox &lt;FLOAT FLOAT FLOAT FLOAT&gt;...
+                                  Special search facet to refine/subset search
+                                  results by spatial extent. This can be a
+                                  string representation of a bounding box. The
+                                  bounding box has to follow the format
+                                  ``min_lon max_lon min_lat,max_lat``. Valid
+                                  strings are ``-10 10 -10 10`` to ``0 5 0
+                                  5``.
+  -bs, --bbox-select [strict|flexible|file]
+                                  Operator that specifies how the spatial
+                                  extent is selected. Choose from flexible
+                                  (default), strict or file. ``strict``
+                                  returns only those files that have the
+                                  *entire* spatial extent covered. The bbox
+                                  search ``-10 10 -10 10`` will not select
+                                  files containing data from 0 5 0 5 with the
+                                  ``strict`` method. ``flexible`` will select
+                                  those files as ``flexible`` returns those
+                                  files that have any part of the extent
+                                  covered. ``file`` will only return files
+                                  where the entire spatial extent is contained
+                                  within *one single* file.  [default:
+                                  flexible]
   -e, --extended-search           Retrieve information on additional search
                                   keys.
   --multi-version                 Select all versions and not just the latest
@@ -1173,11 +1397,13 @@ not added.
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#searching-for-data-locations">Searching for data locations</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#searching-multi-versioned-datasets">Searching multi-versioned datasets</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#streaming-files-via-zarr">Streaming files via zarr</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#special-cases-searching-for-times">Special cases: Searching for times</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#creating-intake-esm-catalouges">Creating intake-esm catalouges</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#creating-stac-catalogue">Creating STAC Catalogue</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#query-the-number-of-occurrences">Query the number of occurrences</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#retrieving-the-available-metadata">Retrieving the available metadata</a><ul class="visible nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#expert-tip-getting-metadata-for-certain-files">Expert tip: Getting metadata for certain files</a></li>
@@ -1226,7 +1452,7 @@ not added.
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.1.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
     <br/>
   </p>
 </div>

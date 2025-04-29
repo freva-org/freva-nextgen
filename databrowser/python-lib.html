@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Databrowser python module &#8212; Freva Databrowser 2502.0.0 documentation</title>
+    <title>Databrowser python module &#8212; Freva Databrowser 2505.0.0 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=3f44df0f"></script>
+    <script src="../_static/documentation_options.js?v=a087691e"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -51,7 +51,6 @@
     <script>let toggleOpenOnPrint = 'true';</script>
     <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
     <script src="../_static/code-tabs.js?v=c983d12e"></script>
-    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'databrowser/python-lib';</script>
     <link rel="canonical" href="http://127.0.0.1:8000/databrowser/python-lib.html" />
@@ -128,8 +127,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2502.0.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2502.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2505.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2505.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -433,7 +432,7 @@ library described in the documentation only support searching for data. If you
 need to apply data analysis plugins, please visit the</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="freva_client.databrowser">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">freva_client.</span></span><span class="sig-name descname"><span class="pre">databrowser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">facets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uniq_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'uri'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'file'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flavour</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'freva'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip6'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip5'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cordex'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nextgems'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'user'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'freva'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream_zarr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fail_on_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">search_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#freva_client.databrowser" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">freva_client.</span></span><span class="sig-name descname"><span class="pre">databrowser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">facets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uniq_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'uri'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'file'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flavour</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'freva'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip6'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip5'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cordex'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nextgems'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'user'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'freva'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream_zarr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fail_on_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">search_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#freva_client.databrowser" title="Link to this definition">#</a></dt>
 <dd><p>Find data in the system.</p>
 <p>You can either search for files or uri’s. Uri’s give you an information
 on the storage system where the files or objects you are looking for are
@@ -441,7 +440,7 @@ located. The query is of the form <code class="docutils literal notranslate"><sp
 use wild cards such as *, ? or any regular expression.</p>
 <section id="parameters">
 <h3>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h3>
-<dl class="simple">
+<dl>
 <dt><a href="#id1"><span class="problematic" id="id2">*</span></a>facets: str</dt><dd><p>If you are not sure about the correct search key’s you can use
 positional arguments to search of any matching entries. For example
 ‘era5’ would allow you to search for any entries
@@ -459,9 +458,12 @@ on the available search flavours and their different search keys.</p>
 This can be a string representation of a time range or a single
 timestamp. The timestamps has to follow ISO-8601. Valid strings are
 <code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M</span> <span class="pre">to</span> <span class="pre">%Y-%m-%dT%H:%M</span></code> for time ranges or
-<code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M</span></code> for single time stamps.
-<strong>Note</strong>: You don’t have to give the full string format to subset
-time steps: <cite>%Y</cite>, <cite>%Y-%m</cite> etc are also valid.</p>
+<code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M</span></code> for single time stamps.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You don’t have to give the full string format to subset time
+steps <code class="docutils literal notranslate"><span class="pre">%Y</span></code>, <code class="docutils literal notranslate"><span class="pre">%Y-%m</span></code> etc are also valid.</p>
+</div>
 </dd>
 <dt>time_select: str, default: flexible</dt><dd><p>Operator that specifies how the time period is selected. Choose from
 flexible (default), strict or file. <code class="docutils literal notranslate"><span class="pre">strict</span></code> returns only those files
@@ -472,10 +474,23 @@ the <code class="docutils literal notranslate"><span class="pre">strict</span></
 covered. <code class="docutils literal notranslate"><span class="pre">file</span></code> will only return files where the entire time
 period is contained within <cite>one single</cite> file.</p>
 </dd>
+<dt>bbox: str, default: “”</dt><dd><p>Special search facet to refine/subset search results by spatial extent.
+This can be a list representation of a bounding box or a WKT polygon.
+Valid lists are <code class="docutils literal notranslate"><span class="pre">min_lon</span> <span class="pre">max_lon</span> <span class="pre">min_lat</span> <span class="pre">max_lat</span></code> for bounding
+boxes and Well-Known Text (WKT) format for polygons.</p>
+</dd>
+<dt>bbox_select: str, default: flexible</dt><dd><p>Operator that specifies how the spatial extent is selected. Choose from
+flexible (default), strict or file. <code class="docutils literal notranslate"><span class="pre">strict</span></code> returns only those files
+that fully contain the query extent. The bbox search <code class="docutils literal notranslate"><span class="pre">-10</span> <span class="pre">10</span> <span class="pre">-10</span> <span class="pre">10</span></code>
+will not select files covering only <code class="docutils literal notranslate"><span class="pre">0</span> <span class="pre">5</span> <span class="pre">0</span> <span class="pre">5</span></code> with the <code class="docutils literal notranslate"><span class="pre">strict</span></code>
+method. <code class="docutils literal notranslate"><span class="pre">flexible</span></code> will select those files as it returns files that
+have any overlap with the query extent. <code class="docutils literal notranslate"><span class="pre">file</span></code> will only return files
+where the entire spatial extent is contained by the query geometry.</p>
+</dd>
 <dt>uniq_key: str, default: file</dt><dd><p>Chose if the solr search query should return paths to files or
 uris, uris will have the file path along with protocol of the storage
-system. Uris can be useful if the search query result should be
-used libraries like fsspec.</p>
+system. URIs are useful when working with libraries like fsspec, which
+require protocol information.</p>
 </dd>
 <dt>host: str, default: None</dt><dd><p>Override the host name of the databrowser server. This is usually the
 url where the freva web site can be found. Such as www.freva.dkrz.de.
@@ -602,7 +617,7 @@ before you are able to access the data. Refer also to the
 </pre></div>
 </div>
 <p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[&#39;http://fv-az788-223:7777/api/freva-nextgen/data-portal/zarr/b5f98d86-b658-5c92-b879-9aeddf6e2f19.zarr&#39;, &#39;http://fv-az788-223:7777/api/freva-nextgen/data-portal/zarr/0fcbbf0c-f054-5085-a547-7374189ad7a0.zarr&#39;]
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[&#39;http://fv-az816-966:7777/api/freva-nextgen/data-portal/zarr/b5f98d86-b658-5c92-b879-9aeddf6e2f19.zarr&#39;, &#39;http://fv-az816-966:7777/api/freva-nextgen/data-portal/zarr/0fcbbf0c-f054-5085-a547-7374189ad7a0.zarr&#39;]
 </pre></div>
 </div>
 <p>After you have created the paths to the zarr files you can open them</p>
@@ -619,11 +634,11 @@ before you are able to access the data. Refer also to the
 </div>
 <dl class="py method">
 <dt class="sig sig-object py" id="freva_client.databrowser.count_values">
-<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">count_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">facets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flavour</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'freva'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip6'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip5'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cordex'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nextgems'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'user'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'freva'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fail_on_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extended_search</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">search_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#freva_client.databrowser.count_values" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">count_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">facets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flavour</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'freva'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip6'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip5'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cordex'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nextgems'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'user'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'freva'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fail_on_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extended_search</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">search_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#freva_client.databrowser.count_values" title="Link to this definition">#</a></dt>
 <dd><p>Count the number of objects in the databrowser.</p>
 <section id="id5">
 <h4>Parameters<a class="headerlink" href="#id5" title="Link to this heading">#</a></h4>
-<dl class="simple">
+<dl>
 <dt><a href="#id6"><span class="problematic" id="id7">*</span></a>facets: str</dt><dd><p>If you are not sure about the correct search key’s you can use
 positional arguments to search of any matching entries. For example
 ‘era5’ would allow you to search for any entries
@@ -636,8 +651,12 @@ datasets to query.</p>
 This can be a string representation of a time range or a single
 timestamp. The timestamp has to follow ISO-8601. Valid strings are
 <code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M</span></code> to <code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M</span></code> for time ranges and
-<code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M</span></code>. <strong>Note</strong>: You don’t have to give the full string
-format to subset time steps <code class="docutils literal notranslate"><span class="pre">%Y</span></code>, <code class="docutils literal notranslate"><span class="pre">%Y-%m</span></code> etc are also valid.</p>
+<code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You don’t have to give the full string format to subset time
+steps <code class="docutils literal notranslate"><span class="pre">%Y</span></code>, <code class="docutils literal notranslate"><span class="pre">%Y-%m</span></code> etc are also valid.</p>
+</div>
 </dd>
 <dt>time_select: str, default: flexible</dt><dd><p>Operator that specifies how the time period is selected. Choose from
 flexible (default), strict or file. <code class="docutils literal notranslate"><span class="pre">strict</span></code> returns only those files
@@ -647,6 +666,19 @@ the <code class="docutils literal notranslate"><span class="pre">strict</span></
 <code class="docutils literal notranslate"><span class="pre">flexible</span></code> returns those files that have either start or end period
 covered. <code class="docutils literal notranslate"><span class="pre">file</span></code> will only return files where the entire time
 period is contained within <cite>one single</cite> file.</p>
+</dd>
+<dt>bbox: str, default: “”</dt><dd><p>Special search facet to refine/subset search results by spatial extent.
+This can be a list representation of a bounding box or a WKT polygon.
+Valid lists are <code class="docutils literal notranslate"><span class="pre">min_lon</span> <span class="pre">max_lon</span> <span class="pre">min_lat</span> <span class="pre">max_lat</span></code> for bounding
+boxes and Well-Known Text (WKT) format for polygons.</p>
+</dd>
+<dt>bbox_select: str, default: flexible</dt><dd><p>Operator that specifies how the spatial extent is selected. Choose from
+flexible (default), strict or file. <code class="docutils literal notranslate"><span class="pre">strict</span></code> returns only those files
+that fully contain the query extent. The bbox search <code class="docutils literal notranslate"><span class="pre">-10</span> <span class="pre">10</span> <span class="pre">-10</span> <span class="pre">10</span></code>
+will not select files covering only <code class="docutils literal notranslate"><span class="pre">0</span> <span class="pre">5</span> <span class="pre">0</span> <span class="pre">5</span></code> with the <code class="docutils literal notranslate"><span class="pre">strict</span></code>
+method. <code class="docutils literal notranslate"><span class="pre">flexible</span></code> will select those files as it returns files that
+have any overlap with the query extent. <code class="docutils literal notranslate"><span class="pre">file</span></code> will only return files
+where the entire spatial extent is contained by the query geometry.</p>
 </dd>
 <dt>extended_search: bool, default: False</dt><dd><p>Retrieve information on additional search keys.</p>
 </dd>
@@ -737,7 +769,7 @@ streaming the target data as zarr:</p>
 </div>
 <p><span class="caption-text">Results</span></p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>                                                 uri project  ... grid_label format
-0  http://fv-az788-223:7777/api/freva-nextgen/dat...   CMIP6  ...         gn     nc
+0  http://fv-az816-966:7777/api/freva-nextgen/dat...   CMIP6  ...         gn     nc
 
 [1 rows x 14 columns]
 </pre></div>
@@ -770,13 +802,13 @@ for retrieving metadata of object stores or file/directory names.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="freva_client.databrowser.metadata_search">
-<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">metadata_search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">facets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flavour</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'freva'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip6'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip5'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cordex'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nextgems'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'user'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'freva'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fail_on_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extended_search</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">search_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#freva_client.databrowser.metadata_search" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">metadata_search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">facets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flavour</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'freva'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip6'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip5'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cordex'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nextgems'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'user'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'freva'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fail_on_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extended_search</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">search_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#freva_client.databrowser.metadata_search" title="Link to this definition">#</a></dt>
 <dd><p>Search for data attributes (facets) in the databrowser.</p>
 <p>The method queries the databrowser for available search facets (keys)
 like model, experiment etc.</p>
 <section id="id14">
 <h4>Parameters<a class="headerlink" href="#id14" title="Link to this heading">#</a></h4>
-<dl class="simple">
+<dl>
 <dt><a href="#id15"><span class="problematic" id="id16">*</span></a>facets: str</dt><dd><p>If you are not sure about the correct search key’s you can use
 positional arguments to search of any matching entries. For example
 ‘era5’ would allow you to search for any entries
@@ -789,8 +821,12 @@ datasets to query.</p>
 This can be a string representation of a time range or a single
 timestamp. The timestamp has to follow ISO-8601. Valid strings are
 <code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M</span></code> to <code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M</span></code> for time ranges and
-<code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M</span></code>. <strong>Note</strong>: You don’t have to give the full string
-format to subset time steps <code class="docutils literal notranslate"><span class="pre">%Y</span></code>, <code class="docutils literal notranslate"><span class="pre">%Y-%m</span></code> etc are also valid.</p>
+<code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You don’t have to give the full string format to subset time
+steps <code class="docutils literal notranslate"><span class="pre">%Y</span></code>, <code class="docutils literal notranslate"><span class="pre">%Y-%m</span></code> etc are also valid.</p>
+</div>
 </dd>
 <dt>time_select: str, default: flexible</dt><dd><p>Operator that specifies how the time period is selected. Choose from
 flexible (default), strict or file. <code class="docutils literal notranslate"><span class="pre">strict</span></code> returns only those files
@@ -800,6 +836,19 @@ the <code class="docutils literal notranslate"><span class="pre">strict</span></
 <code class="docutils literal notranslate"><span class="pre">flexible</span></code> returns those files that have either start or end period
 covered. <code class="docutils literal notranslate"><span class="pre">file</span></code> will only return files where the entire time
 period is contained within <em>one single</em> file.</p>
+</dd>
+<dt>bbox: str, default: “”</dt><dd><p>Special search facet to refine/subset search results by spatial extent.
+This can be a list representation of a bounding box or a WKT polygon.
+Valid lists are <code class="docutils literal notranslate"><span class="pre">min_lon</span> <span class="pre">max_lon</span> <span class="pre">min_lat</span> <span class="pre">max_lat</span></code> for bounding
+boxes and Well-Known Text (WKT) format for polygons.</p>
+</dd>
+<dt>bbox_select: str, default: flexible</dt><dd><p>Operator that specifies how the spatial extent is selected. Choose from
+flexible (default), strict or file. <code class="docutils literal notranslate"><span class="pre">strict</span></code> returns only those files
+that fully contain the query extent. The bbox search <code class="docutils literal notranslate"><span class="pre">-10</span> <span class="pre">10</span> <span class="pre">-10</span> <span class="pre">10</span></code>
+will not select files covering only <code class="docutils literal notranslate"><span class="pre">0</span> <span class="pre">5</span> <span class="pre">0</span> <span class="pre">5</span></code> with the <code class="docutils literal notranslate"><span class="pre">strict</span></code>
+method. <code class="docutils literal notranslate"><span class="pre">flexible</span></code> will select those files as it returns files that
+have any overlap with the query extent. <code class="docutils literal notranslate"><span class="pre">file</span></code> will only return files
+where the entire spatial extent is contained by the query geometry.</p>
 </dd>
 <dt>extended_search: bool, default: False</dt><dd><p>Retrieve information on additional search keys.</p>
 </dd>
@@ -886,6 +935,24 @@ example for getting all ocean reanalysis datasets you can apply the
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{&#39;member_id&#39;: [&#39;r1i1p1&#39;], &#39;experiment_id&#39;: [&#39;oc5&#39;], &#39;institution_id&#39;: [&#39;noaa&#39;], &#39;source_id&#39;: [&#39;nodc&#39;], &#39;activity_id&#39;: [&#39;reanalysis&#39;], &#39;mip_era&#39;: [&#39;observations&#39;], &#39;realm&#39;: [&#39;ocean&#39;], &#39;time_aggregation&#39;: [&#39;mean&#39;], &#39;frequency&#39;: [&#39;mon&#39;], &#39;variable_id&#39;: [&#39;hc700&#39;]}
 </pre></div>
 </div>
+<p>In datasets with multiple versions only the <cite>latest</cite> version (i.e.
+<cite>highest</cite> version number) is returned by default. Querying a specific
+version from a multi versioned datasets requires the <code class="docutils literal notranslate"><span class="pre">multiversion</span></code>
+flag in combination with the <code class="docutils literal notranslate"><span class="pre">version</span></code> special attribute:</p>
+<p><span class="caption-text">Code </span></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">databrowser</span><span class="o">.</span><span class="n">metadata_search</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;cmip6-fs&quot;</span><span class="p">,</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;access-cm2&quot;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;v20191108&quot;</span><span class="p">,</span> <span class="n">extended_search</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">multiversion</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{&#39;cmor_table&#39;: [&#39;amon&#39;], &#39;dataset&#39;: [&#39;cmip6-fs&#39;], &#39;driving_model&#39;: [], &#39;ensemble&#39;: [&#39;r1i1p1f1&#39;], &#39;experiment&#39;: [&#39;amip&#39;], &#39;format&#39;: [&#39;nc&#39;], &#39;fs_type&#39;: [&#39;posix&#39;], &#39;grid_id&#39;: [], &#39;grid_label&#39;: [&#39;gn&#39;], &#39;institute&#39;: [&#39;csiro-arccss&#39;], &#39;level_type&#39;: [&#39;2d&#39;], &#39;model&#39;: [&#39;access-cm2&#39;], &#39;product&#39;: [&#39;cmip&#39;], &#39;project&#39;: [&#39;cmip6&#39;], &#39;rcm_name&#39;: [], &#39;rcm_version&#39;: [], &#39;realm&#39;: [&#39;atmos&#39;], &#39;time_aggregation&#39;: [&#39;mean&#39;], &#39;time_frequency&#39;: [&#39;mon&#39;], &#39;user&#39;: [], &#39;variable&#39;: [&#39;ua&#39;], &#39;version&#39;: [&#39;20191108&#39;]}
+</pre></div>
+</div>
+<p>If no particular <code class="docutils literal notranslate"><span class="pre">version</span></code> is requested, information of all versions
+will be returned.</p>
 </section>
 </dd></dl>
 
@@ -938,6 +1005,7 @@ Search attributes by flavour:
   - realm
   - variable
   - time
+  - bbox
   - time_aggregation
   - time_frequency
   - cmor_table
@@ -957,6 +1025,7 @@ Search attributes by flavour:
   - realm
   - variable_id
   - time
+  - bbox
   - time_aggregation
   - frequency
   - table_id
@@ -976,6 +1045,7 @@ Search attributes by flavour:
   - realm
   - variable
   - time
+  - bbox
   - time_aggregation
   - time_frequency
   - cmor_table
@@ -1005,6 +1075,7 @@ Search attributes by flavour:
   - level_type
   - dataset
   - time
+  - bbox
   - user
   nextgems:
   - simulation_id
@@ -1018,6 +1089,7 @@ Search attributes by flavour:
   - realm
   - variable_id
   - time
+  - bbox
   - time_reduction
   - time_frequency
   - cmor_table
@@ -1044,8 +1116,55 @@ Search attributes by flavour:
   - level_type
   - dataset
   - time
+  - bbox
   - user
 
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="freva_client.databrowser.stac_catalogue">
+<span class="sig-name descname"><span class="pre">stac_catalogue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#freva_client.databrowser.stac_catalogue" title="Link to this definition">#</a></dt>
+<dd><p>Create a static STAC catalogue from
+the search.</p>
+<section id="id24">
+<h4>Parameters<a class="headerlink" href="#id24" title="Link to this heading">#</a></h4>
+<dl class="simple">
+<dt>filename: str, default: None</dt><dd><p>The filename of the STAC catalogue. If not given
+or doesn’t exist the STAC catalogue will be saved
+to the current working directory.</p>
+</dd>
+<dt><a href="#id25"><span class="problematic" id="id26">**</span></a>kwargs: Any</dt><dd><p>Additional keyword arguments to be passed to the request.</p>
+</dd>
+</dl>
+</section>
+<section id="id27">
+<h4>Returns<a class="headerlink" href="#id27" title="Link to this heading">#</a></h4>
+<p>BinaryIO
+A zip file stream</p>
+</section>
+<section id="id28">
+<h4>Raises<a class="headerlink" href="#id28" title="Link to this heading">#</a></h4>
+<p>ValueError: If stac-catalogue creation failed.</p>
+</section>
+<section id="id29">
+<h4>Example<a class="headerlink" href="#id29" title="Link to this heading">#</a></h4>
+<p>Let’s create a static STAC catalogue:</p>
+<p><span class="caption-text">Code </span></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tempfile</span><span class="w"> </span><span class="kn">import</span> <span class="n">mktemp</span>
+<span class="n">temp_path</span> <span class="o">=</span> <span class="n">mktemp</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.zip&quot;</span><span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;cmip6-hsm&quot;</span><span class="p">)</span>
+<span class="n">db</span><span class="o">.</span><span class="n">stac_catalogue</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">temp_path</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;STAC catalog saved to: </span><span class="si">{</span><span class="n">temp_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Downloading the STAC catalog started ...
+STAC catalog saved to: /tmp/tmpxsvicw5i.zip
 </pre></div>
 </div>
 </section>
@@ -1055,8 +1174,8 @@ Search attributes by flavour:
 <dt class="sig sig-object py" id="freva_client.databrowser.url">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#freva_client.databrowser.url" title="Link to this definition">#</a></dt>
 <dd><p>Get the url of the databrowser API.</p>
-<section id="id24">
-<h4>Example<a class="headerlink" href="#id24" title="Link to this heading">#</a></h4>
+<section id="id30">
+<h4>Example<a class="headerlink" href="#id30" title="Link to this heading">#</a></h4>
 <p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">()</span>
@@ -1082,8 +1201,8 @@ categorize and organize the data.</p>
 <p>For the “<code class="docutils literal notranslate"><span class="pre">delete</span></code>” action, the user provides metadata as search
 criteria to identify and remove the existing data from the
 system.</p>
-<section id="id25">
-<h4>Parameters<a class="headerlink" href="#id25" title="Link to this heading">#</a></h4>
+<section id="id31">
+<h4>Parameters<a class="headerlink" href="#id31" title="Link to this heading">#</a></h4>
 <dl class="simple">
 <dt>action<span class="classifier">Literal[“add”, “delete”]</span></dt><dd><p>The action to perform: “add” to add new data, or “delete”
 to remove existing data.</p>
@@ -1105,8 +1224,8 @@ be established.</p>
 </dd>
 </dl>
 </section>
-<section id="id26">
-<h4>Raises<a class="headerlink" href="#id26" title="Link to this heading">#</a></h4>
+<section id="id32">
+<h4>Raises<a class="headerlink" href="#id32" title="Link to this heading">#</a></h4>
 <dl class="simple">
 <dt>ValueError</dt><dd><p>If the operation fails or required parameters are missing
 for the specified action.</p>
@@ -1115,8 +1234,8 @@ for the specified action.</p>
 </dd>
 </dl>
 </section>
-<section id="id27">
-<h4>Example<a class="headerlink" href="#id27" title="Link to this heading">#</a></h4>
+<section id="id33">
+<h4>Example<a class="headerlink" href="#id33" title="Link to this heading">#</a></h4>
 <p>Adding user data:</p>
 <p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">authenticate</span><span class="p">,</span> <span class="n">databrowser</span>
@@ -1222,6 +1341,7 @@ not added.
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.metadata"><code class="docutils literal notranslate"><span class="pre">databrowser.metadata</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.metadata_search"><code class="docutils literal notranslate"><span class="pre">databrowser.metadata_search()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.overview"><code class="docutils literal notranslate"><span class="pre">databrowser.overview()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.stac_catalogue"><code class="docutils literal notranslate"><span class="pre">databrowser.stac_catalogue()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.url"><code class="docutils literal notranslate"><span class="pre">databrowser.url</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.userdata"><code class="docutils literal notranslate"><span class="pre">databrowser.userdata()</span></code></a></li>
 </ul>
@@ -1265,7 +1385,7 @@ not added.
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.1.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
     <br/>
   </p>
 </div>
