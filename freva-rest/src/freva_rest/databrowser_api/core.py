@@ -606,7 +606,7 @@ class Solr:
             key = key.lower().replace("_not_", "")
             if (
                 key not in valid_facets
-                and key not in ("time_select", "bbox_select")
+                and key not in ("time_select", "bbox_select", "zarr_stream")
                 + cls.uniq_keys
             ):
                 raise HTTPException(status_code=422, detail="Could not validate input.")
@@ -958,6 +958,7 @@ class Solr:
         self,
         facets: List[str],
         max_results: int,
+        zarr_stream: bool = False,
     ) -> Tuple[int, SearchResult]:
         """Initialise the apache solr metadata search.
 
@@ -980,16 +981,40 @@ class Solr:
         self.query["facet.field"] = self.translator.translate_facets(
             search_facets, backwards=True
         )
+
         self.query["fl"] = [self.uniq_key, "fs_type"]
+        fq = [q for q in self.query["fq"] if not q.startswith('zarr_stream:')]
+        self.query["fq"] = fq
         logger.info(
             "Query %s for uniq_key: %s with %s",
             self.url,
             self.uniq_key,
             self.query,
         )
-
         async with self._session_get() as res:
             search_status, search = res
+        if zarr_stream:
+            api_path = f"{self._config.proxy}/api/freva-nextgen/data-portal/zarr"
+            for result in search.get("response", {}).get("docs", []):
+                uri = result[self.uniq_key]
+                uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, uri))
+                # produce a redis message
+                try:
+                    cache = await create_redis_connection()
+                    await cache.publish(
+                        "data-portal",
+                        json.dumps({"uri": {"path": uri, "uuid": uuid5}}).encode(
+                            "utf-8"
+                        ),
+                    )
+                    output = f"{api_path}/{uuid5}.zarr"
+                except Exception as error:
+                    logger.error("Cloud not connect to redis: %s", error)
+                    output = "Internal error, service not available"
+                    continue
+                # produce a zarr path
+                result[self.uniq_key] = output
+                result["fs_type"] = result.get("fs_type", "posix")
         return search_status, SearchResult(
             total_count=search.get("response", {}).get("numFound", 0),
             facets=self.translator.translate_query(

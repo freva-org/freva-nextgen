@@ -122,6 +122,46 @@ class SafeAuth:
 
         return dependency
 
+    def optional_dependency(
+        self,
+    ) -> Callable[
+        [SecurityScopes, Optional[HTTPAuthorizationCredentials]],
+        Awaitable[Optional[IDToken]],
+    ]:
+        """
+        Return a FastAPI dependency function that optionally validates a token.
+        If a token is present, it will be validated. If no token is provided,
+        the dependency will return None instead of raising an exception.
+
+        Returns
+        -------
+            Callable: A dependency function to use with Depends() in FastAPI routes.
+        """
+
+        async def dependency(
+            security_scopes: SecurityScopes,
+            authorization_credentials: Optional[
+                HTTPAuthorizationCredentials
+            ] = Depends(HTTPBearer(auto_error=False)),
+        ) -> Optional[IDToken]:
+            if authorization_credentials is None:
+                return None
+
+            await self._ensure_auth_initialized()
+
+            if self._auth is None:
+                # Don't raise HTTPExceptiopn, only log inthe server
+                logger.info("Optional Auth: OIDC server unavailable, "
+                            "cannot validate token")
+                return None
+
+            try:
+                return self._auth.required(security_scopes, authorization_credentials)
+            except HTTPException:
+                return None
+
+        return dependency
+
 
 auth = SafeAuth(server_config.oidc_discovery_url)
 

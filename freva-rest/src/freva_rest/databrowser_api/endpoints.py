@@ -1,7 +1,7 @@
 """Main script that runs the rest API."""
 
 import uuid
-from typing import Annotated, Any, Dict, List, Literal, Union
+from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 from fastapi import (
     Body,
@@ -291,10 +291,13 @@ async def extended_search(
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     max_results: Annotated[int, SolrSchema.params["batch_size"]] = 150,
+    zarr_stream: bool = False,
     facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
     request: Request = Required,
+    current_user: Optional[TokenPayload] = Depends(auth.optional_dependency()),
 ) -> JSONResponse:
     """This endpoint is used by the databrowser web ui client."""
+
     solr_search = await Solr.validate_parameters(
         server_config,
         flavour=flavour,
@@ -304,8 +307,17 @@ async def extended_search(
         translate=translate,
         **SolrSchema.process_parameters(request),
     )
+    if (
+        zarr_stream
+        and current_user is None
+        and "zarr-stream" in server_config.services
+    ):
+        return JSONResponse(
+            content={"detail": "Not authenticated"},
+            status_code=status.HTTP_401_UNAUTHORIZED
+        )
     status_code, result = await solr_search.extended_search(
-        facets or [], max_results=max_results
+        facets or [], max_results=max_results, zarr_stream=zarr_stream
     )
     await solr_search.store_results(result.total_count, status_code)
     return JSONResponse(content=result.dict(), status_code=status_code)
