@@ -983,8 +983,6 @@ class Solr:
         )
 
         self.query["fl"] = [self.uniq_key, "fs_type"]
-        fq = [q for q in self.query["fq"] if not q.startswith('zarr_stream:')]
-        self.query["fq"] = fq
         logger.info(
             "Query %s for uniq_key: %s with %s",
             self.url,
@@ -993,40 +991,44 @@ class Solr:
         )
         async with self._session_get() as res:
             search_status, search = res
-        if zarr_stream:
+
+        docs = search.get("response", {}).get("docs", [])
+
+        if zarr_stream and docs:
             api_path = f"{self._config.proxy}/api/freva-nextgen/data-portal/zarr"
-            for result in search.get("response", {}).get("docs", []):
-                uri = result[self.uniq_key]
+            try:
+                cache = await create_redis_connection()
+            except Exception as err:
+                logger.error("Could not connect to redis: %s", err)
+                cache = None
+            for doc in docs:
+                uri = doc[self.uniq_key]
                 uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, uri))
-                # produce a redis message
-                try:
-                    cache = await create_redis_connection()
-                    await cache.publish(
-                        "data-portal",
-                        json.dumps({"uri": {"path": uri, "uuid": uuid5}}).encode(
-                            "utf-8"
-                        ),
-                    )
-                    output = f"{api_path}/{uuid5}.zarr"
-                except Exception as error:
-                    logger.error("Cloud not connect to redis: %s", error)
-                    output = "Internal error, service not available"
-                    continue
-                # produce a zarr path
-                result[self.uniq_key] = output
-                result["fs_type"] = result.get("fs_type", "posix")
+                if cache:
+                    try:
+                        await cache.publish(
+                            "data-portal",
+                            json.dumps(
+                                {"uri": {"path": uri, "uuid": uuid5}}
+                            ).encode("utf-8"),
+                        )
+                        doc[self.uniq_key] = f"{api_path}/{uuid5}.zarr"
+                    except Exception as pub_err:
+                        logger.error(
+                            "Failed to publish to Redis for %s: %s", uri, pub_err
+                        )
+                        doc[self.uniq_key] = (
+                            "Internal error, service not able to publish"
+                        )
+                else:
+                    doc[self.uniq_key] = "Internal error, service not available"
+                doc["fs_type"] = doc.get("fs_type", "posix")
         return search_status, SearchResult(
             total_count=search.get("response", {}).get("numFound", 0),
             facets=self.translator.translate_query(
                 search.get("facet_counts", {}).get("facet_fields", {})
             ),
-            search_results=[
-                {
-                    **{self.uniq_key: k[self.uniq_key]},
-                    **{"fs_type": k.get("fs_type", "posix")},
-                }
-                for k in search.get("response", {}).get("docs", [])
-            ],
+            search_results=docs,
             facet_mapping={
                 k: self.translator.forward_lookup[k]
                 for k in self.query["facet.field"]
@@ -1083,8 +1085,12 @@ class Solr:
             False: self._config.solr_cores[-1],
         }[self.multi_version]
         url = f"{self._config.get_core_url(core)}/select/"
+        valid_facets = {
+            k: v for k, v in self.facets.items()
+            if k != "zarr_stream"
+        }
         query = []
-        for key, value in self.facets.items():
+        for key, value in valid_facets.items():
             query_pos, query_neg = self._join_facet_queries(key, value)
             key = key.lower().replace("_not_", "")
             if query_pos:
