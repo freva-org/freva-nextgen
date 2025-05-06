@@ -1205,7 +1205,18 @@ class Solr:
                 )
             except Exception as error:
                 logger.error("Cloud not connect to redis: %s", error)
-                yield "Internal error, service not available\n"
+                if catalogue_type == "intake":
+                    intake_error_dict: Dict[str, List[Sized]] = {
+                        self.uniq_key: ["Internal error, service not available"],
+                        "format": ["zarr"],
+                    }
+                    processed = self._process_catalogue_result(intake_error_dict)
+                    prefix = "   "
+                    suffix = "," if num < num_results else ""
+                    output = json.dumps(processed, indent=3)
+                    yield f"{prefix}{output}{suffix}\n"
+                else:
+                    yield "Internal error, service not available\n"
                 continue
             output = f"{api_path}/{uuid5}.zarr"
             if catalogue_type == "intake":
