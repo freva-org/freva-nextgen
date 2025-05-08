@@ -996,32 +996,25 @@ class Solr:
 
         if zarr_stream and docs:
             api_path = f"{self._config.proxy}/api/freva-nextgen/data-portal/zarr"
-            try:
-                cache = await create_redis_connection()
-            except Exception as err:
-                logger.error("Could not connect to redis: %s", err)
-                cache = None
             for doc in docs:
                 uri = doc[self.uniq_key]
                 uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, uri))
-                if cache:
-                    try:
-                        await cache.publish(
-                            "data-portal",
-                            json.dumps(
-                                {"uri": {"path": uri, "uuid": uuid5}}
-                            ).encode("utf-8"),
-                        )
-                        doc[self.uniq_key] = f"{api_path}/{uuid5}.zarr"
-                    except Exception as pub_err:
-                        logger.error(
-                            "Failed to publish to Redis for %s: %s", uri, pub_err
-                        )
-                        doc[self.uniq_key] = (
-                            "Internal error, service not able to publish"
-                        )
-                else:
-                    doc[self.uniq_key] = "Internal error, service not available"
+                try:
+                    cache = await create_redis_connection()
+                    await cache.publish(
+                        "data-portal",
+                        json.dumps(
+                            {"uri": {"path": uri, "uuid": uuid5}}
+                        ).encode("utf-8"),
+                    )
+                    doc[self.uniq_key] = f"{api_path}/{uuid5}.zarr"
+                except Exception as pub_err:
+                    logger.error(
+                        "Failed to publish to Redis for %s: %s", uri, pub_err
+                    )
+                    doc[self.uniq_key] = (
+                        "Internal error, service not able to publish"
+                    )
                 doc["fs_type"] = doc.get("fs_type", "posix")
         return search_status, SearchResult(
             total_count=search.get("response", {}).get("numFound", 0),

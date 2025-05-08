@@ -294,7 +294,9 @@ async def extended_search(
     zarr_stream: bool = False,
     facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
     request: Request = Required,
-    current_user: Optional[TokenPayload] = Depends(auth.optional_dependency()),
+    current_user: Optional[TokenPayload] = Depends(
+        auth.create_auth_dependency(required=False)
+    )
 ) -> JSONResponse:
     """This endpoint is used by the databrowser web ui client."""
 
@@ -350,7 +352,7 @@ async def load_data(
         ),
     ] = None,
     request: Request = Required,
-    current_user: TokenPayload = Depends(auth.required_dependency()),
+    current_user: TokenPayload = Depends(auth.create_auth_dependency()),
 ) -> StreamingResponse:
     """Search for datasets and stream the results as zarr.
 
@@ -399,7 +401,7 @@ async def load_data(
 )
 async def post_user_data(
     request: Annotated[AddUserDataRequestBody, Body(...)],
-    current_user: TokenPayload = Depends(auth.required_dependency()),
+    current_user: TokenPayload = Depends(auth.create_auth_dependency()),
 ) -> Dict[str, str]:
     """Index your own metadata and make it searchable.
 
@@ -458,7 +460,7 @@ async def delete_user_data(
             }
         ],
     ),
-    current_user: TokenPayload = Depends(auth.required_dependency()),
+    current_user: TokenPayload = Depends(auth.create_auth_dependency()),
 ) -> Dict[str, str]:
     """This endpoint lets you delete metadata that has been indexed."""
 
