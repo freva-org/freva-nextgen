@@ -995,26 +995,9 @@ class Solr:
         docs = search.get("response", {}).get("docs", [])
 
         if zarr_stream and docs:
-            api_path = f"{self._config.proxy}/api/freva-nextgen/data-portal/zarr"
             for doc in docs:
-                uri = doc[self.uniq_key]
-                uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, uri))
-                try:
-                    cache = await create_redis_connection()
-                    await cache.publish(
-                        "data-portal",
-                        json.dumps(
-                            {"uri": {"path": uri, "uuid": uuid5}}
-                        ).encode("utf-8"),
-                    )
-                    doc[self.uniq_key] = f"{api_path}/{uuid5}.zarr"
-                except Exception as pub_err:
-                    logger.error(
-                        "Failed to publish to Redis for %s: %s", uri, pub_err
-                    )
-                    doc[self.uniq_key] = (
-                        "Internal error, service not able to publish"
-                    )
+                zarr_path = await self.publish_to_zarr_stream(doc)
+                doc[self.uniq_key] = zarr_path
                 doc["fs_type"] = doc.get("fs_type", "posix")
         return search_status, SearchResult(
             total_count=search.get("response", {}).get("numFound", 0),
@@ -1164,6 +1147,36 @@ class Solr:
         async for result in self._solr_page_response():
             yield f"{result[self.uniq_key]}\n"
 
+    async def publish_to_zarr_stream(
+        self,
+        doc: Dict[str, Any]
+    ) -> str:
+        """Publish URI to Redis for zarr streaming.
+
+        Parameters
+        ----------
+        doc: Dict[str, Any]
+            Document containing the URI to be published
+
+        Returns
+        -------
+        str:
+            The zarr stream path or error message
+        """
+        api_path = f"{self._config.proxy}/api/freva-nextgen/data-portal/zarr"
+        uri = doc[self.uniq_key]
+        uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, uri))
+        try:
+            cache = await create_redis_connection()
+            await cache.publish(
+                "data-portal",
+                json.dumps({"uri": {"path": uri, "uuid": uuid5}}).encode("utf-8"),
+            )
+            return f"{api_path}/{uuid5}.zarr"
+        except Exception as pub_err:
+            logger.error("Failed to publish to Redis for %s: %s", uri, pub_err)
+            return "Internal error, service not able to publish"
+
     async def zarr_response(
         self,
         catalogue_type: Literal["intake", None],
@@ -1179,47 +1192,37 @@ class Solr:
         -------
         AsyncIterator: Stream of search results.
         """
-        api_path = f"{self._config.proxy}/api/freva-nextgen/data-portal/zarr"
         if catalogue_type == "intake":
             _, intake = await self.init_intake_catalogue()
             async for string in self.intake_catalogue(intake.catalogue, True):
                 yield string
             yield ',\n   "catalog_dict": ['
+
         num = 1
         async for result in self._solr_page_response():
             prefix = suffix = ""
-            uri = result[self.uniq_key]
-            uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, uri))
-            try:
-                cache = await create_redis_connection()
-                await cache.publish(
-                    "data-portal",
-                    json.dumps({"uri": {"path": uri, "uuid": uuid5}}).encode("utf-8"),
-                )
-            except Exception as error:
-                logger.error("Cloud not connect to redis: %s", error)
-                if catalogue_type == "intake":
+
+            zarr_path = await self.publish_to_zarr_stream(result)
+
+            if catalogue_type == "intake":
+                if "Internal error" in zarr_path:  # pragma: no cover
                     intake_error_dict: Dict[str, List[Sized]] = {
                         self.uniq_key: ["Internal error, service not available"],
                         "format": ["zarr"],
                     }
                     processed = self._process_catalogue_result(intake_error_dict)
-                    prefix = "   "
-                    suffix = "," if num < num_results else ""
                     output = json.dumps(processed, indent=3)
-                    yield f"{prefix}{output}{suffix}\n"
                 else:
-                    yield "Internal error, service not available\n"
-                continue
-            output = f"{api_path}/{uuid5}.zarr"
-            if catalogue_type == "intake":
-                result[self.uniq_key] = output
-                if num < num_results:
-                    suffix = ","
-                else:
-                    suffix = ""
-                output = json.dumps(self._process_catalogue_result(result), indent=3)
+                    result[self.uniq_key] = zarr_path
+                    output = json.dumps(
+                        self._process_catalogue_result(result), indent=3
+                    )
+
                 prefix = "   "
+                suffix = "," if num < num_results else ""
+            else:
+                output = zarr_path
+
             num += 1
             yield f"{prefix}{output}{suffix}\n"
 

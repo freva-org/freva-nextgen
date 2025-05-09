@@ -254,20 +254,31 @@ def test_extended_search(test_server: str) -> None:
     ).json()
     assert len(res8["search_results"]) == 1
 
-    res8 = requests.get(
+    res9 = requests.get(
         f"{test_server}/databrowser/extended-search/cmip6/uri",
         params={"facets": "activity_id", "max-results": 1, "zarr_stream": True}
     )
-    assert res8.status_code == 401
+    assert res9.status_code == 401
     with mock.patch("freva_rest.databrowser_api.core.create_redis_connection", None):
-        res9 = requests.get(
+        res10 = requests.get(
             f"{test_server}/databrowser/extended-search/cmip6/uri",
             params={"facets": "activity_id", "max-results": 1, "zarr_stream": True},
             headers={
                 "Authorization": f"Bearer {token_res.json()['access_token']}"
             },
         ).json()
-        assert res9["search_results"][0]["uri"] == "Internal error, service not able to publish"
+        assert res10["search_results"][0]["uri"] == "Internal error, service not able to publish"
+
+    with mock.patch(
+        "freva_rest.rest.server_config.api_services",
+        "databrowser"
+    ):
+        res11 = requests.get(
+            f"{test_server}/databrowser/extended-search/cmip6/uri",
+            params={"facets": "activity_id", "max-results": 1, "zarr_stream": True}
+        )
+        # get the normal response
+        assert res11.status_code == 200
 def test_metadata_search(test_server: str) -> None:
     """Test the facet search functionality."""
     res1 = requests.get(

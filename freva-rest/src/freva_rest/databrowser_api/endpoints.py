@@ -291,7 +291,13 @@ async def extended_search(
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     max_results: Annotated[int, SolrSchema.params["batch_size"]] = 150,
-    zarr_stream: bool = False,
+    zarr_stream: Annotated[
+        bool,
+        Query(
+            description="Enable zarr streaming functionality",
+            alias="zarr_stream"
+        )
+    ] = False,
     facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
     request: Request = Required,
     current_user: Optional[TokenPayload] = Depends(
@@ -299,7 +305,6 @@ async def extended_search(
     )
 ) -> JSONResponse:
     """This endpoint is used by the databrowser web ui client."""
-
     solr_search = await Solr.validate_parameters(
         server_config,
         flavour=flavour,
@@ -309,10 +314,11 @@ async def extended_search(
         translate=translate,
         **SolrSchema.process_parameters(request),
     )
+    if "zarr-stream" not in server_config.services:
+        zarr_stream = False
     if (
         zarr_stream
         and current_user is None
-        and "zarr-stream" in server_config.services
     ):
         return JSONResponse(
             content={"detail": "Not authenticated"},
