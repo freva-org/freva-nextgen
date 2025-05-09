@@ -320,7 +320,7 @@ async def extended_search(
         zarr_stream
         and current_user is None
     ):
-        logger.exception("User not authenticated for zarr stream.")
+        logger.error("User not authenticated for zarr stream.")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not authenticated for zarr streaming."
