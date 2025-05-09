@@ -320,10 +320,12 @@ async def extended_search(
         zarr_stream
         and current_user is None
     ):
-        return JSONResponse(
-            content={"detail": "Not authenticated"},
-            status_code=status.HTTP_401_UNAUTHORIZED
+        logger.exception("User not authenticated for zarr stream.")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not authenticated for zarr streaming."
         )
+
     status_code, result = await solr_search.extended_search(
         facets or [], max_results=max_results, zarr_stream=zarr_stream
     )
