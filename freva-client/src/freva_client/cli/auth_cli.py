@@ -28,12 +28,6 @@ def authenticate_cli(
             "the hostname is read from a config file"
         ),
     ),
-    username: str = typer.Option(
-        getuser(),
-        "--username",
-        "-u",
-        help="The username used for authentication.",
-    ),
     refresh_token: Optional[str] = typer.Option(
         None,
         "--refresh-token",
@@ -63,7 +57,6 @@ def authenticate_cli(
     logger.set_verbosity(verbose)
     token_data = authenticate(
         host=host,
-        username=username,
         refresh_token=refresh_token,
         force=force,
     )

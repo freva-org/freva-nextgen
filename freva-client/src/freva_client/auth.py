@@ -1,13 +1,19 @@
 """Module that handles the authentication at the rest service."""
 
 import datetime
-from getpass import getpass, getuser
-from typing import Optional, TypedDict, Union
+import socket
+import urllib.parse
+import webbrowser
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from typing import Dict, Optional, TypedDict, Union
 
-from authlib.integrations.requests_client import OAuth2Session
+import requests
 
 from .utils import logger
 from .utils.databrowser_utils import Config
+
+REDIRECT_URI = "http://localhost:{port}/callback"
+
 
 Token = TypedDict(
     "Token",
@@ -22,6 +28,33 @@ Token = TypedDict(
 )
 
 
+class OAuthCallbackHandler(BaseHTTPRequestHandler):
+    def log_message(self, format: str, *args: object) -> None:
+        # Suppress built-in logging
+        logger.info(format, *args)
+
+    def do_GET(self) -> None:
+        query = urllib.parse.urlparse(self.path).query
+        params = urllib.parse.parse_qs(query)
+        self.server.auth_code = None
+        if "code" in params:
+            self.server.auth_code = params["code"][0]
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"Login successful! You can close this tab.")
+        else:
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b"Authorization code not found.")
+
+
+def start_local_server(port: int) -> str:
+    server = HTTPServer(("localhost", port), OAuthCallbackHandler)
+    logger.info(f"Waiting for callback at http://localhost:{port}/callback ...")
+    server.handle_request()
+    return server.auth_code
+
+
 class Auth:
     """Helper class for authentication."""
 
@@ -34,7 +67,57 @@ class Auth:
         return cls._instance
 
     def __init__(self) -> None:
-        self._auth_cls = OAuth2Session()
+        pass
+
+    def get_token(self, token_url: str, data: Dict[str, str]) -> Token:
+        try:
+            response = requests.post(token_url, data=data)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as error:
+            raise ValueError(f"Fetching token failed: {error}")
+        auth = response.json()
+        return self.set_token(
+            access_token=auth["access_token"],
+            token_type=auth["token_type"],
+            expires=auth["expires"],
+            refresh_token=auth["refresh_token"],
+            refresh_expires=auth["refresh_expires"],
+            scope=auth["scope"],
+        )
+
+    def _login(self, auth_url: str) -> Token:
+        port = self.find_free_port()
+        login_endpoint = f"{auth_url}/login"
+        token_endpoint = f"{auth_url}/token"
+        redirect_uri = REDIRECT_URI.format(port=port)
+        login_url = (
+            login_endpoint + f"?redirect_uri={urllib.parse.quote(redirect_uri)}"
+        )
+        logger.info("Opening browser for login:\n%s", login_url)
+        try:
+            webbrowser.open(login_url)
+        except Exception:
+            logger.warning(
+                "Could not open browser automatically. Please open the URL manually."
+            )
+        code = start_local_server(port)
+        if not code:
+            raise ValueError("No code received. Login probably failed.") from None
+        return self.get_token(
+            token_endpoint,
+            data={
+                "code": code,
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code",
+            },
+        )
+
+    @staticmethod
+    def find_free_port() -> int:
+        """Get a free port where we can start the test server."""
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(("", 0))
+            return s.getsockname()[1]
 
     @property
     def token_expiration_time(self) -> datetime.datetime:
@@ -69,25 +152,15 @@ class Auth:
         )
         return self._auth_token
 
-    def _refresh(
-        self, url: str, refresh_token: str, username: Optional[str] = None
-    ) -> Token:
+    def _refresh(self, url: str, refresh_token: str) -> Token:
         """Refresh the access_token with a refresh token."""
-        auth = self._auth_cls.refresh_token(f"{url}/token", refresh_token or " ")
         try:
-            return self.set_token(
-                access_token=auth["access_token"],
-                token_type=auth["token_type"],
-                expires=auth["expires"],
-                refresh_token=auth["refresh_token"],
-                refresh_expires=auth["refresh_expires"],
-                scope=auth["scope"],
+            return self.get_token(
+                f"{url}/token", data={"refresh_token", refresh_token or ""}
             )
-        except KeyError:
-            logger.warning("Failed to refresh token: %s", auth.get("detail", ""))
-            if username:
-                return self._login_with_password(url, username)
-            raise ValueError("Could not use refresh token") from None
+        except (ValueError, KeyError) as error:
+            logger.warning("Failed to refresh token: %s", error)
+            return self._login(url)
 
     def check_authentication(self, auth_url: Optional[str] = None) -> Token:
         """Check the status of the authentication.
@@ -105,56 +178,32 @@ class Auth:
             self._refresh(auth_url, self._auth_token["refresh_token"])
         return self._auth_token
 
-    def _login_with_password(self, auth_url: str, username: str) -> Token:
-        """Create a new token."""
-        pw_msg = "Give password for server authentication: "
-        auth = self._auth_cls.fetch_token(
-            f"{auth_url}/token", username=username, password=getpass(pw_msg)
-        )
-        try:
-            return self.set_token(
-                access_token=auth["access_token"],
-                token_type=auth["token_type"],
-                expires=auth["expires"],
-                refresh_token=auth["refresh_token"],
-                refresh_expires=auth["refresh_expires"],
-                scope=auth["scope"],
-            )
-        except KeyError:
-            logger.error("Failed to authenticate: %s", auth.get("detail", ""))
-            raise ValueError("Token creation failed") from None
-
     def authenticate(
         self,
         host: Optional[str] = None,
         refresh_token: Optional[str] = None,
-        username: Optional[str] = None,
         force: bool = False,
     ) -> Token:
         """Authenticate the user to the host."""
         cfg = Config(host)
+
         if refresh_token:
             try:
                 return self._refresh(cfg.auth_url, refresh_token)
             except ValueError:
-                logger.warning(
-                    (
-                        "Could not use refresh token, falling back "
-                        "to username/password"
-                    )
-                )
-        username = username or getuser()
+                logger.warning(("Could not use refresh token, lgging in "))
         if self._auth_token is None or force:
-            return self._login_with_password(cfg.auth_url, username)
-        if self.token_expiration_time < datetime.datetime.now(datetime.timezone.utc):
-            self._refresh(cfg.auth_url, self._auth_token["refresh_token"], username)
+            return self._login(cfg.auth_url)
+        if self.token_expiration_time < datetime.datetime.now(
+            datetime.timezone.utc
+        ):
+            self._refresh(cfg.auth_url, self._auth_token["refresh_token"])
         return self._auth_token
 
 
 def authenticate(
     *,
     refresh_token: Optional[str] = None,
-    username: Optional[str] = None,
     host: Optional[str] = None,
     force: bool = False,
 ) -> Token:
@@ -197,6 +246,4 @@ def authenticate(
         token = authenticate(refresh_token="MYTOKEN")
     """
     auth = Auth()
-    return auth.authenticate(
-        host=host, username=username, refresh_token=refresh_token, force=force
-    )
+    return auth.authenticate(host=host, refresh_token=refresh_token, force=force)
