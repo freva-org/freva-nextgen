@@ -122,7 +122,7 @@ class ServerConfig(BaseModel):
     redis_host: Annotated[
         str,
         Field(
-            title="Rest Host",
+            title="Redis Host",
             description="Url of the redis cache.",
         ),
     ] = os.getenv("API_REDIS_HOST", "")
