@@ -188,6 +188,9 @@ def cli(argv: Optional[List[str]] = None) -> None:
         default=os.getenv("API_SERVICES", "").split(","),
         choices=["databrowser", "zarr-stream"],
     )
+    parser.add_argument(
+        "--reload", help="Enable hot reloading.", action="store_true"
+    )
 
     args = parser.parse_args(argv)
     if args.debug:
@@ -223,9 +226,9 @@ def cli(argv: Optional[List[str]] = None) -> None:
             "freva_rest.api:app",
             host="0.0.0.0",
             port=args.port,
-            reload=args.dev,
+            reload=args.dev or args.reload,
             log_level=cfg.log_level,
-            workers=workers[args.dev],
+            workers=workers[args.dev or args.reload],
             env_file=temp_f.name,
         )
 
