@@ -2,6 +2,7 @@
 
 import asyncio
 import datetime
+import secrets
 from typing import (
     Annotated,
     Any,
@@ -12,6 +13,7 @@ from typing import (
     Optional,
     cast,
 )
+from urllib.parse import urlencode, urljoin
 
 import aiohttp
 from fastapi import Depends, Form, HTTPException, Request, Security
@@ -175,6 +177,14 @@ async def oicd_request(
     ) as client:
         try:
             url = server_config.oidc_overview[endpoint]
+            logger.info(
+                "Making request with data: %s, json: %s, headers: %s to url: %s",
+                data,
+                json,
+                headers,
+                url,
+            )
+
             return await client.request(
                 method, url, headers=headers, json=json, data=data
             )
@@ -182,7 +192,8 @@ async def oicd_request(
             logger.error(error)
             raise HTTPException(status_code=401) from error
         except Exception as error:
-            logger.error("Could not connect ot OIDC server")
+            logger.error("Could not connect to OIDC server")
+            logger.exception(error)
             raise HTTPException(status_code=503) from error
 
 
@@ -223,30 +234,61 @@ async def open_id_config() -> RedirectResponse:
     return RedirectResponse(server_config.oidc_discovery_url)
 
 
+@app.get("/api/freva-nextgen/auth/v2/login")
+async def login(request: Request):
+    state = secrets.token_urlsafe(16)
+    nonce = secrets.token_urlsafe(16)
+
+    redirect_uri = request.query_params.get("redirect_uri")
+    if not redirect_uri:
+        raise HTTPException(status_code=400, detail="Missing redirect_uri")
+
+    query = {
+        "response_type": "code",
+        "client_id": server_config.oidc_client_id,
+        "redirect_uri": redirect_uri,
+        "scope": "openid profile",
+        "state": state,
+        "nonce": nonce,
+    }
+    query = {k: v for (k, v) in query.items() if v}
+
+    auth_url = f"{server_config.oidc_overview['authorization_endpoint']}?{urlencode(query)}"
+    return RedirectResponse(auth_url)
+
+
+@app.get("/api/freva-nextgen/auth/v2/callback")
+async def callback(request: Request):
+    code = request.query_params.get("code")
+    state = request.query_params.get("state")
+
+    if not code or not state:
+        raise HTTPException(status_code=400, detail="Missing code or state")
+
+    try:
+        state_token, redirect_uri = state.split("|", 1)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid state format")
+
+    data: Dict[str, Optional[str]] = {
+        "client_id": server_config.oidc_client_id,
+        "client_secret": server_config.oidc_client_secret,
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": redirect_uri,
+    }
+
+    response = await oicd_request(
+        "POST", "token_endpoint", data={k: v for (k, v) in data.items() if v}
+    )
+    token_data = await response.json()
+    return token_data
+
+
 @app.post("/api/freva-nextgen/auth/v2/token", tags=["Authentication"])
 async def fetch_or_refresh_token(
-    username: Annotated[
-        Optional[str],
-        Form(
-            title="Username",
-            help="Username to create a OAuth2 token.",
-        ),
-    ] = None,
-    password: Annotated[
-        Optional[str],
-        Form(
-            title="Password",
-            help="Password to create a OAuth2 token.",
-        ),
-    ] = None,
-    grant_type: Annotated[
-        Literal["password", "refresh_token"],
-        Form(
-            title="Grant type",
-            alias="grant_type",
-            help="The authorization code grant type.",
-        ),
-    ] = "password",
+    code: Annotated[Optional[str], Form(title="Auth code")],
+    redirect_uri: Annotated[Optional[str], Form()] = None,
     refresh_token: Annotated[
         Optional[str],
         Form(
@@ -255,35 +297,26 @@ async def fetch_or_refresh_token(
             help="The refresh token used to renew the OAuth2 token",
         ),
     ] = None,
-    client_id: Annotated[
-        Optional[str],
-        Form(
-            title="Client id",
-            alias="client_id",
-            help="The client id that is used for the refresh token",
-        ),
-    ] = None,
-    client_secret: Annotated[
-        Optional[str],
-        Form(
-            title="Client secret",
-            alias="client_secret",
-            help="The client secret that is used for the refresh token",
-        ),
-    ] = None,
 ) -> Token:
     """Interact with the openID connect endpoint for client authentication."""
     data: Dict[str, Optional[str]] = {
-        "client_id": (client_id or "").replace("None", "")
-        or server_config.oidc_client_id,
-        "client_secret": client_secret or server_config.oidc_client_secret,
-        "grant_type": grant_type,
+        "client_id": server_config.oidc_client_id,
+        "client_secret": server_config.oidc_client_secret,
     }
-    if grant_type == "password":
-        data["password"] = password
-        data["username"] = username
-    else:
+
+    if code:
+        data["redirect_uri"] = redirect_uri or urljoin(
+            server_config.proxy, "/api/freva-nextgen/auth/v2/callback"
+        )
+        data["grant_type"] = "authorization_code"
+        data["code"] = code
+    elif refresh_token:
+        data["grant_type"] = "refresh_token"
         data["refresh_token"] = refresh_token
+    else:
+        raise HTTPException(
+            status_code=400, detail="Missing code or refresh_token"
+        )
     response = await oicd_request(
         "POST",
         "token_endpoint",
