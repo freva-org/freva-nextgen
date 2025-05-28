@@ -22,12 +22,19 @@ release = __version__
 
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
     "sphinx_code_tabs",
     "sphinx_copybutton",
     "sphinx_togglebutton",
     "sphinxcontrib.httpdomain",
     "sphinx_execute_code",
 ]
+
+napoleon_google_docstring = True
+napoleon_numpy_docstring = True
+napoleon_include_init_with_doc = False
+napoleon_include_private_with_doc = False
+
 
 html_static_path = ["_static"]
 html_theme = "pydata_sphinx_theme"

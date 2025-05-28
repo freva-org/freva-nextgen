@@ -17,13 +17,6 @@ command
 
     freva-client databrowser --help
 
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   res = run(["freva-client", "databrowser", "--help"], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
-
 
 Searching for data locations
 ----------------------------
@@ -57,12 +50,6 @@ variables available that satisfies a certain constraint (e.g. sampled
 
     freva-client databrowser data-search project=observations variable=pr model=cp*
 
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   res = run(["freva-client", "databrowser", "data-search", "experiment=cmorph"], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
 
 There are many more options for defining a value for a given key:
 
@@ -135,15 +122,6 @@ the ``version`` special attribute:
 
     freva-client databrowser data-search dataset=cmip6-fs model=access-cm2 --multi-version version=v20191108
 
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   res = run(["freva-client", "databrowser", "data-search",
-              "dataset=cmip6-fs", "model=access-cm2", "--multi-version",
-              "version=v20191108",
-             ], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
 
 If no particular ``version`` is requested, all versions will be returned.
 
@@ -162,20 +140,9 @@ the ``--zarr`` flag.
 
 .. code:: console
 
-    token=$(freva-client auth -u janedoe|jq -r .access_token)
-    freva-client databrowser data-search dataset=cmip6-fs --zarr --access-token $token
-
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   from freva_client import authenticate
-   token = authenticate(username="janedoe")
-   res = run(["freva-client", "databrowser", "data-search",
-              "--zarr", "dataset=cmip6-fs",
-              "--access-token", token["access_token"],
-             ], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
+    freva-client auth > .token.json
+    chmod 600 .token.json
+    freva-client databrowser data-search dataset=cmip6-fs --zarr --token-file .token.json
 
 
 
@@ -190,15 +157,6 @@ ranges:
 
     freva-client databrowser data-search project=observations -t '2016-09-02T22:15 to 2016-10'
 
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   res = run(["freva-client", "databrowser", "data-search",
-              "-t", "2016-09-02T22:15 to 2016-10",
-             ], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
-
 The default method for selecting time periods is ``flexible``, which means
 all files are selected that cover at least start or end date. The
 ``strict`` method implies that the *entire* search time period has to be
@@ -210,25 +168,12 @@ start of the time period:
 
     freva-client databrowser data-search project=observations -t '2016-09-02T22:15 to 2016-10' -ts strict
 
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   res = run(["freva-client", "databrowser", "data-search", "-t", "2016-09-02T22:15 to 2016-10", "-ts", "strict"], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
-
 Giving single time steps is also possible:
 
 .. code:: console
 
     freva-client databrowser data-search project=observations -t 2016-09-02T22:10
 
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   res = run(["freva-client", "databrowser", "data-search", "-t", "2016-09-02T22:00"], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
 
 .. note::
 

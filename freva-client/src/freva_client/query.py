@@ -39,17 +39,17 @@ class databrowser:
     You can either search for files or uri's. Uri's give you an information
     on the storage system where the files or objects you are looking for are
     located. The query is of the form ``key=value``. For ``value`` you might
-    use wild cards such as *, ? or any regular expression.
+    use wild cards such as \\*, ? or any regular expression.
 
     Parameters
     ~~~~~~~~~~
 
-    *facets: str
+    facets: str
         If you are not sure about the correct search key's you can use
         positional arguments to search of any matching entries. For example
         'era5' would allow you to search for any entries
         containing era5, regardless of project, product etc.
-    **search_keys: str
+    search_keys: str
         The search constraints applied in the data search. If not given
         the whole dataset will be queried.
     flavour: str, default: freva
@@ -435,7 +435,7 @@ class databrowser:
             The filename of the STAC catalogue. If not given
             or doesn't exist the STAC catalogue will be saved
             to the current working directory.
-        **kwargs: Any
+        kwargs: Any
             Additional keyword arguments to be passed to the request.
 
         Returns
@@ -521,7 +521,7 @@ class databrowser:
         Parameters
         ~~~~~~~~~~
 
-        *facets: str
+        facets: str
             If you are not sure about the correct search key's you can use
             positional arguments to search of any matching entries. For example
             'era5' would allow you to search for any entries
@@ -574,7 +574,7 @@ class databrowser:
         fail_on_error: bool, default: False
             Make the call fail if the connection to the databrowser could not
             be established.
-        **search_keys: str
+        search_keys: str
             The search constraints to be applied in the data search. If not given
             the whole dataset will be queried.
 
@@ -681,7 +681,7 @@ class databrowser:
         Parameters
         ~~~~~~~~~~
 
-        *facets: str
+        facets: str
             If you are not sure about the correct search key's you can use
             positional arguments to search of any matching entries. For example
             'era5' would allow you to search for any entries
@@ -734,7 +734,7 @@ class databrowser:
         fail_on_error: bool, default: False
             Make the call fail if the connection to the databrowser could not
             be established.
-        **search_keys: str, list[str]
+        search_keys: str, list[str]
             The facets to be applied in the data search. If not given
             the whole dataset will be queried.
 
@@ -763,7 +763,7 @@ class databrowser:
 
         Get all models that have a given time step:
 
-        .. code-block:: ptyhon
+        .. code-block:: python
 
             from freva_client import databrowser
             model = databrowser.metadata_search(
@@ -774,7 +774,7 @@ class databrowser:
 
         Reverse search: retrieving meta data from a known file
 
-        .. code-block:: ptyhon
+        .. code-block:: python
 
             from freva_client import databrowser
             res = databrowser.metadata_search(file="/arch/*CPC/*")

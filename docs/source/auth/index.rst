@@ -16,7 +16,7 @@ system:
 
 
 - via the REST API ``/api/freva-nextgen/auth/v2`` endpoints
-- via the :py:func:`freva_client.authenticate` function
+- via the :py:meth:`freva_client.authenticate` function
 - via the ``freva-client auth`` command-line interface
 
 
@@ -487,9 +487,10 @@ Follow these steps:
 
 1. **Redirect the user to** Freva’s ``/login`` endpoint:
 
-   .. code-block:: text
+   .. code-block:: http
 
-      GET /api/freva-nextgen/auth/v2/login?redirect_uri=https://your-sp.com/callback
+      GET /api/freva-nextgen/auth/v2/login?redirect_uri=https://your-sp.com/callback HTTP/1.1
+      host: www.freva.dkrz.de
 
    - The ``redirect_uri`` must be a publicly accessible endpoint on your service that handles the code exchange.
 
@@ -498,24 +499,30 @@ Follow these steps:
 
 4. **Your SP must then POST the code to** Freva's token exchange endpoint:
 
-   .. code-block:: http
+    .. sourcecode:: http
 
-      POST /api/freva-nextgen/auth/v2/token
-      Content-Type: application/x-www-form-urlencoded
+        POST /api/freva-nextgen/auth/v2/token HTTP/1.1
+        host: www.freva.dkrz.de
+        Content-Type: application/x-www-form-urlencoded
 
-      code=XXX&redirect_uri=https://your-sp.com/callback
+        {
+            code=XXX&redirect_uri=https://your-sp.com/callback
+        }
 
    - This will return a JSON with access token, refresh token, and expiry info.
 
 5. **Use the access token** to authenticate future API requests.
 6. **Optionally refresh the token** before expiry using:
 
-   .. code-block:: http
+   .. sourcecode:: http
 
-      POST /api/freva-nextgen/auth/v2/token
+      POST /api/freva-nextgen/auth/v2/token HTTP/1.1
+      host: www.freva.dkrz.de
       Content-Type: application/x-www-form-urlencoded
 
-      grant_type=refresh_token&refresh_token=YYY
+      {
+            grant_type=refresh_token&refresh_token=YYY
+      }
 
 .. note::
 
