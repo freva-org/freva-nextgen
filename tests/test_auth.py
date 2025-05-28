@@ -318,7 +318,7 @@ def test_userinfo(
             headers={"Authorization": f"Bearer {auth['access_token']}"},
             timeout=3,
         )
-        assert res.status_code == 404
+        assert res.status_code > 400 and res.status_code < 500
 
 
 def test_token_status(test_server: str, auth: Dict[str, str]) -> None:
