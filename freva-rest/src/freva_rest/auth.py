@@ -132,12 +132,52 @@ auth = SafeAuth(server_config.oidc_discovery_url)
 class UserInfo(BaseModel):
     """Basic user info."""
 
-    username: Annotated[str, Field(min_length=1)]
-    last_name: Annotated[str, Field(min_length=1)]
-    first_name: Annotated[str, Field(min_length=1)]
-    email: str
-    home: str
-    is_guest: bool
+    username: Annotated[
+        str,
+        Field(
+            title="User name",
+            description="Username / uid of the user the token belongs to.",
+            min_length=1,
+        ),
+    ]
+    last_name: Annotated[
+        str,
+        Field(
+            title="Last name",
+            description="Surename of the user the token belongs to.",
+        ),
+    ]
+    first_name: Annotated[
+        str,
+        Field(
+            title="First Name",
+            description="Given name of the person the token belongs to.",
+        ),
+    ]
+    is_guest: Annotated[
+        bool,
+        Field(
+            title="Guest User?",
+            description=(
+                "Flag that indicates whehter or not the user is "
+                "System Security Services Daemon (SSSD)"
+            ),
+        ),
+    ]
+    email: Annotated[
+        Optional[str],
+        Field(
+            title="Email",
+            description="Email address of the user the token belongs to.",
+        ),
+    ] = None
+    home: Annotated[
+        Optional[str],
+        Field(
+            title="Home Dir",
+            description="The home directory of the user - if applicable.",
+        ),
+    ] = None
 
 
 class TokenPayload(BaseModel):

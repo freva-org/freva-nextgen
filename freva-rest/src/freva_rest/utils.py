@@ -1,7 +1,7 @@
 """Various utilities for the restAPI."""
 
 import pwd
-from typing import Dict, Optional
+from typing import Dict, NotRequired, Optional, TypedDict, cast
 
 import redis.asyncio as redis
 from fastapi import HTTPException, status
@@ -15,9 +15,22 @@ CACHING_SERVICES = set(("zarr-stream",))
 CONFIG = ServerConfig()
 
 
-def get_userinfo(user_info: Dict[str, str]) -> Dict[str, str]:
+class SystemUserInfo(TypedDict):
+    """Encoded token inforamation."""
+
+    email: NotRequired[str]
+    last_name: NotRequired[str]
+    first_name: NotRequired[str]
+    home: NotRequired[str]
+    username: NotRequired[str]
+    is_guest: bool
+
+
+def get_userinfo(
+    user_info: Dict[str, str],
+) -> SystemUserInfo:
     """Convert a user_info dictionary to the UserInfo Model."""
-    output = {}
+    output: Dict[str, str] = {}
     keys = {
         "email": ("mail", "email"),
         "username": ("preferred-username", "user-name", "uid"),
@@ -40,21 +53,15 @@ def get_userinfo(user_info: Dict[str, str]) -> Dict[str, str]:
     name = output.get("first_name", "") + " " + output.get("last_name", "")
     output["first_name"] = name.partition(" ")[0]
     output["last_name"] = name.rpartition(" ")[-1]
-    output["is_guest"] = False
-    output.setdefault("home", "")
-    output.setdefault("email", "")
-    output.setdefault("username", "")
     try:
         system_info = pwd.getpwnam(output["username"])
     except KeyError:
-        output["is_guest"] = True
-        return output
+        return cast(SystemUserInfo, {**output, **{"is_guest": True}})
     names = system_info.pw_gecos
     output["first_name"] = output["first_name"] or names.partition(" ")[0]
     output["last_name"] = output["last_name"] or names.rpartition(" ")[-1]
-    output["home"] = output["home"] or system_info.pw_dir
-
-    return output
+    output["home"] = output.get("home", system_info.pw_dir)
+    return cast(SystemUserInfo, {**output, **{"is_guest": False}})
 
 
 async def create_redis_connection(
