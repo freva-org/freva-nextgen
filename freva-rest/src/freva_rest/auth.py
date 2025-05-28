@@ -11,6 +11,7 @@ from typing import (
     Dict,
     Literal,
     Optional,
+    Union,
     cast,
 )
 from urllib.parse import urlencode, urljoin
@@ -135,6 +136,8 @@ class UserInfo(BaseModel):
     last_name: Annotated[str, Field(min_length=1)]
     first_name: Annotated[str, Field(min_length=1)]
     email: str
+    home: str
+    is_guest: bool
 
 
 class TokenPayload(BaseModel):
@@ -235,7 +238,7 @@ async def open_id_config() -> RedirectResponse:
 
 
 @app.get("/api/freva-nextgen/auth/v2/login")
-async def login(request: Request):
+async def login(request: Request) -> RedirectResponse:
     state = secrets.token_urlsafe(16)
     nonce = secrets.token_urlsafe(16)
 
@@ -253,15 +256,17 @@ async def login(request: Request):
     }
     query = {k: v for (k, v) in query.items() if v}
 
-    auth_url = f"{server_config.oidc_overview['authorization_endpoint']}?{urlencode(query)}"
+    auth_url = (
+        f"{server_config.oidc_overview['authorization_endpoint']}"
+        f"?{urlencode(query)}"
+    )
     return RedirectResponse(auth_url)
 
 
 @app.get("/api/freva-nextgen/auth/v2/callback")
-async def callback(request: Request):
+async def callback(request: Request) -> Dict[str, Union[str, int]]:
     code = request.query_params.get("code")
     state = request.query_params.get("state")
-
     if not code or not state:
         raise HTTPException(status_code=400, detail="Missing code or state")
 
@@ -277,18 +282,38 @@ async def callback(request: Request):
         "code": code,
         "redirect_uri": redirect_uri,
     }
-
     response = await oicd_request(
         "POST", "token_endpoint", data={k: v for (k, v) in data.items() if v}
     )
-    token_data = await response.json()
+    token_data: Dict[str, Union[str, int]] = await response.json()
     return token_data
 
 
 @app.post("/api/freva-nextgen/auth/v2/token", tags=["Authentication"])
 async def fetch_or_refresh_token(
-    code: Annotated[Optional[str], Form(title="Auth code")],
-    redirect_uri: Annotated[Optional[str], Form()] = None,
+    code: Annotated[
+        Optional[str],
+        Form(
+            title="Authorization Code",
+            description=(
+                "The code received as part of the OAuth2 authorization "
+                "code flow."
+            ),
+            examples=["abc123xyz"],
+        ),
+    ] = None,
+    redirect_uri: Annotated[
+        Optional[str],
+        Form(
+            title="Redirect URI",
+            description=(
+                "The URI to which the authorization server will redirect the "
+                "user after authentication. It must match one of the URIs "
+                "registered with the OAuth2 provider."
+            ),
+            examples=["http://localhost:8080/callback"],
+        ),
+    ] = None,
     refresh_token: Annotated[
         Optional[str],
         Form(
@@ -303,7 +328,6 @@ async def fetch_or_refresh_token(
         "client_id": server_config.oidc_client_id,
         "client_secret": server_config.oidc_client_secret,
     }
-
     if code:
         data["redirect_uri"] = redirect_uri or urljoin(
             server_config.proxy, "/api/freva-nextgen/auth/v2/callback"

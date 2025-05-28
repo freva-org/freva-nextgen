@@ -1,6 +1,7 @@
 """Pytest configuration settings."""
 
 import asyncio
+import datetime
 import json
 import os
 import socket
@@ -18,12 +19,19 @@ import uvicorn
 from typer.testing import CliRunner
 
 from data_portal_worker.cli import _main as run_data_loader
-from freva_client.auth import Auth
+from freva_client.auth import Auth, Token
 from freva_client.utils import logger
 from freva_rest.api import app
 from freva_rest.config import ServerConfig
 from freva_rest.databrowser_api.mock import read_data
 from freva_rest.utils import create_redis_connection
+
+
+def load_data() -> None:
+    """Create a valid server config."""
+    conf = ServerConfig(debug=True)
+    for core in conf.solr_cores:
+        asyncio.run(read_data(core, conf.solr_url))
 
 
 def run_test_server(port: int) -> None:
@@ -34,6 +42,7 @@ def run_test_server(port: int) -> None:
             "freva_rest.databrowser_api.endpoints.server_config.proxy",
             f"http://localhost:{port}",
         ):
+            load_data()
             uvicorn.run(
                 app, host="0.0.0.0", port=port, reload=False, workers=None
             )
@@ -134,15 +143,13 @@ def loader_config() -> Iterator[bytes]:
 @pytest.fixture(scope="function")
 def auth_instance() -> Iterator[Auth]:
     """Fixture to provide a fresh Auth instance for each test."""
-    with mock.patch("freva_client.auth.getpass", lambda x: "janedoe123"):
-        with mock.patch("freva_client.auth.getuser", lambda: "janedoe"):
-            yield Auth()
+    yield Auth()
 
 
 @pytest.fixture(scope="function")
 def cli_runner() -> Iterator[CliRunner]:
     """Set up a cli mock app."""
-    yield CliRunner(mix_stderr=False)
+    yield CliRunner()
     logger.reset_cli()
 
 
@@ -224,8 +231,7 @@ def invalid_eval_conf_file() -> Iterator[Path]:
 def cfg() -> Iterator[ServerConfig]:
     """Create a valid server config."""
     conf = ServerConfig(debug=True)
-    for core in conf.solr_cores:
-        asyncio.run(read_data(core, conf.solr_url))
+    load_data()
     yield conf
 
 
@@ -248,17 +254,52 @@ def test_server() -> Iterator[str]:
 
 
 @pytest.fixture(scope="module")
-def auth(test_server: str) -> Iterator[Dict[str, str]]:
+def auth(test_server: str) -> Iterator[Token]:
     """Create a valid acccess token."""
+    server_config = ServerConfig()
+    data = {
+        "client_id": server_config.oidc_client_id or "",
+        "client_secret": server_config.oidc_client_secret or "",
+        "grant_type": "password",
+        "password": "janedoe123",
+        "username": "janedoe",
+    }
     res = requests.post(
-        f"{test_server}/auth/v2/token",
-        data={
-            "username": "janedoe",
-            "password": "janedoe123",
-            "grant_type": "password",
-        },
+        server_config.oidc_overview["token_endpoint"],
+        data={k: v for (k, v) in data.items()},
     )
-    yield res.json()
+    token_data = res.json()
+    expires_at = (
+        token_data.get("exp")
+        or token_data.get("expires")
+        or token_data.get("expires_at")
+    )
+    now = datetime.datetime.now(datetime.timezone.utc).timestamp()
+    refresh_expires_at = (
+        token_data.get("refresh_exp")
+        or token_data.get("refresh_expires")
+        or token_data.get("refresh_expires_at")
+    )
+    expires_at = expires_at or now + token_data.get("expires_in", 180)
+    refresh_expires_at = refresh_expires_at or now + token_data.get(
+        "refresh_expires_in", 180
+    )
+    return Token(
+        access_token=token_data["access_token"],
+        token_type=token_data["token_type"],
+        expires=int(expires_at),
+        refresh_token=token_data["refresh_token"],
+        refresh_expires=int(refresh_expires_at),
+        scope=token_data["scope"],
+    )
+
+
+@pytest.fixture(scope="module")
+def token_file(auth: Token) -> Path:
+    with NamedTemporaryFile(suffix=".json") as temp_f:
+        out_f = Path(temp_f.name)
+        out_f.write_text(json.dumps(auth))
+        yield out_f
 
 
 @pytest.fixture(scope="function")

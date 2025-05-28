@@ -140,7 +140,7 @@ the ``version`` special attribute:
 
    from subprocess import run, PIPE
    res = run(["freva-client", "databrowser", "data-search",
-              "dataset=cmip6-fs", "model=access-cm2", "--multi-version", 
+              "dataset=cmip6-fs", "model=access-cm2", "--multi-version",
               "version=v20191108",
              ], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
@@ -265,10 +265,10 @@ the data via zarr.
 
 Creating STAC Catalogue
 --------------------------
-The ``stac-catalogue`` sub command allows you to create a static  
-`SpatioTemporal Asset Catalog (STAC) <https://stacspec.org/en/about/stac-spec/>_ `
-from the current search. This can be useful for creating, sharing and using 
-standardized geospatial data catalogs and enabling interoperability between 
+The ``stac-catalogue`` sub command allows you to create a static
+`SpatioTemporal Asset Catalog (STAC) <https://stacspec.org/en/about/stac-spec/>_`
+from the current search. This can be useful for creating, sharing and using
+standardized geospatial data catalogs and enabling interoperability between
 different data systems.
 
 .. code:: console
@@ -289,14 +289,16 @@ To get an static STAC catalogue you can use the following command:
 
     freva-client databrowser stac-catalogue --filename /path/to/output
 
-and if the specified filename directory doesn't specify or not existed or not provided, 
-the STAC catalogue will be saved in the current directory. It can be 
-only a directory or a fully qualified filename. 
+and if the specified filename directory doesn't specify or not existed or not provided,
+the STAC catalogue will be saved in the current directory. It can be
+only a directory or a fully qualified filename.
 
 The STAC Catalogue provides multiple ways to access and interact with the data:
- - Access your climate data through the intake-esm data catalog specification
- - Access search results as Zarr files, available as STAC Assets at both collection and item levels
- - Browse and explore your search results directly through the Freva DataBrowser web interface
+
+- Access your climate data through the intake-esm data catalog specification
+- Access search results as Zarr files, available as STAC Assets at both collection and item levels
+- Browse and explore your search results directly through the Freva DataBrowser web interface
+
 Each of these access methods is encoded as STAC Assets, making them easily discoverable and accessible through any STAC-compatible tool.
 
 
@@ -311,13 +313,6 @@ the files themselves.
 
     freva-client databrowser data-count --help
 
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   res = run(["freva-client", "databrowser", "data-count", "--help"], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
-
 By default the ``data-count`` sub command will display the total number of items
 matching your search query. For example:
 
@@ -325,27 +320,12 @@ matching your search query. For example:
 
     freva-client databrowser data-count project=observations
 
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   res = run(["freva-client", "databrowser", "data-count", "project=observations"], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
-
 If you want to group the number of occurrences by search categories (facets)
 use the ``-d`` or ``--detail`` flag:
 
 .. code:: console
 
     freva-client databrowser data-count -d project=observations
-
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   res = run(["freva-client", "databrowser", "data-count", "-d", "project=observations"], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
-
 
 
 Retrieving the available metadata
@@ -357,26 +337,12 @@ For this you use the ``metadata-search`` sub command:
 
     freva-client databrowser metadata-search --help
 
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   res = run(["freva-client", "databrowser", "metadata-search", "--help"], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
-
 Just like with any other databrowser command you can apply different search
 constraints when acquiring metadata
 
 .. code:: console
 
     freva-client databrowser metadata-search project=observations
-
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   res = run(["freva-client", "databrowser", "metadata-search", "project=observations"], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
 
 
 By default the command will display only the most commonly used metadata
@@ -387,13 +353,6 @@ flag.
 
     freva-client databrowser metadata-search -e project=observations
 
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   res = run(["freva-client", "databrowser", "metadata-search", "-e", "project=observations"], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
-
 Sometimes you don't exactly know the exact names of the search keys and
 want retrieve all file objects that match a certain category. For example
 for getting all ocean reanalysis datasets you can apply the ``--facet`` flag:
@@ -401,14 +360,6 @@ for getting all ocean reanalysis datasets you can apply the ``--facet`` flag:
 .. code:: console
 
     freva-client databrowser metadata-search -e realm=ocean --facet 'rean*'
-
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   res = run(["freva-client", "databrowser", "metadata-search","--facet", "rean*", "realm=ocean"], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
-
 
 
 Expert tip: Getting metadata for certain files
@@ -421,13 +372,6 @@ metadata of those files on tape:
 .. code:: console
 
     freva-client databrowser metadata-search -e file="/arch/*"
-
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   res = run(["freva-client","databrowser", "metadata-search", "-e", "file=/arch*"], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
 
 Parsing the command output
 --------------------------
@@ -442,24 +386,12 @@ search to the `command line json processor jq <https://jqlang.github.io/jq/>`_:
 
     freva-client databrowser metadata-search -e file="/arch/*" --json
 
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   res = run(["freva-client", "databrowser", "metadata-search", "-e", "file=/arch*", "--json"], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
-
 By using the pipe operator ``|`` the JSON output of the `freva-client`
 commands can be piped and processed by ``jq``:
 
 .. code:: console
 
     freva-client databrowser metadata-search -e file="/arch/*" --json | jq -r .ensemble[0]
-
-.. execute_code::
-   :hide_code:
-
-   print("r1i1p1")
 
 The above example will select only the first entry of the ensembles that
 are associated with files on the tape archive.
@@ -488,24 +420,6 @@ To add your data to the databrowser, use the `user-data add` command. You'll nee
         --facet variable=tas \
         --access-token $token
 
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   from freva_client import authenticate
-   token = authenticate(username="janedoe")
-   res = run(
-       ["freva-client", "databrowser", "user-data", "add",
-       "--path", "../freva-rest/src/freva_rest/databrowser_api/mock/",
-       "--facet", "project=cordex",
-       "--facet", "experiment=rcp85",
-       "--facet", "model=mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1",
-       "--facet", "variable=tas",
-       "--access-token", token["access_token"]],
-       check=True, stdout=PIPE, stderr=PIPE
-   )
-   print(res.stdout.decode())
-
 
 This command adds the specified data files to the databrowser and tags them with the provided metadata. These search filters help in indexing and searching your data within the system.
 
@@ -521,18 +435,5 @@ If you need to remove your data from the databrowser, use the `user-data delete`
         --search-key project=cordex \
         --search-key experiment=rcp85 \
         --access-token $token
-
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   from freva_client import authenticate
-   token = authenticate(username="janedoe")
-   res = run(["freva-client", "databrowser", "user-data",
-              "delete",
-              "--search-key", "project=cordex", \
-              "--access-token", token["access_token"],
-             ], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stderr.decode())
 
 This command deletes all data entries that match the specified search keys from the databrowser.

@@ -2,7 +2,7 @@
 all: install
 
 install: prepare
-	python3 -m pip install -e ./freva-rest[dev] -e ./freva-client -e ./freva-data-portal-worker[full]
+	python3 -m pip install -e ./freva-rest[dev,tests] -e ./freva-client -e ./freva-data-portal-worker[full]
 
 prepare:
 	python3 -m pip install cryptography tox

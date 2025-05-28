@@ -1,7 +1,7 @@
 """Command line interface for authentication."""
 
 import json
-from getpass import getuser
+from pathlib import Path
 from typing import Optional
 
 import typer
@@ -28,14 +28,13 @@ def authenticate_cli(
             "the hostname is read from a config file"
         ),
     ),
-    refresh_token: Optional[str] = typer.Option(
+    token_file: Optional[Path] = typer.Option(
         None,
-        "--refresh-token",
-        "-r",
+        "--token-file",
         help=(
-            "Instead of using a password, you can use a refresh token. "
-            "refresh the access token. This is recommended for non-interactive"
-            " environments."
+            "Instead of authenticating via code based authentication flow "
+            "you can set the path to the json file that contains a "
+            "`refresh token` containing a refresh_token key."
         ),
     ),
     force: bool = typer.Option(
@@ -55,9 +54,13 @@ def authenticate_cli(
 ) -> None:
     """Create OAuth2 access and refresh token."""
     logger.set_verbosity(verbose)
-    token_data = authenticate(
+    token_data = "{}"
+    if token_file and Path(token_file).is_file():
+        token_data = Path(token_file).read_text() or "{}"
+    refresh_token = json.loads(token_data).get("refresh_token")
+    token = authenticate(
         host=host,
         refresh_token=refresh_token,
         force=force,
     )
-    print(json.dumps(token_data, indent=3))
+    print(json.dumps(token, indent=3))

@@ -10,18 +10,11 @@ from datetime import date
 
 import freva_client
 from freva_client import __version__
-from freva_client.auth import getpass
 
 project = "Freva Databrowser"
 copyright = f"{date.today().year}, DKRZ"
 author = "DKRZ"
 release = __version__
-
-
-def getpass_mock(msg: str, result: str = "janedoe123") -> str:
-    """Mock the getpass method."""
-    print(f"{msg} *****")
-    return result
 
 
 # -- General configuration ---------------------------------------------------
@@ -103,5 +96,3 @@ if not os.environ.get("READTHEDOCS"):
 
 # specifying the natural language populates some key tags
 language = "en"
-freva_client.auth.getpass = getpass_mock
-getpass = getpass_mock

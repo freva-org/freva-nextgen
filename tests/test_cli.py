@@ -1,8 +1,6 @@
 """Test the command line interface cli."""
 
-import json
 import os
-from copy import deepcopy
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from types import TracebackType
@@ -12,7 +10,6 @@ from pytest_mock import MockerFixture
 from typer.testing import CliRunner
 
 from freva_client import __version__
-from freva_client.auth import Auth
 from freva_client.cli import app as cli_app
 from freva_rest.cli import cli, get_cert_file
 
@@ -142,23 +139,6 @@ def test_rest_cli(mocker: MockerFixture) -> None:
                 workers=8,
                 env_file=str(Path(temp_dir) / "foo.txt"),
             )
-
-
-def test_auth(
-    test_server: str, cli_runner: CliRunner, auth_instance: Auth
-) -> None:
-    """Test authentication."""
-    old_token = deepcopy(auth_instance._auth_token)
-    try:
-        res = cli_runner.invoke(
-            cli_app, ["auth", "--host", test_server, "-u", "janedoe"]
-        )
-        assert res.exit_code == 0
-        assert res.stdout
-        print(res.stdout)
-        assert "access_token" in json.loads(res.stdout)
-    finally:
-        auth_instance._auth_token = old_token
 
 
 def test_main(cli_runner: CliRunner) -> None:

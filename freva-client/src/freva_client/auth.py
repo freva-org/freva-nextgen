@@ -5,7 +5,7 @@ import socket
 import urllib.parse
 import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Dict, Optional, TypedDict, Union
+from typing import Dict, Optional, TypedDict, Union, cast
 
 import requests
 
@@ -30,15 +30,13 @@ Token = TypedDict(
 
 class OAuthCallbackHandler(BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: object) -> None:
-        # Suppress built-in logging
         logger.info(format, *args)
 
     def do_GET(self) -> None:
         query = urllib.parse.urlparse(self.path).query
         params = urllib.parse.parse_qs(query)
-        self.server.auth_code = None
         if "code" in params:
-            self.server.auth_code = params["code"][0]
+            setattr(self.server, "auth_code", params["code"][0])
             self.send_response(200)
             self.end_headers()
             self.wfile.write(b"Login successful! You can close this tab.")
@@ -48,11 +46,12 @@ class OAuthCallbackHandler(BaseHTTPRequestHandler):
             self.wfile.write(b"Authorization code not found.")
 
 
-def start_local_server(port: int) -> str:
+def start_local_server(port: int) -> Optional[str]:
     server = HTTPServer(("localhost", port), OAuthCallbackHandler)
-    logger.info(f"Waiting for callback at http://localhost:{port}/callback ...")
+    logger.info("Waiting for callback ...")
+
     server.handle_request()
-    return server.auth_code
+    return getattr(server, "auth_code", None)
 
 
 class Auth:
@@ -85,15 +84,24 @@ class Auth:
             scope=auth["scope"],
         )
 
-    def _login(self, auth_url: str) -> Token:
-        port = self.find_free_port()
+    def _login(self, auth_url: str, port: Optional[int] = None) -> Token:
         login_endpoint = f"{auth_url}/login"
         token_endpoint = f"{auth_url}/token"
+        port = port or self.find_free_port()
         redirect_uri = REDIRECT_URI.format(port=port)
         login_url = (
             login_endpoint + f"?redirect_uri={urllib.parse.quote(redirect_uri)}"
         )
         logger.info("Opening browser for login:\n%s", login_url)
+        logger.info(
+            "If you are using this on a remote host you might need to "
+            "forward port %i to your localhost via ssh:\n"
+            "   ssh -L %i:localhost:%i user@remotehost",
+            port,
+            port,
+            port,
+        )
+
         try:
             webbrowser.open(login_url)
         except Exception:
@@ -117,7 +125,7 @@ class Auth:
         """Get a free port where we can start the test server."""
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind(("", 0))
-            return s.getsockname()[1]
+            return cast(int, s.getsockname()[1])
 
     @property
     def token_expiration_time(self) -> datetime.datetime:
@@ -152,15 +160,17 @@ class Auth:
         )
         return self._auth_token
 
-    def _refresh(self, url: str, refresh_token: str) -> Token:
+    def _refresh(
+        self, url: str, refresh_token: str, port: Optional[int] = None
+    ) -> Token:
         """Refresh the access_token with a refresh token."""
         try:
             return self.get_token(
-                f"{url}/token", data={"refresh_token", refresh_token or ""}
+                f"{url}/token", data={"refresh-token": refresh_token or ""}
             )
         except (ValueError, KeyError) as error:
             logger.warning("Failed to refresh token: %s", error)
-            return self._login(url)
+            return self._login(url, port=port)
 
     def check_authentication(self, auth_url: Optional[str] = None) -> Token:
         """Check the status of the authentication.
@@ -183,21 +193,24 @@ class Auth:
         host: Optional[str] = None,
         refresh_token: Optional[str] = None,
         force: bool = False,
+        *,
+        helper_port: Optional[int] = None,
     ) -> Token:
         """Authenticate the user to the host."""
         cfg = Config(host)
-
         if refresh_token:
             try:
                 return self._refresh(cfg.auth_url, refresh_token)
             except ValueError:
                 logger.warning(("Could not use refresh token, lgging in "))
         if self._auth_token is None or force:
-            return self._login(cfg.auth_url)
+            return self._login(cfg.auth_url, port=helper_port)
         if self.token_expiration_time < datetime.datetime.now(
             datetime.timezone.utc
         ):
-            self._refresh(cfg.auth_url, self._auth_token["refresh_token"])
+            self._refresh(
+                cfg.auth_url, self._auth_token["refresh_token"], port=helper_port
+            )
         return self._auth_token
 
 
@@ -206,6 +219,7 @@ def authenticate(
     refresh_token: Optional[str] = None,
     host: Optional[str] = None,
     force: bool = False,
+    helper_port: Optional[int] = None,
 ) -> Token:
     """Authenticate to the host.
 
@@ -216,13 +230,14 @@ def authenticate(
     refresh_token: str, optional
         Instead of setting a password, you can set a refresh token to refresh
         the access token. This is recommended for non-interactive environments.
-    username: str, optional
-        The username used for authentication. By default, the current
-        system username is used.
     host: str, optional
         The hostname of the REST server.
     force: bool, default: False
         Force token recreation, even if current token is still valid.
+    helper_port: int, default: None
+        The authentication process will spawn a web server that will open
+        the login url. You can specify the port where this web server should
+        be running on. If None chosen (default) a random port will be set.
 
     Returns
     -------
@@ -235,7 +250,7 @@ def authenticate(
     .. code-block:: python
 
         from freva_client import authenticate
-        token = authenticate(username="janedoe")
+        token = authenticate()
         print(token)
 
     Batch mode authentication with a refresh token:
@@ -246,4 +261,9 @@ def authenticate(
         token = authenticate(refresh_token="MYTOKEN")
     """
     auth = Auth()
-    return auth.authenticate(host=host, refresh_token=refresh_token, force=force)
+    return auth.authenticate(
+        host=host,
+        refresh_token=refresh_token,
+        force=force,
+        helper_port=helper_port,
+    )

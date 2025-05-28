@@ -1,5 +1,6 @@
 """Various utilities for the restAPI."""
 
+import pwd
 from typing import Dict, Optional
 
 import redis.asyncio as redis
@@ -22,6 +23,7 @@ def get_userinfo(user_info: Dict[str, str]) -> Dict[str, str]:
         "username": ("preferred-username", "user-name", "uid"),
         "last_name": ("last-name", "family-name", "name", "surname"),
         "first_name": ("first-name", "given-name"),
+        "home": ("home-dir", "home-directory"),
     }
     for key, entries in keys.items():
         for entry in entries:
@@ -38,6 +40,20 @@ def get_userinfo(user_info: Dict[str, str]) -> Dict[str, str]:
     name = output.get("first_name", "") + " " + output.get("last_name", "")
     output["first_name"] = name.partition(" ")[0]
     output["last_name"] = name.rpartition(" ")[-1]
+    output["is_guest"] = False
+    output.setdefault("home", "")
+    output.setdefault("email", "")
+    output.setdefault("username", "")
+    try:
+        system_info = pwd.getpwnam(output["username"])
+    except KeyError:
+        output["is_guest"] = True
+        return output
+    names = system_info.pw_gecos
+    output["first_name"] = output["first_name"] or names.partition(" ")[0]
+    output["last_name"] = output["last_name"] or names.rpartition(" ")[-1]
+    output["home"] = output["home"] or system_info.pw_dir
+
     return output
 
 

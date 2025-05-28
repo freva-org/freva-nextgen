@@ -1,17 +1,22 @@
 """Test for the authorisation utilities."""
 
+import json
+import threading
+import time
 from copy import deepcopy
 from datetime import datetime, timezone
-from typing import Dict
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+from typing import Any, Dict
+from unittest.mock import AsyncMock, patch
 
-import mock
 import pytest
 import requests
-from fastapi.exceptions import HTTPException
-from pytest_mock import MockFixture
+from pytest_mock import MockerFixture
+from typer.testing import CliRunner
 
-from freva_client.auth import Auth, authenticate
-from freva_rest.auth import SafeAuth
+from freva_client.auth import Auth, authenticate, start_local_server
+from freva_client.cli import app as cli_app
 
 
 def raise_for_status() -> None:
@@ -19,10 +24,31 @@ def raise_for_status() -> None:
     raise requests.HTTPError("Invalid")
 
 
+def mock_token_data(
+    valid_for: int = 3600, refresh_for: int = 7200
+) -> Dict[str, str]:
+    now = int(datetime.now(timezone.utc).timestamp())
+    return {
+        "access_token": "test_access_token",
+        "token_type": "Bearer",
+        "expires": now + valid_for,
+        "refresh_token": "test_refresh_token",
+        "refresh_expires": now + refresh_for,
+        "scope": "profile email address",
+    }
+
+
+async def mock_request(*args: Any, **kwargs: Any) -> AsyncMock:
+    mock_resp = AsyncMock()
+    mock_resp.status = 200
+    mock_resp.json.return_value = mock_token_data()
+    return mock_resp
+
+
 def test_missing_ocid_server(test_server: str) -> None:
     """Test the behviour of a missing ocid server."""
     for url in ("", "http://example.org/foo", "http://muhah.zupap"):
-        with mock.patch(
+        with patch(
             "freva_rest.auth.auth.discovery_url",
             url,
         ):
@@ -33,216 +59,249 @@ def test_missing_ocid_server(test_server: str) -> None:
             assert res.status_code == 503
 
 
-def test_authenticate_with_password(
-    mocker: MockFixture, auth_instance: Auth
-) -> None:
-    """Test authentication using username and password."""
-    old_token_data = deepcopy(auth_instance._auth_token)
-    try:
-        token_data = {
-            "access_token": "test_access_token",
-            "token_type": "Bearer",
-            "expires": int(datetime.now(timezone.utc).timestamp() + 3600),
-            "refresh_token": "test_refresh_token",
-            "refresh_expires": int(datetime.now(timezone.utc).timestamp() + 7200),
-            "scope": "profile email address",
-        }
-        with mocker.patch(
-            "freva_client.auth.OAuth2Session.fetch_token",
-            return_value=token_data,
-        ):
-            auth_instance.authenticate(host="https://example.com")
-        assert isinstance(auth_instance._auth_token, dict)
-        assert auth_instance._auth_token["access_token"] == "test_access_token"
-        assert auth_instance._auth_token["refresh_token"] == "test_refresh_token"
-    finally:
-        auth_instance._auth_token = old_token_data
-
-
 def test_authenticate_with_refresh_token(
-    mocker: MockFixture, auth_instance: Auth
+    test_server: str, mocker: MockerFixture, auth_instance: Auth
 ) -> None:
     """Test authentication using a refresh token."""
-    old_token_data = deepcopy(auth_instance._auth_token)
-    token_data = {
-        "access_token": "test_access_token",
-        "token_type": "Bearer",
-        "expires": int(datetime.now(timezone.utc).timestamp() + 3600),
-        "refresh_token": "test_refresh_token",
-        "refresh_expires": int(datetime.now(timezone.utc).timestamp() + 7200),
-        "scope": "profile email address",
-    }
+    token = deepcopy(auth_instance._auth_token)
     try:
-        with mocker.patch(
-            "freva_client.auth.OAuth2Session.fetch_token",
-            return_value=token_data,
-        ):
+        auth_instance._auth_token = None
+        with patch("aiohttp.ClientSession.request", new=mock_request):
             auth_instance.authenticate(
-                host="https://example.com", refresh_token="test_refresh_token"
+                host=test_server, refresh_token="test_refresh_token"
             )
 
-        assert isinstance(auth_instance._auth_token, dict)
-        assert auth_instance._auth_token["access_token"] == "test_access_token"
-        assert auth_instance._auth_token["refresh_token"] == "test_refresh_token"
+            assert isinstance(auth_instance._auth_token, dict)
+            assert (
+                auth_instance._auth_token["access_token"] == "test_access_token"
+            )
+            assert (
+                auth_instance._auth_token["refresh_token"] == "test_refresh_token"
+            )
+            auth_instance._auth_token["expires"] = 0
+            auth_instance.authenticate(host=test_server)
+            assert isinstance(auth_instance._auth_token, dict)
+            assert (
+                auth_instance._auth_token["refresh_token"] == "test_refresh_token"
+            )
+            assert (
+                auth_instance._auth_token["access_token"] == "test_access_token"
+            )
     finally:
-        auth_instance._auth_token = old_token_data
+        auth_instance._auth_token = token
 
 
-def test_refresh_token(mocker: MockFixture, auth_instance: Auth) -> None:
-    """Test the token refresh functionality."""
-    old_token_data = deepcopy(auth_instance._auth_token)
-    token_data = {
-        "access_token": "new_access_token",
-        "token_type": "Bearer",
-        "expires": int(datetime.now(timezone.utc).timestamp() + 3600),
-        "refresh_token": "new_refresh_token",
-        "refresh_expires": int(datetime.now(timezone.utc).timestamp() + 7200),
-        "scope": "profile email address",
-    }
-    try:
-        with mocker.patch(
-            "freva_client.auth.OAuth2Session.refresh_token",
-            return_value=token_data,
-        ):
-            auth_instance._auth_token = {
-                "access_token": "test_access_token",
-                "token_type": "Bearer",
-                "expires": int(datetime.now().timestamp() - 3600),
-                "refresh_token": "test_refresh_token",
-                "refresh_expires": int(datetime.now().timestamp() + 7200),
-                "scope": "profile email address",
-            }
-
-            auth_instance.check_authentication(auth_url="https://example.com")
-
-        assert isinstance(auth_instance._auth_token, dict)
-        assert auth_instance._auth_token["access_token"] == "new_access_token"
-        assert auth_instance._auth_token["refresh_token"] == "new_refresh_token"
-    finally:
-        auth_instance._auth_token = old_token_data
-
-
-def test_authenticate_function(mocker: MockFixture, auth_instance: Auth) -> None:
-    """Test the authenticate function with username and password."""
-    old_token_data = deepcopy(auth_instance._auth_token)
-    token_data = {
-        "access_token": "test_access_token",
-        "token_type": "Bearer",
-        "expires": int(datetime.now(timezone.utc).timestamp() + 3600),
-        "refresh_token": "test_refresh_token",
-        "refresh_expires": int(datetime.now(timezone.utc).timestamp() + 7200),
-        "scope": "profile email address",
-    }
-    try:
-        with mocker.patch(
-            "freva_client.auth.OAuth2Session.fetch_token",
-            return_value=token_data,
-        ):
-            token = authenticate(host="https://example.com")
-
-        assert token["access_token"] == "test_access_token"
-        assert token["refresh_token"] == "test_refresh_token"
-    finally:
-        auth_instance._auth_token = old_token_data
-
-
-def test_authenticate_function_with_refresh_token(
-    mocker: MockFixture, auth_instance: Auth
+def test_refresh_token(
+    test_server: str, mocker: MockerFixture, auth_instance: Auth
 ) -> None:
-    """Test the authenticate function using a refresh token."""
-    old_token_data = deepcopy(auth_instance._auth_token)
-    token_data = {
-        "access_token": "test_access_token",
+    """Test the token refresh functionality."""
+    token = deepcopy(auth_instance._auth_token)
+    new_token_data = {
+        "access_token": "old_access_token",
         "token_type": "Bearer",
-        "expires": int(datetime.now(timezone.utc).timestamp() + 3600),
-        "refresh_token": "test_refresh_token",
-        "refresh_expires": int(datetime.now(timezone.utc).timestamp() + 7200),
+        "expires": int(datetime.now().timestamp() - 3600),
+        "refresh_token": "old_refresh_token",
+        "refresh_expires": int(datetime.now().timestamp() + 7200),
         "scope": "profile email address",
     }
     try:
-        with mocker.patch(
-            "freva_client.auth.OAuth2Session.refresh_token",
-            return_value=token_data,
-        ):
-            token = authenticate(
-                host="https://example.com", refresh_token="test_refresh_token"
+        with patch("aiohttp.ClientSession.request", new=mock_request):
+            auth_instance._auth_token = new_token_data
+            auth_instance.check_authentication(auth_url=f"{test_server}/auth/v2")
+            assert isinstance(auth_instance._auth_token, dict)
+            assert (
+                auth_instance._auth_token["access_token"] == "test_access_token"
             )
+            assert (
+                auth_instance._auth_token["refresh_token"] == "test_refresh_token"
+            )
+        auth_instance._auth_token["refresh_expires"] = int(
+            datetime.now().timestamp() - 3600
+        )
+        with pytest.raises(ValueError):
+            auth_instance.check_authentication(auth_url=f"{test_server}/auth/v2")
 
-        assert token["access_token"] == "test_access_token"
-        assert token["refresh_token"] == "test_refresh_token"
     finally:
-        auth_instance._auth_token = old_token_data
+        auth_instance._auth_token = token
 
 
-def test_authentication_fail(mocker: MockFixture, auth_instance: Auth) -> None:
-    """Test the behviour if the authentications fails."""
-    old_token_data = deepcopy(auth_instance._auth_token)
-    mock_token_data = {
-        "access_token": "test_access_token",
-        "token_type": "Bearer",
-        "expires": int(datetime.now(timezone.utc).timestamp() - 3600),
-        "refresh_token": "test_refresh_token",
-        "refresh_expires": int(datetime.now(timezone.utc).timestamp() - 7200),
-        "scope": "profile email address",
-    }
-    with mocker.patch(
-        "freva_client.auth.OAuth2Session.refresh_token",
-        return_value={"detail": "Invalid username or password"},
-    ):
-        with mocker.patch(
-            "freva_client.auth.OAuth2Session.fetch_token",
-            return_value={"detail": "Invalid username or password"},
-        ):
-            try:
-                auth_instance._auth_token = None
-                with pytest.raises(ValueError):
-                    authenticate(host="https://example.com")
-                with pytest.raises(ValueError):
-                    authenticate(
-                        host="https://example.com",
-                        refresh_token="test_refresh_token",
-                    )
-                with pytest.raises(ValueError):
-                    auth_instance.check_authentication(
-                        auth_url="https://example.com"
-                    )
-                auth_instance._auth_token = mock_token_data
-                with pytest.raises(ValueError):
-                    auth_instance.check_authentication(
-                        auth_url="https://example.com"
-                    )
-            finally:
-                auth_instance._auth_token = old_token_data
+def test_callback(test_server: str):
+    """Test the /callback endpoint."""
 
-
-def test_real_auth(test_server: str, auth_instance: Auth) -> None:
-    """Test authentication at the keycloak instance."""
-    old_token_data = deepcopy(auth_instance._auth_token)
-    mock_token_data = {
-        "access_token": "test_access_token",
-        "token_type": "Bearer",
-        "expires": int(datetime.now(timezone.utc).timestamp() - 3600),
-        "refresh_token": "test_refresh_token",
-        "refresh_expires": int(datetime.now(timezone.utc).timestamp() - 7200),
-        "scope": "profile email address",
+    params = {
+        "code": "fake",
+        "state": "teststate|http://localhost:8080/callback",
     }
 
+    with patch("aiohttp.ClientSession.request", new=mock_request):
+
+        response = requests.get(f"{test_server}/auth/v2/callback", params=params)
+
+        assert response.status_code == 200
+        assert "access_token" in response.json()
+    response = requests.get(f"{test_server}/auth/v2/callback", params=params)
+    assert response.status_code == 401
+    response = requests.get(f"{test_server}/auth/v2/callback")
+    assert response.status_code == 400
+    params = {
+        "code": "fake",
+        "state": "teststate,http://localhost:8080/callback",
+    }
+    response = requests.get(f"{test_server}/auth/v2/callback", params=params)
+    assert response.status_code == 400
+
+
+def test_auth_via_code_exchange(test_server: str) -> None:
+    """The the token endpoint."""
+
+    with patch("aiohttp.ClientSession.request", new=mock_request):
+        response = requests.post(
+            f"{test_server}/auth/v2/token",
+            data={
+                "code": "fake",
+                "redirect_uri": "http://localhost:8080/callback",
+            },
+        )
+
+        assert response.status_code == 200
+        assert response.json()["access_token"] == "test_access_token"
+
+    res = requests.post(
+        f"{test_server}/auth/v2/token",
+        data={
+            "code": "foo",
+            "redirect_uri": "http://localhost:8080/callback",
+        },
+    )
+    assert res.status_code == 401
+
+    res = requests.post(f"{test_server}/auth/v2/token")
+    assert res.status_code == 400
+
+
+def test_auth_login_endpoint(test_server: str) -> None:
+    """Test the login endpoint."""
+
+    res = requests.get(
+        f"{test_server}/auth/v2/login",
+        params={"redirect_uri": "http://localhost:8080/callback"},
+    )
+    assert res.status_code == 200
+    res = requests.get(f"{test_server}/auth/v2/login")
+    assert res.status_code == 400
+
+
+def test_authenticate_with_login_flow(
+    mocker: MockerFixture, auth_instance: Auth
+) -> None:
+    """Test interactive authentication flow."""
+    token_data = mock_token_data()
+
+    mock_open = mocker.patch("webbrowser.open")
+    mock_server = mocker.patch("freva_client.auth.start_local_server")
+    mock_post = mocker.patch("requests.post")
+
+    mock_open.return_value = True
+    mock_server.return_value = "fake_auth_code"
+    mock_post.return_value.status_code = 200
+    mock_post.return_value.json.return_value = token_data
+    mock_post.return_value.raise_for_status.return_value = None
+
+    token = authenticate(host="https://example.com", force=True)
+
+    assert token["access_token"] == token_data["access_token"]
+    assert token["refresh_token"] == token_data["refresh_token"]
+    mock_open.assert_called_once()
+
+
+def test_check_authentication_refresh(
+    mocker: MockerFixture, auth_instance: Auth
+) -> None:
+    """Test that expired access token triggers refresh."""
+    new_token_data = mock_token_data(valid_for=3600, refresh_for=7200)
+    expired_token = mock_token_data(valid_for=-10, refresh_for=7200)
+
+    mock_post = mocker.patch("requests.post")
+    mock_post.return_value.status_code = 200
+    mock_post.return_value.json.return_value = new_token_data
+    mock_post.return_value.raise_for_status.return_value = None
+
+    auth_instance._auth_token = expired_token
+    token = auth_instance.check_authentication(auth_url="https://example.com")
+
+    assert token["access_token"] == new_token_data["access_token"]
+
+
+def test_authenticate_function_fallback_to_login(
+    mocker: MockerFixture, auth_instance: Auth
+) -> None:
+    """Test fallback to login flow when refresh fails."""
+    expired_token = mock_token_data(valid_for=-10, refresh_for=-10)
+    login_token = mock_token_data()
+
+    mock_post = mocker.patch("requests.post")
+    mock_post.side_effect = [
+        requests.exceptions.HTTPError("refresh failed"),  # refresh fails
+        mocker.Mock(
+            status_code=200,
+            json=lambda: login_token,
+            raise_for_status=lambda: None,
+        ),
+    ]
+
+    mocker.patch("webbrowser.open")
+    mocker.patch("freva_client.auth.start_local_server", return_value="code")
+
+    auth_instance._auth_token = expired_token
+    token = authenticate(
+        host="https://example.com", refresh_token="expired_token"
+    )
+
+    assert token["access_token"] == login_token["access_token"]
+
+
+def test_authenticate_manual_failure(
+    mocker: MockerFixture, auth_instance: Auth
+) -> None:
+    """Test failure in manual login flow."""
+    mocker.patch("webbrowser.open")
+    mocker.patch("freva_client.auth.start_local_server", return_value=None)
+
+    with pytest.raises(ValueError, match="No code received"):
+        authenticate(host="https://example.com", force=True)
+
+
+def test_cli_auth(
+    mocker: MockerFixture,
+    test_server: str,
+    cli_runner: CliRunner,
+    auth_instance: Auth,
+) -> None:
+    """Test authentication."""
+    old_token = deepcopy(auth_instance._auth_token)
     try:
-        auth_instance._auth_token = mock_token_data
-        token_data = authenticate(host=test_server)
-        assert token_data["access_token"] != mock_token_data["access_token"]
-        token_data = authenticate(host=test_server, force=True)
-        assert isinstance(token_data, dict)
-        assert "access_token" in token_data
-        token = token_data["access_token"]
-        token_data2 = authenticate(host=test_server)
-        assert token_data2["access_token"] == token
+        mocker.patch("webbrowser.open")
+        mocker.patch("freva_client.auth.start_local_server", return_value=None)
+
+        res = cli_runner.invoke(cli_app, ["auth", "--host", test_server])
+        assert res.exit_code == 0
+        assert res.stdout
+        assert "access_token" in json.loads(res.stdout)
+        with NamedTemporaryFile(suffix=".json") as temp_f:
+            Path(temp_f.name).write_text(res.stdout)
+            res = cli_runner.invoke(
+                cli_app,
+                ["auth", "--host", test_server, "--token-file", temp_f.name],
+            )
+            assert res.exit_code == 0
+            assert res.stdout
+
     finally:
-        auth_instance._auth_token = old_token_data
+        auth_instance._auth_token = old_token
 
 
 def test_userinfo(
-    mocker: MockFixture, test_server: str, auth: Dict[str, str]
+    mocker: MockerFixture, test_server: str, auth: Dict[str, str]
 ) -> None:
     """Test getting the user info."""
 
@@ -281,3 +340,27 @@ def test_get_overview(test_server: str) -> None:
     """Test the open id connect discovery endpoint."""
     res = requests.get(f"{test_server}/auth/v2/.well-known/openid-configuration")
     assert res.status_code == 200
+
+
+def test_start_local_server_receives_code() -> None:
+    """Test the OAuthCallbackHandler."""
+    port = Auth.find_free_port()  # must not conflict with dev
+    thread = threading.Thread(target=start_local_server, args=(port,))
+    thread.daemon = True
+    thread.start()
+    time.sleep(0.1)
+
+    response = requests.get(f"http://localhost:{port}/?code=abc123")
+
+    assert response.status_code == 200
+    assert "Login successful" in response.text
+
+    port = Auth.find_free_port()  # must not conflict with dev
+    thread = threading.Thread(target=start_local_server, args=(port,))
+    thread.daemon = True
+    thread.start()
+    time.sleep(0.1)
+
+    response = requests.get(f"http://localhost:{port}/?foo=abc123")
+    assert response.status_code == 400
+    assert "code not found" in response.text

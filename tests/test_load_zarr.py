@@ -12,24 +12,6 @@ import requests
 import xarray as xr
 
 
-def test_auth(test_server: str) -> None:
-    """Test the authentication methods."""
-    res1 = requests.post(
-        f"{test_server}/auth/v2/token",
-        data={"username": "foo", "password": "bar"},
-    )
-    assert res1.status_code == 401
-    res2 = requests.post(
-        f"{test_server}/auth/v2/token",
-        data={
-            "username": "janedoe",
-            "password": "janedoe123",
-            "grant_type": "password",
-        },
-    )
-    assert res2.status_code == 200
-
-
 def test_load_files_success(test_server: str, auth: Dict[str, str]) -> None:
     """Test loading single files."""
     token = auth["access_token"]

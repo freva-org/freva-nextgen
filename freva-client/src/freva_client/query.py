@@ -39,7 +39,7 @@ class databrowser:
     You can either search for files or uri's. Uri's give you an information
     on the storage system where the files or objects you are looking for are
     located. The query is of the form ``key=value``. For ``value`` you might
-    use wild cards such as \\*, ? or any regular expression.
+    use wild cards such as *, ? or any regular expression.
 
     Parameters
     ~~~~~~~~~~
@@ -128,7 +128,7 @@ class databrowser:
     databrowser class using the ``experiment`` search constraint.
     If you just 'print' the created object you will get a quick overview:
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import databrowser
         db = databrowser(experiment="cmorph", uniq_key="uri")
@@ -137,7 +137,7 @@ class databrowser:
     After having created the search object you can acquire different kinds of
     information like the number of found objects:
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import databrowser
         db = databrowser(experiment="cmorph", uniq_key="uri")
@@ -146,7 +146,7 @@ class databrowser:
 
     Or you can retrieve the combined metadata of the search objects.
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import databrowser
         db = databrowser(experiment="cmorph", uniq_key="uri")
@@ -154,7 +154,7 @@ class databrowser:
 
     Most importantly you can retrieve the locations of all encountered objects
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import databrowser
         db = databrowser(experiment="cmorph", uniq_key="uri")
@@ -167,7 +167,7 @@ class databrowser:
     You can also set a different flavour, for example according to cmip6
     standard:
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import databrowser
         db = databrowser(flavour="cmip6", experiment_id="cmorph")
@@ -179,7 +179,7 @@ class databrowser:
     for getting all ocean reanalysis datasets you can apply the 'reana*'
     search key as a positional argument:
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import databrowser
         db = databrowser("reana*", realm="ocean", flavour="cmip6")
@@ -195,17 +195,17 @@ class databrowser:
     before you are able to access the data. Refer also to the
     :py:meth:`freva_client.authenticate` method.
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import authenticate, databrowser
-        token_info = authenticate(username="janedoe")
+        token_info = authenticate()
         db = databrowser(dataset="cmip6-fs", stream_zarr=True)
         zarr_files = list(db)
         print(zarr_files)
 
     After you have created the paths to the zarr files you can open them
 
-    ::
+    .. code-block:: python
 
         import xarray as xr
         dset = xr.open_dataset(
@@ -350,7 +350,7 @@ class databrowser:
 
         Example
         ~~~~~~~
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             print(len(databrowser(experiment="cmorph")))
@@ -407,7 +407,7 @@ class databrowser:
         Let's create an intake-esm catalogue that points points allows for
         streaming the target data as zarr:
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             db = databrowser(dataset="cmip6-hsm", stream_zarr=True)
@@ -451,7 +451,7 @@ class databrowser:
         ~~~~~~~
         Let's create a static STAC catalogue:
 
-        .. execute_code::
+        .. code-block:: python
 
             from tempfile import mktemp
             temp_path = mktemp(suffix=".zip")
@@ -587,12 +587,12 @@ class databrowser:
         Example
         ~~~~~~~
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             print(databrowser.count_values(experiment="cmorph"))
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             print(databrowser.count_values("model"))
@@ -602,7 +602,7 @@ class databrowser:
         example for getting all ocean reanalysis datasets you can apply the
         'reana*' search key as a positional argument:
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             print(databrowser.count_values("reana*", realm="ocean", flavour="cmip6"))
@@ -643,7 +643,7 @@ class databrowser:
 
         Reverse search: retrieving meta data from a known file
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             db = databrowser(uri="slk:///arch/*/CPC/*")
@@ -747,7 +747,7 @@ class databrowser:
         Example
         ~~~~~~~
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             all_facets = databrowser.metadata_search(project='obs*')
@@ -755,7 +755,7 @@ class databrowser:
 
         You can also search for all metadata matching a search string:
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             spec_facets = databrowser.metadata_search("obs*")
@@ -763,7 +763,7 @@ class databrowser:
 
         Get all models that have a given time step:
 
-        .. execute_code::
+        .. code-block:: ptyhon
 
             from freva_client import databrowser
             model = databrowser.metadata_search(
@@ -774,7 +774,7 @@ class databrowser:
 
         Reverse search: retrieving meta data from a known file
 
-        .. execute_code::
+        .. code-block:: ptyhon
 
             from freva_client import databrowser
             res = databrowser.metadata_search(file="/arch/*CPC/*")
@@ -785,7 +785,7 @@ class databrowser:
         example for getting all ocean reanalysis datasets you can apply the
         'reana*' search key as a positional argument:
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             print(databrowser.metadata_search("reana*", realm="ocean", flavour="cmip6"))
@@ -795,7 +795,7 @@ class databrowser:
         version from a multi versioned datasets requires the ``multiversion``
         flag in combination with the ``version`` special attribute:
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             res = databrowser.metadata_search(dataset="cmip6-fs",
@@ -852,7 +852,7 @@ class databrowser:
         Example
         ~~~~~~~
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             print(databrowser.overview())
@@ -869,7 +869,7 @@ class databrowser:
         Example
         ~~~~~~~
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             db = databrowser()
@@ -948,11 +948,11 @@ class databrowser:
 
         Adding user data:
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import authenticate, databrowser
             import xarray as xr
-            token_info = authenticate(username="janedoe")
+            token_info = authenticate()
             filenames = (
                 "../freva-rest/src/freva_rest/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/"
                 "GERICS/NCC-NorESM1-M/rcp85/r1i1p1/GERICS-REMO2015/v1/3hr/pr/v20181212/*.nc"
@@ -971,10 +971,10 @@ class databrowser:
 
         Deleting user data:
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import authenticate, databrowser
-            token_info = authenticate(username="janedoe")
+            token_info = authenticate()
             databrowser.userdata(
                 action="delete",
                 metadata={"project": "cmip5", "experiment": "myFavExp"}
