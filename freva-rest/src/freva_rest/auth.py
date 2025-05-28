@@ -17,7 +17,7 @@ from typing import (
 from urllib.parse import urlencode, urljoin
 
 import aiohttp
-from fastapi import Depends, Form, HTTPException, Request, Security
+from fastapi import Depends, Form, HTTPException, Query, Request, Security
 from fastapi.responses import RedirectResponse
 from fastapi.security import (
     HTTPAuthorizationCredentials,
@@ -277,12 +277,52 @@ async def open_id_config() -> RedirectResponse:
     return RedirectResponse(server_config.oidc_discovery_url)
 
 
-@app.get("/api/freva-nextgen/auth/v2/login")
-async def login(request: Request) -> RedirectResponse:
+@app.get(
+    "/api/freva-nextgen/auth/v2/login",
+    tags=["Authentication"],
+    response_class=RedirectResponse,
+    responses={
+        307: {
+            "description": (
+                "Redirect to the identity provider's login page. "
+                "The user must authenticate and will be redirected back to the "
+                "callback URL."
+            ),
+            "content": {"text/html": {"example": "Redirecting to Keycloak..."}},
+        },
+        400: {"description": "Missing redirect_uri query parameter."},
+    },
+)
+async def login(
+    redirect_uri: Annotated[
+        Optional[str],
+        Query(
+            title="Redirect URI",
+            description=(
+                "The URI to redirect back to after successful login. "
+                "Must match the URI registered with your OpenID provider."
+            ),
+            examples=["http://localhost:8080/callback"],
+        ),
+    ] = None,
+) -> RedirectResponse:
+    """
+    Initiate the OpenID Connect authorization code flow.
+
+    This endpoint redirects the user to the identity provider's login screen.
+    It generates and includes `state` and `nonce` parameters to help prevent CSRF
+    and replay attacks. After the user logs in, the identity provider will redirect
+    back to the provided `redirect_uri` with an authorization code.
+
+    !!! tip
+        Normal users should **not call this endpoint directly**. Use the Freva website,
+        Python client, or CLI instead. This endpoint is designed for service
+        provider (SP) implementations that need to integrate code-based
+        authentication flows.
+    """
     state = secrets.token_urlsafe(16)
     nonce = secrets.token_urlsafe(16)
 
-    redirect_uri = request.query_params.get("redirect_uri")
     if not redirect_uri:
         raise HTTPException(status_code=400, detail="Missing redirect_uri")
 
@@ -303,10 +343,61 @@ async def login(request: Request) -> RedirectResponse:
     return RedirectResponse(auth_url)
 
 
-@app.get("/api/freva-nextgen/auth/v2/callback")
-async def callback(request: Request) -> Dict[str, Union[str, int]]:
-    code = request.query_params.get("code")
-    state = request.query_params.get("state")
+@app.get(
+    "/api/freva-nextgen/auth/v2/callback",
+    tags=["Authentication"],
+    responses={
+        200: {
+            "description": "OAuth2 token exchange successful.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                        "refresh_token": "dGhpc2lzYXJlZnJlc2h0b2tlbg==",
+                        "token_type": "bearer",
+                        "expires_in": 3600,
+                    }
+                }
+            },
+        },
+        400: {"description": "Missing or invalid code/state."},
+        500: {"description": "Internal server or Keycloak error."},
+    },
+)
+async def callback(
+    code: Annotated[
+        Optional[str],
+        Query(
+            title="Authorization Code",
+            description=(
+                "Temporary code received from the identity provider after "
+                "login."
+            ),
+            examples={
+                "example": {
+                    "summary": "Typical Authorization Code",
+                    "value": "abc123.def456.ghi789",
+                }
+            },
+        ),
+    ] = None,
+    state: Annotated[
+        Optional[str],
+        Query(
+            title="State Token",
+            examples={
+                "example": {
+                    "summary": "Typical state with redirect_uri",
+                    "value": "abcxyz|http://localhost:8080/callback",
+                }
+            },
+            description=(
+                "Opaque value combining anti-CSRF state and the redirect URI, "
+                "separated by '|'. Returned as-is from the authorization server."
+            ),
+        ),
+    ] = None,
+) -> Dict[str, Union[str, int]]:
     if not code or not state:
         raise HTTPException(status_code=400, detail="Missing code or state")
 

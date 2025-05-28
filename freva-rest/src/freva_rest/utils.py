@@ -1,10 +1,11 @@
 """Various utilities for the restAPI."""
 
 import pwd
-from typing import Dict, NotRequired, Optional, TypedDict, cast
+from typing import Dict, Optional, cast
 
 import redis.asyncio as redis
 from fastapi import HTTPException, status
+from typing_extensions import NotRequired, TypedDict
 
 from freva_rest.config import ServerConfig
 from freva_rest.logger import logger
