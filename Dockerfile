@@ -16,6 +16,15 @@ COPY freva-rest /tmp/app/freva-rest
 COPY freva-data-portal-worker /tmp/app/freva-data-portal-worker
 COPY docker-scripts  /tmp/app/docker-scripts
 RUN  set -xe  && \
+    apt -y update &&\
+    DEBIAN_FRONTEND=noninteractive apt -y install sssd &&\
+    rm -rf /var/lib/apt/lists/* && \
+     printf "\n\
+auth required pam_sss.so\n\
+account required pam_sss.so\n\
+password required pam_sss.so\n\
+session required pam_sss.so\n\
+" > /etc/pam.d/login &&\
     mkdir -p /opt/${CMD}/config $API_LOGDIR /certs /etc/profile.d /usr/local/{lib,bin} && \
     cp /tmp/app/docker-scripts/${CMD}-env.sh /etc/profile.d/env-vars.sh && \
     cp /tmp/app/docker-scripts/logging.sh /usr/local/lib/logging.sh && \
