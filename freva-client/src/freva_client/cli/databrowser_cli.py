@@ -234,17 +234,10 @@ def metadata_search(
     result = databrowser.metadata_search(
         *(facets or []),
         time=time or "",
-        time_select=cast(
-            Literal["file", "flexible", "strict"], time_select.value
-        ),
+        time_select=time_select.value,
         bbox=bbox or None,
-        bbox_select=cast(
-            Literal["file", "flexible", "strict"], bbox_select.value
-        ),
-        flavour=cast(
-            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
-            flavour.value,
-        ),
+        bbox_select=bbox_select.value,
+        flavour=flavour.value,
         host=host,
         extended_search=extended_search,
         multiversion=multiversion,
@@ -383,14 +376,11 @@ def data_search(
     result = databrowser(
         *(facets or []),
         time=time or "",
-        time_select=cast(Literal["file", "flexible", "strict"], time_select),
+        time_select=time_select.value,
         bbox=bbox or None,
-        bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
-        flavour=cast(
-            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
-            flavour.value,
-        ),
-        uniq_key=cast(Literal["uri", "file"], uniq_key.value),
+        bbox_select=bbox_select.value,
+        flavour=flavour.value,
+        uniq_key=uniq_key.value,
         host=host,
         fail_on_error=False,
         multiversion=multiversion,
@@ -535,14 +525,11 @@ def intake_catalogue(
     result = databrowser(
         *(facets or []),
         time=time or "",
-        time_select=cast(Literal["file", "flexible", "strict"], time_select),
+        time_select=time_select.value,
         bbox=bbox or None,
-        bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
-        flavour=cast(
-            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
-            flavour.value,
-        ),
-        uniq_key=cast(Literal["uri", "file"], uniq_key.value),
+        bbox_select=bbox_select.value,
+        flavour=flavour.value,
+        uniq_key=uniq_key.value,
         host=host,
         fail_on_error=False,
         multiversion=multiversion,
@@ -675,14 +662,11 @@ def stac_catalogue(
     result = databrowser(
         *(facets or []),
         time=time or "",
-        time_select=cast(Literal["file", "flexible", "strict"], time_select),
+        time_select=time_select.value,
         bbox=bbox or None,
-        bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
-        flavour=cast(
-            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
-            flavour.value,
-        ),
-        uniq_key=cast(Literal["uri", "file"], uniq_key.value),
+        bbox_select=bbox_select.value,
+        flavour=flavour.value,
+        uniq_key=uniq_key.value,
         host=host,
         fail_on_error=False,
         multiversion=multiversion,
@@ -819,13 +803,10 @@ def count_values(
         result = databrowser.count_values(
             *facets,
             time=time or "",
-            time_select=cast(Literal["file", "flexible", "strict"], time_select),
+            time_select=time_select.value,
             bbox=bbox or None,
-            bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
-            flavour=cast(
-                Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
-                flavour.value,
-            ),
+            bbox_select=bbox_select.value,
+            flavour=flavour.value,
             host=host,
             extended_search=extended_search,
             multiversion=multiversion,
@@ -837,19 +818,10 @@ def count_values(
             databrowser(
                 *facets,
                 time=time or "",
-                time_select=cast(
-                    Literal["file", "flexible", "strict"], time_select
-                ),
+                time_select=time_select.value,
                 bbox=bbox or None,
-                bbox_select=cast(
-                    Literal["file", "flexible", "strict"], bbox_select
-                ),
-                flavour=cast(
-                    Literal[
-                        "freva", "cmip6", "cmip5", "cordex", "nextgems", "user"
-                    ],
-                    flavour.value,
-                ),
+                bbox_select=bbox_select.value,
+                flavour=flavour.value,
                 host=host,
                 multiversion=multiversion,
                 fail_on_error=False,
