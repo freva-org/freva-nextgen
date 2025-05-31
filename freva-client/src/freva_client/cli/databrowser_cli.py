@@ -7,7 +7,7 @@ import json
 from enum import Enum
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Dict, List, Literal, Optional, Tuple, Union, cast
+from typing import Dict, List, Optional, Tuple, Union, cast
 
 import typer
 import xarray as xr
