@@ -42,6 +42,7 @@ environment variables are evaluated:
 - ``API_OIDC_CLIENT_ID``: Name of the client (app) that is used to create
                           the access tokens, defaults to freva
 - ``API_OIDC_CLIENT_SECRET``: You can set a client secret, if you have
+- ``API_OIDC_TOKEN_FILTER``:  Token claim filter
 - ``API_SERVICES``:  The services the api should serve.
 
 📝  You can override the path to the default config file using the
@@ -209,7 +210,7 @@ def cli(argv: Optional[List[str]] = None) -> None:
     cfg = ServerConfig(config=args.config, debug=args.debug)
     for key, value in args._get_kwargs():
         name = key.upper().removeprefix("API_")
-        if key in cfg.model_fields_set and key not in ["debug"]:
+        if key in cfg.model_fields and key not in ["debug"]:
             defaults.setdefault(f"API_{name}", str(value or ""))
     if args.dev:
         from freva_rest.databrowser_api.mock import read_data

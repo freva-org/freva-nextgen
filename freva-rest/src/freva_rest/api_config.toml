@@ -113,4 +113,8 @@ client_id = "freva"
 # authenticate the API to the OIDC provider.
 client_secret = ""
 
-
+# A list of claim-based filters in the format <claim>.<pattern>. Each
+# filter matches if the decoded JWT contains the
+# specified claim (e.g., group, role) and its value includes the given
+#pattern. Patterns can be plain substrings or regular expressions.
+token_filter = []

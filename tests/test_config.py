@@ -30,3 +30,16 @@ def test_invalid_config(caplog: LogCaptureFixture) -> None:
     records: List[logging.LogRecord] = caplog.records
     assert any([record.levelname == "CRITICAL" for record in records])
     assert any(["Failed to load" in record.message for record in records])
+
+
+def test_token_claims() -> None:
+    """Test the token claims of the rest server config."""
+
+    from freva_rest.config import ServerConfig
+
+    cfg = ServerConfig(oidc_token_filter="aud.scope:foo,role:bar")
+    assert len(cfg.oidc_token_match) == 2
+    assert cfg.oidc_token_match[-1].claim == "role"
+    assert cfg.oidc_token_match[-1].pattern == "bar"
+    cfg = ServerConfig()
+    assert len(cfg.oidc_token_match) == 0

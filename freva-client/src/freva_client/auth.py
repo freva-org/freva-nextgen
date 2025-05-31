@@ -84,14 +84,20 @@ class Auth:
             scope=auth["scope"],
         )
 
-    def _login(self, auth_url: str, port: Optional[int] = None) -> Token:
+    def _login(
+        self, auth_url: str, port: Optional[int] = None, force: bool = False
+    ) -> Token:
         login_endpoint = f"{auth_url}/login"
         token_endpoint = f"{auth_url}/token"
         port = port or self.find_free_port()
         redirect_uri = REDIRECT_URI.format(port=port)
-        login_url = (
-            login_endpoint + f"?redirect_uri={urllib.parse.quote(redirect_uri)}"
-        )
+        params = {
+            "redirect_uri": redirect_uri,
+        }
+        if force:
+            params["prompt"] = "login"
+        query = urllib.parse.urlencode(params)
+        login_url = f"{login_endpoint}?{query}"
         logger.info("Opening browser for login:\n%s", login_url)
         logger.info(
             "If you are using this on a remote host you might need to "
@@ -204,7 +210,7 @@ class Auth:
             except ValueError:
                 logger.warning(("Could not use refresh token, lgging in "))
         if self._auth_token is None or force:
-            return self._login(cfg.auth_url, port=helper_port)
+            return self._login(cfg.auth_url, port=helper_port, force=force)
         if self.token_expiration_time < datetime.datetime.now(
             datetime.timezone.utc
         ):

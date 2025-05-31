@@ -3,6 +3,7 @@
 import asyncio
 import datetime
 import secrets
+from enum import Enum
 from typing import (
     Annotated,
     Any,
@@ -29,12 +30,19 @@ from pydantic import BaseModel, Field, ValidationError
 
 from .logger import logger
 from .rest import app, server_config
-from .utils import get_userinfo
+from .utils import get_userinfo, token_field_matches
 
 Required: Any = Ellipsis
 
 TIMEOUT: aiohttp.ClientTimeout = aiohttp.ClientTimeout(total=5)
 """5 seconds for timeout for key cloak interaction."""
+
+
+class Prompt(str, Enum):
+    none = "none"
+    login = "login"
+    consent = "consent"
+    select_account = "select_account"
 
 
 class SafeAuth:
@@ -305,6 +313,14 @@ async def login(
             examples=["http://localhost:8080/callback"],
         ),
     ] = None,
+    prompt: Annotated[
+        Prompt,
+        Query(
+            title="Prompt",
+            description="Prompt parameter for OIDC login (none or login)",
+            examples=["login"],
+        ),
+    ] = Prompt.none,
 ) -> RedirectResponse:
     """
     Initiate the OpenID Connect authorization code flow.
@@ -333,13 +349,14 @@ async def login(
         "scope": "openid profile",
         "state": state,
         "nonce": nonce,
+        "prompt": prompt.value.replace("none", ""),
     }
     query = {k: v for (k, v) in query.items() if v}
-
     auth_url = (
         f"{server_config.oidc_overview['authorization_endpoint']}"
         f"?{urlencode(query)}"
     )
+    print("foofo", query)
     return RedirectResponse(auth_url)
 
 
@@ -478,6 +495,10 @@ async def fetch_or_refresh_token(
         data={k: v for (k, v) in data.items() if v},
     )
     token_data = await response.json()
+    if not token_field_matches(token_data["access_token"]):
+        raise HTTPException(
+            status_code=401, detail="Not allowed to access this resource."
+        )
     expires_at = (
         token_data.get("exp")
         or token_data.get("expires")

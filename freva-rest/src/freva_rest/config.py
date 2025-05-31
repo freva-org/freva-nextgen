@@ -33,6 +33,17 @@ from .logger import logger, logger_file_handle
 ConfigItem = Union[str, int, float, None]
 
 
+class _TokenFilter(BaseModel):
+    """Claim-based filters in the format <claim>.<pattern>.
+
+    Each filter matches if the decoded JWT contains the
+    specified claim (e.g., group, role) and its value includes the given
+    pattern. Patterns can be plain substrings or regular expressions."""
+
+    claim: Annotated[str, Field(min_length=1)]
+    pattern: Annotated[str, Field(min_length=1)]
+
+
 class ServerConfig(BaseModel):
     """Read the basic configuration for the server.
 
@@ -185,6 +196,21 @@ class ServerConfig(BaseModel):
             description="The OIDC client secret, if any, used for authentication.",
         ),
     ] = os.getenv("API_OIDC_CLIENT_SECRET", "")
+    oidc_token_filter: Annotated[
+        str,
+        Field(
+            title="Token claim filter.",
+            description=(
+                "A list (,) separated, of claim-based filters in "
+                "the format <claim>:<pattern>. Each filter "
+                "matches if the decoded JWT contains the "
+                "specified claim (e.g., group, role) and its "
+                "value includes the given pattern. Patterns can "
+                "be plain substrings or regular expressions."
+                "Nested claims are defined by '.' separation."
+            ),
+        ),
+    ] = os.getenv("API_OIDC_TOKEN_FILTER", "")
 
     def _read_config(self, section: str, key: str) -> Any:
         fallback = self._fallback_config[section][key] or None
@@ -211,6 +237,7 @@ class ServerConfig(BaseModel):
         self.api_services = self.api_services or ",".join(
             self._read_config("restAPI", "services")
         )
+        self._oidc_token_match: Optional[List[_TokenFilter]] = None
         self.proxy = (
             self.proxy
             or self._read_config("restAPI", "proxy")
@@ -312,6 +339,19 @@ class ServerConfig(BaseModel):
     def reload(self) -> None:
         """Reload the configuration."""
         self.model_post_init()
+
+    @property
+    def oidc_token_match(self) -> List[_TokenFilter]:
+        if self._oidc_token_match is None:
+            self._oidc_token_match = []
+            for filter_pair in [
+                t.strip() for t in self.oidc_token_filter.split(",") if t.strip()
+            ] or (self._read_config("oidc", "token_filter") or []):
+                key, _, pattern = filter_pair.partition(":")
+                self._oidc_token_match.append(
+                    _TokenFilter(claim=key, pattern=pattern)
+                )
+        return self._oidc_token_match
 
     @property
     def oidc_overview(self) -> Dict[str, Any]:
