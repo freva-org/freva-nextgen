@@ -7,7 +7,7 @@ import os
 from base64 import b64decode
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List, Optional
+from typing import List, Optional, Union, cast
 
 import appdirs
 from watchfiles import run_process
@@ -17,23 +17,71 @@ from .load_data import CLIENT, ProcessQueue, RedisKw
 from .utils import data_logger
 
 
+def read_file_content(input_file: Optional[Union[str, Path]] = None) -> str:
+    """Read the content of a file, if can be written."""
+    if input_file is None:
+        return ""
+    try:
+        return Path(input_file).read_text()
+    except Exception as error:
+        data_logger.warning(
+            "Could not read content of file: %s: %s", input_file, error
+        )
+    return ""
+
+
+def get_redis_config(
+    config_file: Optional[Path] = None,
+    redis_password: Optional[str] = None,
+    redis_user: Optional[str] = None,
+    redis_ssl_certfile: Optional[str] = None,
+    redis_ssl_keyfile: Optional[str] = None,
+) -> RedisKw:
+    """Read redis connection information."""
+    file_config = read_file_content(config_file)
+    cache_config: dict[str, str] = {}
+    if file_config:
+        try:
+            cache_config = json.loads(b64decode(file_config.encode()))
+        except Exception as error:
+            data_logger.warning(
+                "Could not decode file: %s: %s", config_file, error
+            )
+    cache_config.setdefault("user", redis_user or "")
+    cache_config.setdefault("passwd", redis_password or "")
+    cache_config.setdefault("ssl_key", read_file_content(redis_ssl_keyfile))
+    cache_config.setdefault("ssl_cert", read_file_content(redis_ssl_certfile))
+    return cast(RedisKw, cache_config)
+
+
 def _main(
-    config_file: Path,
+    config_file: Optional[Path] = None,
     port: int = 40000,
     exp: int = 3600,
     redis_host: str = "redis://localhost:6379",
+    redis_password: Optional[str] = None,
+    redis_user: Optional[str] = None,
+    redis_ssl_certfile: Optional[str] = None,
+    redis_ssl_keyfile: Optional[str] = None,
     dev: bool = False,
 ) -> None:
     """Run the loader process."""
     data_logger.debug("Loading cluster config from %s", config_file)
-    cache_config: RedisKw = json.loads(b64decode(config_file.read_bytes()))
     env = os.environ.copy()
+    cache_config = get_redis_config(
+        config_file=config_file,
+        redis_password=redis_password,
+        redis_user=redis_user,
+        redis_ssl_certfile=redis_ssl_certfile,
+        redis_ssl_keyfile=redis_ssl_keyfile,
+    )
+
     try:
         os.environ["DASK_PORT"] = str(port)
         os.environ["API_CACHE_EXP"] = str(exp)
-        os.environ["REDIS_HOST"] = redis_host
-        os.environ["REDIS_USER"] = cache_config["user"]
-        os.environ["REDIS_PASS"] = cache_config["passwd"]
+        os.environ["API_REDIS_HOST"] = redis_host
+        os.environ["API_REDIS_USER"] = cache_config["user"]
+        os.environ["API_REDIS_PASSWORD"] = cache_config["passwd"]
         with TemporaryDirectory() as temp:
             if cache_config["ssl_cert"] and cache_config["ssl_key"]:
                 cert_file = Path(temp) / "client-cert.pem"
@@ -42,8 +90,8 @@ def _main(
                 key_file.write_text(cache_config["ssl_key"])
                 key_file.chmod(0o600)
                 cert_file.chmod(0o600)
-                os.environ["REDIS_SSL_CERTFILE"] = str(cert_file)
-                os.environ["REDIS_SSL_KEYFILE"] = str(key_file)
+                os.environ["API_REDIS_SSL_CERTFILE"] = str(cert_file)
+                os.environ["API_REDIS_SSL_KEYFILE"] = str(key_file)
 
             data_logger.debug("Starting data-loader process")
             queue = ProcessQueue(dev_mode=dev)
@@ -62,12 +110,15 @@ def _main(
 
 def run_data_loader(argv: Optional[List[str]] = None) -> None:
     """Daemon that waits for messages to load the data."""
-    config_file = (
-        Path(appdirs.user_cache_dir("freva")) / "data-portal-cluster-config.json"
+    config_file = os.getenv(
+        "API_CONFIG",
+        os.path.join(
+            appdirs.user_cache_dir("freva"), "data-portal-cluster-config.json"
+        ),
     )
 
     redis_host, _, redis_port = (
-        (os.environ.get("REDIS_HOST") or "localhost")
+        (os.environ.get("API_REDIS_HOST") or "localhost")
         .replace("redis://", "")
         .partition(":")
     )
@@ -103,7 +154,7 @@ def run_data_loader(argv: Optional[List[str]] = None) -> None:
         "--port",
         type=int,
         help="Dask scheduler port for loading data.",
-        default=40000,
+        default=os.getenv("API_PORT", "40000"),
     )
     parser.add_argument(
         "--dev",
@@ -123,6 +174,30 @@ def run_data_loader(argv: Optional[List[str]] = None) -> None:
         action="version",
         version="%(prog)s {version}".format(version=__version__),
     )
+    parser.add_argument(
+        "--redis-username",
+        type=str,
+        help="User name for redis connection.",
+        default=os.getenv("API_REDIS_USER"),
+    )
+    parser.add_argument(
+        "--redis-password",
+        type=str,
+        help="Password for redis connection.",
+        default=os.getenv("API_REDIS_PASSWORD"),
+    )
+    parser.add_argument(
+        "--redis-ssl-keyfile",
+        type=Path,
+        help="Path to the private redis key file.",
+        default=os.getenv("API_REDIS_SSL_KEYFILE"),
+    )
+    parser.add_argument(
+        "--redis-ssl-certfile",
+        type=Path,
+        help="Path to the public redis cert file.",
+        default=os.getenv("API_REDIS_SSL_CERTFILE"),
+    )
     args = parser.parse_args(argv)
     if args.verbose is True:
         data_logger.setLevel(logging.DEBUG)
@@ -131,6 +206,10 @@ def run_data_loader(argv: Optional[List[str]] = None) -> None:
         "exp": args.exp,
         "redis_host": args.redis_host,
         "dev": args.dev,
+        "redis_password": args.redis_password,
+        "redis_user": args.redis_username,
+        "redis_ssl_certfile": args.redis_ssl_certfile,
+        "redis_ssl_keyfile": args.redis_ssl_keyfile,
     }
     if args.dev:
         run_process(

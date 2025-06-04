@@ -33,7 +33,6 @@ dependencies = [
 "rich-argparse",
 "requests",
 "redis",
-"uuid",
 "tomli",
 "typing_extensions",
 "uvicorn",

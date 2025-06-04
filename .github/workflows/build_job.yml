@@ -135,15 +135,34 @@ jobs:
       - name: Build and push freva-rest API image
         uses: docker/build-push-action@v4
         with:
-          context: freva-rest
-          file: freva-rest/Dockerfile
-          build-args: VERSION=${{ env.TAG }}
+          context: .
+          file: Dockerfile
+          build-args: |
+            VERSION=${{ env.TAG }}
+            CMD=freva-rest-server
           platforms: linux/amd64, linux/arm64, linux/ppc64le
           push: true
           no-cache: true
           tags: |
             ${{ env.IMAGE }}:${{ env.TAG }}
             ${{ env.IMAGE }}:${{ env.IS_PRERELEASE == 'false' && 'latest' || env.TAG }}
+
+      - name: Build and push freva-data-loader image
+        uses: docker/build-push-action@v4
+        if: env.IS_PRERELEASE == 'false'
+        with:
+          context: .
+          file: Dockerfile
+          build-args: |
+            VERSION=${{ env.TAG }}
+            CMD=data-loader-worker
+          platforms: linux/amd64, linux/arm64, linux/ppc64le
+          push: true
+          no-cache: true
+          tags: |
+            ghcr.io/freva-clint/freva-data-loader:${{ env.TAG }}
+            ghcr.io/freva-clint/freva-data-loader:latest
+
 
   pypi:
     name: Create Pip package

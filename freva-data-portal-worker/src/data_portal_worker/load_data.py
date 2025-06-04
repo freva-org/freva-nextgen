@@ -55,7 +55,7 @@ class RedisCacheFactory(redis.Redis):
 
     def __init__(self, db: int = 0) -> None:
         host, _, port = (
-            (os.environ.get("REDIS_HOST") or "localhost")
+            (os.environ.get("API_REDIS_HOST") or "localhost")
             .replace("redis://", "")
             .partition(":")
         )
@@ -64,11 +64,11 @@ class RedisCacheFactory(redis.Redis):
             "host": host,
             "port": port_i,
             "db": db,
-            "username": os.getenv("REDIS_USER"),
-            "password": os.getenv("REDIS_PASS"),
-            "ssl_certfile": os.getenv("REDIS_SSL_CERTFILE") or None,
-            "ssl_keyfile": os.getenv("REDIS_SSL_KEYFILE") or None,
-            "ssl_ca_certs": os.getenv("REDIS_SSL_CERTFILE") or None,
+            "username": os.getenv("API_REDIS_USER") or None,
+            "password": os.getenv("API_REDIS_PASSWORD") or None,
+            "ssl_certfile": os.getenv("API_REDIS_SSL_CERTFILE") or None,
+            "ssl_keyfile": os.getenv("API_REDIS_SSL_KEYFILE") or None,
+            "ssl_ca_certs": os.getenv("API_REDIS_SSL_CERTFILE") or None,
         }
         conn["ssl"] = conn["ssl_certfile"] is not None
         data_logger.info("Creating redis connection with args: %s", conn)

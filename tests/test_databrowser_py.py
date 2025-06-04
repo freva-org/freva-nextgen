@@ -1,6 +1,7 @@
 """Tests for the databrowser class."""
 
 from copy import deepcopy
+from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
@@ -8,6 +9,7 @@ import pytest
 from freva_client import databrowser
 from freva_client.auth import Auth, authenticate
 from freva_client.utils.logger import DatabrowserWarning
+
 
 def test_search_files(test_server: str) -> None:
     """Test searching for files."""
@@ -68,9 +70,7 @@ def test_metadata_search(test_server: str) -> None:
     metadata = databrowser.metadata_search(host=test_server)
     assert isinstance(metadata, dict)
     assert len(db.metadata) > len(metadata)
-    metadata = databrowser.metadata_search(
-        host=test_server, extended_search=True
-    )
+    metadata = databrowser.metadata_search(host=test_server, extended_search=True)
     assert len(db.metadata) == len(metadata)
 
 
@@ -98,9 +98,7 @@ def test_bad_queries(test_server: str) -> None:
     with pytest.raises(ValueError):
         len(db)
     with pytest.raises(ValueError):
-        databrowser.count_values(
-            host=test_server, foo="bar", fail_on_error=True
-        )
+        databrowser.count_values(host=test_server, foo="bar", fail_on_error=True)
     with pytest.raises(ValueError):
         databrowser.metadata_search(
             host=test_server, foo="bar", fail_on_error=True
@@ -134,32 +132,31 @@ def test_intake_without_zarr(test_server: str) -> None:
     with pytest.raises(ValueError):
         db.intake_catalogue()
 
-def test_stac_catalogue(test_server: str) -> None:
-    """Test the STAC Catalogue functionality."""
 
+def test_stac_catalogue(test_server: str, temp_dir: Path) -> None:
+    """Test the STAC Catalogue functionality."""
     # static STAC catalogue
     db = databrowser(host=test_server, dataset="cmip6-fs")
-    res = db.stac_catalogue(filename="/tmp/something.zip")
-    assert "STAC catalog saved to: /tmp/something.zip" in res
+    res = db.stac_catalogue(filename=temp_dir / "something.zip")
+    assert f"STAC catalog saved to: {temp_dir / 'something.zip'}" in res
 
     # static STAC catalogue with non-existing directory
     db = databrowser(host=test_server, dataset="cmip6-fs")
-    res = db.stac_catalogue(filename="/tmp/anywhere/s")
-    assert "STAC catalog saved to: /tmp/anywhere/s" in res
+    res = db.stac_catalogue(filename=temp_dir / "anywhere/s")
+    assert f"STAC catalog saved to: {temp_dir / 'anywhere/s'}" in res
 
     # static STAC catalogue with existing directory
     db = databrowser(host=test_server, dataset="cmip6-fs")
-    res = db.stac_catalogue(filename="/tmp")
-    assert "STAC catalog saved to: /tmp" in res
+    res = db.stac_catalogue(filename=temp_dir)
+    assert f"STAC catalog saved to: {temp_dir}" in res
+
 
 def test_intake_with_zarr(test_server: str, auth_instance: Auth) -> None:
     """Test the intake zarr catalogue creation."""
     token = deepcopy(auth_instance._auth_token)
     try:
         auth_instance.auth_instance = None
-        db = databrowser(
-            host=test_server, dataset="cmip6-fs", stream_zarr=True
-        )
+        db = databrowser(host=test_server, dataset="cmip6-fs", stream_zarr=True)
         with pytest.raises(ValueError):
             cat = db.intake_catalogue()
         _ = authenticate(username="janedoe", host=test_server)
@@ -174,9 +171,7 @@ def test_zarr_stream(test_server: str, auth_instance: Auth) -> None:
     token = deepcopy(auth_instance._auth_token)
     try:
         auth_instance.auth_instance = None
-        db = databrowser(
-            host=test_server, dataset="cmip6-fs", stream_zarr=True
-        )
+        db = databrowser(host=test_server, dataset="cmip6-fs", stream_zarr=True)
         with pytest.raises(ValueError):
             files = list(db)
         _ = authenticate(username="janedoe", host=test_server)
@@ -349,9 +344,7 @@ def test_userdata_empty_metadata_value_error(
         auth_instance._auth_token = token
 
 
-def test_userdata_non_path_xarray(
-    test_server: str, auth_instance: Auth
-) -> None:
+def test_userdata_non_path_xarray(test_server: str, auth_instance: Auth) -> None:
     """Test adding user data with wrong arguments."""
     token = deepcopy(auth_instance._auth_token)
     try:
