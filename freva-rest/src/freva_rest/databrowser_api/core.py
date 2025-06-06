@@ -503,6 +503,70 @@ class Solr:
             self.url = original_url if original_url is not None else ""
             self.query = original_query if original_query is not None else {}
 
+    def configure_base_search(self) -> None:
+        """Set up basic search configuration."""
+        self.query["q"] = "*:*"
+        self.query["wt"] = "json"
+        self.query["facet"] = "true"
+        self.query["facet.sort"] = "index"
+        self.query["facet.mincount"] = "1"
+        self.query["facet.limit"] = "-1"
+
+    def set_query_params(self, **params: Union[str, int, List[str]]) -> None:
+        """
+        Set multiple Solr query parameters at once.
+
+        This method handles ALL Solr query parameters including:
+        - fl: field list
+        - sort: sort expression
+        - fq: filter queries (can be string or list)
+        - cursorMark: pagination cursor
+        - rows: number of rows
+        - facet_field: facet fields (converted to facet.field)
+        - Any other Solr parameter
+
+        Parameters
+        ----------
+        **params : dict
+            Any Solr query parameters as key-value pairs
+
+        Examples
+        --------
+        #multiple parameters at once
+        solr.set_query_params(
+            fl=["file", "project", "_version_"],
+            sort="_version_ asc,file asc",
+            rows=150,
+            fq=["project:observations", "variable:pr"],
+            cursorMark="*"
+        )
+
+        # Or set them individually
+        solr.set_query_params(rows=0)
+        solr.set_query_params(cursorMark="AoEjQhEfx")
+        """
+        # Parameter name mapping for convenience to call because of dot (.)
+        param_mapping = {
+            "facet_field": "facet.field",
+            "facet_sort": "facet.sort",
+            "facet_mincount": "facet.mincount",
+            "facet_limit": "facet.limit"
+        }
+
+        for key, value in params.items():
+            if value is not None:
+                # Map parameter names if needed
+                actual_key = param_mapping.get(key, key)
+
+                if actual_key == "fq" and isinstance(value, list):
+                    self.query[actual_key] = value
+                elif actual_key == "fl" and isinstance(value, list):
+                    self.query[actual_key] = value
+                elif isinstance(value, list):
+                    self.query[actual_key] = value
+                else:
+                    self.query[actual_key] = str(value)
+
     @asynccontextmanager
     async def _session_get(self) -> AsyncIterator[Tuple[int, Dict[str, Any]]]:
         """Wrap the get request round a try and catch statement."""

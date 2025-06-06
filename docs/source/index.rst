@@ -125,6 +125,7 @@ Table of Content
 
    auth/index
    databrowser/index
+   stacapi/index
 
 Feedback and Support
 ====================

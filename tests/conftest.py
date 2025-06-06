@@ -142,7 +142,7 @@ def auth_instance() -> Iterator[Auth]:
 @pytest.fixture(scope="function")
 def cli_runner() -> Iterator[CliRunner]:
     """Set up a cli mock app."""
-    yield CliRunner(mix_stderr=False)
+    yield CliRunner()
     logger.reset_cli()
 
 

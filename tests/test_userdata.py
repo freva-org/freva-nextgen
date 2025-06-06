@@ -40,7 +40,7 @@ def test_delete_all_userdata_cli(
             app, ["data-count", "--flavour", "user", "--host", test_server]
         )
         assert res.exit_code == 0
-        assert int(res_count_after.output) == 0
+        assert int(res_count_after.stdout.strip()) == 0
     finally:
         auth_instance._auth_token = token
 
@@ -102,7 +102,7 @@ def test_add_userdata_cli_standard(
             app, ["data-count", "--flavour", "user", "--host", test_server]
         )
         assert res.exit_code == 0
-        assert int(res_count_before.output) < int(res_count_after.output)
+        assert int(res_count_before.stdout.strip()) < int(res_count_after.stdout.strip())
     finally:
         auth_instance._auth_token = token
 
@@ -146,7 +146,7 @@ def test_add_userdata_cli_all_successful_and_escape_char(
         res_count_middle = cli_runner.invoke(
             app, ["data-count", "--flavour", "user", "--host", test_server]
         )
-        assert int(res_count_before.output) <= int(res_count_middle.output)
+        assert int(res_count_before.stdout.strip()) <= int(res_count_middle.stdout.strip())
 
         res_del = cli_runner.invoke(
             app,
@@ -170,7 +170,7 @@ def test_add_userdata_cli_all_successful_and_escape_char(
             app, ["data-count", "--flavour", "user", "--host", test_server]
         )
         assert res_del.exit_code == 0
-        assert int(res_count_middle.output) == int(res_count_after.output)
+        assert int(res_count_middle.stdout.strip()) == int(res_count_after.stdout.strip())
     finally:
         auth_instance._auth_token = token
 
@@ -297,7 +297,7 @@ def test_add_userdata_cli_broken_file(
             app, ["data-count", "--flavour", "user", "--host", test_server]
         )
         assert res.exit_code == 0
-        assert int(res_count_before.output) == int(res_count_after.output)
+        assert int(res_count_before.stdout.strip()) == int(res_count_after.stdout.strip())
         # remove whatever is existing
         res = cli_runner.invoke(
             app,
@@ -357,7 +357,7 @@ def test_wrong_equal_facet(
             app, ["data-count", "--flavour", "user", "--host", test_server]
         )
         assert res.exit_code == 1
-        assert int(res_count_before.output) == int(res_count_after.output)
+        assert int(res_count_before.stdout.strip()) == int(res_count_after.stdout.strip())
         # remove whatever is existing
         res = cli_runner.invoke(
             app,

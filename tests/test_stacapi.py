@@ -110,3 +110,161 @@ def test_stacapi_fail(test_server: str) -> None:
 
     result = requests.get(f"{test_server}/stacapi/collections/cmip6/items/wrong_item_id")
     assert result.status_code == 404
+
+def test_stacapi_search_get(test_server: str) -> None:
+    """Test the STAC API search GET endpoint."""
+    res1 = requests.get(f"{test_server}/stacapi/search")
+    assert res1.status_code == 200
+    data = res1.json()
+    assert "features" in data
+    assert "type" in data
+    assert data["type"] == "FeatureCollection"
+    
+    res2 = requests.get(
+        f"{test_server}/stacapi/search",
+        params={"collections": "cmip6", "limit": 5}
+    )
+    assert res2.status_code == 200
+    
+    res3 = requests.get(
+        f"{test_server}/stacapi/search",
+        params={"bbox": "10,20,30,40", "limit": 3}
+    )
+    assert res3.status_code == 200
+    
+    # Invalid bbox format
+    res4 = requests.get(
+        f"{test_server}/stacapi/search",
+        params={"bbox": "invalid_bbox"}
+    )
+    assert res4.status_code == 422
+
+
+def test_stacapi_search_post(test_server: str) -> None:
+    """Test the STAC API search POST endpoint."""
+    search_body = {"limit": 5}
+    res1 = requests.post(
+        f"{test_server}/stacapi/search",
+        json=search_body
+    )
+    assert res1.status_code == 200
+    data = res1.json()
+    assert "features" in data
+    assert "type" in data
+    
+    search_body = {
+        "collections": ["cmip6"],
+        "limit": 3
+    }
+    res2 = requests.post(
+        f"{test_server}/stacapi/search",
+        json=search_body
+    )
+    assert res2.status_code == 200
+    
+    search_body = {
+        "bbox": [10, 20, 30, 40],
+        "limit": 2
+    }
+    res3 = requests.post(
+        f"{test_server}/stacapi/search",
+        json=search_body
+    )
+    assert res3.status_code == 200
+    
+    # Invalid POST body
+    res4 = requests.post(
+        f"{test_server}/stacapi/search",
+        json={"limit": 0}
+    )
+    assert res4.status_code == 422
+
+    # POST search with Free Text Search list
+    search_body = {
+        "q": "[cmip, temperature]",
+        "limit": 2
+    }
+    res5 = requests.post(
+        f"{test_server}/stacapi/search",
+        json=search_body
+    )
+    assert res5.status_code == 200
+
+    search_body = {
+        "q": "cmip",
+        "limit": 2
+    }
+    res6 = requests.post(
+        f"{test_server}/stacapi/search",
+        json=search_body
+    )
+    assert res6.status_code == 200
+    
+
+
+def test_stacapi_queryables(test_server: str) -> None:
+    """Test the STAC API queryables endpoints."""
+    res1 = requests.get(f"{test_server}/stacapi/queryables")
+    assert res1.status_code == 200
+    data = res1.json()
+    assert "$schema" in data
+    assert "properties" in data
+    
+    res2 = requests.get(
+        f"{test_server}/stacapi/collections/cmip6/queryables"
+    )
+    assert res2.status_code == 200
+    data = res2.json()
+    assert "$schema" in data
+    assert "properties" in data
+    
+    # Invalid collection queryables
+    res3 = requests.get(
+        f"{test_server}/stacapi/collections/invalid/queryables"
+    )
+    assert res3.status_code == 404
+
+
+def test_stacapi_ping(test_server: str) -> None:
+    """Test the nextgen STAC API ping endpoint."""
+    res = requests.get(f"{test_server}/stacapi/_mgmt/ping")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["message"] == "PONG"
+
+
+def test_stacapi_search_params(test_server: str) -> None:
+    """Test the nextgen STAC API search parameter validation."""
+
+    res1 = requests.get(
+        f"{test_server}/stacapi/search",
+        params={"datetime": "2023-01-01/2023-12-31", "limit": 2}
+    )
+    assert res1.status_code == 200
+    
+
+    res2 = requests.get(
+        f"{test_server}/stacapi/search",
+        params={"ids": "some_id", "limit": 1}
+    )
+    assert res2.status_code == 200
+    
+    # with free text search
+    res3 = requests.get(
+        f"{test_server}/stacapi/search",
+        params={"q": "climate,temperature", "limit": 2}
+    )
+    assert res3.status_code == 200
+    
+    res4 = requests.get(
+        f"{test_server}/stacapi/search",
+        params={"token": "next:search:some_id", "limit": 1}
+    )
+    assert res4.status_code == 200
+    
+    # Invalid token format
+    res5 = requests.get(
+        f"{test_server}/stacapi/search",
+        params={"token": "invalid_token_format"}
+    )
+    assert res5.status_code == 422
