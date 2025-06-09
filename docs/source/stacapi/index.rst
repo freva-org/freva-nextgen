@@ -12,7 +12,7 @@ The STAC API allows you to:
 - Integrate with STAC-compatible tools and libraries
 
 Getting Started
-------------------
+---------------
 
 The STAC API organizes data into **Collections** and **Items**:
 
@@ -28,7 +28,7 @@ Authentication is not required for read-only access to the STAC API.
 .. _stacapi-landing-page:
 
 Landing Page
----------------------------------
+~~~~~~~~~~~~~~~
 
 .. http:get:: /api/freva-nextgen/stacapi/
 
@@ -120,7 +120,7 @@ Landing Page
 .. _stacapi-conformance:
 
 Conformance Classes
----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. http:get:: /api/freva-nextgen/stacapi/conformance
 
@@ -160,7 +160,7 @@ Conformance Classes
 .. _stacapi-collections:
 
 Collections
--------------
+~~~~~~~~~~~~
 
 .. http:get:: /api/freva-nextgen/stacapi/collections
 
@@ -235,7 +235,7 @@ Collections
 .. _stacapi-collection-details:
 
 Get Collection
------------------
+~~~~~~~~~~~~~~~
 
 .. http:get:: /api/freva-nextgen/stacapi/collections/(str:collection_id)
 
@@ -293,7 +293,7 @@ Get Collection
 .. _stacapi-collection-items:
 
 Get Collection Items
-----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 .. http:get:: /api/freva-nextgen/stacapi/collections/(str:collection_id)/items
 
@@ -412,7 +412,7 @@ Get Collection Items
 .. _stacapi-collection-item-details:
 
 Get Collection Item Details
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. http:get:: /api/freva-nextgen/stacapi/collections/(str:collection_id)/items/(str:item_id)
 
@@ -476,7 +476,7 @@ Get Collection Item Details
 .. _stacapi-search:
 
 Search (GET)
------------------
+~~~~~~~~~~~~
 
 .. http:get:: /api/freva-nextgen/stacapi/search
 
@@ -589,7 +589,7 @@ Search (GET)
 .. _stacapi-search-post:
 
 Search (POST)
------------------
+~~~~~~~~~~~~~
 
 .. http:post:: /api/freva-nextgen/stacapi/search
 
@@ -672,7 +672,7 @@ Search (POST)
 .. _stacapi-queryables:
 
 Queryables
------------------
+~~~~~~~~~~~~
 
 .. http:get:: /api/freva-nextgen/stacapi/queryables
 
@@ -726,7 +726,7 @@ Queryables
 .. _stacapi-collection-queryables:
 
 Collection Queryables
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. http:get:: /api/freva-nextgen/stacapi/collections/(str:collection_id)/queryables
 
@@ -752,6 +752,7 @@ Collection Queryables
 
 
 ---
+
 
 STAC-API Integration
 ====================
@@ -794,3 +795,7 @@ Python Example with `pystac-client`
 
 .. note::
    Free text search (`q` parameter) searches across relevant metadata fields including variable names, experiments, models, and institutes. Multiple terms are combined with OR logic.
+
+.. important::
+   Data transaction and ingestion into the Freva STAC-API is managed by administrators using the `data-crawler <https://freva.gitlab-pages.dkrz.de/metadata-crawler-source/docs/>`_ tool. This has nothing to do with the STAC API itself, which is primarily focused on data discovery and access.
+

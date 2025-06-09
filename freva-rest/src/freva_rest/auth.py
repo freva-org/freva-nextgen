@@ -26,7 +26,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from .logger import logger
 from .rest import app, server_config
-from .utils import get_userinfo
+from .utils.base_utils import get_userinfo
 
 Required: Any = Ellipsis
 

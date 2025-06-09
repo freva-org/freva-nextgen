@@ -20,7 +20,14 @@ from fastapi.encoders import jsonable_encoder
 from freva_rest.config import ServerConfig
 from freva_rest.databrowser_api import Solr
 from freva_rest.logger import logger
-from freva_rest.utils import Asset, Item, Link, parse_bbox, parse_datetime
+from freva_rest.utils.stac_utils import (
+    Asset,
+    Item,
+    Link,
+    parse_bbox,
+    parse_datetime,
+)
+from freva_rest.utils.stats_utils import store_api_statistics
 
 from .schema import (
     CONFORMANCE_URLS,
@@ -145,6 +152,37 @@ class STACAPI:
                 .get("facet_fields", {})
                 .get("project", [])[::2]
             ),
+        )
+
+    async def store_results(
+        self,
+        num_results: int,
+        status: int,
+        endpoint: str,
+        query_params: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """Store STAC API query statistics.
+
+        Parameters
+        ----------
+        num_results: int
+            The number of results returned
+        status: int
+            The HTTP request status
+        endpoint: str
+            The STAC API endpoint name
+        query_params: Optional[Dict[str, Any]]
+            Query parameters used in the request
+        """
+        await store_api_statistics(
+            config=self.config,
+            num_results=num_results,
+            status=status,
+            api_type="stacapi",
+            endpoint=endpoint,
+            query_params=query_params or {},
+            uniq_key=self.uniq_key,
+            limit=self.limit
         )
 
     async def get_landing_page(self) -> Dict[str, Any]:

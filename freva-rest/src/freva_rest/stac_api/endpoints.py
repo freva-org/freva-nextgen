@@ -57,6 +57,7 @@ async def landing_page() -> JSONResponse:
     explore the available collections and items in the STAC API.
     """
     stac_instance = STACAPI(server_config)
+    await stac_instance.store_results(0, 200, "landing_page", {})
     response = await stac_instance.get_landing_page()
     return JSONResponse(response)
 
@@ -97,6 +98,7 @@ async def collections() -> StreamingResponse:
     and temporal extents.
     """
     stacapi_instance = STACAPI(server_config)
+    await stacapi_instance.store_results(0, 200, "collections", {})
     return StreamingResponse(
         stacapi_instance.get_collections(),
         media_type="application/json",
@@ -121,6 +123,9 @@ async def collection(collection_id: str) -> JSONResponse:
     The collection is identified by its ID.
     """
     stacapi_instance = STACAPI(server_config)
+    await stacapi_instance.store_results(
+        0, 200, "collection", {"collection_id": collection_id}
+    )
     collection = await stacapi_instance.get_collection(collection_id)
     return JSONResponse(
         collection.dict(exclude_none=True), media_type="application/json"
@@ -190,6 +195,14 @@ async def collection_items(
         uniuq_key="file",
         **STACAPISchema.process_parameters(request),
     )
+    query_params = {
+        "collection_id": collection_id,
+        "limit": limit,
+        "token": token,
+        "datetime": datetime,
+        "bbox": bbox
+    }
+    await stac_instance.store_results(0, 200, "collection_items", query_params)
     return StreamingResponse(
         stac_instance.get_collection_items(collection_id, limit, token, datetime, bbox),
         media_type="application/json",
@@ -217,6 +230,9 @@ async def collection_item(
     The collection is identified by its ID, and the item is identified by its ID.
     """
     stac_instance = STACAPI(server_config)
+    await stac_instance.store_results(
+        0, 200, "collection_item", {"collection_id": collection_id, "item_id": item_id}
+    )
     item = await stac_instance.get_collection_item(collection_id, item_id)
     return JSONResponse(
         item.to_dict(),
@@ -323,6 +339,13 @@ async def search_get(
         uniuq_key="file",
         **STACAPISchema.process_parameters(request),
     )
+    query_params = {
+        "collections": collections,
+        "ids": ids, "bbox": bbox,
+        "datetime": datetime,
+        "limit": limit,
+        "q": q}
+    await stac_instance.store_results(0, 200, "search_get", query_params)
     return StreamingResponse(
         stac_instance.get_search(
             collections=collections,
@@ -367,6 +390,14 @@ async def search_post(
         uniuq_key="file",
         **STACAPISchema.process_parameters(request),
     )
+
+    query_params = {
+        "collections": body.collections,
+        "ids": body.ids, "bbox": body.bbox,
+        "datetime": body.datetime, "limit": body.limit,
+        "q": body.q
+    }
+    await stac_instance.store_results(0, 200, "search_post", query_params)
 
     return StreamingResponse(
         stac_instance.post_search(

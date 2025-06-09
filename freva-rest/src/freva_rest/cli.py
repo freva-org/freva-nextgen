@@ -142,6 +142,9 @@ class Services(str, Enum):
     data_portal = "zarr-stream"
     databrowser = "databrowser"
     search = "databrowser"
+    stac = "stacapi"
+    stacpi = "stacapi"
+    stacbrowser = "stacapi"
 
 
 def get_cert_file(
@@ -186,7 +189,7 @@ def cli(argv: Optional[List[str]] = None) -> None:
         help="The services the API should serve",
         nargs="+",
         default=os.getenv("API_SERVICES", "").split(","),
-        choices=["databrowser", "zarr-stream"],
+        choices=["databrowser", "zarr-stream", "stacapi"],
     )
 
     args = parser.parse_args(argv)

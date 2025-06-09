@@ -33,6 +33,9 @@ from freva_rest import __version__
 from .config import ServerConfig
 from .logger import logger, reset_loggers
 
+server_config = ServerConfig()
+
+
 metadata_tags = [
     {
         "name": "Data search",
@@ -57,6 +60,13 @@ metadata_tags = [
         ),
     },
     {
+        "name": "Authentication",
+        "description": "These endpoints are for authentication.",
+    },
+]
+
+if "stacapi" in server_config.services:
+    metadata_tags.append({
         "name": "STAC API",
         "description": (
             "The SpatioTemporal Asset Catalog (STAC) family of specifications"
@@ -66,14 +76,7 @@ metadata_tags = [
             "designed to be simple and easy to use, while also being powerful "
             "and flexible enough to support a wide range of use cases."
         ),
-    },
-    {
-        "name": "Authentication",
-        "description": "These endpoints are for authentication.",
-    },
-]
-
-server_config = ServerConfig()
+    })
 
 
 @asynccontextmanager

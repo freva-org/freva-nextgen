@@ -13,7 +13,7 @@ env = [
     "API_REDIS_HOST=redis://localhost:6379",
     "API_REDIS_USER=redis",
     "API_REDIS_PASSWORD=secret",
-    "API_SERVICES=zarr-stream,databrowser",
+    "API_SERVICES=zarr-stream,databrowser,stacapi",
     "API_CONFIG={PWD}/freva-rest/src/freva_rest/api_config.toml",
 
 ]

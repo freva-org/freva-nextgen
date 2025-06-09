@@ -22,7 +22,13 @@ from fastapi import Request
 
 from freva_rest.config import ServerConfig
 from freva_rest.logger import logger
-from freva_rest.utils import Asset, Item, Link, parse_bbox, parse_datetime
+from freva_rest.utils.stac_utils import (
+    Asset,
+    Item,
+    Link,
+    parse_bbox,
+    parse_datetime,
+)
 
 from .core import FlavourType, Solr, Translator
 

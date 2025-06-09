@@ -1,15 +1,7 @@
 """Unit tests for data queries via the rest-api."""
 
-import json
-import os
-import time
-from typing import Dict
 import subprocess
-import mock
 import requests
-from pymongo import MongoClient
-
-from freva_rest.config import ServerConfig
 
 
 def test_stacapi_basic(test_server: str) -> None:

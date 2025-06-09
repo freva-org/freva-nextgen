@@ -1,18 +1,14 @@
 """The core functionality to interact with the apache solr search system."""
 
-import asyncio
 import json
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
-from functools import cached_property, wraps
+from functools import cached_property
 from typing import (
     Any,
     AsyncIterator,
-    Awaitable,
-    Callable,
-    Coroutine,
     Dict,
     Iterable,
     List,
@@ -35,7 +31,8 @@ from freva_rest import __version__
 from freva_rest.config import ServerConfig
 from freva_rest.exceptions import ValidationError
 from freva_rest.logger import logger
-from freva_rest.utils import create_redis_connection
+from freva_rest.utils.base_utils import create_redis_connection
+from freva_rest.utils.stats_utils import store_api_statistics
 
 FlavourType = Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"]
 IntakeType = TypedDict(
@@ -51,29 +48,6 @@ IntakeType = TypedDict(
         "aggregation_control": Dict[str, Any],
     },
 )
-
-
-def ensure_future(
-    async_func: Callable[..., Awaitable[Any]]
-) -> Callable[..., Coroutine[Any, Any, asyncio.Task[Any]]]:
-    """Decorator that runs any given asyncio function in the background."""
-
-    @wraps(async_func)
-    async def wrapper(*args: Any, **kwargs: Any) -> asyncio.Task[Any]:
-        """Async wrapper function that creates the call."""
-        try:
-            loop = (
-                asyncio.get_running_loop()
-            )  # Safely get the current running event loop
-        except RuntimeError:
-            # No running event loop, create a new one
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
-        # Schedule the coroutine for execution in the background
-        return asyncio.ensure_future(async_func(*args, **kwargs))
-
-    return wrapper
 
 
 class SearchResult(BaseModel):
@@ -943,8 +917,9 @@ class Solr:
             except Exception as error:
                 logger.exception("[MONGO] Could not insert metadata: %s", error)
 
-    @ensure_future
-    async def store_results(self, num_results: int, status: int) -> None:
+    async def store_results(
+            self, num_results: int, status: int, endpoint: str = "databrowser"
+    ) -> None:
         """Store the query into a database.
 
         Parameters
@@ -953,23 +928,21 @@ class Solr:
             The number of files that has been found.
         status: int
             The HTTP request status
+        endpoint: str
+            The endpoint name for tracking
         """
-        if num_results == 0:
-            return
-        data = {
-            "num_results": num_results,
-            "flavour": self.translator.flavour,
-            "uniq_key": self.uniq_key,
-            "server_status": status,
-            "date": datetime.now(),
-        }
         facets = {k: "&".join(v) for (k, v) in self.facets.items()}
-        try:
-            await self._config.mongo_collection_search.insert_one(
-                {"metadata": data, "query": facets}
-            )
-        except Exception as error:
-            logger.warning("Could not add stats to mongodb: %s", error)
+
+        await store_api_statistics(
+            config=self._config,
+            num_results=num_results,
+            status=status,
+            api_type="databrowser",
+            endpoint=endpoint,
+            query_params=facets,
+            flavour=self.translator.flavour,
+            uniq_key=self.uniq_key
+        )
 
     def _process_catalogue_result(self, out: Dict[str, List[Sized]]) -> Dict[str, Any]:
         return {

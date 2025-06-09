@@ -118,7 +118,7 @@ class ServerConfig(BaseModel):
             title="Services",
             description="The services that should be enabled.",
         ),
-    ] = os.getenv("API_SERVICES", "databrowser,zarr-stream")
+    ] = os.getenv("API_SERVICES", "databrowser,zarr-stream,stacapi")
     redis_host: Annotated[
         str,
         Field(
