@@ -12,6 +12,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Dict, Iterator
 
+import jwt
 import mock
 import pytest
 import requests
@@ -19,8 +20,9 @@ import uvicorn
 from typer.testing import CliRunner
 
 from data_portal_worker.cli import _main as run_data_loader
-from freva_client.auth import Auth, Token
+from freva_client.auth import Auth
 from freva_client.utils import logger
+from freva_client.utils.auth_utils import TOKEN_ENV_VAR, Token
 from freva_rest.api import app
 from freva_rest.config import ServerConfig
 from freva_rest.databrowser_api.mock import read_data
@@ -46,6 +48,29 @@ def run_test_server(port: int) -> None:
             uvicorn.run(
                 app, host="0.0.0.0", port=port, reload=False, workers=None
             )
+
+
+def mock_token_data(
+    valid_for: int = 3600,
+    refresh_for: int = 7200,
+) -> Token:
+    now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+    token_data = {
+        "result": "test_access_token",
+        "exp": now + valid_for,
+        "iat": now + valid_for,
+        "auth_time": now,
+        "aud": ["freva", "account"],
+        "realm_access": {"groups": ["/foo"]},
+    }
+    return Token(
+        access_token=jwt.encode(token_data, "PyJWK"),
+        token_type="Bearer",
+        expires=now + valid_for,
+        refresh_token="test_refresh_token",
+        refresh_expires=now + refresh_for,
+        scope="profile email address",
+    )
 
 
 def find_free_port() -> int:
@@ -124,6 +149,16 @@ def setup_server() -> Iterator[str]:
     yield f"http://localhost:{port}/api/freva-nextgen"
 
 
+@pytest.fixture(scope="function", autouse=True)
+def user_cache_dir() -> Iterator[str]:
+    """Mock the default user token file."""
+    with NamedTemporaryFile(suffix=".json") as temp_f:
+        with mock.patch.dict(
+            os.environ, {TOKEN_ENV_VAR: temp_f.name}, clear=False
+        ):
+            yield temp_f.name
+
+
 @pytest.fixture(scope="function")
 def temp_dir() -> Iterator[Path]:
     """Create a temporary directory."""
@@ -143,7 +178,9 @@ def loader_config() -> Iterator[bytes]:
 @pytest.fixture(scope="function")
 def auth_instance() -> Iterator[Auth]:
     """Fixture to provide a fresh Auth instance for each test."""
-    yield Auth()
+    auth = Auth()
+    auth._auth_token = mock_token_data()
+    yield auth
 
 
 @pytest.fixture(scope="function")
@@ -266,7 +303,7 @@ def auth(test_server: str) -> Iterator[Token]:
     }
     res = requests.post(
         server_config.oidc_overview["token_endpoint"],
-        data={k: v for (k, v) in data.items()},
+        data={k: v for (k, v) in data.items() if v.strip()},
     )
     token_data = res.json()
     expires_at = (

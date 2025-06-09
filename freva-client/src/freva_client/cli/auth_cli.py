@@ -1,13 +1,14 @@
 """Command line interface for authentication."""
 
 import json
-from pathlib import Path
+import os
 from typing import Optional
 
 import typer
 
-from freva_client import authenticate
+from freva_client.auth import Auth
 from freva_client.utils import exception_handler, logger
+from freva_client.utils.auth_utils import TOKEN_ENV_VAR, get_default_token_file
 
 from .cli_utils import version_callback
 
@@ -28,8 +29,8 @@ def authenticate_cli(
             "the hostname is read from a config file"
         ),
     ),
-    token_file: Optional[Path] = typer.Option(
-        None,
+    token_file: str = typer.Option(
+        os.getenv(TOKEN_ENV_VAR, "").strip(),
         "--token-file",
         help=(
             "Instead of authenticating via code based authentication flow "
@@ -54,13 +55,10 @@ def authenticate_cli(
 ) -> None:
     """Create OAuth2 access and refresh token."""
     logger.set_verbosity(verbose)
-    token_data = "{}"
-    if token_file and Path(token_file).is_file():
-        token_data = Path(token_file).read_text() or "{}"
-    refresh_token = json.loads(token_data).get("refresh_token")
-    token = authenticate(
+    token = Auth(token_file=token_file or get_default_token_file()).authenticate(
         host=host,
-        refresh_token=refresh_token,
         force=force,
+        _cli=True,
+        _auto=False,
     )
     print(json.dumps(token, indent=3))

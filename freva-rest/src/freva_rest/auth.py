@@ -10,6 +10,7 @@ from typing import (
     Awaitable,
     Callable,
     Dict,
+    List,
     Literal,
     Optional,
     Union,
@@ -45,6 +46,21 @@ class Prompt(str, Enum):
     select_account = "select_account"
 
 
+class AuthPorts(BaseModel):
+    """Response for vaid authports."""
+
+    valid_ports: Annotated[
+        List[int],
+        Field(
+            title="Valid local auth ports.",
+            description=(
+                "List valid redirect portss that being used for authentication"
+                " flow via localhost."
+            ),
+        ),
+    ]
+
+
 class SafeAuth:
     """
     A wrapper around fastapi_third_party_auth.Auth that safely delays
@@ -67,6 +83,7 @@ class SafeAuth:
         """
         self.discovery_url: str = (discovery_url or "").strip()
         self._auth: Optional[Auth] = None
+        self.timeout = TIMEOUT
 
     async def _check_server_available(self) -> bool:
         """
@@ -81,10 +98,11 @@ class SafeAuth:
         if not self.discovery_url:
             return False
         try:
-            async with aiohttp.ClientSession(timeout=TIMEOUT) as session:
+            async with aiohttp.ClientSession(timeout=self.timeout) as session:
                 async with session.get(self.discovery_url) as response:
                     return response.status == 200
-        except aiohttp.ClientError:
+        except Exception as error:
+            logger.debug("Could not connect to %s: %s", self.discovery_url, error)
             return False
 
     async def _ensure_auth_initialized(self) -> None:
@@ -128,8 +146,20 @@ class SafeAuth:
                     status_code=503,
                     detail="OIDC server unavailable, cannot validate token.",
                 )
-
-            return self._auth.required(security_scopes, authorization_credentials)
+            claim_check = "oidc.claims" in (security_scopes.scopes or [])
+            scopes = [
+                c for c in security_scopes.scopes or [] if c != "oidc.claims"
+            ]
+            token = self._auth.required(
+                SecurityScopes(scopes or None), authorization_credentials
+            )
+            if authorization_credentials is not None and claim_check:
+                if not token_field_matches(authorization_credentials.credentials):
+                    raise HTTPException(
+                        status_code=401,
+                        detail="Insufficient permissions based on token claims.",
+                    )
+            return token
 
         return dependency
 
@@ -250,7 +280,9 @@ async def oicd_request(
 
 @app.get("/api/freva-nextgen/auth/v2/userinfo", tags=["Authentication"])
 async def userinfo(
-    id_token: IDToken = Security(auth.required_dependency()),
+    id_token: IDToken = Security(
+        auth.required_dependency(), scopes=["oidc.claims"]
+    ),
     request: Request = Required,
 ) -> UserInfo:
     """Get userinfo for the current token."""
@@ -276,13 +308,12 @@ async def userinfo(
 
 
 @app.get(
-    "/api/freva-nextgen/auth/v2/.well-known/openid-configuration",
+    "/api/freva-nextgen/auth/v2/auth-ports",
     tags=["Authentication"],
-    response_class=RedirectResponse,
 )
-async def open_id_config() -> RedirectResponse:
+async def valid_ports() -> AuthPorts:
     """Get the open id connect configuration."""
-    return RedirectResponse(server_config.oidc_discovery_url)
+    return AuthPorts(valid_ports=server_config.oidc_auth_ports)
 
 
 @app.get(
@@ -495,10 +526,6 @@ async def fetch_or_refresh_token(
         data={k: v for (k, v) in data.items() if v},
     )
     token_data = await response.json()
-    if not token_field_matches(token_data["access_token"]):
-        raise HTTPException(
-            status_code=401, detail="Not allowed to access this resource."
-        )
     expires_at = (
         token_data.get("exp")
         or token_data.get("expires")

@@ -47,11 +47,14 @@ def token_field_matches(token: str) -> bool:
 
     matches: List[bool] = []
     token_data: Dict[str, Any] = {}
-    for token_filter in CONFIG.oidc_token_match:
+    for claim, pattern in (CONFIG.oidc_token_claims or {}).items():
         if not token_data:
             token_data = jwt.decode(token, options={"verify_signature": False})
-        value_str = str(_walk_dict(token_data, token_filter.claim.split(".")))
-        matches.append(bool(re.search(token_filter.pattern, value_str)))
+        value_str = str(_walk_dict(token_data, claim.split(".")))
+        for p in pattern:
+            matches.append(
+                bool(re.search(rf"\b{re.escape(str(p))}\b", value_str))
+            )
     return all(matches)
 
 
@@ -108,7 +111,7 @@ async def create_redis_connection(
         ssl_ca_certs=CONFIG.redis_ssl_certfile or None,
         db=0,
     )
-    if CACHING_SERVICES - CONFIG.services == CACHING_SERVICES:
+    if CACHING_SERVICES - set(CONFIG.services or []) == CACHING_SERVICES:
         # All services that would need caching are disabled.
         # If this is the case and we ended up here, we shouldn't be here.
         # tell the users.

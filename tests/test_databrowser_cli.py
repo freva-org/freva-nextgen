@@ -10,7 +10,7 @@ from tempfile import NamedTemporaryFile
 from pytest import LogCaptureFixture
 from typer.testing import CliRunner
 
-from freva_client.auth import Auth, Token
+from freva_client.auth import Auth
 from freva_client.cli.databrowser_cli import databrowser_app as app
 
 

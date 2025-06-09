@@ -5,10 +5,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
-from pytest_mock import MockerFixture
 
 from freva_client import databrowser
-from freva_client.auth import Auth, Token
+from freva_client.auth import Auth, AuthError, Token
 from freva_client.utils.logger import DatabrowserWarning
 
 
@@ -160,7 +159,7 @@ def test_intake_with_zarr(
     try:
         auth_instance._auth_token = None
         db = databrowser(host=test_server, dataset="cmip6-fs", stream_zarr=True)
-        with pytest.raises(ValueError):
+        with pytest.raises(AuthError):
             cat = db.intake_catalogue()
         auth_instance._auth_token = auth
         cat = db.intake_catalogue()
@@ -175,7 +174,7 @@ def test_zarr_stream(test_server: str, auth_instance: Auth, auth: Token) -> None
     try:
         auth_instance._auth_token = None
         db = databrowser(host=test_server, dataset="cmip6-fs", stream_zarr=True)
-        with pytest.raises(ValueError):
+        with pytest.raises(AuthError):
             _ = list(db)
         auth_instance._auth_token = auth
         files = list(db)

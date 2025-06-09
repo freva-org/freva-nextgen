@@ -291,7 +291,7 @@ class databrowser:
         headers = {}
         if self._stream_zarr:
             query_url = self._cfg.zarr_loader_url
-            token = self._auth.check_authentication(auth_url=self._cfg.auth_url)
+            token = self._auth.authenticate(config=self._cfg)
             headers = {"Authorization": f"Bearer {token['access_token']}"}
         result = self._request("GET", query_url, headers=headers, stream=True)
         if result is not None:
@@ -367,7 +367,7 @@ class databrowser:
         kwargs: Dict[str, Any] = {"stream": True}
         url = self._cfg.intake_url
         if self._stream_zarr:
-            token = self._auth.check_authentication(auth_url=self._cfg.auth_url)
+            token = self._auth.authenticate(config=self._cfg)
             url = self._cfg.zarr_loader_url
             kwargs["headers"] = {
                 "Authorization": f"Bearer {token['access_token']}"
@@ -987,7 +987,7 @@ class databrowser:
         userdata_items = userdata_items or []
         metadata = metadata or {}
         url = f"{this._cfg.userdata_url}"
-        token = this._auth.check_authentication(auth_url=this._cfg.auth_url)
+        token = this._auth.authenticate(config=this._cfg)
         headers = {"Authorization": f"Bearer {token['access_token']}"}
         payload_metadata: dict[str, Collection[Collection[str]]] = {}
 

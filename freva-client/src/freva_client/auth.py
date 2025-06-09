@@ -1,36 +1,48 @@
 """Module that handles the authentication at the rest service."""
 
 import datetime
+import json
 import socket
 import urllib.parse
 import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Dict, Optional, TypedDict, Union, cast
+from pathlib import Path
+from threading import Event, Lock, Thread
+from typing import Any, Dict, List, Optional, Union
 
 import requests
 
 from .utils import logger
+from .utils.auth_utils import (
+    Token,
+    choose_token_strategy,
+    get_default_token_file,
+    load_token,
+    wait_for_port,
+)
 from .utils.databrowser_utils import Config
 
 REDIRECT_URI = "http://localhost:{port}/callback"
+AUTH_FAILED_MSG = """Login failed or no valid token found in this environment.
+If you appear to be in a non-interactive or remote session create a new token
+via:
+
+   {command}
+
+Then pass the token file using:"
+
+"    {token_path} or set the $TOKEN_ENV_VAR env. variable."""
 
 
-Token = TypedDict(
-    "Token",
-    {
-        "access_token": str,
-        "token_type": str,
-        "expires": int,
-        "refresh_token": str,
-        "refresh_expires": int,
-        "scope": str,
-    },
-)
+class AuthError(Exception):
+    """Athentication error."""
+
+    pass
 
 
 class OAuthCallbackHandler(BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: object) -> None:
-        logger.info(format, *args)
+        logger.debug(format, *args)
 
     def do_GET(self) -> None:
         query = urllib.parse.urlparse(self.path).query
@@ -46,12 +58,20 @@ class OAuthCallbackHandler(BaseHTTPRequestHandler):
             self.wfile.write(b"Authorization code not found.")
 
 
-def start_local_server(port: int) -> Optional[str]:
+def start_local_server(port: int, event: Event) -> HTTPServer:
+    """Start local HTTP server to wait for a single callback."""
     server = HTTPServer(("localhost", port), OAuthCallbackHandler)
-    logger.info("Waiting for callback ...")
 
-    server.handle_request()
-    return getattr(server, "auth_code", None)
+    def handle() -> None:
+        logger.info("Waiting for browser callback on port %s ...", port)
+        while not event.is_set():
+            server.handle_request()
+            if getattr(server, "auth_code", None):
+                event.set()
+
+    thread = Thread(target=handle, daemon=True)
+    thread.start()
+    return server
 
 
 class Auth:
@@ -59,21 +79,26 @@ class Auth:
 
     _instance: Optional["Auth"] = None
     _auth_token: Optional[Token] = None
+    _thread_lock: Lock = Lock()
 
-    def __new__(cls) -> "Auth":
+    def __new__(cls, *args: Any, **kwargs: Any) -> "Auth":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, token_file: Optional[Union[str, Path]] = None) -> None:
+        self.token_file = str(token_file or "").strip() or None
 
-    def get_token(self, token_url: str, data: Dict[str, str]) -> Token:
+    def get_token(
+        self,
+        token_url: str,
+        data: Dict[str, str],
+    ) -> Token:
         try:
             response = requests.post(token_url, data=data)
             response.raise_for_status()
         except requests.exceptions.RequestException as error:
-            raise ValueError(f"Fetching token failed: {error}")
+            raise AuthError(f"Fetching token failed: {error}")
         auth = response.json()
         return self.set_token(
             access_token=auth["access_token"],
@@ -85,11 +110,14 @@ class Auth:
         )
 
     def _login(
-        self, auth_url: str, port: Optional[int] = None, force: bool = False
+        self,
+        auth_url: str,
+        force: bool = False,
+        _timeout: int = 30,
     ) -> Token:
         login_endpoint = f"{auth_url}/login"
         token_endpoint = f"{auth_url}/token"
-        port = port or self.find_free_port()
+        port = self.find_free_port(auth_url)
         redirect_uri = REDIRECT_URI.format(port=port)
         params = {
             "redirect_uri": redirect_uri,
@@ -100,23 +128,44 @@ class Auth:
         login_url = f"{login_endpoint}?{query}"
         logger.info("Opening browser for login:\n%s", login_url)
         logger.info(
-            "If you are using this on a remote host you might need to "
-            "forward port %i to your localhost via ssh:\n"
-            "   ssh -L %i:localhost:%i user@remotehost",
+            "If you are using this on a remote host, you might need to "
+            "forward port %d:\n"
+            "    ssh -L %d:localhost:%d user@remotehost",
             port,
             port,
             port,
         )
-
+        event = Event()
+        server = start_local_server(port, event)
+        code: Optional[str] = None
+        reason = "Login failed."
         try:
+            wait_for_port("localhost", port)
             webbrowser.open(login_url)
-        except Exception:
+            success = event.wait(timeout=_timeout)
+            if not success:
+                raise TimeoutError(
+                    f"Login did not complete within {_timeout} seconds. "
+                    "Possibly headless environment."
+                )
+            code = getattr(server, "auth_code", None)
+        except Exception as error:
             logger.warning(
-                "Could not open browser automatically. Please open the URL manually."
+                "Could not open browser automatically. %s"
+                "Please open the URL manually.",
+                error,
             )
-        code = start_local_server(port)
+            reason = str(error)
+
+        finally:
+            logger.debug("Cleaning up login state")
+            if hasattr(server, "server_close"):
+                try:
+                    server.server_close()
+                except Exception as error:
+                    logger.debug("Failed to close server cleanly: %s", error)
         if not code:
-            raise ValueError("No code received. Login probably failed.") from None
+            raise AuthError(reason)
         return self.get_token(
             token_endpoint,
             data={
@@ -127,20 +176,19 @@ class Auth:
         )
 
     @staticmethod
-    def find_free_port() -> int:
+    def find_free_port(auth_url: str) -> int:
         """Get a free port where we can start the test server."""
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(("", 0))
-            return cast(int, s.getsockname()[1])
-
-    @property
-    def token_expiration_time(self) -> datetime.datetime:
-        """Get the expiration time of an access token."""
-        if self._auth_token is None:
-            exp = 0.0
-        else:
-            exp = self._auth_token["expires"]
-        return datetime.datetime.fromtimestamp(exp, datetime.timezone.utc)
+        ports: List[int] = (
+            requests.get(f"{auth_url}/auth-ports").json().get("valid_ports", [])
+        )
+        for port in ports:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                try:
+                    s.bind(("localhost", port))
+                    return port
+                except (OSError, PermissionError):
+                    pass
+        raise OSError("No free ports available for login flow")
 
     def set_token(
         self,
@@ -164,68 +212,84 @@ class Auth:
             refresh_expires=int(refresh_expires or now + refresh_expires_in),
             scope=scope,
         )
+        default_token_file = get_default_token_file()
+        for _file in map(
+            Path, set((self.token_file or default_token_file, default_token_file))
+        ):
+            _file.parent.mkdir(exist_ok=True, parents=True)
+            _file.write_text(json.dumps(self._auth_token))
+            _file.chmod(0o600)
+
         return self._auth_token
 
     def _refresh(
-        self, url: str, refresh_token: str, port: Optional[int] = None
+        self,
+        url: str,
+        refresh_token: str,
     ) -> Token:
         """Refresh the access_token with a refresh token."""
         try:
             return self.get_token(
-                f"{url}/token", data={"refresh-token": refresh_token or ""}
+                f"{url}/token",
+                data={"refresh-token": refresh_token or ""},
             )
-        except (ValueError, KeyError) as error:
+        except (AuthError, KeyError) as error:
             logger.warning("Failed to refresh token: %s", error)
-            return self._login(url, port=port)
-
-    def check_authentication(self, auth_url: Optional[str] = None) -> Token:
-        """Check the status of the authentication.
-
-        Raises
-        ------
-        ValueError: If user isn't or is no longer authenticated.
-        """
-        if not self._auth_token:
-            raise ValueError("You must authenticate first.")
-        now = datetime.datetime.now(datetime.timezone.utc).timestamp()
-        if now > self._auth_token["refresh_expires"]:
-            raise ValueError("Refresh token has expired.")
-        if now > self._auth_token["expires"] and auth_url:
-            self._refresh(auth_url, self._auth_token["refresh_token"])
-        return self._auth_token
+            return self._login(url)
 
     def authenticate(
         self,
         host: Optional[str] = None,
-        refresh_token: Optional[str] = None,
-        force: bool = False,
+        config: Optional[Config] = None,
         *,
-        helper_port: Optional[int] = None,
+        force: bool = False,
+        _auto: bool = True,
+        _cli: bool = False,
     ) -> Token:
         """Authenticate the user to the host."""
-        cfg = Config(host)
-        if refresh_token:
-            try:
-                return self._refresh(cfg.auth_url, refresh_token)
-            except ValueError:
-                logger.warning(("Could not use refresh token, lgging in "))
-        if self._auth_token is None or force:
-            return self._login(cfg.auth_url, port=helper_port, force=force)
-        if self.token_expiration_time < datetime.datetime.now(
-            datetime.timezone.utc
-        ):
-            self._refresh(
-                cfg.auth_url, self._auth_token["refresh_token"], port=helper_port
-            )
-        return self._auth_token
+        cfg = config or Config(host)
+        token = self._auth_token or load_token(self.token_file)
+        reason: Optional[str] = None
+        if _auto:
+            strategy = choose_token_strategy(token)
+        else:
+            strategy = "browser_auth"
+        if strategy == "use_token" and token:
+            self._auth_token = token
+            return self._auth_token
+        try:
+            if strategy == "refresh_token" and token:
+                return self._refresh(cfg.auth_url, token["refresh_token"])
+            if strategy == "browser_auth":
+                if _auto:
+                    logger.warning("Automatically launching browser-based login")
+                return self._login(cfg.auth_url, force=force)
+        except AuthError as error:
+            reason = str(error)
+
+        command, token_path = {
+            True: ("freva-client auth", "--token-file /path/to/token.json"),
+            False: (
+                "freva_client.auth",
+                "`token_file='/path/to/token.json'`",
+            ),
+        }[_cli]
+
+        reason = reason or AUTH_FAILED_MSG.format(
+            command=command, token_path=token_path
+        )
+        if _cli:
+            logger.critical(reason)
+            raise SystemExit(1)
+        else:
+            raise AuthError(reason)
 
 
 def authenticate(
     *,
-    refresh_token: Optional[str] = None,
+    token_file: Optional[Union[Path, str]] = None,
     host: Optional[str] = None,
     force: bool = False,
-    helper_port: Optional[int] = None,
 ) -> Token:
     """Authenticate to the host.
 
@@ -240,10 +304,6 @@ def authenticate(
         The hostname of the REST server.
     force: bool, default: False
         Force token recreation, even if current token is still valid.
-    helper_port: int, default: None
-        The authentication process will spawn a web server that will open
-        the login url. You can specify the port where this web server should
-        be running on. If None chosen (default) a random port will be set.
 
     Returns
     -------
@@ -264,12 +324,11 @@ def authenticate(
     .. code-block:: python
 
         from freva_client import authenticate
-        token = authenticate(refresh_token="MYTOKEN")
+        token = authenticate(token_file="~/.freva-login-token.json")
     """
-    auth = Auth()
+    auth = Auth(token_file=token_file or None)
     return auth.authenticate(
         host=host,
-        refresh_token=refresh_token,
         force=force,
-        helper_port=helper_port,
+        _auto=False,
     )

@@ -19,18 +19,6 @@ from freva_client.utils import exception_handler, logger
 from .cli_utils import parse_cli_args, version_callback
 
 
-def _auth(url: str, token_file: Optional[Path]) -> None:
-    if token_file and Path(token_file).is_file():
-        token_data = json.loads(Path(token_file).read_text() or "{}")
-        token = token_data.get("access_token")
-        auth = Auth()
-        auth.set_token(
-            access_token=token, expires=auth.token_expiration_time.timestamp()
-        )
-    else:
-        raise ValueError("`--token-file` is required for authentication.")
-
-
 class UniqKeys(str, Enum):
     """Literal implementation for the cli."""
 
@@ -388,7 +376,7 @@ def data_search(
         **(parse_cli_args(search_keys or [])),
     )
     if zarr:
-        _auth(result._cfg.auth_url, token_file)
+        Auth(token_file).authenticate(host=host, _cli=True)
     if parse_json:
         print(json.dumps(sorted(result)))
     else:
@@ -537,7 +525,7 @@ def intake_catalogue(
         **(parse_cli_args(search_keys or [])),
     )
     if zarr:
-        _auth(result._cfg.auth_url, token_file)
+        Auth(token_file).authenticate(host=host, _cli=True)
     with NamedTemporaryFile(suffix=".json") as temp_f:
         result._create_intake_catalogue_file(str(filename or temp_f.name))
         if not filename:
@@ -884,8 +872,7 @@ def user_data_add(
     """Add user data into the databrowser."""
     logger.set_verbosity(verbose)
     logger.debug("Checking if the user has the right to add data")
-    result = databrowser(host=host)
-    _auth(result._cfg.auth_url, token_file)
+    Auth(token_file).authenticate(host=host, _cli=True)
 
     facet_dict = {}
     if facets:
@@ -941,8 +928,7 @@ def user_data_delete(
     """Delete user data from the databrowser."""
     logger.set_verbosity(verbose)
     logger.debug("Checking if the user has the right to delete data")
-    result = databrowser(host=host)
-    _auth(result._cfg.auth_url, token_file)
+    Auth(token_file).authenticate(host=host, _cli=True)
 
     search_key_dict = {}
     if search_keys:

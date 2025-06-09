@@ -48,23 +48,10 @@ services:
       - "8080:8080"
       - "8443:8443"
     command: |
-      start-dev
-      --hostname-strict=false
-      --import-realm
-      -Dkeycloak.migration.strategy=OVERWRITE_EXISTING
-  ldap:
-    image: docker.io/osixia/openldap:latest
-    environment:
-      LDAP_ORGANISATION: "My Organization"
-      LDAP_DOMAIN: "example.com"
-      LDAP_ADMIN_PASSWORD: "admin_password"
-      LDAP_ADMIN_USERNAME: "admin"
-    command: --copy-service
-    hostname: ldap
-    networks:
-      - freva-rest
-    volumes:
-      - ./config/keycloak/users.ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom/users.ldif
+         start-dev
+         --hostname-strict=false
+         --import-realm
+         -Dkeycloak.migration.strategy=OVERWRITE_EXISTING
   mongodb:
     networks:
       - freva-rest

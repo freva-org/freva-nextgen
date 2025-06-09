@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from types import TracebackType
+from typing import Annotated, Dict, List, Optional, Union
 
 import mock
 from pytest_mock import MockerFixture
@@ -147,3 +148,23 @@ def test_main(cli_runner: CliRunner) -> None:
     assert res.exit_code == 0
     assert res.stdout
     assert __version__ in res.stdout
+
+
+def test_cli_utils() -> None:
+    """Test functionality of some cli related utils."""
+    from freva_rest.cli import _dict_to_defaults, _is_type_annotation
+    from freva_rest.config import env_to_int
+
+    with mock.patch.dict(os.environ, {"DEBUG": "1"}, clear=False):
+        assert env_to_int("DEBUG", 0) == 1
+    assert env_to_int("DEBUG", 0) == 0
+
+    assert _dict_to_defaults({}) == []
+    assert _dict_to_defaults({"foo": "bar"}) == [("foo", "bar")]
+    assert _dict_to_defaults({"foo": ["1", "2"]}) == [("foo", "1"), ("foo", "2")]
+
+    inner_type = Union[Dict[str, str], List[str]]
+    assert _is_type_annotation(inner_type, dict) is True
+    assert (
+        _is_type_annotation(Annotated[Optional[inner_type], "foo"], dict) is True
+    )

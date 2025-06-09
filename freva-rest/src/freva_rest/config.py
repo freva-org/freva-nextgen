@@ -16,11 +16,14 @@ from typing import (
     Dict,
     Iterator,
     List,
+    Literal,
     Optional,
-    Set,
     Tuple,
+    Type,
+    TypeVar,
     Union,
     cast,
+    overload,
 )
 
 import requests
@@ -32,16 +35,59 @@ from .logger import logger, logger_file_handle
 
 ConfigItem = Union[str, int, float, None]
 
+T = TypeVar("T", str, int)
 
-class _TokenFilter(BaseModel):
-    """Claim-based filters in the format <claim>.<pattern>.
 
-    Each filter matches if the decoded JWT contains the
-    specified claim (e.g., group, role) and its value includes the given
-    pattern. Patterns can be plain substrings or regular expressions."""
+def env_to_int(env_var: str, fallback: int) -> int:
+    """Convert a env variable to a dict."""
+    var = os.getenv(env_var, "")
+    if not var.isdigit():
+        return fallback
+    return int(var)
 
-    claim: Annotated[str, Field(min_length=1)]
-    pattern: Annotated[str, Field(min_length=1)]
+
+def env_to_dict(env_var: str) -> Dict[str, List[str]]:
+    """Convert env variables to a dict.
+
+    key1:value1,key2:value2,key1:value2 -> {"key1": ["value1", "value2"],
+                                            "key2": ["value2"]}
+    """
+    result: Dict[str, List[str]] = {}
+    for kv in os.getenv(env_var, "").split(","):
+        key, _, value = kv.partition(":")
+        if key and value:
+            result.setdefault(key, [])
+            if value not in result[key]:
+                result[key].append(value)
+    return result
+
+
+@overload
+def env_to_list(
+    env_var: str, target_type: Type[int]
+) -> List[int]: ...  # pragma: no cover
+
+
+@overload
+def env_to_list(
+    env_var: str, target_type: Type[str]
+) -> List[str]: ...  # pragma: no cover
+
+
+def env_to_list(env_var: str, target_type: Type[T]) -> List[T]:
+    """Convert env variables to a List.
+
+    Converts a comma-separated string from an environment variable into a list
+    of the specified type.
+
+    Example:
+        key1,key2-> ["key1": "key2"]
+    """
+    return [
+        target_type(k.strip())
+        for k in set(os.getenv(env_var, "").split(","))
+        if k.strip()
+    ]
 
 
 class ServerConfig(BaseModel):
@@ -66,12 +112,12 @@ class ServerConfig(BaseModel):
         ),
     ] = os.getenv("API_PROXY", "")
     debug: Annotated[
-        Union[bool, int, str],
+        Union[bool, int],
         Field(
             title="Debug mode",
             description="Turn on debug mode",
         ),
-    ] = os.getenv("DEBUG", "0")
+    ] = env_to_int("DEBUG", 0)
     mongo_host: Annotated[
         str,
         Field(
@@ -115,21 +161,23 @@ class ServerConfig(BaseModel):
         ),
     ] = os.getenv("API_SOLR_CORE", "")
     cache_exp: Annotated[
-        str,
+        Optional[int],
         Field(
             title="Cache expiration.",
             description=(
                 "The expiration time in sec" "of the data loading cache."
             ),
         ),
-    ] = os.getenv("API_CACHE_EXP", "")
-    api_services: Annotated[
-        str,
+    ] = env_to_int("API_CACHE_EXP", 3600)
+    services: Annotated[
+        List[str],
         Field(
             title="Services",
+            alias="s",
+            alias_priority=1,
             description="The services that should be enabled.",
         ),
-    ] = os.getenv("API_SERVICES", "databrowser,zarr-stream")
+    ] = env_to_list("API_SERVICES", str)
     redis_host: Annotated[
         str,
         Field(
@@ -196,13 +244,13 @@ class ServerConfig(BaseModel):
             description="The OIDC client secret, if any, used for authentication.",
         ),
     ] = os.getenv("API_OIDC_CLIENT_SECRET", "")
-    oidc_token_filter: Annotated[
-        str,
+    oidc_token_claims: Annotated[
+        Optional[Dict[str, List[str]]],
         Field(
             title="Token claim filter.",
             description=(
-                "A list (,) separated, of claim-based filters in "
-                "the format <claim>:<pattern>. Each filter "
+                "Token claim-based filters in "
+                "the format [<key1.key2> <pattern>]. Each filter "
                 "matches if the decoded JWT contains the "
                 "specified claim (e.g., group, role) and its "
                 "value includes the given pattern. Patterns can "
@@ -210,7 +258,19 @@ class ServerConfig(BaseModel):
                 "Nested claims are defined by '.' separation."
             ),
         ),
-    ] = os.getenv("API_OIDC_TOKEN_FILTER", "")
+    ] = (
+        env_to_dict("API_OIDC_TOKEN_CLAIMS") or None
+    )
+    oidc_auth_ports: Annotated[
+        List[int],
+        Field(
+            title="Valid local auth ports.",
+            description=(
+                "List valid redirect portss that being used for authentication"
+                " flow via localhost."
+            ),
+        ),
+    ] = env_to_list("API_OIDC_AUTH_PORTS", int)
 
     def _read_config(self, section: str, key: str) -> Any:
         fallback = self._fallback_config[section][key] or None
@@ -227,17 +287,19 @@ class ServerConfig(BaseModel):
         except Exception as error:
             logger.critical("Failed to load config file: %s", error)
             self._config = self._fallback_config
-        if isinstance(self.debug, str):
-            self.debug = bool(int(self.debug))
         self.debug = bool(self.debug)
         self.set_debug(self.debug)
         self._mongo_client: Optional[AsyncIOMotorClient] = None
         self._solr_fields = self._get_solr_fields()
         self._oidc_overview: Optional[Dict[str, Any]] = None
-        self.api_services = self.api_services or ",".join(
-            self._read_config("restAPI", "services")
+        self.services = (
+            self.services or self._read_config("restAPI", "services") or []
         )
-        self._oidc_token_match: Optional[List[_TokenFilter]] = None
+        self.oidc_token_claims = (
+            self.oidc_token_claims
+            or self._read_config("oidc", "token_claims")
+            or {}
+        )
         self.proxy = (
             self.proxy
             or self._read_config("restAPI", "proxy")
@@ -276,6 +338,9 @@ class ServerConfig(BaseModel):
         self.redis_host = self.redis_host or self._read_config(
             "cache", "hostname"
         )
+        self.oidc_auth_ports = self.oidc_auth_ports or self._read_config(
+            "oidc", "auth_ports"
+        )
 
     @staticmethod
     def get_url(url: str, default_port: Union[str, int]) -> str:
@@ -287,11 +352,6 @@ class ServerConfig(BaseModel):
             return url
         return f"{url}:{default_port}"
         # If the original url has already a port in the suffix remove it
-
-    @property
-    def services(self) -> Set[str]:
-        """Define the services that are served."""
-        return set(s.strip() for s in self.api_services.split(",") if s.strip())
 
     @property
     def redis_url(self) -> str:
@@ -339,19 +399,6 @@ class ServerConfig(BaseModel):
     def reload(self) -> None:
         """Reload the configuration."""
         self.model_post_init()
-
-    @property
-    def oidc_token_match(self) -> List[_TokenFilter]:
-        if self._oidc_token_match is None:
-            self._oidc_token_match = []
-            for filter_pair in [
-                t.strip() for t in self.oidc_token_filter.split(",") if t.strip()
-            ] or (self._read_config("oidc", "token_filter") or []):
-                key, _, pattern = filter_pair.partition(":")
-                self._oidc_token_match.append(
-                    _TokenFilter(claim=key, pattern=pattern)
-                )
-        return self._oidc_token_match
 
     @property
     def oidc_overview(self) -> Dict[str, Any]:

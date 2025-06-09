@@ -42,7 +42,7 @@ environment variables are evaluated:
 - ``API_OIDC_CLIENT_ID``: Name of the client (app) that is used to create
                           the access tokens, defaults to freva
 - ``API_OIDC_CLIENT_SECRET``: You can set a client secret, if you have
-- ``API_OIDC_TOKEN_FILTER``:  Token claim filter
+- ``API_OIDC_TOKEN_CLAIMS``:  Valid token claims, to check against
 - ``API_SERVICES``:  The services the api should serve.
 
 📝  You can override the path to the default config file using the
@@ -59,7 +59,19 @@ from enum import Enum
 from pathlib import Path
 from socket import gethostname
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, List, Optional, Tuple, Union
+from types import NoneType
+from typing import (
+    Annotated,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    get_args,
+    get_origin,
+)
 
 import uvicorn
 from pydantic.fields import FieldInfo
@@ -71,6 +83,38 @@ from freva_rest import __version__
 
 from .config import ServerConfig
 from .logger import logger
+
+
+def _dict_to_defaults(
+    input_dict: Optional[Dict[str, Union[List[str], str]]],
+) -> List[Tuple[str, str]]:
+    """Convert to dict to argparse defaults."""
+    output: List[Tuple[str, str]] = []
+    input_dict = input_dict or {}
+    for key, value in input_dict.items():
+        if isinstance(value, str):
+            value = [value]
+        for v in value:
+            output.append((key, v))
+    return output
+
+
+def _is_type_annotation(annotation: Any, target_type: Type[Any]) -> bool:
+    """
+    Recursively check if a type annotation represents or contains the target_type
+    (e.g., dict, list, etc.), even if wrapped in Optional, Annotated, etc.
+    """
+    origin = get_origin(annotation)
+
+    if origin is Annotated:
+        return _is_type_annotation(get_args(annotation)[0], target_type)
+
+    if origin is Union:
+        return any(
+            _is_type_annotation(arg, target_type) for arg in get_args(annotation)
+        )
+
+    return origin is target_type or annotation is target_type
 
 
 class VersionAction(argparse._VersionAction):
@@ -88,9 +132,7 @@ class VersionAction(argparse._VersionAction):
         parser.exit()
 
 
-def create_arg_parser(
-    fields: Dict[str, FieldInfo], forbidden: List[str]
-) -> argparse.ArgumentParser:
+def create_arg_parser(fields: Dict[str, FieldInfo]) -> argparse.ArgumentParser:
     """Create the cli parser."""
     parser = argparse.ArgumentParser(
         prog="freva-rest-server",
@@ -112,22 +154,49 @@ def create_arg_parser(
         type=int,
     )
     for key, field in fields.items():
-        name = key.replace("_", "-")
+        args = [f'--{key.replace("_", "-")}']
+        if field.alias:
+            args.append(f"-{field.alias}")
         if field.annotation in (
             bool,
             Union[str, int, bool],
             Union[int, bool],
         ) or isinstance(field.default, bool):
             parser.add_argument(
-                f"--{name}",
+                *args,
                 help=field.description,
                 action="store_true",
                 default=False,
             )
+        elif field.annotation in (
+            Dict[str, str],
+            Dict[str, List[str]],
+            Union[Dict[str, str], NoneType],
+            Union[Dict[str, List[str]], NoneType],
+        ):
+            default = _dict_to_defaults(field.default)
 
-        elif name not in forbidden:
             parser.add_argument(
-                f"--{name}",
+                *args,
+                help=field.description,
+                default=default,
+                nargs=2,
+                action="append",
+            )
+
+        elif field.annotation in (
+            List[str],
+            Union[List[str], NoneType],
+        ):
+            parser.add_argument(
+                *args,
+                help=field.description,
+                default=field.default or None,
+                nargs="+",
+            )
+        elif key:
+            parser.add_argument(
+                *args,
                 help=field.description,
                 default=field.default or None,
                 type=type(field.default),
@@ -161,7 +230,7 @@ def get_cert_file(
 def cli(argv: Optional[List[str]] = None) -> None:
     """Start the freva rest API."""
     cfg = ServerConfig()
-    parser = create_arg_parser(cfg.model_fields, ["api-services"])
+    parser = create_arg_parser(cfg.model_fields)
     parser.add_argument(
         "--dev", action="store_true", help="Enable development mode"
     )
@@ -180,14 +249,6 @@ def cli(argv: Optional[List[str]] = None) -> None:
         ),
         type=Path,
         default=None,
-    ),
-    parser.add_argument(
-        "--services",
-        "-s",
-        help="The services the API should serve",
-        nargs="+",
-        default=os.getenv("API_SERVICES", "").split(","),
-        choices=["databrowser", "zarr-stream"],
     )
     parser.add_argument(
         "--reload", help="Enable hot reloading.", action="store_true"
@@ -202,16 +263,25 @@ def cli(argv: Optional[List[str]] = None) -> None:
     defaults: Dict[str, str] = {
         "API_CONFIG": str(Path(args.config).expanduser().absolute()),
         "DEBUG": str(int(args.debug)),
-        "API_SERVICES": ",".join(args.services or "").replace("_", "-"),
         "API_REDIS_SSL_KEYFILE": str(ssl_key or ""),
         "API_REDIS_SSL_CERTFILE": str(ssl_cert or ""),
         "API_PROXY": args.proxy or f"http://{gethostname()}:{args.port}",
     }
-    cfg = ServerConfig(config=args.config, debug=args.debug)
     for key, value in args._get_kwargs():
         name = key.upper().removeprefix("API_")
-        if key in cfg.model_fields and key not in ["debug"]:
-            defaults.setdefault(f"API_{name}", str(value or ""))
+        if key in ServerConfig.model_fields and key not in ["debug"]:
+            annotation = ServerConfig.model_fields[key].annotation
+            if _is_type_annotation(annotation, list):
+                iter_value = value or []
+                entries = [v.strip() for v in iter_value if v.strip()]
+                defaults.setdefault(f"API_{name}", ",".join(entries))
+            elif _is_type_annotation(annotation, dict):
+                iter_value = value or []
+                entries = list(set([f"{k}:{v}" for (k, v) in iter_value]))
+                defaults.setdefault(f"API_{name}", ",".join(entries))
+            else:
+                defaults.setdefault(f"API_{name}", str(value or ""))
+    defaults = {k: v for k, v in defaults.items() if v}
     if args.dev:
         from freva_rest.databrowser_api.mock import read_data
 
@@ -220,7 +290,13 @@ def cli(argv: Optional[List[str]] = None) -> None:
     workers = {False: args.n_workers, True: None}
     with NamedTemporaryFile(suffix=".conf", prefix="env") as temp_f:
         env = "\n".join(
-            [f"{k}={v.strip()}" for (k, v) in defaults.items() if v.strip()]
+            set(
+                [
+                    f"{k}={v.strip()}"
+                    for (k, v) in set(defaults.items())
+                    if v.strip()
+                ]
+            )
         )
         Path(temp_f.name).write_text(env, encoding="utf-8")
         uvicorn.run(

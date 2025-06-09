@@ -107,14 +107,18 @@ discovery_url = "http://localhost:8080/realms/freva/.well-known/openid-configura
 
 # Client ID registered with the OIDC provider. This ID identifies the API as
 # an authorized client application for secure access.
-client_id = "freva"
+client_id = ""
 
 # Secret key associated with the client ID. Keep this secure as it is used to
 # authenticate the API to the OIDC provider.
 client_secret = ""
 
-# A list of claim-based filters in the format <claim>.<pattern>. Each
-# filter matches if the decoded JWT contains the
-# specified claim (e.g., group, role) and its value includes the given
-#pattern. Patterns can be plain substrings or regular expressions.
-token_filter = []
+# A dict of claim-based filters in {<key1.key2> = <pattern>}. Each filter
+# matches if the decoded JWT contains the specified claim
+# (e.g., group, role) and its value includes the given pattern. Patterns can
+# be plain substrings or regular expressions.
+# Nested claims are defined by '.' separation.
+token_claims = {}
+
+## Valid ports that should support the auth flow via localhost
+auth_ports = [53100, 53101, 53102, 53103, 53104, 53105]

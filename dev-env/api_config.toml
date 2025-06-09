@@ -27,5 +27,5 @@ key_file = ""
 
 [oidc]
 discovery_url = "http://localhost:8080/realms/freva/.well-known/openid-configuration"
-client_id = "freva"
+client_id = ""
 client_secret = ""
