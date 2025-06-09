@@ -379,7 +379,7 @@ async def search_post(
     request: Request,
     body: SearchPostRequest = Body(...),
 ) -> StreamingResponse:
-    """STAC API search endpoint (POST) with free text search support."""
+    """STAC API search endpoint (POST)"""
 
     stac_instance = await STACAPI.validate_parameters(
         config=server_config,

@@ -192,9 +192,9 @@ class STACAPI:
         collection_ids = await self.get_all_project_facets()
         response = {
             "type": "Catalog",
-            "id": "freva-nextgen",
-            "title": "I'm a STAC API",
-            "description": "FAIR data for the Freva NextGen",
+            "id": "freva",
+            "title": "Freva STAC-API",
+            "description": "FAIR data for the Freva",
             "stac_version": STAC_VERSION,
             "stac_extensions": ["https://api.stacspec.org/v1.0.0/core"],
             "conformsTo": CONFORMANCE_URLS,
@@ -275,7 +275,8 @@ class STACAPI:
         """Get a specific collection."""
         # TODO: We need to define a new core in Solr which contains the
         # description of each collection and all other metadata we need
-        # for constructing this. For now we define them all as constants.
+        # for constructing this. For time being we define them all as
+        # constants, since we don't have any usecase for this yet.
         # TODO: We need to add assets to the collections
 
         collection_ids = await self.get_all_project_facets()
@@ -373,7 +374,7 @@ class STACAPI:
             keywords=[collection_id, "climate", "analysis", "freva"],
             providers=[
                 STACProvider(
-                    name="Freva NextGen",
+                    name="Freva",
                     description=(
                         "The Freva is a platform for climate data analysis and "
                         "evaluation, providing access to various datasets and tools."
@@ -1047,7 +1048,7 @@ class STACAPI:
             "$schema": "https://json-schema.org/draft/2019-09/schema",
             "$id": f"{self.config.proxy}/api/freva-nextgen/stacapi/queryables",
             "type": "object",
-            "title": "Queryables for Freva NextGen STAC API",
+            "title": "Queryables for Freva STAC-API",
             "description": (
                 "Queryable properties available for"
                 " filtering items across all collections"

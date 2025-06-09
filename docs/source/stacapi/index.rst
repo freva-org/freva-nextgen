@@ -6,7 +6,7 @@ The Freva STAC (SpatioTemporal Asset Catalog) API provides a standardized way to
 The STAC API allows you to:
 
 - Browse collections of climate datasets
-- Search for specific data items across collections
+- Free text-search for specific data items across collections
 - Access detailed metadata about datasets and their spatial/temporal coverage
 - Use standardized filtering and pagination
 - Integrate with STAC-compatible tools and libraries
@@ -16,9 +16,9 @@ Getting Started
 
 The STAC API organizes data into **Collections** and **Items**:
 
-- **Collections**: Groups of related datasets (e.g., "observations", "CMIP6")
+- **Collections**: ``project`` search parameters (e.g., "observations", "CMIP6")
 
-- **Items**: Individual dataset files with geospatial and temporal metadata
+- **Items**: Individual dataset ``files`` with geospatial and temporal metadata
 
 Authentication is not required for read-only access to the STAC API.
 
@@ -58,9 +58,9 @@ Landing Page
 
         {
             "type": "Catalog",
-            "id": "freva-nextgen",
-            "title": "I'm a STAC API",
-            "description": "FAIR data for the Freva NextGen",
+            "id": "freva",
+            "title": "Freva STAC-API",
+            "description": "FAIR data for the Freva",
             "stac_version": "1.1.0",
             "stac_extensions": ["https://api.stacspec.org/v1.0.0/core"],
             "conformsTo": [
@@ -757,7 +757,7 @@ Collection Queryables
 STAC-API Integration
 ====================
 
-The Freva STAC API is fully compatible with STAC-compliant tools and libraries. You can use popular tools like:
+The Freva STAC-API is fully compatible with STAC-compliant tools and libraries. You can use popular tools like:
 
 - **Python**: `pystac-client`, `pystac`, `stackstac`
 - **R**: `rstac`
@@ -791,10 +791,7 @@ Python Example with `pystac-client`
    Please note that in these examples, "https://www.freva.dkrz.de" is used as a placeholder URL. You should replace it with the actual URL of your Freva STAC API instance.
 
 .. note::
-   The STAC API follows cursor-based pagination. Use the `token` parameter with values from the `next` and `previous` links in responses to navigate through result pages.
-
-.. note::
-   Free text search (`q` parameter) searches across relevant metadata fields including variable names, experiments, models, and institutes. Multiple terms are combined with OR logic.
+   Free text search (`q` parameter) searches across relevant metadata fields including variable names, experiments, models, and institutes.
 
 .. important::
    Data transaction and ingestion into the Freva STAC-API is managed by administrators using the `data-crawler <https://freva.gitlab-pages.dkrz.de/metadata-crawler-source/docs/>`_ tool. This has nothing to do with the STAC API itself, which is primarily focused on data discovery and access.

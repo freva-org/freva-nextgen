@@ -24,7 +24,7 @@ CONFORMANCE_URLS = [
 
 
 class STACLinks(BaseModel):
-    """STAC Links for navigation."""
+    """STAC Links model"""
     href: str = Field(..., description="Link URL")
     rel: str = Field(..., description="Link relation")
     type: Optional[str] = Field(None, description="Media type")
@@ -37,13 +37,13 @@ class STACLinks(BaseModel):
 
 
 class STACExtent(BaseModel):
-    """STAC Extent model for spatial and temporal boundaries."""
+    """STAC Extent model."""
     spatial: Dict[str, Any] = Field(..., description="Spatial extent")
     temporal: Dict[str, Any] = Field(..., description="Temporal extent")
 
 
 class STACProvider(BaseModel):
-    """STAC Provider information."""
+    """STAC Provider model."""
     name: str = Field(..., description="Provider name")
     description: Optional[str] = Field(None, description="Provider description")
     roles: Optional[List[str]] = Field(None, description="Provider roles")
@@ -65,9 +65,9 @@ class LandingPageResponse(BaseModel):
             "example": {
                 "type": "Catalog",
                 "stac_version": "1.1.0",
-                "id": "freva-nextgen",
-                "title": "FREVA NextGen STAC API",
-                "description": "STAC API for FREVA NextGen climate data catalog",
+                "id": "freva",
+                "title": "FREVA STAC-API",
+                "description": "FAIR data for Freva STAC-API",
                 "links": [
                     {
                         "rel": "self",
@@ -142,9 +142,9 @@ class STACCollection(BaseModel):
             "example": {
                 "type": "Collection",
                 "stac_version": "1.1.0",
-                "id": "climate-data",
-                "title": "Climate Data Collection",
-                "description": "A collection of climate data files",
+                "id": "project",
+                "title": "Freva project search parameters",
+                "description": "A collection of data",
                 "license": "proprietary",
                 "extent": {
                     "spatial": {
@@ -158,14 +158,14 @@ class STACCollection(BaseModel):
                     {
                         "rel": "self",
                         "type": "application/json",
-                        "href": "/api/freva-nextgen/stacapi/collections/climate-data"
+                        "href": "/api/freva-nextgen/stacapi/collections/observations"
                     },
                     {
                         "rel": "items",
                         "type": "application/geo+json",
                         "href": (
                             "/api/freva-nextgen/stacapi/"
-                            "collections/climate-data/items"
+                            "collections/observations/items"
                         )
                     }
                 ]
@@ -185,9 +185,9 @@ class CollectionsResponse(BaseModel):
                     {
                         "type": "Collection",
                         "stac_version": "1.1.0",
-                        "id": "climate-data",
-                        "title": "Climate Data Collection",
-                        "description": "A collection of climate data files",
+                        "id": "project",
+                        "title": "Freva project search parameters",
+                        "description": "FAIR data for Freva STAC-API",
                         "license": "proprietary",
                         "extent": {
                             "spatial": {"bbox": [[-180, -90, 180, 90]]},
@@ -237,7 +237,7 @@ class STACItem(BaseModel):
             "example": {
                 "type": "Feature",
                 "stac_version": "1.1.0",
-                "id": "climate-item-001",
+                "id": "12345678",
                 "geometry": {
                     "type": "Polygon",
                     "coordinates": [[[-180, -90],
@@ -249,17 +249,17 @@ class STACItem(BaseModel):
                 "bbox": [-180, -90, 180, 90],
                 "properties": {
                     "datetime": "2023-01-01T00:00:00Z",
-                    "title": "Climate Data File",
-                    "description": "Monthly climate data for January 2023"
+                    "title": "cmip6 January 2023",
+                    "description": "Monthly cmip data for January 2023"
                 },
-                "collection": "climate-data",
+                "collection": "cmip6",
                 "links": [
                     {
                         "rel": "self",
                         "type": "application/geo+json",
                         "href": (
                             "/api/freva-nextgen/stacapi/collections/"
-                            "climate-data/items/climate-item-001"
+                            "cmip6/items/12345678"
                         )
                     }
                 ],
@@ -267,7 +267,7 @@ class STACItem(BaseModel):
                     "data": {
                         "href": "/path/to/data.nc",
                         "type": "application/netcdf",
-                        "title": "Climate Data File"
+                        "title": "data asset",
                     }
                 }
             }
@@ -306,7 +306,7 @@ class ItemCollectionResponse(BaseModel):
                     {
                         "type": "Feature",
                         "stac_version": "1.1.0",
-                        "id": "climate-item-001",
+                        "id": "12345678",
                         "geometry": {
                             "type": "Point",
                             "coordinates": [0, 0]
@@ -314,7 +314,7 @@ class ItemCollectionResponse(BaseModel):
                         "properties": {
                             "datetime": "2023-01-01T00:00:00Z"
                         },
-                        "collection": "climate-data",
+                        "collection": "cmip6",
                         "links": [],
                         "assets": {}
                     }
@@ -332,7 +332,7 @@ class ItemCollectionResponse(BaseModel):
                         "type": "application/geo+json",
                         "href": (
                             "/api/freva-nextgen/stacapi/search?limit=10&"
-                            "token=next:search:item-010"
+                            "token=next:search:12345678"
                         )
                     }
                 ]
@@ -394,20 +394,6 @@ class PingResponse(BaseModel):
         json_schema_extra = {
             "example": {
                 "message": "PONG"
-            }
-        }
-
-
-class ErrorResponse(BaseModel):
-    """Error response model."""
-    code: int = Field(..., description="Error code")
-    description: str = Field(..., description="Error description")
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "code": 404,
-                "description": "Collection not found"
             }
         }
 
