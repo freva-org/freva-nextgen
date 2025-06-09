@@ -62,7 +62,7 @@ class STACAPI:
     ) -> None:
         self.config = config
         self.uniq_key = uniuq_key
-        self.solr_object = Solr(config)
+        self.solr_object = Solr(config, multi_version=False)
         self.stacapi_query = query
         self.limit = limit
         self.token = token

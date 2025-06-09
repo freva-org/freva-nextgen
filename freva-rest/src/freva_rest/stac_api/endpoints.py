@@ -1,4 +1,4 @@
-"""Replicate the STAC-API Endpoints - MINIMAL CHANGES (just add response_model)."""
+"""Replicate the STAC-API Endpoints"""
 
 from typing import Optional
 
