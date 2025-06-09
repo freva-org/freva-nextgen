@@ -16,7 +16,6 @@ from typing import (
     Dict,
     Iterator,
     List,
-    Literal,
     Optional,
     Tuple,
     Type,
@@ -63,15 +62,11 @@ def env_to_dict(env_var: str) -> Dict[str, List[str]]:
 
 
 @overload
-def env_to_list(
-    env_var: str, target_type: Type[int]
-) -> List[int]: ...  # pragma: no cover
+def env_to_list(env_var: str, target_type: Type[int]) -> List[int]: ...
 
 
 @overload
-def env_to_list(
-    env_var: str, target_type: Type[str]
-) -> List[str]: ...  # pragma: no cover
+def env_to_list(env_var: str, target_type: Type[str]) -> List[str]: ...
 
 
 def env_to_list(env_var: str, target_type: Type[T]) -> List[T]:
