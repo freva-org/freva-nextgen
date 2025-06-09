@@ -124,7 +124,7 @@ jobs:
 
       - name: Set up services
         run: |
-          docker compose -f dev-env/docker-compose.yaml up -d redis ldap keycloak --remove-orphans
+          docker compose -f dev-env/docker-compose.yaml up -d redis keycloak --remove-orphans
 
       - name: Build freva-rest-server image
         uses: docker/build-push-action@v4
