@@ -7,7 +7,7 @@ from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, List
+from typing import Any, Dict, List, NamedTuple
 from unittest.mock import AsyncMock, patch
 
 import jwt
@@ -17,11 +17,7 @@ from aiohttp import ClientTimeout
 from pytest_mock import MockerFixture
 from typer.testing import CliRunner
 
-from freva_client.auth import (
-    Auth,
-    AuthError,
-    authenticate,
-)
+from freva_client.auth import Auth, AuthError, authenticate
 from freva_client.cli import app as cli_app
 from freva_client.utils.auth_utils import TOKEN_ENV_VAR, wait_for_port
 
@@ -431,7 +427,6 @@ def test_userinfo_failed(
     mocker: MockerFixture, test_server: str, auth: Dict[str, str]
 ) -> None:
     """Test failing user info."""
-    from freva_rest.utils import CONFIG
 
     mocker.patch("freva_rest.auth.get_userinfo", return_value={})
     with patch("aiohttp.ClientSession.request", new=mock_request):
@@ -441,15 +436,52 @@ def test_userinfo_failed(
             timeout=3,
         )
         assert res.status_code > 400 and res.status_code < 500
-        mocker.patch.object(
-            CONFIG, "oidc_token_claims", {"resources.roles.foo": ["bar"]}
-        )
+
+
+def test_system_user(
+    mocker: MockerFixture,
+    test_server: str,
+    auth: Dict[str, str],
+) -> None:
+    """Test the system user endpoint."""
+    from freva_rest.utils import CONFIG
+
+    class MockPwNam(NamedTuple):
+        """Mock The getpwnam method."""
+
+        pw_name: str = "janedoe"
+        pw_passwd: str = "x"
+        pw_uid: int = 1000
+        pw_gid: int = 1001
+        pw_gecos: str = "Jane Doe"
+        pw_dir: str = "/home/jane"
+        pw_shell: str = "/bin/bash"
+
+    res = requests.get(
+        f"{test_server}/auth/v2/systemuser",
+        headers={"Authorization": f"Bearer {auth['access_token']}"},
+        timeout=3,
+    )
+    assert res.status_code == 401
+
+    with patch("freva_rest.auth.getpwnam", return_value=MockPwNam()):
         res = requests.get(
-            f"{test_server}/auth/v2/userinfo",
+            f"{test_server}/auth/v2/systemuser",
             headers={"Authorization": f"Bearer {auth['access_token']}"},
             timeout=3,
         )
-        assert res.status_code == 401
+        assert res.status_code == 200
+        assert "pw_name" in res.json()
+        assert res.json()["pw_name"] == "janedoe"
+    mocker.patch.object(
+        CONFIG, "oidc_token_claims", {"resources.roles.foo": ["bar"]}
+    )
+    res = requests.get(
+        f"{test_server}/auth/v2/systemuser",
+        headers={"Authorization": f"Bearer {auth['access_token']}"},
+        timeout=3,
+    )
+    assert res.status_code == 401
 
 
 def test_token_status(test_server: str, auth: Dict[str, str]) -> None:

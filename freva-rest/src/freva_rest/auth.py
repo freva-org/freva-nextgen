@@ -4,6 +4,7 @@ import asyncio
 import datetime
 import secrets
 from enum import Enum
+from pwd import getpwnam
 from typing import (
     Annotated,
     Any,
@@ -167,6 +168,53 @@ class SafeAuth:
 auth = SafeAuth(server_config.oidc_discovery_url)
 
 
+class SystemUser(BaseModel):
+    """Represents a Unix system user as returned by `pwd.getpwnam`.
+
+    This model maps the standard fields of a user's passwd entry and is suitable
+    for serializing system-level account information in APIs. Note that this
+    does not include shadow password data (e.g., from `/etc/shadow`), only what
+    is available from `/etc/passwd`.
+    """
+
+    pw_name: Annotated[
+        str, Field(description="Username string", examples=["janedoe"])
+    ]
+    pw_passwd: Annotated[
+        str,
+        Field(
+            default="x",
+            description=(
+                "Password field (usually 'x' for shadow " "password entries)"
+            ),
+            examples=["x"],
+        ),
+    ]
+    pw_uid: Annotated[int, Field(description="User ID (UID)", examples=[1001])]
+    pw_gid: Annotated[int, Field(description="Group ID (GID)", examples=[1001])]
+    pw_gecos: Annotated[
+        str,
+        Field(
+            description="User's full name or additional info (GECOS field)",
+            examples=["Jane Doe"],
+        ),
+    ]
+    pw_dir: Annotated[
+        str,
+        Field(
+            default="",
+            description="User's home directory",
+            examples=["/home/jane"],
+        ),
+    ]
+    pw_shell: Annotated[
+        str,
+        Field(
+            default="", description="User's login shell", examples=["/bin/bash"]
+        ),
+    ]
+
+
 class UserInfo(BaseModel):
     """Basic user info."""
 
@@ -192,28 +240,12 @@ class UserInfo(BaseModel):
             description="Given name of the person the token belongs to.",
         ),
     ]
-    is_guest: Annotated[
-        bool,
-        Field(
-            title="Guest User?",
-            description=(
-                "Flag that indicates whehter or not the user is "
-                "System Security Services Daemon (SSSD)"
-            ),
-        ),
-    ]
     email: Annotated[
         Optional[str],
         Field(
+            default=None,
             title="Email",
             description="Email address of the user the token belongs to.",
-        ),
-    ] = None
-    home: Annotated[
-        Optional[str],
-        Field(
-            title="Home Dir",
-            description="The home directory of the user - if applicable.",
         ),
     ] = None
 
@@ -280,9 +312,7 @@ async def oicd_request(
 
 @app.get("/api/freva-nextgen/auth/v2/userinfo", tags=["Authentication"])
 async def userinfo(
-    id_token: IDToken = Security(
-        auth.required_dependency(), scopes=["oidc.claims"]
-    ),
+    id_token: IDToken = Security(auth.required_dependency()),
     request: Request = Required,
 ) -> UserInfo:
     """Get userinfo for the current token."""
@@ -305,6 +335,43 @@ async def userinfo(
             )
         except ValidationError:
             raise HTTPException(status_code=404)
+
+
+@app.get(
+    "/api/freva-nextgen/auth/v2/systemuser",
+    tags=["Authentication"],
+    response_model=SystemUser,
+    response_description="Information about a system user",
+)
+async def system_user(
+    id_token: IDToken = Security(
+        auth.required_dependency(), scopes=["oidc.claims"]
+    ),
+    request: Request = Required,
+) -> SystemUser:
+    """Return the password database entry for the given user name."""
+    keys = ("preferred-username", "user-name", "uid")
+    token_data = {k.lower(): str(v) for (k, v) in dict(id_token).items()}
+    uid = ""
+    for key in keys:
+        for _id in set((key, key.replace("-", "_"), key.replace("-", ""))):
+            if token_data.get(_id):
+                uid = token_data[_id]
+        if uid:
+            break
+    try:
+        pw_entry = getpwnam(uid)
+    except KeyError:
+        raise HTTPException(status_code=401, detail="User unkown.")
+    return SystemUser(
+        pw_name=pw_entry.pw_name,
+        pw_passwd=pw_entry.pw_passwd,
+        pw_uid=pw_entry.pw_uid,
+        pw_gid=pw_entry.pw_gid,
+        pw_gecos=pw_entry.pw_gecos,
+        pw_dir=pw_entry.pw_dir,
+        pw_shell=pw_entry.pw_shell,
+    )
 
 
 @app.get(

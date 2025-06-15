@@ -1,7 +1,6 @@
 """Test various utilities."""
 
 import os.path
-from getpass import getuser
 from tempfile import TemporaryDirectory
 
 import netCDF4
@@ -64,9 +63,6 @@ def test_get_auth_userinfo() -> None:
     assert out["email"] == "foo@bar"
     assert out["last_name"] == "Doe"
     assert out["first_name"] == "Jane"
-
-    out = get_userinfo({"uid": getuser()})
-    assert out["is_guest"] == False
 
 
 def test_get_xr_posix_engine() -> None:
