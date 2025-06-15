@@ -52,6 +52,22 @@ services:
          --hostname-strict=false
          --import-realm
          -Dkeycloak.migration.strategy=OVERWRITE_EXISTING
+
+  keycloak-bootstrap:
+    image: docker.io/badouralix/curl-jq
+    depends_on:
+      - keycloak
+    volumes:
+      - ./create-user.sh:/create-user.sh:ro
+    environment:
+      USER: ${USER}
+      KEYCLOAK_ADMIN: keycloak
+      KEYCLOAK_ADMIN_PASSWORD: secret
+      KEYCLOAK_HOST: keycloak:8080
+    entrypoint: ["sh", "/create-user.sh"]
+    networks:
+      - freva-rest
+
   mongodb:
     networks:
       - freva-rest
