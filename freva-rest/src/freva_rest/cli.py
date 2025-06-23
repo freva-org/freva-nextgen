@@ -59,7 +59,6 @@ from enum import Enum
 from pathlib import Path
 from socket import gethostname
 from tempfile import NamedTemporaryFile
-from types import NoneType
 from typing import (
     Annotated,
     Any,
@@ -83,6 +82,8 @@ from freva_rest import __version__
 
 from .config import ServerConfig
 from .logger import logger
+
+NoneType = type(None)
 
 
 def _dict_to_defaults(

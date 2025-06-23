@@ -1,6 +1,10 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [v2506.0.1]
+### Changed
+ - Internal changes.
+
 ## [v2506.0.0]
 ### Changed
  - Moved from password based logins to code based auth flow.
