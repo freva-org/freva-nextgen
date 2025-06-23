@@ -444,7 +444,7 @@ def test_system_user(
     auth: Dict[str, str],
 ) -> None:
     """Test the system user endpoint."""
-    from freva_rest.utils import CONFIG
+    from freva_rest.utils.base_utils import CONFIG
 
     class MockPwNam(NamedTuple):
         """Mock The getpwnam method."""

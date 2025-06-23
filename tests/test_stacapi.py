@@ -84,16 +84,17 @@ def test_stacapi_item_params(test_server: str) -> None:
 def test_stacapi_staccheck(test_server: str) -> None:
     """Test the stacapi staccheck functionality."""
     result_output = subprocess.run(["stac-check", f"{test_server}/stacapi/"], check=True, capture_output=True)
-    assert "Valid CATALOG: True" in result_output.stdout.decode("utf-8")
+    print(result_output.stdout)
+    assert "CATALOG Passed: True" in result_output.stdout.decode("utf-8")
 
     result_output = subprocess.run(["stac-check", f"{test_server}/stacapi/collections/cmip6/"], check=True, capture_output=True)
-    assert "Valid COLLECTION: True" in result_output.stdout.decode("utf-8")
+    assert "COLLECTION Passed: True" in result_output.stdout.decode("utf-8")
 
     result_get = requests.get(f"{test_server}/stacapi/collections/nextgems/items?limit=1")
     item_id = result_get.json().get('features')[0].get('id')
     result_output = subprocess.run(["stac-check", f"{test_server}/stacapi/collections/nextgems/items/{item_id}/"], check=True, capture_output=True)
     
-    assert "Valid ITEM: True" in result_output.stdout.decode("utf-8")
+    assert "ITEM Passed: True" in result_output.stdout.decode("utf-8")
 
 def test_stacapi_fail(test_server: str) -> None:
     """Test the stacapi fail functionality."""

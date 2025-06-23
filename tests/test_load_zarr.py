@@ -206,15 +206,15 @@ def test_no_cache(
 ) -> None:
     """Test the behviour if no cache is present."""
     _id = "c0f32204-57a7-5157-bdc8-a79cee618f70.zarr"
-    mocker.patch("freva_rest.utils.REDIS_CACHE", None)
-    with mock.patch("freva_rest.utils.CONFIG.redis_user", "foo"):
+    mocker.patch("freva_rest.utils.base_utils.REDIS_CACHE", None)
+    with mock.patch("freva_rest.utils.base_utils.CONFIG.redis_user", "foo"):
         res = requests.get(
             f"{test_server}/data-portal/zarr/{_id}/status",
             headers={"Authorization": f"Bearer {auth['access_token']}"},
             timeout=7,
         )
         assert res.status_code == 503
-    with mock.patch("freva_rest.utils.CONFIG.services", ""):
+    with mock.patch("freva_rest.utils.base_utils.CONFIG.services", ""):
         with mock.patch.dict(
             os.environ, {"API_SERVICES": "databrowser"}, clear=False
         ):
