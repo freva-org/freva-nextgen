@@ -1,18 +1,16 @@
 """Test the command line interface cli."""
 
-import json
 import os
-from copy import deepcopy
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from types import TracebackType
+from typing import Annotated, Dict, List, Optional, Union
 
 import mock
 from pytest_mock import MockerFixture
 from typer.testing import CliRunner
 
 from freva_client import __version__
-from freva_client.auth import Auth
 from freva_client.cli import app as cli_app
 from freva_rest.cli import cli, get_cert_file
 
@@ -144,26 +142,29 @@ def test_rest_cli(mocker: MockerFixture) -> None:
             )
 
 
-def test_auth(
-    test_server: str, cli_runner: CliRunner, auth_instance: Auth
-) -> None:
-    """Test authentication."""
-    old_token = deepcopy(auth_instance._auth_token)
-    try:
-        res = cli_runner.invoke(
-            cli_app, ["auth", "--host", test_server, "-u", "janedoe"]
-        )
-        assert res.exit_code == 0
-        assert res.stdout
-        print(res.stdout)
-        assert "access_token" in json.loads(res.stdout)
-    finally:
-        auth_instance._auth_token = old_token
-
-
 def test_main(cli_runner: CliRunner) -> None:
     """Test the functionality of the freva_client main app."""
     res = cli_runner.invoke(cli_app, ["-V"])
     assert res.exit_code == 0
     assert res.stdout
     assert __version__ in res.stdout
+
+
+def test_cli_utils() -> None:
+    """Test functionality of some cli related utils."""
+    from freva_rest.cli import _dict_to_defaults, _is_type_annotation
+    from freva_rest.config import env_to_int
+
+    with mock.patch.dict(os.environ, {"DEBUG": "1"}, clear=False):
+        assert env_to_int("DEBUG", 0) == 1
+    assert env_to_int("DEBUG", 0) == 0
+
+    assert _dict_to_defaults({}) == []
+    assert _dict_to_defaults({"foo": "bar"}) == [("foo", "bar")]
+    assert _dict_to_defaults({"foo": ["1", "2"]}) == [("foo", "1"), ("foo", "2")]
+
+    inner_type = Union[Dict[str, str], List[str]]
+    assert _is_type_annotation(inner_type, dict) is True
+    assert (
+        _is_type_annotation(Annotated[Optional[inner_type], "foo"], dict) is True
+    )

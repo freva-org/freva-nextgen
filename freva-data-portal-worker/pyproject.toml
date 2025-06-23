@@ -36,7 +36,7 @@ dependencies = [
 "redis",
 "rioxarray",
 "watchfiles",
-"xarray",
+"xarray>=2025.3.0",
 "zarr",
 ]
 [project.scripts]

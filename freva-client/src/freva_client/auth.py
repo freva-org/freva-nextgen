@@ -1,25 +1,77 @@
 """Module that handles the authentication at the rest service."""
 
 import datetime
-from getpass import getpass, getuser
-from typing import Optional, TypedDict, Union
+import json
+import socket
+import urllib.parse
+import webbrowser
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
+from threading import Event, Lock, Thread
+from typing import Any, Dict, List, Optional, Union
 
-from authlib.integrations.requests_client import OAuth2Session
+import requests
 
 from .utils import logger
+from .utils.auth_utils import (
+    Token,
+    choose_token_strategy,
+    get_default_token_file,
+    load_token,
+    wait_for_port,
+)
 from .utils.databrowser_utils import Config
 
-Token = TypedDict(
-    "Token",
-    {
-        "access_token": str,
-        "token_type": str,
-        "expires": int,
-        "refresh_token": str,
-        "refresh_expires": int,
-        "scope": str,
-    },
-)
+REDIRECT_URI = "http://localhost:{port}/callback"
+AUTH_FAILED_MSG = """Login failed or no valid token found in this environment.
+If you appear to be in a non-interactive or remote session create a new token
+via:
+
+   {command}
+
+Then pass the token file using:"
+
+"    {token_path} or set the $TOKEN_ENV_VAR env. variable."""
+
+
+class AuthError(Exception):
+    """Athentication error."""
+
+    pass
+
+
+class OAuthCallbackHandler(BaseHTTPRequestHandler):
+    def log_message(self, format: str, *args: object) -> None:
+        logger.debug(format, *args)
+
+    def do_GET(self) -> None:
+        query = urllib.parse.urlparse(self.path).query
+        params = urllib.parse.parse_qs(query)
+        if "code" in params:
+            setattr(self.server, "auth_code", params["code"][0])
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"Login successful! You can close this tab.")
+        else:
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b"Authorization code not found.")
+
+
+def start_local_server(port: int, event: Event) -> HTTPServer:
+    """Start local HTTP server to wait for a single callback."""
+    server = HTTPServer(("localhost", port), OAuthCallbackHandler)
+
+    def handle() -> None:
+        logger.info("Waiting for browser callback on port %s ...", port)
+        while not event.is_set():
+            server.handle_request()
+            if getattr(server, "auth_code", None):
+                event.set()
+
+    thread = Thread(target=handle, daemon=True)
+    thread.start()
+    return server
 
 
 class Auth:
@@ -27,23 +79,116 @@ class Auth:
 
     _instance: Optional["Auth"] = None
     _auth_token: Optional[Token] = None
+    _thread_lock: Lock = Lock()
 
-    def __new__(cls) -> "Auth":
+    def __new__(cls, *args: Any, **kwargs: Any) -> "Auth":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self) -> None:
-        self._auth_cls = OAuth2Session()
+    def __init__(self, token_file: Optional[Union[str, Path]] = None) -> None:
+        self.token_file = str(token_file or "").strip() or None
 
-    @property
-    def token_expiration_time(self) -> datetime.datetime:
-        """Get the expiration time of an access token."""
-        if self._auth_token is None:
-            exp = 0.0
-        else:
-            exp = self._auth_token["expires"]
-        return datetime.datetime.fromtimestamp(exp, datetime.timezone.utc)
+    def get_token(
+        self,
+        token_url: str,
+        data: Dict[str, str],
+    ) -> Token:
+        try:
+            response = requests.post(token_url, data=data)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as error:
+            raise AuthError(f"Fetching token failed: {error}")
+        auth = response.json()
+        return self.set_token(
+            access_token=auth["access_token"],
+            token_type=auth["token_type"],
+            expires=auth["expires"],
+            refresh_token=auth["refresh_token"],
+            refresh_expires=auth["refresh_expires"],
+            scope=auth["scope"],
+        )
+
+    def _login(
+        self,
+        auth_url: str,
+        force: bool = False,
+        _timeout: int = 30,
+    ) -> Token:
+        login_endpoint = f"{auth_url}/login"
+        token_endpoint = f"{auth_url}/token"
+        port = self.find_free_port(auth_url)
+        redirect_uri = REDIRECT_URI.format(port=port)
+        params = {
+            "redirect_uri": redirect_uri,
+        }
+        if force:
+            params["prompt"] = "login"
+        query = urllib.parse.urlencode(params)
+        login_url = f"{login_endpoint}?{query}"
+        logger.info("Opening browser for login:\n%s", login_url)
+        logger.info(
+            "If you are using this on a remote host, you might need to "
+            "forward port %d:\n"
+            "    ssh -L %d:localhost:%d user@remotehost",
+            port,
+            port,
+            port,
+        )
+        event = Event()
+        server = start_local_server(port, event)
+        code: Optional[str] = None
+        reason = "Login failed."
+        try:
+            wait_for_port("localhost", port)
+            webbrowser.open(login_url)
+            success = event.wait(timeout=_timeout)
+            if not success:
+                raise TimeoutError(
+                    f"Login did not complete within {_timeout} seconds. "
+                    "Possibly headless environment."
+                )
+            code = getattr(server, "auth_code", None)
+        except Exception as error:
+            logger.warning(
+                "Could not open browser automatically. %s"
+                "Please open the URL manually.",
+                error,
+            )
+            reason = str(error)
+
+        finally:
+            logger.debug("Cleaning up login state")
+            if hasattr(server, "server_close"):
+                try:
+                    server.server_close()
+                except Exception as error:
+                    logger.debug("Failed to close server cleanly: %s", error)
+        if not code:
+            raise AuthError(reason)
+        return self.get_token(
+            token_endpoint,
+            data={
+                "code": code,
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code",
+            },
+        )
+
+    @staticmethod
+    def find_free_port(auth_url: str) -> int:
+        """Get a free port where we can start the test server."""
+        ports: List[int] = (
+            requests.get(f"{auth_url}/auth-ports").json().get("valid_ports", [])
+        )
+        for port in ports:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                try:
+                    s.bind(("localhost", port))
+                    return port
+                except (OSError, PermissionError):
+                    pass
+        raise OSError("No free ports available for login flow")
 
     def set_token(
         self,
@@ -67,94 +212,82 @@ class Auth:
             refresh_expires=int(refresh_expires or now + refresh_expires_in),
             scope=scope,
         )
+        default_token_file = get_default_token_file()
+        for _file in map(
+            Path, set((self.token_file or default_token_file, default_token_file))
+        ):
+            _file.parent.mkdir(exist_ok=True, parents=True)
+            _file.write_text(json.dumps(self._auth_token))
+            _file.chmod(0o600)
+
         return self._auth_token
 
     def _refresh(
-        self, url: str, refresh_token: str, username: Optional[str] = None
+        self,
+        url: str,
+        refresh_token: str,
     ) -> Token:
         """Refresh the access_token with a refresh token."""
-        auth = self._auth_cls.refresh_token(f"{url}/token", refresh_token or " ")
         try:
-            return self.set_token(
-                access_token=auth["access_token"],
-                token_type=auth["token_type"],
-                expires=auth["expires"],
-                refresh_token=auth["refresh_token"],
-                refresh_expires=auth["refresh_expires"],
-                scope=auth["scope"],
+            return self.get_token(
+                f"{url}/token",
+                data={"refresh-token": refresh_token or ""},
             )
-        except KeyError:
-            logger.warning("Failed to refresh token: %s", auth.get("detail", ""))
-            if username:
-                return self._login_with_password(url, username)
-            raise ValueError("Could not use refresh token") from None
-
-    def check_authentication(self, auth_url: Optional[str] = None) -> Token:
-        """Check the status of the authentication.
-
-        Raises
-        ------
-        ValueError: If user isn't or is no longer authenticated.
-        """
-        if not self._auth_token:
-            raise ValueError("You must authenticate first.")
-        now = datetime.datetime.now(datetime.timezone.utc).timestamp()
-        if now > self._auth_token["refresh_expires"]:
-            raise ValueError("Refresh token has expired.")
-        if now > self._auth_token["expires"] and auth_url:
-            self._refresh(auth_url, self._auth_token["refresh_token"])
-        return self._auth_token
-
-    def _login_with_password(self, auth_url: str, username: str) -> Token:
-        """Create a new token."""
-        pw_msg = "Give password for server authentication: "
-        auth = self._auth_cls.fetch_token(
-            f"{auth_url}/token", username=username, password=getpass(pw_msg)
-        )
-        try:
-            return self.set_token(
-                access_token=auth["access_token"],
-                token_type=auth["token_type"],
-                expires=auth["expires"],
-                refresh_token=auth["refresh_token"],
-                refresh_expires=auth["refresh_expires"],
-                scope=auth["scope"],
-            )
-        except KeyError:
-            logger.error("Failed to authenticate: %s", auth.get("detail", ""))
-            raise ValueError("Token creation failed") from None
+        except (AuthError, KeyError) as error:
+            logger.warning("Failed to refresh token: %s", error)
+            return self._login(url)
 
     def authenticate(
         self,
         host: Optional[str] = None,
-        refresh_token: Optional[str] = None,
-        username: Optional[str] = None,
+        config: Optional[Config] = None,
+        *,
         force: bool = False,
+        _auto: bool = True,
+        _cli: bool = False,
     ) -> Token:
         """Authenticate the user to the host."""
-        cfg = Config(host)
-        if refresh_token:
-            try:
-                return self._refresh(cfg.auth_url, refresh_token)
-            except ValueError:
-                logger.warning(
-                    (
-                        "Could not use refresh token, falling back "
-                        "to username/password"
-                    )
-                )
-        username = username or getuser()
-        if self._auth_token is None or force:
-            return self._login_with_password(cfg.auth_url, username)
-        if self.token_expiration_time < datetime.datetime.now(datetime.timezone.utc):
-            self._refresh(cfg.auth_url, self._auth_token["refresh_token"], username)
-        return self._auth_token
+        cfg = config or Config(host)
+        token = self._auth_token or load_token(self.token_file)
+        reason: Optional[str] = None
+        if _auto:
+            strategy = choose_token_strategy(token)
+        else:
+            strategy = "browser_auth"
+        if strategy == "use_token" and token:
+            self._auth_token = token
+            return self._auth_token
+        try:
+            if strategy == "refresh_token" and token:
+                return self._refresh(cfg.auth_url, token["refresh_token"])
+            if strategy == "browser_auth":
+                if _auto:
+                    logger.warning("Automatically launching browser-based login")
+                return self._login(cfg.auth_url, force=force)
+        except AuthError as error:
+            reason = str(error)
+
+        command, token_path = {
+            True: ("freva-client auth", "--token-file /path/to/token.json"),
+            False: (
+                "freva_client.auth",
+                "`token_file='/path/to/token.json'`",
+            ),
+        }[_cli]
+
+        reason = reason or AUTH_FAILED_MSG.format(
+            command=command, token_path=token_path
+        )
+        if _cli:
+            logger.critical(reason)
+            raise SystemExit(1)
+        else:
+            raise AuthError(reason)
 
 
 def authenticate(
     *,
-    refresh_token: Optional[str] = None,
-    username: Optional[str] = None,
+    token_file: Optional[Union[Path, str]] = None,
     host: Optional[str] = None,
     force: bool = False,
 ) -> Token:
@@ -167,9 +300,6 @@ def authenticate(
     refresh_token: str, optional
         Instead of setting a password, you can set a refresh token to refresh
         the access token. This is recommended for non-interactive environments.
-    username: str, optional
-        The username used for authentication. By default, the current
-        system username is used.
     host: str, optional
         The hostname of the REST server.
     force: bool, default: False
@@ -186,7 +316,7 @@ def authenticate(
     .. code-block:: python
 
         from freva_client import authenticate
-        token = authenticate(username="janedoe")
+        token = authenticate()
         print(token)
 
     Batch mode authentication with a refresh token:
@@ -194,9 +324,11 @@ def authenticate(
     .. code-block:: python
 
         from freva_client import authenticate
-        token = authenticate(refresh_token="MYTOKEN")
+        token = authenticate(token_file="~/.freva-login-token.json")
     """
-    auth = Auth()
+    auth = Auth(token_file=token_file or None)
     return auth.authenticate(
-        host=host, username=username, refresh_token=refresh_token, force=force
+        host=host,
+        force=force,
+        _auto=False,
     )

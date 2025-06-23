@@ -1,7 +1,6 @@
 """Unit tests for data queries via the rest-api."""
 
 import json
-import os
 import time
 from typing import Dict
 
@@ -142,6 +141,7 @@ def test_time_selection(test_server: str) -> None:
     )
     assert res3.status_code == 500
 
+
 def test_bbox_selection(test_server: str) -> None:
     """Test the bbox select functionality of the API."""
     res1 = requests.get(
@@ -171,6 +171,7 @@ def test_bbox_selection(test_server: str) -> None:
         params={"bbox": "-10,10,-91,91"},
     )
     assert res3.status_code == 500
+
 
 def test_primary_facets(test_server: str) -> None:
     """Test the functionality of primary facet definitions."""
@@ -328,15 +329,11 @@ def test_stac_catalogue(test_server: str) -> None:
     # 200 OK from STAC static endpoint
     res = requests.get(
         f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
-        params={
-            "activity_id": "cmip", 
-            "multi-version": True, 
-            "max_results": 2
-        },
-        allow_redirects=False
+        params={"activity_id": "cmip", "multi-version": True, "max_results": 2},
+        allow_redirects=False,
     )
     assert res.status_code == 200
-    
+
     # 413 Request Entity Too Large
     res3 = requests.get(
         f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
@@ -355,6 +352,7 @@ def test_stac_catalogue(test_server: str) -> None:
         params={"activity_id": "cmip3", "multi-version": False},
     )
     assert res5.status_code == 404
+
 
 def test_bad_intake_request(test_server: str) -> None:
     """Test for a wrong intake request."""
@@ -408,7 +406,7 @@ def test_zarr_stream_not_implemented(
     test_server: str, auth: Dict[str, str]
 ) -> None:
     """Test if zarr request is not served when told not to do so."""
-    with mock.patch("freva_rest.rest.server_config.api_services", ""):
+    with mock.patch("freva_rest.rest.server_config.services", ""):
         res = requests.get(
             f"{test_server}/databrowser/load/freva",
             headers={"Authorization": f"Bearer {auth['access_token']}"},
