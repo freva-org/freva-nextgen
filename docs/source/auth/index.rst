@@ -390,6 +390,119 @@ then be included in the authorization header for secured endpoints.
                 return 0;
             }
 
+---
+
+
+.. http:get:: /api/freva-nextgen/auth/v2/systemuser
+
+    Get system information for the user in possession of the oauth token.
+
+
+    :reqheader Authorization: The OAuth2 access token
+    :statuscode 200: no error
+    :statuscode 401: unauthorized
+    :resheader Content-Type: ``application/json``: access and refresh token.
+
+
+    Example Request
+    ~~~~~~~~~~~~~~~
+
+    .. sourcecode:: http
+
+        POST /api/freva-nextgen/auth/v2/systemuser HTTP/1.1
+        host: www.freva.dkrz.de
+        Authorization: Bearer your_access_token
+
+    Example Request
+    ~~~~~~~~~~~~~~~
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        {
+            "pw_name": "janedoe",
+            "pw_passwd": "\*",
+            "pw_uid": 1000,
+            "pw_gid": 1001
+            "pw_gecos": "Jane Doe",
+            "pw_dir":  "/home/jane",
+            "pw_shell": "/bin/zsh"
+        }
+
+    Code examples
+    ~~~~~~~~~~~~~
+    Below you can find example usages of this request in different scripting and
+    programming languages
+
+    .. tabs::
+
+        .. code-tab:: bash
+            :caption: Shell
+
+            curl -X GET https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser \
+             -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+        .. code-tab:: python
+            :caption: Python
+
+            import requests
+            response = requests.get(
+              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser",
+              headers={"Authorization": "Bearer YOUR_ACCESS_TOKEN"}
+            )
+            token_data = response.json()
+
+        .. code-tab:: r
+            :caption: gnuR
+
+            library(httr)
+
+            response <- GET(
+               "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser",
+               add_headers(Authorization = paste("Bearer", "YOUR_ACCESS_TOKEN"))
+            )
+            token_data <- content(response, "parsed")
+
+        .. code-tab:: julia
+            :caption: Julia
+
+            using HTTP
+            using JSON
+
+            response = HTTP.get(
+              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser",
+              headers = Dict("Authorization" => "Bearer YOUR_ACCESS_TOKEN")
+            )
+            token_data = JSON.parse(String(response.body))
+
+        .. code-tab:: c
+            :caption: C/C++
+
+            #include <stdio.h>
+            #include <curl/curl.h>
+
+            int main() {
+                CURL *curl;
+                CURLcode res;
+
+                curl_global_init(CURL_GLOBAL_DEFAULT);
+                curl = curl_easy_init();
+                if(curl) {
+                    struct curl_slist *headers = NULL;
+                    headers = curl_slist_append(headers, "Authorization: Bearer YOUR_ACCESS_TOKEN");
+
+                    curl_easy_setopt(curl, CURLOPT_URL, "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/userinfo");
+                    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+                    res = curl_easy_perform(curl);
+                    curl_easy_cleanup(curl);
+                }
+                curl_global_cleanup();
+                return 0;
+            }
+
 
 ---
 

@@ -197,11 +197,9 @@ class databrowser:
 
     .. code-block:: python
 
-        from freva_client import authenticate, databrowser
-        token_info = authenticate()
+        from freva_client import databrowser
         db = databrowser(dataset="cmip6-fs", stream_zarr=True)
         zarr_files = list(db)
-        print(zarr_files)
 
     After you have created the paths to the zarr files you can open them
 
@@ -950,9 +948,8 @@ class databrowser:
 
         .. code-block:: python
 
-            from freva_client import authenticate, databrowser
+            from freva_client import databrowser
             import xarray as xr
-            token_info = authenticate()
             filenames = (
                 "../freva-rest/src/freva_rest/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/"
                 "GERICS/NCC-NorESM1-M/rcp85/r1i1p1/GERICS-REMO2015/v1/3hr/pr/v20181212/*.nc"
@@ -973,8 +970,7 @@ class databrowser:
 
         .. code-block:: python
 
-            from freva_client import authenticate, databrowser
-            token_info = authenticate()
+            from freva_client import databrowser
             databrowser.userdata(
                 action="delete",
                 metadata={"project": "cmip5", "experiment": "myFavExp"}

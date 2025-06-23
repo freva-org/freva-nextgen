@@ -17,7 +17,8 @@ COPY freva-data-portal-worker /tmp/app/freva-data-portal-worker
 COPY docker-scripts  /tmp/app/docker-scripts
 RUN  set -xe  && \
     apt -y update &&\
-    DEBIAN_FRONTEND=noninteractive apt -y install sssd &&\
+    DEBIAN_FRONTEND=noninteractive apt -y install sssd libnss-sss libpam-sss \
+    sssd-common sssd-tools &&\
     rm -rf /var/lib/apt/lists/* && \
      printf "\n\
 auth required pam_sss.so\n\
