@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Authentication &#8212; Freva Databrowser 2506.0.0 documentation</title>
+    <title>Authentication &#8212; Freva Databrowser 2506.0.1 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=7c662e95"></script>
+    <script src="../_static/documentation_options.js?v=d81eaa8c"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -127,8 +127,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2506.0.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2506.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2506.0.1 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2506.0.1 documentation - Home"/>
   
   
 </a></div>
@@ -386,12 +386,12 @@ lifetime.</p>
 system:</p>
 <ul class="simple">
 <li><p>via the REST API <code class="docutils literal notranslate"><span class="pre">/api/freva-nextgen/auth/v2</span></code> endpoints</p></li>
-<li><p>via the <a class="reference internal" href="#freva_client.authenticate" title="freva_client.authenticate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">freva_client.authenticate()</span></code></a> function</p></li>
+<li><p>via the <a class="reference internal" href="#freva_client.authenticate" title="freva_client.authenticate"><code class="xref py py-func docutils literal notranslate"><span class="pre">freva_client.authenticate()</span></code></a> function</p></li>
 <li><p>via the <code class="docutils literal notranslate"><span class="pre">freva-client</span> <span class="pre">auth</span></code> command-line interface</p></li>
 </ul>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>Starting with version 2505.1.0, the <strong>password grant type is no longer supported</strong>.</p>
+<p>Starting with version 2506.0.0, the <strong>password grant type is no longer supported</strong>.</p>
 <p>Authentication must now be performed using the <strong>authorization code flow</strong>.
 Unless you want to setup a service provider, we advice against using the
 restAPI endpoints for authentication.</p>

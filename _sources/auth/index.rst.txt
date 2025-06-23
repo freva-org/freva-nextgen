@@ -16,13 +16,13 @@ system:
 
 
 - via the REST API ``/api/freva-nextgen/auth/v2`` endpoints
-- via the :py:meth:`freva_client.authenticate` function
+- via the :py:func:`freva_client.authenticate` function
 - via the ``freva-client auth`` command-line interface
 
 
 .. warning::
 
-   Starting with version 2505.1.0, the **password grant type is no longer supported**.
+   Starting with version 2506.0.0, the **password grant type is no longer supported**.
 
    Authentication must now be performed using the **authorization code flow**.
    Unless you want to setup a service provider, we advice against using the
