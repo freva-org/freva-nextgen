@@ -48,14 +48,14 @@ you have `docker-compose` or `podman-compose` installed on your system.
 Then, run the following command:
 
 ```console
-docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
+USER=$(whoami) docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
 ```
 
 if you use `podman`:
 
 ```console
 python -m pip install podman-compose
-podman-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
+USER=$(whoami) podman-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
 ```
 
 This will start the required services and containers to create the development
@@ -75,15 +75,18 @@ load any existing test data. If you don't like that simply do not pass the
 ``--dev`` flag.
 
 
-### Test ldap instance
-The dev system sets up a small LDAP server for testing. The following users
-in this ldap server are available:
+### Test users
+The following users are available for log on:
 
+
+- uid: ``<YOUR-USER>``, password: ``secret``
 - uid: ``johndoe``, password: ``johndoe123``
 - uid: ``janedoe``, password: ``janedoe123``
 - uid: ``alicebrown``, password: ``alicebrown123``
 - uid: ``bobsmith``, password: ``bobsmith123``
 - uid: ``lisajones``, password: ``lisajones123``
+
+`<YOUR-USER>` is the user name that started the compose command.
 
 ## Testing
 

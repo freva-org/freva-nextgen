@@ -56,6 +56,9 @@ tests = ["xarray",
          "mock",
          "pytest-mock",
          "pytest-cov",
+         "pytest-asyncio",
+         "pymongo",
+         "stac-check",
          ]
 
 [package-data]

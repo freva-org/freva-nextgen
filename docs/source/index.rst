@@ -127,6 +127,19 @@ Table of Content
    databrowser/index
    stacapi/index
 
+.. warning::
+
+   As of version 2505.1.0, **password-based authentication is deprecated**.
+   You can now only log in using the **authorization code flow**.
+
+   To obtain OAuth2 tokens, you have the following options:
+
+   - Log in via the Freva website and download a token file.
+   - Use the :py:func:`freva_client.authenticate` function.
+   - Use the ``freva-client auth`` command-line interface.
+
+
+
 Feedback and Support
 ====================
 We value your feedback and are committed to improving the API continuously.

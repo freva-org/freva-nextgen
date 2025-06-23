@@ -17,10 +17,12 @@ from typing import (
     Iterator,
     List,
     Optional,
-    Set,
     Tuple,
+    Type,
+    TypeVar,
     Union,
     cast,
+    overload,
 )
 
 import requests
@@ -31,6 +33,56 @@ from pydantic import BaseModel, Field
 from .logger import logger, logger_file_handle
 
 ConfigItem = Union[str, int, float, None]
+
+T = TypeVar("T", str, int)
+
+
+def env_to_int(env_var: str, fallback: int) -> int:
+    """Convert a env variable to a dict."""
+    var = os.getenv(env_var, "")
+    if not var.isdigit():
+        return fallback
+    return int(var)
+
+
+def env_to_dict(env_var: str) -> Dict[str, List[str]]:
+    """Convert env variables to a dict.
+
+    key1:value1,key2:value2,key1:value2 -> {"key1": ["value1", "value2"],
+                                            "key2": ["value2"]}
+    """
+    result: Dict[str, List[str]] = {}
+    for kv in os.getenv(env_var, "").split(","):
+        key, _, value = kv.partition(":")
+        if key and value:
+            result.setdefault(key, [])
+            if value not in result[key]:
+                result[key].append(value)
+    return result
+
+
+@overload
+def env_to_list(env_var: str, target_type: Type[int]) -> List[int]: ...
+
+
+@overload
+def env_to_list(env_var: str, target_type: Type[str]) -> List[str]: ...
+
+
+def env_to_list(env_var: str, target_type: Type[T]) -> List[T]:
+    """Convert env variables to a List.
+
+    Converts a comma-separated string from an environment variable into a list
+    of the specified type.
+
+    Example:
+        key1,key2-> ["key1": "key2"]
+    """
+    return [
+        target_type(k.strip())
+        for k in set(os.getenv(env_var, "").split(","))
+        if k.strip()
+    ]
 
 
 class ServerConfig(BaseModel):
@@ -55,12 +107,12 @@ class ServerConfig(BaseModel):
         ),
     ] = os.getenv("API_PROXY", "")
     debug: Annotated[
-        Union[bool, int, str],
+        Union[bool, int],
         Field(
             title="Debug mode",
             description="Turn on debug mode",
         ),
-    ] = os.getenv("DEBUG", "0")
+    ] = env_to_int("DEBUG", 0)
     mongo_host: Annotated[
         str,
         Field(
@@ -104,25 +156,27 @@ class ServerConfig(BaseModel):
         ),
     ] = os.getenv("API_SOLR_CORE", "")
     cache_exp: Annotated[
-        str,
+        Optional[int],
         Field(
             title="Cache expiration.",
             description=(
                 "The expiration time in sec" "of the data loading cache."
             ),
         ),
-    ] = os.getenv("API_CACHE_EXP", "")
-    api_services: Annotated[
-        str,
+    ] = env_to_int("API_CACHE_EXP", 3600)
+    services: Annotated[
+        List[str],
         Field(
             title="Services",
+            alias="s",
+            alias_priority=1,
             description="The services that should be enabled.",
         ),
-    ] = os.getenv("API_SERVICES", "databrowser,zarr-stream,stacapi")
+    ] = env_to_list("API_SERVICES", str)
     redis_host: Annotated[
         str,
         Field(
-            title="Rest Host",
+            title="Redis Host",
             description="Url of the redis cache.",
         ),
     ] = os.getenv("API_REDIS_HOST", "")
@@ -185,6 +239,33 @@ class ServerConfig(BaseModel):
             description="The OIDC client secret, if any, used for authentication.",
         ),
     ] = os.getenv("API_OIDC_CLIENT_SECRET", "")
+    oidc_token_claims: Annotated[
+        Optional[Dict[str, List[str]]],
+        Field(
+            title="Token claim filter.",
+            description=(
+                "Token claim-based filters in "
+                "the format [<key1.key2> <pattern>]. Each filter "
+                "matches if the decoded JWT contains the "
+                "specified claim (e.g., group, role) and its "
+                "value includes the given pattern. Patterns can "
+                "be plain substrings or regular expressions."
+                "Nested claims are defined by '.' separation."
+            ),
+        ),
+    ] = (
+        env_to_dict("API_OIDC_TOKEN_CLAIMS") or None
+    )
+    oidc_auth_ports: Annotated[
+        List[int],
+        Field(
+            title="Valid local auth ports.",
+            description=(
+                "List valid redirect portss that being used for authentication"
+                " flow via localhost."
+            ),
+        ),
+    ] = env_to_list("API_OIDC_AUTH_PORTS", int)
 
     def _read_config(self, section: str, key: str) -> Any:
         fallback = self._fallback_config[section][key] or None
@@ -201,15 +282,18 @@ class ServerConfig(BaseModel):
         except Exception as error:
             logger.critical("Failed to load config file: %s", error)
             self._config = self._fallback_config
-        if isinstance(self.debug, str):
-            self.debug = bool(int(self.debug))
         self.debug = bool(self.debug)
         self.set_debug(self.debug)
         self._mongo_client: Optional[AsyncIOMotorClient] = None
         self._solr_fields = self._get_solr_fields()
         self._oidc_overview: Optional[Dict[str, Any]] = None
-        self.api_services = self.api_services or ",".join(
-            self._read_config("restAPI", "services")
+        self.services = (
+            self.services or self._read_config("restAPI", "services") or []
+        )
+        self.oidc_token_claims = (
+            self.oidc_token_claims
+            or self._read_config("oidc", "token_claims")
+            or {}
         )
         self.proxy = (
             self.proxy
@@ -249,6 +333,9 @@ class ServerConfig(BaseModel):
         self.redis_host = self.redis_host or self._read_config(
             "cache", "hostname"
         )
+        self.oidc_auth_ports = self.oidc_auth_ports or self._read_config(
+            "oidc", "auth_ports"
+        )
 
     @staticmethod
     def get_url(url: str, default_port: Union[str, int]) -> str:
@@ -260,11 +347,6 @@ class ServerConfig(BaseModel):
             return url
         return f"{url}:{default_port}"
         # If the original url has already a port in the suffix remove it
-
-    @property
-    def services(self) -> Set[str]:
-        """Define the services that are served."""
-        return set(s.strip() for s in self.api_services.split(",") if s.strip())
 
     @property
     def redis_url(self) -> str:

@@ -1,19 +1,20 @@
 """Tests for add user data to the databrowser."""
 
-import os
 from copy import deepcopy
+from pathlib import Path
 from typing import Dict, List, Union
 
 import mock
 import requests
 from typer.testing import CliRunner
 
-from freva_client.auth import Auth, authenticate
+from freva_client import databrowser
+from freva_client.auth import Auth, Token
 from freva_client.cli.databrowser_cli import databrowser_app as app
 
 
 def test_delete_all_userdata_cli(
-    cli_runner: CliRunner, test_server: str, auth_instance: Auth
+    cli_runner: CliRunner, test_server: str, auth_instance: Auth, token_file: Path
 ) -> None:
     """Test deleting all user data through the CLI."""
     token = deepcopy(auth_instance._auth_token)
@@ -23,7 +24,6 @@ def test_delete_all_userdata_cli(
         res = cli_runner.invoke(app, ["--host", test_server])
         assert res.exit_code > 0
 
-        token_data = authenticate(username="janedoe", host=test_server)
         auth_instance._auth_token = None
         res = cli_runner.invoke(
             app,
@@ -32,22 +32,21 @@ def test_delete_all_userdata_cli(
                 "delete",
                 "--host",
                 test_server,
-                "--access-token",
-                token_data["access_token"],
+                "--token-file",
+                str(token_file),
             ],
         )
-        res_count_after = cli_runner.invoke(
+        _ = cli_runner.invoke(
             app, ["data-count", "--flavour", "user", "--host", test_server]
         )
         assert res.exit_code == 0
-        assert int(res_count_after.stdout.strip()) == 0
     finally:
         auth_instance._auth_token = token
 
 
 def test_userdata_add_api_202(
     test_server: str,
-    auth: Dict[str, str],
+    auth: Token,
     user_data_payload_sample: Dict[str, Union[List[str], Dict[str, str]]],
 ) -> None:
     """Test user data through the API with valid metadata."""
@@ -69,7 +68,7 @@ def test_userdata_add_api_202(
 
 
 def test_add_userdata_cli_standard(
-    cli_runner: CliRunner, test_server: str, auth_instance: Auth
+    cli_runner: CliRunner, test_server: str, auth_instance: Auth, token_file: Path
 ) -> None:
     """Test adding user data through the CLI."""
     token = deepcopy(auth_instance._auth_token)
@@ -79,11 +78,8 @@ def test_add_userdata_cli_standard(
         res = cli_runner.invoke(app, ["--host", test_server])
         assert res.exit_code > 0
 
-        token_data = authenticate(username="janedoe", host=test_server)
         auth_instance._auth_token = None
-        res_count_before = cli_runner.invoke(
-            app, ["data-count", "--flavour", "user", "--host", test_server]
-        )
+        res_count_before = len(databrowser(flavour="user", host=test_server))
 
         res = cli_runner.invoke(
             app,
@@ -94,21 +90,22 @@ def test_add_userdata_cli_standard(
                 "./freva-rest",
                 "--host",
                 test_server,
-                "--access-token",
-                token_data["access_token"],
+                "--token-file",
+                str(token_file),
             ],
         )
-        res_count_after = cli_runner.invoke(
+        _ = cli_runner.invoke(
             app, ["data-count", "--flavour", "user", "--host", test_server]
         )
+        res_count_after = len(databrowser(flavour="user", host=test_server))
         assert res.exit_code == 0
-        assert int(res_count_before.stdout.strip()) < int(res_count_after.stdout.strip())
+        assert res_count_after > res_count_before
     finally:
         auth_instance._auth_token = token
 
 
 def test_add_userdata_cli_all_successful_and_escape_char(
-    cli_runner: CliRunner, test_server: str, auth_instance: Auth
+    cli_runner: CliRunner, test_server: str, auth_instance: Auth, token_file: Path
 ) -> None:
     """Test adding user data through the CLI."""
     token = deepcopy(auth_instance._auth_token)
@@ -118,11 +115,8 @@ def test_add_userdata_cli_all_successful_and_escape_char(
         res = cli_runner.invoke(app, ["--host", test_server])
         assert res.exit_code > 0
 
-        token_data = authenticate(username="janedoe", host=test_server)
         auth_instance._auth_token = None
-        res_count_before = cli_runner.invoke(
-            app, ["data-count", "--flavour", "user", "--host", test_server]
-        )
+        res_count_before = len(databrowser(flavour="user", host=test_server))
 
         res_add = cli_runner.invoke(
             app,
@@ -138,15 +132,13 @@ def test_add_userdata_cli_all_successful_and_escape_char(
                 ),
                 "--host",
                 test_server,
-                "--access-token",
-                token_data["access_token"],
+                "--token-file",
+                str(token_file),
             ],
         )
         assert res_add.exit_code == 0
-        res_count_middle = cli_runner.invoke(
-            app, ["data-count", "--flavour", "user", "--host", test_server]
-        )
-        assert int(res_count_before.stdout.strip()) <= int(res_count_middle.stdout.strip())
+        res_count_middle = len(databrowser(flavour="user", host=test_server))
+        assert res_count_before <= res_count_middle
 
         res_del = cli_runner.invoke(
             app,
@@ -162,22 +154,23 @@ def test_add_userdata_cli_all_successful_and_escape_char(
                 ),
                 "--host",
                 test_server,
-                "--access-token",
-                token_data["access_token"],
+                "--token-file",
+                str(token_file),
             ],
         )
         res_count_after = cli_runner.invoke(
             app, ["data-count", "--flavour", "user", "--host", test_server]
         )
+        res_count_after = len(databrowser(flavour="user", host=test_server))
         assert res_del.exit_code == 0
-        assert int(res_count_middle.stdout.strip()) == int(res_count_after.stdout.strip())
+        assert res_count_middle == res_count_after
     finally:
         auth_instance._auth_token = token
 
 
 def test_userdata_add_api_202_duplicate_bulk_error_mongo(
     test_server: str,
-    auth: Dict[str, str],
+    auth: Token,
     user_data_payload_sample_partially_success: Dict[
         str, Union[List[str], Dict[str, str]]
     ],
@@ -192,7 +185,7 @@ def test_userdata_add_api_202_duplicate_bulk_error_mongo(
     assert response.status_code == 202
 
 
-def test_userdata_add_api_422(test_server: str, auth: Dict[str, str]) -> None:
+def test_userdata_add_api_422(test_server: str, auth: Token) -> None:
     """Test user data through the API with invalid metadata."""
     token = auth["access_token"]
     data = {
@@ -212,9 +205,7 @@ def test_userdata_add_api_422(test_server: str, auth: Dict[str, str]) -> None:
     assert response.status_code == 422
 
 
-def test_userdata_delete_api_202(
-    test_server: str, auth: Dict[str, str]
-) -> None:
+def test_userdata_delete_api_202(test_server: str, auth: Token) -> None:
     """Test user data through the API with valid metadata."""
     token = auth["access_token"]
     response = requests.delete(
@@ -225,7 +216,7 @@ def test_userdata_delete_api_202(
     assert response.status_code == 202
 
 
-def test_userdata_add_api_500(test_server: str, auth: Dict[str, str]) -> None:
+def test_userdata_add_api_500(test_server: str, auth: Token) -> None:
     """Test user data through the API with invalid user_metadata."""
     token = auth["access_token"]
     data = {
@@ -242,9 +233,7 @@ def test_userdata_add_api_500(test_server: str, auth: Dict[str, str]) -> None:
     assert response.status_code == 500
 
 
-def test_userdata_delete_api_422(
-    test_server: str, auth: Dict[str, str]
-) -> None:
+def test_userdata_delete_api_422(test_server: str, auth: Token) -> None:
     """Test user data through the API with invalid metadata."""
     token = auth["access_token"]
     data = {
@@ -262,7 +251,10 @@ def test_userdata_delete_api_422(
 
 
 def test_add_userdata_cli_broken_file(
-    cli_runner: CliRunner, test_server: str, auth_instance: Auth
+    cli_runner: CliRunner,
+    test_server: str,
+    auth_instance: Auth,
+    token_file: Path,
 ) -> None:
     """Test adding user broken data through the CLI."""
     token = deepcopy(auth_instance._auth_token)
@@ -272,11 +264,8 @@ def test_add_userdata_cli_broken_file(
         res = cli_runner.invoke(app, ["--host", test_server])
         assert res.exit_code > 0
 
-        token_data = authenticate(username="janedoe", host=test_server)
         auth_instance._auth_token = None
-        res_count_before = cli_runner.invoke(
-            app, ["data-count", "--flavour", "user", "--host", test_server]
-        )
+        res_count_before = len(databrowser(flavour="user", host=test_server))
         # add the broken file
         res = cli_runner.invoke(
             app,
@@ -289,15 +278,16 @@ def test_add_userdata_cli_broken_file(
                 "product=johndoe",
                 "--host",
                 test_server,
-                "--access-token",
-                token_data["access_token"],
+                "--token-file",
+                str(token_file),
             ],
         )
         res_count_after = cli_runner.invoke(
             app, ["data-count", "--flavour", "user", "--host", test_server]
         )
         assert res.exit_code == 0
-        assert int(res_count_before.stdout.strip()) == int(res_count_after.stdout.strip())
+        res_count_after = len(databrowser(flavour="user", host=test_server))
+        assert res_count_before == res_count_after
         # remove whatever is existing
         res = cli_runner.invoke(
             app,
@@ -307,8 +297,8 @@ def test_add_userdata_cli_broken_file(
                 "janedoe",
                 "--host",
                 test_server,
-                "--access-token",
-                token_data["access_token"],
+                "--token-file",
+                str(token_file),
             ],
         )
 
@@ -317,7 +307,7 @@ def test_add_userdata_cli_broken_file(
 
 
 def test_wrong_equal_facet(
-    cli_runner: CliRunner, test_server: str, auth_instance: Auth
+    cli_runner: CliRunner, test_server: str, auth_instance: Auth, token_file: Path
 ) -> None:
     """Test adding user data through the CLI."""
     token = deepcopy(auth_instance._auth_token)
@@ -327,12 +317,9 @@ def test_wrong_equal_facet(
         res = cli_runner.invoke(app, ["--host", test_server])
         assert res.exit_code > 0
 
-        token_data = authenticate(username="janedoe", host=test_server)
         auth_instance._auth_token = None
         # First add the file
-        res_count_before = cli_runner.invoke(
-            app, ["data-count", "--flavour", "user", "--host", test_server]
-        )
+        res_count_before = len(databrowser(flavour="user", host=test_server))
         res = cli_runner.invoke(
             app,
             [
@@ -349,15 +336,16 @@ def test_wrong_equal_facet(
                 "product:johndoe",
                 "--host",
                 test_server,
-                "--access-token",
-                token_data["access_token"],
+                "--token-file",
+                str(token_file),
             ],
         )
         res_count_after = cli_runner.invoke(
             app, ["data-count", "--flavour", "user", "--host", test_server]
         )
         assert res.exit_code == 1
-        assert int(res_count_before.stdout.strip()) == int(res_count_after.stdout.strip())
+        res_count_after = len(databrowser(flavour="user", host=test_server))
+        assert res_count_before == res_count_after
         # remove whatever is existing
         res = cli_runner.invoke(
             app,
@@ -373,15 +361,15 @@ def test_wrong_equal_facet(
                 ),
                 "--host",
                 test_server,
-                "--access-token",
-                token_data["access_token"],
+                "--token-file",
+                str(token_file),
             ],
         )
     finally:
         auth_instance._auth_token = token
 
 
-def test_no_solr_post(test_server: str, auth: Dict[str, str]) -> None:
+def test_no_solr_post(test_server: str, auth: Token) -> None:
     """Test what happens if there is no connection to Solr during a PUT request."""
     token = auth["access_token"]
     data = {
@@ -404,7 +392,7 @@ def test_no_solr_post(test_server: str, auth: Dict[str, str]) -> None:
         assert res.status_code == 500
 
 
-def test_no_solr_delete(test_server: str, auth: Dict[str, str]) -> None:
+def test_no_solr_delete(test_server: str, auth: Token) -> None:
     """Test what happens if there is no connection to Solr during a PUT request."""
     token = auth["access_token"]
     with mock.patch("freva_rest.rest.server_config.solr_host", "foo.bar"):

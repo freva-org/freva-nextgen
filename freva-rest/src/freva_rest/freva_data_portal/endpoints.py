@@ -5,11 +5,12 @@ import json
 from typing import Annotated, Any, Dict, Optional
 
 import cloudpickle
-from fastapi import Depends, Path, Query, status
+from fastapi import Path, Query, Security, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse, Response
+from fastapi_third_party_auth import IDToken as TokenPayload
 
-from freva_rest.auth import TokenPayload, auth
+from freva_rest.auth import auth
 from freva_rest.rest import app
 from freva_rest.utils.base_utils import create_redis_connection
 
@@ -102,7 +103,9 @@ async def get_status(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Depends(auth.required_dependency()),
+    current_user: TokenPayload = Security(
+        auth.required_dependency(), scopes=["oidc.claims"]
+    ),
 ) -> JSONResponse:
     """Get the status of a loading process."""
     meta: Dict[str, Any] = await read_redis_data(uuid5, "status", timeout=timeout)
@@ -136,7 +139,9 @@ async def zemtadata(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Depends(auth.required_dependency()),
+    current_user: TokenPayload = Security(
+        auth.required_dependency(), scopes=["oidc.claims"]
+    ),
 ) -> JSONResponse:
     """Consolidate zarr metadata
 
@@ -144,7 +149,9 @@ async def zemtadata(
     data within the particular zarr store in question.
     """
 
-    meta: Dict[str, Any] = await read_redis_data(uuid5, "json_meta", timeout=timeout)
+    meta: Dict[str, Any] = await read_redis_data(
+        uuid5, "json_meta", timeout=timeout
+    )
     return JSONResponse(
         content=meta,
         status_code=status.HTTP_200_OK,
@@ -179,7 +186,9 @@ async def zgroup(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Depends(auth.required_dependency()),
+    current_user: TokenPayload = Security(
+        auth.required_dependency(), scopes=["oidc.claims"]
+    ),
 ) -> JSONResponse:
     """Zarr group data.
 
@@ -189,7 +198,9 @@ async def zgroup(
     organizing and managing the structure of data within a Zarr group,
     allowing users to access and manipulate arrays and subgroups efficiently.
     """
-    meta: Dict[str, Any] = await read_redis_data(uuid5, "json_meta", timeout=timeout)
+    meta: Dict[str, Any] = await read_redis_data(
+        uuid5, "json_meta", timeout=timeout
+    )
     return JSONResponse(
         content=meta["metadata"][".zgroup"],
         status_code=status.HTTP_200_OK,
@@ -223,7 +234,9 @@ async def zattrs(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Depends(auth.required_dependency()),
+    current_user: TokenPayload = Security(
+        auth.required_dependency(), scopes=["oidc.claims"]
+    ),
 ) -> JSONResponse:
     """Get zarr Attributes.
 
@@ -232,7 +245,9 @@ async def zattrs(
     or arrays, such as descriptions, units, creation dates, or any other
     custom metadata relevant to the data.
     """
-    meta: Dict[str, Any] = await read_redis_data(uuid5, "json_meta", timeout=timeout)
+    meta: Dict[str, Any] = await read_redis_data(
+        uuid5, "json_meta", timeout=timeout
+    )
     return JSONResponse(
         content=meta["metadata"][".zattrs"], status_code=status.HTTP_200_OK
     )
@@ -276,7 +291,9 @@ async def chunk_data(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Depends(auth.required_dependency()),
+    current_user: TokenPayload = Security(
+        auth.required_dependency(), scopes=["oidc.claims"]
+    ),
 ) -> Response:
     """Get a zarr array chunk.
 

@@ -1,4 +1,5 @@
 .. _auth:
+
 Authentication
 ==============
 
@@ -18,6 +19,16 @@ system:
 - via the :py:func:`freva_client.authenticate` function
 - via the ``freva-client auth`` command-line interface
 
+
+.. warning::
+
+   Starting with version 2506.0.0, the **password grant type is no longer supported**.
+
+   Authentication must now be performed using the **authorization code flow**.
+   Unless you want to setup a service provider, we advice against using the
+   restAPI endpoints for authentication.
+
+
 Using the restAPI endpoints
 ---------------------------
 The API supports token-based authentication using OAuth2. To obtain an access
@@ -33,21 +44,20 @@ then be included in the authorization header for secured endpoints.
     specific access for certain users. If you don't set the client_id, the
     default id will be chosen.
 
-    :form username: The username for the login
-    :type username: str
-    :form password: The password for the login
-    :type password: str
-    :form refresh_token: The refresh token that is used to create a new token
+    :form code:          The code received as part of the OAuth2 authorization
+                         code flow
+    :type code:          str
+    :form redirect_uri:  The URI to which the authorization server will redirect
+                         the user after authentication. It must match one of the
+                         URIs registered with the OAuth2 provider
+    :type redirect_uri: str
+    :form refresh-token: The refresh token that is used to create a new token
                          the refresh token can be used instead of authorizing
                          via user creentials.
-    :type refresh_token: str
+    :type refresh-token: str
     :form client_id: The unique identifier for your application used to
                      request an OAuth2 access token from the authentication
                      server, this form parameter is optional.
-    :type client_id: str
-    :form client_secret: An optional client secret used for authentication.
-                         This param. is optional and in most cases not needed
-    :type client_secret: str
     :statuscode 200: no error
     :statuscode 401: unauthorized
     :resheader Content-Type: ``application/json``: access and refresh token.
@@ -62,8 +72,7 @@ then be included in the authorization header for secured endpoints.
         host: www.freva.dkrz.de
 
         {
-            "username": "your_username",
-            "password": "your_password"
+            "refresh-token": "my-token",
         }
 
     Example Request
@@ -103,7 +112,7 @@ then be included in the authorization header for secured endpoints.
             import requests
             response = requests.post(
               "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/token",
-              data={"username": "janedoe", "password": "janedoe123"}
+              data={"refresh-token": "mytoken"}
             )
             token_data = response.json()
 
@@ -115,7 +124,7 @@ then be included in the authorization header for secured endpoints.
             url <- "https://freva.dkrz.de/api/freva-nextgen/auth/v2/token"
             response <- POST(
                "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/token",
-               body = list(username = "janedoe", password = "janedoe123"),
+               body = setNames(list("mytoken"), "refresh-token"),
                encode = "form"
             )
             token_data <- content(response, "parsed")
@@ -128,7 +137,7 @@ then be included in the authorization header for secured endpoints.
 
             response = HTTP.POST(
               "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/token",
-              body = Dict("username" => "janedoe", "password" => "janedoe123")
+              body = Dict("refresh-token" => "mytoken")
             )
             token_data = JSON.parse(String(response.body))
 
@@ -150,7 +159,7 @@ then be included in the authorization header for secured endpoints.
 
                     curl_easy_setopt(curl, CURLOPT_URL, "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/token");
                     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-                    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "username=janedoe&password=janedoe123");
+                    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "refresh-token=mytoken");
 
                     res = curl_easy_perform(curl);
                     curl_easy_cleanup(curl);
@@ -271,6 +280,232 @@ then be included in the authorization header for secured endpoints.
 
 ---
 
+
+.. http:get:: /api/freva-nextgen/auth/v2/userinfo
+
+    Get userinfo for the current token.
+
+
+    :reqheader Authorization: The OAuth2 access token
+    :statuscode 200: no error
+    :statuscode 401: unauthorized
+    :resheader Content-Type: ``application/json``: access and refresh token.
+
+
+    Example Request
+    ~~~~~~~~~~~~~~~
+
+    .. sourcecode:: http
+
+        POST /api/freva-nextgen/auth/v2/userinfo HTTP/1.1
+        host: www.freva.dkrz.de
+        Authorization: Bearer your_access_token
+
+    Example Request
+    ~~~~~~~~~~~~~~~
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        {
+            "username": "janedoe",
+            "first_name": "Jane",
+            "last_name": "Doe",
+            "email": "jane@example.com"
+            "home": ""
+            "is_guest": true
+        }
+
+    Code examples
+    ~~~~~~~~~~~~~
+    Below you can find example usages of this request in different scripting and
+    programming languages
+
+    .. tabs::
+
+        .. code-tab:: bash
+            :caption: Shell
+
+            curl -X GET https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/userinfo \
+             -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+        .. code-tab:: python
+            :caption: Python
+
+            import requests
+            response = requests.get(
+              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/userinfo",
+              headers={"Authorization": "Bearer YOUR_ACCESS_TOKEN"}
+            )
+            token_data = response.json()
+
+        .. code-tab:: r
+            :caption: gnuR
+
+            library(httr)
+
+            response <- GET(
+               "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/userinfo",
+               add_headers(Authorization = paste("Bearer", "YOUR_ACCESS_TOKEN"))
+            )
+            token_data <- content(response, "parsed")
+
+        .. code-tab:: julia
+            :caption: Julia
+
+            using HTTP
+            using JSON
+
+            response = HTTP.get(
+              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/userinfo",
+              headers = Dict("Authorization" => "Bearer YOUR_ACCESS_TOKEN")
+            )
+            token_data = JSON.parse(String(response.body))
+
+        .. code-tab:: c
+            :caption: C/C++
+
+            #include <stdio.h>
+            #include <curl/curl.h>
+
+            int main() {
+                CURL *curl;
+                CURLcode res;
+
+                curl_global_init(CURL_GLOBAL_DEFAULT);
+                curl = curl_easy_init();
+                if(curl) {
+                    struct curl_slist *headers = NULL;
+                    headers = curl_slist_append(headers, "Authorization: Bearer YOUR_ACCESS_TOKEN");
+
+                    curl_easy_setopt(curl, CURLOPT_URL, "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/userinfo");
+                    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+                    res = curl_easy_perform(curl);
+                    curl_easy_cleanup(curl);
+                }
+                curl_global_cleanup();
+                return 0;
+            }
+
+---
+
+
+.. http:get:: /api/freva-nextgen/auth/v2/systemuser
+
+    Get system information for the user in possession of the oauth token.
+
+
+    :reqheader Authorization: The OAuth2 access token
+    :statuscode 200: no error
+    :statuscode 401: unauthorized
+    :resheader Content-Type: ``application/json``: access and refresh token.
+
+
+    Example Request
+    ~~~~~~~~~~~~~~~
+
+    .. sourcecode:: http
+
+        POST /api/freva-nextgen/auth/v2/systemuser HTTP/1.1
+        host: www.freva.dkrz.de
+        Authorization: Bearer your_access_token
+
+    Example Request
+    ~~~~~~~~~~~~~~~
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        {
+            "pw_name": "janedoe",
+            "pw_passwd": "\*",
+            "pw_uid": 1000,
+            "pw_gid": 1001
+            "pw_gecos": "Jane Doe",
+            "pw_dir":  "/home/jane",
+            "pw_shell": "/bin/zsh"
+        }
+
+    Code examples
+    ~~~~~~~~~~~~~
+    Below you can find example usages of this request in different scripting and
+    programming languages
+
+    .. tabs::
+
+        .. code-tab:: bash
+            :caption: Shell
+
+            curl -X GET https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser \
+             -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+        .. code-tab:: python
+            :caption: Python
+
+            import requests
+            response = requests.get(
+              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser",
+              headers={"Authorization": "Bearer YOUR_ACCESS_TOKEN"}
+            )
+            token_data = response.json()
+
+        .. code-tab:: r
+            :caption: gnuR
+
+            library(httr)
+
+            response <- GET(
+               "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser",
+               add_headers(Authorization = paste("Bearer", "YOUR_ACCESS_TOKEN"))
+            )
+            token_data <- content(response, "parsed")
+
+        .. code-tab:: julia
+            :caption: Julia
+
+            using HTTP
+            using JSON
+
+            response = HTTP.get(
+              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser",
+              headers = Dict("Authorization" => "Bearer YOUR_ACCESS_TOKEN")
+            )
+            token_data = JSON.parse(String(response.body))
+
+        .. code-tab:: c
+            :caption: C/C++
+
+            #include <stdio.h>
+            #include <curl/curl.h>
+
+            int main() {
+                CURL *curl;
+                CURLcode res;
+
+                curl_global_init(CURL_GLOBAL_DEFAULT);
+                curl = curl_easy_init();
+                if(curl) {
+                    struct curl_slist *headers = NULL;
+                    headers = curl_slist_append(headers, "Authorization: Bearer YOUR_ACCESS_TOKEN");
+
+                    curl_easy_setopt(curl, CURLOPT_URL, "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/userinfo");
+                    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+                    res = curl_easy_perform(curl);
+                    curl_easy_cleanup(curl);
+                }
+                curl_global_cleanup();
+                return 0;
+            }
+
+
+---
+
 Using the freva-client python library
 --------------------------------------
 The freva-client python library offers a very simple interface to interact
@@ -306,7 +541,7 @@ refresh token to create new tokens:
 
 .. code:: console
 
-    freva-client auth -u janedoe > ~/.mytoken.json
+    freva-client auth  > ~/.mytoken.json
     chmod 600 ~/.mytoken.json
 
 Later you can use the `jq json command line parser <https://jqlang.github.io/jq/>`_
@@ -314,5 +549,99 @@ to read the refresh token from and use it to create new access tokens.
 
 .. code:: console
 
-    export re_token=$(cat ~/.mytoken.json | jq -r .refresh_token)
-    freva-client auth -r $re_token > ~/.mytoken.json
+    freva-client auth --token-file ~/.mytoken.json > ~/.mytoken.json
+
+
+.. warning::
+
+    Avoid storing access tokens insecurely. Access tokens are sensitive and
+    should be treated like passwords. Do not store them in publicly readable
+    plaintext or in code repositories. Instead:
+
+    - Use environment variables or secure storage (e.g. ``.netrc``, OS keychains).
+    - Rotate and expire tokens regularly if implementing long-running SPs.
+
+
+Notes on Code-Based Auth Flow
+-----------------------------
+
+Code-based authentication is the only supported method since
+version ``2505.1.0``. It follows the OAuth2 Authorization Code Flow and is
+suitable for both end users and Service Provider (SP) integrations.
+However, there are important guidelines and limitations you should be aware of.
+
+🔒 Do not call ``/login`` or ``/callback`` directly
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The endpoints ``/auth/v2/login`` and ``/auth/v2/callback`` are internal
+coordination points for the authentication process:
+
+- ``/login`` initiates the code flow by redirecting to the OpenID Connect provider.
+- ``/callback`` is the endpoint where the OpenID provider sends the authorization code.
+
+These endpoints are **not designed for direct use by end users** or typical API consumers. Calling them directly will likely lead to errors or unexpected behaviour.
+
+Instead, you should authenticate using **one of the supported client tools**:
+
+- The **Python client**: via :py:func``freva_client.authenticate``
+- The **CLI tool**: via ``freva-client auth``
+- The **web portal**: to manually log in and download a token file
+
+These interfaces abstract away the complexity and ensure the flow is handled securely and correctly.
+
+For Service Providers (SPs)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you are building a custom SP (e.g. a web service or interactive tool
+that needs to act on behalf of a user), then it is appropriate to
+interact with the code flow endpoints directly — but only with care.
+
+Follow these steps:
+
+1. **Redirect the user to** Freva’s ``/login`` endpoint:
+
+   .. code-block:: http
+
+      GET /api/freva-nextgen/auth/v2/login?redirect_uri=https://your-sp.com/callback HTTP/1.1
+      host: www.freva.dkrz.de
+
+   - The ``redirect_uri`` must be a publicly accessible endpoint on your service that handles the code exchange.
+
+2. **User authenticates** via the upstream Identity Provider (e.g., Keycloak).
+3. **The Identity Provider redirects back** to your service's ``/callback`` endpoint with a `code` and `state` query parameter.
+
+4. **Your SP must then POST the code to** Freva's token exchange endpoint:
+
+    .. sourcecode:: http
+
+        POST /api/freva-nextgen/auth/v2/token HTTP/1.1
+        host: www.freva.dkrz.de
+        Content-Type: application/x-www-form-urlencoded
+
+        {
+            code=XXX&redirect_uri=https://your-sp.com/callback
+        }
+
+   - This will return a JSON with access token, refresh token, and expiry info.
+
+5. **Use the access token** to authenticate future API requests.
+6. **Optionally refresh the token** before expiry using:
+
+   .. sourcecode:: http
+
+      POST /api/freva-nextgen/auth/v2/token HTTP/1.1
+      host: www.freva.dkrz.de
+      Content-Type: application/x-www-form-urlencoded
+
+      {
+            grant_type=refresh_token&refresh_token=YYY
+      }
+
+.. note::
+
+   - You do **not need** to manage client secrets for browser-based SPs.
+   - The ``redirect_uri`` must match one of the values registered with the OIDC provider.
+   - If you are building a backend-for-frontend (BFF) architecture, handle the
+     token exchange **server-side** to protect credentials.
+
+This is the recommended approach for implementing a standards-compliant OAuth2 Authorization Code Flow as a Service Provider.
