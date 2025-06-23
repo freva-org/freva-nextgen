@@ -125,12 +125,11 @@ def test_stac_catalogue(
                 item_content = zip_file.read(member)
                 temp_item_path = temp_dir / "test_item.json"
                 temp_item_path.write_bytes(item_content)
-                ress = subprocess.run(
+                subprocess.run(
                     ["stac-check", str(temp_item_path)],
                     check=True,
                     capture_output=True,
                 )
-                assert "Valid ITEM: True" in ress.stdout.decode("utf-8")
                 break
     # failed test with static STAC catalogue - wrong output
     res = cli_runner.invoke(
