@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Databrowser python module &#8212; Freva Databrowser 2505.0.0 documentation</title>
+    <title>Databrowser python module &#8212; Freva Databrowser 2506.0.0 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=a087691e"></script>
+    <script src="../_static/documentation_options.js?v=7c662e95"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -127,8 +127,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2505.0.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2505.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2506.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2506.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -438,23 +438,20 @@ need to apply data analysis plugins, please visit the</p>
 on the storage system where the files or objects you are looking for are
 located. The query is of the form <code class="docutils literal notranslate"><span class="pre">key=value</span></code>. For <code class="docutils literal notranslate"><span class="pre">value</span></code> you might
 use wild cards such as *, ? or any regular expression.</p>
-<section id="parameters">
-<h3>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h3>
-<dl>
-<dt><a href="#id1"><span class="problematic" id="id2">*</span></a>facets: str</dt><dd><p>If you are not sure about the correct search key’s you can use
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>facets</strong> (<em>str</em>) – If you are not sure about the correct search key’s you can use
 positional arguments to search of any matching entries. For example
 ‘era5’ would allow you to search for any entries
-containing era5, regardless of project, product etc.</p>
-</dd>
-<dt><a href="#id3"><span class="problematic" id="id4">**</span></a>search_keys: str</dt><dd><p>The search constraints applied in the data search. If not given
-the whole dataset will be queried.</p>
-</dd>
-<dt>flavour: str, default: freva</dt><dd><p>The Data Reference Syntax (DRS) standard specifying the type of climate
+containing era5, regardless of project, product etc.</p></li>
+<li><p><strong>search_keys</strong> (<em>str</em>) – The search constraints applied in the data search. If not given
+the whole dataset will be queried.</p></li>
+<li><p><strong>flavour</strong> (<em>str</em><em>, </em><em>default: freva</em>) – The Data Reference Syntax (DRS) standard specifying the type of climate
 datasets to query. You can get an overview by using the
 :py:meth:databrowser.overview class method to retrieve information
-on the available search flavours and their different search keys.</p>
-</dd>
-<dt>time: str, default: “”</dt><dd><p>Special search key to refine/subset search results by time.
+on the available search flavours and their different search keys.</p></li>
+<li><p><strong>time</strong> (<em>str</em><em>, </em><em>default: &quot;&quot;</em>) – <p>Special search key to refine/subset search results by time.
 This can be a string representation of a time range or a single
 timestamp. The timestamps has to follow ISO-8601. Valid strings are
 <code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M</span> <span class="pre">to</span> <span class="pre">%Y-%m-%dT%H:%M</span></code> for time ranges or
@@ -464,101 +461,90 @@ timestamp. The timestamps has to follow ISO-8601. Valid strings are
 <p>You don’t have to give the full string format to subset time
 steps <code class="docutils literal notranslate"><span class="pre">%Y</span></code>, <code class="docutils literal notranslate"><span class="pre">%Y-%m</span></code> etc are also valid.</p>
 </div>
-</dd>
-<dt>time_select: str, default: flexible</dt><dd><p>Operator that specifies how the time period is selected. Choose from
+</p></li>
+<li><p><strong>time_select</strong> (<em>str</em><em>, </em><em>default: flexible</em>) – Operator that specifies how the time period is selected. Choose from
 flexible (default), strict or file. <code class="docutils literal notranslate"><span class="pre">strict</span></code> returns only those files
 that have the <cite>entire</cite> time period covered. The time search <code class="docutils literal notranslate"><span class="pre">2000</span> <span class="pre">to</span>
 <span class="pre">2012</span></code> will not select files containing data from 2010 to 2020 with
 the <code class="docutils literal notranslate"><span class="pre">strict</span></code> method. <code class="docutils literal notranslate"><span class="pre">flexible</span></code> will select those files as
 <code class="docutils literal notranslate"><span class="pre">flexible</span></code> returns those files that have either start or end period
 covered. <code class="docutils literal notranslate"><span class="pre">file</span></code> will only return files where the entire time
-period is contained within <cite>one single</cite> file.</p>
-</dd>
-<dt>bbox: str, default: “”</dt><dd><p>Special search facet to refine/subset search results by spatial extent.
+period is contained within <cite>one single</cite> file.</p></li>
+<li><p><strong>bbox</strong> (<em>str</em><em>, </em><em>default: &quot;&quot;</em>) – Special search facet to refine/subset search results by spatial extent.
 This can be a list representation of a bounding box or a WKT polygon.
 Valid lists are <code class="docutils literal notranslate"><span class="pre">min_lon</span> <span class="pre">max_lon</span> <span class="pre">min_lat</span> <span class="pre">max_lat</span></code> for bounding
-boxes and Well-Known Text (WKT) format for polygons.</p>
-</dd>
-<dt>bbox_select: str, default: flexible</dt><dd><p>Operator that specifies how the spatial extent is selected. Choose from
+boxes and Well-Known Text (WKT) format for polygons.</p></li>
+<li><p><strong>bbox_select</strong> (<em>str</em><em>, </em><em>default: flexible</em>) – Operator that specifies how the spatial extent is selected. Choose from
 flexible (default), strict or file. <code class="docutils literal notranslate"><span class="pre">strict</span></code> returns only those files
 that fully contain the query extent. The bbox search <code class="docutils literal notranslate"><span class="pre">-10</span> <span class="pre">10</span> <span class="pre">-10</span> <span class="pre">10</span></code>
 will not select files covering only <code class="docutils literal notranslate"><span class="pre">0</span> <span class="pre">5</span> <span class="pre">0</span> <span class="pre">5</span></code> with the <code class="docutils literal notranslate"><span class="pre">strict</span></code>
 method. <code class="docutils literal notranslate"><span class="pre">flexible</span></code> will select those files as it returns files that
 have any overlap with the query extent. <code class="docutils literal notranslate"><span class="pre">file</span></code> will only return files
-where the entire spatial extent is contained by the query geometry.</p>
-</dd>
-<dt>uniq_key: str, default: file</dt><dd><p>Chose if the solr search query should return paths to files or
+where the entire spatial extent is contained by the query geometry.</p></li>
+<li><p><strong>uniq_key</strong> (<em>str</em><em>, </em><em>default: file</em>) – Chose if the solr search query should return paths to files or
 uris, uris will have the file path along with protocol of the storage
 system. URIs are useful when working with libraries like fsspec, which
-require protocol information.</p>
-</dd>
-<dt>host: str, default: None</dt><dd><p>Override the host name of the databrowser server. This is usually the
+require protocol information.</p></li>
+<li><p><strong>host</strong> (<em>str</em><em>, </em><em>default: None</em>) – Override the host name of the databrowser server. This is usually the
 url where the freva web site can be found. Such as www.freva.dkrz.de.
 By default no host name is given and the host name will be taken from
-the freva config file.</p>
-</dd>
-<dt>stream_zarr: bool, default: False</dt><dd><p>Create a zarr stream for all search results. When set to true the
-files are served in zarr format and can be opened from anywhere.</p>
-</dd>
-<dt>multiversion: bool, default: False</dt><dd><p>Select all versions and not just the latest version (default).</p>
-</dd>
-<dt>fail_on_error: bool, default: False</dt><dd><p>Make the call fail if the connection to the databrowser could not
-be established.</p>
+the freva config file.</p></li>
+<li><p><strong>stream_zarr</strong> (<em>bool</em><em>, </em><em>default: False</em>) – Create a zarr stream for all search results. When set to true the
+files are served in zarr format and can be opened from anywhere.</p></li>
+<li><p><strong>multiversion</strong> (<em>bool</em><em>, </em><em>default: False</em>) – Select all versions and not just the latest version (default).</p></li>
+<li><p><strong>fail_on_error</strong> (<em>bool</em><em>, </em><em>default: False</em>) – Make the call fail if the connection to the databrowser could not
+be established.</p></li>
+</ul>
 </dd>
 </dl>
-</section>
-<section id="attributes">
-<h3>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">#</a></h3>
-<dl class="simple">
-<dt>url: str</dt><dd><p>the url of the currently selected databrowser api server</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="freva_client.databrowser.url">
+<span class="sig-name descname"><span class="pre">url</span></span><a class="headerlink" href="#freva_client.databrowser.url" title="Link to this definition">#</a></dt>
+<dd><p>the url of the currently selected databrowser api server</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
-<dt>metadata: dict[str, str]</dt><dd><p>The available search keys, or metadata, found for the applied search
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="freva_client.databrowser.metadata">
+<span class="sig-name descname"><span class="pre">metadata</span></span><a class="headerlink" href="#freva_client.databrowser.metadata" title="Link to this definition">#</a></dt>
+<dd><p>The available search keys, or metadata, found for the applied search
 constraints. This can be useful for reverse searches.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, str]</p>
 </dd>
 </dl>
-</section>
-<section id="example">
-<h3>Example<a class="headerlink" href="#example" title="Link to this heading">#</a></h3>
+</dd></dl>
+
+<p class="rubric">Example</p>
 <p>Search for the cmorph datasets. Suppose we know that the experiment name
 of this dataset is cmorph therefore we can create in instance of the
 databrowser class using the <code class="docutils literal notranslate"><span class="pre">experiment</span></code> search constraint.
 If you just ‘print’ the created object you will get a quick overview:</p>
-<p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="n">experiment</span><span class="o">=</span><span class="s2">&quot;cmorph&quot;</span><span class="p">,</span> <span class="n">uniq_key</span><span class="o">=</span><span class="s2">&quot;uri&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>databrowser(flavour=freva, host=http://localhost:7777/api/freva-nextgen/databrowser, multi_version=False, experiment=cmorph)
-</pre></div>
-</div>
 <p>After having created the search object you can acquire different kinds of
 information like the number of found objects:</p>
-<p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="n">experiment</span><span class="o">=</span><span class="s2">&quot;cmorph&quot;</span><span class="p">,</span> <span class="n">uniq_key</span><span class="o">=</span><span class="s2">&quot;uri&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">db</span><span class="p">))</span>
 <span class="c1"># Get all the search keys associated with this search</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>49
-</pre></div>
-</div>
 <p>Or you can retrieve the combined metadata of the search objects.</p>
-<p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="n">experiment</span><span class="o">=</span><span class="s2">&quot;cmorph&quot;</span><span class="p">,</span> <span class="n">uniq_key</span><span class="o">=</span><span class="s2">&quot;uri&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{&#39;cmor_table&#39;: [&#39;30min&#39;], &#39;dataset&#39;: [&#39;obs-fs&#39;, &#39;obs-hsm&#39;, &#39;obs-swfit&#39;], &#39;driving_model&#39;: [], &#39;ensemble&#39;: [&#39;r1i1p1&#39;], &#39;experiment&#39;: [&#39;cmorph&#39;], &#39;format&#39;: [&#39;nc&#39;, &#39;zarr&#39;], &#39;fs_type&#39;: [&#39;posix&#39;], &#39;grid_id&#39;: [], &#39;grid_label&#39;: [&#39;gn&#39;], &#39;institute&#39;: [&#39;cpc&#39;], &#39;level_type&#39;: [&#39;2d&#39;], &#39;model&#39;: [&#39;cpc&#39;, &#39;cpc-cmorph&#39;], &#39;product&#39;: [&#39;grid&#39;], &#39;project&#39;: [&#39;observations&#39;], &#39;rcm_name&#39;: [], &#39;rcm_version&#39;: [], &#39;realm&#39;: [&#39;atmos&#39;], &#39;time_aggregation&#39;: [&#39;mean&#39;], &#39;time_frequency&#39;: [&#39;1min&#39;], &#39;user&#39;: [], &#39;variable&#39;: [&#39;pr&#39;]}
-</pre></div>
-</div>
 <p>Most importantly you can retrieve the locations of all encountered objects</p>
-<p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="n">experiment</span><span class="o">=</span><span class="s2">&quot;cmorph&quot;</span><span class="p">,</span> <span class="n">uniq_key</span><span class="o">=</span><span class="s2">&quot;uri&quot;</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">db</span><span class="p">:</span>
@@ -567,37 +553,21 @@ information like the number of found objects:</p>
 <span class="nb">print</span><span class="p">(</span><span class="n">all_files</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609020030.nc
-</pre></div>
-</div>
 <p>You can also set a different flavour, for example according to cmip6
 standard:</p>
-<p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="n">flavour</span><span class="o">=</span><span class="s2">&quot;cmip6&quot;</span><span class="p">,</span> <span class="n">experiment_id</span><span class="o">=</span><span class="s2">&quot;cmorph&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
-</pre></div>
-</div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{&#39;table_id&#39;: [&#39;30min&#39;], &#39;dataset&#39;: [&#39;obs-fs&#39;, &#39;obs-hsm&#39;, &#39;obs-swfit&#39;], &#39;driving_model&#39;: [], &#39;member_id&#39;: [&#39;r1i1p1&#39;], &#39;experiment_id&#39;: [&#39;cmorph&#39;], &#39;format&#39;: [&#39;nc&#39;, &#39;zarr&#39;], &#39;fs_type&#39;: [&#39;posix&#39;], &#39;grid_id&#39;: [], &#39;grid_label&#39;: [&#39;gn&#39;], &#39;institution_id&#39;: [&#39;cpc&#39;], &#39;level_type&#39;: [&#39;2d&#39;], &#39;source_id&#39;: [&#39;cpc&#39;, &#39;cpc-cmorph&#39;], &#39;activity_id&#39;: [&#39;grid&#39;], &#39;mip_era&#39;: [&#39;observations&#39;], &#39;rcm_name&#39;: [], &#39;rcm_version&#39;: [], &#39;realm&#39;: [&#39;atmos&#39;], &#39;time_aggregation&#39;: [&#39;mean&#39;], &#39;frequency&#39;: [&#39;1min&#39;], &#39;user&#39;: [], &#39;variable_id&#39;: [&#39;pr&#39;]}
 </pre></div>
 </div>
 <p>Sometimes you don’t exactly know the exact names of the search keys and
 want retrieve all file objects that match a certain category. For example
 for getting all ocean reanalysis datasets you can apply the ‘reana*’
 search key as a positional argument:</p>
-<p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="s2">&quot;reana*&quot;</span><span class="p">,</span> <span class="n">realm</span><span class="o">=</span><span class="s2">&quot;ocean&quot;</span><span class="p">,</span> <span class="n">flavour</span><span class="o">=</span><span class="s2">&quot;cmip6&quot;</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">db</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
-</pre></div>
-</div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>https://swift.dkrz.de/v1/dkrz_a32dc0e8-2299-4239-a47d-6bf45c8b0160/freva_test/model/obs/reanalysis/reanalysis/NOAA/NODC/OC5/mon/ocean/Omon/r1i1p1/v20200101/hc700/hc700_mon_NODC_OC5_r1i1p1_201201-201212.zarr
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/model/obs/reanalysis/reanalysis/NOAA/NODC/OC5/mon/ocean/Omon/r1i1p1/v20200101/hc700/hc700_mon_NODC_OC5_r1i1p1_201201-201212.nc
-/arch/bb1203/freva_test/model/obs/reanalysis/reanalysis/NOAA/NODC/OC5/mon/ocean/Omon/r1i1p1/v20200101/hc700/hc700_mon_NODC_OC5_r1i1p1_201201-201212.nc
 </pre></div>
 </div>
 <p>If you don’t have direct access to the data, for example because you are
@@ -608,20 +578,13 @@ mind that zarr streams if not accessed in time will expire. Since the
 data can be accessed from anywhere you will also have to authenticate
 before you are able to access the data. Refer also to the
 <a class="reference internal" href="../auth/index.html#freva_client.authenticate" title="freva_client.authenticate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">freva_client.authenticate()</span></code></a> method.</p>
-<p><span class="caption-text">Code </span></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">authenticate</span><span class="p">,</span> <span class="n">databrowser</span>
-<span class="n">token_info</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">&quot;janedoe&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;cmip6-fs&quot;</span><span class="p">,</span> <span class="n">stream_zarr</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">zarr_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">zarr_files</span><span class="p">)</span>
-</pre></div>
-</div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[&#39;http://fv-az816-966:7777/api/freva-nextgen/data-portal/zarr/b5f98d86-b658-5c92-b879-9aeddf6e2f19.zarr&#39;, &#39;http://fv-az816-966:7777/api/freva-nextgen/data-portal/zarr/0fcbbf0c-f054-5085-a547-7374189ad7a0.zarr&#39;]
 </pre></div>
 </div>
 <p>After you have created the paths to the zarr files you can open them</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
 <span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span>
    <span class="n">zarr_files</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
    <span class="n">chunks</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
@@ -636,18 +599,16 @@ before you are able to access the data. Refer also to the
 <dt class="sig sig-object py" id="freva_client.databrowser.count_values">
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">count_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">facets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flavour</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'freva'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip6'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cmip5'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cordex'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nextgems'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'user'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'freva'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fail_on_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extended_search</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">search_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#freva_client.databrowser.count_values" title="Link to this definition">#</a></dt>
 <dd><p>Count the number of objects in the databrowser.</p>
-<section id="id5">
-<h4>Parameters<a class="headerlink" href="#id5" title="Link to this heading">#</a></h4>
-<dl>
-<dt><a href="#id6"><span class="problematic" id="id7">*</span></a>facets: str</dt><dd><p>If you are not sure about the correct search key’s you can use
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>facets</strong> (<em>str</em>) – If you are not sure about the correct search key’s you can use
 positional arguments to search of any matching entries. For example
 ‘era5’ would allow you to search for any entries
-containing era5, regardless of project, product etc.</p>
-</dd>
-<dt>flavour: str, default: freva</dt><dd><p>The Data Reference Syntax (DRS) standard specifying the type of climate
-datasets to query.</p>
-</dd>
-<dt>time: str, default: “”</dt><dd><p>Special search facet to refine/subset search results by time.
+containing era5, regardless of project, product etc.</p></li>
+<li><p><strong>flavour</strong> (<em>str</em><em>, </em><em>default: freva</em>) – The Data Reference Syntax (DRS) standard specifying the type of climate
+datasets to query.</p></li>
+<li><p><strong>time</strong> (<em>str</em><em>, </em><em>default: &quot;&quot;</em>) – <p>Special search facet to refine/subset search results by time.
 This can be a string representation of a time range or a single
 timestamp. The timestamp has to follow ISO-8601. Valid strings are
 <code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M</span></code> to <code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M</span></code> for time ranges and
@@ -657,88 +618,63 @@ timestamp. The timestamp has to follow ISO-8601. Valid strings are
 <p>You don’t have to give the full string format to subset time
 steps <code class="docutils literal notranslate"><span class="pre">%Y</span></code>, <code class="docutils literal notranslate"><span class="pre">%Y-%m</span></code> etc are also valid.</p>
 </div>
-</dd>
-<dt>time_select: str, default: flexible</dt><dd><p>Operator that specifies how the time period is selected. Choose from
+</p></li>
+<li><p><strong>time_select</strong> (<em>str</em><em>, </em><em>default: flexible</em>) – Operator that specifies how the time period is selected. Choose from
 flexible (default), strict or file. <code class="docutils literal notranslate"><span class="pre">strict</span></code> returns only those files
 that have the <em>entire</em> time period covered. The time search <code class="docutils literal notranslate"><span class="pre">2000</span> <span class="pre">to</span>
 <span class="pre">2012</span></code> will not select files containing data from 2010 to 2020 with
 the <code class="docutils literal notranslate"><span class="pre">strict</span></code> method. <code class="docutils literal notranslate"><span class="pre">flexible</span></code> will select those files as
 <code class="docutils literal notranslate"><span class="pre">flexible</span></code> returns those files that have either start or end period
 covered. <code class="docutils literal notranslate"><span class="pre">file</span></code> will only return files where the entire time
-period is contained within <cite>one single</cite> file.</p>
-</dd>
-<dt>bbox: str, default: “”</dt><dd><p>Special search facet to refine/subset search results by spatial extent.
+period is contained within <cite>one single</cite> file.</p></li>
+<li><p><strong>bbox</strong> (<em>str</em><em>, </em><em>default: &quot;&quot;</em>) – Special search facet to refine/subset search results by spatial extent.
 This can be a list representation of a bounding box or a WKT polygon.
 Valid lists are <code class="docutils literal notranslate"><span class="pre">min_lon</span> <span class="pre">max_lon</span> <span class="pre">min_lat</span> <span class="pre">max_lat</span></code> for bounding
-boxes and Well-Known Text (WKT) format for polygons.</p>
-</dd>
-<dt>bbox_select: str, default: flexible</dt><dd><p>Operator that specifies how the spatial extent is selected. Choose from
+boxes and Well-Known Text (WKT) format for polygons.</p></li>
+<li><p><strong>bbox_select</strong> (<em>str</em><em>, </em><em>default: flexible</em>) – Operator that specifies how the spatial extent is selected. Choose from
 flexible (default), strict or file. <code class="docutils literal notranslate"><span class="pre">strict</span></code> returns only those files
 that fully contain the query extent. The bbox search <code class="docutils literal notranslate"><span class="pre">-10</span> <span class="pre">10</span> <span class="pre">-10</span> <span class="pre">10</span></code>
 will not select files covering only <code class="docutils literal notranslate"><span class="pre">0</span> <span class="pre">5</span> <span class="pre">0</span> <span class="pre">5</span></code> with the <code class="docutils literal notranslate"><span class="pre">strict</span></code>
 method. <code class="docutils literal notranslate"><span class="pre">flexible</span></code> will select those files as it returns files that
 have any overlap with the query extent. <code class="docutils literal notranslate"><span class="pre">file</span></code> will only return files
-where the entire spatial extent is contained by the query geometry.</p>
-</dd>
-<dt>extended_search: bool, default: False</dt><dd><p>Retrieve information on additional search keys.</p>
-</dd>
-<dt>host: str, default: None</dt><dd><p>Override the host name of the databrowser server. This is usually
+where the entire spatial extent is contained by the query geometry.</p></li>
+<li><p><strong>extended_search</strong> (<em>bool</em><em>, </em><em>default: False</em>) – Retrieve information on additional search keys.</p></li>
+<li><p><strong>host</strong> (<em>str</em><em>, </em><em>default: None</em>) – Override the host name of the databrowser server. This is usually
 the url where the freva web site can be found. Such as
 www.freva.dkrz.de. By default no host name is given and the host
-name will be taken from the freva config file.</p>
+name will be taken from the freva config file.</p></li>
+<li><p><strong>multiversion</strong> (<em>bool</em><em>, </em><em>default: False</em>) – Select all versions and not just the latest version (default).</p></li>
+<li><p><strong>fail_on_error</strong> (<em>bool</em><em>, </em><em>default: False</em>) – Make the call fail if the connection to the databrowser could not
+be established.</p></li>
+<li><p><strong>search_keys</strong> (<em>str</em>) – The search constraints to be applied in the data search. If not given
+the whole dataset will be queried.</p></li>
+</ul>
 </dd>
-<dt>multiversion: bool, default: False</dt><dd><p>Select all versions and not just the latest version (default).</p>
-</dd>
-<dt>fail_on_error: bool, default: False</dt><dd><p>Make the call fail if the connection to the databrowser could not
-be established.</p>
-</dd>
-<dt><a href="#id8"><span class="problematic" id="id9">**</span></a>search_keys: str</dt><dd><p>The search constraints to be applied in the data search. If not given
-the whole dataset will be queried.</p>
-</dd>
-</dl>
-</section>
-<section id="returns">
-<h4>Returns<a class="headerlink" href="#returns" title="Link to this heading">#</a></h4>
-<dl class="simple">
-<dt>dict[str, int]:</dt><dd><p>Dictionary with the number of objects for each search facet/key
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary with the number of objects for each search facet/key
 is given.</p>
 </dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, int]</p>
+</dd>
 </dl>
-</section>
-<section id="id10">
-<h4>Example<a class="headerlink" href="#id10" title="Link to this heading">#</a></h4>
-<p><span class="caption-text">Code </span></p>
+<p class="rubric">Example</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">databrowser</span><span class="o">.</span><span class="n">count_values</span><span class="p">(</span><span class="n">experiment</span><span class="o">=</span><span class="s2">&quot;cmorph&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{&#39;ensemble&#39;: {&#39;r1i1p1&#39;: 49}, &#39;experiment&#39;: {&#39;cmorph&#39;: 49}, &#39;institute&#39;: {&#39;cpc&#39;: 49}, &#39;model&#39;: {&#39;cpc&#39;: 25, &#39;cpc-cmorph&#39;: 24}, &#39;product&#39;: {&#39;grid&#39;: 49}, &#39;project&#39;: {&#39;observations&#39;: 49}, &#39;realm&#39;: {&#39;atmos&#39;: 49}, &#39;time_aggregation&#39;: {&#39;mean&#39;: 49}, &#39;time_frequency&#39;: {&#39;1min&#39;: 49}, &#39;variable&#39;: {&#39;pr&#39;: 49}}
-</pre></div>
-</div>
-<p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">databrowser</span><span class="o">.</span><span class="n">count_values</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">))</span>
-</pre></div>
-</div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{&#39;ensemble&#39;: {}, &#39;experiment&#39;: {}, &#39;institute&#39;: {}, &#39;model&#39;: {}, &#39;product&#39;: {}, &#39;project&#39;: {}, &#39;realm&#39;: {}, &#39;time_aggregation&#39;: {}, &#39;time_frequency&#39;: {}, &#39;variable&#39;: {}}
 </pre></div>
 </div>
 <p>Sometimes you don’t exactly know the exact names of the search keys and
 want retrieve all file objects that match a certain category. For
 example for getting all ocean reanalysis datasets you can apply the
 ‘reana*’ search key as a positional argument:</p>
-<p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">databrowser</span><span class="o">.</span><span class="n">count_values</span><span class="p">(</span><span class="s2">&quot;reana*&quot;</span><span class="p">,</span> <span class="n">realm</span><span class="o">=</span><span class="s2">&quot;ocean&quot;</span><span class="p">,</span> <span class="n">flavour</span><span class="o">=</span><span class="s2">&quot;cmip6&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{&#39;member_id&#39;: {&#39;r1i1p1&#39;: 3}, &#39;experiment_id&#39;: {&#39;oc5&#39;: 3}, &#39;institution_id&#39;: {&#39;noaa&#39;: 3}, &#39;source_id&#39;: {&#39;nodc&#39;: 3}, &#39;activity_id&#39;: {&#39;reanalysis&#39;: 3}, &#39;mip_era&#39;: {&#39;observations&#39;: 3}, &#39;realm&#39;: {&#39;ocean&#39;: 3}, &#39;time_aggregation&#39;: {&#39;mean&#39;: 3}, &#39;frequency&#39;: {&#39;mon&#39;: 3}, &#39;variable_id&#39;: {&#39;hc700&#39;: 3}}
-</pre></div>
-</div>
-</section>
 </dd></dl>
 
 <dl class="py method">
@@ -748,56 +684,42 @@ example for getting all ocean reanalysis datasets you can apply the
 <p>This method creates a intake-esm catalogue from the current object
 search. Instead of having the original files as target objects you can
 also choose to stream the files via zarr.</p>
-<section id="id11">
-<h4>Returns<a class="headerlink" href="#id11" title="Link to this heading">#</a></h4>
-<p>intake_esm.core.esm_datastore: intake-esm catalogue.</p>
-</section>
-<section id="raises">
-<h4>Raises<a class="headerlink" href="#raises" title="Link to this heading">#</a></h4>
-<p>ValueError: If user is not authenticated or catalogue creation failed.</p>
-</section>
-<section id="id12">
-<h4>Example<a class="headerlink" href="#id12" title="Link to this heading">#</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>intake_esm.core.esm_datastore</strong></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>intake-esm catalogue.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If user is not authenticated or catalogue creation failed.:</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
 <p>Let’s create an intake-esm catalogue that points points allows for
 streaming the target data as zarr:</p>
-<p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;cmip6-hsm&quot;</span><span class="p">,</span> <span class="n">stream_zarr</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">cat</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">intake_catalogue</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">cat</span><span class="o">.</span><span class="n">df</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>                                                 uri project  ... grid_label format
-0  http://fv-az816-966:7777/api/freva-nextgen/dat...   CMIP6  ...         gn     nc
-
-[1 rows x 14 columns]
-</pre></div>
-</div>
-</section>
 </dd></dl>
 
 <dl class="py property">
-<dt class="sig sig-object py" id="freva_client.databrowser.metadata">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">metadata</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#freva_client.databrowser.metadata" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="id0">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">metadata</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id0" title="Link to this definition">#</a></dt>
 <dd><p>Get the metadata (facets) for the current databrowser query.</p>
 <p>You can retrieve all information that is associated with your current
 databrowser search. This can be useful for reverse searches for example
 for retrieving metadata of object stores or file/directory names.</p>
-<section id="id13">
-<h4>Example<a class="headerlink" href="#id13" title="Link to this heading">#</a></h4>
+<p class="rubric">Example</p>
 <p>Reverse search: retrieving meta data from a known file</p>
-<p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="n">uri</span><span class="o">=</span><span class="s2">&quot;slk:///arch/*/CPC/*&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{&#39;cmor_table&#39;: [&#39;30min&#39;], &#39;dataset&#39;: [&#39;obs-hsm&#39;], &#39;driving_model&#39;: [], &#39;ensemble&#39;: [&#39;r1i1p1&#39;], &#39;experiment&#39;: [&#39;cmorph&#39;], &#39;format&#39;: [&#39;nc&#39;], &#39;fs_type&#39;: [&#39;posix&#39;], &#39;grid_id&#39;: [], &#39;grid_label&#39;: [&#39;gn&#39;], &#39;institute&#39;: [&#39;cpc&#39;], &#39;level_type&#39;: [&#39;2d&#39;], &#39;model&#39;: [&#39;cpc&#39;], &#39;product&#39;: [&#39;grid&#39;], &#39;project&#39;: [&#39;observations&#39;], &#39;rcm_name&#39;: [], &#39;rcm_version&#39;: [], &#39;realm&#39;: [&#39;atmos&#39;], &#39;time_aggregation&#39;: [&#39;mean&#39;], &#39;time_frequency&#39;: [&#39;1min&#39;], &#39;user&#39;: [], &#39;variable&#39;: [&#39;pr&#39;]}
-</pre></div>
-</div>
-</section>
 </dd></dl>
 
 <dl class="py method">
@@ -806,18 +728,16 @@ for retrieving metadata of object stores or file/directory names.</p>
 <dd><p>Search for data attributes (facets) in the databrowser.</p>
 <p>The method queries the databrowser for available search facets (keys)
 like model, experiment etc.</p>
-<section id="id14">
-<h4>Parameters<a class="headerlink" href="#id14" title="Link to this heading">#</a></h4>
-<dl>
-<dt><a href="#id15"><span class="problematic" id="id16">*</span></a>facets: str</dt><dd><p>If you are not sure about the correct search key’s you can use
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>facets</strong> (<em>str</em>) – If you are not sure about the correct search key’s you can use
 positional arguments to search of any matching entries. For example
 ‘era5’ would allow you to search for any entries
-containing era5, regardless of project, product etc.</p>
-</dd>
-<dt>flavour: str, default: freva</dt><dd><p>The Data Reference Syntax (DRS) standard specifying the type of climate
-datasets to query.</p>
-</dd>
-<dt>time: str, default: “”</dt><dd><p>Special search facet to refine/subset search results by time.
+containing era5, regardless of project, product etc.</p></li>
+<li><p><strong>flavour</strong> (<em>str</em><em>, </em><em>default: freva</em>) – The Data Reference Syntax (DRS) standard specifying the type of climate
+datasets to query.</p></li>
+<li><p><strong>time</strong> (<em>str</em><em>, </em><em>default: &quot;&quot;</em>) – <p>Special search facet to refine/subset search results by time.
 This can be a string representation of a time range or a single
 timestamp. The timestamp has to follow ISO-8601. Valid strings are
 <code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M</span></code> to <code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M</span></code> for time ranges and
@@ -827,78 +747,58 @@ timestamp. The timestamp has to follow ISO-8601. Valid strings are
 <p>You don’t have to give the full string format to subset time
 steps <code class="docutils literal notranslate"><span class="pre">%Y</span></code>, <code class="docutils literal notranslate"><span class="pre">%Y-%m</span></code> etc are also valid.</p>
 </div>
-</dd>
-<dt>time_select: str, default: flexible</dt><dd><p>Operator that specifies how the time period is selected. Choose from
+</p></li>
+<li><p><strong>time_select</strong> (<em>str</em><em>, </em><em>default: flexible</em>) – Operator that specifies how the time period is selected. Choose from
 flexible (default), strict or file. <code class="docutils literal notranslate"><span class="pre">strict</span></code> returns only those files
 that have the <em>entire</em> time period covered. The time search <code class="docutils literal notranslate"><span class="pre">2000</span> <span class="pre">to</span>
 <span class="pre">2012</span></code> will not select files containing data from 2010 to 2020 with
 the <code class="docutils literal notranslate"><span class="pre">strict</span></code> method. <code class="docutils literal notranslate"><span class="pre">flexible</span></code> will select those files as
 <code class="docutils literal notranslate"><span class="pre">flexible</span></code> returns those files that have either start or end period
 covered. <code class="docutils literal notranslate"><span class="pre">file</span></code> will only return files where the entire time
-period is contained within <em>one single</em> file.</p>
-</dd>
-<dt>bbox: str, default: “”</dt><dd><p>Special search facet to refine/subset search results by spatial extent.
+period is contained within <em>one single</em> file.</p></li>
+<li><p><strong>bbox</strong> (<em>str</em><em>, </em><em>default: &quot;&quot;</em>) – Special search facet to refine/subset search results by spatial extent.
 This can be a list representation of a bounding box or a WKT polygon.
 Valid lists are <code class="docutils literal notranslate"><span class="pre">min_lon</span> <span class="pre">max_lon</span> <span class="pre">min_lat</span> <span class="pre">max_lat</span></code> for bounding
-boxes and Well-Known Text (WKT) format for polygons.</p>
-</dd>
-<dt>bbox_select: str, default: flexible</dt><dd><p>Operator that specifies how the spatial extent is selected. Choose from
+boxes and Well-Known Text (WKT) format for polygons.</p></li>
+<li><p><strong>bbox_select</strong> (<em>str</em><em>, </em><em>default: flexible</em>) – Operator that specifies how the spatial extent is selected. Choose from
 flexible (default), strict or file. <code class="docutils literal notranslate"><span class="pre">strict</span></code> returns only those files
 that fully contain the query extent. The bbox search <code class="docutils literal notranslate"><span class="pre">-10</span> <span class="pre">10</span> <span class="pre">-10</span> <span class="pre">10</span></code>
 will not select files covering only <code class="docutils literal notranslate"><span class="pre">0</span> <span class="pre">5</span> <span class="pre">0</span> <span class="pre">5</span></code> with the <code class="docutils literal notranslate"><span class="pre">strict</span></code>
 method. <code class="docutils literal notranslate"><span class="pre">flexible</span></code> will select those files as it returns files that
 have any overlap with the query extent. <code class="docutils literal notranslate"><span class="pre">file</span></code> will only return files
-where the entire spatial extent is contained by the query geometry.</p>
-</dd>
-<dt>extended_search: bool, default: False</dt><dd><p>Retrieve information on additional search keys.</p>
-</dd>
-<dt>multiversion: bool, default: False</dt><dd><p>Select all versions and not just the latest version (default).</p>
-</dd>
-<dt>host: str, default: None</dt><dd><p>Override the host name of the databrowser server. This is usually
+where the entire spatial extent is contained by the query geometry.</p></li>
+<li><p><strong>extended_search</strong> (<em>bool</em><em>, </em><em>default: False</em>) – Retrieve information on additional search keys.</p></li>
+<li><p><strong>multiversion</strong> (<em>bool</em><em>, </em><em>default: False</em>) – Select all versions and not just the latest version (default).</p></li>
+<li><p><strong>host</strong> (<em>str</em><em>, </em><em>default: None</em>) – Override the host name of the databrowser server. This is usually
 the url where the freva web site can be found. Such as
 www.freva.dkrz.de. By default no host name is given and the host
-name will be taken from the freva config file.</p>
+name will be taken from the freva config file.</p></li>
+<li><p><strong>fail_on_error</strong> (<em>bool</em><em>, </em><em>default: False</em>) – Make the call fail if the connection to the databrowser could not
+be established.</p></li>
+<li><p><strong>search_keys</strong> (<em>str</em><em>, </em><em>list</em><em>[</em><em>str</em><em>]</em>) – The facets to be applied in the data search. If not given
+the whole dataset will be queried.</p></li>
+</ul>
 </dd>
-<dt>fail_on_error: bool, default: False</dt><dd><p>Make the call fail if the connection to the databrowser could not
-be established.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary with a list search facet values for each search facet key</p>
 </dd>
-<dt><a href="#id17"><span class="problematic" id="id18">**</span></a>search_keys: str, list[str]</dt><dd><p>The facets to be applied in the data search. If not given
-the whole dataset will be queried.</p>
-</dd>
-</dl>
-</section>
-<section id="id19">
-<h4>Returns<a class="headerlink" href="#id19" title="Link to this heading">#</a></h4>
-<dl class="simple">
-<dt>dict[str, list[str]]:</dt><dd><p>Dictionary with a list search facet values for each search facet key</p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, list[str]]</p>
 </dd>
 </dl>
-</section>
-<section id="id20">
-<h4>Example<a class="headerlink" href="#id20" title="Link to this heading">#</a></h4>
-<p><span class="caption-text">Code </span></p>
+<p class="rubric">Example</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">all_facets</span> <span class="o">=</span> <span class="n">databrowser</span><span class="o">.</span><span class="n">metadata_search</span><span class="p">(</span><span class="n">project</span><span class="o">=</span><span class="s1">&#39;obs*&#39;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">all_facets</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{&#39;ensemble&#39;: [&#39;r1i1p1&#39;], &#39;experiment&#39;: [&#39;cmorph&#39;, &#39;oc5&#39;], &#39;institute&#39;: [&#39;cpc&#39;, &#39;noaa&#39;], &#39;model&#39;: [&#39;cpc&#39;, &#39;cpc-cmorph&#39;, &#39;nodc&#39;], &#39;product&#39;: [&#39;grid&#39;, &#39;reanalysis&#39;], &#39;project&#39;: [&#39;observations&#39;], &#39;realm&#39;: [&#39;atmos&#39;, &#39;ocean&#39;], &#39;time_aggregation&#39;: [&#39;mean&#39;], &#39;time_frequency&#39;: [&#39;1min&#39;, &#39;mon&#39;], &#39;variable&#39;: [&#39;hc700&#39;, &#39;pr&#39;]}
-</pre></div>
-</div>
 <p>You can also search for all metadata matching a search string:</p>
-<p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">spec_facets</span> <span class="o">=</span> <span class="n">databrowser</span><span class="o">.</span><span class="n">metadata_search</span><span class="p">(</span><span class="s2">&quot;obs*&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">spec_facets</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{&#39;ensemble&#39;: [&#39;r1i1p1&#39;], &#39;experiment&#39;: [&#39;cmorph&#39;], &#39;institute&#39;: [&#39;cpc&#39;], &#39;model&#39;: [&#39;cpc&#39;, &#39;cpc-cmorph&#39;], &#39;product&#39;: [&#39;grid&#39;], &#39;project&#39;: [&#39;observations&#39;], &#39;realm&#39;: [&#39;atmos&#39;], &#39;time_aggregation&#39;: [&#39;mean&#39;], &#39;time_frequency&#39;: [&#39;1min&#39;], &#39;variable&#39;: [&#39;pr&#39;]}
-</pre></div>
-</div>
 <p>Get all models that have a given time step:</p>
-<p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">databrowser</span><span class="o">.</span><span class="n">metadata_search</span><span class="p">(</span>
     <span class="n">project</span><span class="o">=</span><span class="s2">&quot;obs*&quot;</span><span class="p">,</span>
@@ -907,39 +807,24 @@ the whole dataset will be queried.</p>
 <span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{&#39;ensemble&#39;: [&#39;r1i1p1&#39;], &#39;experiment&#39;: [&#39;cmorph&#39;], &#39;institute&#39;: [&#39;cpc&#39;], &#39;model&#39;: [&#39;cpc&#39;, &#39;cpc-cmorph&#39;], &#39;product&#39;: [&#39;grid&#39;], &#39;project&#39;: [&#39;observations&#39;], &#39;realm&#39;: [&#39;atmos&#39;], &#39;time_aggregation&#39;: [&#39;mean&#39;], &#39;time_frequency&#39;: [&#39;1min&#39;], &#39;variable&#39;: [&#39;pr&#39;]}
-</pre></div>
-</div>
 <p>Reverse search: retrieving meta data from a known file</p>
-<p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">res</span> <span class="o">=</span> <span class="n">databrowser</span><span class="o">.</span><span class="n">metadata_search</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="s2">&quot;/arch/*CPC/*&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
-</pre></div>
-</div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{&#39;ensemble&#39;: [&#39;r1i1p1&#39;], &#39;experiment&#39;: [&#39;cmorph&#39;], &#39;institute&#39;: [&#39;cpc&#39;], &#39;model&#39;: [&#39;cpc&#39;], &#39;product&#39;: [&#39;grid&#39;], &#39;project&#39;: [&#39;observations&#39;], &#39;realm&#39;: [&#39;atmos&#39;], &#39;time_aggregation&#39;: [&#39;mean&#39;], &#39;time_frequency&#39;: [&#39;1min&#39;], &#39;variable&#39;: [&#39;pr&#39;]}
 </pre></div>
 </div>
 <p>Sometimes you don’t exactly know the exact names of the search keys and
 want retrieve all file objects that match a certain category. For
 example for getting all ocean reanalysis datasets you can apply the
 ‘reana*’ search key as a positional argument:</p>
-<p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">databrowser</span><span class="o">.</span><span class="n">metadata_search</span><span class="p">(</span><span class="s2">&quot;reana*&quot;</span><span class="p">,</span> <span class="n">realm</span><span class="o">=</span><span class="s2">&quot;ocean&quot;</span><span class="p">,</span> <span class="n">flavour</span><span class="o">=</span><span class="s2">&quot;cmip6&quot;</span><span class="p">))</span>
-</pre></div>
-</div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{&#39;member_id&#39;: [&#39;r1i1p1&#39;], &#39;experiment_id&#39;: [&#39;oc5&#39;], &#39;institution_id&#39;: [&#39;noaa&#39;], &#39;source_id&#39;: [&#39;nodc&#39;], &#39;activity_id&#39;: [&#39;reanalysis&#39;], &#39;mip_era&#39;: [&#39;observations&#39;], &#39;realm&#39;: [&#39;ocean&#39;], &#39;time_aggregation&#39;: [&#39;mean&#39;], &#39;frequency&#39;: [&#39;mon&#39;], &#39;variable_id&#39;: [&#39;hc700&#39;]}
 </pre></div>
 </div>
 <p>In datasets with multiple versions only the <cite>latest</cite> version (i.e.
 <cite>highest</cite> version number) is returned by default. Querying a specific
 version from a multi versioned datasets requires the <code class="docutils literal notranslate"><span class="pre">multiversion</span></code>
 flag in combination with the <code class="docutils literal notranslate"><span class="pre">version</span></code> special attribute:</p>
-<p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">res</span> <span class="o">=</span> <span class="n">databrowser</span><span class="o">.</span><span class="n">metadata_search</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;cmip6-fs&quot;</span><span class="p">,</span>
     <span class="n">model</span><span class="o">=</span><span class="s2">&quot;access-cm2&quot;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;v20191108&quot;</span><span class="p">,</span> <span class="n">extended_search</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -947,13 +832,8 @@ flag in combination with the <code class="docutils literal notranslate"><span cl
 <span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{&#39;cmor_table&#39;: [&#39;amon&#39;], &#39;dataset&#39;: [&#39;cmip6-fs&#39;], &#39;driving_model&#39;: [], &#39;ensemble&#39;: [&#39;r1i1p1f1&#39;], &#39;experiment&#39;: [&#39;amip&#39;], &#39;format&#39;: [&#39;nc&#39;], &#39;fs_type&#39;: [&#39;posix&#39;], &#39;grid_id&#39;: [], &#39;grid_label&#39;: [&#39;gn&#39;], &#39;institute&#39;: [&#39;csiro-arccss&#39;], &#39;level_type&#39;: [&#39;2d&#39;], &#39;model&#39;: [&#39;access-cm2&#39;], &#39;product&#39;: [&#39;cmip&#39;], &#39;project&#39;: [&#39;cmip6&#39;], &#39;rcm_name&#39;: [], &#39;rcm_version&#39;: [], &#39;realm&#39;: [&#39;atmos&#39;], &#39;time_aggregation&#39;: [&#39;mean&#39;], &#39;time_frequency&#39;: [&#39;mon&#39;], &#39;user&#39;: [], &#39;variable&#39;: [&#39;ua&#39;], &#39;version&#39;: [&#39;20191108&#39;]}
-</pre></div>
-</div>
 <p>If no particular <code class="docutils literal notranslate"><span class="pre">version</span></code> is requested, information of all versions
 will be returned.</p>
-</section>
 </dd></dl>
 
 <dl class="py method">
@@ -963,165 +843,25 @@ will be returned.</p>
 <p>If you don’t know what search flavours or search keys you can use
 for searching the data you can use this method to get an overview
 over what is available.</p>
-<section id="id21">
-<h4>Parameters<a class="headerlink" href="#id21" title="Link to this heading">#</a></h4>
-<dl class="simple">
-<dt>host: str, default None</dt><dd><p>Override the host name of the databrowser server. This is usually
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>host</strong> (<em>str</em><em>, </em><em>default None</em>) – Override the host name of the databrowser server. This is usually
 the url where the freva web site can be found. Such as
 www.freva.dkrz.de. By default no host name is given and the host
 name will be taken from the freva config file.</p>
 </dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>str</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A string representation over what is available.</p>
+</dd>
 </dl>
-</section>
-<section id="id22">
-<h4>Returns<a class="headerlink" href="#id22" title="Link to this heading">#</a></h4>
-<p>str: A string representation over what is available.</p>
-</section>
-<section id="id23">
-<h4>Example<a class="headerlink" href="#id23" title="Link to this heading">#</a></h4>
-<p><span class="caption-text">Code </span></p>
+<p class="rubric">Example</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">databrowser</span><span class="o">.</span><span class="n">overview</span><span class="p">())</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Available search flavours:
-- freva
-- cmip6
-- cmip5
-- cordex
-- nextgems
-- user
-Search attributes by flavour:
-  cmip5:
-  - experiment
-  - member_id
-  - fs_type
-  - grid_label
-  - institution_id
-  - model_id
-  - project
-  - product
-  - realm
-  - variable
-  - time
-  - bbox
-  - time_aggregation
-  - time_frequency
-  - cmor_table
-  - dataset
-  - format
-  - grid_id
-  - level_type
-  cmip6:
-  - experiment_id
-  - member_id
-  - fs_type
-  - grid_label
-  - institution_id
-  - source_id
-  - mip_era
-  - activity_id
-  - realm
-  - variable_id
-  - time
-  - bbox
-  - time_aggregation
-  - frequency
-  - table_id
-  - dataset
-  - format
-  - grid_id
-  - level_type
-  cordex:
-  - experiment
-  - ensemble
-  - fs_type
-  - grid_label
-  - institution
-  - model
-  - project
-  - domain
-  - realm
-  - variable
-  - time
-  - bbox
-  - time_aggregation
-  - time_frequency
-  - cmor_table
-  - dataset
-  - driving_model
-  - format
-  - grid_id
-  - level_type
-  - rcm_name
-  - rcm_version
-  freva:
-  - project
-  - product
-  - institute
-  - model
-  - experiment
-  - time_frequency
-  - realm
-  - variable
-  - ensemble
-  - time_aggregation
-  - fs_type
-  - grid_label
-  - cmor_table
-  - format
-  - grid_id
-  - level_type
-  - dataset
-  - time
-  - bbox
-  - user
-  nextgems:
-  - simulation_id
-  - member_id
-  - fs_type
-  - grid_label
-  - institution_id
-  - source_id
-  - project
-  - experiment_id
-  - realm
-  - variable_id
-  - time
-  - bbox
-  - time_reduction
-  - time_frequency
-  - cmor_table
-  - dataset
-  - format
-  - grid_id
-  - level_type
-  user:
-  - project
-  - product
-  - institute
-  - model
-  - experiment
-  - time_frequency
-  - realm
-  - variable
-  - ensemble
-  - time_aggregation
-  - fs_type
-  - grid_label
-  - cmor_table
-  - format
-  - grid_id
-  - level_type
-  - dataset
-  - time
-  - bbox
-  - user
-
-</pre></div>
-</div>
-</section>
 </dd></dl>
 
 <dl class="py method">
@@ -1129,30 +869,28 @@ Search attributes by flavour:
 <span class="sig-name descname"><span class="pre">stac_catalogue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#freva_client.databrowser.stac_catalogue" title="Link to this definition">#</a></dt>
 <dd><p>Create a static STAC catalogue from
 the search.</p>
-<section id="id24">
-<h4>Parameters<a class="headerlink" href="#id24" title="Link to this heading">#</a></h4>
-<dl class="simple">
-<dt>filename: str, default: None</dt><dd><p>The filename of the STAC catalogue. If not given
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<em>str</em><em>, </em><em>default: None</em>) – The filename of the STAC catalogue. If not given
 or doesn’t exist the STAC catalogue will be saved
-to the current working directory.</p>
+to the current working directory.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Additional keyword arguments to be passed to the request.</p></li>
+</ul>
 </dd>
-<dt><a href="#id25"><span class="problematic" id="id26">**</span></a>kwargs: Any</dt><dd><p>Additional keyword arguments to be passed to the request.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>BinaryIO</em></p></li>
+<li><p><em>A zip file stream</em></p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If stac-catalogue creation failed.:</p>
 </dd>
 </dl>
-</section>
-<section id="id27">
-<h4>Returns<a class="headerlink" href="#id27" title="Link to this heading">#</a></h4>
-<p>BinaryIO
-A zip file stream</p>
-</section>
-<section id="id28">
-<h4>Raises<a class="headerlink" href="#id28" title="Link to this heading">#</a></h4>
-<p>ValueError: If stac-catalogue creation failed.</p>
-</section>
-<section id="id29">
-<h4>Example<a class="headerlink" href="#id29" title="Link to this heading">#</a></h4>
+<p class="rubric">Example</p>
 <p>Let’s create a static STAC catalogue:</p>
-<p><span class="caption-text">Code </span></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tempfile</span><span class="w"> </span><span class="kn">import</span> <span class="n">mktemp</span>
 <span class="n">temp_path</span> <span class="o">=</span> <span class="n">mktemp</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.zip&quot;</span><span class="p">)</span>
 
@@ -1162,31 +900,18 @@ A zip file stream</p>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;STAC catalog saved to: </span><span class="si">{</span><span class="n">temp_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Downloading the STAC catalog started ...
-STAC catalog saved to: /tmp/tmpxsvicw5i.zip
-</pre></div>
-</div>
-</section>
 </dd></dl>
 
 <dl class="py property">
-<dt class="sig sig-object py" id="freva_client.databrowser.url">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#freva_client.databrowser.url" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="id1">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#id1" title="Link to this definition">#</a></dt>
 <dd><p>Get the url of the databrowser API.</p>
-<section id="id30">
-<h4>Example<a class="headerlink" href="#id30" title="Link to this heading">#</a></h4>
-<p><span class="caption-text">Code </span></p>
+<p class="rubric">Example</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>http://localhost:7777/api/freva-nextgen/databrowser
-</pre></div>
-</div>
-</section>
 </dd></dl>
 
 <dl class="py method">
@@ -1201,46 +926,36 @@ categorize and organize the data.</p>
 <p>For the “<code class="docutils literal notranslate"><span class="pre">delete</span></code>” action, the user provides metadata as search
 criteria to identify and remove the existing data from the
 system.</p>
-<section id="id31">
-<h4>Parameters<a class="headerlink" href="#id31" title="Link to this heading">#</a></h4>
-<dl class="simple">
-<dt>action<span class="classifier">Literal[“add”, “delete”]</span></dt><dd><p>The action to perform: “add” to add new data, or “delete”
-to remove existing data.</p>
-</dd>
-<dt>userdata_items<span class="classifier">List[Union[str, xr.Dataset]], optional</span></dt><dd><p>A list of user file paths or xarray datasets to add to the
-databrowser (required for “add”).</p>
-</dd>
-<dt>metadata<span class="classifier">Dict[str, str], optional</span></dt><dd><p>Key-value metadata pairs to categorize the data (for “add”)
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>action</strong> (<em>Literal</em><em>[</em><em>&quot;add&quot;</em><em>, </em><em>&quot;delete&quot;</em><em>]</em>) – The action to perform: “add” to add new data, or “delete”
+to remove existing data.</p></li>
+<li><p><strong>userdata_items</strong> (<em>List</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>xr.Dataset</em><em>]</em><em>]</em><em>, </em><em>optional</em>) – A list of user file paths or xarray datasets to add to the
+databrowser (required for “add”).</p></li>
+<li><p><strong>metadata</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>, </em><em>optional</em>) – Key-value metadata pairs to categorize the data (for “add”)
 or search and identify data for
-deletion (for “delete”).</p>
-</dd>
-<dt>host<span class="classifier">str, optional</span></dt><dd><p>Override the host name of the databrowser server. This is usually
+deletion (for “delete”).</p></li>
+<li><p><strong>host</strong> (<em>str</em><em>, </em><em>optional</em>) – Override the host name of the databrowser server. This is usually
 the url where the freva web site can be found. Such as
 www.freva.dkrz.de. By default no host name is given and the host
-name will be taken from the freva config file.</p>
+name will be taken from the freva config file.</p></li>
+<li><p><strong>fail_on_error</strong> (<em>bool</em><em>, </em><em>optional</em>) – Make the call fail if the connection to the databrowser could not
+be established.</p></li>
+</ul>
 </dd>
-<dt>fail_on_error<span class="classifier">bool, optional</span></dt><dd><p>Make the call fail if the connection to the databrowser could not
-be established.</p>
-</dd>
-</dl>
-</section>
-<section id="id32">
-<h4>Raises<a class="headerlink" href="#id32" title="Link to this heading">#</a></h4>
-<dl class="simple">
-<dt>ValueError</dt><dd><p>If the operation fails or required parameters are missing
-for the specified action.</p>
-</dd>
-<dt>FileNotFoundError</dt><dd><p>If no user data is provided for the “add” action.</p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If the operation fails or required parameters are missing
+    for the specified action.</p></li>
+<li><p><strong>FileNotFoundError</strong> – If no user data is provided for the “add” action.</p></li>
+</ul>
 </dd>
 </dl>
-</section>
-<section id="id33">
-<h4>Example<a class="headerlink" href="#id33" title="Link to this heading">#</a></h4>
+<p class="rubric">Example</p>
 <p>Adding user data:</p>
-<p><span class="caption-text">Code </span></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">authenticate</span><span class="p">,</span> <span class="n">databrowser</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
-<span class="n">token_info</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">&quot;janedoe&quot;</span><span class="p">)</span>
 <span class="n">filenames</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">&quot;../freva-rest/src/freva_rest/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/&quot;</span>
     <span class="s2">&quot;GERICS/NCC-NorESM1-M/rcp85/r1i1p1/GERICS-REMO2015/v1/3hr/pr/v20181212/*.nc&quot;</span>
@@ -1258,29 +973,16 @@ for the specified action.</p>
 <span class="p">)</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1 have been successfully added to the databrowser. 1 files were duplicates and 
-not added.
-</pre></div>
-</div>
 <p>Deleting user data:</p>
-<p><span class="caption-text">Code </span></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">authenticate</span><span class="p">,</span> <span class="n">databrowser</span>
-<span class="n">token_info</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">&quot;janedoe&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">databrowser</span><span class="o">.</span><span class="n">userdata</span><span class="p">(</span>
     <span class="n">action</span><span class="o">=</span><span class="s2">&quot;delete&quot;</span><span class="p">,</span>
     <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;cmip5&quot;</span><span class="p">,</span> <span class="s2">&quot;experiment&quot;</span><span class="p">:</span> <span class="s2">&quot;myFavExp&quot;</span><span class="p">}</span>
 <span class="p">)</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>User data deleted successfully
-</pre></div>
-</div>
-</section>
 </dd></dl>
 
-</section>
 </dd></dl>
 
 </section>
@@ -1336,13 +1038,15 @@ not added.
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tldr-too-long-didn-t-read">TLDR: Too long didn’t read</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#library-reference">Library Reference</a><ul class="visible nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser"><code class="docutils literal notranslate"><span class="pre">databrowser</span></code></a><ul class="visible nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.url"><code class="docutils literal notranslate"><span class="pre">databrowser.url</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.metadata"><code class="docutils literal notranslate"><span class="pre">databrowser.metadata</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.count_values"><code class="docutils literal notranslate"><span class="pre">databrowser.count_values()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.intake_catalogue"><code class="docutils literal notranslate"><span class="pre">databrowser.intake_catalogue()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.metadata"><code class="docutils literal notranslate"><span class="pre">databrowser.metadata</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id0"><code class="docutils literal notranslate"><span class="pre">databrowser.metadata</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.metadata_search"><code class="docutils literal notranslate"><span class="pre">databrowser.metadata_search()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.overview"><code class="docutils literal notranslate"><span class="pre">databrowser.overview()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.stac_catalogue"><code class="docutils literal notranslate"><span class="pre">databrowser.stac_catalogue()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.url"><code class="docutils literal notranslate"><span class="pre">databrowser.url</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id1"><code class="docutils literal notranslate"><span class="pre">databrowser.url</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.userdata"><code class="docutils literal notranslate"><span class="pre">databrowser.userdata()</span></code></a></li>
 </ul>
 </li>

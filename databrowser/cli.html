@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>The databrowser command line interface &#8212; Freva Databrowser 2505.0.0 documentation</title>
+    <title>The databrowser command line interface &#8212; Freva Databrowser 2506.0.0 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=a087691e"></script>
+    <script src="../_static/documentation_options.js?v=7c662e95"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -126,8 +126,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2505.0.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2505.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2506.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2506.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -396,25 +396,6 @@ command</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser --help</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Usage: freva-client databrowser [OPTIONS] COMMAND [ARGS]...
-
-  Data search related commands
-
-Options:
-  --help  Show this message and exit.
-
-Commands:
-  data-overview     Get an overview over what is available in the...
-  metadata-search   Search databrowser for metadata (facets).
-  data-search       Search the databrowser for datasets.
-  intake-catalogue  Create an intake catalogue from the search.
-  stac-catalogue    Create a static STAC catalogue from the search.
-  data-count        Count the databrowser search results
-  user-data         Add or delete user data.
-
-</pre></div>
-</div>
 <section id="searching-for-data-locations">
 <h2>Searching for data locations<a class="headerlink" href="#searching-for-data-locations" title="Link to this heading">#</a></h2>
 <p>Getting the locations of the data is probably the most common use case of the
@@ -464,8 +445,10 @@ Options:
                                   period is contained within *one single*
                                   file.  [default: flexible]
   --zarr                          Create zarr stream files.
-  --access-token TEXT             Use this access token for authentication
-                                  when creating a zarr stream files.
+  -t, --token-file PATH           Instead of authenticating via code based
+                                  authentication flow you can set the path to
+                                  the json file that contains a `refresh
+                                  token` containing a refresh_token key.
   -t, --time TEXT                 Special search facet to refine/subset search
                                   results by time. This can be a string
                                   representation of a time range or a single
@@ -521,59 +504,6 @@ instead of file paths. For example you can search for the list of
 variables available that satisfies a certain constraint (e.g. sampled
 6hr, from a certain model, etc).</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser data-search project=observations variable=pr model=cp*</span>
-</pre></div>
-</div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>https://swift.dkrz.de/v1/dkrz_a32dc0e8-2299-4239-a47d-6bf45c8b0160/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609022330.zarr
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022100-201609022130.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022000-201609022030.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021900-201609021930.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021800-201609021830.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021700-201609021730.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021600-201609021630.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021500-201609021530.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021400-201609021430.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021300-201609021330.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021200-201609021230.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021100-201609021130.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021000-201609021030.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020900-201609020930.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020800-201609020830.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020700-201609020730.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020600-201609020630.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020500-201609020530.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020400-201609020430.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020300-201609020330.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020200-201609020230.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020100-201609020130.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609020030.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022100-201609022130.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022000-201609022030.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021900-201609021930.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021800-201609021830.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021700-201609021730.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021600-201609021630.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021500-201609021530.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021400-201609021430.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021300-201609021330.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021200-201609021230.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021100-201609021130.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609021000-201609021030.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020900-201609020930.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020800-201609020830.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020700-201609020730.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020600-201609020630.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020500-201609020530.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020400-201609020430.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020300-201609020330.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020200-201609020230.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020100-201609020130.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609020030.nc
-
 </pre></div>
 </div>
 <p>There are many more options for defining a value for a given key:</p>
@@ -661,11 +591,6 @@ the <code class="docutils literal notranslate"><span class="pre">version</span><
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser data-search dataset=cmip6-fs model=access-cm2 --multi-version version=v20191108</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/model/global/cmip6/CMIP6/CMIP/CSIRO-ARCCSS/ACCESS-CM2/amip/r1i1p1f1/Amon/ua/gn/v20191108/ua_Amon_ACCESS-CM2_amip_r1i1p1f1_gn_197901-201412.nc
-
-</pre></div>
-</div>
 <p>If no particular <code class="docutils literal notranslate"><span class="pre">version</span></code> is requested, all versions will be returned.</p>
 </section>
 <section id="streaming-files-via-zarr">
@@ -680,15 +605,9 @@ the <code class="docutils literal notranslate"><span class="pre">--zarr</span></
 to create an access token and use that token to log on to the system
 see also the <a class="reference internal" href="../auth/index.html#auth"><span class="std std-ref">Authentication</span></a> chapter for more details on token creation.</p>
 </div>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">token=$(freva-client auth -u janedoe|jq -r .access_token)</span>
-<span class="go">freva-client databrowser data-search dataset=cmip6-fs --zarr --access-token $token</span>
-</pre></div>
-</div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Give password for server authentication:  *****
-http://fv-az816-966:7777/api/freva-nextgen/data-portal/zarr/b5f98d86-b658-5c92-b879-9aeddf6e2f19.zarr
-http://fv-az816-966:7777/api/freva-nextgen/data-portal/zarr/0fcbbf0c-f054-5085-a547-7374189ad7a0.zarr
-
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client auth &gt; .token.json</span>
+<span class="go">chmod 600 .token.json</span>
+<span class="go">freva-client databrowser data-search dataset=cmip6-fs --zarr --token-file .token.json</span>
 </pre></div>
 </div>
 </section>
@@ -700,16 +619,6 @@ ranges:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser data-search project=observations -t &#39;2016-09-02T22:15 to 2016-10&#39;</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>https://swift.dkrz.de/v1/dkrz_a32dc0e8-2299-4239-a47d-6bf45c8b0160/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609022330.zarr
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/CLMcom/MPI-M-MPI-ESM-LR/historical/r0i0p0/CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_fx.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
-
-</pre></div>
-</div>
 <p>The default method for selecting time periods is <code class="docutils literal notranslate"><span class="pre">flexible</span></code>, which means
 all files are selected that cover at least start or end date. The
 <code class="docutils literal notranslate"><span class="pre">strict</span></code> method implies that the <em>entire</em> search time period has to be
@@ -719,26 +628,8 @@ start of the time period:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser data-search project=observations -t &#39;2016-09-02T22:15 to 2016-10&#39; -ts strict</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
-
-</pre></div>
-</div>
 <p>Giving single time steps is also possible:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser data-search project=observations -t 2016-09-02T22:10</span>
-</pre></div>
-</div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>https://swift.dkrz.de/v1/dkrz_a32dc0e8-2299-4239-a47d-6bf45c8b0160/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609020000-201609022330.zarr
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/random/test.json
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
-/home/runner/work/freva-nextgen/freva-nextgen/freva-rest/src/freva_rest/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/CLMcom/MPI-M-MPI-ESM-LR/historical/r0i0p0/CLMcom-CCLM4-8-17/v1/fx/orog/v20140515/orog_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_fx.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022300-201609022330.nc
-/arch/bb1203/freva_test/observations/grid/CPC/CPC/cmorph/30min/atmos/30min/r1i1p1/v20210618/pr/pr_30min_CPC_cmorph_r1i1p1_201609022200-201609022230.nc
-/arch/bb1203/freva_test/model/global/cmip6/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/amip/r2i1p1f1/Amon/ua/gn/v20190815/ua_mon_MPI-ESM1-2-LR_amip_r2i1p1f1_197901-199812.nc
-
 </pre></div>
 </div>
 <div class="admonition note">
@@ -835,8 +726,10 @@ Options:
                                   flexible]
   --zarr                          Create zarr stream files, as catalogue
                                   targets.
-  --access-token TEXT             Use this access token for authentication
-                                  when creating a zarr based intake catalogue.
+  --token-file PATH               Instead of authenticating via code based
+                                  authentication flow you can set the path to
+                                  the json file that contains a `refresh
+                                  token` containing a refresh_token key.
   -f, --filename PATH             Path to the file where the catalogue, should
                                   be written to. if None given (default) the
                                   catalogue is parsed to stdout.
@@ -859,7 +752,7 @@ the data via zarr.</p>
 <section id="creating-stac-catalogue">
 <h2>Creating STAC Catalogue<a class="headerlink" href="#creating-stac-catalogue" title="Link to this heading">#</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">stac-catalogue</span></code> sub command allows you to create a static
-<a href="#id1"><span class="problematic" id="id2">`</span></a>SpatioTemporal Asset Catalog (STAC) &lt;<a class="reference external" href="https://stacspec.org/en/about/stac-spec/">https://stacspec.org/en/about/stac-spec/</a>&gt;_ `
+<cite>SpatioTemporal Asset Catalog (STAC) &lt;https://stacspec.org/en/about/stac-spec/&gt;_</cite>
 from the current search. This can be useful for creating, sharing and using
 standardized geospatial data catalogs and enabling interoperability between
 different data systems.</p>
@@ -962,14 +855,12 @@ Options:
 <p>and if the specified filename directory doesn’t specify or not existed or not provided,
 the STAC catalogue will be saved in the current directory. It can be
 only a directory or a fully qualified filename.</p>
-<dl class="simple">
-<dt>The STAC Catalogue provides multiple ways to access and interact with the data:</dt><dd><ul class="simple">
+<p>The STAC Catalogue provides multiple ways to access and interact with the data:</p>
+<ul class="simple">
 <li><p>Access your climate data through the intake-esm data catalog specification</p></li>
 <li><p>Access search results as Zarr files, available as STAC Assets at both collection and item levels</p></li>
 <li><p>Browse and explore your search results directly through the Freva DataBrowser web interface</p></li>
 </ul>
-</dd>
-</dl>
 <p>Each of these access methods is encoded as STAC Assets, making them easily discoverable and accessible through any STAC-compatible tool.</p>
 </section>
 <section id="query-the-number-of-occurrences">
@@ -981,116 +872,14 @@ the files themselves.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser data-count --help</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Usage: freva-client databrowser data-count [OPTIONS] [SEARCH_KEYS]...
-
-  Count the databrowser search results
-
-Arguments:
-  [SEARCH_KEYS]...  Refine your data search with this `key=value` pair search
-                    parameters. The parameters could be, depending on the DRS
-                    standard, flavour product, project model etc.
-
-Options:
-  --facet TEXT                    If you are not sure about the correct search
-                                  key&#39;s you can use the ``--facet`` flag to
-                                  search of any matching entries. For example
-                                  --facet &#39;era5&#39; would allow you to search for
-                                  any entries containing era5, regardless of
-                                  project, product etc.
-  -d, --detail                    Separate the count by search facets.
-  -f, --flavour [freva|cmip6|cmip5|cordex|nextgems|user]
-                                  The Data Reference Syntax (DRS) standard
-                                  specifying the type of climate datasets to
-                                  query.  [default: freva]
-  -ts, --time-select [strict|flexible|file]
-                                  Operator that specifies how the time period
-                                  is selected. Choose from flexible (default),
-                                  strict or file. ``strict`` returns only
-                                  those files that have the *entire* time
-                                  period covered. The time search ``2000 to
-                                  2012`` will not select files containing data
-                                  from 2010 to 2020 with the ``strict``
-                                  method. ``flexible`` will select those files
-                                  as ``flexible`` returns those files that
-                                  have start or end period covered. ``file``
-                                  will only return files where the entire time
-                                  period is contained within *one single*
-                                  file.  [default: flexible]
-  -t, --time TEXT                 Special search facet to refine/subset search
-                                  results by time. This can be a string
-                                  representation of a time range or a single
-                                  time step. The time steps have to follow
-                                  ISO-8601. Valid strings are
-                                  ``%Y-%m-%dT%H:%M`` to ``%Y-%m-%dT%H:%M`` for
-                                  time ranges and ``%Y-%m-%dT%H:%M``.
-                                  **Note**: You don&#39;t have to give the full
-                                  string format to subset time steps ``%Y``,
-                                  ``%Y-%m`` etc are also valid.
-  -b, --bbox &lt;FLOAT FLOAT FLOAT FLOAT&gt;...
-                                  Special search facet to refine/subset search
-                                  results by spatial extent. This can be a
-                                  string representation of a bounding box. The
-                                  bounding box has to follow the format
-                                  ``min_lon max_lon min_lat max_lat``. Valid
-                                  strings are ``-10 10 -10 10`` to ``0 5 0
-                                  5``.
-  -bs, --bbox-select [strict|flexible|file]
-                                  Operator that specifies how the spatial
-                                  extent is selected. Choose from flexible
-                                  (default), strict or file. ``strict``
-                                  returns only those files that have the
-                                  *entire* spatial extent covered. The bbox
-                                  search ``-10 10 -10 10`` will not select
-                                  files containing data from 0 5 0 5 with the
-                                  ``strict`` method. ``flexible`` will select
-                                  those files as ``flexible`` returns those
-                                  files that have any part of the extent
-                                  covered. ``file`` will only return files
-                                  where the entire spatial extent is contained
-                                  within *one single* file.  [default:
-                                  flexible]
-  -e, --extended-search           Retrieve information on additional search
-                                  keys.
-  --multi-version                 Select all versions and not just the latest
-                                  version (default).
-  --host TEXT                     Set the hostname of the databrowser, if not
-                                  set (default) the hostname is read from a
-                                  config file
-  -j, --json                      Parse output in json format.
-  -v                              Increase verbosity  [default: 0]
-  -V, --version                   Show version an exit
-  --help                          Show this message and exit.
-
-</pre></div>
-</div>
 <p>By default the <code class="docutils literal notranslate"><span class="pre">data-count</span></code> sub command will display the total number of items
 matching your search query. For example:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser data-count project=observations</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>52
-
-</pre></div>
-</div>
 <p>If you want to group the number of occurrences by search categories (facets)
 use the <code class="docutils literal notranslate"><span class="pre">-d</span></code> or <code class="docutils literal notranslate"><span class="pre">--detail</span></code> flag:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser data-count -d project=observations</span>
-</pre></div>
-</div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>ensemble: r1i1p1[52]
-experiment: cmorph[49], oc5[3]
-institute: cpc[49], noaa[3]
-model: cpc[25], cpc-cmorph[24], nodc[3]
-product: grid[49], reanalysis[3]
-project: observations[52]
-realm: atmos[49], ocean[3]
-time_aggregation: mean[52]
-time_frequency: 1min[49], mon[3]
-variable: hc700[3], pr[49]
-
 </pre></div>
 </div>
 </section>
@@ -1101,105 +890,9 @@ For this you use the <code class="docutils literal notranslate"><span class="pre
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser metadata-search --help</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Usage: freva-client databrowser metadata-search [OPTIONS] [SEARCH_KEYS]...
-
-  Search databrowser for metadata (facets).
-
-Arguments:
-  [SEARCH_KEYS]...  Refine your data search with this `key=value` pair search
-                    parameters. The parameters could be, depending on the DRS
-                    standard, flavour product, project model etc.
-
-Options:
-  --facet TEXT                    If you are not sure about the correct search
-                                  key&#39;s you can use the ``--facet`` flag to
-                                  search of any matching entries. For example
-                                  --facet &#39;era5&#39; would allow you to search for
-                                  any entries containing era5, regardless of
-                                  project, product etc.
-  -f, --flavour [freva|cmip6|cmip5|cordex|nextgems|user]
-                                  The Data Reference Syntax (DRS) standard
-                                  specifying the type of climate datasets to
-                                  query.  [default: freva]
-  -ts, --time-select [strict|flexible|file]
-                                  Operator that specifies how the time period
-                                  is selected. Choose from flexible (default),
-                                  strict or file. ``strict`` returns only
-                                  those files that have the *entire* time
-                                  period covered. The time search ``2000 to
-                                  2012`` will not select files containing data
-                                  from 2010 to 2020 with the ``strict``
-                                  method. ``flexible`` will select those files
-                                  as ``flexible`` returns those files that
-                                  have start or end period covered. ``file``
-                                  will only return files where the entire time
-                                  period is contained within *one single*
-                                  file.  [default: flexible]
-  -t, --time TEXT                 Special search facet to refine/subset search
-                                  results by time. This can be a string
-                                  representation of a time range or a single
-                                  time step. The time steps have to follow
-                                  ISO-8601. Valid strings are
-                                  ``%Y-%m-%dT%H:%M`` to ``%Y-%m-%dT%H:%M`` for
-                                  time ranges and ``%Y-%m-%dT%H:%M``.
-                                  **Note**: You don&#39;t have to give the full
-                                  string format to subset time steps ``%Y``,
-                                  ``%Y-%m`` etc are also valid.
-  -b, --bbox &lt;FLOAT FLOAT FLOAT FLOAT&gt;...
-                                  Special search facet to refine/subset search
-                                  results by spatial extent. This can be a
-                                  string representation of a bounding box. The
-                                  bounding box has to follow the format
-                                  ``min_lon max_lon min_lat,max_lat``. Valid
-                                  strings are ``-10 10 -10 10`` to ``0 5 0
-                                  5``.
-  -bs, --bbox-select [strict|flexible|file]
-                                  Operator that specifies how the spatial
-                                  extent is selected. Choose from flexible
-                                  (default), strict or file. ``strict``
-                                  returns only those files that have the
-                                  *entire* spatial extent covered. The bbox
-                                  search ``-10 10 -10 10`` will not select
-                                  files containing data from 0 5 0 5 with the
-                                  ``strict`` method. ``flexible`` will select
-                                  those files as ``flexible`` returns those
-                                  files that have any part of the extent
-                                  covered. ``file`` will only return files
-                                  where the entire spatial extent is contained
-                                  within *one single* file.  [default:
-                                  flexible]
-  -e, --extended-search           Retrieve information on additional search
-                                  keys.
-  --multi-version                 Select all versions and not just the latest
-                                  version (default).
-  --host TEXT                     Set the hostname of the databrowser, if not
-                                  set (default) the hostname is read from a
-                                  config file
-  -j, --json                      Parse output in json format.
-  -v                              Increase verbosity  [default: 0]
-  -V, --version                   Show version an exit
-  --help                          Show this message and exit.
-
-</pre></div>
-</div>
 <p>Just like with any other databrowser command you can apply different search
 constraints when acquiring metadata</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser metadata-search project=observations</span>
-</pre></div>
-</div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>ensemble: r1i1p1
-experiment: cmorph, oc5
-institute: cpc, noaa
-model: cpc, cpc-cmorph, nodc
-product: grid, reanalysis
-project: observations
-realm: atmos, ocean
-time_aggregation: mean
-time_frequency: 1min, mon
-variable: hc700, pr
-
 </pre></div>
 </div>
 <p>By default the command will display only the most commonly used metadata
@@ -1208,49 +901,10 @@ flag.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser metadata-search -e project=observations</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>cmor_table: 30min, omon
-dataset: obs-fs, obs-hsm, obs-swfit, reana-fs, reana-hsm, reana-swfit
-driving_model: 
-ensemble: r1i1p1
-experiment: cmorph, oc5
-format: nc, zarr
-fs_type: posix
-grid_id: 
-grid_label: gn
-institute: cpc, noaa
-level_type: 2d
-model: cpc, cpc-cmorph, nodc
-product: grid, reanalysis
-project: observations
-rcm_name: 
-rcm_version: 
-realm: atmos, ocean
-time_aggregation: mean
-time_frequency: 1min, mon
-user: 
-variable: hc700, pr
-
-</pre></div>
-</div>
 <p>Sometimes you don’t exactly know the exact names of the search keys and
 want retrieve all file objects that match a certain category. For example
 for getting all ocean reanalysis datasets you can apply the <code class="docutils literal notranslate"><span class="pre">--facet</span></code> flag:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser metadata-search -e realm=ocean --facet &#39;rean*&#39;</span>
-</pre></div>
-</div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>ensemble: r1i1p1
-experiment: oc5
-institute: noaa
-model: nodc
-product: reanalysis
-project: observations
-realm: ocean
-time_aggregation: mean
-time_frequency: mon
-variable: hc700
-
 </pre></div>
 </div>
 <section id="expert-tip-getting-metadata-for-certain-files">
@@ -1259,31 +913,6 @@ variable: hc700
 file or object store locations. For example if we wanted to retrieve the
 metadata of those files on tape:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser metadata-search -e file=&quot;/arch/*&quot;</span>
-</pre></div>
-</div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>cmor_table: 1day, 30min, 3hr, amon, inst-or-acc, omon
-dataset: cmip6-hsm, cordex-hsm, nextgems, obs-hsm, reana-hsm
-driving_model: mpi-m-mpi-esm-lr, ncc-noresm1-m
-ensemble: r1i1p1, r1i1p1f1
-experiment: amip, cmorph, historical, hqys, oc5, rcp85
-format: nc
-fs_type: posix
-grid_id: tco2559
-grid_label: gn
-institute: clmcom, cpc, csiro-arccss, ecmwf-awi, gerics, noaa
-level_type: 2d
-model: access-cm2, cpc, ifs-fesom, mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1, ncc-noresm1-m-gerics-remo2015-v1, nodc
-product: cmip, eur-11, grid, nextgems_cycle2, reanalysis
-project: cmip6, cordex, nextgems, observations
-rcm_name: clmcom-cclm4-8-17, gerics-remo2015
-rcm_version: v1
-realm: atm, atmos, ocean
-time_aggregation: mean
-time_frequency: 1day, 1hr, 1min, 3hr, mon
-user: 
-variable: 100si, 100u, 100v, 10u, 10v, 2d, 2t, asn, blh, cape, cdir, chnk, ci, cin, cp, dsrp, e, es, ewss, fal, fdir, fsr, hc700, hcc, lcc, litota1, litoti, lsm, lsp, lwcs, mcc, msl, nsss, par, pev, pr, ro, rsn, sd, sf, skt, slhf, smlt, sp, sro, sshf, ssr, ssrc, ssrd, ssro, sst, stl1, stl2, stl3, stl4, str, strc, strd, swvl1, swvl2, swvl3, swvl4, tas, tcc, tciw, tclw, tcrw, tcslw, tcsw, tcw, tcwv, tisr, tp, tsn, tsr, tsrc, ttr, ttrc, ua, uvb, vike, vipie, vipile, vithe, z
-
 </pre></div>
 </div>
 </section>
@@ -1297,18 +926,9 @@ search to the <a class="reference external" href="https://jqlang.github.io/jq/">
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser metadata-search -e file=&quot;/arch/*&quot; --json</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{&quot;cmor_table&quot;: [&quot;1day&quot;, &quot;30min&quot;, &quot;3hr&quot;, &quot;amon&quot;, &quot;inst-or-acc&quot;, &quot;omon&quot;], &quot;dataset&quot;: [&quot;cmip6-hsm&quot;, &quot;cordex-hsm&quot;, &quot;nextgems&quot;, &quot;obs-hsm&quot;, &quot;reana-hsm&quot;], &quot;driving_model&quot;: [&quot;mpi-m-mpi-esm-lr&quot;, &quot;ncc-noresm1-m&quot;], &quot;ensemble&quot;: [&quot;r1i1p1&quot;, &quot;r1i1p1f1&quot;], &quot;experiment&quot;: [&quot;amip&quot;, &quot;cmorph&quot;, &quot;historical&quot;, &quot;hqys&quot;, &quot;oc5&quot;, &quot;rcp85&quot;], &quot;format&quot;: [&quot;nc&quot;], &quot;fs_type&quot;: [&quot;posix&quot;], &quot;grid_id&quot;: [&quot;tco2559&quot;], &quot;grid_label&quot;: [&quot;gn&quot;], &quot;institute&quot;: [&quot;clmcom&quot;, &quot;cpc&quot;, &quot;csiro-arccss&quot;, &quot;ecmwf-awi&quot;, &quot;gerics&quot;, &quot;noaa&quot;], &quot;level_type&quot;: [&quot;2d&quot;], &quot;model&quot;: [&quot;access-cm2&quot;, &quot;cpc&quot;, &quot;ifs-fesom&quot;, &quot;mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1&quot;, &quot;ncc-noresm1-m-gerics-remo2015-v1&quot;, &quot;nodc&quot;], &quot;product&quot;: [&quot;cmip&quot;, &quot;eur-11&quot;, &quot;grid&quot;, &quot;nextgems_cycle2&quot;, &quot;reanalysis&quot;], &quot;project&quot;: [&quot;cmip6&quot;, &quot;cordex&quot;, &quot;nextgems&quot;, &quot;observations&quot;], &quot;rcm_name&quot;: [&quot;clmcom-cclm4-8-17&quot;, &quot;gerics-remo2015&quot;], &quot;rcm_version&quot;: [&quot;v1&quot;], &quot;realm&quot;: [&quot;atm&quot;, &quot;atmos&quot;, &quot;ocean&quot;], &quot;time_aggregation&quot;: [&quot;mean&quot;], &quot;time_frequency&quot;: [&quot;1day&quot;, &quot;1hr&quot;, &quot;1min&quot;, &quot;3hr&quot;, &quot;mon&quot;], &quot;user&quot;: [], &quot;variable&quot;: [&quot;100si&quot;, &quot;100u&quot;, &quot;100v&quot;, &quot;10u&quot;, &quot;10v&quot;, &quot;2d&quot;, &quot;2t&quot;, &quot;asn&quot;, &quot;blh&quot;, &quot;cape&quot;, &quot;cdir&quot;, &quot;chnk&quot;, &quot;ci&quot;, &quot;cin&quot;, &quot;cp&quot;, &quot;dsrp&quot;, &quot;e&quot;, &quot;es&quot;, &quot;ewss&quot;, &quot;fal&quot;, &quot;fdir&quot;, &quot;fsr&quot;, &quot;hc700&quot;, &quot;hcc&quot;, &quot;lcc&quot;, &quot;litota1&quot;, &quot;litoti&quot;, &quot;lsm&quot;, &quot;lsp&quot;, &quot;lwcs&quot;, &quot;mcc&quot;, &quot;msl&quot;, &quot;nsss&quot;, &quot;par&quot;, &quot;pev&quot;, &quot;pr&quot;, &quot;ro&quot;, &quot;rsn&quot;, &quot;sd&quot;, &quot;sf&quot;, &quot;skt&quot;, &quot;slhf&quot;, &quot;smlt&quot;, &quot;sp&quot;, &quot;sro&quot;, &quot;sshf&quot;, &quot;ssr&quot;, &quot;ssrc&quot;, &quot;ssrd&quot;, &quot;ssro&quot;, &quot;sst&quot;, &quot;stl1&quot;, &quot;stl2&quot;, &quot;stl3&quot;, &quot;stl4&quot;, &quot;str&quot;, &quot;strc&quot;, &quot;strd&quot;, &quot;swvl1&quot;, &quot;swvl2&quot;, &quot;swvl3&quot;, &quot;swvl4&quot;, &quot;tas&quot;, &quot;tcc&quot;, &quot;tciw&quot;, &quot;tclw&quot;, &quot;tcrw&quot;, &quot;tcslw&quot;, &quot;tcsw&quot;, &quot;tcw&quot;, &quot;tcwv&quot;, &quot;tisr&quot;, &quot;tp&quot;, &quot;tsn&quot;, &quot;tsr&quot;, &quot;tsrc&quot;, &quot;ttr&quot;, &quot;ttrc&quot;, &quot;ua&quot;, &quot;uvb&quot;, &quot;vike&quot;, &quot;vipie&quot;, &quot;vipile&quot;, &quot;vithe&quot;, &quot;z&quot;]}
-
-</pre></div>
-</div>
 <p>By using the pipe operator <code class="docutils literal notranslate"><span class="pre">|</span></code> the JSON output of the <cite>freva-client</cite>
 commands can be piped and processed by <code class="docutils literal notranslate"><span class="pre">jq</span></code>:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser metadata-search -e file=&quot;/arch/*&quot; --json | jq -r .ensemble[0]</span>
-</pre></div>
-</div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>r1i1p1
 </pre></div>
 </div>
 <p>The above example will select only the first entry of the ensembles that
@@ -1331,12 +951,6 @@ are associated with files on the tape archive.</p>
 <span class="go">    --access-token $token</span>
 </pre></div>
 </div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>8 have been successfully added to the databrowser. 0 files were duplicates and 
-not added.
-
-</pre></div>
-</div>
 <p>This command adds the specified data files to the databrowser and tags them with the provided metadata. These search filters help in indexing and searching your data within the system.</p>
 </section>
 <section id="deleting-user-data">
@@ -1347,10 +961,6 @@ not added.
 <span class="go">    --search-key project=cordex \</span>
 <span class="go">    --search-key experiment=rcp85 \</span>
 <span class="go">    --access-token $token</span>
-</pre></div>
-</div>
-<p><span class="caption-text">Results</span></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>
 </pre></div>
 </div>
 <p>This command deletes all data entries that match the specified search keys from the databrowser.</p>
