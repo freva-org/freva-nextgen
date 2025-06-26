@@ -85,7 +85,7 @@ deps = -e ./freva-rest
        sphinx-sitemap
        sphinx-togglebutton
        sphinxcontrib-httpdomain
-       sphinx-social-previews
+       sphinxext-opengraph
        pydata-sphinx-theme
 setenv =
     FREVA_CONFIG = {toxinidir}/dev-env/freva.toml
