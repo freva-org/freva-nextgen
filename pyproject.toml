@@ -85,6 +85,7 @@ deps = -e ./freva-rest
        sphinx-sitemap
        sphinx-togglebutton
        sphinxcontrib-httpdomain
+       sphinx-social-previews
        pydata-sphinx-theme
 setenv =
     FREVA_CONFIG = {toxinidir}/dev-env/freva.toml
@@ -127,11 +128,11 @@ deps = git-python
 commands = python3 bump.py tag freva_rest -p freva-rest
 allowlist_externals = rm
                       curl
-commands_pre = curl -H 'Cache-Control: no-cache' -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/main/release.py
+commands_pre = curl -H 'Cache-Control: no-cache' -Ls -o bump.py https://raw.githubusercontent.com/freva-org/freva-admin/main/release.py
 commands_post = rm bump.py
 [testenv:bump]
 commands = python3 bump.py deploy -p freva-rest -v
-commands_pre = curl -H 'Cache-Control: no-cache' -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/main/release.py
+commands_pre = curl -H 'Cache-Control: no-cache' -Ls -o bump.py https://raw.githubusercontent.com/freva-org/freva-admin/main/release.py
 allowlist_externals = rm
                       curl
 commands_post = rm bump.py

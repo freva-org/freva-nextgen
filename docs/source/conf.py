@@ -28,6 +28,7 @@ extensions = [
     "sphinx_togglebutton",
     "sphinxcontrib.httpdomain",
     "sphinx_execute_code",
+    "sphinx-social-previews",
 ]
 
 napoleon_google_docstring = True
@@ -46,7 +47,7 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "GitHub",
-            "url": "https://github.com/FREVA-CLINT/freva-nextgen/freva-client",
+            "url": "https://github.com/freva-org/freva-nextgen/freva-client",
             "icon": "fa-brands fa-github",
         }
     ],
@@ -62,12 +63,37 @@ html_theme_options = {
 }
 
 html_context = {
-    "github_user": "FREVA-CLINT",
+    "github_user": "freva-org",
     "github_repo": "freva-nextgen",
     "github_version": "main",
     "doc_path": "docs",
 }
 html_sidebars = {"**": ["search-field", "sidebar-nav-bs"]}
+html_meta = {
+    "description": "Freva - the Free Evaluation system framework.",
+    "keywords": "freva, climate, data analysis, evaluation, framework, climate science",
+    "author": "Freva Team",
+    "og:title": "Freva – Free Evaluation System Framework",
+    "og:description": "Admin guide for Freva.",
+    "og:type": "website",
+    "og:url": "https://freva-org.github.io/freva-legacy/",
+    "og:image": "https://freva-org.github.io/freva-admin/_images/freva_flowchart-new.png",
+    "twitter:card": "summary_large_image",
+    "twitter:title": "Freva – Evaluation System Framework",
+    "twitter:description": "Search, analyse and evaluate climate model data.",
+    "twitter:image": "https://freva-org.github.io/freva-admin/_images/freva_flowchart-new.png",
+}
+
+ogp_site_url = "https://freva-org.github.io/freva-legacy"
+opg_image = (
+    "https://freva-org.github.io/freva-admin/_images/freva_flowchart-new.png",
+)
+ogp_type = "website"
+ogp_custom_meta_tags = [
+    '<meta name="twitter:card" content="summary_large_image">',
+    '<meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">',
+]
+
 
 # -- Options for autosummary/autodoc output ------------------------------------
 autosummary_generate = True
