@@ -28,7 +28,7 @@ extensions = [
     "sphinx_togglebutton",
     "sphinxcontrib.httpdomain",
     "sphinx_execute_code",
-    "sphinx-social-previews",
+    "sphinxext.opengraph",
 ]
 
 napoleon_google_docstring = True
