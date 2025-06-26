@@ -42,9 +42,9 @@ dependencies = [
 [project.scripts]
 data-loader-worker = "data_portal_worker:cli.run_data_loader"
 [project.urls]
-Documentation = "https://freva-clint.github.io/freva-nextgen"
-Issues = "https://github.com/FREVA-CLINT/freva-nextgen/issues"
-Source = "https://github.com/FREVA-CLINT/freva-nextgen/"
+Documentation = "https://freva-org.github.io/freva-nextgen"
+Issues = "https://github.com/freva-org/freva-nextgen/issues"
+Source = "https://github.com/freva-org/freva-nextgen/"
 
 [project.optional-dependencies]
 dev = ["tox"]
