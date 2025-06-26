@@ -1,6 +1,12 @@
 name: Build and publish the container image
 run-name: ${{ github.actor }} is preparing the next release
 
+permissions:
+  pull-requests: write
+  contents: write
+  packages: write
+
+
 "on":
   workflow_dispatch:
   push:
