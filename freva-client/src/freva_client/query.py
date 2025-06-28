@@ -206,6 +206,8 @@ class databrowser:
 
     .. code-block:: python
 
+        from freva_client import authenticate
+        token_info = authenticate()
         import xarray as xr
         dset = xr.open_dataset(
            zarr_files[0],
@@ -402,10 +404,16 @@ class databrowser:
         .. code-block:: python
 
             from freva_client import databrowser
-
-            db = databrowser(dataset="cmip6-hsm")
-            assert db.token is None
-
+            import xarray as xr
+            db = databrowser(dataset="cmip6-hsm", stream_zarr=True)
+            dset = xr.open_dataset(
+               zarr_files[0],
+               chunks="auto",
+               engine="zarr",
+               storage_options={"header":
+                    {"Authorization": f"Bearer {db.auth_token['access_token']}"}
+               }
+            )
         """
         token = self._auth._auth_token or load_token(self._auth.token_file)
         strategy = choose_token_strategy(token)
