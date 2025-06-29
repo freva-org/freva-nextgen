@@ -410,14 +410,13 @@ class databrowser:
                zarr_files[0],
                chunks="auto",
                engine="zarr",
-               storage_options={"header":
+               storage_options={"headers":
                     {"Authorization": f"Bearer {db.auth_token['access_token']}"}
                }
             )
         """
         token = self._auth._auth_token or load_token(self._auth.token_file)
         strategy = choose_token_strategy(token)
-        logger.critical(("foo", strategy, choose_token_strategy))
         if strategy in ("browser_auth", "fail"):
             return None
         if strategy == "refresh_token":
