@@ -60,6 +60,14 @@ tests = ["xarray",
          "pymongo",
          "stac-check",
          ]
-
+docs = ["sphinx-execute-code-python3",
+        "sphinx-code-tabs",
+        "sphinx-copybutton",
+        "sphinx-sitemap",
+        "sphinx-togglebutton",
+        "sphinxcontrib-httpdomain",
+        "sphinxext-opengraph",
+        "pydata-sphinx-theme"
+        ]
 [package-data]
 freva_rest = ["py.typed", "*.toml", "*.ico", "mock/*.json"]
