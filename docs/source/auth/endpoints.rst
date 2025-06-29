@@ -1,5 +1,5 @@
-Using the restAPI endpoints
----------------------------
+The restAPI auth endpoints
+==========================
 The API supports token-based authentication using OAuth2. To obtain an access
 token, clients can use the ``/api/freva-nextgen/auth/v2/token`` endpoint by
 providing valid username and password credentials. The access token should
@@ -44,8 +44,8 @@ then be included in the authorization header for secured endpoints.
             "refresh-token": "my-token",
         }
 
-    Example Request
-    ~~~~~~~~~~~~~~~
+    Example Response
+    ~~~~~~~~~~~~~~~~
 
     .. sourcecode:: http
 
@@ -161,8 +161,8 @@ then be included in the authorization header for secured endpoints.
         host: www.freva.dkrz.de
         Authorization: Bearer your_access_token
 
-    Example Request
-    ~~~~~~~~~~~~~~~
+    Example Response
+    ~~~~~~~~~~~~~~~~
 
     .. sourcecode:: http
 
@@ -270,8 +270,8 @@ then be included in the authorization header for secured endpoints.
         host: www.freva.dkrz.de
         Authorization: Bearer your_access_token
 
-    Example Request
-    ~~~~~~~~~~~~~~~
+    Example Response
+    ~~~~~~~~~~~~~~~~
 
     .. sourcecode:: http
 
@@ -382,8 +382,8 @@ then be included in the authorization header for secured endpoints.
         host: www.freva.dkrz.de
         Authorization: Bearer your_access_token
 
-    Example Request
-    ~~~~~~~~~~~~~~~
+    Example Response
+    ~~~~~~~~~~~~~~~~
 
     .. sourcecode:: http
 
@@ -475,62 +475,6 @@ then be included in the authorization header for secured endpoints.
 
 ---
 
-Using the freva-client python library
---------------------------------------
-The freva-client python library offers a very simple interface to interact
-with the authentication system.
-
-.. automodule:: freva_client
-   :members: authenticate
-
-Using the command line interface
---------------------------------
-
-Token creation and refreshing can also be achieved with help of the ``auth``
-sub command of the command line interface
-
-.. code:: console
-
-    freva-client auth --help
-
-.. execute_code::
-   :hide_code:
-
-   from subprocess import run, PIPE
-   res = run(["freva-client", "auth", "--help"], check=True, stdout=PIPE, stderr=PIPE)
-   print(res.stdout.decode())
-
-You can create a token using your user name and password. For security reasons
-you can not pass your password as an argument to the command line interface.
-This means that you can only create a new token with help of a valid refresh
-token in a non-interactive session. Such as a batch job.
-
-Therefore you want to store your token data securely in a file, and use the
-refresh token to create new tokens:
-
-.. code:: console
-
-    freva-client auth  > ~/.mytoken.json
-    chmod 600 ~/.mytoken.json
-
-Later you can use the `jq json command line parser <https://jqlang.github.io/jq/>`_
-to read the refresh token from and use it to create new access tokens.
-
-.. code:: console
-
-    freva-client auth --token-file ~/.mytoken.json > ~/.mytoken.json
-
-
-.. warning::
-
-    Avoid storing access tokens insecurely. Access tokens are sensitive and
-    should be treated like passwords. Do not store them in publicly readable
-    plaintext or in code repositories. Instead:
-
-    - Use environment variables or secure storage (e.g. ``.netrc``, OS keychains).
-    - Rotate and expire tokens regularly if implementing long-running SPs.
-
-
 Notes on Code-Based Auth Flow
 -----------------------------
 
@@ -539,8 +483,8 @@ version ``2505.1.0``. It follows the OAuth2 Authorization Code Flow and is
 suitable for both end users and Service Provider (SP) integrations.
 However, there are important guidelines and limitations you should be aware of.
 
-🔒 Do not call ``/login`` or ``/callback`` directly
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+🔒 In most cases: Do not call ``/login`` or ``/callback`` directly
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The endpoints ``/auth/v2/login`` and ``/auth/v2/callback`` are internal
 coordination points for the authentication process:
@@ -548,7 +492,8 @@ coordination points for the authentication process:
 - ``/login`` initiates the code flow by redirecting to the OpenID Connect provider.
 - ``/callback`` is the endpoint where the OpenID provider sends the authorization code.
 
-These endpoints are **not designed for direct use by end users** or typical API consumers. Calling them directly will likely lead to errors or unexpected behaviour.
+These endpoints are **not designed for direct use by end users** or typical API consumers.
+Calling them directly will likely lead to errors or unexpected behaviour.
 
 Instead, you should authenticate using **one of the supported client tools**:
 
@@ -569,7 +514,7 @@ Follow these steps:
 
 1. **Redirect the user to** Freva’s ``/login`` endpoint:
 
-   .. code-block:: http
+   .. sourcecode:: http
 
       GET /api/freva-nextgen/auth/v2/login?redirect_uri=https://your-sp.com/callback HTTP/1.1
       host: www.freva.dkrz.de
@@ -581,15 +526,15 @@ Follow these steps:
 
 4. **Your SP must then POST the code to** Freva's token exchange endpoint:
 
-    .. sourcecode:: http
+   .. sourcecode:: http
 
-        POST /api/freva-nextgen/auth/v2/token HTTP/1.1
-        host: www.freva.dkrz.de
-        Content-Type: application/x-www-form-urlencoded
+      POST /api/freva-nextgen/auth/v2/token HTTP/1.1
+      host: www.freva.dkrz.de
+      Content-Type: application/x-www-form-urlencoded
 
-        {
-            code=XXX&redirect_uri=https://your-sp.com/callback
-        }
+      {
+          code=XXX&redirect_uri=https://your-sp.com/callback
+      }
 
    - This will return a JSON with access token, refresh token, and expiry info.
 
@@ -613,4 +558,6 @@ Follow these steps:
    - If you are building a backend-for-frontend (BFF) architecture, handle the
      token exchange **server-side** to protect credentials.
 
-This is the recommended approach for implementing a standards-compliant OAuth2 Authorization Code Flow as a Service Provider.
+This is the recommended approach for implementing a standards-compliant
+OAuth2 Authorization Code Flow as a Service Provider. A detailed example
+is given in the :ref:`auth_example` section.

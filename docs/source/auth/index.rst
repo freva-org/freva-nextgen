@@ -1,11 +1,12 @@
 .. _auth:
 
-Authentication
-==============
+Authentication & Authorization
+==============================
 
 Some functionality of the freva-rest API and the client library is only
-accessible after successful authentication. This authentication is realised
-with OAuth2 token creation. You can create new access and refresh tokens.
+accessible after successful authentication and authorization.
+This is realised with OAuth2 token creation. You can create new access and
+refresh tokens.
 Refresh tokens can be used to create new access tokens without needing to log
 in via username and password, thereby minimising the risk of exposing login
 credentials. Bear in mind that both login and refresh tokens have a limited
@@ -31,7 +32,8 @@ system:
 
 .. toctree::
    :maxdepth: 1
-   :caption: RestAPI Guide
+   :caption: Authentication and authorization Guide
 
+   auth-lib
    endpoints
    app_example

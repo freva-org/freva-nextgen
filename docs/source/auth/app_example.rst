@@ -1,4 +1,6 @@
-Integrating OpenID Connect Authentication with Freva
+.. _auth_example:
+
+Integrating Authentiction into your Web Applications
 ----------------------------------------------------
 Freva supports OAuth2-based authentication using the Authorization Code Flow.
 
@@ -18,10 +20,14 @@ The standard OIDC Authorization Code flow involves three steps:
 
 Redirect the user to the login endpoint with the `redirect_uri` parameter.
 
-.. http:get:: /api/freva-nextgen/auth/v2/login
+.. sourcecode:: http
 
-   :query redirect_uri: http://localhost:8050/callback
-   :query type: str
+   GET /api/freva-nextgen/auth/v2/login HTTP/1.1
+   host: www.freva.dkrz.de
+
+   {
+        redirect_uri=http://localhost:8050/callback
+   }
 
 2. Authorization Callback
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -32,31 +38,30 @@ with the following query parameters:
 - ``code``: a temporary authorization code
 - ``state``: an opaque anti-CSRF token
 
-3. Exchange Code for Tokens
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You must exchange this ``code`` value with the Freva `/token` endpoint.
 
-You must exchange the `code` using the Freva `/token` endpoint.
+.. sourcecode:: http
 
-.. http:post:: /api/freva-nextgen/auth/v2/token
+   POST /api/freva-nextgen/auth/v2/token HTTP/1.1
+   host: www.freva.dkrz.de
+   Content-Type: application/x-www-form-urlencoded
 
-    :resheader Content-Type: ``application/x-www-form-urlencoded``
-    :form code: xyz123
-    :type code: str
-    :form redirect_uri: http://localhost:8050/callback
-    :type redirect_uri: str
-    :form grant_type: authorization_code
-    :type grant_type: str
+   {
+        code=xyz122&redirect_uri=http://localhost:8050/callback&grant_type=authorization_code
+   }
 
 This returns an OAuth2 access token and optional refresh token.
 
-4. Retrieve User Info (optional):
+3. Retrieve User Info (optional):
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Use the access token to fetch the user's identity:
+Use the gnerated access token to fetch the user's identity:
 
-.. http:get:: /api/freva-nextgen/auth/v2/userinfo
+.. sourcecode:: http
 
-   :reqheader Authorization: Bearer <access_token>
+   GET /api/freva-nextgen/auth/v2/userinfo HTTP/1.1
+   host: www.freva.dkrz.de
+   Authorization: Bearer access_token
 
 Alternatively, you can use the ``/systemuser`` endpoint to retrieve more detailed i
 information about the authenticated user. This endpoint is only accessible
@@ -65,11 +70,11 @@ restrictions or `authorization` in your application.
 By calling ``/systemuser`` with a valid access token, you can reliably verify
 whether the current user is a full (primary) account holder.
 
-.. http:get:: /api/freva-nextgen/auth/v2/systemuser
+.. sourcecode:: http
 
-    :reqheader Authorization: Bearer <access_token>
-
-
+   GET /api/freva-nextgen/auth/v2/systemuser HTTP/1.1
+   host: www.freva.dkrz.de
+   Authorization: Bearer access_token
 
 
 Dash Example
