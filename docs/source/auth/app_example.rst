@@ -90,13 +90,14 @@ Plotly graph.
    :language: python
    :linenos:
 
-Security Notes
-++++++++++++++
+You can download the example file here: :download:`dash_auth_example.py <dash_auth_example.py>`.
 
-- **Redirect URI**: Must match the URI registered with the identity provider.
+**Security Notes**
+
+- *Redirect URI*: Must match the URI registered with the identity provider.
                     Contact your freindly freva admins for advice.
-- **Session Secret**: Set ``server.secret_key`` using a secure environment variable in production.
-- **HTTPS**: Always use HTTPS in production to protect token integrity.
+- *Session Secret*: Set ``server.secret_key`` using a secure environment variable in production.
+- *HTTPS*: Always use HTTPS in production to protect token integrity.
 - Use a WSGI-compatible server like Gunicorn for deployment:
 
   .. code-block:: console

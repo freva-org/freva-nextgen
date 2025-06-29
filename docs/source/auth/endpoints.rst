@@ -497,8 +497,8 @@ Calling them directly will likely lead to errors or unexpected behaviour.
 
 Instead, you should authenticate using **one of the supported client tools**:
 
-- The **Python client**: via :py:func``freva_client.authenticate``
-- The **CLI tool**: via ``freva-client auth``
+- The **Python client**: via :py:func:`freva_client.authenticate`
+- The **CLI tool**: via :ref:`freva-client auth <auth_cli>`
 - The **web portal**: to manually log in and download a token file
 
 These interfaces abstract away the complexity and ensure the flow is handled securely and correctly.
