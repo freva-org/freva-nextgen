@@ -503,7 +503,7 @@ class STACAPISchema:
 
 
 class CONFORMANCE(BaseModel):
-    """STAC Conformance response model (legacy)."""
+    """STAC Conformance response model."""
     conformsTo: List[str] = Field(
         default=CONFORMANCE_URLS,
         description="List of conformance URLs"
@@ -511,18 +511,18 @@ class CONFORMANCE(BaseModel):
 
 
 class STACConformance(BaseModel):
-    """STAC Conformance response model (legacy)."""
+    """STAC Conformance response model."""
     conformsTo: List[str] = Field(..., description="List of conformance URLs")
 
 
 class STACCollections(BaseModel):
-    """STAC Collections response model (legacy)."""
+    """STAC Collections response model."""
     collections: List[STACCollection] = Field(..., description="List of collections")
     links: List[STACLinks] = Field(..., description="Navigation links")
 
 
 class STACItemCollection(BaseModel):
-    """STAC Item Collection response model (legacy)."""
+    """STAC Item Collection response model."""
     type: str = Field("FeatureCollection", description="GeoJSON type")
     features: List[STACItem] = Field(..., description="List of STAC items")
     links: List[STACLinks] = Field(..., description="Navigation links")

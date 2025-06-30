@@ -1,4 +1,4 @@
-"""Various utilities for the restAPI."""
+""" utilities for the STAC."""
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
