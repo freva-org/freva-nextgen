@@ -445,7 +445,7 @@ class STACAPI:
             ```bash
             pip install freva-client
             ```
-            2. (Python) Get the auth token and access the zarr data - recommended
+            2. Python - recommended:
             ```python
             from freva_client import databrowser
             import xarray as xr
@@ -462,7 +462,7 @@ class STACAPI:
             }}
             )
             ```
-            3. (CLI) Get token then access:
+            3. CLI:
             ```bash
             freva-client databrowser data-search {self.uniq_key}={id} \\
                 --zarr --host {self.config.proxy}
@@ -476,7 +476,7 @@ class STACAPI:
               -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
             ```
             💡: Read more about the
-            [freva-client](https://freva-clint.github.io/freva-nextgen/)
+            [freva-client](https://freva-org.github.io/freva-nextgen/)
             """
         )  # noqa: E501
         local_access_desc = dedent(

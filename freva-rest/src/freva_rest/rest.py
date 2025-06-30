@@ -110,7 +110,7 @@ app = FastAPI(
         "name": "BSD 2-Clause License",
         "url": "https://opensource.org/license/bsd-2-clause",
         "x-logo": {
-            "url": "https://freva-clint.github.io/freva-nextgen/_static/logo.png"
+            "url": "https://freva-org.github.io/freva-nextgen/_static/logo.png"
         },
     },
 )

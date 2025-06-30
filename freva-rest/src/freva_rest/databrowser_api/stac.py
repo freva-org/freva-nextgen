@@ -306,7 +306,7 @@ class STAC(Solr):
               -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
             ```
             💡: Read more about the
-            [freva-client](https://freva-clint.github.io/freva-nextgen/)
+            [freva-client](https://freva-org.github.io/freva-nextgen/)
             """
         )  # noqa: E501
         local_access_desc = dedent(
@@ -564,7 +564,7 @@ class STAC(Solr):
             -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
             ```
             💡: Read more about the
-            [freva-client](https://freva-clint.github.io/freva-nextgen/)
+            [freva-client](https://freva-org.github.io/freva-nextgen/)
             """
         )
 
