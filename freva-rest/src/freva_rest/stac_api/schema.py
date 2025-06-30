@@ -464,14 +464,14 @@ class STACAPISchema:
             title="Max. results",
             description="Control the number of maximum result items returned.",
             ge=0,
-            le=1500,
+            le=1000,
         ),
         "token": Query(
             alias="token",
             title="Token",
             description="Token for pagination.",
             min_length=1,
-            max_length=100,
+            max_length=200,
         ),
         "datetime": Query(
             alias="datetime",
