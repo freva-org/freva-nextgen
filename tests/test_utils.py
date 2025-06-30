@@ -10,7 +10,7 @@ import zarr
 
 from data_portal_worker.backends.posix import get_xr_engine
 from data_portal_worker.utils import str_to_int as str_to_int2
-from freva_rest.utils import get_userinfo, str_to_int
+from freva_rest.utils.base_utils import get_userinfo, str_to_int
 
 
 def create_netcdf4_file(temp_dir: str) -> str:

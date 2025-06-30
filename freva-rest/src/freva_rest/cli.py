@@ -213,6 +213,9 @@ class Services(str, Enum):
     data_portal = "zarr-stream"
     databrowser = "databrowser"
     search = "databrowser"
+    stac = "stacapi"
+    stacpi = "stacapi"
+    stacbrowser = "stacapi"
 
 
 def get_cert_file(
