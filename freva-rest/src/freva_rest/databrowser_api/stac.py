@@ -275,23 +275,27 @@ class STAC(Solr):
             ```bash
             pip install freva-client
             ```
-            2. (Python) Get the auth token and access the zarr data - recommended
+            2. Python - recommended
             ```python
             from freva_client import authenticate, databrowser
             import xarray as xr
-            token_info = authenticate(username=<your_username>, \\
-                host='{self.config.proxy}')
             db = databrowser({python_params} {self.uniq_key}='{id}', \\
                             stream_zarr=True, host='{self.config.proxy}')
-            xarray_dataset = xr.open_mfdataset(list(db))
+            xarray_dataset = xr.open_mfdataset(
+            list(db),
+            chunks="auto",
+            engine="zarr",
+            storage_options={{"headers":
+                    {{
+                    "Authorization": f"Bearer {{db.auth_token['access_token']}}"
+                    }}
+            }}
+            )
             ```
-            3. (CLI) Get token then access:
+            3. CLI:
             ```bash
-            # Attention: jq has to be installed beforehand
-            token=$(freva-client auth -u <username> --host {self.config.proxy}\\
-                                                        |jq -r .access_token)
             freva-client databrowser data-search {cli_params} {self.uniq_key}={id} \\
-                --zarr --host {self.config.proxy} --access-token $token
+                --zarr --host {self.config.proxy}
             ```
             4. Access the zarr data directly (API - language agnostic)
             ```bash
@@ -530,23 +534,27 @@ class STAC(Solr):
             ```bash
             pip install freva-client
             ```
-            2. Get the auth token and access the zarr data (Python) - recommended
+            2. Python - recommended
             ```python
             from freva_client import authenticate, databrowser
             import xarray as xr
-            token_info = authenticate(username=<your_username>,\\
-                                    host='{self.config.proxy}')
             db = databrowser({python_params} stream_zarr=True,\\
                                 host='{self.config.proxy}')
-            xarray_dataset = xr.open_mfdataset(list(db))
+            xarray_dataset = xr.open_mfdataset(
+            list(db),
+            chunks="auto",
+            engine="zarr",
+            storage_options={{"headers":
+                    {{
+                    "Authorization": f"Bearer {{db.auth_token['access_token']}}"
+                    }}
+            }}
+            )
             ```
-            3. Get the auth token and access the zarr data (CLI)
+            3. CLI
             ```bash
-            # Attention: jq has to be installed beforehand
-            token=$(freva-client auth -u <username> --host {self.config.proxy}\\
-                                                        |jq -r .access_token)
             freva-client databrowser data-search {cli_params} --zarr\\
-                            --host {self.config.proxy} --access-token $token
+                            --host {self.config.proxy}
             ```
             4. Access the zarr data directly (API - language agnostic)
             ```bash

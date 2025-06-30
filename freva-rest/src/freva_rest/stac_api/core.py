@@ -447,21 +447,25 @@ class STACAPI:
             ```
             2. (Python) Get the auth token and access the zarr data - recommended
             ```python
-            from freva_client import authenticate, databrowser
+            from freva_client import databrowser
             import xarray as xr
-            token_info = authenticate(username=<your_username>, \\
-                host='{self.config.proxy}')
             db = databrowser({self.uniq_key}='{id}', \\
                             stream_zarr=True, host='{self.config.proxy}')
-            xarray_dataset = xr.open_mfdataset(list(db))
+            xarray_dataset = xr.open_mfdataset(
+            list(db),
+            chunks="auto",
+            engine="zarr",
+            storage_options={{"headers":
+                    {{
+                    "Authorization": f"Bearer {{db.auth_token['access_token']}}"
+                    }}
+            }}
+            )
             ```
             3. (CLI) Get token then access:
             ```bash
-            # Attention: jq has to be installed beforehand
-            token=$(freva-client auth -u <username> --host {self.config.proxy}\\
-                                                        |jq -r .access_token)
             freva-client databrowser data-search {self.uniq_key}={id} \\
-                --zarr --host {self.config.proxy} --access-token $token
+                --zarr --host {self.config.proxy}
             ```
             4. Access the zarr data directly (API - language agnostic)
             ```bash
