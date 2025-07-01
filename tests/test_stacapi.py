@@ -84,7 +84,6 @@ def test_stacapi_item_params(test_server: str) -> None:
 def test_stacapi_staccheck(test_server: str) -> None:
     """Test the stacapi staccheck functionality."""
     result_output = subprocess.run(["stac-check", f"{test_server}/stacapi/"], check=True, capture_output=True)
-    print(result_output.stdout)
     assert "CATALOG Passed: True" in result_output.stdout.decode("utf-8")
 
     result_output = subprocess.run(["stac-check", f"{test_server}/stacapi/collections/cmip6/"], check=True, capture_output=True)
@@ -261,3 +260,173 @@ def test_stacapi_search_params(test_server: str) -> None:
         params={"token": "invalid_token_format"}
     )
     assert res5.status_code == 422
+
+
+def test_stacapi_search_filter(test_server: str) -> None:
+    """ test for CQL2 filters."""
+    
+    #=, !=, <, <=, >, >=, isNull
+    filters = [
+        '{"op": "=", "args": [{"property": "project"}, "cmip6"]}',
+        '{"op": "!=", "args": [{"property": "project"}, "cmip6"]}',
+        '{"op": "<", "args": [{"property": "variable"}, "z"]}',
+        '{"op": "<=", "args": [{"property": "variable"}, "tas"]}',
+        '{"op": ">", "args": [{"property": "variable"}, "a"]}',
+        '{"op": ">=", "args": [{"property": "variable"}, "a"]}',
+        '{"op": "isNull", "args": [{"property": "nonexistent"}]}'
+    ]
+    
+    for filter_json in filters:
+        res = requests.get(f"{test_server}/stacapi/search", params={"filter": filter_json, "limit": 2})
+        assert res.status_code == 200
+
+    search_body = {
+        "limit": 3,
+        "filter": {
+            "op": "and",
+            "args": [
+                {"op": "or", "args": [
+                    {"op": "=", "args": [{"property": "collection"}, "cmip6"]},  # collection to project mapping
+                    {"op": "=", "args": [{"property": "project"}, "cordex"]}
+                ]},
+                {"op": "not", "args": [
+                    {"op": "=", "args": [{"property": "id"}, "nonexistent"]}  # id to file/uri mapping
+                ]}
+            ]
+        }
+    }
+    res = requests.post(f"{test_server}/stacapi/search", json=search_body)
+    assert res.status_code == 200
+
+    # t_after, t_before, t_during
+    temporal_filters = [
+        # timestamp dict
+        {"op": "t_after", "args": [{"property": "datetime"}, {"timestamp": "2020-01-01T00:00:00Z"}]},
+        {"op": "t_before", "args": [{"property": "datetime"}, {"timestamp": "2025-01-01T00:00:00Z"}]},
+        # string
+        {"op": "t_before", "args": [{"property": "datetime"}, "2025-01-01T00:00:00Z"]},
+        {"op": "t_after", "args": [{"property": "datetime"}, "2020-01-01T00:00:00Z"]},
+        # interval dict
+        {"op": "t_during", "args": [{"property": "datetime"}, {"interval": ["2020-01-01T00:00:00Z", "2023-12-31T23:59:59Z"]}]},
+        # interval list
+        {"op": "t_during", "args": [{"property": "datetime"}, ["2020-01-01T00:00:00Z", "2023-12-31T23:59:59Z"]]}
+    ]
+    
+    for temp_filter in temporal_filters:
+        search_body = {
+            "limit": 2,
+            "filter": {
+                "op": "and",
+                "args": [
+                    {
+                        "op": "s_intersects",
+                        "args": [
+                            {"property": "geometry"},
+                            {"type": "Polygon", "coordinates": [[[10.0, 20.0], [30.0, 20.0], [30.0, 40.0], [10.0, 40.0], [10.0, 20.0]]]}
+                        ]
+                    },
+                    temp_filter
+                ]
+            }
+        }
+        res = requests.post(f"{test_server}/stacapi/search", json=search_body)
+        assert res.status_code == 200
+
+    # filter + collections + bbox + datetime
+    search_body = {
+        "collections": ["cmip6"],
+        "bbox": [10, 20, 30, 40],
+        "datetime": "2020-01-01/2023-12-31",
+        "limit": 2,
+        "filter": {"op": "=", "args": [{"property": "realm"}, "atmos"]}
+    }
+    res = requests.post(f"{test_server}/stacapi/search", json=search_body)
+    assert res.status_code == 200
+
+    # empty filters errors
+    error_cases = [
+        # empty
+        {"filter": {}},
+        # missing operator
+        {"filter": {"args": [{"property": "project"}, "cmip6"]}},
+        # Invalid operator
+        {"filter": {"op": "invalid_op", "args": [{"property": "project"}, "cmip6"]}},
+        # missing args for comparison operators
+        {"filter": {"op": "=", "args": [{"property": "project"}]}},
+        {"filter": {"op": "!=", "args": []}},
+        {"filter": {"op": "<", "args": [{"property": "field"}]}},
+        {"filter": {"op": "<=", "args": []}},
+        {"filter": {"op": ">", "args": [{"property": "field"}]}},
+        {"filter": {"op": ">=", "args": []}},
+        {"filter": {"op": "isNull", "args": []}},
+        # missed property in args
+        {"filter": {"op": "=", "args": [{"notproperty": "field"}, "value"]}},
+        {"filter": {"op": "isNull", "args": [{"notproperty": "field"}]}},
+        # Logical operators invalid args
+        {"filter": {"op": "and", "args": []}},
+        {"filter": {"op": "or", "args": []}},
+        {"filter": {"op": "not", "args": []}},
+        {"filter": {"op": "not", "args": [{"invalid": "structure"}]}},
+        # bbox invalid
+        {"filter": {"op": "s_intersects", "args": []}},
+        {"filter": {"op": "s_intersects", "args": [{"property": "geometry"}]}},
+        {"filter": {"op": "s_intersects", "args": [{"property": "notgeometry"}, {"type": "Polygon"}]}},
+        {"filter": {"op": "s_intersects", "args": [{"property": "geometry"}, {"type": "Point"}]}},
+        {"filter": {"op": "s_intersects", "args": [{"property": "geometry"}, {"type": "Polygon", "coordinates": []}]}},
+        {"filter": {"op": "s_intersects", "args": [{"property": "geometry"}, {"type": "Polygon", "coordinates": [[[10, 20]]]}]}},
+        # time invalid 
+        {"filter": {"op": "t_after", "args": []}},
+        {"filter": {"op": "t_after", "args": [{"property": "datetime"}]}},
+        {"filter": {"op": "t_after", "args": [{"property": "notdatetime"}, "2020-01-01T00:00:00Z"]}},
+        {"filter": {"op": "t_after", "args": [{"property": "datetime"}, {"nottimestamp": "2020-01-01T00:00:00Z"}]}},
+        {"filter": {"op": "t_before", "args": []}},
+        {"filter": {"op": "t_before", "args": [{"property": "datetime"}]}},
+        {"filter": {"op": "t_before", "args": [{"property": "notdatetime"}, "2020-01-01T00:00:00Z"]}},
+        {"filter": {"op": "t_before", "args": [{"property": "datetime"}, {"nottimestamp": "2020-01-01T00:00:00Z"}]}},
+        {"filter": {"op": "t_during", "args": []}},
+        {"filter": {"op": "t_during", "args": [{"property": "datetime"}]}},
+        {"filter": {"op": "t_during", "args": [{"property": "notdatetime"}, ["2020-01-01T00:00:00Z", "2021-01-01T00:00:00Z"]]}},
+        {"filter": {"op": "t_during", "args": [{"property": "datetime"}, {"notinterval": ["2020-01-01T00:00:00Z", "2021-01-01T00:00:00Z"]}]}},
+        {"filter": {"op": "t_during", "args": [{"property": "datetime"}, ["2020-01-01T00:00:00Z"]]}},
+        {"filter": {"op": "=", "args": [{"property": "project"}, "test:value/with+special-chars"]}},
+        {"filter": {"op": ">", "args": [{"property": "numeric_field"}, 100]}}
+    ]
+    
+    for case in error_cases:
+        res = requests.post(f"{test_server}/stacapi/search", json={**case, "limit": 1})
+        assert res.status_code == 200
+
+    # project, id mapping
+    mapping_tests = [
+        {"filter": {"op": "=", "args": [{"property": "collection"}, "cmip6"]}},
+        {"filter": {"op": "=", "args": [{"property": "id"}, "some_file"]}},
+        # collection -> project mapping with non-string value (hits else: return [f'{field}:{value}'])
+        {"filter": {"op": "=", "args": [{"property": "collection"}, 123]}},
+        # id non-string value
+        {"filter": {"op": "=", "args": [{"property": "id"}, 456]}},
+        # fields with non-string value =
+        {"filter": {"op": "=", "args": [{"property": "numeric_field"}, 789]}},
+        {"filter": {"op": "=", "args": [{"property": "boolean_field"}, True]}},
+        {"filter": {"op": "!=", "args": [{"property": "collection"}, "cmip6"]}},
+        # id -> uniq_key mapping with string value  
+        {"filter": {"op": "!=", "args": [{"property": "id"}, "some_file"]}},
+        # collection non-string
+        {"filter": {"op": "!=", "args": [{"property": "collection"}, 123]}},
+        # id non-string 
+        {"filter": {"op": "!=", "args": [{"property": "id"}, 456]}},
+        # fields with non-string value !=, !=, <, <=, >, >=
+        {"filter": {"op": "!=", "args": [{"property": "numeric_field"}, 789]}},
+        {"filter": {"op": "!=", "args": [{"property": "boolean_field"}, True]}},
+        {"filter": {"op": "<", "args": [{"property": "collection"}, "cmip6"]}},
+        {"filter": {"op": ">", "args": [{"property": "collection"}, "cmip6"]}},
+        {"filter": {"op": ">=", "args": [{"property": "collection"}, "cmip6"]}},   
+        {"filter": {"op": "<=", "args": [{"property": "collection"}, "cmip6"]}},  
+    ]
+    
+    for case in mapping_tests:
+        res = requests.post(f"{test_server}/stacapi/search", json={**case, "limit": 1})
+        assert res.status_code == 200
+
+    # Invalid JSON
+    res = requests.get(f"{test_server}/stacapi/search", params={"filter": "invalid_json", "limit": 1})
+    assert res.status_code == 200 

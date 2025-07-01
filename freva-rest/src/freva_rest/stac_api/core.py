@@ -236,10 +236,11 @@ class STACAPI:
                     "method": "GET",
                 },
                 {
-                    "rel": "queryables",
-                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/queryables",
+                    "rel": "http://www.opengis.net/def/rel/ogc/1.0/queryables",
                     "type": "application/schema+json",
                     "title": "Queryables",
+                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/queryables",
+                    "method": "GET"
                 },
                 {
                     "rel": "service-desc",
@@ -664,7 +665,6 @@ class STACAPI:
             if direction == "next":
                 filters.append(f"_version_:{{{pivot_id} TO *}}")
             if direction == "prev":
-                print(f"Pivot ID: {pivot_id}", file=sys.stderr)
                 filters.append(f"_version_:{{* TO {pivot_id}}}")
                 self.solr_object.set_query_params(sort="_version_ desc,file asc")
 
@@ -676,7 +676,6 @@ class STACAPI:
         )
 
         yield '{"type":"FeatureCollection","features":['
-        print(f"{items_returned=}, {limit=}, {direction=}", file=sys.stderr)
 
         while items_returned < limit:
             async with self.solr_object._session_get() as res:
@@ -692,7 +691,6 @@ class STACAPI:
                 item_id = str(doc.get("_version_"))
                 if items_returned == 0:
                     first_item_id = item_id
-                    print(f"First item ID: {first_item_id}", file=sys.stderr)
                 last_item_id = item_id
 
                 project_value = doc.get("project", context_id)
@@ -870,6 +868,209 @@ class STACAPI:
         item = await self.create_stac_item(docs[0], collection_id)
         return item
 
+    def _parse_cql2_filter(self, filter_expr: Dict[str, Any]) -> List[str]:
+        """
+        Parse CQL2-JSON filter expression and convert to Solr query filters.
+        TODO: when we have multiple backend support, we need to
+        implement this method for each backend.
+
+        Attention: All of the operators are coming from the STAC API
+        CQL2-JSON specification, see:
+        https://github.com/stac-api-extensions/filter
+
+        Parameters
+        ----------
+        filter_expr : Dict[str, Any]
+            CQL2-JSON filter expression
+
+        Returns
+        -------
+        List[str]
+            List of Solr filter queries
+        """
+        if not isinstance(filter_expr, dict) or "op" not in filter_expr:
+            return []
+
+        op = filter_expr["op"]
+        args = filter_expr.get("args", [])
+
+        # Logical operators
+        if op == "and":
+            sub_filters = []
+            for arg in args:
+                if isinstance(arg, dict) and "op" in arg:
+                    sub_filters.extend(self._parse_cql2_filter(arg))
+            return [f"({' AND '.join(sub_filters)})"] if sub_filters else []
+
+        elif op == "or":
+            sub_filters = []
+            for arg in args:
+                if isinstance(arg, dict) and "op" in arg:
+                    sub_filters.extend(self._parse_cql2_filter(arg))
+            return [f"({' OR '.join(sub_filters)})"] if sub_filters else []
+
+        elif op == "not":
+            if len(args) == 1 and isinstance(args[0], dict) and "op" in args[0]:
+                sub_filter = self._parse_cql2_filter(args[0])
+                if sub_filter:
+                    return [f"-({sub_filter[0]})"]
+            return []
+
+        # Comparison operators
+        elif op in ["=", "eq"]:
+            if len(args) == 2:
+                prop = args[0]
+                value = args[1]
+                if isinstance(prop, dict) and prop.get("property"):
+                    field = prop["property"]
+                    # special mappings - collection and id are non-changeable
+                    if field == "collection":
+                        field = "project"
+                    elif field == "id":
+                        field = self.uniq_key
+
+                    # Escape special characters in value
+                    if isinstance(value, str):
+                        escaped_value = value
+                        for char in self.solr_object.escape_chars:
+                            escaped_value = escaped_value.replace(char, f'\\{char}')
+                        return [f'{field}:"{escaped_value}"']
+                    else:
+                        return [f'{field}:{value}']
+            return []
+
+        elif op in ["<>", "!=", "neq"]:
+            if len(args) == 2:
+                prop = args[0]
+                value = args[1]
+                if isinstance(prop, dict) and prop.get("property"):
+                    field = prop["property"]
+                    if field == "collection":
+                        field = "project"
+                    elif field == "id":
+                        field = self.uniq_key
+
+                    if isinstance(value, str):
+                        escaped_value = value
+                        for char in self.solr_object.escape_chars:
+                            escaped_value = escaped_value.replace(char, f'\\{char}')
+                        return [f'-{field}:"{escaped_value}"']
+                    else:
+                        return [f'-{field}:{value}']
+            return []
+
+        elif op in ["<", "lt"]:
+            if len(args) == 2:
+                prop = args[0]
+                value = args[1]
+                if isinstance(prop, dict) and prop.get("property"):
+                    field = prop["property"]
+                    if field == "collection":
+                        field = "project"
+                    return [f'{field}:{{* TO {value}}}']
+            return []
+
+        elif op in ["<=", "lte"]:
+            if len(args) == 2:
+                prop = args[0]
+                value = args[1]
+                if isinstance(prop, dict) and prop.get("property"):
+                    field = prop["property"]
+                    if field == "collection":
+                        field = "project"
+                    return [f'{field}:[* TO {value}]']
+            return []
+
+        elif op in [">", "gt"]:
+            if len(args) == 2:
+                prop = args[0]
+                value = args[1]
+                if isinstance(prop, dict) and prop.get("property"):
+                    field = prop["property"]
+                    if field == "collection":
+                        field = "project"
+                    return [f'{field}:{{{value} TO *}}']
+            return []
+
+        elif op in [">=", "gte"]:
+            if len(args) == 2:
+                prop = args[0]
+                value = args[1]
+                if isinstance(prop, dict) and prop.get("property"):
+                    field = prop["property"]
+                    if field == "collection":
+                        field = "project"
+                    return [f'{field}:[{value} TO *]']
+            return []
+
+        elif op == "isNull":
+            if len(args) == 1:
+                prop = args[0]
+                if isinstance(prop, dict) and prop.get("property"):
+                    field = prop["property"]
+                    if field == "collection":
+                        field = "project"  # pragma: no cover
+                    return [f'-{field}:[* TO *]']
+            return []
+
+        # Spatial operators
+        elif op == "s_intersects":
+            if len(args) == 2:
+                prop = args[0]
+                geom = args[1]
+                if isinstance(prop, dict) and prop.get("property") == "geometry":
+                    if isinstance(geom, dict) and geom.get("type") == "Polygon":
+                        coords = geom.get("coordinates", [[]])[0]
+                        if len(coords) >= 4:
+                            # Convert to bbox for Solr
+                            lons = [c[0] for c in coords[:-1]]
+                            lats = [c[1] for c in coords[:-1]]
+                            minx, maxx = min(lons), max(lons)
+                            miny, maxy = min(lats), max(lats)
+                            bbox_str = f"ENVELOPE({minx},{maxx},{maxy},{miny})"
+                            return [f'{{!field f=bbox}}Intersects({bbox_str})']
+            return []
+
+        # Temporal operators
+        elif op == "t_after":
+            if len(args) == 2:
+                prop = args[0]
+                timestamp = args[1]
+                if isinstance(prop, dict) and prop.get("property") == "datetime":
+                    if isinstance(timestamp, dict) and "timestamp" in timestamp:
+                        ts = timestamp["timestamp"]
+                        return [f'time:{{{ts} TO *}}']
+                    elif isinstance(timestamp, str):
+                        return [f'time:{{{timestamp} TO *}}']
+            return []
+
+        elif op == "t_before":
+            if len(args) == 2:
+                prop = args[0]
+                timestamp = args[1]
+                if isinstance(prop, dict) and prop.get("property") == "datetime":
+                    if isinstance(timestamp, dict) and "timestamp" in timestamp:
+                        ts = timestamp["timestamp"]
+                        return [f'time:{{* TO {ts}}}']
+                    elif isinstance(timestamp, str):
+                        return [f'time:{{* TO {timestamp}}}']
+            return []
+
+        elif op == "t_during":
+            if len(args) == 2:
+                prop = args[0]
+                interval = args[1]
+                if isinstance(prop, dict) and prop.get("property") == "datetime":
+                    if isinstance(interval, dict) and "interval" in interval:
+                        start, end = interval["interval"]
+                        return [f'{{!field f=time op=Intersects}}[{start} TO {end}]']
+                    elif isinstance(interval, list) and len(interval) == 2:
+                        start, end = interval
+                        return [f'{{!field f=time op=Intersects}}[{start} TO {end}]']
+            return []
+
+        return []
+
     async def get_search(
         self,
         collections: Optional[str] = None,
@@ -902,18 +1103,35 @@ class STACAPI:
             base_params["bbox"] = bbox
         if q:
             base_params["q"] = q
+        if filter:
+            base_params["filter"] = filter
 
         filters: List[str] = []
 
+        # CQL2 filter handling
+        if filter:
+            try:
+                filter_obj = json.loads(filter) if isinstance(filter, str) else filter
+                cql2_filters = self._parse_cql2_filter(filter_obj)
+                filters.extend(cql2_filters)
+            except (json.JSONDecodeError, Exception) as e:
+                logger.error(f"Failed to parse CQL2 filter: {e}")
+
+        # standard filters if CQL2 didn't handle them
+        has_collection_filter = any("project:" in f for f in filters)
+        has_id_filter = any(f"{self.uniq_key}:" in f for f in filters)
+        has_time_filter = any("time:" in f for f in filters)
+        has_bbox_filter = any("bbox" in f for f in filters)
+
         # Collection filter
-        if collection_list:
+        if collection_list and not has_collection_filter:
             collection_filter = " OR ".join(
                 [f"project:{coll}" for coll in collection_list]
             )
             filters.append(f"({collection_filter})")
 
         # IDs filter
-        if ids_list:
+        if ids_list and not has_id_filter:
             ids_filter = " OR ".join(
                 [f'{self.uniq_key}:"{item_id}"' for item_id in ids_list]
             )
@@ -922,22 +1140,19 @@ class STACAPI:
         # Free text search filter
         if q_terms:
             text_fields = self.config.solr_fields
-            print(f"Text fields: {text_fields}", file=sys.stderr)
             q_filters: List[str] = []
             for term in q_terms:
                 field_queries: List[str] = []
                 for field in text_fields:
                     escaped_term = term.replace(":", "\\:").replace(" ", "\\ ")
                     field_queries.append(f"{field}:*{escaped_term}*")
-
                 if field_queries:
                     q_filters.append(f"({' OR '.join(field_queries)})")
-
             if q_filters:
                 filters.append(f"({' OR '.join(q_filters)})")
 
         # Datetime filter
-        if datetime:
+        if datetime and not has_time_filter:
             if "/" in datetime:
                 start, end = datetime.split("/", 1)
                 if start and end:
@@ -946,7 +1161,7 @@ class STACAPI:
                 filters.append(f"time:[{datetime} TO *]")  # pragma: no cover
 
         # Bbox filter
-        if bbox:
+        if bbox and not has_bbox_filter:
             coords = [float(c) for c in bbox.split(",")]
             minx, miny, maxx, maxy = coords
             bbox_fq = (
@@ -976,7 +1191,7 @@ class STACAPI:
         query: Optional[Dict[str, str]] = None,
         sortby: Optional[List[Dict[str, str]]] = None,
         fields: Optional[dict[str, list[str]]] = None,
-        filter: Optional[Dict[str, str]] = None,
+        filter: Optional[Dict[str, Any]] = None,
     ) -> AsyncGenerator[str, None]:
         """Execute POST search across collections."""
 
@@ -993,7 +1208,12 @@ class STACAPI:
             else:
                 q_str = q
 
-        # Delegate to get_search with converted parameters
+        # Convert filter dict to JSON string for processing req
+        filter_str = None
+        if filter:
+            filter_str = json.dumps(filter) if isinstance(filter, dict) else str(filter)
+
+        # execute get_search with converted parameters
         async for chunk in self.get_search(
             collections=collections_str,
             ids=ids_str,
@@ -1005,9 +1225,27 @@ class STACAPI:
             query=json.dumps(query) if query else None,
             sortby=json.dumps(sortby) if sortby else None,
             fields=json.dumps(fields) if fields else None,
-            filter=json.dumps(filter) if filter else None,
+            filter=filter_str,
         ):
             yield chunk
+
+    async def _fetch_facets(self) -> Dict[str, List[str]]:
+        """Fetch current facets to use it in the search filter."""
+        try:
+            await self._set_solr_query()
+            _, search_result = await self.solr_object.extended_search([], max_results=0)
+
+            facet_values = {}
+            for facet_name, facet_data in search_result.facets.items():
+                if isinstance(facet_data, list) and len(facet_data) > 1:
+                    values = [str(facet_data[i]) for i in range(0, len(facet_data), 2)]
+                    if values:
+                        facet_values[facet_name] = values
+
+            return facet_values
+        except Exception as e:  # pragma: no cover
+            logger.error(f"Error fetching facets: {e}")
+            return {}
 
     async def get_queryables(self) -> Dict[str, Any]:
         """Get global queryables schema."""
@@ -1039,14 +1277,15 @@ class STACAPI:
             }
         }
 
-        if hasattr(self.config, 'solr_fields') and self.config.solr_fields:
-            for field in self.config.solr_fields:
-                if field not in properties:
-                    properties[field] = {
-                        "description": f"Custom field: {field}",
-                        # Generic type for flexibility
-                        "type": ["string", "number", "null"]
-                    }
+        # Fetch dynamic facets and add them as properties
+        facets = await self._fetch_facets()
+        for facet_name, facet_values in facets.items():
+            if facet_name not in properties:
+                properties[facet_name] = {
+                    "description": f"Search facet: {facet_name}",
+                    "type": "string",
+                    "enum": facet_values
+                }
 
         queryables_schema = {
             "$schema": "https://json-schema.org/draft/2019-09/schema",

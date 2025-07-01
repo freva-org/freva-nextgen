@@ -454,7 +454,6 @@ async def login(
         f"{server_config.oidc_overview['authorization_endpoint']}"
         f"?{urlencode(query)}"
     )
-    print("foofo", query)
     return RedirectResponse(auth_url)
 
 
