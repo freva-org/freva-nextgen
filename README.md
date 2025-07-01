@@ -2,9 +2,9 @@
 
 [![License](https://img.shields.io/badge/License-BSD-purple.svg)](LICENSE)
 [![PyPI](https://img.shields.io/pypi/pyversions/freva-client.svg)](https://pypi.org/project/freva-client/)
-[![Docs](https://img.shields.io/badge/API-Doc-green.svg)](https://freva-clint.github.io/freva-nextgen)
-[![Tests](https://github.com/FREVA-CLINT/freva-nextgen/actions/workflows/ci_job.yml/badge.svg)](https://github.com/FREVA-CLINT/freva-nextgen/actions)
-[![Test-Coverage](https://codecov.io/github/FREVA-CLINT/freva-nextgen/branch/init/graph/badge.svg?token=dGhXxh7uP3)](https://codecov.io/github/FREVA-CLINT/freva-nextgen)
+[![Docs](https://img.shields.io/badge/API-Doc-green.svg)](https://freva-org.github.io/freva-nextgen)
+[![Tests](https://github.com/freva-org/freva-nextgen/actions/workflows/ci_job.yml/badge.svg)](https://github.com/freva-org/freva-nextgen/actions)
+[![Test-Coverage](https://codecov.io/github/freva-org/freva-nextgen/branch/init/graph/badge.svg?token=dGhXxh7uP3)](https://codecov.io/github/freva-org/freva-nextgen)
 
 
 This is a multi-part repository it contains code for:
@@ -22,7 +22,7 @@ This is a multi-part repository it contains code for:
 2. Clone this repository:
 
     ```console
-    git clone --recursive git@github.com:FREVA-CLINT/freva-nextgen.git
+    git clone --recursive git@github.com:freva-org/freva-nextgen.git
     cd freva-nextgen
     ```
 
@@ -48,14 +48,14 @@ you have `docker-compose` or `podman-compose` installed on your system.
 Then, run the following command:
 
 ```console
-docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
+USER=$(whoami) docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
 ```
 
 if you use `podman`:
 
 ```console
 python -m pip install podman-compose
-podman-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
+USER=$(whoami) podman-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
 ```
 
 This will start the required services and containers to create the development
@@ -75,15 +75,18 @@ load any existing test data. If you don't like that simply do not pass the
 ``--dev`` flag.
 
 
-### Test ldap instance
-The dev system sets up a small LDAP server for testing. The following users
-in this ldap server are available:
+### Test users
+The following users are available for log on:
 
+
+- uid: ``<YOUR-USER>``, password: ``secret``
 - uid: ``johndoe``, password: ``johndoe123``
 - uid: ``janedoe``, password: ``janedoe123``
 - uid: ``alicebrown``, password: ``alicebrown123``
 - uid: ``bobsmith``, password: ``bobsmith123``
 - uid: ``lisajones``, password: ``lisajones123``
+
+`<YOUR-USER>` is the user name that started the compose command.
 
 ## Testing
 
@@ -130,8 +133,8 @@ docker run --rm --privileged multiarch/qemu-user-static --reset -p yes && \
 - Build for the `data-loader-worker` image for the target platforms
 ```console
 docker buildx build --no-cache --platform linux/amd64,linux/arm64,linux/ppc64le\
-    -t ghcr.io/freva-clint/freva-data-loader:latest  \
-    -t ghcr.io/freva-clint/freva-data-loader:<VERSION> \
+    -t ghcr.io/freva-org/freva-data-loader:latest  \
+    -t ghcr.io/freva-org/freva-data-loader:<VERSION> \
     --build-arg=VERSION=<VERSION> \
     --build-arg=CMD=data-loader-worker .
 ```
@@ -139,8 +142,8 @@ docker buildx build --no-cache --platform linux/amd64,linux/arm64,linux/ppc64le\
 - Build for the `freva-rest-api` image for the target platforms
 ```console
 docker buildx build --no-cache --platform linux/amd64,linux/arm64,linux/ppc64le\
-    -t ghcr.io/freva-clint/freva-rest-api:latest  \
-    -t ghcr.io/freva-clint/freva-rest-api:<VERSION> \
+    -t ghcr.io/freva-org/freva-rest-api:latest  \
+    -t ghcr.io/freva-org/freva-rest-api:<VERSION> \
     --build-arg=VERSION=<VERSION> \
     --build-arg=CMD=freva-rest-server .
 ```

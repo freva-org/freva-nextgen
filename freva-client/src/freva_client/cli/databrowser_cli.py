@@ -7,7 +7,7 @@ import json
 from enum import Enum
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Dict, List, Literal, Optional, Tuple, Union, cast
+from typing import Dict, List, Optional, Tuple, Union, cast
 
 import typer
 import xarray as xr
@@ -17,16 +17,6 @@ from freva_client.auth import Auth
 from freva_client.utils import exception_handler, logger
 
 from .cli_utils import parse_cli_args, version_callback
-
-
-def _auth(url: str, token: Optional[str]) -> None:
-    if token:
-        auth = Auth()
-        auth.set_token(
-            access_token=token, expires=auth.token_expiration_time.timestamp()
-        )
-    else:
-        raise ValueError("`--access-token` is required for authentication.")
 
 
 class UniqKeys(str, Enum):
@@ -65,19 +55,19 @@ class SelectMethod(str, Enum):
         """
         examples = {
             "time": ("2000 to 2012", "2010 to 2020"),
-            "bbox": ("-10 10 -10 10", "0 5 0 5")
+            "bbox": ("-10 10 -10 10", "0 5 0 5"),
         }
         descriptions = {
             "time": {
                 "unit": "time period",
                 "start_end": "start or end period",
-                "subset": "time period"
+                "subset": "time period",
             },
             "bbox": {
                 "unit": "spatial extent",
                 "start_end": "any part of the extent",
-                "subset": "spatial extent"
-            }
+                "subset": "spatial extent",
+            },
         }
 
         context_info = descriptions.get(context, descriptions["time"])
@@ -232,13 +222,10 @@ def metadata_search(
     result = databrowser.metadata_search(
         *(facets or []),
         time=time or "",
-        time_select=cast(Literal["file", "flexible", "strict"], time_select.value),
+        time_select=time_select.value,
         bbox=bbox or None,
-        bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select.value),
-        flavour=cast(
-            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
-            flavour.value,
-        ),
+        bbox_select=bbox_select.value,
+        flavour=flavour.value,
         host=host,
         extended_search=extended_search,
         multiversion=multiversion,
@@ -299,12 +286,14 @@ def data_search(
         help=SelectMethod.get_help("time"),
     ),
     zarr: bool = typer.Option(False, "--zarr", help="Create zarr stream files."),
-    access_token: Optional[str] = typer.Option(
+    token_file: Optional[Path] = typer.Option(
         None,
-        "--access-token",
+        "--token-file",
+        "-tf",
         help=(
-            "Use this access token for authentication"
-            " when creating a zarr stream files."
+            "Instead of authenticating via code based authentication flow "
+            "you can set the path to the json file that contains a "
+            "`refresh token` containing a refresh_token key."
         ),
     ),
     time: Optional[str] = typer.Option(
@@ -375,14 +364,11 @@ def data_search(
     result = databrowser(
         *(facets or []),
         time=time or "",
-        time_select=cast(Literal["file", "flexible", "strict"], time_select),
+        time_select=time_select.value,
         bbox=bbox or None,
-        bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
-        flavour=cast(
-            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
-            flavour.value,
-        ),
-        uniq_key=cast(Literal["uri", "file"], uniq_key.value),
+        bbox_select=bbox_select.value,
+        flavour=flavour.value,
+        uniq_key=uniq_key.value,
         host=host,
         fail_on_error=False,
         multiversion=multiversion,
@@ -390,7 +376,7 @@ def data_search(
         **(parse_cli_args(search_keys or [])),
     )
     if zarr:
-        _auth(result._cfg.auth_url, access_token)
+        Auth(token_file).authenticate(host=host, _cli=True)
     if parse_json:
         print(json.dumps(sorted(result)))
     else:
@@ -479,12 +465,14 @@ def intake_catalogue(
     zarr: bool = typer.Option(
         False, "--zarr", help="Create zarr stream files, as catalogue targets."
     ),
-    access_token: Optional[str] = typer.Option(
+    token_file: Optional[Path] = typer.Option(
         None,
-        "--access-token",
+        "--token-file",
+        "-tf",
         help=(
-            "Use this access token for authentication"
-            " when creating a zarr based intake catalogue."
+            "Instead of authenticating via code based authentication flow "
+            "you can set the path to the json file that contains a "
+            "`refresh token` containing a refresh_token key."
         ),
     ),
     filename: Optional[Path] = typer.Option(
@@ -526,14 +514,11 @@ def intake_catalogue(
     result = databrowser(
         *(facets or []),
         time=time or "",
-        time_select=cast(Literal["file", "flexible", "strict"], time_select),
+        time_select=time_select.value,
         bbox=bbox or None,
-        bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
-        flavour=cast(
-            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
-            flavour.value,
-        ),
-        uniq_key=cast(Literal["uri", "file"], uniq_key.value),
+        bbox_select=bbox_select.value,
+        flavour=flavour.value,
+        uniq_key=uniq_key.value,
         host=host,
         fail_on_error=False,
         multiversion=multiversion,
@@ -541,7 +526,7 @@ def intake_catalogue(
         **(parse_cli_args(search_keys or [])),
     )
     if zarr:
-        _auth(result._cfg.auth_url, access_token)
+        Auth(token_file).authenticate(host=host, _cli=True)
     with NamedTemporaryFile(suffix=".json") as temp_f:
         result._create_intake_catalogue_file(str(filename or temp_f.name))
         if not filename:
@@ -549,8 +534,7 @@ def intake_catalogue(
 
 
 @databrowser_app.command(
-    name="stac-catalogue",
-    help="Create a static STAC catalogue from the search."
+    name="stac-catalogue", help="Create a static STAC catalogue from the search."
 )
 @exception_handler
 def stac_catalogue(
@@ -667,14 +651,11 @@ def stac_catalogue(
     result = databrowser(
         *(facets or []),
         time=time or "",
-        time_select=cast(Literal["file", "flexible", "strict"], time_select),
+        time_select=time_select.value,
         bbox=bbox or None,
-        bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
-        flavour=cast(
-            Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
-            flavour.value,
-        ),
-        uniq_key=cast(Literal["uri", "file"], uniq_key.value),
+        bbox_select=bbox_select.value,
+        flavour=flavour.value,
+        uniq_key=uniq_key.value,
         host=host,
         fail_on_error=False,
         multiversion=multiversion,
@@ -802,20 +783,19 @@ def count_values(
     result: Union[int, Dict[str, Dict[str, int]]] = 0
     search_kws = parse_cli_args(search_keys or [])
     time = cast(str, time or search_kws.pop("time", ""))
-    bbox = cast(Optional[Tuple[float, float, float, float]],
-                bbox or search_kws.pop("bbox", None))
+    bbox = cast(
+        Optional[Tuple[float, float, float, float]],
+        bbox or search_kws.pop("bbox", None),
+    )
     facets = facets or []
     if detail:
         result = databrowser.count_values(
             *facets,
             time=time or "",
-            time_select=cast(Literal["file", "flexible", "strict"], time_select),
+            time_select=time_select.value,
             bbox=bbox or None,
-            bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
-            flavour=cast(
-                Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"],
-                flavour.value,
-            ),
+            bbox_select=bbox_select.value,
+            flavour=flavour.value,
             host=host,
             extended_search=extended_search,
             multiversion=multiversion,
@@ -827,15 +807,10 @@ def count_values(
             databrowser(
                 *facets,
                 time=time or "",
-                time_select=cast(Literal["file", "flexible", "strict"], time_select),
+                time_select=time_select.value,
                 bbox=bbox or None,
-                bbox_select=cast(Literal["file", "flexible", "strict"], bbox_select),
-                flavour=cast(
-                    Literal[
-                        "freva", "cmip6", "cmip5", "cordex", "nextgems", "user"
-                    ],
-                    flavour.value,
-                ),
+                bbox_select=bbox_select.value,
+                flavour=flavour.value,
                 host=host,
                 multiversion=multiversion,
                 fail_on_error=False,
@@ -884,18 +859,22 @@ def user_data_add(
             "the hostname is read from a config file."
         ),
     ),
-    access_token: Optional[str] = typer.Option(
+    token_file: Optional[Path] = typer.Option(
         None,
-        "--access-token",
-        help="Access token for authentication when adding user data.",
+        "--token-file",
+        "-tf",
+        help=(
+            "Instead of authenticating via code based authentication flow "
+            "you can set the path to the json file that contains a "
+            "`refresh token` containing a refresh_token key."
+        ),
     ),
     verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
 ) -> None:
     """Add user data into the databrowser."""
     logger.set_verbosity(verbose)
     logger.debug("Checking if the user has the right to add data")
-    result = databrowser(host=host)
-    _auth(result._cfg.auth_url, access_token)
+    Auth(token_file).authenticate(host=host, _cli=True)
 
     facet_dict = {}
     if facets:
@@ -937,18 +916,22 @@ def user_data_delete(
             "the hostname is read from a config file."
         ),
     ),
-    access_token: Optional[str] = typer.Option(
+    token_file: Optional[Path] = typer.Option(
         None,
-        "--access-token",
-        help="Access token for authentication when deleting user data.",
+        "--token-file",
+        "-tf",
+        help=(
+            "Instead of authenticating via code based authentication flow "
+            "you can set the path to the json file that contains a "
+            "`refresh token` containing a refresh_token key."
+        ),
     ),
     verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
 ) -> None:
     """Delete user data from the databrowser."""
     logger.set_verbosity(verbose)
     logger.debug("Checking if the user has the right to delete data")
-    result = databrowser(host=host)
-    _auth(result._cfg.auth_url, access_token)
+    Auth(token_file).authenticate(host=host, _cli=True)
 
     search_key_dict = {}
     if search_keys:

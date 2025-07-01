@@ -1,13 +1,14 @@
 """Command line interface for authentication."""
 
 import json
-from getpass import getuser
+import os
 from typing import Optional
 
 import typer
 
-from freva_client import authenticate
+from freva_client.auth import Auth
 from freva_client.utils import exception_handler, logger
+from freva_client.utils.auth_utils import TOKEN_ENV_VAR, get_default_token_file
 
 from .cli_utils import version_callback
 
@@ -28,20 +29,13 @@ def authenticate_cli(
             "the hostname is read from a config file"
         ),
     ),
-    username: str = typer.Option(
-        getuser(),
-        "--username",
-        "-u",
-        help="The username used for authentication.",
-    ),
-    refresh_token: Optional[str] = typer.Option(
-        None,
-        "--refresh-token",
-        "-r",
+    token_file: str = typer.Option(
+        os.getenv(TOKEN_ENV_VAR, "").strip(),
+        "--token-file",
         help=(
-            "Instead of using a password, you can use a refresh token. "
-            "refresh the access token. This is recommended for non-interactive"
-            " environments."
+            "Instead of authenticating via code based authentication flow "
+            "you can set the path to the json file that contains a "
+            "`refresh token` containing a refresh_token key."
         ),
     ),
     force: bool = typer.Option(
@@ -61,10 +55,9 @@ def authenticate_cli(
 ) -> None:
     """Create OAuth2 access and refresh token."""
     logger.set_verbosity(verbose)
-    token_data = authenticate(
+    token = Auth(token_file=token_file or get_default_token_file()).authenticate(
         host=host,
-        username=username,
-        refresh_token=refresh_token,
         force=force,
+        _cli=True,
     )
-    print(json.dumps(token_data, indent=3))
+    print(json.dumps(token, indent=3))

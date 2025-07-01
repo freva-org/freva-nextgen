@@ -6,6 +6,7 @@ env = [
     "API_MONGO_PASSWORD=secret",
     "API_SOLR_HOST=localhost:8983",
     "API_SOLR_CORE=files",
+    "API_OIDC_CLIENT_ID=freva",
     "FREVA_NO_RICH_PANELS=1",
     "FREVA_CONFIG={PWD}/dev-env/freva.toml",
     "API_REDIS_SSL_CERTFILE={PWD}/dev-env/config/certs/client-cert.pem",
@@ -14,14 +15,17 @@ env = [
     "API_REDIS_USER=redis",
     "API_REDIS_PASSWORD=secret",
     "API_SERVICES=zarr-stream,databrowser",
+    "API_OIDC_TOKEN_CLAIMS=aud:freva",
     "API_CONFIG={PWD}/freva-rest/src/freva_rest/api_config.toml",
+    "JUPYTER_PLATFORM_DIRS=1",
+    "FREVA_BATCH_JOB=foo",
 
 ]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 filterwarnings = ["ignore::UserWarning"]
 [tool.flake8]
-ignore = ["F405", "F403"]
+ignore = ["F405", "F403", "E704"]
 
 [tool.mypy]
 files = "freva-*/src"
@@ -62,42 +66,25 @@ passenv = *
 parallel_show_output = false
 [testenv:test]
 description = "Run the unit tests."
-deps = -e ./freva-rest
+deps = -e ./freva-rest[tests]
        -e ./freva-client
        -e ./freva-data-portal-worker[full]
-       httpx
-       pytest
-       pytest-asyncio
-       pytest-cov
-       pytest-mock
-       mock
-       pymongo
-       pytest-env
        setuptools
-       xarray
-       stac-check
 
 commands =
     pytest -vv --cov=freva-rest --cov=freva-client --cov=freva-data-portal-worker --cov-report=html:coverage_report --junitxml report.xml --cov-report xml tests/
     python3 -m coverage report --fail-under=98.5 --precision=2
 [testenv:docs]
 description = "Create the documentation."
-deps = -e ./freva-rest
+deps = -e ./freva-rest[docs]
        -e ./freva-client
        -e ./freva-data-portal-worker[full]
-       sphinx-execute-code-python3
-       sphinx-code-tabs
-       sphinx-copybutton
-       sphinx-sitemap
-       sphinx-togglebutton
-       sphinxcontrib-httpdomain
-       pydata-sphinx-theme
 setenv =
     FREVA_CONFIG = {toxinidir}/dev-env/freva.toml
     FREVA_NO_RICH_PANELS = 1
 allowlist_externals = make
 commands = make -C docs clean
-           make -C docs html 
+           make -C docs html
 [testenv:lint]
 description = "Check code quality."
 deps = -e ./freva-rest
@@ -111,9 +98,9 @@ commands =
     python3 -m isort --check --profile black -t py312 -l 79 freva-rest/src
     python3 -m isort --check --profile black -t py312 -l 79 freva-client/src
     python3 -m isort --check --profile black -t py312 -l 79 freva-data-portal-worker/src
-    python3 -m flake8 freva-client/src --count --max-complexity=10 --ignore=F405,F403,W503,C901 --max-line-length=88 --statistics --show-source
-    python3 -m flake8 freva-rest/src --count --max-complexity=10 --ignore=F405,F403,W503,C901 --max-line-length=88 --statistics --show-source
-    python3 -m flake8 freva-data-portal-worker/src --count --max-complexity=10 --ignore=F405,F403,W503,C901 --max-line-length=88 --statistics --show-source
+    python3 -m flake8 freva-client/src --count --max-complexity=10 --ignore=F405,F403,E704,W503,C901 --max-line-length=88 --statistics --show-source
+    python3 -m flake8 freva-rest/src --count --max-complexity=10 --ignore=F405,F403,W503,E704,C901 --max-line-length=88 --statistics --show-source
+    python3 -m flake8 freva-data-portal-worker/src --count --max-complexity=10 --ignore=F405,E704,F403,W503,C901 --max-line-length=88 --statistics --show-source
 [testenv:types]
 description = "Static type checking."
 deps = ./freva-rest
@@ -133,11 +120,11 @@ deps = git-python
 commands = python3 bump.py tag freva_rest -p freva-rest
 allowlist_externals = rm
                       curl
-commands_pre = curl -H 'Cache-Control: no-cache' -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/main/release.py
+commands_pre = curl -H 'Cache-Control: no-cache' -Ls -o bump.py https://raw.githubusercontent.com/freva-org/freva-admin/main/release.py
 commands_post = rm bump.py
 [testenv:bump]
 commands = python3 bump.py deploy -p freva-rest -v
-commands_pre = curl -H 'Cache-Control: no-cache' -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/main/release.py
+commands_pre = curl -H 'Cache-Control: no-cache' -Ls -o bump.py https://raw.githubusercontent.com/freva-org/freva-admin/main/release.py
 allowlist_externals = rm
                       curl
 commands_post = rm bump.py

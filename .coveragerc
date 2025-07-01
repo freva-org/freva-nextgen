@@ -24,6 +24,7 @@ exclude_lines =
     except ImportError:
     except RuntimeError
     raise SystemExit
+    except OSError:
     except Exception as error:
     except Exception:
     # Don't complain about the Completer class

@@ -1,0 +1,3 @@
+ipython
+./freva-rest[docs]
+./freva-client

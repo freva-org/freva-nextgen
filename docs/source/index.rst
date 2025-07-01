@@ -17,13 +17,13 @@ Freva: The free evaluation system
    :target: https://pypi.org/project/freva-client
 
 .. image:: https://img.shields.io/badge/ViewOn-GitHub-purple
-   :target: https://github.com/FREVA-CLINT/freva-nextgen
+   :target: https://github.com/freva-org/freva-nextgen
 
-.. image:: https://github.com/FREVA-CLINT/freva-nextgen/actions/workflows/ci_job.yml/badge.svg
-   :target: https://github.com/FREVA-CLINT/freva-nextgen/actions
+.. image:: https://github.com/freva-org/freva-nextgen/actions/workflows/ci_job.yml/badge.svg
+   :target: https://github.com/freva-org/freva-nextgen/actions
 
-.. image:: https://codecov.io/github/FREVA-CLINT/freva-nextgen/branch/init/graph/badge.svg?token=dGhXxh7uP3
-   :target: https://codecov.io/github/FREVA-CLINT/freva-nextgen
+.. image:: https://codecov.io/github/freva-org/freva-nextgen/branch/init/graph/badge.svg?token=dGhXxh7uP3
+   :target: https://codecov.io/github/freva-org/freva-nextgen
 
 
 Freva, the free evaluation system framework, is a data search and analysis
@@ -41,7 +41,7 @@ This documentation describes the *freva-client* library, its
 command line interface (cli) and the REST API. The *freva-client* library
 described in this documentation only support searching for data. If you
 need to apply data analysis plugins, please visit the
-`official documentation <https://freva-clint.github.io/freva>`_
+`official documentation <https://freva-org.github.io/freva>`_
 
 .. _install+configure:
 
@@ -125,6 +125,19 @@ Table of Content
 
    auth/index
    databrowser/index
+
+.. warning::
+
+   As of version 2505.1.0, **password-based authentication is deprecated**.
+   You can now only log in using the **authorization code flow**.
+
+   To obtain OAuth2 tokens, you have the following options:
+
+   - Log in via the Freva website and download a token file.
+   - Use the :py:func:`freva_client.authenticate` function.
+   - Use the :ref:`freva-client auth <auth_cli>` command-line interface.
+
+
 
 Feedback and Support
 ====================

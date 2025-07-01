@@ -1,6 +1,12 @@
 name: Build and publish the container image
 run-name: ${{ github.actor }} is preparing the next release
 
+permissions:
+  pull-requests: write
+  contents: write
+  packages: write
+
+
 "on":
   workflow_dispatch:
   push:
@@ -28,10 +34,10 @@ jobs:
           TAG="${{ steps.get-tag.outputs.tag }}"
           IS_PRERELEASE="false"
           if [[ "$TAG" == *"-dev"* || "$TAG" == *"-beta"* || "$TAG" == *"-alpha"* ]]; then
-            echo "ghcr.io/freva-clint/freva-rest-api-dev" > image.txt
+            echo "ghcr.io/freva-org/freva-rest-api-dev" > image.txt
             IS_PRERELEASE="true"
           else
-            echo "ghcr.io/freva-clint/freva-rest-api" > image.txt
+            echo "ghcr.io/freva-org/freva-rest-api" > image.txt
           fi
           echo "${{ steps.get-tag.outputs.tag }}" > tag.txt
           echo "$IS_PRERELEASE" > is_prerelease.txt
@@ -160,8 +166,8 @@ jobs:
           push: true
           no-cache: true
           tags: |
-            ghcr.io/freva-clint/freva-data-loader:${{ env.TAG }}
-            ghcr.io/freva-clint/freva-data-loader:latest
+            ghcr.io/freva-org/freva-data-loader:${{ env.TAG }}
+            ghcr.io/freva-org/freva-data-loader:latest
 
 
   pypi:
@@ -228,7 +234,7 @@ jobs:
         run: pip install git-python packaging tomli requests
 
       - name: Getting realease job
-        run: curl -Ls -o bump.py https://raw.githubusercontent.com/FREVA-CLINT/freva-deployment/main/release.py
+        run: curl -Ls -o bump.py https://raw.githubusercontent.com/freva-org/freva-admin/main/release.py
 
       - name: Do the release job
         run: python3 bump.py deploy freva_rest -p freva-rest -v -s solr ${{steps.solr.outputs.tag}}

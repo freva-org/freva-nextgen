@@ -28,6 +28,7 @@ from rich import print as pprint
 
 from .auth import Auth
 from .utils import logger
+from .utils.auth_utils import Token, choose_token_strategy, load_token
 from .utils.databrowser_utils import Config, UserDataHandler
 
 __all__ = ["databrowser"]
@@ -44,12 +45,12 @@ class databrowser:
     Parameters
     ~~~~~~~~~~
 
-    *facets: str
+    facets: str
         If you are not sure about the correct search key's you can use
         positional arguments to search of any matching entries. For example
         'era5' would allow you to search for any entries
         containing era5, regardless of project, product etc.
-    **search_keys: str
+    search_keys: str
         The search constraints applied in the data search. If not given
         the whole dataset will be queried.
     flavour: str, default: freva
@@ -128,7 +129,7 @@ class databrowser:
     databrowser class using the ``experiment`` search constraint.
     If you just 'print' the created object you will get a quick overview:
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import databrowser
         db = databrowser(experiment="cmorph", uniq_key="uri")
@@ -137,7 +138,7 @@ class databrowser:
     After having created the search object you can acquire different kinds of
     information like the number of found objects:
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import databrowser
         db = databrowser(experiment="cmorph", uniq_key="uri")
@@ -146,7 +147,7 @@ class databrowser:
 
     Or you can retrieve the combined metadata of the search objects.
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import databrowser
         db = databrowser(experiment="cmorph", uniq_key="uri")
@@ -154,7 +155,7 @@ class databrowser:
 
     Most importantly you can retrieve the locations of all encountered objects
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import databrowser
         db = databrowser(experiment="cmorph", uniq_key="uri")
@@ -167,7 +168,7 @@ class databrowser:
     You can also set a different flavour, for example according to cmip6
     standard:
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import databrowser
         db = databrowser(flavour="cmip6", experiment_id="cmorph")
@@ -179,7 +180,7 @@ class databrowser:
     for getting all ocean reanalysis datasets you can apply the 'reana*'
     search key as a positional argument:
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import databrowser
         db = databrowser("reana*", realm="ocean", flavour="cmip6")
@@ -195,18 +196,18 @@ class databrowser:
     before you are able to access the data. Refer also to the
     :py:meth:`freva_client.authenticate` method.
 
-    .. execute_code::
+    .. code-block:: python
 
-        from freva_client import authenticate, databrowser
-        token_info = authenticate(username="janedoe")
+        from freva_client import databrowser
         db = databrowser(dataset="cmip6-fs", stream_zarr=True)
         zarr_files = list(db)
-        print(zarr_files)
 
     After you have created the paths to the zarr files you can open them
 
-    ::
+    .. code-block:: python
 
+        from freva_client import authenticate
+        token_info = authenticate()
         import xarray as xr
         dset = xr.open_dataset(
            zarr_files[0],
@@ -291,7 +292,7 @@ class databrowser:
         headers = {}
         if self._stream_zarr:
             query_url = self._cfg.zarr_loader_url
-            token = self._auth.check_authentication(auth_url=self._cfg.auth_url)
+            token = self._auth.authenticate(config=self._cfg)
             headers = {"Authorization": f"Bearer {token['access_token']}"}
         result = self._request("GET", query_url, headers=headers, stream=True)
         if result is not None:
@@ -350,7 +351,7 @@ class databrowser:
 
         Example
         ~~~~~~~
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             print(len(databrowser(experiment="cmorph")))
@@ -367,7 +368,7 @@ class databrowser:
         kwargs: Dict[str, Any] = {"stream": True}
         url = self._cfg.intake_url
         if self._stream_zarr:
-            token = self._auth.check_authentication(auth_url=self._cfg.auth_url)
+            token = self._auth.authenticate(config=self._cfg)
             url = self._cfg.zarr_loader_url
             kwargs["headers"] = {
                 "Authorization": f"Bearer {token['access_token']}"
@@ -386,6 +387,41 @@ class databrowser:
             raise ValueError(
                 f"Couldn't write catalogue content: {error}"
             ) from None
+
+    @property
+    def auth_token(self) -> Optional[Token]:
+        """Get the current OAuth2 token - if it is still valid.
+
+        Returns
+        -------
+        Token:
+            If the OAuth2 token exists,is valid and can be used it will
+            be returned, None otherwise.
+
+        Example
+        -------
+
+        .. code-block:: python
+
+            from freva_client import databrowser
+            import xarray as xr
+            db = databrowser(dataset="cmip6-hsm", stream_zarr=True)
+            dset = xr.open_dataset(
+               zarr_files[0],
+               chunks="auto",
+               engine="zarr",
+               storage_options={"headers":
+                    {"Authorization": f"Bearer {db.auth_token['access_token']}"}
+               }
+            )
+        """
+        token = self._auth._auth_token or load_token(self._auth.token_file)
+        strategy = choose_token_strategy(token)
+        if strategy in ("browser_auth", "fail"):
+            return None
+        if strategy == "refresh_token":
+            token = self._auth.authenticate(config=self._cfg)
+        return token
 
     def intake_catalogue(self) -> intake_esm.core.esm_datastore:
         """Create an intake esm catalogue object from the search.
@@ -407,7 +443,7 @@ class databrowser:
         Let's create an intake-esm catalogue that points points allows for
         streaming the target data as zarr:
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             db = databrowser(dataset="cmip6-hsm", stream_zarr=True)
@@ -435,7 +471,7 @@ class databrowser:
             The filename of the STAC catalogue. If not given
             or doesn't exist the STAC catalogue will be saved
             to the current working directory.
-        **kwargs: Any
+        kwargs: Any
             Additional keyword arguments to be passed to the request.
 
         Returns
@@ -451,7 +487,7 @@ class databrowser:
         ~~~~~~~
         Let's create a static STAC catalogue:
 
-        .. execute_code::
+        .. code-block:: python
 
             from tempfile import mktemp
             temp_path = mktemp(suffix=".zip")
@@ -521,7 +557,7 @@ class databrowser:
         Parameters
         ~~~~~~~~~~
 
-        *facets: str
+        facets: str
             If you are not sure about the correct search key's you can use
             positional arguments to search of any matching entries. For example
             'era5' would allow you to search for any entries
@@ -574,7 +610,7 @@ class databrowser:
         fail_on_error: bool, default: False
             Make the call fail if the connection to the databrowser could not
             be established.
-        **search_keys: str
+        search_keys: str
             The search constraints to be applied in the data search. If not given
             the whole dataset will be queried.
 
@@ -587,12 +623,12 @@ class databrowser:
         Example
         ~~~~~~~
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             print(databrowser.count_values(experiment="cmorph"))
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             print(databrowser.count_values("model"))
@@ -602,7 +638,7 @@ class databrowser:
         example for getting all ocean reanalysis datasets you can apply the
         'reana*' search key as a positional argument:
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             print(databrowser.count_values("reana*", realm="ocean", flavour="cmip6"))
@@ -643,7 +679,7 @@ class databrowser:
 
         Reverse search: retrieving meta data from a known file
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             db = databrowser(uri="slk:///arch/*/CPC/*")
@@ -681,7 +717,7 @@ class databrowser:
         Parameters
         ~~~~~~~~~~
 
-        *facets: str
+        facets: str
             If you are not sure about the correct search key's you can use
             positional arguments to search of any matching entries. For example
             'era5' would allow you to search for any entries
@@ -734,7 +770,7 @@ class databrowser:
         fail_on_error: bool, default: False
             Make the call fail if the connection to the databrowser could not
             be established.
-        **search_keys: str, list[str]
+        search_keys: str, list[str]
             The facets to be applied in the data search. If not given
             the whole dataset will be queried.
 
@@ -747,7 +783,7 @@ class databrowser:
         Example
         ~~~~~~~
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             all_facets = databrowser.metadata_search(project='obs*')
@@ -755,7 +791,7 @@ class databrowser:
 
         You can also search for all metadata matching a search string:
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             spec_facets = databrowser.metadata_search("obs*")
@@ -763,7 +799,7 @@ class databrowser:
 
         Get all models that have a given time step:
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             model = databrowser.metadata_search(
@@ -774,7 +810,7 @@ class databrowser:
 
         Reverse search: retrieving meta data from a known file
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             res = databrowser.metadata_search(file="/arch/*CPC/*")
@@ -785,7 +821,7 @@ class databrowser:
         example for getting all ocean reanalysis datasets you can apply the
         'reana*' search key as a positional argument:
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             print(databrowser.metadata_search("reana*", realm="ocean", flavour="cmip6"))
@@ -795,7 +831,7 @@ class databrowser:
         version from a multi versioned datasets requires the ``multiversion``
         flag in combination with the ``version`` special attribute:
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             res = databrowser.metadata_search(dataset="cmip6-fs",
@@ -852,7 +888,7 @@ class databrowser:
         Example
         ~~~~~~~
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             print(databrowser.overview())
@@ -869,7 +905,7 @@ class databrowser:
         Example
         ~~~~~~~
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             db = databrowser()
@@ -948,11 +984,10 @@ class databrowser:
 
         Adding user data:
 
-        .. execute_code::
+        .. code-block:: python
 
-            from freva_client import authenticate, databrowser
+            from freva_client import databrowser
             import xarray as xr
-            token_info = authenticate(username="janedoe")
             filenames = (
                 "../freva-rest/src/freva_rest/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/"
                 "GERICS/NCC-NorESM1-M/rcp85/r1i1p1/GERICS-REMO2015/v1/3hr/pr/v20181212/*.nc"
@@ -971,10 +1006,9 @@ class databrowser:
 
         Deleting user data:
 
-        .. execute_code::
+        .. code-block:: python
 
-            from freva_client import authenticate, databrowser
-            token_info = authenticate(username="janedoe")
+            from freva_client import databrowser
             databrowser.userdata(
                 action="delete",
                 metadata={"project": "cmip5", "experiment": "myFavExp"}
@@ -987,7 +1021,7 @@ class databrowser:
         userdata_items = userdata_items or []
         metadata = metadata or {}
         url = f"{this._cfg.userdata_url}"
-        token = this._auth.check_authentication(auth_url=this._cfg.auth_url)
+        token = this._auth.authenticate(config=this._cfg)
         headers = {"Authorization": f"Bearer {token['access_token']}"}
         payload_metadata: dict[str, Collection[Collection[str]]] = {}
 

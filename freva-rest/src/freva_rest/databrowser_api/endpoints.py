@@ -5,11 +5,11 @@ from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 from fastapi import (
     Body,
-    Depends,
     HTTPException,
     Query,
     Request,
     Response,
+    Security,
     status,
 )
 from fastapi.responses import (
@@ -17,9 +17,10 @@ from fastapi.responses import (
     PlainTextResponse,
     StreamingResponse,
 )
+from fastapi_third_party_auth import IDToken as TokenPayload
 from pydantic import BaseModel, Field
 
-from freva_rest.auth import TokenPayload, auth
+from freva_rest.auth import auth
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 
@@ -49,7 +50,9 @@ class AddUserDataRequestBody(BaseModel):
     facets: Dict[str, Any] = Field(
         ...,
         description="Key-value pairs representing metadata search attributes.",
-        examples=[{"project": "user-data", "product": "new", "institute": "globe"}],
+        examples=[
+            {"project": "user-data", "product": "new", "institute": "globe"}
+        ],
     )
 
 
@@ -79,7 +82,9 @@ async def overview() -> SearchFlavours:
                 for f in translator.forward_lookup.values()
                 if f not in translator.cordex_keys
             ]
-    return SearchFlavours(flavours=list(Translator.flavours), attributes=attributes)
+    return SearchFlavours(
+        flavours=list(Translator.flavours), attributes=attributes
+    )
 
 
 @app.get(
@@ -119,10 +124,12 @@ async def metadata_search(
         start=0,
         **SolrSchema.process_parameters(request),
     )
-    status_code, result = await solr_search.extended_search(facets or [], max_results=0)
+    status_code, result = await solr_search.extended_search(
+        facets or [], max_results=0
+    )
     await solr_search.store_results(result.total_count, status_code)
-    output = result.dict()
-    del output["search_results"]
+    output = result.model_dump()
+    _ = output.pop("search_results", "")
     return JSONResponse(content=output, status_code=status_code)
 
 
@@ -274,9 +281,7 @@ async def stac_catalogue(
     return StreamingResponse(
         stac_instance.stream_stac_catalogue(collection_id, total_count),
         media_type="application/zip",
-        headers={
-            "Content-Disposition": f'attachment; filename="{file_name}"'
-        }
+        headers={"Content-Disposition": f'attachment; filename="{file_name}"'},
     )
 
 
@@ -300,8 +305,9 @@ async def extended_search(
     ] = False,
     facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
     request: Request = Required,
-    current_user: Optional[TokenPayload] = Depends(
-        auth.create_auth_dependency(required=False)
+    current_user: Optional[TokenPayload] = Security(
+        auth.create_auth_dependency(required=False),
+        scopes=["oidc.claims"]
     )
 ) -> JSONResponse:
     """This endpoint is used by the databrowser web ui client."""
@@ -330,7 +336,7 @@ async def extended_search(
         facets or [], max_results=max_results, zarr_stream=zarr_stream
     )
     await solr_search.store_results(result.total_count, status_code)
-    return JSONResponse(content=result.dict(), status_code=status_code)
+    return JSONResponse(content=result.model_dump(), status_code=status_code)
 
 
 @app.get(
@@ -360,7 +366,9 @@ async def load_data(
         ),
     ] = None,
     request: Request = Required,
-    current_user: TokenPayload = Depends(auth.create_auth_dependency()),
+    current_user: TokenPayload = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
 ) -> StreamingResponse:
     """Search for datasets and stream the results as zarr.
 
@@ -371,7 +379,7 @@ async def load_data(
     [!NOTE]
     The urls are only temporary and will be invalidated.
     """
-    if "zarr-stream" not in server_config.services:
+    if "zarr-stream" not in (server_config.services or []):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Service not enabled.",
@@ -409,7 +417,9 @@ async def load_data(
 )
 async def post_user_data(
     request: Annotated[AddUserDataRequestBody, Body(...)],
-    current_user: TokenPayload = Depends(auth.create_auth_dependency()),
+    current_user: TokenPayload = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
 ) -> Dict[str, str]:
     """Index your own metadata and make it searchable.
 
@@ -432,7 +442,7 @@ async def post_user_data(
                 detail=f"Invalid request data: {error}",
             )
         status_msg = await solr_instance.add_user_metadata(
-            current_user.preferred_username,  # type: ignore
+            current_user.preferred_username,
             validated_user_metadata,
             facets=request.facets,
         )
@@ -468,14 +478,16 @@ async def delete_user_data(
             }
         ],
     ),
-    current_user: TokenPayload = Depends(auth.create_auth_dependency()),
+    current_user: TokenPayload = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
 ) -> Dict[str, str]:
     """This endpoint lets you delete metadata that has been indexed."""
 
     solr_instance = Solr(server_config)
     try:
         await solr_instance.delete_user_metadata(
-            current_user.preferred_username, request  # type: ignore
+            current_user.preferred_username, request
         )
     except Exception as error:
         logger.exception("Failed to delete user data: %s", error)
@@ -484,4 +496,6 @@ async def delete_user_data(
             detail=f"Failed to delete user data: {error}",
         )
 
-    return {"status": "User data has been deleted successfully from the databrowser."}
+    return {
+        "status": "User data has been deleted successfully from the databrowser."
+    }

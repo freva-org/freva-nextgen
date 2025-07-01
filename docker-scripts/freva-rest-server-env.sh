@@ -6,5 +6,5 @@ export API_REDIS_SSL_KEYFILE=${API_REDIS_SSL_KEYFILE:-/certs/client-key.pem}
 export API_SOLR_HOST=${API_SOLR_HOST:-localhost:8983}
 export API_MONGO_HOST=${API_MONGO_HOST:-localhost:27017}
 export API_OIDC_CLIENT_ID=${API_OIDC_CLIENT_ID:-freva}
-export API_MONGO_DB=${API_MONGO_HOST:-search_stats}
+export API_MONGO_DB=${API_MONGO_DB:-search_stats}
 export CONTAINER=freva-rest-server

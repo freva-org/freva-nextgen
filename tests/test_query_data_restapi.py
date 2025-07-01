@@ -1,7 +1,6 @@
 """Unit tests for data queries via the rest-api."""
 
 import json
-import os
 import time
 from typing import Dict
 
@@ -142,6 +141,7 @@ def test_time_selection(test_server: str) -> None:
     )
     assert res3.status_code == 500
 
+
 def test_bbox_selection(test_server: str) -> None:
     """Test the bbox select functionality of the API."""
     res1 = requests.get(
@@ -172,6 +172,7 @@ def test_bbox_selection(test_server: str) -> None:
     )
     assert res3.status_code == 500
 
+
 def test_primary_facets(test_server: str) -> None:
     """Test the functionality of primary facet definitions."""
     res1 = requests.get(
@@ -196,7 +197,7 @@ def test_primary_facets(test_server: str) -> None:
     assert res1["primary_facets"] != res2["primary_facets"]
 
 
-def test_extended_search(test_server: str) -> None:
+def test_extended_search(test_server: str, auth: Dict[str, str]) -> None:
     """Test the facet search functionality."""
     res1 = requests.get(
         f"{test_server}/databrowser/extended-search/cmip6/uri",
@@ -237,19 +238,11 @@ def test_extended_search(test_server: str) -> None:
         params={"facets": "activity_id", "max-results": 0},
     ).json()
     assert len(res7["search_results"]) == 0
-    # first get he tokenn to be able to use the zarr stream
-    token_res = requests.post(
-        f"{test_server}/auth/v2/token",
-        data={
-            "username": "janedoe",
-            "password": "janedoe123",
-            "grant_type": "password",
-        },
-    )
+    # test the zarr stream pagination functionality
     res8 = requests.get(
         f"{test_server}/databrowser/extended-search/cmip6/uri",
         params={"facets": "activity_id", "max-results": 1, "zarr_stream": True}, headers={
-            "Authorization": f"Bearer {token_res.json()['access_token']}"
+            "Authorization": f"Bearer {auth['access_token']}"
         }
     ).json()
     assert len(res8["search_results"]) == 1
@@ -264,13 +257,13 @@ def test_extended_search(test_server: str) -> None:
             f"{test_server}/databrowser/extended-search/cmip6/uri",
             params={"facets": "activity_id", "max-results": 1, "zarr_stream": True},
             headers={
-                "Authorization": f"Bearer {token_res.json()['access_token']}"
+                "Authorization": f"Bearer {auth['access_token']}"
             },
         ).json()
         assert res10["search_results"][0]["uri"] == "Internal error, service not able to publish"
 
     with mock.patch(
-        "freva_rest.rest.server_config.api_services",
+        "freva_rest.rest.server_config.services",
         "databrowser"
     ):
         res11 = requests.get(
@@ -368,15 +361,11 @@ def test_stac_catalogue(test_server: str) -> None:
     # 200 OK from STAC static endpoint
     res = requests.get(
         f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
-        params={
-            "activity_id": "cmip", 
-            "multi-version": True, 
-            "max_results": 2
-        },
-        allow_redirects=False
+        params={"activity_id": "cmip", "multi-version": True, "max_results": 2},
+        allow_redirects=False,
     )
     assert res.status_code == 200
-    
+
     # 413 Request Entity Too Large
     res3 = requests.get(
         f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
@@ -395,6 +384,7 @@ def test_stac_catalogue(test_server: str) -> None:
         params={"activity_id": "cmip3", "multi-version": False},
     )
     assert res5.status_code == 404
+
 
 def test_bad_intake_request(test_server: str) -> None:
     """Test for a wrong intake request."""
@@ -448,7 +438,7 @@ def test_zarr_stream_not_implemented(
     test_server: str, auth: Dict[str, str]
 ) -> None:
     """Test if zarr request is not served when told not to do so."""
-    with mock.patch("freva_rest.rest.server_config.api_services", ""):
+    with mock.patch("freva_rest.rest.server_config.services", ""):
         res = requests.get(
             f"{test_server}/databrowser/load/freva",
             headers={"Authorization": f"Bearer {auth['access_token']}"},
