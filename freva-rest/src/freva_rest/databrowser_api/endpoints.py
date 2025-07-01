@@ -1,7 +1,7 @@
 """Main script that runs the rest API."""
 
 import uuid
-from typing import Annotated, Any, Dict, List, Literal, Union
+from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 from fastapi import (
     Body,
@@ -296,8 +296,19 @@ async def extended_search(
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     max_results: Annotated[int, SolrSchema.params["batch_size"]] = 150,
+    zarr_stream: Annotated[
+        bool,
+        Query(
+            description="Enable zarr streaming functionality",
+            alias="zarr_stream"
+        )
+    ] = False,
     facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
     request: Request = Required,
+    current_user: Optional[TokenPayload] = Security(
+        auth.create_auth_dependency(required=False),
+        scopes=["oidc.claims"]
+    )
 ) -> JSONResponse:
     """This endpoint is used by the databrowser web ui client."""
     solr_search = await Solr.validate_parameters(
@@ -309,8 +320,20 @@ async def extended_search(
         translate=translate,
         **SolrSchema.process_parameters(request),
     )
+    if "zarr-stream" not in server_config.services:
+        zarr_stream = False
+    if (
+        zarr_stream
+        and current_user is None
+    ):
+        logger.error("User not authenticated for zarr stream.")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not authenticated for zarr streaming."
+        )
+
     status_code, result = await solr_search.extended_search(
-        facets or [], max_results=max_results
+        facets or [], max_results=max_results, zarr_stream=zarr_stream
     )
     await solr_search.store_results(result.total_count, status_code)
     return JSONResponse(content=result.model_dump(), status_code=status_code)
@@ -344,7 +367,7 @@ async def load_data(
     ] = None,
     request: Request = Required,
     current_user: TokenPayload = Security(
-        auth.required_dependency(), scopes=["oidc.claims"]
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
 ) -> StreamingResponse:
     """Search for datasets and stream the results as zarr.
@@ -395,7 +418,7 @@ async def load_data(
 async def post_user_data(
     request: Annotated[AddUserDataRequestBody, Body(...)],
     current_user: TokenPayload = Security(
-        auth.required_dependency(), scopes=["oidc.claims"]
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
 ) -> Dict[str, str]:
     """Index your own metadata and make it searchable.
@@ -456,7 +479,7 @@ async def delete_user_data(
         ],
     ),
     current_user: TokenPayload = Security(
-        auth.required_dependency(), scopes=["oidc.claims"]
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
 ) -> Dict[str, str]:
     """This endpoint lets you delete metadata that has been indexed."""
