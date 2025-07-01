@@ -76,17 +76,9 @@ commands =
     python3 -m coverage report --fail-under=98.5 --precision=2
 [testenv:docs]
 description = "Create the documentation."
-deps = -e ./freva-rest
+deps = -e ./freva-rest[docs]
        -e ./freva-client
        -e ./freva-data-portal-worker[full]
-       sphinx-execute-code-python3
-       sphinx-code-tabs
-       sphinx-copybutton
-       sphinx-sitemap
-       sphinx-togglebutton
-       sphinxcontrib-httpdomain
-       sphinxext-opengraph
-       pydata-sphinx-theme
 setenv =
     FREVA_CONFIG = {toxinidir}/dev-env/freva.toml
     FREVA_NO_RICH_PANELS = 1

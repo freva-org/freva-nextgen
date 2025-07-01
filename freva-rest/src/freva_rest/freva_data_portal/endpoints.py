@@ -104,7 +104,7 @@ async def get_status(
         ),
     ] = 1,
     current_user: TokenPayload = Security(
-        auth.required_dependency(), scopes=["oidc.claims"]
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
 ) -> JSONResponse:
     """Get the status of a loading process."""
@@ -140,7 +140,7 @@ async def zemtadata(
         ),
     ] = 1,
     current_user: TokenPayload = Security(
-        auth.required_dependency(), scopes=["oidc.claims"]
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
 ) -> JSONResponse:
     """Consolidate zarr metadata
@@ -187,7 +187,7 @@ async def zgroup(
         ),
     ] = 1,
     current_user: TokenPayload = Security(
-        auth.required_dependency(), scopes=["oidc.claims"]
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
 ) -> JSONResponse:
     """Zarr group data.
@@ -235,7 +235,7 @@ async def zattrs(
         ),
     ] = 1,
     current_user: TokenPayload = Security(
-        auth.required_dependency(), scopes=["oidc.claims"]
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
 ) -> JSONResponse:
     """Get zarr Attributes.
@@ -292,7 +292,7 @@ async def chunk_data(
         ),
     ] = 1,
     current_user: TokenPayload = Security(
-        auth.required_dependency(), scopes=["oidc.claims"]
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
 ) -> Response:
     """Get a zarr array chunk.
