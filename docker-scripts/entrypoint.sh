@@ -17,6 +17,8 @@ run_freva_rest() {
     check_env API_OIDC_DISCOVERY_URL freva-rest
     log_service "Starting freva-rest API"
     if [ "${CACHE_CONFIG:-}" ];then
+        export API_REDIS_SSL_CERTFILE=/tmp/redis.crt
+        export API_REDIS_SSL_CERTFILE=/tmp/redis.key
         echo $CACHE_CONFIG | base64 --decode | jq -r .ssl_cert > $API_REDIS_SSL_CERTFILE
         echo $CACHE_CONFIG | base64 --decode | jq -r .ssl_key > $API_REDIS_SSL_KEYFILE
         export API_REDIS_USER=$(echo $CACHE_CONFIG | base64 --decode | jq -r .user)
@@ -29,6 +31,15 @@ run_data_loader() {
     log_service "Starting data-loader"
     if [ "${CACHE_CONFIG:-}" ];then
         echo "${CACHE_CONFIG}" > $API_CONFIG
+        export API_REDIS_SSL_CERTFILE=$(echo $CACHE_CONFIG | base64 --decode | jq -r .ssl_keyfile)
+        export API_REDIS_SSL_KEYFILE=$(echo $CACHE_CONFIG | base64 --decode | jq -r .ssl_keyfile)
+        mkdir -p $(dirname $API_REDIS_SSL_CERTFILE)
+        mkdir -p $(dirname $API_REDIS_SSL_KEYFILE)
+        echo $CACHE_CONFIG | base64 --decode | jq -r .ssl_cert > $API_REDIS_SSL_CERTFILE
+        echo $CACHE_CONFIG | base64 --decode | jq -r .ssl_key > $API_REDIS_SSL_KEYFILE
+        export API_REDIS_USER=$(echo $CACHE_CONFIG | base64 --decode | jq -r .user)
+        export API_REDIS_PASSWORD=$(echo $CACHE_CONFIG | base64 --decode | jq -r .passwd)
+
     fi
     python3 -m data_portal_worker "$@"
 }
