@@ -1,6 +1,6 @@
 """Replicate the STAC-API Endpoints"""
 
-from typing import Optional
+from typing import Awaitable, Callable, Optional
 
 from fastapi import Body, Query, Request
 from fastapi.responses import (
@@ -8,6 +8,9 @@ from fastapi.responses import (
     PlainTextResponse,
     StreamingResponse,
 )
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
+from starlette.types import ASGIApp
 
 from freva_rest.rest import app, server_config
 
@@ -25,6 +28,33 @@ from .schema import (
     STACCollection,
     STACItem,
 )
+
+
+##################################################
+# we only apply CORS to STAC endpoints to be able to
+# use the STAC API from the frontend without any issues.
+class STACCORSMiddleware(BaseHTTPMiddleware):
+    def __init__(
+            self, app: ASGIApp, stac_path_prefix: str = "/api/freva-nextgen/stacapi"
+    ):
+        super().__init__(app)
+        self.stac_path_prefix = stac_path_prefix
+
+    async def dispatch(
+            self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        if not request.url.path.startswith(self.stac_path_prefix):
+            return await call_next(request)
+        response = await call_next(request)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+
+        return response
+
+
+app.add_middleware(STACCORSMiddleware)
+##################################################
 
 
 @app.get(
