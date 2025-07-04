@@ -33,6 +33,9 @@ from freva_rest import __version__
 from .config import ServerConfig
 from .logger import logger, reset_loggers
 
+server_config = ServerConfig()
+
+
 metadata_tags = [
     {
         "name": "Data search",
@@ -66,7 +69,18 @@ metadata_tags = [
     },
 ]
 
-server_config = ServerConfig()
+if "stacapi" in server_config.services:
+    metadata_tags.append({
+        "name": "STAC API",
+        "description": (
+            "The SpatioTemporal Asset Catalog (STAC) family of specifications"
+            " is a community-driven effort to make geospatial data more discoverable"
+            " and usable. The STAC API is a standard for building APIs that "
+            "provide access to STAC items and collections. The STAC API is "
+            "designed to be simple and easy to use, while also being powerful "
+            "and flexible enough to support a wide range of use cases."
+        ),
+    })
 
 
 @asynccontextmanager
@@ -100,7 +114,7 @@ app = FastAPI(
         "name": "BSD 2-Clause License",
         "url": "https://opensource.org/license/bsd-2-clause",
         "x-logo": {
-            "url": "https://freva-clint.github.io/freva-nextgen/_static/logo.png"
+            "url": "https://freva-org.github.io/freva-nextgen/_static/logo.png"
         },
     },
 )

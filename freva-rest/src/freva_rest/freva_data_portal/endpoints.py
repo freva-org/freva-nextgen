@@ -12,7 +12,7 @@ from fastapi_third_party_auth import IDToken as TokenPayload
 
 from freva_rest.auth import auth
 from freva_rest.rest import app
-from freva_rest.utils import create_redis_connection
+from freva_rest.utils.base_utils import create_redis_connection
 
 ZARRAY_JSON = ".zarray"
 ZGROUP_JSON = ".zgroup"

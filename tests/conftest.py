@@ -26,7 +26,7 @@ from freva_client.utils.auth_utils import TOKEN_ENV_VAR, Token
 from freva_rest.api import app
 from freva_rest.config import ServerConfig
 from freva_rest.databrowser_api.mock import read_data
-from freva_rest.utils import create_redis_connection
+from freva_rest.utils.base_utils import create_redis_connection
 
 
 def load_data() -> None:

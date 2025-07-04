@@ -4,7 +4,7 @@ ARG VERSION
 ARG CMD=freva-rest-server
 LABEL org.freva.service="$CMD"
 LABEL org.opencontainers.image.authors="DRKZ-CLINT"
-LABEL org.opencontainers.image.source="https://github.com/FREVA-CLINT/freva-nextgen/freva-rest"
+LABEL org.opencontainers.image.source="https://github.com/freva-org/freva-nextgen/freva-rest"
 LABEL org.opencontainers.image.version="$VERSION"
 ENV    PYTHONUNBUFFERED=1 \
        API_LOGDIR=/opt/${CMD}/logs
