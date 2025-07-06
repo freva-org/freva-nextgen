@@ -289,7 +289,6 @@ def data_search(
     token_file: Optional[Path] = typer.Option(
         None,
         "--token-file",
-        "-t",
         help=(
             "Instead of authenticating via code based authentication flow "
             "you can set the path to the json file that contains a "
