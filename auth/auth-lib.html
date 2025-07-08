@@ -7,16 +7,16 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta property="og:title" content="Search for data" />
+<meta property="og:title" content="Authentication using the freva-client library" />
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://freva-org.github.io/databrowser/index.html" />
+<meta property="og:url" content="https://freva-org.github.io/auth/auth-lib.html" />
 <meta property="og:site_name" content="Freva Databrowser" />
-<meta property="og:description" content="The freva-databrowser allows you to perform searches for climate datasets in a wide range of programming languages. The databrowser offers a python library freva_databrowser a command line interfac..." />
-<meta name="description" content="The freva-databrowser allows you to perform searches for climate datasets in a wide range of programming languages. The databrowser offers a python library freva_databrowser a command line interfac..." />
+<meta property="og:description" content="The freva-client python library offers a very simple interface to interact with the authentication system. Client software freva evaluation system framework (freva): Freva, the free evaluation syst..." />
+<meta name="description" content="The freva-client python library offers a very simple interface to interact with the authentication system. Client software freva evaluation system framework (freva): Freva, the free evaluation syst..." />
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>Search for data &#8212; Freva Databrowser 2507.0.0 documentation</title>
+    <title>Authentication using the freva-client library &#8212; Freva Databrowser 2507.0.0 documentation</title>
   
   
   
@@ -60,13 +60,13 @@
     <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
     <script src="../_static/code-tabs.js?v=c983d12e"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'databrowser/index';</script>
-    <link rel="canonical" href="http://127.0.0.1:8000/databrowser/index.html" />
+    <script>DOCUMENTATION_OPTIONS.pagename = 'auth/auth-lib';</script>
+    <link rel="canonical" href="http://127.0.0.1:8000/auth/auth-lib.html" />
     <link rel="icon" href="../_static/logo.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Databrowser python module" href="python-lib.html" />
-    <link rel="prev" title="Integrating Authentiction into your Web Applications" href="../auth/app_example.html" />
+    <link rel="next" title="The restAPI auth endpoints" href="endpoints.html" />
+    <link rel="prev" title="Authentication &amp; Authorization" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -151,15 +151,15 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../auth/index.html">
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
     Authentication & Authorization
   </a>
 </li>
 
 
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="#">
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../databrowser/index.html">
     Search for data
   </a>
 </li>
@@ -260,15 +260,15 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../auth/index.html">
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
     Authentication & Authorization
   </a>
 </li>
 
 
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="#">
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../databrowser/index.html">
     Search for data
   </a>
 </li>
@@ -339,14 +339,12 @@
 <nav class="bd-docs-nav bd-links"
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
-  <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
-<li class="toctree-l1 has-children"><a class="reference internal" href="python-lib.html">Databrowser python module</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
-</ul>
-</details></li>
-<li class="toctree-l1"><a class="reference internal" href="APIRef.html">Databrowser Rest API</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="cli.html">The databrowser command line interface</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
-</ul>
-</details></li>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Authentication and authorization Guide</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Authentication using the freva-client library</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="endpoints.html">The restAPI auth endpoints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="app_example.html">Integrating Authentiction into your Web Applications</a></li>
 </ul>
 </div>
 </nav></div>
@@ -387,7 +385,10 @@
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Search for data</span></li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Authentication &amp; Authorization</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Authentication using the freva-client library</span></li>
   </ul>
 </nav>
 </div>
@@ -404,62 +405,110 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="search-for-data">
-<h1>Search for data<a class="headerlink" href="#search-for-data" title="Link to this heading">#</a></h1>
-<p>The <em>freva-databrowser</em> allows you to perform searches for climate datasets
-in a wide range of programming languages. The databrowser offers a python
-library <cite>freva_databrowser</cite> a command line interface (cli) - <cite>freva-databrowser</cite>
-and a REST API which allows you to easily integrate the API into your
-preferred language and environment.
-Whether you use Python, JavaScript, R, Julia, or any other language with HTTP
-request capabilities, the Freva Databrowser REST API accommodates your needs.</p>
-<section id="getting-started">
-<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">#</a></h2>
-<p>To begin using the <em>freva-databrowser</em>, you can make key-value
-paired queries to search for specific datasets based on different
-Data Reference Syntax (DRS) standards. The API currently supports
-several standards, including <code class="docutils literal notranslate"><span class="pre">CMIP5</span></code>, <code class="docutils literal notranslate"><span class="pre">CMIP6</span></code>, <code class="docutils literal notranslate"><span class="pre">CORDEX</span></code>, <code class="docutils literal notranslate"><span class="pre">Freva</span></code>, and
-<code class="docutils literal notranslate"><span class="pre">NextGEMS</span></code>. With the ability to combine these standards intelligently, the
-databrowser provides a comprehensive and versatile search entry point.</p>
+  <section id="authentication-using-the-freva-client-library">
+<span id="auth-lib"></span><h1>Authentication using the freva-client library<a class="headerlink" href="#authentication-using-the-freva-client-library" title="Link to this heading">#</a></h1>
+<p>The freva-client python library offers a very simple interface to interact
+with the authentication system.</p>
+<p id="module-freva_client">Client software freva evaluation system framework (freva):</p>
+<p>Freva, the free evaluation system framework, is a data search and analysis
+platform developed by the atmospheric science community for the atmospheric
+science community. With help of Freva researchers can:</p>
+<ul class="simple">
+<li><p>quickly and intuitively search for data stored at typical data centers that
+host many datasets.</p></li>
+<li><p>create a common interface for user defined data analysis tools.</p></li>
+<li><p>apply data analysis tools in a reproducible manner.</p></li>
+</ul>
+<p>The code described here is currently in testing phase. The client and server
+library described in the documentation only support searching for data. If you
+need to apply data analysis plugins, please visit the</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="freva_client.authenticate">
+<span class="sig-prename descclassname"><span class="pre">freva_client.</span></span><span class="sig-name descname"><span class="pre">authenticate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">token_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Token</span></span></span><a class="headerlink" href="#freva_client.authenticate" title="Link to this definition">#</a></dt>
+<dd><p>Authenticate to the host.</p>
+<p>This method generates a new access token that should be used for restricted methods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>refresh_token</strong> (<em>str</em><em>, </em><em>optional</em>) – Instead of setting a password, you can set a refresh token to refresh
+the access token. This is recommended for non-interactive environments.</p></li>
+<li><p><strong>host</strong> (<em>str</em><em>, </em><em>optional</em>) – The hostname of the REST server.</p></li>
+<li><p><strong>force</strong> (<em>bool</em><em>, </em><em>default: False</em>) – Force token recreation, even if current token is still valid.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Token</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The authentication token.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Interactive authentication:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">authenticate</span>
+<span class="n">token</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Batch mode authentication with a refresh token:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">authenticate</span>
+<span class="n">token</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">(</span><span class="n">token_file</span><span class="o">=</span><span class="s2">&quot;~/.freva-login-token.json&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
 </section>
-<section id="authentication">
-<h2>Authentication<a class="headerlink" href="#authentication" title="Link to this heading">#</a></h2>
-<p>The Freva Databrowser is open and publicly accessible, and as such,
-it doesn’t require authentication. This means you can quickly start exploring
-and accessing climate data without any additional setup.</p>
-</section>
-<section id="table-of-content">
-<h2>Table of Content<a class="headerlink" href="#table-of-content" title="Link to this heading">#</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="python-lib.html">Databrowser python module</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="python-lib.html#tldr-too-long-didn-t-read">TLDR: Too long didn’t read</a></li>
-<li class="toctree-l2"><a class="reference internal" href="python-lib.html#library-reference">Library Reference</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="APIRef.html">Databrowser Rest API</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="APIRef.html#getting-an-overview">Getting an overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="APIRef.html#searching-for-datasets-locations">Searching for datasets locations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="APIRef.html#searching-for-metadata">Searching for metadata</a></li>
-<li class="toctree-l2"><a class="reference internal" href="APIRef.html#generating-a-stac-catalogue">Generating a STAC Catalogue</a></li>
-<li class="toctree-l2"><a class="reference internal" href="APIRef.html#generating-an-intake-esm-catalogue">Generating an intake-esm catalogue</a></li>
-<li class="toctree-l2"><a class="reference internal" href="APIRef.html#creating-zarr-endpoints-for-streaming-data">Creating zarr endpoints for streaming data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="APIRef.html#adding-and-deleting-user-data-in-databrowser">Adding and deleting User Data in Databrowser</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="cli.html">The databrowser command line interface</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="cli.html#searching-for-data-locations">Searching for data locations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cli.html#creating-intake-esm-catalouges">Creating intake-esm catalouges</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cli.html#creating-stac-catalogue">Creating STAC Catalogue</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cli.html#query-the-number-of-occurrences">Query the number of occurrences</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cli.html#retrieving-the-available-metadata">Retrieving the available metadata</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cli.html#parsing-the-command-output">Parsing the command output</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cli.html#adding-and-deleting-user-data">Adding and Deleting User Data</a></li>
-</ul>
-</li>
+<section id="using-the-command-line-interface">
+<span id="auth-cli"></span><h1>Using the command line interface<a class="headerlink" href="#using-the-command-line-interface" title="Link to this heading">#</a></h1>
+<p>Token creation and refreshing can also be achieved with help of the <code class="docutils literal notranslate"><span class="pre">auth</span></code>
+sub command of the command line interface</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client auth --help</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Usage: freva-client auth [OPTIONS]
+
+  Create OAuth2 access and refresh token.
+
+Options:
+  --host TEXT        Set the hostname of the databrowser, if not set (default)
+                     the hostname is read from a config file
+  --token-file TEXT  Instead of authenticating via code based authentication
+                     flow you can set the path to the json file that contains
+                     a `refresh token` containing a refresh_token key.
+  -f, --force        Force token recreation, even if current token is still
+                     valid.
+  -v                 Increase verbosity  [default: 0]
+  -V, --version      Show version an exit
+  --help             Show this message and exit.
+
+</pre></div>
+</div>
+<p>You can create a token using your user name and password. For security reasons
+you can not pass your password as an argument to the command line interface.
+This means that you can only create a new token with help of a valid refresh
+token in a non-interactive session. Such as a batch job.</p>
+<p>Therefore you want to store your token data securely in a file, and use the
+refresh token to create new tokens:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client auth  &gt; ~/.mytoken.json</span>
+<span class="go">chmod 600 ~/.mytoken.json</span>
+</pre></div>
+</div>
+<p>Later you can use the <a class="reference external" href="https://jqlang.github.io/jq/">jq json command line parser</a>
+to read the refresh token from and use it to create new access tokens.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client auth --token-file ~/.mytoken.json &gt; ~/.mytoken.json</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Avoid storing access tokens insecurely. Access tokens are sensitive and
+should be treated like passwords. Do not store them in publicly readable
+plaintext or in code repositories. Instead:</p>
+<ul class="simple">
+<li><p>Use environment variables or secure storage (e.g. <code class="docutils literal notranslate"><span class="pre">.netrc</span></code>, OS keychains).</p></li>
+<li><p>Rotate and expire tokens regularly if implementing long-running SPs.</p></li>
 </ul>
 </div>
-</section>
 </section>
 
 
@@ -473,20 +522,20 @@ and accessing climate data without any additional setup.</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="../auth/app_example.html"
+       href="index.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Integrating Authentiction into your Web Applications</p>
+        <p class="prev-next-title">Authentication &amp; Authorization</p>
       </div>
     </a>
     <a class="right-next"
-       href="python-lib.html"
+       href="endpoints.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Databrowser python module</p>
+        <p class="prev-next-title">The restAPI auth endpoints</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -509,10 +558,13 @@ and accessing climate data without any additional setup.</p>
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#getting-started">Getting Started</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#authentication">Authentication</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#table-of-content">Table of Content</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Authentication using the freva-client library</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.authenticate"><code class="docutils literal notranslate"><span class="pre">authenticate()</span></code></a></li>
 </ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#using-the-command-line-interface">Using the command line interface</a></li>
+</ul>
+
   </nav></div>
 
 </div></div>

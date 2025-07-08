@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>The databrowser command line interface &#8212; Freva Databrowser 2506.0.1 documentation</title>
+    <title>The databrowser command line interface &#8212; Freva Databrowser 2507.0.0 documentation</title>
   
   
   
@@ -49,7 +49,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=d81eaa8c"></script>
+    <script src="../_static/documentation_options.js?v=811611d3"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,6 +65,7 @@
     <link rel="icon" href="../_static/logo.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="STAC API" href="../stacapi/index.html" />
     <link rel="prev" title="Databrowser Rest API" href="APIRef.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -134,8 +135,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2506.0.1 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2506.0.1 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2507.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2507.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -152,7 +153,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../auth/index.html">
-    Authentication
+    Authentication & Authorization
   </a>
 </li>
 
@@ -160,6 +161,13 @@
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
     Search for data
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../stacapi/index.html">
+    STAC API
   </a>
 </li>
 
@@ -254,7 +262,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../auth/index.html">
-    Authentication
+    Authentication & Authorization
   </a>
 </li>
 
@@ -262,6 +270,13 @@
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
     Search for data
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../stacapi/index.html">
+    STAC API
   </a>
 </li>
 
@@ -453,7 +468,7 @@ Options:
                                   period is contained within *one single*
                                   file.  [default: flexible]
   --zarr                          Create zarr stream files.
-  -t, --token-file PATH           Instead of authenticating via code based
+  -tf, --token-file PATH          Instead of authenticating via code based
                                   authentication flow you can set the path to
                                   the json file that contains a `refresh
                                   token` containing a refresh_token key.
@@ -611,7 +626,7 @@ the <code class="docutils literal notranslate"><span class="pre">--zarr</span></
 <p class="admonition-title">Note</p>
 <p>Before you can use the <code class="docutils literal notranslate"><span class="pre">--zarr</span></code> flag you will have
 to create an access token and use that token to log on to the system
-see also the <a class="reference internal" href="../auth/index.html#auth"><span class="std std-ref">Authentication</span></a> chapter for more details on token creation.</p>
+see also the <a class="reference internal" href="../auth/index.html#auth"><span class="std std-ref">Authentication &amp; Authorization</span></a> chapter for more details on token creation.</p>
 </div>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client auth &gt; .token.json</span>
 <span class="go">chmod 600 .token.json</span>
@@ -734,7 +749,7 @@ Options:
                                   flexible]
   --zarr                          Create zarr stream files, as catalogue
                                   targets.
-  --token-file PATH               Instead of authenticating via code based
+  -tf, --token-file PATH          Instead of authenticating via code based
                                   authentication flow you can set the path to
                                   the json file that contains a `refresh
                                   token` containing a refresh_token key.
@@ -945,7 +960,7 @@ are associated with files on the tape archive.</p>
 <section id="adding-and-deleting-user-data">
 <h2>Adding and Deleting User Data<a class="headerlink" href="#adding-and-deleting-user-data" title="Link to this heading">#</a></h2>
 <p>You can manage your personal datasets within the databrowser by adding or deleting user-specific data. This functionality allows you to include your own data files into the databrowser, making them accessible for analysis and retrieval alongside other datasets.</p>
-<p>Before using the <cite>user-data</cite> commands, you need to create an access token and authenticate with the system. Please refer to the <a class="reference internal" href="../auth/index.html#auth"><span class="std std-ref">Authentication</span></a> chapter for more details on token creation and authentication.</p>
+<p>Before using the <cite>user-data</cite> commands, you need to create an access token and authenticate with the system. Please refer to the <a class="reference internal" href="../auth/index.html#auth"><span class="std std-ref">Authentication &amp; Authorization</span></a> chapter for more details on token creation and authentication.</p>
 <section id="adding-user-data">
 <h3>Adding User Data<a class="headerlink" href="#adding-user-data" title="Link to this heading">#</a></h3>
 <p>To add your data to the databrowser, use the <cite>user-data add</cite> command. You’ll need to provide the paths to your data files, and any metadata you’d like to associate with your data.</p>
@@ -994,6 +1009,15 @@ are associated with files on the tape archive.</p>
         <p class="prev-next-subtitle">previous</p>
         <p class="prev-next-title">Databrowser Rest API</p>
       </div>
+    </a>
+    <a class="right-next"
+       href="../stacapi/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">STAC API</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
     </a>
 </div>
                 </footer>

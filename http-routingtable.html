@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HTTP Routing Table &#8212; Freva Databrowser 2506.0.1 documentation</title>
+    <title>HTTP Routing Table &#8212; Freva Databrowser 2507.0.0 documentation</title>
   
   
   
@@ -40,7 +40,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=d81eaa8c"></script>
+    <script src="_static/documentation_options.js?v=811611d3"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -131,8 +131,8 @@
       
     
     
-    <img src="_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2506.0.1 documentation - Home"/>
-    <img src="_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2506.0.1 documentation - Home"/>
+    <img src="_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2507.0.0 documentation - Home"/>
+    <img src="_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2507.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -149,7 +149,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="auth/index.html">
-    Authentication
+    Authentication & Authorization
   </a>
 </li>
 
@@ -157,6 +157,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="databrowser/index.html">
     Search for data
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="stacapi/index.html">
+    STAC API
   </a>
 </li>
 
@@ -249,7 +256,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="auth/index.html">
-    Authentication
+    Authentication & Authorization
   </a>
 </li>
 
@@ -257,6 +264,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="databrowser/index.html">
     Search for data
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="stacapi/index.html">
+    STAC API
   </a>
 </li>
 
@@ -359,17 +373,17 @@
      <tr>
        <td></td>
        <td>
-       <a href="auth/index.html#get--api-freva-nextgen-auth-v2-status"><code class="xref">GET /api/freva-nextgen/auth/v2/status</code></a></td><td>
+       <a href="auth/endpoints.html#get--api-freva-nextgen-auth-v2-status"><code class="xref">GET /api/freva-nextgen/auth/v2/status</code></a></td><td>
        <em></em></td></tr>
      <tr>
        <td></td>
        <td>
-       <a href="auth/index.html#get--api-freva-nextgen-auth-v2-systemuser"><code class="xref">GET /api/freva-nextgen/auth/v2/systemuser</code></a></td><td>
+       <a href="auth/endpoints.html#get--api-freva-nextgen-auth-v2-systemuser"><code class="xref">GET /api/freva-nextgen/auth/v2/systemuser</code></a></td><td>
        <em></em></td></tr>
      <tr>
        <td></td>
        <td>
-       <a href="auth/index.html#get--api-freva-nextgen-auth-v2-userinfo"><code class="xref">GET /api/freva-nextgen/auth/v2/userinfo</code></a></td><td>
+       <a href="auth/endpoints.html#get--api-freva-nextgen-auth-v2-userinfo"><code class="xref">GET /api/freva-nextgen/auth/v2/userinfo</code></a></td><td>
        <em></em></td></tr>
      <tr>
        <td></td>
@@ -404,12 +418,62 @@
      <tr>
        <td></td>
        <td>
-       <a href="auth/index.html#post--api-freva-nextgen-auth-v2-token"><code class="xref">POST /api/freva-nextgen/auth/v2/token</code></a></td><td>
+       <a href="stacapi/index.html#get--api-freva-nextgen-stacapi-"><code class="xref">GET /api/freva-nextgen/stacapi/</code></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="stacapi/index.html#get--api-freva-nextgen-stacapi-collections"><code class="xref">GET /api/freva-nextgen/stacapi/collections</code></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="stacapi/index.html#get--api-freva-nextgen-stacapi-collections-(str-collection_id)"><code class="xref">GET /api/freva-nextgen/stacapi/collections/(str:collection_id)</code></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="stacapi/index.html#get--api-freva-nextgen-stacapi-collections-(str-collection_id)-items"><code class="xref">GET /api/freva-nextgen/stacapi/collections/(str:collection_id)/items</code></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="stacapi/index.html#get--api-freva-nextgen-stacapi-collections-(str-collection_id)-items-(str-item_id)"><code class="xref">GET /api/freva-nextgen/stacapi/collections/(str:collection_id)/items/(str:item_id)</code></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="stacapi/index.html#get--api-freva-nextgen-stacapi-collections-(str-collection_id)-queryables"><code class="xref">GET /api/freva-nextgen/stacapi/collections/(str:collection_id)/queryables</code></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="stacapi/index.html#get--api-freva-nextgen-stacapi-conformance"><code class="xref">GET /api/freva-nextgen/stacapi/conformance</code></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="stacapi/index.html#get--api-freva-nextgen-stacapi-queryables"><code class="xref">GET /api/freva-nextgen/stacapi/queryables</code></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="stacapi/index.html#get--api-freva-nextgen-stacapi-search"><code class="xref">GET /api/freva-nextgen/stacapi/search</code></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="auth/endpoints.html#post--api-freva-nextgen-auth-v2-token"><code class="xref">POST /api/freva-nextgen/auth/v2/token</code></a></td><td>
        <em></em></td></tr>
      <tr>
        <td></td>
        <td>
        <a href="databrowser/APIRef.html#post--api-freva-nextgen-databrowser-userdata"><code class="xref">POST /api/freva-nextgen/databrowser/userdata</code></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="stacapi/index.html#post--api-freva-nextgen-stacapi-search"><code class="xref">POST /api/freva-nextgen/stacapi/search</code></a></td><td>
        <em></em></td></tr>
      <tr>
        <td></td>

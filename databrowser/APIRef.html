@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>Databrowser Rest API &#8212; Freva Databrowser 2506.0.1 documentation</title>
+    <title>Databrowser Rest API &#8212; Freva Databrowser 2507.0.0 documentation</title>
   
   
   
@@ -49,7 +49,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=d81eaa8c"></script>
+    <script src="../_static/documentation_options.js?v=811611d3"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -135,8 +135,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2506.0.1 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2506.0.1 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2507.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2507.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -153,7 +153,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../auth/index.html">
-    Authentication
+    Authentication & Authorization
   </a>
 </li>
 
@@ -161,6 +161,13 @@
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
     Search for data
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../stacapi/index.html">
+    STAC API
   </a>
 </li>
 
@@ -255,7 +262,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../auth/index.html">
-    Authentication
+    Authentication & Authorization
   </a>
 </li>
 
@@ -263,6 +270,13 @@
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
     Search for data
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../stacapi/index.html">
+    STAC API
   </a>
 </li>
 
@@ -1369,7 +1383,7 @@ on the DRS standard flavour <code class="docutils literal notranslate"><span cla
 endpoints. We constrain the data search by <code class="docutils literal notranslate"><span class="pre">key=value</span></code> search pairs.
 The only difference is that we have to authenticate by using an access token.
 You will also have to use a valid access token if you want to access the
-zarr data via http. Please refer to the <a class="reference internal" href="../auth/index.html#auth"><span class="std std-ref">Authentication</span></a> chapter for more details.</p>
+zarr data via http. Please refer to the <a class="reference internal" href="../auth/index.html#auth"><span class="std std-ref">Authentication &amp; Authorization</span></a> chapter for more details.</p>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/freva-nextgen/databrowser/load/freva/file?dataset=cmip6-fs</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
 <span class="na">Host</span><span class="o">:</span> <span class="l">www.freva.dkrz.de</span>
 <span class="na">Authorization</span><span class="o">:</span> <span class="l">Bearer your_access_token</span>

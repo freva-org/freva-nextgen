@@ -125,6 +125,7 @@ Table of Content
 
    auth/index
    databrowser/index
+   stacapi/index
 
 .. warning::
 
@@ -135,7 +136,7 @@ Table of Content
 
    - Log in via the Freva website and download a token file.
    - Use the :py:func:`freva_client.authenticate` function.
-   - Use the ``freva-client auth`` command-line interface.
+   - Use the :ref:`freva-client auth <auth_cli>` command-line interface.
 
 
 

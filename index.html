@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>Freva: The free evaluation system &#8212; Freva Databrowser 2506.0.1 documentation</title>
+    <title>Freva: The free evaluation system &#8212; Freva Databrowser 2507.0.0 documentation</title>
   
   
   
@@ -49,7 +49,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=d81eaa8c"></script>
+    <script src="_static/documentation_options.js?v=811611d3"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
     <link rel="icon" href="_static/logo.png"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Authentication" href="auth/index.html" />
+    <link rel="next" title="Authentication &amp; Authorization" href="auth/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -134,8 +134,8 @@
       
     
     
-    <img src="_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2506.0.1 documentation - Home"/>
-    <img src="_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2506.0.1 documentation - Home"/>
+    <img src="_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2507.0.0 documentation - Home"/>
+    <img src="_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2507.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -152,7 +152,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="auth/index.html">
-    Authentication
+    Authentication & Authorization
   </a>
 </li>
 
@@ -160,6 +160,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="databrowser/index.html">
     Search for data
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="stacapi/index.html">
+    STAC API
   </a>
 </li>
 
@@ -256,7 +263,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="auth/index.html">
-    Authentication
+    Authentication & Authorization
   </a>
 </li>
 
@@ -264,6 +271,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="databrowser/index.html">
     Search for data
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="stacapi/index.html">
+    STAC API
   </a>
 </li>
 
@@ -463,8 +477,10 @@ set to the url of the freva web site you are using, for example
 <h1>Table of Content<a class="headerlink" href="#table-of-content" title="Link to this heading">#</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="auth/index.html">Authentication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auth/index.html">Authentication &amp; Authorization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="databrowser/index.html">Search for data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="stacapi/index.html">STAC API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="stacapi/index.html#stac-api-integration">STAC-API Integration</a></li>
 </ul>
 </div>
 <div class="admonition warning">
@@ -474,8 +490,8 @@ You can now only log in using the <strong>authorization code flow</strong>.</p>
 <p>To obtain OAuth2 tokens, you have the following options:</p>
 <ul class="simple">
 <li><p>Log in via the Freva website and download a token file.</p></li>
-<li><p>Use the <a class="reference internal" href="auth/index.html#freva_client.authenticate" title="freva_client.authenticate"><code class="xref py py-func docutils literal notranslate"><span class="pre">freva_client.authenticate()</span></code></a> function.</p></li>
-<li><p>Use the <code class="docutils literal notranslate"><span class="pre">freva-client</span> <span class="pre">auth</span></code> command-line interface.</p></li>
+<li><p>Use the <a class="reference internal" href="auth/auth-lib.html#freva_client.authenticate" title="freva_client.authenticate"><code class="xref py py-func docutils literal notranslate"><span class="pre">freva_client.authenticate()</span></code></a> function.</p></li>
+<li><p>Use the <a class="reference internal" href="auth/auth-lib.html#auth-cli"><span class="std std-ref">freva-client auth</span></a> command-line interface.</p></li>
 </ul>
 </div>
 </section>
@@ -511,7 +527,7 @@ needs.</p>
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Authentication</p>
+        <p class="prev-next-title">Authentication &amp; Authorization</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
