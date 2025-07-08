@@ -12,7 +12,7 @@ from fastapi_third_party_auth import IDToken as TokenPayload
 
 from freva_rest.auth import auth
 from freva_rest.rest import app
-from freva_rest.utils import create_redis_connection
+from freva_rest.utils.base_utils import create_redis_connection
 
 ZARRAY_JSON = ".zarray"
 ZGROUP_JSON = ".zgroup"
@@ -104,7 +104,7 @@ async def get_status(
         ),
     ] = 1,
     current_user: TokenPayload = Security(
-        auth.required_dependency(), scopes=["oidc.claims"]
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
 ) -> JSONResponse:
     """Get the status of a loading process."""
@@ -140,7 +140,7 @@ async def zemtadata(
         ),
     ] = 1,
     current_user: TokenPayload = Security(
-        auth.required_dependency(), scopes=["oidc.claims"]
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
 ) -> JSONResponse:
     """Consolidate zarr metadata
@@ -187,7 +187,7 @@ async def zgroup(
         ),
     ] = 1,
     current_user: TokenPayload = Security(
-        auth.required_dependency(), scopes=["oidc.claims"]
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
 ) -> JSONResponse:
     """Zarr group data.
@@ -235,7 +235,7 @@ async def zattrs(
         ),
     ] = 1,
     current_user: TokenPayload = Security(
-        auth.required_dependency(), scopes=["oidc.claims"]
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
 ) -> JSONResponse:
     """Get zarr Attributes.
@@ -292,7 +292,7 @@ async def chunk_data(
         ),
     ] = 1,
     current_user: TokenPayload = Security(
-        auth.required_dependency(), scopes=["oidc.claims"]
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
 ) -> Response:
     """Get a zarr array chunk.

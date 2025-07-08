@@ -1,18 +1,14 @@
 """The core functionality to interact with the apache solr search system."""
 
-import asyncio
 import json
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
-from functools import cached_property, wraps
+from functools import cached_property
 from typing import (
     Any,
     AsyncIterator,
-    Awaitable,
-    Callable,
-    Coroutine,
     Dict,
     Iterable,
     List,
@@ -35,7 +31,8 @@ from freva_rest import __version__
 from freva_rest.config import ServerConfig
 from freva_rest.exceptions import ValidationError
 from freva_rest.logger import logger
-from freva_rest.utils import create_redis_connection
+from freva_rest.utils.base_utils import create_redis_connection
+from freva_rest.utils.stats_utils import store_api_statistics
 
 FlavourType = Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"]
 IntakeType = TypedDict(
@@ -51,29 +48,6 @@ IntakeType = TypedDict(
         "aggregation_control": Dict[str, Any],
     },
 )
-
-
-def ensure_future(
-    async_func: Callable[..., Awaitable[Any]]
-) -> Callable[..., Coroutine[Any, Any, asyncio.Task[Any]]]:
-    """Decorator that runs any given asyncio function in the background."""
-
-    @wraps(async_func)
-    async def wrapper(*args: Any, **kwargs: Any) -> asyncio.Task[Any]:
-        """Async wrapper function that creates the call."""
-        try:
-            loop = (
-                asyncio.get_running_loop()
-            )  # Safely get the current running event loop
-        except RuntimeError:
-            # No running event loop, create a new one
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
-        # Schedule the coroutine for execution in the background
-        return asyncio.ensure_future(async_func(*args, **kwargs))
-
-    return wrapper
 
 
 class SearchResult(BaseModel):
@@ -503,6 +477,70 @@ class Solr:
             self.url = original_url if original_url is not None else ""
             self.query = original_query if original_query is not None else {}
 
+    def configure_base_search(self) -> None:
+        """Set up basic search configuration."""
+        self.query["q"] = "*:*"
+        self.query["wt"] = "json"
+        self.query["facet"] = "true"
+        self.query["facet.sort"] = "index"
+        self.query["facet.mincount"] = "1"
+        self.query["facet.limit"] = "-1"
+
+    def set_query_params(self, **params: Union[str, int, List[str]]) -> None:
+        """
+        Set multiple Solr query parameters at once.
+
+        This method handles ALL Solr query parameters including:
+        - fl: field list
+        - sort: sort expression
+        - fq: filter queries (can be string or list)
+        - cursorMark: pagination cursor
+        - rows: number of rows
+        - facet_field: facet fields (converted to facet.field)
+        - Any other Solr parameter
+
+        Parameters
+        ----------
+        **params : dict
+            Any Solr query parameters as key-value pairs
+
+        Examples
+        --------
+        #multiple parameters at once
+        solr.set_query_params(
+            fl=["file", "project", "_version_"],
+            sort="_version_ asc,file asc",
+            rows=150,
+            fq=["project:observations", "variable:pr"],
+            cursorMark="*"
+        )
+
+        # Or set them individually
+        solr.set_query_params(rows=0)
+        solr.set_query_params(cursorMark="AoEjQhEfx")
+        """
+        # Parameter name mapping for convenience to call because of dot (.)
+        param_mapping = {
+            "facet_field": "facet.field",
+            "facet_sort": "facet.sort",
+            "facet_mincount": "facet.mincount",
+            "facet_limit": "facet.limit"
+        }
+
+        for key, value in params.items():
+            if value is not None:
+                # Map parameter names if needed
+                actual_key = param_mapping.get(key, key)
+
+                if actual_key == "fq" and isinstance(value, list):
+                    self.query[actual_key] = value
+                elif actual_key == "fl" and isinstance(value, list):
+                    self.query[actual_key] = value
+                elif isinstance(value, list):
+                    self.query[actual_key] = value
+                else:
+                    self.query[actual_key] = str(value)
+
     @asynccontextmanager
     async def _session_get(self) -> AsyncIterator[Tuple[int, Dict[str, Any]]]:
         """Wrap the get request round a try and catch statement."""
@@ -606,7 +644,7 @@ class Solr:
             key = key.lower().replace("_not_", "")
             if (
                 key not in valid_facets
-                and key not in ("time_select", "bbox_select")
+                and key not in ("time_select", "bbox_select", "zarr_stream")
                 + cls.uniq_keys
             ):
                 raise HTTPException(status_code=422, detail="Could not validate input.")
@@ -879,8 +917,9 @@ class Solr:
             except Exception as error:
                 logger.exception("[MONGO] Could not insert metadata: %s", error)
 
-    @ensure_future
-    async def store_results(self, num_results: int, status: int) -> None:
+    async def store_results(
+            self, num_results: int, status: int, endpoint: str = "databrowser"
+    ) -> None:
         """Store the query into a database.
 
         Parameters
@@ -889,23 +928,21 @@ class Solr:
             The number of files that has been found.
         status: int
             The HTTP request status
+        endpoint: str
+            The endpoint name for tracking
         """
-        if num_results == 0:
-            return
-        data = {
-            "num_results": num_results,
-            "flavour": self.translator.flavour,
-            "uniq_key": self.uniq_key,
-            "server_status": status,
-            "date": datetime.now(),
-        }
         facets = {k: "&".join(v) for (k, v) in self.facets.items()}
-        try:
-            await self._config.mongo_collection_search.insert_one(
-                {"metadata": data, "query": facets}
-            )
-        except Exception as error:
-            logger.warning("Could not add stats to mongodb: %s", error)
+
+        await store_api_statistics(
+            config=self._config,
+            num_results=num_results,
+            status=status,
+            api_type="databrowser",
+            endpoint=endpoint,
+            query_params=facets,
+            flavour=self.translator.flavour,
+            uniq_key=self.uniq_key
+        )
 
     def _process_catalogue_result(self, out: Dict[str, List[Sized]]) -> Dict[str, Any]:
         return {
@@ -958,6 +995,7 @@ class Solr:
         self,
         facets: List[str],
         max_results: int,
+        zarr_stream: bool = False,
     ) -> Tuple[int, SearchResult]:
         """Initialise the apache solr metadata search.
 
@@ -980,6 +1018,7 @@ class Solr:
         self.query["facet.field"] = self.translator.translate_facets(
             search_facets, backwards=True
         )
+
         self.query["fl"] = [self.uniq_key, "fs_type"]
         logger.info(
             "Query %s for uniq_key: %s with %s",
@@ -987,21 +1026,22 @@ class Solr:
             self.uniq_key,
             self.query,
         )
-
         async with self._session_get() as res:
             search_status, search = res
+
+        docs = search.get("response", {}).get("docs", [])
+
+        if zarr_stream and docs:
+            for doc in docs:
+                zarr_path = await self.publish_to_zarr_stream(doc)
+                doc[self.uniq_key] = zarr_path
+                doc["fs_type"] = doc.get("fs_type", "posix")
         return search_status, SearchResult(
             total_count=search.get("response", {}).get("numFound", 0),
             facets=self.translator.translate_query(
                 search.get("facet_counts", {}).get("facet_fields", {})
             ),
-            search_results=[
-                {
-                    **{self.uniq_key: k[self.uniq_key]},
-                    **{"fs_type": k.get("fs_type", "posix")},
-                }
-                for k in search.get("response", {}).get("docs", [])
-            ],
+            search_results=docs,
             facet_mapping={
                 k: self.translator.forward_lookup[k]
                 for k in self.query["facet.field"]
@@ -1058,8 +1098,12 @@ class Solr:
             False: self._config.solr_cores[-1],
         }[self.multi_version]
         url = f"{self._config.get_core_url(core)}/select/"
+        valid_facets = {
+            k: v for k, v in self.facets.items()
+            if k != "zarr_stream"
+        }
         query = []
-        for key, value in self.facets.items():
+        for key, value in valid_facets.items():
             query_pos, query_neg = self._join_facet_queries(key, value)
             key = key.lower().replace("_not_", "")
             if query_pos:
@@ -1140,6 +1184,36 @@ class Solr:
         async for result in self._solr_page_response():
             yield f"{result[self.uniq_key]}\n"
 
+    async def publish_to_zarr_stream(
+        self,
+        doc: Dict[str, Any]
+    ) -> str:
+        """Publish URI to Redis for zarr streaming.
+
+        Parameters
+        ----------
+        doc: Dict[str, Any]
+            Document containing the URI to be published
+
+        Returns
+        -------
+        str:
+            The zarr stream path or error message
+        """
+        api_path = f"{self._config.proxy}/api/freva-nextgen/data-portal/zarr"
+        uri = doc[self.uniq_key]
+        uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, uri))
+        try:
+            cache = await create_redis_connection()
+            await cache.publish(
+                "data-portal",
+                json.dumps({"uri": {"path": uri, "uuid": uuid5}}).encode("utf-8"),
+            )
+            return f"{api_path}/{uuid5}.zarr"
+        except Exception as pub_err:
+            logger.error("Failed to publish to Redis for %s: %s", uri, pub_err)
+            return "Internal error, service not able to publish"
+
     async def zarr_response(
         self,
         catalogue_type: Literal["intake", None],
@@ -1155,36 +1229,37 @@ class Solr:
         -------
         AsyncIterator: Stream of search results.
         """
-        api_path = f"{self._config.proxy}/api/freva-nextgen/data-portal/zarr"
         if catalogue_type == "intake":
             _, intake = await self.init_intake_catalogue()
             async for string in self.intake_catalogue(intake.catalogue, True):
                 yield string
             yield ',\n   "catalog_dict": ['
+
         num = 1
         async for result in self._solr_page_response():
             prefix = suffix = ""
-            uri = result[self.uniq_key]
-            uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, uri))
-            try:
-                cache = await create_redis_connection()
-                await cache.publish(
-                    "data-portal",
-                    json.dumps({"uri": {"path": uri, "uuid": uuid5}}).encode("utf-8"),
-                )
-            except Exception as error:
-                logger.error("Cloud not connect to redis: %s", error)
-                yield "Internal error, service not available\n"
-                continue
-            output = f"{api_path}/{uuid5}.zarr"
+
+            zarr_path = await self.publish_to_zarr_stream(result)
+
             if catalogue_type == "intake":
-                result[self.uniq_key] = output
-                if num < num_results:
-                    suffix = ","
+                if "Internal error" in zarr_path:  # pragma: no cover
+                    intake_error_dict: Dict[str, List[Sized]] = {
+                        self.uniq_key: ["Internal error, service not available"],
+                        "format": ["zarr"],
+                    }
+                    processed = self._process_catalogue_result(intake_error_dict)
+                    output = json.dumps(processed, indent=3)
                 else:
-                    suffix = ""
-                output = json.dumps(self._process_catalogue_result(result), indent=3)
+                    result[self.uniq_key] = zarr_path
+                    output = json.dumps(
+                        self._process_catalogue_result(result), indent=3
+                    )
+
                 prefix = "   "
+                suffix = "," if num < num_results else ""
+            else:
+                output = zarr_path
+
             num += 1
             yield f"{prefix}{output}{suffix}\n"
 
