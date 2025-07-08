@@ -115,9 +115,7 @@ class SafeAuth:
             if self._auth is None and await self._check_server_available():
                 self._auth = Auth(self.discovery_url)
 
-    def create_auth_dependency(
-        self, required: bool = True
-    ) -> Callable[
+    def create_auth_dependency(self, required: bool = True) -> Callable[
         [SecurityScopes, Optional[HTTPAuthorizationCredentials]],
         Awaitable[IDToken],
     ]:
@@ -133,6 +131,7 @@ class SafeAuth:
         ------
         HTTPException: 503 if the auth server is not available
         """
+
         async def dependency(
             security_scopes: SecurityScopes,
             authorization_credentials: Optional[
@@ -148,8 +147,10 @@ class SafeAuth:
                         detail="OIDC server unavailable, cannot validate token.",
                     )
                 else:
-                    logger.info("[Optional Auth]: OIDC server unavailable"
-                                ", cannot validate token")
+                    logger.info(
+                        "[Optional Auth]: OIDC server unavailable"
+                        ", cannot validate token"
+                    )
                     return None
 
             try:
@@ -161,7 +162,9 @@ class SafeAuth:
                     SecurityScopes(scopes or None), authorization_credentials
                 )
                 if authorization_credentials is not None and claim_check:
-                    if not token_field_matches(authorization_credentials.credentials):
+                    if not token_field_matches(
+                        authorization_credentials.credentials
+                    ):
                         raise HTTPException(
                             status_code=401,
                             detail="Insufficient permissions based on token claims.",
@@ -170,8 +173,10 @@ class SafeAuth:
             except HTTPException:
                 if not required:
                     # skip the exception if not required
-                    logger.info("[Optional Auth]: OIDC validation failed,"
-                                "but not required for this endpoint")
+                    logger.info(
+                        "[Optional Auth]: OIDC validation failed,"
+                        "but not required for this endpoint"
+                    )
                     return None
                 raise
 
@@ -296,7 +301,7 @@ async def oicd_request(
     headers: Optional[Dict[str, str]] = None,
     json: Optional[Dict[str, str]] = None,
     data: Optional[Dict[str, str]] = None,
-) -> aiohttp.client_reqrep.ClientResponse:
+) -> Dict[str, Any]:
     """Make a request to the openID connect server."""
     async with aiohttp.ClientSession(
         timeout=TIMEOUT, raise_for_status=True
@@ -311,9 +316,10 @@ async def oicd_request(
                 url,
             )
 
-            return await client.request(
+            res = await client.request(
                 method, url, headers=headers, json=json, data=data
             )
+            return cast(Dict[str, Any], await res.json())
         except aiohttp.client_exceptions.ClientResponseError as error:
             logger.error(error)
             raise HTTPException(status_code=401) from error
@@ -334,12 +340,11 @@ async def userinfo(
         return UserInfo(**get_userinfo(token_data))
     except ValidationError:
         authorization = dict(request.headers)["authorization"]
-        response = await oicd_request(
+        token_data = await oicd_request(
             "GET",
             "userinfo_endpoint",
             headers={"Authorization": authorization},
         )
-        token_data = await response.json()
         try:
             return UserInfo(
                 **get_userinfo(
@@ -540,10 +545,9 @@ async def callback(
         "code": code,
         "redirect_uri": redirect_uri,
     }
-    response = await oicd_request(
+    token_data: Dict[str, Union[str, int]] = await oicd_request(
         "POST", "token_endpoint", data={k: v for (k, v) in data.items() if v}
     )
-    token_data: Dict[str, Union[str, int]] = await response.json()
     return token_data
 
 
@@ -599,12 +603,11 @@ async def fetch_or_refresh_token(
         raise HTTPException(
             status_code=400, detail="Missing code or refresh_token"
         )
-    response = await oicd_request(
+    token_data = await oicd_request(
         "POST",
         "token_endpoint",
         data={k: v for (k, v) in data.items() if v},
     )
-    token_data = await response.json()
     expires_at = (
         token_data.get("exp")
         or token_data.get("expires")
