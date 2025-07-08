@@ -26,6 +26,7 @@ exclude_lines =
     raise SystemExit
     except OSError:
     except Exception as error:
+    except errors.BulkWriteError as bwe:
     except Exception:
     # Don't complain about the Completer class
     class Completer

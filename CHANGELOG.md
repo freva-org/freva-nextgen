@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 ## [v2507.0.0]
 ### Changed
  - Internal changes.
- - Bug fixes
+ - Cli bug fix
+
+
 
 ## [v2506.0.1]
 ### Changed
