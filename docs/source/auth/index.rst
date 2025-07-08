@@ -35,5 +35,3 @@ system:
    :caption: Authentication and authorization Guide
 
    auth-lib
-   endpoints
-   app_example

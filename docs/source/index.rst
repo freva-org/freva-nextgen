@@ -125,7 +125,7 @@ Table of Content
 
    auth/index
    databrowser/index
-   stacapi/index
+   developers/index
 
 .. warning::
 
