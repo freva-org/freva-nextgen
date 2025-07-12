@@ -32,5 +32,4 @@ Table of Content
    :maxdepth: 2
 
    python-lib
-   APIRef
    cli

@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta property="og:title" content="STAC API" />
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://freva-org.github.io/stacapi/index.html" />
+<meta property="og:url" content="https://freva-org.github.io/developers/stac.html" />
 <meta property="og:site_name" content="Freva Databrowser" />
 <meta property="og:description" content="The Freva STAC (SpatioTemporal Asset Catalog) API provides a standardized way to access climate datasets following the STAC specification. STAC is an open standard for geospatial data cataloguing, ..." />
 <meta name="description" content="The Freva STAC (SpatioTemporal Asset Catalog) API provides a standardized way to access climate datasets following the STAC specification. STAC is an open standard for geospatial data cataloguing, ..." />
@@ -60,12 +60,12 @@
     <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
     <script src="../_static/code-tabs.js?v=c983d12e"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'stacapi/index';</script>
-    <link rel="canonical" href="http://127.0.0.1:8000/stacapi/index.html" />
+    <script>DOCUMENTATION_OPTIONS.pagename = 'developers/stac';</script>
+    <link rel="canonical" href="http://127.0.0.1:8000/developers/stac.html" />
     <link rel="icon" href="../_static/logo.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="prev" title="The databrowser command line interface" href="../databrowser/cli.html" />
+    <link rel="prev" title="Databrowser Rest API" href="databrowser.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -165,8 +165,8 @@
 
 
 <li class="nav-item current active">
-  <a class="nav-link nav-internal" href="#">
-    STAC API
+  <a class="nav-link nav-internal" href="index.html">
+    Developer REST API Overview
   </a>
 </li>
 
@@ -274,8 +274,8 @@
 
 
 <li class="nav-item current active">
-  <a class="nav-link nav-internal" href="#">
-    STAC API
+  <a class="nav-link nav-internal" href="index.html">
+    Developer REST API Overview
   </a>
 </li>
 
@@ -338,7 +338,14 @@
 <nav class="bd-docs-nav bd-links"
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
-  <div class="bd-toc-item navbar-nav"></div>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="auth.html">The restAPI auth endpoints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auth_example.html">Integrating Authentiction into your Web Applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="databrowser.html">Databrowser Rest API</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">STAC API</a></li>
+
+</ul>
+</div>
 </nav></div>
     </div>
   
@@ -377,6 +384,9 @@
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Developer REST API Overview</a></li>
+    
     <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">STAC API</span></li>
   </ul>
 </nav>
@@ -1270,12 +1280,12 @@ describing the properties available for filtering items in a specific collection
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="../databrowser/cli.html"
+       href="databrowser.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">The databrowser command line interface</p>
+        <p class="prev-next-title">Databrowser Rest API</p>
       </div>
     </a>
 </div>

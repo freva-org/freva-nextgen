@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta property="og:title" content="The restAPI auth endpoints" />
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://freva-org.github.io/auth/endpoints.html" />
+<meta property="og:url" content="https://freva-org.github.io/developers/auth.html" />
 <meta property="og:site_name" content="Freva Databrowser" />
 <meta property="og:description" content="The API supports token-based authentication using OAuth2. To obtain an access token, clients can use the/api/freva-nextgen/auth/v2/token endpoint by providing valid username and password credential..." />
 <meta name="description" content="The API supports token-based authentication using OAuth2. To obtain an access token, clients can use the/api/freva-nextgen/auth/v2/token endpoint by providing valid username and password credential..." />
@@ -60,13 +60,13 @@
     <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
     <script src="../_static/code-tabs.js?v=c983d12e"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'auth/endpoints';</script>
-    <link rel="canonical" href="http://127.0.0.1:8000/auth/endpoints.html" />
+    <script>DOCUMENTATION_OPTIONS.pagename = 'developers/auth';</script>
+    <link rel="canonical" href="http://127.0.0.1:8000/developers/auth.html" />
     <link rel="icon" href="../_static/logo.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Integrating Authentiction into your Web Applications" href="app_example.html" />
-    <link rel="prev" title="Authentication using the freva-client library" href="auth-lib.html" />
+    <link rel="next" title="Integrating Authentiction into your Web Applications" href="auth_example.html" />
+    <link rel="prev" title="Developer REST API Overview" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -151,8 +151,8 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="index.html">
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auth/index.html">
     Authentication & Authorization
   </a>
 </li>
@@ -165,9 +165,9 @@
 </li>
 
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../stacapi/index.html">
-    STAC API
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Developer REST API Overview
   </a>
 </li>
 
@@ -260,8 +260,8 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="index.html">
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auth/index.html">
     Authentication & Authorization
   </a>
 </li>
@@ -274,9 +274,9 @@
 </li>
 
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../stacapi/index.html">
-    STAC API
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Developer REST API Overview
   </a>
 </li>
 
@@ -339,12 +339,12 @@
 <nav class="bd-docs-nav bd-links"
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
-  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Authentication and authorization Guide</span></p>
-<ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="auth-lib.html">Authentication using the freva-client library</a></li>
-
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">The restAPI auth endpoints</a></li>
-<li class="toctree-l1"><a class="reference internal" href="app_example.html">Integrating Authentiction into your Web Applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auth_example.html">Integrating Authentiction into your Web Applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="databrowser.html">Databrowser Rest API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="stac.html">STAC API</a></li>
+
 </ul>
 </div>
 </nav></div>
@@ -386,7 +386,7 @@
       </a>
     </li>
     
-    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Authentication &amp; Authorization</a></li>
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Developer REST API Overview</a></li>
     
     <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">The restAPI auth endpoints</span></li>
   </ul>
@@ -932,8 +932,8 @@ coordination points for the authentication process:</p>
 Calling them directly will likely lead to errors or unexpected behaviour.</p>
 <p>Instead, you should authenticate using <strong>one of the supported client tools</strong>:</p>
 <ul class="simple">
-<li><p>The <strong>Python client</strong>: via <a class="reference internal" href="auth-lib.html#freva_client.authenticate" title="freva_client.authenticate"><code class="xref py py-func docutils literal notranslate"><span class="pre">freva_client.authenticate()</span></code></a></p></li>
-<li><p>The <strong>CLI tool</strong>: via <a class="reference internal" href="auth-lib.html#auth-cli"><span class="std std-ref">freva-client auth</span></a></p></li>
+<li><p>The <strong>Python client</strong>: via <a class="reference internal" href="../auth/auth-lib.html#freva_client.authenticate" title="freva_client.authenticate"><code class="xref py py-func docutils literal notranslate"><span class="pre">freva_client.authenticate()</span></code></a></p></li>
+<li><p>The <strong>CLI tool</strong>: via <a class="reference internal" href="../auth/auth-lib.html#auth-cli"><span class="std std-ref">freva-client auth</span></a></p></li>
 <li><p>The <strong>web portal</strong>: to manually log in and download a token file</p></li>
 </ul>
 <p>These interfaces abstract away the complexity and ensure the flow is handled securely and correctly.</p>
@@ -994,7 +994,7 @@ token exchange <strong>server-side</strong> to protect credentials.</p></li>
 </div>
 <p>This is the recommended approach for implementing a standards-compliant
 OAuth2 Authorization Code Flow as a Service Provider. A detailed example
-is given in the <a class="reference internal" href="app_example.html#auth-example"><span class="std std-ref">Integrating Authentiction into your Web Applications</span></a> section.</p>
+is given in the <a class="reference internal" href="auth_example.html#auth-example"><span class="std std-ref">Integrating Authentiction into your Web Applications</span></a> section.</p>
 </section>
 </section>
 </section>
@@ -1010,16 +1010,16 @@ is given in the <a class="reference internal" href="app_example.html#auth-exampl
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="auth-lib.html"
+       href="index.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Authentication using the freva-client library</p>
+        <p class="prev-next-title">Developer REST API Overview</p>
       </div>
     </a>
     <a class="right-next"
-       href="app_example.html"
+       href="auth_example.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
