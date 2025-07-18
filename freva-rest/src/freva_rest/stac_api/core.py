@@ -279,7 +279,7 @@ class STACAPI:
         # for constructing this. For time being we define them all as
         # constants, since we don't have any usecase for this yet.
         # TODO: We need to add assets to the collections
-
+        collection_id = collection_id.lower()
         collection_ids = await self.get_all_project_facets()
         if collection_id not in collection_ids:
             raise HTTPException(
@@ -437,7 +437,7 @@ class STACAPI:
         collection_id: str,
     ) -> Item:
         """Create a STAC item from the Solr doc."""
-
+        collection_id = collection_id.lower()
         id = result.get(self.uniq_key, "")
         zarr_desc = dedent(
             f"""
@@ -810,6 +810,7 @@ class STACAPI:
     ) -> AsyncGenerator[str, None]:
         """Get a all items of a specific collection."""
         base_params: Dict[str, Any] = {"limit": limit}
+        collection_id = collection_id.lower()
         if datetime:
             base_params["datetime"] = datetime
         if bbox:
