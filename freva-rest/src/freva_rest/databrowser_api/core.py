@@ -29,7 +29,7 @@ from pymongo import UpdateOne, errors
 from typing_extensions import TypedDict
 
 from freva_rest import __version__
-from freva_rest.config import BUILTIN_FLAVOURS, ServerConfig
+from freva_rest.config import ServerConfig
 from freva_rest.exceptions import ValidationError
 from freva_rest.logger import logger
 from freva_rest.utils.base_utils import create_redis_connection
@@ -79,7 +79,6 @@ class FlavoursProperty:
             return config.available_flavours
         except ImportError:
             pass
-        return BUILTIN_FLAVOURS
 
 
 @dataclass

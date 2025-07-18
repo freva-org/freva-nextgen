@@ -228,7 +228,6 @@ def metadata_search(
     search criteria.
     """
     logger.set_verbosity(verbose)
-    print(f"freva flavour: {flavour}")
     logger.debug("Search the databrowser")
     result = databrowser.metadata_search(
         *(facets or []),

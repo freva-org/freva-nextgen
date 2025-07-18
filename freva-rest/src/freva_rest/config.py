@@ -372,7 +372,7 @@ class ServerConfig(BaseModel):
                         result[flavour_name] = json.loads(env_value)
                     except json.JSONDecodeError:
                         encoded = quote_plus(env_value)
-                        validator_url = f"https://jsonlint.com/json?json={encoded}"
+                        validator_url = f"https://jsonlint.com/?json={encoded}"
                         logger.warning(
                             f"Failed to parse {env_var} as JSON. "
                             "Please ensure it's valid JSON. "
@@ -385,7 +385,7 @@ class ServerConfig(BaseModel):
         """Get all available flavours (built-in + custome)."""
         base_flavours = BUILTIN_FLAVOURS.copy()
 
-        if self.flavour_mappings:
+        if self.flavour_mappings or self.flavour_mappings == {}:
             configured_flavours = list(self.flavour_mappings.keys())
             return base_flavours + [
                 f for f in configured_flavours if f not in base_flavours

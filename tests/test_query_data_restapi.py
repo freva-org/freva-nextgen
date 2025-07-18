@@ -1,6 +1,7 @@
 """Unit tests for data queries via the rest-api."""
 
 import json
+import os
 import time
 from typing import Dict
 
@@ -49,6 +50,12 @@ def test_databrowser(test_server: str) -> None:
         },
     )
     assert len(res2.text.split()) < len(res5.text.split())
+
+    # wrong flavour
+    res6 = requests.get(
+        f"{test_server}/databrowser/data-search/cmipx/file"
+    )
+    assert res6.status_code == 422
 
 
 def test_multiversion(test_server: str) -> None:
@@ -469,3 +476,61 @@ def test_mongo_parameter_insert(test_server: str, cfg: ServerConfig) -> None:
         len([k for k in stats[0]["query"].values() if not isinstance(k, str)])
         == 0
     )
+
+def test_load_flavour_mappings(cfg: ServerConfig):
+    """Test loading flavour mappings from 
+    both api_config and environment variables."""
+    
+    # api_config mappings only
+    api_config_mappings = {
+        "custom1": {"variable": "var", "model": "source_id"},
+        "custom2": {"experiment": "exp_id"}
+    }
+    with mock.patch.dict(os.environ, {}, clear=True):
+        with mock.patch.object(cfg, '_read_config', return_value=api_config_mappings):
+            result = cfg._load_all_flavour_mappings()
+            assert result == api_config_mappings
+    
+    # env variables only
+    env_mappings = {
+        "API_TRANSLATOR_MAPPING_CUSTOM3": '{"variable": "variable_id"}',
+        "API_TRANSLATOR_MAPPING_CUSTOM4": '{"model": "model_id"}'
+    }
+    expected = {
+        "custom3": {"variable": "variable_id"},
+        "custom4": {"model": "model_id"}
+    }
+    with mock.patch.dict(os.environ, env_mappings, clear=True):
+        with mock.patch.object(cfg, '_read_config', return_value=None):
+            result = cfg._load_all_flavour_mappings()
+            assert result == expected
+    
+    # both api_config and env
+    env_mappings = {
+        "API_TRANSLATOR_MAPPING_CUSTOM1": '{"should": "be_ignored"}',
+        "API_TRANSLATOR_MAPPING_CUSTOM5": '{"new": "mapping"}'
+    }
+    expected = {
+        "custom1": {"variable": "var", "model": "source_id"},
+        "custom2": {"experiment": "exp_id"},
+        "custom5": {"new": "mapping"}
+    }
+    with mock.patch.dict(os.environ, env_mappings, clear=True):
+        with mock.patch.object(cfg, '_read_config', return_value=api_config_mappings):
+            result = cfg._load_all_flavour_mappings()
+            assert result == expected
+    
+    # Invalid JSON in env
+    env_mappings = {
+        "API_TRANSLATOR_MAPPING_INVALID": 'invalid json{',
+        "API_TRANSLATOR_MAPPING_VALID": '{"experiment": "experiment_id"}'
+    }
+    expected = {"valid": {"experiment": "experiment_id"}}
+    
+    with mock.patch.dict(os.environ, env_mappings, clear=True):
+        with mock.patch.object(cfg, '_read_config', return_value=None):
+            with mock.patch('freva_rest.config.logger.warning') as mock_logger:
+                result = cfg._load_all_flavour_mappings()
+                assert result == expected
+                mock_logger.assert_called_once()
+                assert "Failed to parse API_TRANSLATOR_MAPPING_INVALID" in mock_logger.call_args[0][0]
