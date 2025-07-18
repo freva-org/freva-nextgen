@@ -75,10 +75,7 @@ class FlavoursProperty:
 
     def __get__(self, instance: Optional["Translator"], owner: type) -> List[str]:
         config = ServerConfig()
-        try:
-            return config.available_flavours
-        except ImportError:
-            pass
+        return config.available_flavours
 
 
 @dataclass
