@@ -74,6 +74,8 @@ class FlavoursProperty:
     automatically include custom flavours."""
 
     def __get__(self, instance: Optional["Translator"], owner: type) -> List[str]:
+        if instance is not None and instance.config is not None:  # pragma: no cover
+            return instance.config.available_flavours
         config = ServerConfig()
         return config.available_flavours
 
@@ -97,6 +99,7 @@ class Translator:
 
     flavour: str
     translate: bool = True
+    config: Optional[ServerConfig] = None
     # Dynamically load flavours from server_config
     flavours = FlavoursProperty()
 
@@ -248,10 +251,9 @@ class Translator:
         base_mapping = builtin_mappings.get(
             self.flavour, {k: k for k in self._freva_facets}
         ).copy()
-        config = ServerConfig()
         # Add/override with custom mappings from config if they exist
-        if config and config.flavour_mappings:
-            custom_mapping = config.flavour_mappings.get(self.flavour.lower())
+        if self.config and self.config.flavour_mappings:
+            custom_mapping = self.config.flavour_mappings.get(self.flavour.lower())
             if custom_mapping:
                 base_mapping.update(custom_mapping)
 
@@ -386,7 +388,7 @@ class Solr:
         self._config = config
         self.uniq_key = uniq_key
         self.multi_version = multi_version
-        self.translator = _translator or Translator(flavour, translate)
+        self.translator = _translator or Translator(flavour, translate, config)
         try:
             self.time = self.adjust_time_string(
                 query.pop("time", [""])[0],
@@ -624,7 +626,7 @@ class Solr:
         translate: bool, default: True
             Translate the output to the required DRS flavour.
         """
-        translator = Translator(flavour, translate)
+        translator = Translator(flavour, translate, config)
         valid_facets = translator.valid_facets
         if multi_version:
             valid_facets = translator.valid_facets + ["version"]

@@ -384,8 +384,7 @@ class ServerConfig(BaseModel):
     def available_flavours(self) -> List[str]:
         """Get all available flavours (built-in + custome)."""
         base_flavours = BUILTIN_FLAVOURS.copy()
-
-        if self.flavour_mappings or self.flavour_mappings == {}:
+        if self.flavour_mappings:
             configured_flavours = list(self.flavour_mappings.keys())
             return base_flavours + [
                 f for f in configured_flavours if f not in base_flavours

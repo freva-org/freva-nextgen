@@ -477,7 +477,7 @@ def test_mongo_parameter_insert(test_server: str, cfg: ServerConfig) -> None:
         == 0
     )
 
-def test_load_flavour_mappings(cfg: ServerConfig):
+def test_load_flavour_mappings(test_server: str, cfg: ServerConfig):
     """Test loading flavour mappings from 
     both api_config and environment variables."""
     
@@ -504,7 +504,11 @@ def test_load_flavour_mappings(cfg: ServerConfig):
         with mock.patch.object(cfg, '_read_config', return_value=None):
             result = cfg._load_all_flavour_mappings()
             assert result == expected
-    
+    with mock.patch("freva_rest.rest.server_config.flavour_mappings", {'custom3': {'variable': 'variable_id'}, 'custom4': {'model': 'model_id'}}):
+        res = requests.get(
+            f"{test_server}/databrowser/data-search/custom3/uri"
+        )
+        assert res.status_code == 200
     # both api_config and env
     env_mappings = {
         "API_TRANSLATOR_MAPPING_CUSTOM1": '{"should": "be_ignored"}',
@@ -519,7 +523,7 @@ def test_load_flavour_mappings(cfg: ServerConfig):
         with mock.patch.object(cfg, '_read_config', return_value=api_config_mappings):
             result = cfg._load_all_flavour_mappings()
             assert result == expected
-    
+       
     # Invalid JSON in env
     env_mappings = {
         "API_TRANSLATOR_MAPPING_INVALID": 'invalid json{',
