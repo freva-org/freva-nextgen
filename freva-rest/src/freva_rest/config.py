@@ -5,6 +5,7 @@ be overridden with a specific toml file holding configurations or environment
 variables.
 """
 
+import json
 import logging
 import os
 from functools import cached_property
@@ -24,6 +25,7 @@ from typing import (
     cast,
     overload,
 )
+from urllib.parse import quote_plus
 
 import requests
 import tomli
@@ -33,7 +35,7 @@ from pydantic import BaseModel, Field
 from .logger import logger, logger_file_handle
 
 ConfigItem = Union[str, int, float, None]
-
+BUILTIN_FLAVOURS = ["freva", "cmip6", "cmip5", "cordex", "user"]
 T = TypeVar("T", str, int)
 
 
@@ -266,9 +268,16 @@ class ServerConfig(BaseModel):
             ),
         ),
     ] = env_to_list("API_OIDC_AUTH_PORTS", int)
+    flavour_mappings: Annotated[
+        Optional[Dict[str, Dict[str, str]]],
+        Field(
+            title="Flavour mappings",
+            description="Dictionary of flavour translation mappings"
+        ),
+    ] = None
 
     def _read_config(self, section: str, key: str) -> Any:
-        fallback = self._fallback_config[section][key] or None
+        fallback = self._fallback_config.get(section, {}).get(key, None)
         return self._config.get(section, {}).get(key, fallback)
 
     def model_post_init(self, __context: Any = None) -> None:
@@ -336,6 +345,53 @@ class ServerConfig(BaseModel):
         self.oidc_auth_ports = self.oidc_auth_ports or self._read_config(
             "oidc", "auth_ports"
         )
+        self.flavour_mappings = self._load_all_flavour_mappings()
+
+    def _load_all_flavour_mappings(self) -> Optional[Dict[str, Dict[str, str]]]:
+        """Load all flavour mappings from config and environment.
+        It can be set via the `restAPI.flavour_mappings` in the
+        `api_config.toml` file or via environment variables
+        starting with `API_TRANSLATOR_MAPPING_{flavour_name}`.
+
+        """
+        result = {}
+        # first read from api_toml
+        toml_mappings = self._read_config("restAPI", "flavour_mappings")
+        if not isinstance(toml_mappings, dict):
+            toml_mappings = {}
+        if toml_mappings and isinstance(toml_mappings, dict):
+            result.update(toml_mappings)
+
+        # then environment variables
+        for env_var in os.environ:
+            if env_var.startswith("API_TRANSLATOR_MAPPING_"):
+                flavour_name = env_var.replace("API_TRANSLATOR_MAPPING_", "").lower()
+                env_value = os.getenv(env_var, "")
+                if env_value and flavour_name not in toml_mappings.keys():
+                    try:
+                        result[flavour_name] = json.loads(env_value)
+                    except json.JSONDecodeError:
+                        encoded = quote_plus(env_value)
+                        validator_url = f"https://jsonlint.com/json?json={encoded}"
+                        logger.warning(
+                            f"Failed to parse {env_var} as JSON. "
+                            "Please ensure it's valid JSON. "
+                            f"You can validate it here: {validator_url}"
+                        )
+        return result if result else None
+
+    @property
+    def available_flavours(self) -> List[str]:
+        """Get all available flavours (built-in + custome)."""
+        base_flavours = BUILTIN_FLAVOURS.copy()
+
+        if self.flavour_mappings:
+            configured_flavours = list(self.flavour_mappings.keys())
+            return base_flavours + [
+                f for f in configured_flavours if f not in base_flavours
+            ]
+
+        return base_flavours
 
     @staticmethod
     def get_url(url: str, default_port: Union[str, int]) -> str:

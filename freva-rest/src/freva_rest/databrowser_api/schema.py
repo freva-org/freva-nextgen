@@ -86,5 +86,5 @@ class FacetResults(BaseModel):
 class SearchFlavours(BaseModel):
     """Schema for search flavours."""
 
-    flavours: List[FlavourType]
-    attributes: Dict[FlavourType, List[str]]
+    flavours: List[Union[FlavourType, str]]
+    attributes: Dict[Union[FlavourType, str], List[str]]

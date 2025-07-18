@@ -1,20 +1,30 @@
 """Command line interface for the freva databrowser.
 
 Search quickly and intuitively for many different climate datasets.
+
+Note: since we are getting the FlavourEnum dynamically on the runtime
+we couldn't simply satisfy the mypy type checker with a static and we
+ignored the type checking for the flavour option.
+The reason of getting the FlavourEnum dynamically is that
+we want to see the list of the available flavours(custum included) on the
+command line interface.
 """
 
+import enum
 import json
 from enum import Enum
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import typer
+import typer.models
 import xarray as xr
 
 from freva_client import databrowser
 from freva_client.auth import Auth
 from freva_client.utils import exception_handler, logger
+from freva_rest.config import ServerConfig
 
 from .cli_utils import parse_cli_args, version_callback
 
@@ -26,15 +36,23 @@ class UniqKeys(str, Enum):
     uri = "uri"
 
 
-class Flavours(str, Enum):
-    """Literal implementation for the cli."""
+def flavour_option() -> Tuple[typer.models.OptionInfo, Any]:
+    names = ServerConfig().available_flavours
+    members = {n.upper(): n for n in names}
+    # Dynamically create an Enum for flavours
+    FlavourEnum = enum.Enum("Flavours", members, type=str)  # type: ignore
+    default_member = getattr(FlavourEnum, names[0].upper())
+    opt = typer.Option(
+        default_member,
+        "-f", "--flavour",
+        help=("The Data Reference Syntax (DRS) standard specifying"
+              " the type of climate datasets to query."),
+        show_default=True,
+    )
+    return opt, FlavourEnum
 
-    freva = "freva"
-    cmip6 = "cmip6"
-    cmip5 = "cmip5"
-    cordex = "cordex"
-    nextgems = "nextgems"
-    user = "user"
+
+flavour_opt, Flavours = flavour_option()
 
 
 class SelectMethod(str, Enum):
@@ -131,15 +149,7 @@ def metadata_search(
             " containing era5, regardless of project, product etc."
         ),
     ),
-    flavour: Flavours = typer.Option(
-        "freva",
-        "--flavour",
-        "-f",
-        help=(
-            "The Data Reference Syntax (DRS) standard specifying the type "
-            "of climate datasets to query."
-        ),
-    ),
+    flavour: Flavours = flavour_opt,  # type: ignore[valid-type]
     time_select: SelectMethod = typer.Option(
         "flexible",
         "-ts",
@@ -218,6 +228,7 @@ def metadata_search(
     search criteria.
     """
     logger.set_verbosity(verbose)
+    print(f"freva flavour: {flavour}")
     logger.debug("Search the databrowser")
     result = databrowser.metadata_search(
         *(facets or []),
@@ -225,7 +236,7 @@ def metadata_search(
         time_select=time_select.value,
         bbox=bbox or None,
         bbox_select=bbox_select.value,
-        flavour=flavour.value,
+        flavour=flavour.value,  # type: ignore[attr-defined]
         host=host,
         extended_search=extended_search,
         multiversion=multiversion,
@@ -270,15 +281,7 @@ def data_search(
             "based on file paths or Uniform Resource Identifiers"
         ),
     ),
-    flavour: Flavours = typer.Option(
-        "freva",
-        "--flavour",
-        "-f",
-        help=(
-            "The Data Reference Syntax (DRS) standard specifying the type "
-            "of climate datasets to query."
-        ),
-    ),
+    flavour: Flavours = flavour_opt,  # type: ignore[valid-type]
     time_select: SelectMethod = typer.Option(
         "flexible",
         "-ts",
@@ -367,7 +370,7 @@ def data_search(
         time_select=time_select.value,
         bbox=bbox or None,
         bbox_select=bbox_select.value,
-        flavour=flavour.value,
+        flavour=flavour.value,  # type: ignore[attr-defined]
         uniq_key=uniq_key.value,
         host=host,
         fail_on_error=False,
@@ -415,15 +418,7 @@ def intake_catalogue(
             "based on file paths or Uniform Resource Identifiers"
         ),
     ),
-    flavour: Flavours = typer.Option(
-        "freva",
-        "--flavour",
-        "-f",
-        help=(
-            "The Data Reference Syntax (DRS) standard specifying the type "
-            "of climate datasets to query."
-        ),
-    ),
+    flavour: Flavours = flavour_opt,  # type: ignore[valid-type]
     time_select: SelectMethod = typer.Option(
         "flexible",
         "-ts",
@@ -517,7 +512,7 @@ def intake_catalogue(
         time_select=time_select.value,
         bbox=bbox or None,
         bbox_select=bbox_select.value,
-        flavour=flavour.value,
+        flavour=flavour.value,  # type: ignore[attr-defined]
         uniq_key=uniq_key.value,
         host=host,
         fail_on_error=False,
@@ -564,15 +559,7 @@ def stac_catalogue(
             "based on file paths or Uniform Resource Identifiers"
         ),
     ),
-    flavour: Flavours = typer.Option(
-        "freva",
-        "--flavour",
-        "-f",
-        help=(
-            "The Data Reference Syntax (DRS) standard specifying the type "
-            "of climate datasets to query."
-        ),
-    ),
+    flavour: Flavours = flavour_opt,  # type: ignore[valid-type]
     time_select: SelectMethod = typer.Option(
         "flexible",
         "-ts",
@@ -654,7 +641,7 @@ def stac_catalogue(
         time_select=time_select.value,
         bbox=bbox or None,
         bbox_select=bbox_select.value,
-        flavour=flavour.value,
+        flavour=flavour.value,  # type: ignore[attr-defined]
         uniq_key=uniq_key.value,
         host=host,
         fail_on_error=False,
@@ -692,15 +679,7 @@ def count_values(
         "-d",
         help=("Separate the count by search facets."),
     ),
-    flavour: Flavours = typer.Option(
-        "freva",
-        "--flavour",
-        "-f",
-        help=(
-            "The Data Reference Syntax (DRS) standard specifying the type "
-            "of climate datasets to query."
-        ),
-    ),
+    flavour: Flavours = flavour_opt,  # type: ignore[valid-type]
     time_select: SelectMethod = typer.Option(
         "flexible",
         "-ts",
@@ -795,7 +774,7 @@ def count_values(
             time_select=time_select.value,
             bbox=bbox or None,
             bbox_select=bbox_select.value,
-            flavour=flavour.value,
+            flavour=flavour.value,  # type: ignore[attr-defined]
             host=host,
             extended_search=extended_search,
             multiversion=multiversion,
@@ -810,7 +789,7 @@ def count_values(
                 time_select=time_select.value,
                 bbox=bbox or None,
                 bbox_select=bbox_select.value,
-                flavour=flavour.value,
+                flavour=flavour.value,  # type: ignore[attr-defined]
                 host=host,
                 multiversion=multiversion,
                 fail_on_error=False,

@@ -225,9 +225,7 @@ class databrowser:
         self,
         *facets: str,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems", "user"
-        ] = "freva",
+        flavour: str = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -539,9 +537,7 @@ class databrowser:
     def count_values(
         cls,
         *facets: str,
-        flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems", "user"
-        ] = "freva",
+        flavour: str = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -696,9 +692,7 @@ class databrowser:
     def metadata_search(
         cls,
         *facets: str,
-        flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems", "user"
-        ] = "freva",
+        flavour: str = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",

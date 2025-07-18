@@ -13,6 +13,7 @@ from typing import (
     Iterable,
     List,
     Literal,
+    Optional,
     Sequence,
     Sized,
     Tuple,
@@ -28,13 +29,14 @@ from pymongo import UpdateOne, errors
 from typing_extensions import TypedDict
 
 from freva_rest import __version__
-from freva_rest.config import ServerConfig
+from freva_rest.config import BUILTIN_FLAVOURS, ServerConfig
 from freva_rest.exceptions import ValidationError
 from freva_rest.logger import logger
 from freva_rest.utils.base_utils import create_redis_connection
 from freva_rest.utils.stats_utils import store_api_statistics
 
-FlavourType = Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"]
+FlavourType = Literal["freva", "cmip6", "cmip5", "cordex", "user"]
+
 IntakeType = TypedDict(
     "IntakeType",
     {
@@ -67,6 +69,19 @@ class IntakeCatalogue(BaseModel):
     total_count: int
 
 
+class FlavoursProperty:
+    """Descriptor that makes Translator.flavours
+    automatically include custom flavours."""
+
+    def __get__(self, instance: Optional["Translator"], owner: type) -> List[str]:
+        config = ServerConfig()
+        try:
+            return config.available_flavours
+        except ImportError:
+            pass
+        return BUILTIN_FLAVOURS
+
+
 @dataclass
 class Translator:
     """Class that defines the flavour translation.
@@ -86,14 +101,8 @@ class Translator:
 
     flavour: str
     translate: bool = True
-    flavours: tuple[FlavourType, ...] = (
-        "freva",
-        "cmip6",
-        "cmip5",
-        "cordex",
-        "nextgems",
-        "user",
-    )
+    # Dynamically load flavours from server_config
+    flavours = FlavoursProperty()
 
     @property
     def facet_hierarchy(self) -> list[str]:
@@ -228,46 +237,29 @@ class Translator:
             "rcm_version": "rcm_version",
         }
 
-    @property
-    def _nextgems_lookup(self) -> Dict[str, str]:
-        """Define the search facets for the cmip5 standard."""
-        return {
-            "experiment": "simulation_id",
-            "ensemble": "member_id",
-            "fs_type": "fs_type",
-            "grid_label": "grid_label",
-            "institute": "institution_id",
-            "model": "source_id",
-            "project": "project",
-            "product": "experiment_id",
-            "realm": "realm",
-            "variable": "variable_id",
-            "time": "time",
-            "bbox": "bbox",
-            "time_aggregation": "time_reduction",
-            "time_frequency": "time_frequency",
-            "cmor_table": "cmor_table",
-            "dataset": "dataset",
-            "driving_model": "driving_model",
-            "format": "format",
-            "grid_id": "grid_id",
-            "level_type": "level_type",
-            "rcm_name": "rcm_name",
-            "rcm_version": "rcm_version",
-        }
-
     @cached_property
     def forward_lookup(self) -> Dict[str, str]:
         """Define how things get translated from the freva standard"""
 
-        return {
+        builtin_mappings = {
             "freva": {k: k for k in self._freva_facets},
             "cmip6": self._cmip6_lookup,
             "cmip5": self._cmip5_lookup,
             "cordex": self._cordex_lookup,
-            "nextgems": self._nextgems_lookup,
             "user": {k: k for k in self._freva_facets},
-        }[self.flavour]
+        }
+
+        base_mapping = builtin_mappings.get(
+            self.flavour, {k: k for k in self._freva_facets}
+        ).copy()
+        config = ServerConfig()
+        # Add/override with custom mappings from config if they exist
+        if config and config.flavour_mappings:
+            custom_mapping = config.flavour_mappings.get(self.flavour.lower())
+            if custom_mapping:
+                base_mapping.update(custom_mapping)
+
+        return base_mapping
 
     @cached_property
     def valid_facets(self) -> list[str]:
@@ -388,7 +380,7 @@ class Solr:
         config: ServerConfig,
         *,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: FlavourType = "freva",
+        flavour: Union[FlavourType, str] = "freva",
         start: int = 0,
         multi_version: bool = True,
         translate: bool = True,
@@ -609,7 +601,7 @@ class Solr:
         config: ServerConfig,
         *,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: FlavourType = "freva",
+        flavour: Union[FlavourType, str] = "freva",
         start: int = 0,
         multi_version: bool = False,
         translate: bool = True,
