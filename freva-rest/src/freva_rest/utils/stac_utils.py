@@ -1,10 +1,13 @@
 """ utilities for the STAC."""
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
 import re
+from datetime import datetime, MINYEAR, MAXYEAR
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 from dateutil import parser
+
 YEAR_ONLY = re.compile(r"^\d{1,4}$")
+
 
 class Item:
     """ Item class which is compatible with pySTAC
@@ -129,13 +132,13 @@ def parse_datetime(time_str: str) -> Tuple[datetime, datetime]:
     try:
         if YEAR_ONLY.fullmatch(start_str) and YEAR_ONLY.fullmatch(end_str):
             sy, ey = int(start_str), int(end_str)
-            sy = max(datetime.MINYEAR, min(sy, datetime.MAXYEAR))
-            ey = max(datetime.MINYEAR, min(ey, datetime.MAXYEAR))
+            sy = max(MINYEAR, min(sy, MAXYEAR))
+            ey = max(MINYEAR, min(ey, MAXYEAR))
             start_dt = datetime(sy, 1, 1)
-            end_dt   = datetime(ey, 12, 31, 23, 59, 59)
+            end_dt = datetime(ey, 12, 31, 23, 59, 59)
         else:
             start_dt = parser.parse(start_str)
-            end_dt   = parser.parse(end_str)
+            end_dt = parser.parse(end_str)
     except Exception:
         start_dt, end_dt = datetime.min, datetime.max
 
