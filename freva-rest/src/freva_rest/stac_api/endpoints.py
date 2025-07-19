@@ -45,9 +45,16 @@ class STACCORSMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         if not request.url.path.startswith(self.stac_path_prefix):
             return await call_next(request)
+        if request.method == "OPTIONS":
+            headers = {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                "Access-Control-Allow-Headers": "*",
+            }
+            return Response(status_code=200, headers=headers)
         response = await call_next(request)
         response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "*"
 
         return response

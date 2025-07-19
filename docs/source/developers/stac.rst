@@ -115,6 +115,28 @@ Landing Page
             response = HTTP.get("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/")
             data = JSON.parse(String(HTTP.body(response)))
 
+        .. code-tab:: c
+            :caption: C/C++
+
+            #include <stdio.h>
+            #include <curl/curl.h>
+
+            int main() {
+                CURL *curl;
+                CURLcode res;
+
+                curl = curl_easy_init();
+                if (curl) {
+                    char url[] = "https://www.freva.dkrz.de/api/freva-nextgen/stacapi/";
+
+                    curl_easy_setopt(curl, CURLOPT_URL, url);
+                    res = curl_easy_perform(curl);
+                    curl_easy_cleanup(curl);
+                }
+
+                return 0;
+            }
+
 ---
 
 .. _stacapi-conformance:
@@ -154,6 +176,59 @@ Conformance Classes
                 "https://api.stacspec.org/v1.0.0/item-search"
             ]
         }
+
+    Code examples
+    ~~~~~~~~~~~~~
+
+    .. tabs::
+
+        .. code-tab:: bash
+            :caption: Shell
+
+            curl -X GET https://www.freva.dkrz.de/api/freva-nextgen/stacapi/conformance
+
+        .. code-tab:: python
+            :caption: Python
+
+            import requests
+            response = requests.get("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/conformance")
+            data = response.json()
+
+        .. code-tab:: r
+            :caption: gnuR
+
+            library(httr)
+            response <- GET("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/conformance")
+            data <- jsonlite::fromJSON(content(response, as = "text", encoding = "utf-8"))
+
+        .. code-tab:: julia
+            :caption: Julia
+
+            using HTTP, JSON
+            response = HTTP.get("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/conformance")
+            data = JSON.parse(String(HTTP.body(response)))
+
+        .. code-tab:: c
+            :caption: C/C++
+
+            #include <stdio.h>
+            #include <curl/curl.h>
+
+            int main() {
+                CURL *curl;
+                CURLcode res;
+
+                curl = curl_easy_init();
+                if (curl) {
+                    char url[] = "https://www.freva.dkrz.de/api/freva-nextgen/stacapi/conformance";
+
+                    curl_easy_setopt(curl, CURLOPT_URL, url);
+                    res = curl_easy_perform(curl);
+                    curl_easy_cleanup(curl);
+                }
+
+                return 0;
+            }
 
 ---
 
@@ -230,6 +305,44 @@ Collections
             response = requests.get("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections")
             collections = response.json()["collections"]
 
+        .. code-tab:: r
+            :caption: gnuR
+
+            library(httr)
+            response <- GET("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections")
+            data <- jsonlite::fromJSON(content(response, as = "text", encoding = "utf-8"))
+            collections <- data$collections
+
+        .. code-tab:: julia
+            :caption: Julia
+
+            using HTTP, JSON
+            response = HTTP.get("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections")
+            data = JSON.parse(String(HTTP.body(response)))
+            collections = data["collections"]
+
+        .. code-tab:: c
+            :caption: C/C++
+
+            #include <stdio.h>
+            #include <curl/curl.h>
+
+            int main() {
+                CURL *curl;
+                CURLcode res;
+
+                curl = curl_easy_init();
+                if (curl) {
+                    char url[] = "https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections";
+
+                    curl_easy_setopt(curl, CURLOPT_URL, url);
+                    res = curl_easy_perform(curl);
+                    curl_easy_cleanup(curl);
+                }
+
+                return 0;
+            }
+
 ---
 
 .. _stacapi-collection-details:
@@ -287,6 +400,59 @@ Get Collection
             ],
             "keywords": ["observations", "climate", "analysis", "freva"]
         }
+
+    Code examples
+    ~~~~~~~~~~~~~
+
+    .. tabs::
+
+        .. code-tab:: bash
+            :caption: Shell
+
+            curl -X GET https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations
+
+        .. code-tab:: python
+            :caption: Python
+
+            import requests
+            response = requests.get("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations")
+            collection = response.json()
+
+        .. code-tab:: r
+            :caption: gnuR
+
+            library(httr)
+            response <- GET("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations")
+            collection <- jsonlite::fromJSON(content(response, as = "text", encoding = "utf-8"))
+
+        .. code-tab:: julia
+            :caption: Julia
+
+            using HTTP, JSON
+            response = HTTP.get("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations")
+            collection = JSON.parse(String(HTTP.body(response)))
+
+        .. code-tab:: c
+            :caption: C/C++
+
+            #include <stdio.h>
+            #include <curl/curl.h>
+
+            int main() {
+                CURL *curl;
+                CURLcode res;
+
+                curl = curl_easy_init();
+                if (curl) {
+                    char url[] = "https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations";
+
+                    curl_easy_setopt(curl, CURLOPT_URL, url);
+                    res = curl_easy_perform(curl);
+                    curl_easy_cleanup(curl);
+                }
+
+                return 0;
+            }
 
 ---
 
@@ -407,6 +573,42 @@ Get Collection Items
             )
             data <- jsonlite::fromJSON(content(response, as = "text", encoding = "utf-8"))
 
+        .. code-tab:: julia
+            :caption: Julia
+
+            using HTTP, JSON
+            response = HTTP.get(
+                "https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/items",
+                query = Dict(
+                    "limit" => 10,
+                    "datetime" => "2016-01-01/2016-12-31",
+                    "bbox" => "-10,40,10,60"
+                )
+            )
+            data = JSON.parse(String(HTTP.body(response)))
+
+        .. code-tab:: c
+            :caption: C/C++
+
+            #include <stdio.h>
+            #include <curl/curl.h>
+
+            int main() {
+                CURL *curl;
+                CURLcode res;
+
+                curl = curl_easy_init();
+                if (curl) {
+                    char url[] = "https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/items?limit=10&datetime=2016-01-01/2016-12-31&bbox=-10,40,10,60";
+
+                    curl_easy_setopt(curl, CURLOPT_URL, url);
+                    res = curl_easy_perform(curl);
+                    curl_easy_cleanup(curl);
+                }
+
+                return 0;
+            }
+
 ---
 
 .. _stacapi-collection-item-details:
@@ -470,6 +672,59 @@ Get Collection Item Details
                 }
             }
         }
+
+    Code examples
+    ~~~~~~~~~~~~~
+
+    .. tabs::
+
+        .. code-tab:: bash
+            :caption: Shell
+
+            curl -X GET https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/items/1834103571652542466
+
+        .. code-tab:: python
+            :caption: Python
+
+            import requests
+            response = requests.get("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/items/1834103571652542466")
+            item = response.json()
+
+        .. code-tab:: r
+            :caption: gnuR
+
+            library(httr)
+            response <- GET("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/items/1834103571652542466")
+            item <- jsonlite::fromJSON(content(response, as = "text", encoding = "utf-8"))
+
+        .. code-tab:: julia
+            :caption: Julia
+
+            using HTTP, JSON
+            response = HTTP.get("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/items/1834103571652542466")
+            item = JSON.parse(String(HTTP.body(response)))
+
+        .. code-tab:: c
+            :caption: C/C++
+
+            #include <stdio.h>
+            #include <curl/curl.h>
+
+            int main() {
+                CURL *curl;
+                CURLcode res;
+
+                curl = curl_easy_init();
+                if (curl) {
+                    char url[] = "https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/items/1834103571652542466";
+
+                    curl_easy_setopt(curl, CURLOPT_URL, url);
+                    res = curl_easy_perform(curl);
+                    curl_easy_cleanup(curl);
+                }
+
+                return 0;
+            }
 
 ---
 
@@ -584,6 +839,43 @@ Search (GET)
             )
             data <- jsonlite::fromJSON(content(response, as = "text", encoding = "utf-8"))
 
+        .. code-tab:: julia
+            :caption: Julia
+
+            using HTTP, JSON
+            response = HTTP.get(
+                "https://www.freva.dkrz.de/api/freva-nextgen/stacapi/search",
+                query = Dict(
+                    "collections" => "observations",
+                    "q" => "temperature",
+                    "bbox" => "-180,-90,180,90",
+                    "limit" => 10
+                )
+            )
+            data = JSON.parse(String(HTTP.body(response)))
+
+        .. code-tab:: c
+            :caption: C/C++
+
+            #include <stdio.h>
+            #include <curl/curl.h>
+
+            int main() {
+                CURL *curl;
+                CURLcode res;
+
+                curl = curl_easy_init();
+                if (curl) {
+                    char url[] = "https://www.freva.dkrz.de/api/freva-nextgen/stacapi/search?collections=observations&q=temperature&bbox=-180,-90,180,90&limit=10";
+
+                    curl_easy_setopt(curl, CURLOPT_URL, url);
+                    res = curl_easy_perform(curl);
+                    curl_easy_cleanup(curl);
+                }
+
+                return 0;
+            }
+
 ---
 
 .. _stacapi-search-post:
@@ -667,6 +959,78 @@ Search (POST)
             )
             results = response.json()
 
+        .. code-tab:: r
+            :caption: gnuR
+
+            library(httr)
+            response <- POST(
+                "https://www.freva.dkrz.de/api/freva-nextgen/stacapi/search",
+                body = list(
+                    collections = list("observations"),
+                    q = list("temperature"),
+                    bbox = list(-180, -90, 180, 90),
+                    limit = 10
+                ),
+                encode = "json"
+            )
+            data <- jsonlite::fromJSON(content(response, as = "text", encoding = "utf-8"))
+
+        .. code-tab:: julia
+            :caption: Julia
+
+            using HTTP, JSON
+            response = HTTP.post(
+                "https://www.freva.dkrz.de/api/freva-nextgen/stacapi/search",
+                headers = Dict("Content-Type" => "application/json"),
+                body = JSON.json(Dict(
+                    "collections" => ["observations"],
+                    "q" => ["temperature"],
+                    "bbox" => [-180, -90, 180, 90],
+                    "limit" => 10
+                ))
+            )
+            data = JSON.parse(String(HTTP.body(response)))
+
+        .. code-tab:: c
+            :caption: C/C++
+
+            #include <stdio.h>
+            #include <curl/curl.h>
+
+            int main() {
+                CURL *curl;
+                CURLcode res;
+
+                const char *url = "https://www.freva.dkrz.de/api/freva-nextgen/stacapi/search";
+                const char *json_data = "{"
+                    "\"collections\": [\"observations\"],"
+                    "\"q\": [\"temperature\"],"
+                    "\"bbox\": [-180, -90, 180, 90],"
+                    "\"limit\": 10"
+                "}";
+
+                curl = curl_easy_init();
+                if (curl) {
+                    struct curl_slist *headers = NULL;
+                    headers = curl_slist_append(headers, "Content-Type: application/json");
+
+                    curl_easy_setopt(curl, CURLOPT_URL, url);
+                    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+                    curl_easy_setopt(curl, CURLOPT_POST, 1L);
+                    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_data);
+
+                    res = curl_easy_perform(curl);
+                    if (res != CURLE_OK) {
+                        fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+                    }
+
+                    curl_slist_free_all(headers);
+                    curl_easy_cleanup(curl);
+                }
+
+                return 0;
+            }
+
 ---
 
 .. _stacapi-queryables:
@@ -721,6 +1085,59 @@ Queryables
             }
         }
 
+    Code examples
+    ~~~~~~~~~~~~~
+
+    .. tabs::
+
+        .. code-tab:: bash
+            :caption: Shell
+
+            curl -X GET https://www.freva.dkrz.de/api/freva-nextgen/stacapi/queryables
+
+        .. code-tab:: python
+            :caption: Python
+
+            import requests
+            response = requests.get("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/queryables")
+            queryables = response.json()
+
+        .. code-tab:: r
+            :caption: gnuR
+
+            library(httr)
+            response <- GET("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/queryables")
+            queryables <- jsonlite::fromJSON(content(response, as = "text", encoding = "utf-8"))
+
+        .. code-tab:: julia
+            :caption: Julia
+
+            using HTTP, JSON
+            response = HTTP.get("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/queryables")
+            queryables = JSON.parse(String(HTTP.body(response)))
+
+        .. code-tab:: c
+            :caption: C/C++
+
+            #include <stdio.h>
+            #include <curl/curl.h>
+
+            int main() {
+                CURL *curl;
+                CURLcode res;
+
+                curl = curl_easy_init();
+                if (curl) {
+                    char url[] = "https://www.freva.dkrz.de/api/freva-nextgen/stacapi/queryables";
+
+                    curl_easy_setopt(curl, CURLOPT_URL, url);
+                    res = curl_easy_perform(curl);
+                    curl_easy_cleanup(curl);
+                }
+
+                return 0;
+            }
+
 ---
 
 .. _stacapi-collection-queryables:
@@ -749,6 +1166,58 @@ Collection Queryables
         GET /api/freva-nextgen/stacapi/collections/observations/queryables HTTP/1.1
         Host: www.freva.dkrz.de
 
+    Code examples
+    ~~~~~~~~~~~~~
+
+    .. tabs::
+
+        .. code-tab:: bash
+            :caption: Shell
+
+            curl -X GET https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/queryables
+
+        .. code-tab:: python
+            :caption: Python
+
+            import requests
+            response = requests.get("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/queryables")
+            queryables = response.json()
+
+        .. code-tab:: r
+            :caption: gnuR
+
+            library(httr)
+            response <- GET("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/queryables")
+            queryables <- jsonlite::fromJSON(content(response, as = "text", encoding = "utf-8"))
+
+        .. code-tab:: julia
+            :caption: Julia
+
+            using HTTP, JSON
+            response = HTTP.get("https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/queryables")
+            queryables = JSON.parse(String(HTTP.body(response)))
+
+        .. code-tab:: c
+            :caption: C/C++
+
+            #include <stdio.h>
+            #include <curl/curl.h>
+
+            int main() {
+                CURL *curl;
+                CURLcode res;
+
+                curl = curl_easy_init();
+                if (curl) {
+                    char url[] = "https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/queryables";
+
+                    curl_easy_setopt(curl, CURLOPT_URL, url);
+                    res = curl_easy_perform(curl);
+                    curl_easy_cleanup(curl);
+                }
+
+                return 0;
+            }
 
 
 ---
@@ -763,26 +1232,71 @@ The Freva STAC-API is fully compatible with STAC-compliant tools and libraries. 
 - **R**: `rstac`
 - **JavaScript**: `@stac/client`
 
-Python Example with `pystac-client`
---------------------------------------
+Integration Examples
+-------------------
 
-.. code-tab:: python
+.. tabs::
 
-    from pystac_client import Client
+    .. code-tab:: python
+        :caption: Python with pystac-client
 
-    # Connect to the STAC API
-    catalog = Client.open("https://www.freva.dkrz.de/api/freva-nextgen/stacapi")
+        from pystac_client import Client
 
-    # Search for items
-    search = catalog.search(
-        collections=["observations"],
-        datetime="2020-01-01/2020-12-31",
-        bbox=[-10, 40, 10, 60]
-    )
+        # Connect to the STAC API
+        catalog = Client.open("https://www.freva.dkrz.de/api/freva-nextgen/stacapi")
 
-    # Get items
-    items = list(search.get_items())
-    print(f"Found {len(items)} items")
+        # Search for items
+        search = catalog.search(
+            collections=["observations"],
+            datetime="2020-01-01/2020-12-31",
+            bbox=[-10, 40, 10, 60]
+        )
+
+        # Get items
+        items = list(search.get_items())
+        print(f"Found {len(items)} items")
+
+    .. code-tab:: r
+        :caption: R with rstac
+
+        library(rstac)
+
+        # Connect to the STAC API
+        catalog <- stac("https://www.freva.dkrz.de/api/freva-nextgen/stacapi")
+
+        # Search for items
+        search <- catalog %>%
+            stac_search(
+                collections = "observations",
+                datetime = "2020-01-01/2020-12-31",
+                bbox = c(-10, 40, 10, 60)
+            ) %>%
+            get_request()
+
+        # Get items
+        items <- search$features
+        cat("Found", length(items), "items\n")
+
+    .. code-tab:: javascript
+        :caption: JavaScript with @stac/client
+
+        import { STACApiClient } from '@stac/client';
+
+        // Connect to the STAC API
+        const client = new STACApiClient({
+            url: 'https://www.freva.dkrz.de/api/freva-nextgen/stacapi'
+        });
+
+        // Search for items
+        const search = await client.search({
+            collections: ['observations'],
+            datetime: '2020-01-01/2020-12-31',
+            bbox: [-10, 40, 10, 60]
+        });
+
+        // Get items
+        const items = await search.getItems();
+        console.log(`Found ${items.length} items`);
 
 ---
 
@@ -795,4 +1309,3 @@ Python Example with `pystac-client`
 
 .. important::
    Data transaction and ingestion into the Freva STAC-API is managed by administrators using the `data-crawler <https://freva.gitlab-pages.dkrz.de/metadata-crawler-source/docs/>`_ tool. This has nothing to do with the STAC API itself, which is primarily focused on data discovery and access.
-
