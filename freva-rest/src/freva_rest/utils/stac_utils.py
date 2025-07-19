@@ -1,7 +1,7 @@
 """ utilities for the STAC."""
 
 import re
-from datetime import datetime, MINYEAR, MAXYEAR
+from datetime import MAXYEAR, MINYEAR, datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from dateutil import parser
