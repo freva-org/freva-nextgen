@@ -2,9 +2,9 @@
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
-
+import re
 from dateutil import parser
-
+YEAR_ONLY = re.compile(r"^\d{1,4}$")
 
 class Item:
     """ Item class which is compatible with pySTAC
@@ -124,9 +124,22 @@ def parse_datetime(time_str: str) -> Tuple[datetime, datetime]:
     Tuple[datetime, datetime]
         Start and end datetime objects
     """
-    clean_start_time = time_str.replace("[", "").split(" TO ")[0]
-    clean_end_time = time_str.replace("]", "").split(" TO ")[1]
-    return parser.parse(clean_start_time), parser.parse(clean_end_time)
+    start_str, end_str = time_str.strip("[]").split(" TO ")
+
+    try:
+        if YEAR_ONLY.fullmatch(start_str) and YEAR_ONLY.fullmatch(end_str):
+            sy, ey = int(start_str), int(end_str)
+            sy = max(datetime.MINYEAR, min(sy, datetime.MAXYEAR))
+            ey = max(datetime.MINYEAR, min(ey, datetime.MAXYEAR))
+            start_dt = datetime(sy, 1, 1)
+            end_dt   = datetime(ey, 12, 31, 23, 59, 59)
+        else:
+            start_dt = parser.parse(start_str)
+            end_dt   = parser.parse(end_str)
+    except Exception:
+        start_dt, end_dt = datetime.min, datetime.max
+
+    return start_dt, end_dt
 
 
 def parse_bbox(bbox_str: Union[str, List[str]]) -> List[float]:
