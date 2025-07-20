@@ -1229,10 +1229,8 @@ STAC-API Integration
 The Freva STAC-API is fully compatible with STAC-compliant tools and libraries. You can use popular tools like:
 
 - **Python**: `pystac-client`, `pystac`, `stackstac`
-- **R**: `rstac`
-- **JavaScript**: `@stac/client`
 
-Integration Examples
+Integration Example with Python
 -------------------
 
 .. tabs::
@@ -1242,61 +1240,19 @@ Integration Examples
 
         from pystac_client import Client
 
-        # Connect to the STAC API
+        # Connect to the Freva STAC API
         catalog = Client.open("https://www.freva.dkrz.de/api/freva-nextgen/stacapi")
 
         # Search for items
         search = catalog.search(
-            collections=["observations"],
-            datetime="2020-01-01/2020-12-31",
+            max_items=10,
+            collections=["cmip6"],
             bbox=[-10, 40, 10, 60]
         )
 
         # Get items
-        items = list(search.get_items())
+        items = list(search.items())
         print(f"Found {len(items)} items")
-
-    .. code-tab:: r
-        :caption: R with rstac
-
-        library(rstac)
-
-        # Connect to the STAC API
-        catalog <- stac("https://www.freva.dkrz.de/api/freva-nextgen/stacapi")
-
-        # Search for items
-        search <- catalog %>%
-            stac_search(
-                collections = "observations",
-                datetime = "2020-01-01/2020-12-31",
-                bbox = c(-10, 40, 10, 60)
-            ) %>%
-            get_request()
-
-        # Get items
-        items <- search$features
-        cat("Found", length(items), "items\n")
-
-    .. code-tab:: javascript
-        :caption: JavaScript with @stac/client
-
-        import { STACApiClient } from '@stac/client';
-
-        // Connect to the STAC API
-        const client = new STACApiClient({
-            url: 'https://www.freva.dkrz.de/api/freva-nextgen/stacapi'
-        });
-
-        // Search for items
-        const search = await client.search({
-            collections: ['observations'],
-            datetime: '2020-01-01/2020-12-31',
-            bbox: [-10, 40, 10, 60]
-        });
-
-        // Get items
-        const items = await search.getItems();
-        console.log(`Found ${items.length} items`);
 
 ---
 
