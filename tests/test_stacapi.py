@@ -430,3 +430,17 @@ def test_stacapi_search_filter(test_server: str) -> None:
     # Invalid JSON
     res = requests.get(f"{test_server}/stacapi/search", params={"filter": "invalid_json", "limit": 1})
     assert res.status_code == 200 
+def test_cors_preflight_options(test_server: str) -> None:
+    """Preflight (OPTIONS) on STAC search must return 200 + CORS headers."""
+    resp = requests.options(
+        f"{test_server}/stacapi/search",
+        headers={
+            "Origin": "https://radiantearth.github.io",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "Content-Type",
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.headers.get("access-control-allow-origin") == "*"
+    assert "POST" in resp.headers.get("access-control-allow-methods", "")
+    assert "*" in resp.headers.get("access-control-allow-headers", "")
