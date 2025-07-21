@@ -1,7 +1,7 @@
 # This is the server configuration file for running the restAPI as
 #
 [restAPI]
-services = ["databrowser", "zarr-stream"]
+services = ["databrowser", "zarr-stream", "stacapi"]
 proxy = ""
 
 [solr]

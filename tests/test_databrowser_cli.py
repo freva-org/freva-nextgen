@@ -1,13 +1,16 @@
 """Tests for the commandline interface."""
 
 import json
+import subprocess
+import zipfile
 from copy import deepcopy
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from pytest import LogCaptureFixture
 from typer.testing import CliRunner
 
-from freva_client.auth import Auth, authenticate
+from freva_client.auth import Auth
 from freva_client.cli.databrowser_cli import databrowser_app as app
 
 
@@ -36,15 +39,13 @@ def test_search_files_normal(cli_runner: CliRunner, test_server: str) -> None:
     )
     assert res.exit_code == 0
     assert not res.stdout
-    res = cli_runner.invoke(
-        app, ["data-search", "--host", test_server, "--json"]
-    )
+    res = cli_runner.invoke(app, ["data-search", "--host", test_server, "--json"])
     assert res.exit_code == 0
     assert isinstance(json.loads(res.stdout), list)
 
 
 def test_search_files_zarr(
-    cli_runner: CliRunner, test_server: str, auth_instance: Auth
+    cli_runner: CliRunner, test_server: str, auth_instance: Auth, token_file: Path
 ) -> None:
     """Test searching for files (with zarr)."""
     token = deepcopy(auth_instance._auth_token)
@@ -54,7 +55,6 @@ def test_search_files_zarr(
             app, ["data-search", "--host", test_server, "--zar"]
         )
         assert res.exit_code > 0
-        token_data = authenticate(username="janedoe", host=test_server)
         auth_instance._auth_token = None
         res = cli_runner.invoke(
             app,
@@ -63,8 +63,8 @@ def test_search_files_zarr(
                 "--host",
                 test_server,
                 "--zarr",
-                "--access-token",
-                token_data["access_token"],
+                "--token-file",
+                str(token_file),
                 "dataset=cmip6-fs",
                 "--json",
             ],
@@ -108,8 +108,61 @@ def test_intake_catalogue_no_zarr(
             assert isinstance(json.load(stream), dict)
 
 
+def test_stac_catalogue(
+    cli_runner: CliRunner, test_server: str, temp_dir: Path
+) -> None:
+    """Test STAC Catalogue"""
+    output_file = temp_dir / "something.zip"
+    # we check the STAC items in the output file
+    res = cli_runner.invoke(
+        app,
+        ["stac-catalogue", "--host", test_server, "--filename", output_file],
+    )
+    assert res.exit_code == 0
+    with zipfile.ZipFile(output_file, "r") as zip_file:
+        for member in zip_file.namelist():
+            if "/items/" in member and member.endswith(".json"):
+                item_content = zip_file.read(member)
+                temp_item_path = temp_dir / "test_item.json"
+                temp_item_path.write_bytes(item_content)
+                res_stac = subprocess.run(
+                    ["stac-check", str(temp_item_path)],
+                    check=True,
+                    capture_output=True,
+                )
+                assert "ITEM Passed: True" in res_stac.stdout.decode("utf-8")
+
+                break
+    # failed test with static STAC catalogue - wrong output
+    res = cli_runner.invoke(
+        app, ["stac-catalogue", "--host", test_server, "--filename", "/foo/bar"]
+    )
+    assert res.exit_code == 1
+
+    # failed test with static STAC catalogue - wrong search params
+    res = cli_runner.invoke(
+        app,
+        [
+            "stac-catalogue",
+            "--host",
+            test_server,
+            "--filename",
+            "/foo/bar" "foo=b",
+        ],
+    )
+    assert res.exit_code == 1
+
+    # None filename
+    res = cli_runner.invoke(app, ["stac-catalogue", "--host", test_server])
+    assert res.exit_code == 0
+    assert (
+        "Downloading the STAC catalog started ...\nSTAC catalog saved to: "
+        in res.stdout
+    )
+
+
 def test_intake_files_zarr(
-    cli_runner: CliRunner, test_server: str, auth_instance: Auth
+    cli_runner: CliRunner, test_server: str, auth_instance: Auth, token_file: Path
 ) -> None:
     """Test searching for files (with zarr)."""
     token = deepcopy(auth_instance._auth_token)
@@ -119,7 +172,6 @@ def test_intake_files_zarr(
             app, ["inktake-catalogue", "--host", test_server, "--zar"]
         )
         assert res.exit_code > 0
-        token_data = authenticate(username="janedoe", host=test_server)
         auth_instance._auth_token = None
         res = cli_runner.invoke(
             app,
@@ -128,8 +180,8 @@ def test_intake_files_zarr(
                 "--host",
                 test_server,
                 "--zarr",
-                "--access-token",
-                token_data["access_token"],
+                "--token-file",
+                str(token_file),
                 "dataset=cmip6-fs",
             ],
         )
@@ -169,9 +221,7 @@ def test_count_values(cli_runner: CliRunner, test_server: str) -> None:
     res = cli_runner.invoke(app, ["data-count", "--host", test_server])
     assert res.exit_code == 0
     assert res.stdout
-    res = cli_runner.invoke(
-        app, ["data-count", "--host", test_server, "--json"]
-    )
+    res = cli_runner.invoke(app, ["data-count", "--host", test_server, "--json"])
     assert res.exit_code == 0
     assert isinstance(json.loads(res.stdout), int)
 

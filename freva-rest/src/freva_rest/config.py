@@ -17,10 +17,12 @@ from typing import (
     Iterator,
     List,
     Optional,
-    Set,
     Tuple,
+    Type,
+    TypeVar,
     Union,
     cast,
+    overload,
 )
 import asyncio
 import requests
@@ -35,6 +37,56 @@ from sqlalchemy.sql import text
 
 ConfigItem = Union[str, int, float, None]
 
+T = TypeVar("T", str, int)
+
+
+def env_to_int(env_var: str, fallback: int) -> int:
+    """Convert a env variable to a dict."""
+    var = os.getenv(env_var, "")
+    if not var.isdigit():
+        return fallback
+    return int(var)
+
+
+def env_to_dict(env_var: str) -> Dict[str, List[str]]:
+    """Convert env variables to a dict.
+
+    key1:value1,key2:value2,key1:value2 -> {"key1": ["value1", "value2"],
+                                            "key2": ["value2"]}
+    """
+    result: Dict[str, List[str]] = {}
+    for kv in os.getenv(env_var, "").split(","):
+        key, _, value = kv.partition(":")
+        if key and value:
+            result.setdefault(key, [])
+            if value not in result[key]:
+                result[key].append(value)
+    return result
+
+
+@overload
+def env_to_list(env_var: str, target_type: Type[int]) -> List[int]: ...
+
+
+@overload
+def env_to_list(env_var: str, target_type: Type[str]) -> List[str]: ...
+
+
+def env_to_list(env_var: str, target_type: Type[T]) -> List[T]:
+    """Convert env variables to a List.
+
+    Converts a comma-separated string from an environment variable into a list
+    of the specified type.
+
+    Example:
+        key1,key2-> ["key1": "key2"]
+    """
+    return [
+        target_type(k.strip())
+        for k in set(os.getenv(env_var, "").split(","))
+        if k.strip()
+    ]
+
 
 class ServerConfig(BaseModel):
     """Read the basic configuration for the server.
@@ -47,9 +99,7 @@ class ServerConfig(BaseModel):
         Union[str, Path],
         Field(
             title="API Config",
-            description=(
-                "Path to a .toml file holding the API" "configuration"
-            ),
+            description=("Path to a .toml file holding the API" "configuration"),
         ),
     ] = os.getenv("API_CONFIG", Path(__file__).parent / "api_config.toml")
     proxy: Annotated[
@@ -60,12 +110,12 @@ class ServerConfig(BaseModel):
         ),
     ] = os.getenv("API_PROXY", "")
     debug: Annotated[
-        Union[bool, int, str],
+        Union[bool, int],
         Field(
             title="Debug mode",
             description="Turn on debug mode",
         ),
-    ] = os.getenv("DEBUG", "0")
+    ] = env_to_int("DEBUG", 0)
     mongo_host: Annotated[
         str,
         Field(
@@ -109,25 +159,27 @@ class ServerConfig(BaseModel):
         ),
     ] = os.getenv("API_SOLR_CORE", "")
     cache_exp: Annotated[
-        str,
+        Optional[int],
         Field(
             title="Cache expiration.",
             description=(
                 "The expiration time in sec" "of the data loading cache."
             ),
         ),
-    ] = os.getenv("API_CACHE_EXP", "")
-    api_services: Annotated[
-        str,
+    ] = env_to_int("API_CACHE_EXP", 3600)
+    services: Annotated[
+        List[str],
         Field(
             title="Services",
+            alias="s",
+            alias_priority=1,
             description="The services that should be enabled.",
         ),
-    ] = os.getenv("API_SERVICES", "databrowser,zarr-stream")
+    ] = env_to_list("API_SERVICES", str)
     redis_host: Annotated[
         str,
         Field(
-            title="Rest Host",
+            title="Redis Host",
             description="Url of the redis cache.",
         ),
     ] = os.getenv("API_REDIS_HOST", "")
@@ -190,6 +242,33 @@ class ServerConfig(BaseModel):
             description="The OIDC client secret, if any, used for authentication.",
         ),
     ] = os.getenv("API_OIDC_CLIENT_SECRET", "")
+    oidc_token_claims: Annotated[
+        Optional[Dict[str, List[str]]],
+        Field(
+            title="Token claim filter.",
+            description=(
+                "Token claim-based filters in "
+                "the format [<key1.key2> <pattern>]. Each filter "
+                "matches if the decoded JWT contains the "
+                "specified claim (e.g., group, role) and its "
+                "value includes the given pattern. Patterns can "
+                "be plain substrings or regular expressions."
+                "Nested claims are defined by '.' separation."
+            ),
+        ),
+    ] = (
+        env_to_dict("API_OIDC_TOKEN_CLAIMS") or None
+    )
+    oidc_auth_ports: Annotated[
+        List[int],
+        Field(
+            title="Valid local auth ports.",
+            description=(
+                "List valid redirect portss that being used for authentication"
+                " flow via localhost."
+            ),
+        ),
+    ] = env_to_list("API_OIDC_AUTH_PORTS", int)
     # TODO: Since all are coming from a toml file, we can consider the following
     # variables as a dict.
     secondary_backend_type: Annotated[
@@ -235,7 +314,6 @@ class ServerConfig(BaseModel):
             description="Set the lookuptable to the Secondary backend service.",
         ),
     ] = os.getenv("API_SECONDARY_BACKEND_LOOKUPTABLE", {})
-
     def _read_config(self, section: str, key: str) -> Any:
         fallback = self._fallback_config.get(section, {}).get(key) or None
         return self._config.get(section, {}).get(key, fallback)
@@ -252,16 +330,19 @@ class ServerConfig(BaseModel):
         except Exception as error:
             logger.critical("Failed to load config file: %s", error)
             self._config = self._fallback_config
-        if isinstance(self.debug, str):
-            self.debug = bool(int(self.debug))
         self.debug = bool(self.debug)
         self.set_debug(self.debug)
         self._mongo_client: Optional[AsyncIOMotorClient] = None
         self._sqlaclchemy_client: Optional[async_sessionmaker[AsyncSession]] = None
         self._solr_fields = self._get_solr_fields()
         self._oidc_overview: Optional[Dict[str, Any]] = None
-        self.api_services = self.api_services or ",".join(
-            self._read_config("restAPI", "services")
+        self.services = (
+            self.services or self._read_config("restAPI", "services") or []
+        )
+        self.oidc_token_claims = (
+            self.oidc_token_claims
+            or self._read_config("oidc", "token_claims")
+            or {}
         )
         self.proxy = (
             self.proxy
@@ -280,16 +361,12 @@ class ServerConfig(BaseModel):
         self.mongo_host = self.mongo_host or self._read_config(
             "mongo_db", "hostname"
         )
-        self.mongo_user = self.mongo_user or self._read_config(
-            "mongo_db", "user"
-        )
+        self.mongo_user = self.mongo_user or self._read_config("mongo_db", "user")
         self.mongo_password = self.mongo_password or self._read_config(
             "mongo_db", "password"
         )
         self.mongo_db = self.mongo_db or self._read_config("mongo_db", "name")
-        self.solr_host = self.solr_host or self._read_config(
-            "solr", "hostname"
-        )
+        self.solr_host = self.solr_host or self._read_config("solr", "hostname")
         self.solr_core = self.solr_core or self._read_config("solr", "core")
         self.redis_user = self.redis_user or self._read_config("cache", "user")
         self.redis_password = self.redis_password or self._read_config(
@@ -304,6 +381,9 @@ class ServerConfig(BaseModel):
         )
         self.redis_host = self.redis_host or self._read_config(
             "cache", "hostname"
+        )
+        self.oidc_auth_ports = self.oidc_auth_ports or self._read_config(
+            "oidc", "auth_ports"
         )
         self.secondary_backend_type = (backend_type := self.secondary_backend_type or self._read_config("secondary-backend", "type")) in VALID_SECONDARY_BACKEND_TYPES and backend_type
         self.secondary_backend_dns = self.secondary_backend_dns or self._read_config(
@@ -328,13 +408,6 @@ class ServerConfig(BaseModel):
             return url
         return f"{url}:{default_port}"
         # If the original url has already a port in the suffix remove it
-
-    @property
-    def services(self) -> Set[str]:
-        """Define the services that are served."""
-        return set(
-            s.strip() for s in self.api_services.split(",") if s.strip()
-        )
 
     @property
     def redis_url(self) -> str:
@@ -454,7 +527,8 @@ class ServerConfig(BaseModel):
                 ] not in ("file_name", "file", "file_no_version"):
                     yield entry["name"]
         except (
-            requests.exceptions.ConnectionError
+            requests.exceptions.ConnectionError,
+            requests.exceptions.JSONDecodeError,
         ) as error:  # pragma: no cover
             logger.error(
                 "Connection to %s failed: %s", url, error

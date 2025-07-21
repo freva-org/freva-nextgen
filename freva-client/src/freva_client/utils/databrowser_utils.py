@@ -141,12 +141,17 @@ class Config:
     @property
     def zarr_loader_url(self) -> str:
         """Define the url for getting zarr files."""
-        return f"{self.databrowser_url}/load/{self.flavour}/"
+        return f"{self.databrowser_url}/load/{self.flavour}"
 
     @property
     def intake_url(self) -> str:
         """Define the url for creating intake catalogues."""
         return f"{self.databrowser_url}/intake-catalogue/{self.flavour}/{self.uniq_key}"
+
+    @property
+    def stac_url(self) -> str:
+        """Define the url for creating stac catalogue."""
+        return f"{self.databrowser_url}/stac-catalogue/{self.flavour}/{self.uniq_key}"
 
     @property
     def metadata_url(self) -> str:
@@ -325,13 +330,13 @@ class UserDataHandler:
         self, path: Union[os.PathLike[str], xr.Dataset]
     ) -> Dict[str, Union[str, List[str], Dict[str, str]]]:
         """Get metadata from a path or xarray dataset."""
-
+        time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
         try:
             dset = (
                 path
                 if isinstance(path, xr.Dataset)
                 else xr.open_mfdataset(
-                    str(path), parallel=False, use_cftime=True, lock=False
+                    str(path), parallel=False, decode_times=time_coder, lock=False
                 )
             )
             time_freq = dset.attrs.get("frequency", "")

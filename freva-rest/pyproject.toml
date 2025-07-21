@@ -33,21 +33,21 @@ dependencies = [
 "rich-argparse",
 "requests",
 "redis",
-"uuid",
 "tomli",
 "typing_extensions",
 "uvicorn",
-"zarr<3",
 "sqlalchemy",
 "asyncpg",
 "greenlet",
+"zarr",
+"httpx",
 ]
 [project.scripts]
 freva-rest-server = "freva_rest.cli:cli"
 [project.urls]
-Documentation = "https://freva-clint.github.io/freva-nextgen"
-Issues = "https://github.com/FREVA-CLINT/freva-nextgen/issues"
-Source = "https://github.com/FREVA-CLINT/freva-nextgen/"
+Documentation = "https://freva-org.github.io/freva-nextgen"
+Issues = "https://github.com/freva-org/freva-nextgen/issues"
+Source = "https://github.com/freva-org/freva-nextgen/"
 
 [project.optional-dependencies]
 dev = ["tox", "cryptography", "intake-esm"]
@@ -59,7 +59,18 @@ tests = ["xarray",
          "mock",
          "pytest-mock",
          "pytest-cov",
+         "pytest-asyncio",
+         "pymongo",
+         "stac-check",
          ]
-
+docs = ["sphinx-execute-code-python3",
+        "sphinx-code-tabs",
+        "sphinx-copybutton",
+        "sphinx-sitemap",
+        "sphinx-togglebutton",
+        "sphinxcontrib-httpdomain",
+        "sphinxext-opengraph",
+        "pydata-sphinx-theme"
+        ]
 [package-data]
 freva_rest = ["py.typed", "*.toml", "*.ico", "mock/*.json"]

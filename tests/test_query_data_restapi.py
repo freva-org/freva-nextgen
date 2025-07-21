@@ -1,7 +1,6 @@
 """Unit tests for data queries via the rest-api."""
 
 import json
-import os
 import time
 from typing import Dict
 
@@ -143,6 +142,37 @@ def test_time_selection(test_server: str) -> None:
     assert res3.status_code == 500
 
 
+def test_bbox_selection(test_server: str) -> None:
+    """Test the bbox select functionality of the API."""
+    res1 = requests.get(
+        f"{test_server}/databrowser/data-search/freva/file",
+        params={"bbox": "-10,10,-10,10"},
+    )
+    assert len(res1.text.split()) == 61
+    res2 = requests.get(
+        f"{test_server}/databrowser/data-search/freva/file",
+        params={"bbox": "-10,10,-10,10", "bbox_select": "foo"},
+    )
+    assert res2.status_code == 500
+    res3 = requests.get(
+        f"{test_server}/databrowser/data-search/freva/file",
+        params={"bbox": "fx"},
+    )
+    assert res3.status_code == 500
+
+    res3 = requests.get(
+        f"{test_server}/databrowser/data-search/freva/file",
+        params={"bbox": "-181,181,-10,10"},
+    )
+    assert res3.status_code == 500
+
+    res4 = requests.get(
+        f"{test_server}/databrowser/data-search/freva/file",
+        params={"bbox": "-10,10,-91,91"},
+    )
+    assert res3.status_code == 500
+
+
 def test_primary_facets(test_server: str) -> None:
     """Test the functionality of primary facet definitions."""
     res1 = requests.get(
@@ -167,7 +197,7 @@ def test_primary_facets(test_server: str) -> None:
     assert res1["primary_facets"] != res2["primary_facets"]
 
 
-def test_extended_search(test_server: str) -> None:
+def test_extended_search(test_server: str, auth: Dict[str, str]) -> None:
     """Test the facet search functionality."""
     res1 = requests.get(
         f"{test_server}/databrowser/extended-search/cmip6/uri",
@@ -208,8 +238,40 @@ def test_extended_search(test_server: str) -> None:
         params={"facets": "activity_id", "max-results": 0},
     ).json()
     assert len(res7["search_results"]) == 0
+    # test the zarr stream pagination functionality
+    res8 = requests.get(
+        f"{test_server}/databrowser/extended-search/cmip6/uri",
+        params={"facets": "activity_id", "max-results": 1, "zarr_stream": True}, headers={
+            "Authorization": f"Bearer {auth['access_token']}"
+        }
+    ).json()
+    assert len(res8["search_results"]) == 1
 
+    res9 = requests.get(
+        f"{test_server}/databrowser/extended-search/cmip6/uri",
+        params={"facets": "activity_id", "max-results": 1, "zarr_stream": True}
+    )
+    assert res9.status_code == 401
+    with mock.patch("freva_rest.databrowser_api.core.create_redis_connection", None):
+        res10 = requests.get(
+            f"{test_server}/databrowser/extended-search/cmip6/uri",
+            params={"facets": "activity_id", "max-results": 1, "zarr_stream": True},
+            headers={
+                "Authorization": f"Bearer {auth['access_token']}"
+            },
+        ).json()
+        assert res10["search_results"][0]["uri"] == "Internal error, service not able to publish"
 
+    with mock.patch(
+        "freva_rest.rest.server_config.services",
+        "databrowser"
+    ):
+        res11 = requests.get(
+            f"{test_server}/databrowser/extended-search/cmip6/uri",
+            params={"facets": "activity_id", "max-results": 1, "zarr_stream": True}
+        )
+        # get the normal response
+        assert res11.status_code == 200
 def test_metadata_search(test_server: str) -> None:
     """Test the facet search functionality."""
     res1 = requests.get(
@@ -293,6 +355,37 @@ def test_intake_search(test_server: str) -> None:
     assert res4.status_code == 413
 
 
+def test_stac_catalogue(test_server: str) -> None:
+    """Test the creation of STAC Catalogue."""
+
+    # 200 OK from STAC static endpoint
+    res = requests.get(
+        f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
+        params={"activity_id": "cmip", "multi-version": True, "max_results": 2},
+        allow_redirects=False,
+    )
+    assert res.status_code == 200
+
+    # 413 Request Entity Too Large
+    res3 = requests.get(
+        f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
+        params={"activity_id": "cmip", "multi-version": False, "max-results": 1},
+    )
+    assert res3.status_code == 413
+    # 422 Unprocessable Entity
+    res4 = requests.get(
+        f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
+        params={"collection": "cmip2", "multi-version": False},
+    )
+    assert res4.status_code == 422
+    # 404 Not Found
+    res5 = requests.get(
+        f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
+        params={"activity_id": "cmip3", "multi-version": False},
+    )
+    assert res5.status_code == 404
+
+
 def test_bad_intake_request(test_server: str) -> None:
     """Test for a wrong intake request."""
     res1 = requests.get(
@@ -345,7 +438,7 @@ def test_zarr_stream_not_implemented(
     test_server: str, auth: Dict[str, str]
 ) -> None:
     """Test if zarr request is not served when told not to do so."""
-    with mock.patch("freva_rest.rest.server_config.api_services", ""):
+    with mock.patch("freva_rest.rest.server_config.services", ""):
         res = requests.get(
             f"{test_server}/databrowser/load/freva",
             headers={"Authorization": f"Bearer {auth['access_token']}"},

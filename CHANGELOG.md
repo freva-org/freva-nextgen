@@ -1,6 +1,26 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [v2507.0.0]
+### Changed
+ - Internal changes.
+ - Cli bug fix
+
+
+
+## [v2506.0.1]
+### Changed
+ - Internal changes.
+
+## [v2506.0.0]
+### Changed
+ - Moved from password based logins to code based auth flow.
+
+## [v2505.0.0]
+### Changed
+- Creation of static stac caltalogues anologuous to intake-catalogues.
+- Added bmounding boxes to search for geographical regions.
+
 ## [v2408.0.0]
 ### Changed
 - Only use open id connect discovery url for authentication.

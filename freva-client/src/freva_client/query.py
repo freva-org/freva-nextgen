@@ -28,6 +28,7 @@ from rich import print as pprint
 
 from .auth import Auth
 from .utils import logger
+from .utils.auth_utils import Token, choose_token_strategy, load_token
 from .utils.databrowser_utils import Config, UserDataHandler
 
 __all__ = ["databrowser"]
@@ -44,12 +45,12 @@ class databrowser:
     Parameters
     ~~~~~~~~~~
 
-    *facets: str
+    facets: str
         If you are not sure about the correct search key's you can use
         positional arguments to search of any matching entries. For example
         'era5' would allow you to search for any entries
         containing era5, regardless of project, product etc.
-    **search_keys: str
+    search_keys: str
         The search constraints applied in the data search. If not given
         the whole dataset will be queried.
     flavour: str, default: freva
@@ -63,8 +64,10 @@ class databrowser:
         timestamp. The timestamps has to follow ISO-8601. Valid strings are
         ``%Y-%m-%dT%H:%M to %Y-%m-%dT%H:%M`` for time ranges or
         ``%Y-%m-%dT%H:%M`` for single time stamps.
-        **Note**: You don't have to give the full string format to subset
-        time steps: `%Y`, `%Y-%m` etc are also valid.
+
+        .. note:: You don't have to give the full string format to subset time
+                steps ``%Y``, ``%Y-%m`` etc are also valid.
+
     time_select: str, default: flexible
         Operator that specifies how the time period is selected. Choose from
         flexible (default), strict or file. ``strict`` returns only those files
@@ -74,11 +77,25 @@ class databrowser:
         ``flexible`` returns those files that have either start or end period
         covered. ``file`` will only return files where the entire time
         period is contained within `one single` file.
+    bbox: str, default: ""
+        Special search facet to refine/subset search results by spatial extent.
+        This can be a list representation of a bounding box or a WKT polygon.
+        Valid lists are ``min_lon max_lon min_lat max_lat`` for bounding
+        boxes and Well-Known Text (WKT) format for polygons.
+
+    bbox_select: str, default: flexible
+        Operator that specifies how the spatial extent is selected. Choose from
+        flexible (default), strict or file. ``strict`` returns only those files
+        that fully contain the query extent. The bbox search ``-10 10 -10 10``
+        will not select files covering only ``0 5 0 5`` with the ``strict``
+        method. ``flexible`` will select those files as it returns files that
+        have any overlap with the query extent. ``file`` will only return files
+        where the entire spatial extent is contained by the query geometry.
     uniq_key: str, default: file
         Chose if the solr search query should return paths to files or
         uris, uris will have the file path along with protocol of the storage
-        system. Uris can be useful if the search query result should be
-        used libraries like fsspec.
+        system. URIs are useful when working with libraries like fsspec, which
+        require protocol information.
     host: str, default: None
         Override the host name of the databrowser server. This is usually the
         url where the freva web site can be found. Such as www.freva.dkrz.de.
@@ -112,7 +129,7 @@ class databrowser:
     databrowser class using the ``experiment`` search constraint.
     If you just 'print' the created object you will get a quick overview:
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import databrowser
         db = databrowser(experiment="cmorph", uniq_key="uri")
@@ -121,7 +138,7 @@ class databrowser:
     After having created the search object you can acquire different kinds of
     information like the number of found objects:
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import databrowser
         db = databrowser(experiment="cmorph", uniq_key="uri")
@@ -130,7 +147,7 @@ class databrowser:
 
     Or you can retrieve the combined metadata of the search objects.
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import databrowser
         db = databrowser(experiment="cmorph", uniq_key="uri")
@@ -138,7 +155,7 @@ class databrowser:
 
     Most importantly you can retrieve the locations of all encountered objects
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import databrowser
         db = databrowser(experiment="cmorph", uniq_key="uri")
@@ -151,7 +168,7 @@ class databrowser:
     You can also set a different flavour, for example according to cmip6
     standard:
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import databrowser
         db = databrowser(flavour="cmip6", experiment_id="cmorph")
@@ -163,7 +180,7 @@ class databrowser:
     for getting all ocean reanalysis datasets you can apply the 'reana*'
     search key as a positional argument:
 
-    .. execute_code::
+    .. code-block:: python
 
         from freva_client import databrowser
         db = databrowser("reana*", realm="ocean", flavour="cmip6")
@@ -179,18 +196,18 @@ class databrowser:
     before you are able to access the data. Refer also to the
     :py:meth:`freva_client.authenticate` method.
 
-    .. execute_code::
+    .. code-block:: python
 
-        from freva_client import authenticate, databrowser
-        token_info = authenticate(username="janedoe")
+        from freva_client import databrowser
         db = databrowser(dataset="cmip6-fs", stream_zarr=True)
         zarr_files = list(db)
-        print(zarr_files)
 
     After you have created the paths to the zarr files you can open them
 
-    ::
+    .. code-block:: python
 
+        from freva_client import authenticate
+        token_info = authenticate()
         import xarray as xr
         dset = xr.open_dataset(
            zarr_files[0],
@@ -214,6 +231,8 @@ class databrowser:
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
+        bbox: Optional[Tuple[float, float, float, float]] = None,
+        bbox_select: Literal["flexible", "strict", "file"] = "flexible",
         stream_zarr: bool = False,
         multiversion: bool = False,
         fail_on_error: bool = False,
@@ -238,6 +257,10 @@ class databrowser:
         if time:
             self._params["time"] = time
             self._params["time_select"] = time_select
+        if bbox:
+            bbox_str = ",".join(map(str, bbox))
+            self._params["bbox"] = bbox_str
+            self._params["bbox_select"] = bbox_select
         if facets:
             self._add_search_keyword_args_from_facet(facets, facet_search)
 
@@ -269,7 +292,7 @@ class databrowser:
         headers = {}
         if self._stream_zarr:
             query_url = self._cfg.zarr_loader_url
-            token = self._auth.check_authentication(auth_url=self._cfg.auth_url)
+            token = self._auth.authenticate(config=self._cfg)
             headers = {"Authorization": f"Bearer {token['access_token']}"}
         result = self._request("GET", query_url, headers=headers, stream=True)
         if result is not None:
@@ -328,7 +351,7 @@ class databrowser:
 
         Example
         ~~~~~~~
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             print(len(databrowser(experiment="cmorph")))
@@ -345,7 +368,7 @@ class databrowser:
         kwargs: Dict[str, Any] = {"stream": True}
         url = self._cfg.intake_url
         if self._stream_zarr:
-            token = self._auth.check_authentication(auth_url=self._cfg.auth_url)
+            token = self._auth.authenticate(config=self._cfg)
             url = self._cfg.zarr_loader_url
             kwargs["headers"] = {
                 "Authorization": f"Bearer {token['access_token']}"
@@ -364,6 +387,41 @@ class databrowser:
             raise ValueError(
                 f"Couldn't write catalogue content: {error}"
             ) from None
+
+    @property
+    def auth_token(self) -> Optional[Token]:
+        """Get the current OAuth2 token - if it is still valid.
+
+        Returns
+        -------
+        Token:
+            If the OAuth2 token exists,is valid and can be used it will
+            be returned, None otherwise.
+
+        Example
+        -------
+
+        .. code-block:: python
+
+            from freva_client import databrowser
+            import xarray as xr
+            db = databrowser(dataset="cmip6-hsm", stream_zarr=True)
+            dset = xr.open_dataset(
+               zarr_files[0],
+               chunks="auto",
+               engine="zarr",
+               storage_options={"headers":
+                    {"Authorization": f"Bearer {db.auth_token['access_token']}"}
+               }
+            )
+        """
+        token = self._auth._auth_token or load_token(self._auth.token_file)
+        strategy = choose_token_strategy(token)
+        if strategy in ("browser_auth", "fail"):
+            return None
+        if strategy == "refresh_token":
+            token = self._auth.authenticate(config=self._cfg)
+        return token
 
     def intake_catalogue(self) -> intake_esm.core.esm_datastore:
         """Create an intake esm catalogue object from the search.
@@ -385,7 +443,7 @@ class databrowser:
         Let's create an intake-esm catalogue that points points allows for
         streaming the target data as zarr:
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             db = databrowser(dataset="cmip6-hsm", stream_zarr=True)
@@ -399,6 +457,84 @@ class databrowser:
                 intake.open_esm_datastore(temp_f.name),
             )
 
+    def stac_catalogue(
+        self,
+        filename: Optional[Union[str, Path]] = None,
+        **kwargs: Any,
+    ) -> str:
+        """Create a static STAC catalogue from
+        the search.
+
+        Parameters
+        ~~~~~~~~~~
+        filename: str, default: None
+            The filename of the STAC catalogue. If not given
+            or doesn't exist the STAC catalogue will be saved
+            to the current working directory.
+        kwargs: Any
+            Additional keyword arguments to be passed to the request.
+
+        Returns
+        ~~~~~~~
+        BinaryIO
+        A zip file stream
+
+        Raises
+        ~~~~~~
+        ValueError: If stac-catalogue creation failed.
+
+        Example
+        ~~~~~~~
+        Let's create a static STAC catalogue:
+
+        .. code-block:: python
+
+            from tempfile import mktemp
+            temp_path = mktemp(suffix=".zip")
+
+            from freva_client import databrowser
+            db = databrowser(dataset="cmip6-hsm")
+            db.stac_catalogue(filename=temp_path)
+            print(f"STAC catalog saved to: {temp_path}")
+
+        """
+
+        kwargs.update({"stream": True})
+        stac_url = self._cfg.stac_url
+        pprint("[b][green]Downloading the STAC catalog started ...[green][b]")
+        result = self._request("GET", stac_url, **kwargs)
+        if result is None or result.status_code == 404:
+            raise ValueError(  # pragma: no cover
+                "No STAC catalog found. Please check if you have any search results."
+            )
+        default_filename = (
+            result.headers.get("Content-Disposition", "")
+            .split("filename=")[-1]
+            .strip('"')
+        )
+
+        if filename is None:
+            save_path = Path.cwd() / default_filename
+        else:
+            save_path = Path(cast(str, filename))
+        if save_path.is_dir() and save_path.exists():
+            save_path = save_path / default_filename
+
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+
+        total_size = 0
+        with open(save_path, "wb") as f:
+            for chunk in result.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+                    total_size += len(chunk)
+
+        return (
+            f"STAC catalog saved to: {save_path} "
+            f"(size: {total_size / 1024 / 1024:.2f} MB). "
+            f"Or simply download from: {result.url}"
+        )
+
     @classmethod
     def count_values(
         cls,
@@ -409,6 +545,8 @@ class databrowser:
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
+        bbox: Optional[Tuple[float, float, float, float]] = None,
+        bbox_select: Literal["flexible", "strict", "file"] = "flexible",
         multiversion: bool = False,
         fail_on_error: bool = False,
         extended_search: bool = False,
@@ -419,7 +557,7 @@ class databrowser:
         Parameters
         ~~~~~~~~~~
 
-        *facets: str
+        facets: str
             If you are not sure about the correct search key's you can use
             positional arguments to search of any matching entries. For example
             'era5' would allow you to search for any entries
@@ -432,8 +570,11 @@ class databrowser:
             This can be a string representation of a time range or a single
             timestamp. The timestamp has to follow ISO-8601. Valid strings are
             ``%Y-%m-%dT%H:%M`` to ``%Y-%m-%dT%H:%M`` for time ranges and
-            ``%Y-%m-%dT%H:%M``. **Note**: You don't have to give the full string
-            format to subset time steps ``%Y``, ``%Y-%m`` etc are also valid.
+            ``%Y-%m-%dT%H:%M``.
+
+            .. note:: You don't have to give the full string format to subset time
+                    steps ``%Y``, ``%Y-%m`` etc are also valid.
+
         time_select: str, default: flexible
             Operator that specifies how the time period is selected. Choose from
             flexible (default), strict or file. ``strict`` returns only those files
@@ -443,6 +584,20 @@ class databrowser:
             ``flexible`` returns those files that have either start or end period
             covered. ``file`` will only return files where the entire time
             period is contained within `one single` file.
+        bbox: str, default: ""
+            Special search facet to refine/subset search results by spatial extent.
+            This can be a list representation of a bounding box or a WKT polygon.
+            Valid lists are ``min_lon max_lon min_lat max_lat`` for bounding
+            boxes and Well-Known Text (WKT) format for polygons.
+
+        bbox_select: str, default: flexible
+            Operator that specifies how the spatial extent is selected. Choose from
+            flexible (default), strict or file. ``strict`` returns only those files
+            that fully contain the query extent. The bbox search ``-10 10 -10 10``
+            will not select files covering only ``0 5 0 5`` with the ``strict``
+            method. ``flexible`` will select those files as it returns files that
+            have any overlap with the query extent. ``file`` will only return files
+            where the entire spatial extent is contained by the query geometry.
         extended_search: bool, default: False
             Retrieve information on additional search keys.
         host: str, default: None
@@ -455,7 +610,7 @@ class databrowser:
         fail_on_error: bool, default: False
             Make the call fail if the connection to the databrowser could not
             be established.
-        **search_keys: str
+        search_keys: str
             The search constraints to be applied in the data search. If not given
             the whole dataset will be queried.
 
@@ -468,12 +623,12 @@ class databrowser:
         Example
         ~~~~~~~
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             print(databrowser.count_values(experiment="cmorph"))
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             print(databrowser.count_values("model"))
@@ -483,7 +638,7 @@ class databrowser:
         example for getting all ocean reanalysis datasets you can apply the
         'reana*' search key as a positional argument:
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             print(databrowser.count_values("reana*", realm="ocean", flavour="cmip6"))
@@ -494,6 +649,8 @@ class databrowser:
             flavour=flavour,
             time=time,
             time_select=time_select,
+            bbox=bbox,
+            bbox_select=bbox_select,
             host=host,
             multiversion=multiversion,
             fail_on_error=fail_on_error,
@@ -522,7 +679,7 @@ class databrowser:
 
         Reverse search: retrieving meta data from a known file
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             db = databrowser(uri="slk:///arch/*/CPC/*")
@@ -545,6 +702,8 @@ class databrowser:
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
+        bbox: Optional[Tuple[float, float, float, float]] = None,
+        bbox_select: Literal["flexible", "strict", "file"] = "flexible",
         multiversion: bool = False,
         fail_on_error: bool = False,
         extended_search: bool = False,
@@ -558,7 +717,7 @@ class databrowser:
         Parameters
         ~~~~~~~~~~
 
-        *facets: str
+        facets: str
             If you are not sure about the correct search key's you can use
             positional arguments to search of any matching entries. For example
             'era5' would allow you to search for any entries
@@ -571,8 +730,11 @@ class databrowser:
             This can be a string representation of a time range or a single
             timestamp. The timestamp has to follow ISO-8601. Valid strings are
             ``%Y-%m-%dT%H:%M`` to ``%Y-%m-%dT%H:%M`` for time ranges and
-            ``%Y-%m-%dT%H:%M``. **Note**: You don't have to give the full string
-            format to subset time steps ``%Y``, ``%Y-%m`` etc are also valid.
+            ``%Y-%m-%dT%H:%M``.
+
+            .. note:: You don't have to give the full string format to subset time
+                    steps ``%Y``, ``%Y-%m`` etc are also valid.
+
         time_select: str, default: flexible
             Operator that specifies how the time period is selected. Choose from
             flexible (default), strict or file. ``strict`` returns only those files
@@ -582,6 +744,20 @@ class databrowser:
             ``flexible`` returns those files that have either start or end period
             covered. ``file`` will only return files where the entire time
             period is contained within *one single* file.
+        bbox: str, default: ""
+            Special search facet to refine/subset search results by spatial extent.
+            This can be a list representation of a bounding box or a WKT polygon.
+            Valid lists are ``min_lon max_lon min_lat max_lat`` for bounding
+            boxes and Well-Known Text (WKT) format for polygons.
+
+        bbox_select: str, default: flexible
+            Operator that specifies how the spatial extent is selected. Choose from
+            flexible (default), strict or file. ``strict`` returns only those files
+            that fully contain the query extent. The bbox search ``-10 10 -10 10``
+            will not select files covering only ``0 5 0 5`` with the ``strict``
+            method. ``flexible`` will select those files as it returns files that
+            have any overlap with the query extent. ``file`` will only return files
+            where the entire spatial extent is contained by the query geometry.
         extended_search: bool, default: False
             Retrieve information on additional search keys.
         multiversion: bool, default: False
@@ -594,7 +770,7 @@ class databrowser:
         fail_on_error: bool, default: False
             Make the call fail if the connection to the databrowser could not
             be established.
-        **search_keys: str, list[str]
+        search_keys: str, list[str]
             The facets to be applied in the data search. If not given
             the whole dataset will be queried.
 
@@ -607,7 +783,7 @@ class databrowser:
         Example
         ~~~~~~~
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             all_facets = databrowser.metadata_search(project='obs*')
@@ -615,7 +791,7 @@ class databrowser:
 
         You can also search for all metadata matching a search string:
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             spec_facets = databrowser.metadata_search("obs*")
@@ -623,7 +799,7 @@ class databrowser:
 
         Get all models that have a given time step:
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             model = databrowser.metadata_search(
@@ -634,7 +810,7 @@ class databrowser:
 
         Reverse search: retrieving meta data from a known file
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             res = databrowser.metadata_search(file="/arch/*CPC/*")
@@ -645,10 +821,26 @@ class databrowser:
         example for getting all ocean reanalysis datasets you can apply the
         'reana*' search key as a positional argument:
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             print(databrowser.metadata_search("reana*", realm="ocean", flavour="cmip6"))
+
+        In datasets with multiple versions only the `latest` version (i.e.
+        `highest` version number) is returned by default. Querying a specific
+        version from a multi versioned datasets requires the ``multiversion``
+        flag in combination with the ``version`` special attribute:
+
+        .. code-block:: python
+
+            from freva_client import databrowser
+            res = databrowser.metadata_search(dataset="cmip6-fs",
+                model="access-cm2", version="v20191108", extended_search=True,
+                multiversion=True)
+            print(res)
+
+        If no particular ``version`` is requested, information of all versions
+        will be returned.
 
         """
         this = cls(
@@ -656,6 +848,8 @@ class databrowser:
             flavour=flavour,
             time=time,
             time_select=time_select,
+            bbox=bbox,
+            bbox_select=bbox_select,
             host=host,
             multiversion=multiversion,
             fail_on_error=fail_on_error,
@@ -694,7 +888,7 @@ class databrowser:
         Example
         ~~~~~~~
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             print(databrowser.overview())
@@ -711,7 +905,7 @@ class databrowser:
         Example
         ~~~~~~~
 
-        .. execute_code::
+        .. code-block:: python
 
             from freva_client import databrowser
             db = databrowser()
@@ -790,11 +984,10 @@ class databrowser:
 
         Adding user data:
 
-        .. execute_code::
+        .. code-block:: python
 
-            from freva_client import authenticate, databrowser
+            from freva_client import databrowser
             import xarray as xr
-            token_info = authenticate(username="janedoe")
             filenames = (
                 "../freva-rest/src/freva_rest/databrowser_api/mock/data/model/regional/cordex/output/EUR-11/"
                 "GERICS/NCC-NorESM1-M/rcp85/r1i1p1/GERICS-REMO2015/v1/3hr/pr/v20181212/*.nc"
@@ -813,10 +1006,9 @@ class databrowser:
 
         Deleting user data:
 
-        .. execute_code::
+        .. code-block:: python
 
-            from freva_client import authenticate, databrowser
-            token_info = authenticate(username="janedoe")
+            from freva_client import databrowser
             databrowser.userdata(
                 action="delete",
                 metadata={"project": "cmip5", "experiment": "myFavExp"}
@@ -829,7 +1021,7 @@ class databrowser:
         userdata_items = userdata_items or []
         metadata = metadata or {}
         url = f"{this._cfg.userdata_url}"
-        token = this._auth.check_authentication(auth_url=this._cfg.auth_url)
+        token = this._auth.authenticate(config=this._cfg)
         headers = {"Authorization": f"Bearer {token['access_token']}"}
         payload_metadata: dict[str, Collection[Collection[str]]] = {}
 

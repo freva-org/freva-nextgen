@@ -48,26 +48,26 @@ services:
       - "8080:8080"
       - "8443:8443"
     command: |
-      start-dev
-      --hostname-strict=false
-      --import-realm
-      -Dkeycloak.migration.strategy=OVERWRITE_EXISTING
-  ldap:
-    image: docker.io/osixia/openldap:latest
+         start-dev
+         --hostname-strict=false
+         --import-realm
+         -Dkeycloak.migration.strategy=OVERWRITE_EXISTING
+
+  keycloak-bootstrap:
+    image: docker.io/badouralix/curl-jq
+    depends_on:
+      - keycloak
+    volumes:
+      - ./create-user.sh:/create-user.sh:ro
     environment:
-      LDAP_ORGANISATION: "My Organization"
-      LDAP_DOMAIN: "example.com"
-      LDAP_ADMIN_PASSWORD: "admin_password"
-      LDAP_ADMIN_USERNAME: "admin"
-    ports:
-      - "389:389"
-      - "636:636"
-    command: --copy-service
-    hostname: ldap
+      USER: ${USER}
+      KEYCLOAK_ADMIN: keycloak
+      KEYCLOAK_ADMIN_PASSWORD: secret
+      KEYCLOAK_HOST: keycloak:8080
+    entrypoint: ["sh", "/create-user.sh"]
     networks:
       - freva-rest
-    volumes:
-      - ./config/keycloak/users.ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom/users.ldif
+
   mongodb:
     networks:
       - freva-rest
@@ -80,7 +80,9 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - ./config/mongo/mongo-userdata-init.js:/docker-entrypoint-initdb.d/mongo-userdata-init.js:ro
+      - ./mongo-userdata-init.js:/docker-entrypoint-initdb.d/mongo-userdata-init.js:ro
+
+
 
   pgstac:
     networks:
@@ -110,7 +112,6 @@ services:
       - ./config/opensearch/opensearch.yml:/usr/share/opensearch/config/opensearch.yml
     ports:
       - "9203:9202"
-
 
 networks:
   freva-rest:

@@ -25,7 +25,6 @@ requires-python = ">=3.8"
 dependencies = [
 "appdirs",
 "pyyaml",
-"authlib",
 "requests",
 "intake_esm",
 "rich",
@@ -36,9 +35,9 @@ dependencies = [
 [project.scripts]
 freva-client = "freva_client:cli.app"
 [project.urls]
-Documentation = "https://freva-clint.github.io/freva-nextgen"
-Issues = "https://github.com/FREVA-CLINT/freva-nextgen/issues"
-Source = "https://github.com/FREVA-CLINT/freva-nextgen/"
+Documentation = "https://freva-org.github.io/freva-nextgen"
+Issues = "https://github.com/freva-org/freva-nextgen/issues"
+Source = "https://github.com/freva-org/freva-nextgen/"
 
 [project.optional-dependencies]
 dev = ["tox"]

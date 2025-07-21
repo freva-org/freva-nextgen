@@ -26,12 +26,15 @@ from typing import AsyncIterator
 from fastapi import FastAPI
 from fastapi.openapi.docs import get_redoc_html
 from fastapi.requests import Request
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 
 from freva_rest import __version__
 
 from .config import ServerConfig
 from .logger import logger, reset_loggers
+
+server_config = ServerConfig()
+
 
 metadata_tags = [
     {
@@ -60,9 +63,24 @@ metadata_tags = [
         "name": "Authentication",
         "description": "These endpoints are for authentication.",
     },
+    {
+        "name": "System",
+        "description": "System utility endpoints for monitoring and diagnostics.",
+    },
 ]
 
-server_config = ServerConfig()
+if "stacapi" in server_config.services:
+    metadata_tags.append({
+        "name": "STAC API",
+        "description": (
+            "The SpatioTemporal Asset Catalog (STAC) family of specifications"
+            " is a community-driven effort to make geospatial data more discoverable"
+            " and usable. The STAC API is a standard for building APIs that "
+            "provide access to STAC items and collections. The STAC API is "
+            "designed to be simple and easy to use, while also being powerful "
+            "and flexible enough to support a wide range of use cases."
+        ),
+    })
 
 
 @asynccontextmanager
@@ -96,7 +114,7 @@ app = FastAPI(
         "name": "BSD 2-Clause License",
         "url": "https://opensource.org/license/bsd-2-clause",
         "x-logo": {
-            "url": "https://freva-clint.github.io/freva-nextgen/_static/logo.png"
+            "url": "https://freva-org.github.io/freva-nextgen/_static/logo.png"
         },
     },
 )
@@ -108,6 +126,20 @@ async def custom_redoc_ui_html(request: Request) -> HTMLResponse:
         openapi_url="/api/freva-nextgen/help/openapi.json",
         title="Freva RestAPI",
         redoc_favicon_url="/favicon.ico",
+    )
+
+
+@app.get(
+    "/api/freva-nextgen/ping",
+    tags=["System"],
+    summary="Health check endpoint"
+)
+async def ping(request: Request) -> JSONResponse:
+    """Health check endpoint that returns
+        `pong` when the API is operational."""
+    return JSONResponse(
+        content={"ping": "pong"},
+        status_code=200,
     )
 
 

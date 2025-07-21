@@ -2,25 +2,29 @@
 
 import json
 import os
+import ssl
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, Literal, Optional, Tuple, TypedDict, cast
 
-import cloudpickle  # fades cloudpickle
-import redis  # fades redis
-import xarray as xr  # fades xarray
-from dask.distributed import LocalCluster  # fades distributed
-from dask.distributed import Client
+import cloudpickle
+import redis
+import xarray as xr
+from dask.distributed import Client, LocalCluster
 from xarray.backends.zarr import encode_zarr_variable
-from xpublish.utils.zarr import create_zmetadata  # fades xpublish
-from xpublish.utils.zarr import encode_chunk, get_data_chunk, jsonify_zmetadata
-from zarr.storage import array_meta_key
 
 from .backends import load_data
 from .utils import data_logger, str_to_int
+from .zarr_utils import (
+    create_zmetadata,
+    encode_chunk,
+    get_data_chunk,
+    jsonify_zmetadata,
+)
 
 ZARR_CONSOLIDATED_FORMAT = 1
 ZARR_FORMAT = 2
+ZARRAY_JSON = ".zarray"
 
 CLIENT: Optional[Client] = None
 LoadDict = TypedDict(
@@ -52,7 +56,7 @@ class RedisCacheFactory(redis.Redis):
 
     def __init__(self, db: int = 0) -> None:
         host, _, port = (
-            (os.environ.get("REDIS_HOST") or "localhost")
+            (os.environ.get("API_REDIS_HOST") or "localhost")
             .replace("redis://", "")
             .partition(":")
         )
@@ -61,11 +65,11 @@ class RedisCacheFactory(redis.Redis):
             "host": host,
             "port": port_i,
             "db": db,
-            "username": os.getenv("REDIS_USER"),
-            "password": os.getenv("REDIS_PASS"),
-            "ssl_certfile": os.getenv("REDIS_SSL_CERTFILE") or None,
-            "ssl_keyfile": os.getenv("REDIS_SSL_KEYFILE") or None,
-            "ssl_ca_certs": os.getenv("REDIS_SSL_CERTFILE") or None,
+            "username": os.getenv("API_REDIS_USER") or None,
+            "password": os.getenv("API_REDIS_PASSWORD") or None,
+            "ssl_certfile": os.getenv("API_REDIS_SSL_CERTFILE") or None,
+            "ssl_keyfile": os.getenv("API_REDIS_SSL_KEYFILE") or None,
+            "ssl_ca_certs": os.getenv("API_REDIS_SSL_CERTFILE") or None,
         }
         conn["ssl"] = conn["ssl_certfile"] is not None
         data_logger.info("Creating redis connection with args: %s", conn)
@@ -79,6 +83,7 @@ class RedisCacheFactory(redis.Redis):
             ssl_certfile=conn["ssl_certfile"],
             ssl_keyfile=conn["ssl_keyfile"],
             ssl_ca_certs=conn["ssl_ca_certs"],
+            ssl_cert_reqs=ssl.CERT_NONE,
         )
 
 
@@ -226,7 +231,7 @@ class DataLoadFactory:
         """Read the zarr metadata from the cache."""
         pickle_data, dset = self.load_object(key)
         meta = cast(Dict[str, Any], pickle_data["meta"])
-        arr_meta = meta["metadata"][f"{variable}/{array_meta_key}"]
+        arr_meta = meta["metadata"][f"{variable}/{ZARRAY_JSON}"]
         data = encode_chunk(
             get_data_chunk(
                 encode_zarr_variable(
@@ -319,9 +324,7 @@ class ProcessQueue(DataLoadFactory):
         data_logger.debug(
             "Assigning %s to %s for future processing", inp_obj, uuid5
         )
-        data_cache: Optional[bytes] = cast(
-            Optional[bytes], self.cache.get(uuid5)
-        )
+        data_cache: Optional[bytes] = cast(Optional[bytes], self.cache.get(uuid5))
         status_dict: LoadDict = {
             "status": 2,
             "obj_path": f"/api/freva-data-portal/zarr/{uuid5}.zarr",

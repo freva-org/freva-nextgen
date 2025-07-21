@@ -15,10 +15,10 @@ To query data databrowser and search for data you have three different options.
 You can the to following methods
 
 - :py:class:`freva_client.databrowser`: The main class for searching data is the
-  :py:class:`freva_client.databrowser` class. After creating in instance of the
+  :py:class:`freva_client.databrowser` class. After creating an instance of the
   databrowser class with your specific search constraints you can get retrieve
-  all *files* or *uris* that matching your search constraints. You can also
-  retrieve a count of the number objects matching the search, as well as
+  all *files* or *uris* that match your search constraints. You can also
+  retrieve a count of the objects matching the search, as well as
   getting an overview over the available metadata and creating an intake-esm
   catalogue from your search. Searching for *Uris* instead of *file* paths
   can be useful to get information on the storage system where the *files*

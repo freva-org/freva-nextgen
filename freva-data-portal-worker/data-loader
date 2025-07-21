@@ -69,29 +69,13 @@ if [ "$create" = true ]; then
     echo "Setting up miniconda:"
     rm -rf ${MAMBA_DIR}
     ARCH=$(uname -m)
+    SYSTEM=$(uname -s)
     CWD=$(readlink -f $(dirname $0))
     TEMP_DIR=$(mktemp -d)
     cd "$TEMP_DIR" || { echo "Failed to create temporary directory"; exit 1; }
-
-    case "$ARCH" in
-        x86_64)
-            curl -s https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o conda.sh
-            ;;
-        aarch64)
-            curl -s https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-aarch64.sh -o conda.sh
-            ;;
-        ppc64le)
-            curl -s https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-ppc64le.sh -o conda.sh
-            ;;
-        armv7l)
-            curl -s https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-armv7l.sh -o conda.sh
-            ;;
-        *)
-            echo "Unsupported architecture: $ARCH"
-            exit 1
-            ;;
-    esac
-
+    URL_PREFIX="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3"
+    echo Downloading miniforge from ${URL_PREFIX}
+    python -c "from urllib.request import urlretrieve; urlretrieve('${URL_PREFIX}-${SYSTEM}-${ARCH}.sh', filename='conda.sh')"
     /bin/sh conda.sh -b -u -f -p ${MAMBA_DIR}
     ${MAMBA_DIR}/bin/conda install -c conda-forge -y $PKGS
     echo $MD5SUM > ${MAMBA_DIR}/environment.txt
@@ -102,7 +86,7 @@ if [ ! -f ${MAMBA_DIR}/bin/data-loader-worker ]; then
     echo "Setting up the dataportal:"
     TEMP_DIR=$(mktemp -d)
     cd "$TEMP_DIR" || { echo "Failed to create temporary directory"; exit 1; }
-    ${MAMBA_DIR}/bin/git clone --recursive https://github.com/FREVA-CLINT/freva-nextgen.git
+    ${MAMBA_DIR}/bin/git clone --recursive https://github.com/freva-org/freva-nextgen.git
     rm -rf ${MAMBA_DIR}/freva-data-portal-worker
     cp -r freva-nextgen/freva-data-portal-worker ${MAMBA_DIR}/
     cp -r freva-nextgen/dev-env ${MAMBA_DIR}/freva-data-portal-worker/setup
@@ -112,8 +96,8 @@ if [ ! -f ${MAMBA_DIR}/bin/data-loader-worker ]; then
     rm -fr $TEMP_DIR
 fi
 
-if ([ ! -f "~/.data-portal-cluster-config.json" ] && [ "x$IS_WORKER" = x ]); then
-    TEMP_DIR=~ ${MAMBA_DIR}/bin/python ${MAMBA_DIR}/freva-data-portal-worker/run_server.py --gen-certs --script-dir ${MAMBA_DIR}/freva-data-portal-worker/setup
+if ([ ! -f "$HOME/.data-portal-cluster-config.json" ] && [ "x$IS_WORKER" = x ]); then
+    TEMP_DIR=~ ${MAMBA_DIR}/bin/python ${MAMBA_DIR}//freva-data-portal-worker/setup/config/dev-utils.py redis-config $HOME/.data-portal-cluster-config.json
 fi
 
 export PATH=${MAMBA_DIR}/bin:$PATH

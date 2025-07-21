@@ -1,12 +1,13 @@
 """Tests for the databrowser class."""
 
 from copy import deepcopy
+from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
 
 from freva_client import databrowser
-from freva_client.auth import Auth, authenticate
+from freva_client.auth import Auth, AuthError, Token
 from freva_client.utils.logger import DatabrowserWarning
 
 
@@ -19,6 +20,8 @@ def test_search_files(test_server: str) -> None:
     with pytest.raises(ValueError):
         len(db)
     db = databrowser(host=test_server, foo="bar", time="2000 to 2050")
+    assert len(db) == 0
+    db = databrowser(host=test_server, foo="bar", bbox=(10, 20, 30, 40))
     assert len(db) == 0
     db = databrowser(host=test_server, model="bar")
     assert len(db) == len(list(db)) == 0
@@ -67,9 +70,7 @@ def test_metadata_search(test_server: str) -> None:
     metadata = databrowser.metadata_search(host=test_server)
     assert isinstance(metadata, dict)
     assert len(db.metadata) > len(metadata)
-    metadata = databrowser.metadata_search(
-        host=test_server, extended_search=True
-    )
+    metadata = databrowser.metadata_search(host=test_server, extended_search=True)
     assert len(db.metadata) == len(metadata)
 
 
@@ -97,9 +98,7 @@ def test_bad_queries(test_server: str) -> None:
     with pytest.raises(ValueError):
         len(db)
     with pytest.raises(ValueError):
-        databrowser.count_values(
-            host=test_server, foo="bar", fail_on_error=True
-        )
+        databrowser.count_values(host=test_server, foo="bar", fail_on_error=True)
     with pytest.raises(ValueError):
         databrowser.metadata_search(
             host=test_server, foo="bar", fail_on_error=True
@@ -134,34 +133,50 @@ def test_intake_without_zarr(test_server: str) -> None:
         db.intake_catalogue()
 
 
-def test_intake_with_zarr(test_server: str, auth_instance: Auth) -> None:
+def test_stac_catalogue(test_server: str, temp_dir: Path) -> None:
+    """Test the STAC Catalogue functionality."""
+    # static STAC catalogue
+    db = databrowser(host=test_server, dataset="cmip6-fs")
+    res = db.stac_catalogue(filename=temp_dir / "something.zip")
+    assert f"STAC catalog saved to: {temp_dir / 'something.zip'}" in res
+
+    # static STAC catalogue with non-existing directory
+    db = databrowser(host=test_server, dataset="cmip6-fs")
+    res = db.stac_catalogue(filename=temp_dir / "anywhere/s")
+    assert f"STAC catalog saved to: {temp_dir / 'anywhere/s'}" in res
+
+    # static STAC catalogue with existing directory
+    db = databrowser(host=test_server, dataset="cmip6-fs")
+    res = db.stac_catalogue(filename=temp_dir)
+    assert f"STAC catalog saved to: {temp_dir}" in res
+
+
+def test_intake_with_zarr(
+    test_server: str, auth_instance: Auth, auth: Token
+) -> None:
     """Test the intake zarr catalogue creation."""
     token = deepcopy(auth_instance._auth_token)
     try:
-        auth_instance.auth_instance = None
-        db = databrowser(
-            host=test_server, dataset="cmip6-fs", stream_zarr=True
-        )
-        with pytest.raises(ValueError):
+        auth_instance._auth_token = None
+        db = databrowser(host=test_server, dataset="cmip6-fs", stream_zarr=True)
+        with pytest.raises(AuthError):
             cat = db.intake_catalogue()
-        _ = authenticate(username="janedoe", host=test_server)
+        auth_instance._auth_token = auth
         cat = db.intake_catalogue()
-        assert hasattr(cat, "df")
     finally:
         auth_instance._auth_token = token
+    assert hasattr(cat, "df")
 
 
-def test_zarr_stream(test_server: str, auth_instance: Auth) -> None:
+def test_zarr_stream(test_server: str, auth_instance: Auth, auth: Token) -> None:
     """Test creating zarr endpoints for loading."""
     token = deepcopy(auth_instance._auth_token)
     try:
-        auth_instance.auth_instance = None
-        db = databrowser(
-            host=test_server, dataset="cmip6-fs", stream_zarr=True
-        )
-        with pytest.raises(ValueError):
-            files = list(db)
-        _ = authenticate(username="janedoe", host=test_server)
+        auth_instance._auth_token = None
+        db = databrowser(host=test_server, dataset="cmip6-fs", stream_zarr=True)
+        with pytest.raises(AuthError):
+            _ = list(db)
+        auth_instance._auth_token = auth
         files = list(db)
         assert len(files) == 2
     finally:
@@ -169,15 +184,16 @@ def test_zarr_stream(test_server: str, auth_instance: Auth) -> None:
 
 
 def test_userdata_add_path_xarray_py(
-    test_server: str, auth_instance: Auth
+    test_server: str,
+    auth_instance: Auth,
+    auth: Token,
 ) -> None:
     """Test adding path and xarray user data."""
     import xarray as xr
 
     token = deepcopy(auth_instance._auth_token)
     try:
-        auth_instance.auth_instance = None
-        _ = authenticate(username="janedoe", host=test_server)
+        auth_instance._auth_token = auth
 
         databrowser.userdata("delete", metadata={}, host=test_server)
         filename = (
@@ -200,13 +216,14 @@ def test_userdata_add_path_xarray_py(
         auth_instance._auth_token = token
 
 
-def test_userdata_failed(test_server: str, auth_instance: Auth) -> None:
+def test_userdata_failed(
+    test_server: str, auth_instance: Auth, auth: Token
+) -> None:
     """Test user data wrong paths."""
     token = deepcopy(auth_instance._auth_token)
     try:
-        auth_instance.auth_instance = None
+        auth_instance._auth_token = auth
         db = databrowser(host=test_server)
-        _ = authenticate(username="janedoe", host=test_server)
         length = len(db)
         with pytest.raises(FileNotFoundError) as exc_info:
             databrowser.userdata(
@@ -218,20 +235,20 @@ def test_userdata_failed(test_server: str, auth_instance: Auth) -> None:
         assert "No valid file paths or xarray datasets found." in str(
             exc_info.value
         )
-        assert len(db) == length
     finally:
         auth_instance._auth_token = token
+    assert len(db) == length
 
 
 def test_userdata_post_delete_failure(
-    test_server: str, auth_instance: Auth
+    test_server: str, auth_instance: Auth, auth: Token
 ) -> None:
     """Test failure of adding user data."""
 
     token = deepcopy(auth_instance._auth_token)
     try:
-        auth_instance.auth_instance = None
-        _ = authenticate(username="janedoe", host=test_server)
+        auth_instance._auth_token = deepcopy(auth)
+        auth_instance._auth_token["access_token"] = "foo"
         with pytest.raises(ValueError):
             databrowser.userdata(
                 "add",
@@ -254,14 +271,13 @@ def test_userdata_post_delete_failure(
 
 
 def test_userdata_post_delete_without_failure(
-    test_server: str, auth_instance: Auth
+    test_server: str, auth_instance: Auth, auth: Token
 ) -> None:
     """Test successful deleting user data."""
 
     token = deepcopy(auth_instance._auth_token)
     try:
-        auth_instance.auth_instance = None
-        _ = authenticate(username="janedoe", host=test_server)
+        auth_instance._auth_token = auth
         with pytest.raises(ValueError):
             databrowser.userdata(
                 "add",
@@ -282,13 +298,14 @@ def test_userdata_post_delete_without_failure(
 
 
 def test_userdata_correct_args_wrong_place(
-    test_server: str, auth_instance: Auth
+    test_server: str,
+    auth_instance: Auth,
+    auth: Token,
 ) -> None:
     """Test adding user data with wrong arguments."""
     token = deepcopy(auth_instance._auth_token)
     try:
-        auth_instance.auth_instance = None
-        _ = authenticate(username="janedoe", host=test_server)
+        auth_instance._auth_token = auth
         with pytest.raises(FileNotFoundError):
             databrowser.userdata(
                 "add", metadata={"username": "johndoe"}, host=test_server
@@ -306,13 +323,12 @@ def test_userdata_correct_args_wrong_place(
 
 
 def test_userdata_empty_metadata_value_error(
-    test_server: str, auth_instance: Auth
+    test_server: str, auth_instance: Auth, auth: Token
 ) -> None:
     """Test adding user data with wrong arguments."""
     token = deepcopy(auth_instance._auth_token)
     try:
-        auth_instance.auth_instance = None
-        _ = authenticate(username="janedoe", host=test_server)
+        auth_instance._auth_token = auth
         with pytest.raises(ValueError):
             databrowser.userdata(
                 "add",
@@ -332,13 +348,12 @@ def test_userdata_empty_metadata_value_error(
 
 
 def test_userdata_non_path_xarray(
-    test_server: str, auth_instance: Auth
+    test_server: str, auth_instance: Auth, auth: Token
 ) -> None:
     """Test adding user data with wrong arguments."""
     token = deepcopy(auth_instance._auth_token)
     try:
-        auth_instance.auth_instance = None
-        _ = authenticate(username="janedoe", host=test_server)
+        auth_instance._auth_token = auth
         with pytest.raises(FileNotFoundError):
             databrowser.userdata(
                 "add",
@@ -350,12 +365,13 @@ def test_userdata_non_path_xarray(
         auth_instance._auth_token = token
 
 
-def test_add_userdata_wild_card(test_server: str, auth_instance: Auth) -> None:
+def test_add_userdata_wild_card(
+    test_server: str, auth_instance: Auth, auth: Token
+) -> None:
     """Test adding user data with wild card."""
     token = deepcopy(auth_instance._auth_token)
     try:
-        auth_instance.auth_instance = None
-        _ = authenticate(username="janedoe", host=test_server)
+        auth_instance._auth_token = auth
         databrowser.userdata("delete", host=test_server)
         databrowser.userdata(
             "add",

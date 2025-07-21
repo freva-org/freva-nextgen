@@ -5,14 +5,18 @@ import json
 from typing import Annotated, Any, Dict, Optional
 
 import cloudpickle
-from fastapi import Depends, Path, Query, status
+from fastapi import Path, Query, Security, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse, Response
-from zarr.storage import array_meta_key, attrs_key, group_meta_key
+from fastapi_third_party_auth import IDToken as TokenPayload
 
-from freva_rest.auth import TokenPayload, auth
+from freva_rest.auth import auth
 from freva_rest.rest import app
-from freva_rest.utils import create_redis_connection
+from freva_rest.utils.base_utils import create_redis_connection
+
+ZARRAY_JSON = ".zarray"
+ZGROUP_JSON = ".zgroup"
+ZATTRS_JSON = ".zattrs"
 
 
 async def read_redis_data(
@@ -99,15 +103,13 @@ async def get_status(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Depends(auth.required),
+    current_user: TokenPayload = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
 ) -> JSONResponse:
     """Get the status of a loading process."""
-    meta: Dict[str, Any] = await read_redis_data(
-        uuid5, "status", timeout=timeout
-    )
-    return JSONResponse(
-        content={"status": meta}, status_code=status.HTTP_200_OK
-    )
+    meta: Dict[str, Any] = await read_redis_data(uuid5, "status", timeout=timeout)
+    return JSONResponse(content={"status": meta}, status_code=status.HTTP_200_OK)
 
 
 @app.get(
@@ -137,7 +139,9 @@ async def zemtadata(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Depends(auth.required),
+    current_user: TokenPayload = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
 ) -> JSONResponse:
     """Consolidate zarr metadata
 
@@ -182,7 +186,9 @@ async def zgroup(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Depends(auth.required),
+    current_user: TokenPayload = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
 ) -> JSONResponse:
     """Zarr group data.
 
@@ -228,7 +234,9 @@ async def zattrs(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Depends(auth.required),
+    current_user: TokenPayload = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
 ) -> JSONResponse:
     """Get zarr Attributes.
 
@@ -271,9 +279,7 @@ async def chunk_data(
     ],
     chunk: Annotated[
         str,
-        Path(
-            title="chunk", description="The chnuk number that should be read."
-        ),
+        Path(title="chunk", description="The chnuk number that should be read."),
     ],
     timeout: Annotated[
         int,
@@ -285,20 +291,22 @@ async def chunk_data(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Depends(auth.required),
+    current_user: TokenPayload = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
 ) -> Response:
     """Get a zarr array chunk.
 
     This method reads the zarr data."""
 
-    if array_meta_key in chunk or attrs_key in chunk:
+    if ZARRAY_JSON in chunk or ZATTRS_JSON in chunk:
         json_meta: Dict[str, Any] = await read_redis_data(
             uuid5, "json_meta", timeout=timeout
         )
-        if attrs_key in chunk:
-            key = f"{variable}/{attrs_key}"
+        if ZATTRS_JSON in chunk:
+            key = f"{variable}/{ZATTRS_JSON}"
         else:
-            key = f"{variable}/{array_meta_key}"
+            key = f"{variable}/{ZARRAY_JSON}"
         try:
             content = json_meta["metadata"][key]
         except KeyError as error:
@@ -307,7 +315,7 @@ async def chunk_data(
             content=content,
             status_code=status.HTTP_200_OK,
         )
-    if group_meta_key in chunk:
+    if ZGROUP_JSON in chunk:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Sub groups are not supported.",

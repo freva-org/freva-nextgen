@@ -2,9 +2,9 @@
 
 [![License](https://img.shields.io/badge/License-BSD-purple.svg)](LICENSE)
 [![PyPI](https://img.shields.io/pypi/pyversions/freva-client.svg)](https://pypi.org/project/freva-client/)
-[![Docs](https://img.shields.io/badge/API-Doc-green.svg)](https://freva-clint.github.io/freva-nextgen)
-[![Tests](https://github.com/FREVA-CLINT/freva-nextgen/actions/workflows/ci_job.yml/badge.svg)](https://github.com/FREVA-CLINT/freva-nextgen/actions)
-[![Test-Coverage](https://codecov.io/github/FREVA-CLINT/freva-nextgen/branch/init/graph/badge.svg?token=dGhXxh7uP3)](https://codecov.io/github/FREVA-CLINT/freva-nextgen)
+[![Docs](https://img.shields.io/badge/API-Doc-green.svg)](https://freva-org.github.io/freva-nextgen)
+[![Tests](https://github.com/freva-org/freva-nextgen/actions/workflows/ci_job.yml/badge.svg)](https://github.com/freva-org/freva-nextgen/actions)
+[![Test-Coverage](https://codecov.io/github/freva-org/freva-nextgen/branch/init/graph/badge.svg?token=dGhXxh7uP3)](https://codecov.io/github/freva-org/freva-nextgen)
 
 
 This is a multi-part repository it contains code for:
@@ -22,7 +22,7 @@ This is a multi-part repository it contains code for:
 2. Clone this repository:
 
     ```console
-    git clone --recursive git@github.com:FREVA-CLINT/freva-nextgen.git
+    git clone --recursive git@github.com:freva-org/freva-nextgen.git
     cd freva-nextgen
     ```
 
@@ -48,20 +48,22 @@ you have `docker-compose` or `podman-compose` installed on your system.
 Then, run the following command:
 
 ```console
-docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
+USER=$(whoami) docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
 ```
 
 if you use `podman`:
 
 ```console
 python -m pip install podman-compose
-podman-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
+USER=$(whoami) podman-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
 ```
 
 This will start the required services and containers to create the development
 environment. You can now develop and test the project within this environment.
 
-After the containers are up and running you can start the REST server the following:
+After the containers are up and running you will need to
+[install the REST server](freva-rest/README.md) and start it
+doing the following:
 
 ```console
 python run_server.py --config dev-env/api_config.toml --debug --dev -p 7777 -f
@@ -73,15 +75,18 @@ load any existing test data. If you don't like that simply do not pass the
 ``--dev`` flag.
 
 
-### Test ldap instance
-The dev system sets up a small LDAP server for testing. The following users
-in this ldap server are available:
+### Test users
+The following users are available for log on:
 
+
+- uid: ``<YOUR-USER>``, password: ``secret``
 - uid: ``johndoe``, password: ``johndoe123``
 - uid: ``janedoe``, password: ``janedoe123``
 - uid: ``alicebrown``, password: ``alicebrown123``
 - uid: ``bobsmith``, password: ``bobsmith123``
 - uid: ``lisajones``, password: ``lisajones123``
+
+`<YOUR-USER>` is the user name that started the compose command.
 
 ## Testing
 
@@ -107,6 +112,46 @@ environment use:
 python -m pip install -e freva-rest[tests] freva-client freva-data-portal-worker
 pytest -vv ./tests
 ```
+
+### Creating a test docker container for freva-rest-api and data-loader-worker
+This repository defines two docker images that can be used for production
+
+- `freva-rest-api` (restAPI)
+- `data-loader-worker` (zarr streaming)
+
+
+These images are automatically build via the GitHub CI pipeline.
+Yet for debugging they can be built using the following commands:
+
+- First setup mulitarch build:
+```console
+docker run --rm --privileged multiarch/qemu-user-static --reset -p yes && \
+ docker buildx create --name multiarch --use && \
+ docker buildx inspect --bootstrap
+```
+
+- Build for the `data-loader-worker` image for the target platforms
+```console
+docker buildx build --no-cache --platform linux/amd64,linux/arm64,linux/ppc64le\
+    -t ghcr.io/freva-org/freva-data-loader:latest  \
+    -t ghcr.io/freva-org/freva-data-loader:<VERSION> \
+    --build-arg=VERSION=<VERSION> \
+    --build-arg=CMD=data-loader-worker .
+```
+
+- Build for the `freva-rest-api` image for the target platforms
+```console
+docker buildx build --no-cache --platform linux/amd64,linux/arm64,linux/ppc64le\
+    -t ghcr.io/freva-org/freva-rest-api:latest  \
+    -t ghcr.io/freva-org/freva-rest-api:<VERSION> \
+    --build-arg=VERSION=<VERSION> \
+    --build-arg=CMD=freva-rest-server .
+```
+
+> If you are using podman make sure
+> [buildah and qemu are set up for your OS.](https://danmanners.com/posts/2022-01-buildah-multi-arch/).
+> You can then replace the `docker buildx` commands with `buildah`.
+
 ### Creating a new release.
 
 Once the development is finished and you decide that it's time for a new

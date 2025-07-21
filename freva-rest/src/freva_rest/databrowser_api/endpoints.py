@@ -1,21 +1,32 @@
 """Main script that runs the rest API."""
 
-from typing import Annotated, Any, Dict, List, Literal, Union
+import uuid
+from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
-from fastapi import Body, Depends, HTTPException, Query, Request, status
+from fastapi import (
+    Body,
+    HTTPException,
+    Query,
+    Request,
+    Response,
+    Security,
+    status,
+)
 from fastapi.responses import (
     JSONResponse,
     PlainTextResponse,
     StreamingResponse,
 )
+from fastapi_third_party_auth import IDToken as TokenPayload
 from pydantic import BaseModel, Field
 
-from freva_rest.auth import TokenPayload, auth
+from freva_rest.auth import auth
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 
 from .core import FlavourType, SearchResult, Solr, Translator
 from .schema import Required, SearchFlavours, SolrSchema
+from .stac import STAC
 
 
 class AddUserDataRequestBody(BaseModel):
@@ -117,8 +128,8 @@ async def metadata_search(
         facets or [], max_results=0
     )
     await solr_search.store_results(result.total_count, status_code)
-    output = result.dict()
-    del output["search_results"]
+    output = result.model_dump()
+    _ = output.pop("search_results", "")
     return JSONResponse(content=output, status_code=status_code)
 
 
@@ -220,6 +231,61 @@ async def intake_catalogue(
 
 
 @app.get(
+    "/api/freva-nextgen/databrowser/stac-catalogue/{flavour}/{uniq_key}",
+    tags=["Data search"],
+    status_code=200,
+    responses={
+        413: {"description": "Result stream too big."},
+        422: {"description": "Invalid flavour or search keys."},
+        503: {"description": "Search backend error"},
+        500: {"description": "Internal server error"},
+    },
+    response_class=Response,
+)
+async def stac_catalogue(
+    flavour: FlavourType,
+    uniq_key: Literal["file", "uri"],
+    start: Annotated[int, SolrSchema.params["start"]] = 0,
+    multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
+    translate: Annotated[bool, SolrSchema.params["translate"]] = True,
+    max_results: Annotated[int, SolrSchema.params["max_results"]] = -1,
+    request: Request = Required,
+) -> Response:
+    """Create a STAC catalogue from a freva search.
+
+    This endpoint transforms Freva databrowser search results into a Static
+    SpatioTemporal Asset Catalog (STAC). STAC is an open standard for geospatial
+    data catalouging, enabling consistent discovery and access of climate
+    datasets, satellite imagery and spatiotemporal data. It provides a
+    common language for describing geospatial information and related metadata.
+    """
+    stac_instance = await STAC.validate_parameters(
+        server_config,
+        flavour=flavour,
+        uniq_key=uniq_key,
+        start=start,
+        multi_version=multi_version,
+        translate=translate,
+        **SolrSchema.process_parameters(request),
+    )
+    status_code, total_count = await stac_instance.validate_stac()
+    await stac_instance.store_results(total_count, status_code)
+    if total_count == 0:
+        raise HTTPException(status_code=404, detail="No results found.")
+    if total_count > max_results and max_results > 0:
+        raise HTTPException(status_code=413, detail="Result stream too big.")
+
+    collection_id = f"Dataset-{(f'{flavour}-{str(uuid.uuid4())}')[:18]}"
+    await stac_instance.init_stac_catalogue(request)
+    file_name = f"stac-catalog-{collection_id}-{uniq_key}.zip"
+    return StreamingResponse(
+        stac_instance.stream_stac_catalogue(collection_id, total_count),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{file_name}"'},
+    )
+
+
+@app.get(
     "/api/freva-nextgen/databrowser/extended-search/{flavour}/{uniq_key}",
     include_in_schema=False,
 )
@@ -230,8 +296,19 @@ async def extended_search(
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     max_results: Annotated[int, SolrSchema.params["batch_size"]] = 150,
+    zarr_stream: Annotated[
+        bool,
+        Query(
+            description="Enable zarr streaming functionality",
+            alias="zarr_stream"
+        )
+    ] = False,
     facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
     request: Request = Required,
+    current_user: Optional[TokenPayload] = Security(
+        auth.create_auth_dependency(required=False),
+        scopes=["oidc.claims"]
+    )
 ) -> JSONResponse:
     """This endpoint is used by the databrowser web ui client."""
     solr_search = await Solr.validate_parameters(
@@ -243,11 +320,23 @@ async def extended_search(
         translate=translate,
         **SolrSchema.process_parameters(request),
     )
+    if "zarr-stream" not in server_config.services:
+        zarr_stream = False
+    if (
+        zarr_stream
+        and current_user is None
+    ):
+        logger.error("User not authenticated for zarr stream.")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not authenticated for zarr streaming."
+        )
+
     status_code, result = await solr_search.extended_search(
-        facets or [], max_results=max_results
+        facets or [], max_results=max_results, zarr_stream=zarr_stream
     )
     await solr_search.store_results(result.total_count, status_code)
-    return JSONResponse(content=result.dict(), status_code=status_code)
+    return JSONResponse(content=result.model_dump(), status_code=status_code)
 
 
 @app.get(
@@ -277,7 +366,9 @@ async def load_data(
         ),
     ] = None,
     request: Request = Required,
-    current_user: TokenPayload = Depends(auth.required),
+    current_user: TokenPayload = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
 ) -> StreamingResponse:
     """Search for datasets and stream the results as zarr.
 
@@ -288,7 +379,7 @@ async def load_data(
     [!NOTE]
     The urls are only temporary and will be invalidated.
     """
-    if "zarr-stream" not in server_config.services:
+    if "zarr-stream" not in (server_config.services or []):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Service not enabled.",
@@ -326,7 +417,9 @@ async def load_data(
 )
 async def post_user_data(
     request: Annotated[AddUserDataRequestBody, Body(...)],
-    current_user: TokenPayload = Depends(auth.required),
+    current_user: TokenPayload = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
 ) -> Dict[str, str]:
     """Index your own metadata and make it searchable.
 
@@ -349,7 +442,7 @@ async def post_user_data(
                 detail=f"Invalid request data: {error}",
             )
         status_msg = await solr_instance.add_user_metadata(
-            current_user.preferred_username,  # type: ignore
+            current_user.preferred_username,
             validated_user_metadata,
             facets=request.facets,
         )
@@ -385,14 +478,16 @@ async def delete_user_data(
             }
         ],
     ),
-    current_user: TokenPayload = Depends(auth.required),
+    current_user: TokenPayload = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
 ) -> Dict[str, str]:
     """This endpoint lets you delete metadata that has been indexed."""
 
     solr_instance = Solr(server_config)
     try:
         await solr_instance.delete_user_metadata(
-            current_user.preferred_username, request  # type: ignore
+            current_user.preferred_username, request
         )
     except Exception as error:
         logger.exception("Failed to delete user data: %s", error)
