@@ -6,7 +6,7 @@ from urllib.parse import parse_qs
 from fastapi import Query, Request
 from pydantic import BaseModel
 
-from .core import FlavourType
+from .translation.translator import FlavourType
 
 Required: Any = Ellipsis
 

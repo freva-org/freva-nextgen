@@ -18,7 +18,7 @@ from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 
 from freva_rest.config import ServerConfig
-from freva_rest.databrowser_api import Solr
+from freva_rest.databrowser_api.core import DataBrowserCore
 from freva_rest.logger import logger
 from freva_rest.utils.stac_utils import (
     Asset,
@@ -62,7 +62,7 @@ class STACAPI:
     ) -> None:
         self.config = config
         self.uniq_key = uniuq_key
-        self.solr_object = Solr(config, multi_version=False)
+        self.solr_object = DataBrowserCore(config, multi_version=False, uniq_key=self.uniq_key)
         self.stacapi_query = query
         self.limit = limit
         self.token = token

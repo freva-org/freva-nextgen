@@ -29,8 +29,8 @@ from freva_rest.utils.stac_utils import (
     parse_bbox,
     parse_datetime,
 )
-
-from .core import FlavourType, Solr, Translator
+from .core import DataBrowserCore
+from .translation.translator import Translator, FlavourType
 
 
 class ZipStream(io.RawIOBase):
@@ -73,7 +73,7 @@ class ZipStream(io.RawIOBase):
         return chunk
 
 
-class STAC(Solr):
+class STAC:
     """STAC class to create static STAC catalogues."""
     def __init__(
         self,
@@ -87,14 +87,13 @@ class STAC(Solr):
         _translator: Union[None, Translator] = None,
         **query: list[str],
     ):
-        super().__init__(
+        self.backend = DataBrowserCore(
             config,
             uniq_key=uniq_key,
             flavour=flavour,
             start=start,
             multi_version=multi_version,
             translate=translate,
-            _translator=_translator,
             **query
         )
         self.config = config
@@ -126,7 +125,7 @@ class STAC(Solr):
     ) -> "STAC":
         """Use Solr validate_parameters and return a STAC validated_parameters
         for validating the search params through Solr in STAC inheritated cls."""
-        solr_instance = await super().validate_parameters(
+        solr_instance = await DataBrowserCore.validate_parameters(
             config,
             uniq_key=uniq_key,
             flavour=flavour,
@@ -146,7 +145,41 @@ class STAC(Solr):
             _translator=solr_instance.translator,
             **query
         )
+    def _set_catalogue_queries(self):
+        """Delegate to backend."""
+        return self.backend._set_catalogue_queries()
 
+    def _session_get(self):
+        """Delegate to backend."""
+        return self.backend._session_get()
+
+    @property
+    def query(self):
+        """Delegate to backend."""
+        return self.backend.query
+
+    @property
+    def _config(self):
+        """Delegate to backend."""
+        return self.backend.config
+
+    @property
+    def uniq_key(self):
+        """Delegate to backend."""
+        return self.backend.uniq_key
+
+    @property
+    def batch_size(self):
+        """Delegate to backend."""
+        return self.backend.batch_size
+
+    async def store_results(self, num_results: int, status: int, endpoint: str = "databrowser"):
+        """Delegate to backend."""
+        return await self.backend.store_results(num_results, status, endpoint)
+    @property
+    def translator(self):
+        """Delegate to backend."""
+        return self.backend.translator
     async def _iter_stac_items(self) -> "AsyncIterator[List[Item]]":
         self.query["cursorMark"] = "*"
         items_batch = []

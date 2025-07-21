@@ -24,7 +24,9 @@ from freva_rest.auth import auth
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 
-from .core import FlavourType, SearchResult, Solr, Translator
+from .core import DataBrowserCore
+from .backends.base import SearchResult
+from .translation.translator import Translator, FlavourType
 from .schema import Required, SearchFlavours, SolrSchema
 from .stac import STAC
 
@@ -115,7 +117,7 @@ async def metadata_search(
     provides a comprehensive view of the available facets and their
     corresponding counts based on the provided search criteria.
     """
-    solr_search = await Solr.validate_parameters(
+    solr_search = await DataBrowserCore.validate_parameters(
         server_config,
         flavour=flavour,
         uniq_key=uniq_key,
@@ -160,7 +162,7 @@ async def data_search(
     datasets matching specific search criteria and retrieve a list of data
     files or locations that meet the query parameters.
     """
-    solr_search = await Solr.validate_parameters(
+    solr_search = await DataBrowserCore.validate_parameters(
         server_config,
         flavour=flavour,
         uniq_key=uniq_key,
@@ -206,7 +208,7 @@ async def intake_catalogue(
     The generated catalogue can be used by tools compatible with intake-esm,
     such as Pangeo.
     """
-    solr_search = await Solr.validate_parameters(
+    solr_search = await DataBrowserCore.validate_parameters(
         server_config,
         flavour=flavour,
         uniq_key=uniq_key,
@@ -311,7 +313,7 @@ async def extended_search(
     )
 ) -> JSONResponse:
     """This endpoint is used by the databrowser web ui client."""
-    solr_search = await Solr.validate_parameters(
+    solr_search = await DataBrowserCore.validate_parameters(
         server_config,
         flavour=flavour,
         uniq_key=uniq_key,
@@ -384,7 +386,7 @@ async def load_data(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Service not enabled.",
         )
-    solr_search = await Solr.validate_parameters(
+    solr_search = await DataBrowserCore.validate_parameters(
         server_config,
         flavour=flavour,
         uniq_key="uri",
