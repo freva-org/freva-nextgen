@@ -13,6 +13,7 @@ from typing import (
     Iterable,
     List,
     Literal,
+    Optional,
     Sequence,
     Sized,
     Tuple,
@@ -34,7 +35,8 @@ from freva_rest.logger import logger
 from freva_rest.utils.base_utils import create_redis_connection
 from freva_rest.utils.stats_utils import store_api_statistics
 
-FlavourType = Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"]
+FlavourType = Literal["freva", "cmip6", "cmip5", "cordex", "user"]
+
 IntakeType = TypedDict(
     "IntakeType",
     {
@@ -67,6 +69,17 @@ class IntakeCatalogue(BaseModel):
     total_count: int
 
 
+class FlavoursProperty:
+    """Descriptor that makes Translator.flavours
+    automatically include custom flavours."""
+
+    def __get__(self, instance: Optional["Translator"], owner: type) -> List[str]:
+        if instance is not None and instance.config is not None:  # pragma: no cover
+            return instance.config.available_flavours
+        config = ServerConfig()
+        return config.available_flavours
+
+
 @dataclass
 class Translator:
     """Class that defines the flavour translation.
@@ -86,14 +99,9 @@ class Translator:
 
     flavour: str
     translate: bool = True
-    flavours: tuple[FlavourType, ...] = (
-        "freva",
-        "cmip6",
-        "cmip5",
-        "cordex",
-        "nextgems",
-        "user",
-    )
+    config: Optional[ServerConfig] = None
+    # Dynamically load flavours from server_config
+    flavours = FlavoursProperty()
 
     @property
     def facet_hierarchy(self) -> list[str]:
@@ -228,46 +236,28 @@ class Translator:
             "rcm_version": "rcm_version",
         }
 
-    @property
-    def _nextgems_lookup(self) -> Dict[str, str]:
-        """Define the search facets for the cmip5 standard."""
-        return {
-            "experiment": "simulation_id",
-            "ensemble": "member_id",
-            "fs_type": "fs_type",
-            "grid_label": "grid_label",
-            "institute": "institution_id",
-            "model": "source_id",
-            "project": "project",
-            "product": "experiment_id",
-            "realm": "realm",
-            "variable": "variable_id",
-            "time": "time",
-            "bbox": "bbox",
-            "time_aggregation": "time_reduction",
-            "time_frequency": "time_frequency",
-            "cmor_table": "cmor_table",
-            "dataset": "dataset",
-            "driving_model": "driving_model",
-            "format": "format",
-            "grid_id": "grid_id",
-            "level_type": "level_type",
-            "rcm_name": "rcm_name",
-            "rcm_version": "rcm_version",
-        }
-
     @cached_property
     def forward_lookup(self) -> Dict[str, str]:
         """Define how things get translated from the freva standard"""
 
-        return {
+        builtin_mappings = {
             "freva": {k: k for k in self._freva_facets},
             "cmip6": self._cmip6_lookup,
             "cmip5": self._cmip5_lookup,
             "cordex": self._cordex_lookup,
-            "nextgems": self._nextgems_lookup,
             "user": {k: k for k in self._freva_facets},
-        }[self.flavour]
+        }
+
+        base_mapping = builtin_mappings.get(
+            self.flavour, {k: k for k in self._freva_facets}
+        ).copy()
+        # Add/override with custom mappings from config if they exist
+        if self.config and self.config.flavour_mappings:
+            custom_mapping = self.config.flavour_mappings.get(self.flavour.lower())
+            if custom_mapping:
+                base_mapping.update(custom_mapping)
+
+        return base_mapping
 
     @cached_property
     def valid_facets(self) -> list[str]:
@@ -388,7 +378,7 @@ class Solr:
         config: ServerConfig,
         *,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: FlavourType = "freva",
+        flavour: Union[FlavourType, str] = "freva",
         start: int = 0,
         multi_version: bool = True,
         translate: bool = True,
@@ -398,7 +388,7 @@ class Solr:
         self._config = config
         self.uniq_key = uniq_key
         self.multi_version = multi_version
-        self.translator = _translator or Translator(flavour, translate)
+        self.translator = _translator or Translator(flavour, translate, config)
         try:
             self.time = self.adjust_time_string(
                 query.pop("time", [""])[0],
@@ -609,7 +599,7 @@ class Solr:
         config: ServerConfig,
         *,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: FlavourType = "freva",
+        flavour: Union[FlavourType, str] = "freva",
         start: int = 0,
         multi_version: bool = False,
         translate: bool = True,
@@ -636,7 +626,7 @@ class Solr:
         translate: bool, default: True
             Translate the output to the required DRS flavour.
         """
-        translator = Translator(flavour, translate)
+        translator = Translator(flavour, translate, config)
         valid_facets = translator.valid_facets
         if multi_version:
             valid_facets = translator.valid_facets + ["version"]

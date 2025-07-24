@@ -5,7 +5,9 @@ from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 from fastapi import (
     Body,
+    Depends,
     HTTPException,
+    Path,
     Query,
     Request,
     Response,
@@ -24,7 +26,7 @@ from freva_rest.auth import auth
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 
-from .core import FlavourType, SearchResult, Solr, Translator
+from .core import SearchResult, Solr, Translator
 from .schema import Required, SearchFlavours, SolrSchema
 from .stac import STAC
 
@@ -54,6 +56,16 @@ class AddUserDataRequestBody(BaseModel):
             {"project": "user-data", "product": "new", "institute": "globe"}
         ],
     )
+
+
+def validate_flavour_dependency(
+    flavour: str = Path(..., description="Flavour type"),
+) -> str:
+    available_flavours = server_config.available_flavours
+    if flavour in available_flavours:
+        return flavour
+    error_msg = f"Invalid flavour '{flavour}'. Available flavours: {available_flavours}"
+    raise HTTPException(status_code=422, detail=error_msg)
 
 
 @app.get(
@@ -98,8 +110,8 @@ async def overview() -> SearchFlavours:
     },
 )
 async def metadata_search(
-    flavour: FlavourType,
-    uniq_key: Literal["file", "uri"],
+    flavour: str = Depends(validate_flavour_dependency),
+    uniq_key: Literal["file", "uri"] = Path(..., description="core type"),
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
@@ -144,8 +156,8 @@ async def metadata_search(
     response_class=PlainTextResponse,
 )
 async def data_search(
-    flavour: FlavourType,
-    uniq_key: Literal["file", "uri"],
+    flavour: str = Depends(validate_flavour_dependency),
+    uniq_key: Literal["file", "uri"] = Path(..., description="core type"),
     start: Annotated[int, SolrSchema.params["start"]] = 0,
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
@@ -189,8 +201,8 @@ async def data_search(
     response_class=JSONResponse,
 )
 async def intake_catalogue(
-    flavour: FlavourType,
-    uniq_key: Literal["file", "uri"],
+    flavour: str = Depends(validate_flavour_dependency),
+    uniq_key: Literal["file", "uri"] = Path(..., description="core type"),
     start: Annotated[int, SolrSchema.params["start"]] = 0,
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
@@ -243,8 +255,8 @@ async def intake_catalogue(
     response_class=Response,
 )
 async def stac_catalogue(
-    flavour: FlavourType,
-    uniq_key: Literal["file", "uri"],
+    flavour: str = Depends(validate_flavour_dependency),
+    uniq_key: Literal["file", "uri"] = Path(..., description="core type"),
     start: Annotated[int, SolrSchema.params["start"]] = 0,
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
@@ -290,8 +302,8 @@ async def stac_catalogue(
     include_in_schema=False,
 )
 async def extended_search(
-    flavour: FlavourType,
-    uniq_key: Literal["file", "uri"],
+    flavour: str = Depends(validate_flavour_dependency),
+    uniq_key: Literal["file", "uri"] = Path(..., description="core type"),
     start: Annotated[int, SolrSchema.params["start"]] = 0,
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
@@ -351,7 +363,7 @@ async def extended_search(
     response_class=PlainTextResponse,
 )
 async def load_data(
-    flavour: FlavourType,
+    flavour: str = Depends(validate_flavour_dependency),
     start: Annotated[int, SolrSchema.params["start"]] = 0,
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
