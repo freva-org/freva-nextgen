@@ -495,7 +495,8 @@ as the entry point for exploring available collections and items.</p>
 Shell</li><li class="tabbutton" data-id="1" onclick="sphinx_code_tabs_onclick(this)">
 Python</li><li class="tabbutton" data-id="2" onclick="sphinx_code_tabs_onclick(this)">
 gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(this)">
-Julia</li></ul><div class="tab codetab selected" data-id="0">
+Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
+C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>https://www.freva.dkrz.de/api/freva-nextgen/stacapi/
 </pre></div>
 </div>
@@ -515,6 +516,27 @@ Julia</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span><span class="p">,</span><span class="w"> </span><span class="n">JSON</span>
 <span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/&quot;</span><span class="p">)</span>
 <span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">HTTP</span><span class="o">.</span><span class="n">body</span><span class="p">(</span><span class="n">response</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="4">
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;curl/curl.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">CURL</span><span class="w"> </span><span class="o">*</span><span class="n">curl</span><span class="p">;</span>
+<span class="w">    </span><span class="n">CURLcode</span><span class="w"> </span><span class="n">res</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">url</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/&quot;</span><span class="p">;</span>
+
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">);</span>
+<span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_cleanup</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 </div></div></section>
@@ -564,6 +586,59 @@ This provides information about the supported features and capabilities of the A
 </pre></div>
 </div>
 </section>
+<section id="id3">
+<h4>Code examples<a class="headerlink" href="#id3" title="Link to this heading">#</a></h4>
+<div class="tabs docutils container" data-tabgroup="">
+<ul class="tabbar">
+<li class="tabbutton selected" data-id="0" onclick="sphinx_code_tabs_onclick(this)">
+Shell</li><li class="tabbutton" data-id="1" onclick="sphinx_code_tabs_onclick(this)">
+Python</li><li class="tabbutton" data-id="2" onclick="sphinx_code_tabs_onclick(this)">
+gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(this)">
+Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
+C/C++</li></ul><div class="tab codetab selected" data-id="0">
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>https://www.freva.dkrz.de/api/freva-nextgen/stacapi/conformance
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="1">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/conformance&quot;</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="2">
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
+<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">GET</span><span class="p">(</span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/conformance&quot;</span><span class="p">)</span>
+<span class="n">data</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">jsonlite</span><span class="o">::</span><span class="nf">fromJSON</span><span class="p">(</span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;text&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;utf-8&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="3">
+<div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span><span class="p">,</span><span class="w"> </span><span class="n">JSON</span>
+<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/conformance&quot;</span><span class="p">)</span>
+<span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">HTTP</span><span class="o">.</span><span class="n">body</span><span class="p">(</span><span class="n">response</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="4">
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;curl/curl.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">CURL</span><span class="w"> </span><span class="o">*</span><span class="n">curl</span><span class="p">;</span>
+<span class="w">    </span><span class="n">CURLcode</span><span class="w"> </span><span class="n">res</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">url</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/conformance&quot;</span><span class="p">;</span>
+
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">);</span>
+<span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_cleanup</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></div></section>
 </dd></dl>
 
 <p>—</p>
@@ -589,15 +664,15 @@ description, and spatial/temporal extents.</p>
 </ul>
 </dd>
 </dl>
-<section id="id3">
-<h4>Example Request<a class="headerlink" href="#id3" title="Link to this heading">#</a></h4>
+<section id="id4">
+<h4>Example Request<a class="headerlink" href="#id4" title="Link to this heading">#</a></h4>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/freva-nextgen/stacapi/collections</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
 <span class="na">Host</span><span class="o">:</span> <span class="l">www.freva.dkrz.de</span>
 </pre></div>
 </div>
 </section>
-<section id="id4">
-<h4>Example Response<a class="headerlink" href="#id4" title="Link to this heading">#</a></h4>
+<section id="id5">
+<h4>Example Response<a class="headerlink" href="#id5" title="Link to this heading">#</a></h4>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
@@ -628,13 +703,16 @@ description, and spatial/temporal extents.</p>
 </pre></div>
 </div>
 </section>
-<section id="id5">
-<h4>Code examples<a class="headerlink" href="#id5" title="Link to this heading">#</a></h4>
+<section id="id6">
+<h4>Code examples<a class="headerlink" href="#id6" title="Link to this heading">#</a></h4>
 <div class="tabs docutils container" data-tabgroup="">
 <ul class="tabbar">
 <li class="tabbutton selected" data-id="0" onclick="sphinx_code_tabs_onclick(this)">
 Shell</li><li class="tabbutton" data-id="1" onclick="sphinx_code_tabs_onclick(this)">
-Python</li></ul><div class="tab codetab selected" data-id="0">
+Python</li><li class="tabbutton" data-id="2" onclick="sphinx_code_tabs_onclick(this)">
+gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(this)">
+Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
+C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections
 </pre></div>
 </div>
@@ -642,6 +720,41 @@ Python</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections&quot;</span><span class="p">)</span>
 <span class="n">collections</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;collections&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="2">
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
+<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">GET</span><span class="p">(</span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections&quot;</span><span class="p">)</span>
+<span class="n">data</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">jsonlite</span><span class="o">::</span><span class="nf">fromJSON</span><span class="p">(</span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;text&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;utf-8&quot;</span><span class="p">))</span>
+<span class="n">collections</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">data</span><span class="o">$</span><span class="n">collections</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="3">
+<div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span><span class="p">,</span><span class="w"> </span><span class="n">JSON</span>
+<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections&quot;</span><span class="p">)</span>
+<span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">HTTP</span><span class="o">.</span><span class="n">body</span><span class="p">(</span><span class="n">response</span><span class="p">)))</span>
+<span class="n">collections</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">data</span><span class="p">[</span><span class="s">&quot;collections&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="4">
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;curl/curl.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">CURL</span><span class="w"> </span><span class="o">*</span><span class="n">curl</span><span class="p">;</span>
+<span class="w">    </span><span class="n">CURLcode</span><span class="w"> </span><span class="n">res</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">url</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections&quot;</span><span class="p">;</span>
+
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">);</span>
+<span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_cleanup</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 </div></div></section>
@@ -675,15 +788,15 @@ the collection including its extent, license, and available links.</p>
 </ul>
 </dd>
 </dl>
-<section id="id6">
-<h4>Example Request<a class="headerlink" href="#id6" title="Link to this heading">#</a></h4>
+<section id="id7">
+<h4>Example Request<a class="headerlink" href="#id7" title="Link to this heading">#</a></h4>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/freva-nextgen/stacapi/collections/observations</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
 <span class="na">Host</span><span class="o">:</span> <span class="l">www.freva.dkrz.de</span>
 </pre></div>
 </div>
 </section>
-<section id="id7">
-<h4>Example Response<a class="headerlink" href="#id7" title="Link to this heading">#</a></h4>
+<section id="id8">
+<h4>Example Response<a class="headerlink" href="#id8" title="Link to this heading">#</a></h4>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
@@ -711,6 +824,59 @@ the collection including its extent, license, and available links.</p>
 </pre></div>
 </div>
 </section>
+<section id="id9">
+<h4>Code examples<a class="headerlink" href="#id9" title="Link to this heading">#</a></h4>
+<div class="tabs docutils container" data-tabgroup="">
+<ul class="tabbar">
+<li class="tabbutton selected" data-id="0" onclick="sphinx_code_tabs_onclick(this)">
+Shell</li><li class="tabbutton" data-id="1" onclick="sphinx_code_tabs_onclick(this)">
+Python</li><li class="tabbutton" data-id="2" onclick="sphinx_code_tabs_onclick(this)">
+gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(this)">
+Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
+C/C++</li></ul><div class="tab codetab selected" data-id="0">
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="1">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations&quot;</span><span class="p">)</span>
+<span class="n">collection</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="2">
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
+<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">GET</span><span class="p">(</span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations&quot;</span><span class="p">)</span>
+<span class="n">collection</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">jsonlite</span><span class="o">::</span><span class="nf">fromJSON</span><span class="p">(</span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;text&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;utf-8&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="3">
+<div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span><span class="p">,</span><span class="w"> </span><span class="n">JSON</span>
+<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations&quot;</span><span class="p">)</span>
+<span class="n">collection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">HTTP</span><span class="o">.</span><span class="n">body</span><span class="p">(</span><span class="n">response</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="4">
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;curl/curl.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">CURL</span><span class="w"> </span><span class="o">*</span><span class="n">curl</span><span class="p">;</span>
+<span class="w">    </span><span class="n">CURLcode</span><span class="w"> </span><span class="n">res</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">url</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations&quot;</span><span class="p">;</span>
+
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">);</span>
+<span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_cleanup</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></div></section>
 </dd></dl>
 
 <p>—</p>
@@ -749,15 +915,15 @@ query parameters such as limit, datetime range, and bounding box.</p>
 </ul>
 </dd>
 </dl>
-<section id="id8">
-<h4>Example Request<a class="headerlink" href="#id8" title="Link to this heading">#</a></h4>
+<section id="id10">
+<h4>Example Request<a class="headerlink" href="#id10" title="Link to this heading">#</a></h4>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/freva-nextgen/stacapi/collections/observations/items?limit=2&amp;bbox=-180,-90,180,90</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
 <span class="na">Host</span><span class="o">:</span> <span class="l">www.freva.dkrz.de</span>
 </pre></div>
 </div>
 </section>
-<section id="id9">
-<h4>Example Response<a class="headerlink" href="#id9" title="Link to this heading">#</a></h4>
+<section id="id11">
+<h4>Example Response<a class="headerlink" href="#id11" title="Link to this heading">#</a></h4>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/geo+json</span>
 
@@ -799,14 +965,16 @@ query parameters such as limit, datetime range, and bounding box.</p>
 </pre></div>
 </div>
 </section>
-<section id="id10">
-<h4>Code examples<a class="headerlink" href="#id10" title="Link to this heading">#</a></h4>
+<section id="id12">
+<h4>Code examples<a class="headerlink" href="#id12" title="Link to this heading">#</a></h4>
 <div class="tabs docutils container" data-tabgroup="">
 <ul class="tabbar">
 <li class="tabbutton selected" data-id="0" onclick="sphinx_code_tabs_onclick(this)">
 Shell</li><li class="tabbutton" data-id="1" onclick="sphinx_code_tabs_onclick(this)">
 Python</li><li class="tabbutton" data-id="2" onclick="sphinx_code_tabs_onclick(this)">
-gnuR</li></ul><div class="tab codetab selected" data-id="0">
+gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(this)">
+Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
+C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="se">\</span>
 <span class="s1">&#39;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/items?limit=10&amp;datetime=2016-01-01/2016-12-31&#39;</span>
 </pre></div>
@@ -835,6 +1003,40 @@ gnuR</li></ul><div class="tab codetab selected" data-id="0">
 <span class="w">    </span><span class="p">)</span>
 <span class="p">)</span>
 <span class="n">data</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">jsonlite</span><span class="o">::</span><span class="nf">fromJSON</span><span class="p">(</span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;text&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;utf-8&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="3">
+<div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span><span class="p">,</span><span class="w"> </span><span class="n">JSON</span>
+<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+<span class="w">    </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/items&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span>
+<span class="w">        </span><span class="s">&quot;limit&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span>
+<span class="w">        </span><span class="s">&quot;datetime&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;2016-01-01/2016-12-31&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s">&quot;bbox&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;-10,40,10,60&quot;</span>
+<span class="w">    </span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">HTTP</span><span class="o">.</span><span class="n">body</span><span class="p">(</span><span class="n">response</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="4">
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;curl/curl.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">CURL</span><span class="w"> </span><span class="o">*</span><span class="n">curl</span><span class="p">;</span>
+<span class="w">    </span><span class="n">CURLcode</span><span class="w"> </span><span class="n">res</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">url</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/items?limit=10&amp;datetime=2016-01-01/2016-12-31&amp;bbox=-10,40,10,60&quot;</span><span class="p">;</span>
+
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">);</span>
+<span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_cleanup</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 </div></div></section>
@@ -869,15 +1071,15 @@ the dataset including its geometry, properties, assets, and links.</p>
 </ul>
 </dd>
 </dl>
-<section id="id11">
-<h4>Example Request<a class="headerlink" href="#id11" title="Link to this heading">#</a></h4>
+<section id="id13">
+<h4>Example Request<a class="headerlink" href="#id13" title="Link to this heading">#</a></h4>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/freva-nextgen/stacapi/collections/observations/items/1834103571652542466</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
 <span class="na">Host</span><span class="o">:</span> <span class="l">www.freva.dkrz.de</span>
 </pre></div>
 </div>
 </section>
-<section id="id12">
-<h4>Example Response<a class="headerlink" href="#id12" title="Link to this heading">#</a></h4>
+<section id="id14">
+<h4>Example Response<a class="headerlink" href="#id14" title="Link to this heading">#</a></h4>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
@@ -909,6 +1111,59 @@ the dataset including its geometry, properties, assets, and links.</p>
 </pre></div>
 </div>
 </section>
+<section id="id15">
+<h4>Code examples<a class="headerlink" href="#id15" title="Link to this heading">#</a></h4>
+<div class="tabs docutils container" data-tabgroup="">
+<ul class="tabbar">
+<li class="tabbutton selected" data-id="0" onclick="sphinx_code_tabs_onclick(this)">
+Shell</li><li class="tabbutton" data-id="1" onclick="sphinx_code_tabs_onclick(this)">
+Python</li><li class="tabbutton" data-id="2" onclick="sphinx_code_tabs_onclick(this)">
+gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(this)">
+Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
+C/C++</li></ul><div class="tab codetab selected" data-id="0">
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/items/1834103571652542466
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="1">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/items/1834103571652542466&quot;</span><span class="p">)</span>
+<span class="n">item</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="2">
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
+<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">GET</span><span class="p">(</span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/items/1834103571652542466&quot;</span><span class="p">)</span>
+<span class="n">item</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">jsonlite</span><span class="o">::</span><span class="nf">fromJSON</span><span class="p">(</span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;text&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;utf-8&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="3">
+<div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span><span class="p">,</span><span class="w"> </span><span class="n">JSON</span>
+<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/items/1834103571652542466&quot;</span><span class="p">)</span>
+<span class="n">item</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">HTTP</span><span class="o">.</span><span class="n">body</span><span class="p">(</span><span class="n">response</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="4">
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;curl/curl.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">CURL</span><span class="w"> </span><span class="o">*</span><span class="n">curl</span><span class="p">;</span>
+<span class="w">    </span><span class="n">CURLcode</span><span class="w"> </span><span class="n">res</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">url</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/items/1834103571652542466&quot;</span><span class="p">;</span>
+
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">);</span>
+<span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_cleanup</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></div></section>
 </dd></dl>
 
 <p>—</p>
@@ -945,15 +1200,15 @@ temporal, and property-based filtering with free text search capabilities.</p>
 </ul>
 </dd>
 </dl>
-<section id="id13">
-<h4>Example Request<a class="headerlink" href="#id13" title="Link to this heading">#</a></h4>
+<section id="id16">
+<h4>Example Request<a class="headerlink" href="#id16" title="Link to this heading">#</a></h4>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/freva-nextgen/stacapi/search?collections=observations&amp;q=precipitation,temperature&amp;limit=5</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
 <span class="na">Host</span><span class="o">:</span> <span class="l">www.freva.dkrz.de</span>
 </pre></div>
 </div>
 </section>
-<section id="id14">
-<h4>Example Response<a class="headerlink" href="#id14" title="Link to this heading">#</a></h4>
+<section id="id17">
+<h4>Example Response<a class="headerlink" href="#id17" title="Link to this heading">#</a></h4>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/geo+json</span>
 
@@ -982,14 +1237,16 @@ temporal, and property-based filtering with free text search capabilities.</p>
 </pre></div>
 </div>
 </section>
-<section id="id15">
-<h4>Code examples<a class="headerlink" href="#id15" title="Link to this heading">#</a></h4>
+<section id="id18">
+<h4>Code examples<a class="headerlink" href="#id18" title="Link to this heading">#</a></h4>
 <div class="tabs docutils container" data-tabgroup="">
 <ul class="tabbar">
 <li class="tabbutton selected" data-id="0" onclick="sphinx_code_tabs_onclick(this)">
 Shell</li><li class="tabbutton" data-id="1" onclick="sphinx_code_tabs_onclick(this)">
 Python</li><li class="tabbutton" data-id="2" onclick="sphinx_code_tabs_onclick(this)">
-gnuR</li></ul><div class="tab codetab selected" data-id="0">
+gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(this)">
+Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
+C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="se">\</span>
 <span class="s1">&#39;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/search?collections=observations&amp;q=temperature&amp;bbox=-180,-90,180,90&amp;limit=10&#39;</span>
 </pre></div>
@@ -1021,6 +1278,41 @@ gnuR</li></ul><div class="tab codetab selected" data-id="0">
 <span class="w">    </span><span class="p">)</span>
 <span class="p">)</span>
 <span class="n">data</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">jsonlite</span><span class="o">::</span><span class="nf">fromJSON</span><span class="p">(</span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;text&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;utf-8&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="3">
+<div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span><span class="p">,</span><span class="w"> </span><span class="n">JSON</span>
+<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+<span class="w">    </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/search&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span>
+<span class="w">        </span><span class="s">&quot;collections&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;observations&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s">&quot;q&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;temperature&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s">&quot;bbox&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;-180,-90,180,90&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s">&quot;limit&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="mi">10</span>
+<span class="w">    </span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">HTTP</span><span class="o">.</span><span class="n">body</span><span class="p">(</span><span class="n">response</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="4">
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;curl/curl.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">CURL</span><span class="w"> </span><span class="o">*</span><span class="n">curl</span><span class="p">;</span>
+<span class="w">    </span><span class="n">CURLcode</span><span class="w"> </span><span class="n">res</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">url</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/search?collections=observations&amp;q=temperature&amp;bbox=-180,-90,180,90&amp;limit=10&quot;</span><span class="p">;</span>
+
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">);</span>
+<span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_cleanup</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 </div></div></section>
@@ -1073,8 +1365,8 @@ search parameters and supports arrays for certain fields.</p>
 </ul>
 </dd>
 </dl>
-<section id="id16">
-<h4>Example Request<a class="headerlink" href="#id16" title="Link to this heading">#</a></h4>
+<section id="id19">
+<h4>Example Request<a class="headerlink" href="#id19" title="Link to this heading">#</a></h4>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">POST</span> <span class="nn">/api/freva-nextgen/stacapi/search</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
 <span class="na">Host</span><span class="o">:</span> <span class="l">www.freva.dkrz.de</span>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
@@ -1089,13 +1381,16 @@ search parameters and supports arrays for certain fields.</p>
 </pre></div>
 </div>
 </section>
-<section id="id17">
-<h4>Code examples<a class="headerlink" href="#id17" title="Link to this heading">#</a></h4>
+<section id="id20">
+<h4>Code examples<a class="headerlink" href="#id20" title="Link to this heading">#</a></h4>
 <div class="tabs docutils container" data-tabgroup="">
 <ul class="tabbar">
 <li class="tabbutton selected" data-id="0" onclick="sphinx_code_tabs_onclick(this)">
 Shell</li><li class="tabbutton" data-id="1" onclick="sphinx_code_tabs_onclick(this)">
-Python</li></ul><div class="tab codetab selected" data-id="0">
+Python</li><li class="tabbutton" data-id="2" onclick="sphinx_code_tabs_onclick(this)">
+gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(this)">
+Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
+C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="se">\</span>
 <span class="s1">&#39;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/search&#39;</span><span class="w"> </span><span class="se">\</span>
 -H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
@@ -1119,6 +1414,75 @@ Python</li></ul><div class="tab codetab selected" data-id="0">
     <span class="p">}</span>
 <span class="p">)</span>
 <span class="n">results</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="2">
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
+<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">POST</span><span class="p">(</span>
+<span class="w">    </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/search&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span>
+<span class="w">        </span><span class="n">collections</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="s">&quot;observations&quot;</span><span class="p">),</span>
+<span class="w">        </span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="s">&quot;temperature&quot;</span><span class="p">),</span>
+<span class="w">        </span><span class="n">bbox</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="m">-180</span><span class="p">,</span><span class="w"> </span><span class="m">-90</span><span class="p">,</span><span class="w"> </span><span class="m">180</span><span class="p">,</span><span class="w"> </span><span class="m">90</span><span class="p">),</span>
+<span class="w">        </span><span class="n">limit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">10</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="w">    </span><span class="n">encode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;json&quot;</span>
+<span class="p">)</span>
+<span class="n">data</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">jsonlite</span><span class="o">::</span><span class="nf">fromJSON</span><span class="p">(</span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;text&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;utf-8&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="3">
+<div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span><span class="p">,</span><span class="w"> </span><span class="n">JSON</span>
+<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+<span class="w">    </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/search&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span><span class="s">&quot;Content-Type&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;application/json&quot;</span><span class="p">),</span>
+<span class="w">    </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">json</span><span class="p">(</span><span class="kt">Dict</span><span class="p">(</span>
+<span class="w">        </span><span class="s">&quot;collections&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">[</span><span class="s">&quot;observations&quot;</span><span class="p">],</span>
+<span class="w">        </span><span class="s">&quot;q&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">[</span><span class="s">&quot;temperature&quot;</span><span class="p">],</span>
+<span class="w">        </span><span class="s">&quot;bbox&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">[</span><span class="o">-</span><span class="mi">180</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="w"> </span><span class="mi">180</span><span class="p">,</span><span class="w"> </span><span class="mi">90</span><span class="p">],</span>
+<span class="w">        </span><span class="s">&quot;limit&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="mi">10</span>
+<span class="w">    </span><span class="p">))</span>
+<span class="p">)</span>
+<span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">HTTP</span><span class="o">.</span><span class="n">body</span><span class="p">(</span><span class="n">response</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="4">
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;curl/curl.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">CURL</span><span class="w"> </span><span class="o">*</span><span class="n">curl</span><span class="p">;</span>
+<span class="w">    </span><span class="n">CURLcode</span><span class="w"> </span><span class="n">res</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/search&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">json_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;{&quot;</span>
+<span class="w">        </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">collections</span><span class="se">\&quot;</span><span class="s">: [</span><span class="se">\&quot;</span><span class="s">observations</span><span class="se">\&quot;</span><span class="s">],&quot;</span>
+<span class="w">        </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">q</span><span class="se">\&quot;</span><span class="s">: [</span><span class="se">\&quot;</span><span class="s">temperature</span><span class="se">\&quot;</span><span class="s">],&quot;</span>
+<span class="w">        </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">bbox</span><span class="se">\&quot;</span><span class="s">: [-180, -90, 180, 90],&quot;</span>
+<span class="w">        </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">limit</span><span class="se">\&quot;</span><span class="s">: 10&quot;</span>
+<span class="w">    </span><span class="s">&quot;}&quot;</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">struct</span><span class="w"> </span><span class="nc">curl_slist</span><span class="w"> </span><span class="o">*</span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+<span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Content-Type: application/json&quot;</span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_HTTPHEADER</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_POST</span><span class="p">,</span><span class="w"> </span><span class="mf">1L</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_POSTFIELDS</span><span class="p">,</span><span class="w"> </span><span class="n">json_data</span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">res</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">CURLE_OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;curl_easy_perform() failed: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">curl_easy_strerror</span><span class="p">(</span><span class="n">res</span><span class="p">));</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="n">curl_slist_free_all</span><span class="p">(</span><span class="n">headers</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_cleanup</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 </div></div></section>
@@ -1146,15 +1510,15 @@ the properties that can be used in filter expressions across all collections.</p
 </ul>
 </dd>
 </dl>
-<section id="id18">
-<h4>Example Request<a class="headerlink" href="#id18" title="Link to this heading">#</a></h4>
+<section id="id21">
+<h4>Example Request<a class="headerlink" href="#id21" title="Link to this heading">#</a></h4>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/freva-nextgen/stacapi/queryables</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
 <span class="na">Host</span><span class="o">:</span> <span class="l">www.freva.dkrz.de</span>
 </pre></div>
 </div>
 </section>
-<section id="id19">
-<h4>Example Response<a class="headerlink" href="#id19" title="Link to this heading">#</a></h4>
+<section id="id22">
+<h4>Example Response<a class="headerlink" href="#id22" title="Link to this heading">#</a></h4>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/schema+json</span>
 
@@ -1182,6 +1546,59 @@ the properties that can be used in filter expressions across all collections.</p
 </pre></div>
 </div>
 </section>
+<section id="id23">
+<h4>Code examples<a class="headerlink" href="#id23" title="Link to this heading">#</a></h4>
+<div class="tabs docutils container" data-tabgroup="">
+<ul class="tabbar">
+<li class="tabbutton selected" data-id="0" onclick="sphinx_code_tabs_onclick(this)">
+Shell</li><li class="tabbutton" data-id="1" onclick="sphinx_code_tabs_onclick(this)">
+Python</li><li class="tabbutton" data-id="2" onclick="sphinx_code_tabs_onclick(this)">
+gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(this)">
+Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
+C/C++</li></ul><div class="tab codetab selected" data-id="0">
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>https://www.freva.dkrz.de/api/freva-nextgen/stacapi/queryables
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="1">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/queryables&quot;</span><span class="p">)</span>
+<span class="n">queryables</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="2">
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
+<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">GET</span><span class="p">(</span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/queryables&quot;</span><span class="p">)</span>
+<span class="n">queryables</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">jsonlite</span><span class="o">::</span><span class="nf">fromJSON</span><span class="p">(</span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;text&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;utf-8&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="3">
+<div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span><span class="p">,</span><span class="w"> </span><span class="n">JSON</span>
+<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/queryables&quot;</span><span class="p">)</span>
+<span class="n">queryables</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">HTTP</span><span class="o">.</span><span class="n">body</span><span class="p">(</span><span class="n">response</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="4">
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;curl/curl.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">CURL</span><span class="w"> </span><span class="o">*</span><span class="n">curl</span><span class="p">;</span>
+<span class="w">    </span><span class="n">CURLcode</span><span class="w"> </span><span class="n">res</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">url</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/queryables&quot;</span><span class="p">;</span>
+
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">);</span>
+<span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_cleanup</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></div></section>
 </dd></dl>
 
 <p>—</p>
@@ -1212,13 +1629,66 @@ describing the properties available for filtering items in a specific collection
 </ul>
 </dd>
 </dl>
-<section id="id20">
-<h4>Example Request<a class="headerlink" href="#id20" title="Link to this heading">#</a></h4>
+<section id="id24">
+<h4>Example Request<a class="headerlink" href="#id24" title="Link to this heading">#</a></h4>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/freva-nextgen/stacapi/collections/observations/queryables</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
 <span class="na">Host</span><span class="o">:</span> <span class="l">www.freva.dkrz.de</span>
 </pre></div>
 </div>
 </section>
+<section id="id25">
+<h4>Code examples<a class="headerlink" href="#id25" title="Link to this heading">#</a></h4>
+<div class="tabs docutils container" data-tabgroup="">
+<ul class="tabbar">
+<li class="tabbutton selected" data-id="0" onclick="sphinx_code_tabs_onclick(this)">
+Shell</li><li class="tabbutton" data-id="1" onclick="sphinx_code_tabs_onclick(this)">
+Python</li><li class="tabbutton" data-id="2" onclick="sphinx_code_tabs_onclick(this)">
+gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(this)">
+Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
+C/C++</li></ul><div class="tab codetab selected" data-id="0">
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/queryables
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="1">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/queryables&quot;</span><span class="p">)</span>
+<span class="n">queryables</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="2">
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
+<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">GET</span><span class="p">(</span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/queryables&quot;</span><span class="p">)</span>
+<span class="n">queryables</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">jsonlite</span><span class="o">::</span><span class="nf">fromJSON</span><span class="p">(</span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;text&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;utf-8&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="3">
+<div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span><span class="p">,</span><span class="w"> </span><span class="n">JSON</span>
+<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/queryables&quot;</span><span class="p">)</span>
+<span class="n">queryables</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">HTTP</span><span class="o">.</span><span class="n">body</span><span class="p">(</span><span class="n">response</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="4">
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;curl/curl.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">CURL</span><span class="w"> </span><span class="o">*</span><span class="n">curl</span><span class="p">;</span>
+<span class="w">    </span><span class="n">CURLcode</span><span class="w"> </span><span class="n">res</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">url</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/queryables&quot;</span><span class="p">;</span>
+
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">);</span>
+<span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_cleanup</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></div></section>
 </dd></dl>
 
 <p>—</p>
@@ -1230,30 +1700,31 @@ describing the properties available for filtering items in a specific collection
 <p>The Freva STAC-API is fully compatible with STAC-compliant tools and libraries. You can use popular tools like:</p>
 <ul class="simple">
 <li><p><strong>Python</strong>: <cite>pystac-client</cite>, <cite>pystac</cite>, <cite>stackstac</cite></p></li>
-<li><p><strong>R</strong>: <cite>rstac</cite></p></li>
-<li><p><strong>JavaScript</strong>: <cite>&#64;stac/client</cite></p></li>
 </ul>
-<section id="python-example-with-pystac-client">
-<h2>Python Example with <cite>pystac-client</cite><a class="headerlink" href="#python-example-with-pystac-client" title="Link to this heading">#</a></h2>
-<div class="tab codetab" data-id="1">
+<section id="integration-example-with-python">
+<h2>Integration Example with Python<a class="headerlink" href="#integration-example-with-python" title="Link to this heading">#</a></h2>
+<div class="tabs docutils container" data-tabgroup="">
+<ul class="tabbar">
+<li class="tabbutton selected" data-id="0" onclick="sphinx_code_tabs_onclick(this)">
+Python with pystac-client</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pystac_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
 
-<span class="c1"># Connect to the STAC API</span>
+<span class="c1"># Connect to the Freva STAC API</span>
 <span class="n">catalog</span> <span class="o">=</span> <span class="n">Client</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/stacapi&quot;</span><span class="p">)</span>
 
 <span class="c1"># Search for items</span>
 <span class="n">search</span> <span class="o">=</span> <span class="n">catalog</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>
-    <span class="n">collections</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;observations&quot;</span><span class="p">],</span>
-    <span class="n">datetime</span><span class="o">=</span><span class="s2">&quot;2020-01-01/2020-12-31&quot;</span><span class="p">,</span>
+    <span class="n">max_items</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">collections</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cmip6&quot;</span><span class="p">],</span>
     <span class="n">bbox</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">60</span><span class="p">]</span>
 <span class="p">)</span>
 
 <span class="c1"># Get items</span>
-<span class="n">items</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">get_items</span><span class="p">())</span>
+<span class="n">items</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)</span><span class="si">}</span><span class="s2"> items&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-</div><p>—</p>
+</div></div><p>—</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Please note that in these examples, “<a class="reference external" href="https://www.freva.dkrz.de">https://www.freva.dkrz.de</a>” is used as a placeholder URL. You should replace it with the actual URL of your Freva STAC API instance.</p>
@@ -1324,7 +1795,7 @@ describing the properties available for filtering items in a specific collection
 </ul>
 </li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#stac-api-integration">STAC-API Integration</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#python-example-with-pystac-client">Python Example with <cite>pystac-client</cite></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#integration-example-with-python">Integration Example with Python</a></li>
 </ul>
 </li>
 </ul>
