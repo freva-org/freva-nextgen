@@ -5,8 +5,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
  - Internal changes.
  - Cli bug fix
-
-
+ - Fix STAC-API 405 status code on preflight OPTIONS
+ - Polish the STAC-API docs
 
 ## [v2506.0.1]
 ### Changed
