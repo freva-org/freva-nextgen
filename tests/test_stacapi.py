@@ -7,7 +7,7 @@ import requests
 def test_stacapi_basic(test_server: str) -> None:
     """Test the default stacapi functionality."""
     result_catalog = requests.get(f"{test_server}/stacapi/")
-    assert result_catalog.json()["stac_version"] == "1.1.0"
+    assert result_catalog.json()["stac_version"] == "1.0.0"
     assert result_catalog.json()["type"] == "Catalog"
 
     result_collections = requests.get(f"{test_server}/stacapi/collections")
@@ -17,7 +17,7 @@ def test_stacapi_basic(test_server: str) -> None:
     result_collection = requests.get(f"{test_server}/stacapi/collections/cmip6")
     assert result_collection.status_code == 200
     assert result_collection.json()["id"] == "cmip6"
-    assert result_collection.json()["stac_version"] == "1.1.0"
+    assert result_collection.json()["stac_version"] == "1.0.0"
     assert result_collection.json()["type"] == "Collection"
 
     result_items = requests.get(f"{test_server}/stacapi/collections/cmip6/items")
