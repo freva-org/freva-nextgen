@@ -215,7 +215,7 @@ class UserDataHandler:
     def __init__(self, userdata_items: List[Union[str, xr.Dataset]]) -> None:
         self._suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", "zar"]
         self.user_metadata: List[
-            Dict[str, Union[str, List[str], Dict[str, str]]]
+            Dict[str, Union[str, List[str], Dict[str, str], None]]
         ] = []
         self._metadata_collection: List[Dict[str, Union[str, List[str]]]] = []
         try:
@@ -228,9 +228,12 @@ class UserDataHandler:
 
     def _gather_files(self, path: Path, pattern: str = "*") -> Iterator[Path]:
         """Gather all valid files from directory and wildcard pattern."""
-        for item in path.rglob(pattern):
-            if item.is_file() and item.suffix in self._suffixes:
-                yield item
+        try:
+            for item in path.rglob(pattern):
+                if item.is_file() and item.suffix in self._suffixes:
+                    yield item
+        except (OSError, PermissionError) as e:  # pragma: no cover
+            logger.warning(f"Error accessing path {path}: {e}")
 
     def _validate_user_data(
         self,
@@ -328,7 +331,7 @@ class UserDataHandler:
 
     def _get_metadata(
         self, path: Union[os.PathLike[str], xr.Dataset]
-    ) -> Dict[str, Union[str, List[str], Dict[str, str]]]:
+    ) -> Dict[str, Optional[Union[str, List[str], Dict[str, str]]]]:
         """Get metadata from a path or xarray dataset."""
         time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
         try:
@@ -352,9 +355,12 @@ class UserDataHandler:
             return {}
         if len(times) > 0:
             try:
-                time_str = (
-                    f"[{times[0].isoformat()}Z TO {times[-1].isoformat()}Z]"
-                )
+                try:
+                    time_str = (
+                        f"[{times[0].isoformat()}Z TO {times[-1].isoformat()}Z]"
+                    )
+                except (AttributeError, IndexError):
+                    time_str = "fx"
                 dt = (
                     abs((times[1] - times[0]).total_seconds())
                     if len(times) > 1
@@ -389,8 +395,15 @@ class UserDataHandler:
             and var.lower() not in ["rotated_pole", "rot_pole"]
         ]
 
-        _data: Dict[str, Union[str, List[str], Dict[str, str]]] = {}
-        _data.setdefault("variable", variables[0])
+        _data: Dict[str, Optional[Union[str, List[str], Dict[str, str]]]] = {}
+        if variables:
+            _data.setdefault("variable", variables[0])
+        elif data_vars:  # pragma: no cover
+            _data.setdefault("variable", data_vars[0])
+            logger.info(f"No filtered variables found in {path}, using {data_vars[0]}")
+        else:  # pragma: no cover
+            _data.setdefault("variable", None)
+            logger.warning(f"No data variables found in {path}")
         _data.setdefault(
             "time_frequency", self._get_time_frequency(dt, time_freq)
         )
@@ -400,5 +413,5 @@ class UserDataHandler:
         if isinstance(path, Path):
             _data["file"] = str(path)
         if isinstance(path, xr.Dataset):
-            _data["file"] = str(dset.encoding["source"])
+            _data["file"] = dset.encoding.get("source", None)
         return _data

@@ -24,6 +24,7 @@ from freva_rest.utils.stac_utils import (
     Asset,
     Item,
     Link,
+    generate_local_access_desc,
     parse_bbox,
     parse_datetime,
 )
@@ -480,16 +481,7 @@ class STACAPI:
             [freva-client](https://freva-org.github.io/freva-nextgen/)
             """
         )  # noqa: E501
-        local_access_desc = dedent(
-            f"""
-            # Accessing data locally where the data is stored
-            ```python
-            import xarray as xr
-            ds = xr.open_mfdataset('{id}')
-            ```
-            💡: Ensure required xarray packages are installed.
-            """
-        )
+        local_access_desc = generate_local_access_desc(id)
         item_id = str(result.get("_version_"))
         bbox = result.get("bbox")
         if bbox:

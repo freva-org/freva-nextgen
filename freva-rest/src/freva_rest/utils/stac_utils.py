@@ -2,8 +2,10 @@
 
 import re
 from datetime import MAXYEAR, MINYEAR, datetime
+from textwrap import dedent
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import fsspec.core
 from dateutil import parser
 
 YEAR_ONLY = re.compile(r"^\d{1,4}$")
@@ -167,3 +169,88 @@ def parse_bbox(bbox_str: Union[str, List[str]]) -> List[float]:
         for x in bbox.replace("ENVELOPE(", "").replace(")", "").split(",")
     ]
     return [nums[0], nums[3], nums[1], nums[2]]
+
+
+def generate_local_access_desc(file_id: str) -> str:
+    """
+    Generate local access description based on file type and protocol.
+
+    Parameters
+    ----------
+    file_id : str
+        The file identifier/path
+
+    Returns
+    -------
+    str
+        Formatted description with appropriate access code
+    """
+    protocol, _ = fsspec.core.split_protocol(file_id)
+    is_remote = protocol in ("s3", "gs", "gcs", "azure", "abfs", "http", "https")
+    is_zarr = file_id.endswith(".zarr")
+
+    if is_remote and is_zarr:
+        # Remote zarr file
+        desc = dedent(
+            f"""
+            # Accessing remote Zarr data
+            ```python
+            import fsspec
+            import xarray as xr
+
+            file = "{file_id}"
+            protocol, _ = fsspec.core.split_protocol(file)
+            anon_access = protocol in ("s3", "gs")
+            mapper = fsspec.get_mapper(file, anon=anon_access)
+            ds = xr.open_dataset(mapper, engine="zarr")
+            ```
+            💡: Requires fsspec and zarr packages: `pip install fsspec zarr`
+            """
+        )
+    elif is_remote and not is_zarr:
+        # Remote non-zarr file
+        desc = dedent(
+            f"""
+            # Accessing remote data
+            ```python
+            import fsspec
+            import xarray as xr
+
+            file = "{file_id}"
+            # For remote files, you might need authentication
+            with fsspec.open(file) as f:
+                ds = xr.open_dataset(f)
+            # Or: direct access if supported
+            # ds = xr.open_dataset(file)
+            ```
+            💡: Requires fsspec package: `pip install fsspec`
+            💡: Some protocols may require authentication credentials
+            """
+        )
+    elif not is_remote and is_zarr:
+        # local zarr file
+        desc = dedent(
+            f"""
+            # Accessing local Zarr data
+            ```python
+            import xarray as xr
+
+            ds = xr.open_dataset("{file_id}", engine="zarr")
+            ```
+            💡: Requires zarr package: `pip install zarr`
+            """
+        )
+    else:
+        # local non-zarr file
+        desc = dedent(
+            f"""
+            # Accessing data locally where the data is stored
+            ```python
+            import xarray as xr
+            ds = xr.open_mfdataset('{file_id}')
+            ```
+            💡: Ensure required xarray packages are installed.
+            """
+        )
+
+    return desc
