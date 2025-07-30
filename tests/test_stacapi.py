@@ -444,3 +444,24 @@ def test_cors_preflight_options(test_server: str) -> None:
     assert resp.headers.get("access-control-allow-origin") == "*"
     assert "POST" in resp.headers.get("access-control-allow-methods", "")
     assert "*" in resp.headers.get("access-control-allow-headers", "")
+
+def test_generate_local_access_desc_remote_files():
+    """Test generation of local access description for remote files."""
+    from freva_rest.utils.stac_utils import generate_local_access_desc
+    
+    # remote zarr file
+    zarr_desc = generate_local_access_desc("gs://bucket/data.zarr")
+    assert "# Accessing remote Zarr data" in zarr_desc
+    assert "fsspec.get_mapper" in zarr_desc
+    assert "anon_access = protocol in" in zarr_desc
+    
+    # remote non-zarr file  
+    nc_desc = generate_local_access_desc("s3://random/bucket/data.nc")
+    assert "# Accessing remote data" in nc_desc
+    assert "fsspec.open(file) as f:" in nc_desc
+    assert "authentication" in nc_desc
+    # local zarr file
+    local_zarr_desc = generate_local_access_desc("/random/path/to/data.zarr")
+    assert "# Accessing local Zarr data" in local_zarr_desc
+    assert 'engine="zarr"' in local_zarr_desc
+    assert "pip install zarr" in local_zarr_desc

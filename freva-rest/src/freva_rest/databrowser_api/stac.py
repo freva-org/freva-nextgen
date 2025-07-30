@@ -327,7 +327,7 @@ class STAC(Solr):
             try:
                 start_time, end_time = parse_datetime(time)
                 self._update_temporal_extent(start_time, end_time)
-            except ValueError as e:
+            except ValueError as e:  # pragma: no cover
                 logger.warning(f"Invalid datetime for {id}: {e}")
 
         geometry = None

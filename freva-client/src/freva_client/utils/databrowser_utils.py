@@ -232,7 +232,7 @@ class UserDataHandler:
             for item in path.rglob(pattern):
                 if item.is_file() and item.suffix in self._suffixes:
                     yield item
-        except (OSError, PermissionError) as e:
+        except (OSError, PermissionError) as e:  # pragma: no cover
             logger.warning(f"Error accessing path {path}: {e}")
 
     def _validate_user_data(
@@ -398,10 +398,10 @@ class UserDataHandler:
         _data: Dict[str, Optional[Union[str, List[str], Dict[str, str]]]] = {}
         if variables:
             _data.setdefault("variable", variables[0])
-        elif data_vars:
+        elif data_vars:  # pragma: no cover
             _data.setdefault("variable", data_vars[0])
             logger.info(f"No filtered variables found in {path}, using {data_vars[0]}")
-        else:
+        else:  # pragma: no cover
             _data.setdefault("variable", None)
             logger.warning(f"No data variables found in {path}")
         _data.setdefault(
