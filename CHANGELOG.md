@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
  - Cli bug fix
  - Fix STAC-API 405 status code on preflight OPTIONS
  - Polish the STAC-API docs
+ - Fix an issue regarding get_metadata on user-data
+ - Aadd better helper on item assets of STAC 
 
 ## [v2506.0.1]
 ### Changed
