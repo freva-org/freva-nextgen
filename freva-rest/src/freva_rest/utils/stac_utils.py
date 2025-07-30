@@ -5,10 +5,17 @@ from datetime import MAXYEAR, MINYEAR, datetime
 from textwrap import dedent
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import fsspec.core
 from dateutil import parser
 
 YEAR_ONLY = re.compile(r"^\d{1,4}$")
+
+
+def split_protocol(path: str) -> Tuple[Optional[str], str]:
+    """Split protocol from path."""
+    if "://" in path:
+        protocol, rest = path.split("://", 1)
+        return protocol, rest
+    return None, path
 
 
 class Item:
@@ -185,7 +192,7 @@ def generate_local_access_desc(file_id: str) -> str:
     str
         Formatted description with appropriate access code
     """
-    protocol, _ = fsspec.core.split_protocol(file_id)
+    protocol, _ = split_protocol(file_id)
     is_remote = protocol in ("s3", "gs", "gcs", "azure", "abfs", "http", "https")
     is_zarr = file_id.endswith(".zarr")
 
