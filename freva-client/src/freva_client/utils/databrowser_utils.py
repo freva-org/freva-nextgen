@@ -56,7 +56,7 @@ class Config:
             config.get("databrowser.host", config.get("solr.host", ""))
         )
         host, _, port = (host or "").partition(":")
-        port = port or config.get("databrowser.port", "")
+        port = port or config.get("databrowser.port", "7777")
         if port:
             host = f"{host}:{port}"
         return f"{scheme}://{host}"
@@ -84,14 +84,29 @@ class Config:
 
     @cached_property
     def overview(self) -> Dict[str, Any]:
-        """Get an overview of the all databrowser flavours and search keys."""
+        """Get an overview of all databrowser flavours
+        and search keys including custom flavours."""
+        try:
+            from freva_client.auth import Auth
+
+            # to get custom flavours
+            auth = Auth()
+            token = auth.authenticate(config=self)
+            headers = {"Authorization": f"Bearer {token['access_token']}"}
+            res = requests.get(
+                f"{self.databrowser_url}/overview", headers=headers, timeout=15
+            )
+            if res.status_code == 200:
+                return cast(Dict[str, Any], res.json())
+        except Exception:
+            pass
         try:
             res = requests.get(f"{self.databrowser_url}/overview", timeout=15)
+            return cast(Dict[str, Any], res.json())
         except requests.exceptions.ConnectionError:
             raise ValueError(
                 f"Could not connect to {self.databrowser_url}"
             ) from None
-        return cast(Dict[str, Any], res.json())
 
     def _get_databrowser_host_from_config(self) -> str:
         """Get the config file order."""
@@ -207,7 +222,6 @@ class Config:
 
 class UserDataHandler:
     """Class for processing user data.
-
     This class is used for processing user data and extracting metadata
     from the data files.
     """

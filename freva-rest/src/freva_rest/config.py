@@ -33,7 +33,7 @@ from pydantic import BaseModel, Field
 from .logger import logger, logger_file_handle
 
 ConfigItem = Union[str, int, float, None]
-
+BUILTIN_FLAVOURS = ["freva", "cmip6", "cmip5", "cordex", "user"]
 T = TypeVar("T", str, int)
 
 
@@ -266,9 +266,18 @@ class ServerConfig(BaseModel):
             ),
         ),
     ] = env_to_list("API_OIDC_AUTH_PORTS", int)
+    admin_list: Annotated[
+        List[str],
+        Field(
+            title="Admin user list",
+            description=(
+                "List of user names that are considered as admin users."
+            ),
+        ),
+    ] = env_to_list("API_ADMIN_LIST", str)
 
     def _read_config(self, section: str, key: str) -> Any:
-        fallback = self._fallback_config[section][key] or None
+        fallback = self._fallback_config.get(section, {}).get(key, None)
         return self._config.get(section, {}).get(key, fallback)
 
     def model_post_init(self, __context: Any = None) -> None:
@@ -336,6 +345,9 @@ class ServerConfig(BaseModel):
         self.oidc_auth_ports = self.oidc_auth_ports or self._read_config(
             "oidc", "auth_ports"
         )
+        self.admin_list = self.admin_list or self._read_config(
+            "restAPI", "admin_list"
+        ) or []
 
     @staticmethod
     def get_url(url: str, default_port: Union[str, int]) -> str:
@@ -384,6 +396,33 @@ class ServerConfig(BaseModel):
             AsyncIOMotorCollection,
             self.mongo_client[self.mongo_db]["user_data"],
         )
+
+    @property
+    def mongo_collection_flavours(self) -> AsyncIOMotorCollection:
+        """Define the mongoDB collection for custom flavours."""
+        return cast(
+            AsyncIOMotorCollection,
+            self.mongo_client[self.mongo_db]["custom_flavours"],
+        )
+
+    # TODO: the Logik of this function needs to be brainstormed.
+    # First and naive solution
+    def is_admin_user(self, current_user: BaseModel) -> bool:
+        """Return True if the user holds the 'realm-admin' (or 'admin') role."""
+        if (
+            hasattr(current_user, 'preferred_username')
+            and current_user.preferred_username in self.admin_list
+        ):
+            return True
+
+        claims = current_user.dict()
+        roles = (
+            claims
+            .get("resource_access", {})
+            .get("realm-management", {})
+            .get("roles", [])
+        )
+        return "realm-admin" in roles or "admin" in roles
 
     def power_cycle_mongodb(self) -> None:
         """Reset an existing mongoDB connection."""

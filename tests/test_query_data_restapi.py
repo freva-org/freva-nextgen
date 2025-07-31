@@ -1,6 +1,7 @@
 """Unit tests for data queries via the rest-api."""
 
 import json
+import os
 import time
 from typing import Dict
 
@@ -49,6 +50,12 @@ def test_databrowser(test_server: str) -> None:
         },
     )
     assert len(res2.text.split()) < len(res5.text.split())
+
+    # wrong flavour
+    res6 = requests.get(
+        f"{test_server}/databrowser/data-search/cmipx/file"
+    )
+    assert res6.status_code == 422
 
 
 def test_multiversion(test_server: str) -> None:
@@ -469,3 +476,117 @@ def test_mongo_parameter_insert(test_server: str, cfg: ServerConfig) -> None:
         len([k for k in stats[0]["query"].values() if not isinstance(k, str)])
         == 0
     )
+
+def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
+    """Test all flavour endpoints: list, add, delete."""
+    
+    # listing flavours without authentication
+    res1 = requests.get(f"{test_server}/databrowser/flavours")
+    assert res1.status_code == 200
+    flavours_data = res1.json()
+    assert "total" in flavours_data
+    assert "flavours" in flavours_data
+    assert flavours_data["total"] >= 5
+    built_in_names = [f["flavour_name"] for f in flavours_data["flavours"]]
+    assert "freva" in built_in_names
+    assert "cmip6" in built_in_names
+
+    #adding a custom flavour
+    custom_flavour = {
+        "flavour_name": "test_flavour",
+        "mapping": {
+            "project": "my_project",
+            "variable": "my_variable"
+        },
+        "is_global": False
+    }
+    res2 = requests.post(
+        f"{test_server}/databrowser/flavours",
+        json=custom_flavour,
+        headers={"Authorization": f"Bearer {auth['access_token']}"}
+    )
+    assert res2.status_code == 201
+    assert "status" in res2.json()
+
+    # getting 409 for the same flavour again
+    res2_duplicate = requests.post(
+        f"{test_server}/databrowser/flavours",
+        json=custom_flavour,
+        headers={"Authorization": f"Bearer {auth['access_token']}"}
+    )
+    assert res2_duplicate.status_code == 409
+
+    # getting 409 conflict with the global flavour
+    conflict_map = {
+        "flavour_name": "freva",
+        "mapping": {
+            "project": "my_project",
+            "variable": "my_variable"
+        },
+        "is_global": True
+    }
+    
+    with mock.patch("freva_rest.rest.server_config.admin_list", ["janedoe"]):
+        res_conflict_global = requests.post(
+            f"{test_server}/databrowser/flavours",
+            json=conflict_map,
+            headers={"Authorization": f"Bearer {auth['access_token']}"}
+        )
+
+        assert res_conflict_global.status_code == 409
+
+    # adding a flavour with non-admin user
+    res_non_admin = requests.post(
+        f"{test_server}/databrowser/flavours",
+        json=conflict_map,
+        headers={"Authorization": f"Bearer {auth['access_token']}"}
+    )
+    assert res_non_admin.status_code == 403
+
+    # listing flavours with authentication
+    res3 = requests.get(
+        f"{test_server}/databrowser/flavours",
+        headers={"Authorization": f"Bearer {auth['access_token']}"}
+    )
+    assert res3.status_code == 200
+    flavours_data = res3.json()
+    assert flavours_data["total"] > res1.json()["total"]
+    custom_names = [f["flavour_name"] for f in flavours_data["flavours"]]
+    assert "test_flavour" in custom_names
+
+    # deleting the custom flavour
+    res4 = requests.delete(
+        f"{test_server}/databrowser/flavours/test_flavour",
+        headers={"Authorization": f"Bearer {auth['access_token']}"}
+    )
+    assert res4.status_code == 200
+    assert "status" in res4.json()
+
+    # built-in flavours cannot be deleted
+    res5 = requests.delete(
+        f"{test_server}/databrowser/flavours/freva",
+        headers={"Authorization": f"Bearer {auth['access_token']}"}
+    )
+    assert res5.status_code == 422
+    assert "Cannot delete built-in flavour" in res5.json()["detail"]
+
+    # adding flavour without authentication
+    res6 = requests.post(
+        f"{test_server}/databrowser/flavours",
+        json=custom_flavour
+    )
+    assert res6.status_code == 403
+
+    # deleting non-existent flavour
+    res7 = requests.delete(
+        f"{test_server}/databrowser/flavours/non_existent_flavour",
+        headers={"Authorization": f"Bearer {auth['access_token']}"}
+    )
+    assert res7.status_code == 404
+
+    # invalid params 422
+    res8 = requests.get(
+        f"{test_server}/databrowser/flavours",
+        params={"invalid_param": "test"}
+    )
+    assert res8.status_code == 422
