@@ -1,14 +1,15 @@
 """Schema definitions for the FastAPI endpoints."""
 
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Literal, Union
 from urllib.parse import parse_qs
 
 from fastapi import Query, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
-from .core import FlavourType
+from freva_rest.rest import server_config
 
 Required: Any = Ellipsis
+FlavourType = Literal["freva", "cmip6", "cmip5", "cordex", "user"]
 
 
 class LoadFiles(BaseModel):
@@ -88,3 +89,96 @@ class SearchFlavours(BaseModel):
 
     flavours: List[Union[FlavourType, str]]
     attributes: Dict[Union[FlavourType, str], List[str]]
+
+
+class FlavourDefinition(BaseModel):
+    """Schema for flavour definition."""
+    flavour_name: str = Field(
+        ...,
+        description="Name of the custom flavour",
+        examples=["nextgem", "custom_project"]
+    )
+    mapping: Dict[str, str] = Field(
+        ...,
+        description="Facet mapping dictionary",
+        examples=[{
+            "project": "mip_era",
+            "model": "source_id",
+            "experiment": "experiment_id",
+            "variable": "variable_id"
+        }]
+    )
+    is_global: bool = Field(
+        False,
+        description="Make flavour available to all users",
+        examples=[False, True]
+    )
+
+    class Config:
+        extra = "forbid"
+
+    @field_validator('mapping')
+    @classmethod
+    def validate_mapping_keys(cls, v: Dict[str, str]) -> Dict[str, str]:
+        """Validate that mapping keys are valid freva facets."""
+        valid_facets = set(server_config.solr_fields)
+        valid_facets.update({"time", "bbox", "user"})
+        invalid_keys = set(v.keys()) - valid_facets
+        if invalid_keys:  # pragma: no cover
+            raise ValueError(
+                f"Invalid mapping keys: {sorted(invalid_keys)}. "
+                f"Valid freva facets are: {sorted(valid_facets)}"
+            )
+        return v
+
+
+class FlavourResponse(BaseModel):
+    """Response schema for flavour queries."""
+    flavour_name: str = Field(examples=["nextgem", "cordex"])
+    mapping: Dict[str, str] = Field(
+        examples=[{"project": "mip_era", "model": "source_id"}]
+    )
+    owner: str = Field(examples=["global", "john_doe"])
+    created_at: str = Field(examples=["2024-01-15T10:30:00"])
+
+
+class FlavourListResponse(BaseModel):
+    total: int = Field(examples=[1])
+    flavours: List[FlavourResponse]
+
+
+class FlavourDeleteResponse(BaseModel):
+    """Response schema for flavour deletion."""
+    status: str = Field(
+        examples=[
+            "Personal flavour 'nextgem' deleted successfully",
+            "Global flavour 'custom_project' deleted successfully"
+        ]
+    )
+
+
+class AddUserDataRequestBody(BaseModel):
+    """Request body schema for adding user data."""
+
+    user_metadata: List[Dict[str, str]] = Field(
+        ...,
+        description="List of user metadata objects or strings to be"
+        " added to the databrowser.",
+        examples=[
+            [
+                {
+                    "variable": "tas",
+                    "time_frequency": "mon",
+                    "time": "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",
+                    "file": "path of the file",
+                },
+            ]
+        ],
+    )
+    facets: Dict[str, Any] = Field(
+        ...,
+        description="Key-value pairs representing metadata search attributes.",
+        examples=[
+            {"project": "user-data", "product": "new", "institute": "globe"}
+        ],
+    )

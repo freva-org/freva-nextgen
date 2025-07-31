@@ -23,7 +23,8 @@ from typing import (
 
 import httpx
 from dateutil.parser import ParserError, parse
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
+from fastapi_third_party_auth import IDToken as TokenPayload
 from pydantic import BaseModel
 from pymongo import UpdateOne, errors
 from typing_extensions import TypedDict
@@ -35,7 +36,14 @@ from freva_rest.logger import logger
 from freva_rest.utils.base_utils import create_redis_connection
 from freva_rest.utils.stats_utils import store_api_statistics
 
-FlavourType = Literal["freva", "cmip6", "cmip5", "cordex", "user"]
+from .schema import (
+    FlavourDefinition,
+    FlavourDeleteResponse,
+    FlavourResponse,
+    FlavourType,
+)
+
+BUILTIN_FLAVOURS = ["freva", "cmip6", "cmip5", "cordex", "user"]
 
 IntakeType = TypedDict(
     "IntakeType",
@@ -69,17 +77,6 @@ class IntakeCatalogue(BaseModel):
     total_count: int
 
 
-class FlavoursProperty:
-    """Descriptor that makes Translator.flavours
-    automatically include custom flavours."""
-
-    def __get__(self, instance: Optional["Translator"], owner: type) -> List[str]:
-        if instance is not None and instance.config is not None:  # pragma: no cover
-            return instance.config.available_flavours
-        config = ServerConfig()
-        return config.available_flavours
-
-
 @dataclass
 class Translator:
     """Class that defines the flavour translation.
@@ -99,9 +96,14 @@ class Translator:
 
     flavour: str
     translate: bool = True
-    config: Optional[ServerConfig] = None
-    # Dynamically load flavours from server_config
-    flavours = FlavoursProperty()
+    config: Optional['ServerConfig'] = None
+    flavours: tuple[FlavourType, ...] = (
+        "freva",
+        "cmip6",
+        "cmip5",
+        "cordex",
+        "user",
+    )
 
     @property
     def facet_hierarchy(self) -> list[str]:
@@ -251,12 +253,6 @@ class Translator:
         base_mapping = builtin_mappings.get(
             self.flavour, {k: k for k in self._freva_facets}
         ).copy()
-        # Add/override with custom mappings from config if they exist
-        if self.config and self.config.flavour_mappings:
-            custom_mapping = self.config.flavour_mappings.get(self.flavour.lower())
-            if custom_mapping:
-                base_mapping.update(custom_mapping)
-
         return base_mapping
 
     @cached_property
@@ -350,7 +346,7 @@ class Solr:
 
     timeout: httpx.Timeout = httpx.Timeout(30)
     """30 seconds for timeout."""
-
+    allowed_flavour_query_params = {"flavour_name", "owner", "multi_version"}
     batch_size: int = 150
     """Maximum solr batch query size for one single query result."""
     suffixes = [".nc", ".nc4", ".grb", ".grib", ".tar", ".zarr"]
@@ -388,7 +384,7 @@ class Solr:
         self._config = config
         self.uniq_key = uniq_key
         self.multi_version = multi_version
-        self.translator = _translator or Translator(flavour, translate, config)
+        self.translator = _translator or Translator(flavour, translate, config=config)
         try:
             self.time = self.adjust_time_string(
                 query.pop("time", [""])[0],
@@ -411,6 +407,7 @@ class Solr:
         self.total_duplicated_files = 0
         self.current_batch: List[Dict[str, str]] = []
         self.suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", "zar"]
+
         # TODO: If one adds a dataset from cloud storage, the file system type
         # should be changed to cloud storage type. We need to find an approach
         # to determine the file system
@@ -594,6 +591,48 @@ class Solr:
             yield response.status_code, response_data
 
     @classmethod
+    async def _validate_and_get_flavour(
+        cls, config: ServerConfig, flavour: str, user_name: str
+    ) -> Translator:
+        """Validate flavour exists and return configured translator."""
+        temp_solr = cls(config)
+        all_flavours = await temp_solr.get_all_flavours(user_name, flavour_name=flavour)
+        if not any(f.flavour_name == flavour for f in all_flavours):
+            logger.error(
+                "%s attempted to use flavour '%s' which is not available.",
+                user_name,
+                flavour,
+            )
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid flavour '{flavour}'. Not found in available flavours."
+            )
+        translator = Translator(flavour, translate=True, config=config)
+
+        if flavour not in BUILTIN_FLAVOURS:
+            custom_flavour = next(
+                (f for f in all_flavours if f.flavour_name == flavour),
+                None
+            )
+            if custom_flavour:
+                translator.forward_lookup.update(custom_flavour.mapping)
+        return translator
+
+    @staticmethod
+    def _validate_query_params(
+        query: Dict[str, Any],
+        valid_facets: list[str],
+        uniq_keys: Tuple[str, str] = ("file", "uri")
+    ) -> None:
+        """Validate query parameters against valid facets."""
+        allowed_params = ("time_select", "bbox_select", "zarr_stream") + uniq_keys
+
+        for key in query:
+            clean_key = key.lower().replace("_not_", "")
+            if clean_key not in valid_facets and clean_key not in allowed_params:
+                raise HTTPException(status_code=422, detail="Could not validate input.")
+
+    @classmethod
     async def validate_parameters(
         cls,
         config: ServerConfig,
@@ -603,6 +642,7 @@ class Solr:
         start: int = 0,
         multi_version: bool = False,
         translate: bool = True,
+        current_user: Optional[TokenPayload] = None,
         **query: list[str],
     ) -> "Solr":
         """Create an instance of an Solr class with parameter validation.
@@ -625,19 +665,18 @@ class Solr:
             Use versioned datasets in stead of latest versions.
         translate: bool, default: True
             Translate the output to the required DRS flavour.
+        current_user: Optional[TokenPayload], default: None
+            The current user token payload, used to determine the preferred username
+            for flavour validation.
         """
-        translator = Translator(flavour, translate, config)
-        valid_facets = translator.valid_facets
-        if multi_version:
-            valid_facets = translator.valid_facets + ["version"]
-        for key in query:
-            key = key.lower().replace("_not_", "")
-            if (
-                key not in valid_facets
-                and key not in ("time_select", "bbox_select", "zarr_stream")
-                + cls.uniq_keys
-            ):
-                raise HTTPException(status_code=422, detail="Could not validate input.")
+        user_name = current_user.preferred_username if current_user else "global"
+
+        translator = await cls._validate_and_get_flavour(config, flavour, user_name)
+        translator.translate = translate
+
+        valid_facets = translator.valid_facets + (["version"] if multi_version else [])
+        cls._validate_query_params(query, valid_facets, cls.uniq_keys)
+
         return Solr(
             config,
             flavour=flavour,
@@ -935,15 +974,20 @@ class Solr:
         )
 
     def _process_catalogue_result(self, out: Dict[str, List[Sized]]) -> Dict[str, Any]:
-        return {
-            k: (
-                out[k][0]
-                if isinstance(out.get(k), list) and len(out[k]) == 1
-                else out.get(k)
-            )
-            for k in [self.uniq_key] + self.translator.facet_hierarchy
-            if out.get(k)
-        }
+        result = {}
+        for freva_key in [self.uniq_key] + self.translator.facet_hierarchy:
+            if out.get(freva_key):
+
+                translated_key = self.translator.forward_lookup.get(
+                    freva_key, freva_key
+                )
+                result[translated_key] = (
+                    out[freva_key][0]
+                    if isinstance(out.get(freva_key), list)
+                    and len(out[freva_key]) == 1
+                    else out.get(freva_key)
+                )
+        return result
 
     async def _iterintake(self) -> AsyncIterator[str]:
         encoder = json.JSONEncoder(indent=3)
@@ -1474,3 +1518,354 @@ class Solr:
         search_keys["user"] = user_name
         await self._purge_user_data(search_keys)
         logger.info("Deleted files from Solr and MongoDB with keys: %s", search_keys)
+
+    async def query_flavour_mongo(
+        self,
+        user_name: Optional[str] = None,
+        flavour_name: Optional[str] = None,
+    ) -> List[FlavourResponse]:
+        """
+        Query flavours from MongoDB for both global and user-specific flavours.
+
+        This method retrieves flavour definitions from the MongoDB collection,
+        filtering by owner (global and/or specific user) and optionally by
+        flavour name.
+
+        Parameters
+        ----------
+        user_name: Optional[str], default: None
+            The username to include user-specific flavours for. If None,
+            only global flavours are returned.
+        flavour_name: Optional[str], default: None
+            Filter results to only include this specific flavour name.
+            If None, all matching flavours are returned.
+
+        Returns
+        -------
+        List[FlavourResponse]
+            A list of flavour response objects containing flavour definitions
+            that match the query criteria. Returns empty list if no matches found.
+        """
+        try:
+            or_clauses = [{"owner": "global"}]
+            if user_name:
+                or_clauses.append({"owner": user_name})
+            mongo_filter: Dict[str, Any] = {"$or": or_clauses}
+            if flavour_name:
+                mongo_filter["flavour_name"] = flavour_name
+
+            cursor = self._config.mongo_collection_flavours.find(mongo_filter)
+            docs = await cursor.to_list(length=None)
+
+            if not docs:
+                return []
+
+            return [
+                FlavourResponse(
+                    flavour_name=doc["flavour_name"],
+                    mapping=doc["mapping"],
+                    owner=doc["owner"],
+                    created_at=doc.get("created_at", "")
+                )
+                for doc in docs
+            ]
+        except Exception as error:
+            logger.warning("MongoDB unavailable for flavour queries: %s", error)
+            return []
+
+    async def add_flavour(
+        self,
+        user_name: str,
+        flavour_def: FlavourDefinition,
+    ) -> Dict[str, str]:
+        """
+        Add a new custom flavour definition to MongoDB.
+
+        This method validates the flavour definition against existing flavours
+        and built-in flavours, then stores it in the MongoDB collection for
+        future use in search operations.
+
+        Parameters
+        ----------
+        user_name: str
+            The username of the user creating the flavour. Used as owner
+            unless flavour_def.is_global is True.
+        flavour_def: FlavourDefinition
+            The flavour definition object containing the flavour name,
+            mapping, and global flag.
+
+        Returns
+        -------
+        Dict[str, str]
+            A dictionary containing the status message of the operation.
+
+        Raises
+        ------
+        HTTPException
+            Status 409 if the flavour name conflicts with global flavours
+            or already exists for the same owner(Other users can define
+            the same name and it doesn't conflict).
+        HTTPException
+            Status 500 if there's an error inserting into MongoDB.
+        """
+        if flavour_def.flavour_name.lower() in [f.lower() for f in BUILTIN_FLAVOURS]:
+            logger.warning(
+                ("'%s' has chosen '%s' as flavour name, "
+                 "but this conflicts with a global flavours."),
+                user_name,
+                flavour_def.flavour_name
+            )
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"Flavour name '{flavour_def.flavour_name}'"
+                    f"conflicts with global flavours. "
+                    f"Please choose another `falvour_name`."
+                )
+            )
+
+        try:
+            effective_owner = "global" if flavour_def.is_global else user_name
+            existing = await self.query_flavour_mongo(
+                effective_owner, flavour_def.flavour_name
+            )
+
+            same_owner_existing = [f for f in existing if f.owner == effective_owner]
+
+            if same_owner_existing:
+                owner_type = "global" if flavour_def.is_global else "personal"
+                logger.warning(
+                    "'%s' tried to add flavour '%s', but it already exists.",
+                    user_name,
+                    flavour_def.flavour_name
+                )
+                raise HTTPException(
+                    409,
+                    (
+                        f"{owner_type.capitalize()} flavour "
+                        f"'{flavour_def.flavour_name}' already exists"
+                    )
+                )
+        except HTTPException as e:
+            if e.status_code != 404:
+                raise
+
+        flavour_doc = {
+            "flavour_name": flavour_def.flavour_name,
+            "mapping": flavour_def.mapping,
+            "owner": effective_owner,
+            "created_at": datetime.now().isoformat()
+        }
+
+        try:
+            await self._config.mongo_collection_flavours.insert_one(flavour_doc)
+            logger.info(
+                "Added flavour '%s' for user '%s' with mapping: %s",
+                flavour_def.flavour_name,
+                user_name,
+                flavour_def.mapping
+            )
+            return {
+                "status": f"Flavour '{flavour_def.flavour_name}' added successfully"
+            }
+        except Exception as error:
+            logger.error(
+                "%s's attempt to add flavour '%s' failed: %s",
+                user_name,
+                flavour_def.flavour_name,
+                error
+            )
+            raise HTTPException(status_code=500, detail="Failed to add flavour")
+
+    async def delete_flavour(
+        self,
+        user_name: str,
+        flavour_name: str,
+        is_global: bool = False,
+    ) -> FlavourDeleteResponse:
+        """
+        Delete a custom flavour definition from MongoDB.
+
+        This method removes a flavour definition from the MongoDB collection
+        after validating that it exists and the user has permission to delete it.
+
+        Parameters
+        ----------
+        user_name: str
+            The username of the user requesting the deletion. Used to determine
+            effective owner unless is_global is True.
+        flavour_name: str
+            The name of the flavour to delete.
+        is_global: bool, default: False
+            Whether to delete a global flavour. Only admin users can delete
+            global flavours.
+
+        Returns
+        -------
+        Dict[str, str]
+            A dictionary containing the status message of the deletion operation.
+
+        Raises
+        ------
+        HTTPException
+            Status 404 if the flavour is not found for the specified owner.
+        HTTPException
+            Status 500 if there's an error deleting from MongoDB.
+        """
+        effective_user = "global" if is_global else user_name
+
+        existing_flavours = await self.query_flavour_mongo(effective_user, flavour_name)
+        if not existing_flavours:
+            flavour_type = "global" if is_global else "personal"
+            logger.warning(
+                "'%s' tried to delete %s flavour '%s', but it does not exist.",
+                user_name,
+                flavour_type,
+                flavour_name
+            )
+            raise HTTPException(
+                status_code=404,
+                detail=f"{flavour_type.capitalize()} flavour '{flavour_name}' not found"
+            )
+
+        try:
+            await self._config.mongo_collection_flavours.delete_one({
+                "flavour_name": flavour_name,
+                "owner": effective_user
+            })
+
+            flavour_type = "global" if is_global else "personal"
+            logger.info(
+                "Deleted %s flavour '%s' for user '%s'",
+                flavour_type,
+                flavour_name,
+                effective_user
+            )
+            return cast(FlavourDeleteResponse, {
+                "status": (
+                    f"{flavour_type.capitalize()} flavour "
+                    f"'{flavour_name}' deleted successfully"
+                )
+            })
+
+        except Exception as error:
+            logger.error(
+                "user '%s' failed to delete flavour '%s': %s",
+                user_name,
+                flavour_name,
+                error
+            )
+            raise HTTPException(500, "Failed to delete flavour")
+
+    @classmethod
+    def validate_flavour_parameters(
+        cls,
+        config: ServerConfig,
+        request: Request,
+        **params: Any
+    ) -> "Solr":
+        """Validate flavour query parameters and return Solr instance.
+
+        Parameters
+        ----------
+        config: ServerConfig
+            Server configuration instance
+        request: Request
+            The FastAPI request object containing query parameters
+        **params: Any
+            Additional parameters passed to the function
+
+        Returns
+        -------
+        Solr
+            A configured Solr instance for flavour operations
+
+        Raises
+        ------
+        HTTPException
+            If invalid query parameters are found (status 422)
+        """
+        query_params = dict(request.query_params)
+
+        for param in list(query_params.keys()):
+            if param.lower().replace("-", "_") not in cls.allowed_flavour_query_params:
+                raise HTTPException(
+                    status_code=422,
+                    detail=(
+                        f"Invalid parameter '{param}'. Valid parameters: "
+                        f"{list(cls.allowed_flavour_query_params)}"
+                    )
+                )
+        return cls(config=config)
+
+    @staticmethod
+    async def list_builtin_flavours() -> List[FlavourResponse]:
+        """
+        Retrieve all built-in flavour definitions as FlavourResponse objects.
+
+        This method returns the standard flavour definitions that are built into
+        the system (freva, cmip5, cmip6, cordex, user). These flavours are always
+        available and owned by 'global'.
+
+        Returns
+        -------
+        List[FlavourResponse]
+            A list of FlavourResponse objects representing all built-in flavours.
+            Each response contains the flavour name, its facet mapping, owner as
+            'global'.
+        """
+        results: List[FlavourResponse] = []
+        for name in BUILTIN_FLAVOURS:
+            mapping = Translator(name, translate=True).forward_lookup
+            results.append(
+                FlavourResponse(
+                    flavour_name=name,
+                    mapping=mapping,
+                    owner="global",
+                    # TODO: any better way to set current time?
+                    created_at=datetime.now().isoformat()
+                )
+            )
+        return results
+
+    async def get_all_flavours(
+        self,
+        user_name: Optional[str] = None,
+        flavour_name: Optional[str] = None,
+        owner: Optional[str] = None
+    ) -> List[FlavourResponse]:
+        """
+        Get all available flavours (built-in + custom) with optional filtering.
+
+        This method combines built-in flavours with custom flavours from MongoDB,
+        applying optional filters for flavour name and owner. Built-in flavours
+        are always included unless explicitly filtered out by owner.
+
+        Parameters
+        ----------
+        user_name : Optional[str], default: None
+            Username to get user-specific flavours for. If provided, includes
+            both global and user-specific custom flavours.
+        flavour_name : Optional[str], default: None
+            Filter by specific flavour name. If provided, only flavours with
+            this exact name are returned.
+        owner : Optional[str], default: None
+            Filter by owner ('global' or username). If provided, only flavours
+            owned by this entity are returned.
+
+        Returns
+        -------
+        List[FlavourResponse]
+            Combined list of built-in and custom flavours that match the
+            specified filter criteria.
+        """
+        raw_custom = await self.query_flavour_mongo(user_name, flavour_name)
+        custom = [f for f in raw_custom if (owner is None or f.owner == owner)]
+        all_builtins = await self.list_builtin_flavours()
+        builtins = [
+            f for f in all_builtins
+            if (flavour_name is None or f.flavour_name == flavour_name)
+            and (owner is None or f.owner == owner)
+        ]
+
+        return builtins + custom

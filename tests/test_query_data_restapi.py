@@ -477,64 +477,116 @@ def test_mongo_parameter_insert(test_server: str, cfg: ServerConfig) -> None:
         == 0
     )
 
-def test_load_flavour_mappings(test_server: str, cfg: ServerConfig):
-    """Test loading flavour mappings from 
-    both api_config and environment variables."""
+def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
+    """Test all flavour endpoints: list, add, delete."""
     
-    # api_config mappings only
-    api_config_mappings = {
-        "custom1": {"variable": "var", "model": "source_id"},
-        "custom2": {"experiment": "exp_id"}
+    # listing flavours without authentication
+    res1 = requests.get(f"{test_server}/databrowser/flavours")
+    assert res1.status_code == 200
+    flavours_data = res1.json()
+    assert "total" in flavours_data
+    assert "flavours" in flavours_data
+    assert flavours_data["total"] >= 5
+    built_in_names = [f["flavour_name"] for f in flavours_data["flavours"]]
+    assert "freva" in built_in_names
+    assert "cmip6" in built_in_names
+
+    #adding a custom flavour
+    custom_flavour = {
+        "flavour_name": "test_flavour",
+        "mapping": {
+            "project": "my_project",
+            "variable": "my_variable"
+        },
+        "is_global": False
     }
-    with mock.patch.dict(os.environ, {}, clear=True):
-        with mock.patch.object(cfg, '_read_config', return_value=api_config_mappings):
-            result = cfg._load_all_flavour_mappings()
-            assert result == api_config_mappings
+    res2 = requests.post(
+        f"{test_server}/databrowser/flavours",
+        json=custom_flavour,
+        headers={"Authorization": f"Bearer {auth['access_token']}"}
+    )
+    assert res2.status_code == 201
+    assert "status" in res2.json()
+
+    # getting 409 for the same flavour again
+    res2_duplicate = requests.post(
+        f"{test_server}/databrowser/flavours",
+        json=custom_flavour,
+        headers={"Authorization": f"Bearer {auth['access_token']}"}
+    )
+    assert res2_duplicate.status_code == 409
+
+    # getting 409 conflict with the global flavour
+    conflict_map = {
+        "flavour_name": "freva",
+        "mapping": {
+            "project": "my_project",
+            "variable": "my_variable"
+        },
+        "is_global": True
+    }
     
-    # env variables only
-    env_mappings = {
-        "API_TRANSLATOR_MAPPING_CUSTOM3": '{"variable": "variable_id"}',
-        "API_TRANSLATOR_MAPPING_CUSTOM4": '{"model": "model_id"}'
-    }
-    expected = {
-        "custom3": {"variable": "variable_id"},
-        "custom4": {"model": "model_id"}
-    }
-    with mock.patch.dict(os.environ, env_mappings, clear=True):
-        with mock.patch.object(cfg, '_read_config', return_value=None):
-            result = cfg._load_all_flavour_mappings()
-            assert result == expected
-    with mock.patch("freva_rest.rest.server_config.flavour_mappings", {'custom3': {'variable': 'variable_id'}, 'custom4': {'model': 'model_id'}}):
-        res = requests.get(
-            f"{test_server}/databrowser/data-search/custom3/uri"
+    with mock.patch("freva_rest.rest.server_config.admin_list", ["janedoe"]):
+        res_conflict_global = requests.post(
+            f"{test_server}/databrowser/flavours",
+            json=conflict_map,
+            headers={"Authorization": f"Bearer {auth['access_token']}"}
         )
-        assert res.status_code == 200
-    # both api_config and env
-    env_mappings = {
-        "API_TRANSLATOR_MAPPING_CUSTOM1": '{"should": "be_ignored"}',
-        "API_TRANSLATOR_MAPPING_CUSTOM5": '{"new": "mapping"}'
-    }
-    expected = {
-        "custom1": {"variable": "var", "model": "source_id"},
-        "custom2": {"experiment": "exp_id"},
-        "custom5": {"new": "mapping"}
-    }
-    with mock.patch.dict(os.environ, env_mappings, clear=True):
-        with mock.patch.object(cfg, '_read_config', return_value=api_config_mappings):
-            result = cfg._load_all_flavour_mappings()
-            assert result == expected
-       
-    # Invalid JSON in env
-    env_mappings = {
-        "API_TRANSLATOR_MAPPING_INVALID": 'invalid json{',
-        "API_TRANSLATOR_MAPPING_VALID": '{"experiment": "experiment_id"}'
-    }
-    expected = {"valid": {"experiment": "experiment_id"}}
-    
-    with mock.patch.dict(os.environ, env_mappings, clear=True):
-        with mock.patch.object(cfg, '_read_config', return_value=None):
-            with mock.patch('freva_rest.config.logger.warning') as mock_logger:
-                result = cfg._load_all_flavour_mappings()
-                assert result == expected
-                mock_logger.assert_called_once()
-                assert "Failed to parse API_TRANSLATOR_MAPPING_INVALID" in mock_logger.call_args[0][0]
+
+        assert res_conflict_global.status_code == 409
+
+    # adding a flavour with non-admin user
+    res_non_admin = requests.post(
+        f"{test_server}/databrowser/flavours",
+        json=conflict_map,
+        headers={"Authorization": f"Bearer {auth['access_token']}"}
+    )
+    assert res_non_admin.status_code == 403
+
+    # listing flavours with authentication
+    res3 = requests.get(
+        f"{test_server}/databrowser/flavours",
+        headers={"Authorization": f"Bearer {auth['access_token']}"}
+    )
+    assert res3.status_code == 200
+    flavours_data = res3.json()
+    assert flavours_data["total"] > res1.json()["total"]
+    custom_names = [f["flavour_name"] for f in flavours_data["flavours"]]
+    assert "test_flavour" in custom_names
+
+    # deleting the custom flavour
+    res4 = requests.delete(
+        f"{test_server}/databrowser/flavours/test_flavour",
+        headers={"Authorization": f"Bearer {auth['access_token']}"}
+    )
+    assert res4.status_code == 200
+    assert "status" in res4.json()
+
+    # built-in flavours cannot be deleted
+    res5 = requests.delete(
+        f"{test_server}/databrowser/flavours/freva",
+        headers={"Authorization": f"Bearer {auth['access_token']}"}
+    )
+    assert res5.status_code == 422
+    assert "Cannot delete built-in flavour" in res5.json()["detail"]
+
+    # adding flavour without authentication
+    res6 = requests.post(
+        f"{test_server}/databrowser/flavours",
+        json=custom_flavour
+    )
+    assert res6.status_code == 403
+
+    # deleting non-existent flavour
+    res7 = requests.delete(
+        f"{test_server}/databrowser/flavours/non_existent_flavour",
+        headers={"Authorization": f"Bearer {auth['access_token']}"}
+    )
+    assert res7.status_code == 404
+
+    # invalid params 422
+    res8 = requests.get(
+        f"{test_server}/databrowser/flavours",
+        params={"invalid_param": "test"}
+    )
+    assert res8.status_code == 422

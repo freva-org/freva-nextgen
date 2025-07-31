@@ -1,11 +1,10 @@
 """Main script that runs the rest API."""
 
 import uuid
-from typing import Annotated, Any, Dict, List, Literal, Optional, Union
+from typing import Annotated, Dict, List, Literal, Optional, Union
 
 from fastapi import (
     Body,
-    Depends,
     HTTPException,
     Path,
     Query,
@@ -20,52 +19,23 @@ from fastapi.responses import (
     StreamingResponse,
 )
 from fastapi_third_party_auth import IDToken as TokenPayload
-from pydantic import BaseModel, Field
 
 from freva_rest.auth import auth
+from freva_rest.config import BUILTIN_FLAVOURS
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 
-from .core import SearchResult, Solr, Translator
-from .schema import Required, SearchFlavours, SolrSchema
+from .core import SearchResult, Solr
+from .schema import (
+    AddUserDataRequestBody,
+    FlavourDefinition,
+    FlavourDeleteResponse,
+    FlavourListResponse,
+    Required,
+    SearchFlavours,
+    SolrSchema,
+)
 from .stac import STAC
-
-
-class AddUserDataRequestBody(BaseModel):
-    """Request body schema for adding user data."""
-
-    user_metadata: List[Dict[str, str]] = Field(
-        ...,
-        description="List of user metadata objects or strings to be"
-        " added to the databrowser.",
-        examples=[
-            [
-                {
-                    "variable": "tas",
-                    "time_frequency": "mon",
-                    "time": "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",
-                    "file": "path of the file",
-                },
-            ]
-        ],
-    )
-    facets: Dict[str, Any] = Field(
-        ...,
-        description="Key-value pairs representing metadata search attributes.",
-        examples=[
-            {"project": "user-data", "product": "new", "institute": "globe"}
-        ],
-    )
-
-
-def validate_flavour_dependency(
-    flavour: str = Path(..., description="Flavour type"),
-) -> str:
-    available_flavours = server_config.available_flavours
-    if flavour in available_flavours:
-        return flavour
-    error_msg = f"Invalid flavour '{flavour}'. Available flavours: {available_flavours}"
-    raise HTTPException(status_code=422, detail=error_msg)
 
 
 @app.get(
@@ -74,7 +44,11 @@ def validate_flavour_dependency(
     status_code=200,
     response_model=SearchFlavours,
 )
-async def overview() -> SearchFlavours:
+async def overview(
+    current_user: Optional[TokenPayload] = Security(
+        auth.create_auth_dependency(required=False), scopes=["oidc.claims"]
+    ),
+) -> SearchFlavours:
     """Get all available search flavours and their attributes.
 
     This endpoint allows you to retrieve an overview of the different
@@ -83,20 +57,24 @@ async def overview() -> SearchFlavours:
     for climate datasets, and each standard offers specific attributes for
     searching and filtering datasets.
     """
+    user_name = current_user.preferred_username if current_user else "global"
+    solr_instance = Solr(server_config)
+
+    all_flavour_responses = await solr_instance.get_all_flavours(user_name)
+    flavours = [f.flavour_name for f in all_flavour_responses]
     attributes = {}
-    for flavour in Translator.flavours:
-        translator = Translator(flavour)
-        if flavour in ("cordex",):
-            attributes[flavour] = list(translator.forward_lookup.values())
+
+    for flavour_response in all_flavour_responses:
+        flavour_name = flavour_response.flavour_name
+        if flavour_name in ("cordex",):
+            attributes[flavour_name] = list(flavour_response.mapping.values())
         else:
-            attributes[flavour] = [
-                f
-                for f in translator.forward_lookup.values()
-                if f not in translator.cordex_keys
+            cordex_keys = ("rcm_name", "driving_model", "rcm_version")
+            attributes[flavour_name] = [
+                v for v in flavour_response.mapping.values()
+                if v not in cordex_keys
             ]
-    return SearchFlavours(
-        flavours=list(Translator.flavours), attributes=attributes
-    )
+    return SearchFlavours(flavours=flavours, attributes=attributes)
 
 
 @app.get(
@@ -110,12 +88,15 @@ async def overview() -> SearchFlavours:
     },
 )
 async def metadata_search(
-    flavour: str = Depends(validate_flavour_dependency),
-    uniq_key: Literal["file", "uri"] = Path(..., description="core type"),
+    flavour: str,
+    uniq_key: Literal["file", "uri"],
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
     request: Request = Required,
+    current_user: Optional[TokenPayload] = Security(
+        auth.create_auth_dependency(required=False), scopes=["oidc.claims"]
+    ),
 ) -> JSONResponse:
     """Query the available metadata.
 
@@ -134,6 +115,7 @@ async def metadata_search(
         multi_version=multi_version,
         translate=translate,
         start=0,
+        current_user=current_user,
         **SolrSchema.process_parameters(request),
     )
     status_code, result = await solr_search.extended_search(
@@ -156,12 +138,15 @@ async def metadata_search(
     response_class=PlainTextResponse,
 )
 async def data_search(
-    flavour: str = Depends(validate_flavour_dependency),
-    uniq_key: Literal["file", "uri"] = Path(..., description="core type"),
+    flavour: str,
+    uniq_key: Literal["file", "uri"],
     start: Annotated[int, SolrSchema.params["start"]] = 0,
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     request: Request = Required,
+    current_user: Optional[TokenPayload] = Security(
+        auth.create_auth_dependency(required=False), scopes=["oidc.claims"]
+    ),
 ) -> StreamingResponse:
     """Search for datasets.
 
@@ -179,6 +164,7 @@ async def data_search(
         start=start,
         multi_version=multi_version,
         translate=translate,
+        current_user=current_user,
         **SolrSchema.process_parameters(request),
     )
     status_code, total_count = await solr_search.init_stream()
@@ -201,13 +187,16 @@ async def data_search(
     response_class=JSONResponse,
 )
 async def intake_catalogue(
-    flavour: str = Depends(validate_flavour_dependency),
-    uniq_key: Literal["file", "uri"] = Path(..., description="core type"),
+    flavour: str,
+    uniq_key: Literal["file", "uri"],
     start: Annotated[int, SolrSchema.params["start"]] = 0,
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     max_results: Annotated[int, SolrSchema.params["max_results"]] = -1,
     request: Request = Required,
+    current_user: Optional[TokenPayload] = Security(
+        auth.create_auth_dependency(required=False), scopes=["oidc.claims"]
+    ),
 ) -> StreamingResponse:
     """Create an intake catalogue from a freva search.
 
@@ -225,6 +214,7 @@ async def intake_catalogue(
         start=start,
         multi_version=multi_version,
         translate=translate,
+        current_user=current_user,
         **SolrSchema.process_parameters(request),
     )
     status_code, result = await solr_search.init_intake_catalogue()
@@ -233,7 +223,7 @@ async def intake_catalogue(
         raise HTTPException(status_code=404, detail="No results found.")
     if result.total_count > max_results and max_results > 0:
         raise HTTPException(status_code=413, detail="Result stream too big.")
-    file_name = f"IntakeEsmCatalogue_{flavour}_{uniq_key}.json"
+    file_name = f"IntakeEsmCatalogue_{str(uuid.uuid4())[:8]}_{uniq_key}.json"
     return StreamingResponse(
         solr_search.intake_catalogue(result.catalogue),
         status_code=status_code,
@@ -255,13 +245,16 @@ async def intake_catalogue(
     response_class=Response,
 )
 async def stac_catalogue(
-    flavour: str = Depends(validate_flavour_dependency),
-    uniq_key: Literal["file", "uri"] = Path(..., description="core type"),
+    flavour: str,
+    uniq_key: Literal["file", "uri"],
     start: Annotated[int, SolrSchema.params["start"]] = 0,
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     max_results: Annotated[int, SolrSchema.params["max_results"]] = -1,
     request: Request = Required,
+    current_user: Optional[TokenPayload] = Security(
+        auth.create_auth_dependency(required=False), scopes=["oidc.claims"]
+    ),
 ) -> Response:
     """Create a STAC catalogue from a freva search.
 
@@ -278,6 +271,7 @@ async def stac_catalogue(
         start=start,
         multi_version=multi_version,
         translate=translate,
+        current_user=current_user,
         **SolrSchema.process_parameters(request),
     )
     status_code, total_count = await stac_instance.validate_stac()
@@ -287,9 +281,9 @@ async def stac_catalogue(
     if total_count > max_results and max_results > 0:
         raise HTTPException(status_code=413, detail="Result stream too big.")
 
-    collection_id = f"Dataset-{(f'{flavour}-{str(uuid.uuid4())}')[:18]}"
+    collection_id = f"Dataset-{(f'{str(uuid.uuid4())}')[:18]}"
     await stac_instance.init_stac_catalogue(request)
-    file_name = f"stac-catalog-{collection_id}-{uniq_key}.zip"
+    file_name = f"stac-catalog-{collection_id}-{str(uuid.uuid4())[:8]}.zip"
     return StreamingResponse(
         stac_instance.stream_stac_catalogue(collection_id, total_count),
         media_type="application/zip",
@@ -302,8 +296,8 @@ async def stac_catalogue(
     include_in_schema=False,
 )
 async def extended_search(
-    flavour: str = Depends(validate_flavour_dependency),
-    uniq_key: Literal["file", "uri"] = Path(..., description="core type"),
+    flavour: str,
+    uniq_key: Literal["file", "uri"],
     start: Annotated[int, SolrSchema.params["start"]] = 0,
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
@@ -363,7 +357,7 @@ async def extended_search(
     response_class=PlainTextResponse,
 )
 async def load_data(
-    flavour: str = Depends(validate_flavour_dependency),
+    flavour: str,
     start: Annotated[int, SolrSchema.params["start"]] = 0,
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
@@ -511,3 +505,158 @@ async def delete_user_data(
     return {
         "status": "User data has been deleted successfully from the databrowser."
     }
+
+
+@app.post(
+    "/api/freva-nextgen/databrowser/flavours",
+    tags=["Data search"],
+    status_code=201,
+    response_class=JSONResponse,
+    responses={
+        401: {"description": "Unauthorised / not a valid token."},
+        422: {"description": "Invalid flavour definition."},
+        403: {
+            "description": "Forbidden - only admin users can create global flavours."
+        },
+        409: {"description": "Conflict - flavour already exists."},
+        500: {"description": "Internal server error - failed to add flavour."},
+    },
+)
+async def add_custom_flavour(
+    flavour_def: FlavourDefinition,
+    current_user: TokenPayload = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
+) -> Dict[str, str]:
+    """Add a new custom flavour definition.
+
+    This endpoint allows authenticated users to create custom flavour definitions
+    that map freva facet names to their preferred naming conventions. Personal
+    flavours are only visible to the creating user, while global flavours are
+    available to all users. Only administrators can create global flavours.
+
+    The custom flavour can then be used in other databrowser endpoints by
+    specifying the flavour name, enabling customized facet naming for search
+    results and metadata.
+    """
+
+    if flavour_def.is_global and not server_config.is_admin_user(current_user):
+        logger.error(
+            "Unauthorized attempt to create global flavour by user: %s",
+            current_user.preferred_username
+        )
+        raise HTTPException(
+            status_code=403,
+            detail="Only admin users can create global flavours"
+        )
+    solr_instance = Solr(config=server_config)
+    return await solr_instance.add_flavour(
+        current_user.preferred_username,
+        flavour_def
+    )
+
+
+@app.get(
+    "/api/freva-nextgen/databrowser/flavours",
+    tags=["Data search"],
+    status_code=200,
+    response_model=FlavourListResponse,
+    responses={
+        401: {"description": "Unauthorised / not a valid token."},
+        422: {"description": "Invalid flavour parameters."},
+        500: {"description": "Internal server error - failed to retrieve flavours."},
+    },
+)
+async def list_flavours(
+    flavour_name: Optional[str] = Query(
+        None,
+        description="Filter by specific flavour type",
+        example="nextgem"
+    ),
+    owner: Optional[str] = Query(
+        None,
+        description="Filter by owner ('global' or username)",
+        example="global"
+    ),
+    request: Request = Required,
+    current_user: Optional[TokenPayload] = Security(
+        auth.create_auth_dependency(required=False), scopes=["oidc.claims"]
+    ),
+
+) -> FlavourListResponse:
+    """Get available flavours for the current user.
+
+    This endpoint retrieves all flavours that are accessible to the current user,
+    including built-in flavours (freva, cmip5, cmip6, cordex, user) and any custom
+    flavours created by the user or made globally available by administrators.
+
+    The results can be optionally filtered by flavour name to get a specific
+    flavour, or by owner to show only global flavours or user-specific ones.
+    For unauthenticated users, only global flavours are returned.
+    """
+    solr = Solr.validate_flavour_parameters(server_config, request)
+    user_name = (current_user.preferred_username
+                 if current_user and current_user.preferred_username
+                 else "global")
+
+    all_flavours = await solr.get_all_flavours(user_name, flavour_name, owner)
+
+    return FlavourListResponse(
+        total=len(all_flavours),
+        flavours=all_flavours
+    )
+
+
+@app.delete(
+    "/api/freva-nextgen/databrowser/flavours/{flavour_name}",
+    tags=["Data search"],
+    status_code=200,
+    response_model=FlavourDeleteResponse,
+    responses={
+        401: {"description": "Unauthorised / not a valid token."},
+        422: {"description": "Invalid flavour name."},
+        403: {"description": "Forbidden - cannot delete global flavours."},
+        404: {"description": "Flavour not found."},
+        500: {"description": "Internal server error - failed to delete flavour."},
+    },
+)
+async def delete_custom_flavour(
+    flavour_name: str = Path(
+        ..., description="Name of the flavour to delete",
+        examples=["nextgem", "custom_project"]
+    ),
+    current_user: TokenPayload = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
+) -> FlavourDeleteResponse:
+    """Delete a custom flavour definition.
+
+    This endpoint allows authenticated users to delete custom flavour definitions
+    that they have previously created. Regular users can only delete their own
+    personal flavours, while administrators can delete both personal and global
+    flavours.
+
+    Built-in flavours (freva, cmip5, cmip6, cordex, user) cannot be deleted as
+    they are system-defined and always available. Once a custom flavour is
+    deleted, it will no longer be available for use in databrowser searches
+    and will be removed from the flavour listings.
+    """
+    if flavour_name.lower() in [f.lower() for f in BUILTIN_FLAVOURS]:
+        logger.error(
+            "Attempt to delete built-in flavour: %s by user: %s",
+            flavour_name,
+            current_user.preferred_username
+        )
+        raise HTTPException(
+            status_code=422,
+            detail=f"Cannot delete built-in flavour '{flavour_name}'"
+        )
+
+    is_global = server_config.is_admin_user(current_user)
+
+    solr_instance = Solr(config=server_config)
+    return await solr_instance.delete_flavour(
+        current_user.preferred_username,
+        flavour_name,
+        is_global
+    )

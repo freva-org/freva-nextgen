@@ -159,6 +159,20 @@ def test_stac_catalogue(
         "Downloading the STAC catalog started ...\nSTAC catalog saved to: "
         in res.stdout
     )
+    # try the custom flavour with auth
+    res = cli_runner.invoke(
+        app,
+        [
+            "stac-catalogue",
+            "--host",
+            test_server,
+            "--filename",
+            output_file,
+            "--flavour",
+            "cmip69",
+        ],
+    )
+    assert res.exit_code == 1
 
 
 def test_intake_files_zarr(
@@ -291,3 +305,141 @@ def test_check_versions(cli_runner: CliRunner) -> None:
     for cmd in ("data-count", "data-search", "metadata-search"):
         res = cli_runner.invoke(app, [cmd, "-V"])
         assert res.exit_code == 0
+
+def test_flavour_commands(
+    cli_runner: CliRunner, 
+    test_server: str, 
+    auth_instance: Auth, 
+    token_file: Path
+) -> None:
+    """Test cli flavour: list, add, delete."""
+    from copy import deepcopy
+    
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance._auth_token = None
+        
+        # listing flavours with authentication
+        res = cli_runner.invoke(
+            app, 
+            ["flavour", "list", "--host", test_server, "--token-file", str(token_file)]
+        )
+        assert res.exit_code == 0
+        assert "🎨 Available Data Reference Syntax" in res.stdout or "No custom flavours found" in res.stdout
+        
+        # listing flavours with JSON output
+        res = cli_runner.invoke(
+            app, 
+            ["flavour", "list", "--host", test_server, "--token-file", str(token_file), "--json"]
+        )
+        assert res.exit_code == 0
+        flavours_data = json.loads(res.stdout)
+        assert isinstance(flavours_data, list)
+        initial_count = len(flavours_data)
+        
+        # adding a custom flavour
+        res = cli_runner.invoke(
+            app,
+            [
+                "flavour", "add", "test_cli_flavour",
+                "--host", test_server,
+                "--token-file", str(token_file),
+                "--map", "project=projekt",
+                "--map", "variable=var"
+            ]
+        )
+        assert res.exit_code == 0
+        
+        # flavour was added
+        res = cli_runner.invoke(
+            app, 
+            ["flavour", "list", "--host", test_server, "--token-file", str(token_file), "--json"]
+        )
+        assert res.exit_code == 0
+        flavours_after = json.loads(res.stdout)
+        assert len(flavours_after) > initial_count
+        flavour_names = [f["flavour_name"] for f in flavours_after]
+        assert "test_cli_flavour" in flavour_names
+        
+        # deleting the custom flavour
+        res = cli_runner.invoke(
+            app,
+            [
+                "flavour", "delete", "test_cli_flavour",
+                "--host", test_server,
+                "--token-file", str(token_file)
+            ]
+        )
+        assert res.exit_code == 0
+        
+        # flavour was deleted
+        res = cli_runner.invoke(
+            app, 
+            ["flavour", "list", "--host", test_server, "--token-file", str(token_file), "--json"]
+        )
+        assert res.exit_code == 0
+        flavours_final = json.loads(res.stdout)
+        final_names = [f["flavour_name"] for f in flavours_final]
+        assert "test_cli_flavour" not in final_names
+        assert len(flavours_final) == initial_count
+        
+    finally:
+        auth_instance._auth_token = token
+
+
+def test_flavour_error_cases(
+    cli_runner: CliRunner, 
+    test_server: str, 
+    auth_instance: Auth, 
+    token_file: Path
+) -> None:
+    """Test flavour CLI error handling."""
+    from copy import deepcopy
+    
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance._auth_token = None
+        
+        # adding flavour without mapping
+        res = cli_runner.invoke(
+            app,
+            [
+                "flavour", "add", "test_flavour",
+                "--host", test_server,
+                "--token-file", str(token_file)
+            ]
+        )
+        assert res.exit_code == 1
+        
+        # adding flavour with invalid mapping format
+        res = cli_runner.invoke(
+            app,
+            [
+                "flavour", "add", "test_flavour",
+                "--host", test_server,
+                "--token-file", str(token_file),
+                "--map", "invalid_format"
+            ]
+        )
+        assert res.exit_code == 1  # Should fail
+        
+        # list without authentication 
+        res = cli_runner.invoke(app, ["flavour", "list", "--host", test_server])
+        assert res.exit_code == 0
+        
+        # add/delete without authentication
+        auth_instance._auth_token = None
+        res = cli_runner.invoke(
+            app, 
+            ["flavour", "add", "test", "--host", test_server, "--map", "a=b"]
+        )
+        assert res.exit_code != 0
+        auth_instance._auth_token = None
+        res = cli_runner.invoke(
+            app, 
+            ["flavour", "delete", "test", "--host", test_server]
+        )
+        assert res.exit_code != 0 
+        
+    finally:
+        auth_instance._auth_token = token

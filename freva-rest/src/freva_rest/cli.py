@@ -44,10 +44,8 @@ environment variables are evaluated:
 - ``API_OIDC_CLIENT_SECRET``: You can set a client secret, if you have
 - ``API_OIDC_TOKEN_CLAIMS``:  Valid token claims, to check against
 - ``API_SERVICES``:  The services the api should serve.
-- ``API_TRANSLATOR_MAPPING_<FLAVOUR>``: JSON string containing custom
-                                        facet mappings for a specific
-                                        flavour. For example:
-                API_TRANSLATOR_MAPPING_CUSTOM='{"variable": "var_id"}'
+- ``API_ADMIN_LIST``: List of admin users, that are allowed to add new
+                      global Flavours.
 
 📝  You can override the path to the default config file using the
     ``API_CONFIG`` environment variable. The default location of this config

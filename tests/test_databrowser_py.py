@@ -392,3 +392,121 @@ def test_add_userdata_wild_card(
         )
     finally:
         auth_instance._auth_token = token
+
+
+def test_flavour_operations(test_server: str, auth_instance: Auth, auth: Token) -> None:
+    """Test query flavour add, list, and delete operations."""
+    from copy import deepcopy
+
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance._auth_token = auth
+        
+        # listing flavours
+        flavours = databrowser.flavour(action="list", host=test_server)
+        assert isinstance(flavours, list)
+        assert len(flavours) >= 5
+        flavour_names = [f["flavour_name"] for f in flavours]
+        assert "freva" in flavour_names
+        assert "cmip6" in flavour_names
+        
+        # adding a custom flavour
+        custom_mapping = {
+            "project": "projekt", 
+            "variable": "variable_name",
+            "model": "modell"
+        }
+        databrowser.flavour(
+            action="add",
+            name="test_flavour_client",
+            mapping=custom_mapping,
+            is_global=False,
+            host=test_server
+        )
+        
+        # ustom flavour appears in list
+        flavours_after = databrowser.flavour(action="list", host=test_server)
+        assert len(flavours_after) > len(flavours)
+        new_flavour_names = [f["flavour_name"] for f in flavours_after]
+        assert "test_flavour_client" in new_flavour_names
+        valid_token = deepcopy(auth_instance._auth_token)
+        auth_instance._auth_token["access_token"] = "foo"
+        # deleting a flavour with invalid token raises an error
+        try:
+            databrowser.flavour(
+                action="list", 
+                host="http://non-existent-host:9999", 
+                fail_on_error=True
+            )
+            assert False
+        except ValueError as e:
+            assert "Failed to list flavours" in str(e)
+            
+        # empty flavours - without fail_on_error
+        flavoursx = databrowser.flavour(
+            action="list", 
+            host="http://non-existent-host:9999", 
+            fail_on_error=False
+        )
+        assert flavoursx == []
+
+        auth_instance._auth_token = valid_token
+        # custom flavour can be used in searches
+        db = databrowser(flavour="test_flavour_client", host=test_server)
+        # not fail even if no results since flavour is custom
+        assert len(db) >= 0
+        
+        # deleting the custom flavour
+        databrowser.flavour(
+            action="delete",
+            name="test_flavour_client",
+            host=test_server
+        )
+        
+        # custom flavour is gone
+        flavours_final = databrowser.flavour(action="list", host=test_server)
+        final_flavour_names = [f["flavour_name"] for f in flavours_final]
+        assert "test_flavour_client" not in final_flavour_names
+        assert len(flavours_final) == len(flavours)
+    finally:
+        auth_instance._auth_token = token
+
+
+def test_flavour_error_cases(test_server: str, auth_instance: Auth, auth: Token) -> None:
+    """Test flavour error handling."""
+    from copy import deepcopy
+    
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance._auth_token = auth
+        # wrong facet key
+        custom_mapping = {
+            "projecta": "projekt",
+        }
+        Added = databrowser.flavour(action="add", name="test_flavour_no_auth", mapping=custom_mapping, host=test_server)
+        assert Added is None
+
+        # test the missing name and mapping parameters
+        with pytest.raises(ValueError, match="Both 'name' and 'mapping' are required"):
+            databrowser.flavour(action="add", host=test_server)
+        
+        # deleting flavour without name
+        with pytest.raises(ValueError, match="'name' is required for delete action"):
+            databrowser.flavour(action="delete", host=test_server)
+        
+        # deleting non-existent flavour
+        with pytest.raises(ValueError, match="Failed to delete flavour"):
+                
+            databrowser.flavour(
+                action="delete",
+                name="non_existent_flavour",
+                host=test_server
+            )
+    finally:
+        auth_instance._auth_token = token
+
+
+def test_flavour_without_auth(test_server: str) -> None:
+    """Test listing flavours without authentication"""
+    flavours = databrowser.flavour(action="list", host=test_server)
+    assert isinstance(flavours, list)
