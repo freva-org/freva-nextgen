@@ -1491,7 +1491,6 @@ Adding and deleting User Data in Databrowser
                return 0;
            }
 
-
 ---
 
 .. _databrowser-api-flavours:

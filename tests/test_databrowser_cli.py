@@ -421,7 +421,9 @@ def test_flavour_error_cases(
                 "--map", "invalid_format"
             ]
         )
-        assert res.exit_code == 1  # Should fail
+        # Should fail, because the ValidationError
+        # is raised on backend schema
+        assert res.exit_code == 1  
         
         # list without authentication 
         res = cli_runner.invoke(app, ["flavour", "list", "--host", test_server])
