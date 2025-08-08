@@ -28,26 +28,19 @@ sub command of the command line interface
    res = run(["freva-client", "auth", "--help"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
-You can create a token using your user name and password. For security reasons
-you can not pass your password as an argument to the command line interface.
-This means that you can only create a new token with help of a valid refresh
-token in a non-interactive session. Such as a batch job.
+You can create a token using your username and password, but for security reasons
+your password cannot be passed as a command-line argument.
+Currently, a new token can only be created *from scratch* via the website of your host
+instance.
+Once logged in, click the **Token button** to generate a token, then copy, paste,
+or download it.
 
-Therefore you want to store your token data securely in a file, and use the
-refresh token to create new tokens:
-
-.. code:: console
-
-    freva-client auth  > ~/.mytoken.json
-    chmod 600 ~/.mytoken.json
-
-Later you can use the `jq json command line parser <https://jqlang.github.io/jq/>`_
-to read the refresh token from and use it to create new access tokens.
+Store your token securely in a file and use it as refresh token to create new tokens:
 
 .. code:: console
 
-    freva-client auth --token-file ~/.mytoken.json > ~/.mytoken.json
-
+    freva-client auth --token-file ~/.my_old_token.json > ~/.my_new_token.json
+    chmod 600 ~/.my_new_token.json
 
 .. warning::
 

@@ -294,7 +294,7 @@ def authenticate(
 
     Parameters
     ----------
-    refresh_token: str, optional
+    token_file: str, optional
         Instead of setting a password, you can set a refresh token to refresh
         the access token. This is recommended for non-interactive environments.
     host: str, optional
@@ -308,15 +308,11 @@ def authenticate(
 
     Examples
     --------
-    Interactive authentication:
+    Currently, a new token can only be created *from scratch* via the website of
+    your host instance. Once logged in, click the **Token button** to generate a
+    refresh token, then copy, paste, or download it.
 
-    .. code-block:: python
-
-        from freva_client import authenticate
-        token = authenticate()
-        print(token)
-
-    Batch mode authentication with a refresh token:
+    Authentication with a refresh token:
 
     .. code-block:: python
 
