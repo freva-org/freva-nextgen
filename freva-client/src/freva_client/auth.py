@@ -246,30 +246,38 @@ class Auth:
         _cli: bool = False,
     ) -> Token:
         """Authenticate the user to the host."""
+
+        def _https_no_port(url: str) -> str:
+            """Normalize only when no explicit host was passed."""
+            p = urllib.parse.urlsplit(url)
+            netloc = p.hostname or ""
+            return urllib.parse.urlunsplit(
+                ("https", netloc, p.path, p.query, p.fragment)
+            )
+
         cfg = config or Config(host)
+        use_auth_url = cfg.auth_url if host else _https_no_port(cfg.auth_url)
+
         token = self._auth_token or load_token(self.token_file)
         reason: Optional[str] = None
-        if force:
-            strategy = "browser_auth"
-        else:
-            strategy = choose_token_strategy(token)
+
+        strategy = "browser_auth" if force else choose_token_strategy(token)
+
         if strategy == "use_token" and token:
             self._auth_token = token
             return self._auth_token
+
         try:
             if strategy == "refresh_token" and token:
-                return self._refresh(cfg.auth_url, token["refresh_token"])
+                return self._refresh(use_auth_url, token["refresh_token"])
             if strategy == "browser_auth":
-                return self._login(cfg.auth_url, force=force)
+                return self._login(use_auth_url, force=force)
         except AuthError as error:
             reason = str(error)
 
         command, token_path = {
             True: ("freva-client auth", "--token-file /path/to/token.json"),
-            False: (
-                "freva_client.auth",
-                "`token_file='/path/to/token.json'`",
-            ),
+            False: ("freva_client.auth", "`token_file='/path/to/token.json'`"),
         }[_cli]
 
         reason = reason or AUTH_FAILED_MSG.format(
