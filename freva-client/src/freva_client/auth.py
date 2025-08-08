@@ -308,11 +308,15 @@ def authenticate(
 
     Examples
     --------
-    Currently, a new token can only be created *from scratch* via the website of
-    your host instance. Once logged in, click the **Token button** to generate a
-    refresh token, then copy, paste, or download it.
+    Interactive authentication:
 
-    Authentication with a refresh token:
+    .. code-block:: python
+
+        from freva_client import authenticate
+        token = authenticate()
+        print(token)
+
+    Batch mode authentication with a refresh token:
 
     .. code-block:: python
 
