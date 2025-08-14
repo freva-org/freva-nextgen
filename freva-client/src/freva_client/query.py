@@ -1251,9 +1251,9 @@ class databrowser:
             server_msg = ""
             if hasattr(error, 'response') and error.response is not None:
                 error_data = error.response.json()
-                server_msg = f" - {
-                    error_data.get('detail', error_data.get('message', ''))
-                }"
+                server_msg = (
+                    f" - {error_data.get('detail', error_data.get('message', ''))}"
+                )
             msg = f"{method_upper} request failed with: {error}{server_msg}"
             if self._fail_on_error:
                 raise ValueError(msg) from None
