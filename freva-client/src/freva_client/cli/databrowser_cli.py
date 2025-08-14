@@ -1139,7 +1139,7 @@ def flavour_list(
     if parse_json:
         print(flavours_json)
     else:
-        pprint(f"[yellow]{results.get("Note", "")}[/yellow]")
+        pprint(f"[yellow]{results.get('Note', '')}[/yellow]")
         print("🎨 Available Data Reference Syntax (DRS) Flavours")
         print("=" * 55)
         for flavour in results["flavours"]:
