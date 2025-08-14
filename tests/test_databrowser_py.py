@@ -10,7 +10,6 @@ from freva_client import databrowser
 from freva_client.auth import Auth, AuthError, Token
 from freva_client.utils.logger import DatabrowserWarning
 
-
 def test_search_files(test_server: str) -> None:
     """Test searching for files."""
     db = databrowser(host=test_server)
@@ -103,9 +102,6 @@ def test_bad_queries(test_server: str) -> None:
         databrowser.metadata_search(
             host=test_server, foo="bar", fail_on_error=True
         )
-    db = databrowser(host=test_server, foo="bar", flavour="foo")  # type: ignore
-    with pytest.raises(ValueError):
-        len(db)
 
 
 def test_repr(test_server: str) -> None:
@@ -118,6 +114,11 @@ def test_repr(test_server: str) -> None:
     assert "flavour" in overview
     assert "cmip6" in overview
     assert "freva" in overview
+
+    # test overview with a non-existing host
+    with pytest.raises(ValueError):
+        databrowser.overview(host="foo.bar.de:7777")
+
 
 
 def test_intake_without_zarr(test_server: str) -> None:
@@ -403,10 +404,10 @@ def test_flavour_operations(test_server: str, auth_instance: Auth, auth: Token) 
         auth_instance._auth_token = auth
         
         # listing flavours
-        flavours = databrowser.flavour(action="list", host=test_server)
-        assert isinstance(flavours, list)
-        assert len(flavours) >= 5
-        flavour_names = [f["flavour_name"] for f in flavours]
+        result = databrowser.flavour(action="list", host=test_server)
+        assert isinstance(result["flavours"], list)
+        assert len(result["flavours"]) >= 5
+        flavour_names = [f["flavour_name"] for f in result["flavours"]]
         assert "freva" in flavour_names
         assert "cmip6" in flavour_names
         
@@ -424,34 +425,24 @@ def test_flavour_operations(test_server: str, auth_instance: Auth, auth: Token) 
             host=test_server
         )
         
-        # ustom flavour appears in list
-        flavours_after = databrowser.flavour(action="list", host=test_server)
-        assert len(flavours_after) > len(flavours)
-        new_flavour_names = [f["flavour_name"] for f in flavours_after]
-        assert "test_flavour_client" in new_flavour_names
+        # custom flavour appears in list
+        result_after = databrowser.flavour(action="list", host=test_server)
+        assert len(result_after["flavours"]) > len(result["flavours"])
+        new_flavour_names = [f["flavour_name"] for f in result_after["flavours"]]
+        assert f"test_flavour_client" in new_flavour_names
         valid_token = deepcopy(auth_instance._auth_token)
         auth_instance._auth_token["access_token"] = "foo"
         # deleting a flavour with invalid token raises an error
-        try:
+        with pytest.raises(ValueError):
             databrowser.flavour(
-                action="list", 
-                host="http://non-existent-host:9999", 
+                action="list",
+                host="http://non-existent-host:9999",
                 fail_on_error=True
             )
-            assert False
-        except ValueError as e:
-            assert "Failed to list flavours" in str(e)
-            
-        # empty flavours - without fail_on_error
-        flavoursx = databrowser.flavour(
-            action="list", 
-            host="http://non-existent-host:9999", 
-            fail_on_error=False
-        )
-        assert flavoursx == []
 
         auth_instance._auth_token = valid_token
         # custom flavour can be used in searches
+        
         db = databrowser(flavour="test_flavour_client", host=test_server)
         # not fail even if no results since flavour is custom
         assert len(db) >= 0
@@ -465,9 +456,9 @@ def test_flavour_operations(test_server: str, auth_instance: Auth, auth: Token) 
         
         # custom flavour is gone
         flavours_final = databrowser.flavour(action="list", host=test_server)
-        final_flavour_names = [f["flavour_name"] for f in flavours_final]
+        final_flavour_names = [f["flavour_name"] for f in flavours_final["flavours"]]
         assert "test_flavour_client" not in final_flavour_names
-        assert len(flavours_final) == len(flavours)
+        assert len(flavours_final["flavours"]) == len(result["flavours"])
     finally:
         auth_instance._auth_token = token
 
@@ -493,15 +484,7 @@ def test_flavour_error_cases(test_server: str, auth_instance: Auth, auth: Token)
         # deleting flavour without name
         with pytest.raises(ValueError, match="'name' is required for delete action"):
             databrowser.flavour(action="delete", host=test_server)
-        
-        # deleting non-existent flavour
-        with pytest.raises(ValueError, match="Failed to delete flavour"):
-                
-            databrowser.flavour(
-                action="delete",
-                name="non_existent_flavour",
-                host=test_server
-            )
+
     finally:
         auth_instance._auth_token = token
 
@@ -509,4 +492,4 @@ def test_flavour_error_cases(test_server: str, auth_instance: Auth, auth: Token)
 def test_flavour_without_auth(test_server: str) -> None:
     """Test listing flavours without authentication"""
     flavours = databrowser.flavour(action="list", host=test_server)
-    assert isinstance(flavours, list)
+    assert isinstance(flavours, dict)

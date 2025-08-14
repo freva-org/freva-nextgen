@@ -3,8 +3,9 @@
 from typing import Any, Dict, List, Literal, Union
 from urllib.parse import parse_qs
 
-from fastapi import Query, Request
+from fastapi import Path, Query, Request
 from pydantic import BaseModel, Field, field_validator
+from typing_extensions import TypedDict
 
 from freva_rest.rest import server_config
 
@@ -63,6 +64,26 @@ class SolrSchema:
         ),
     }
 
+    path_params: Dict[str, Any] = {
+        "flavour": Path(
+            ...,
+            description=(
+                "DRS flavour: built-in (freva, cmip6, cmip5, cordex, user)"
+                " or custom flavours."
+                " For custom flavours, use '`flavour_name`' or "
+                "'`username:flavour_name`' format when conflicts exist"
+                " with the global flavours."
+            ),
+            examples=[
+                "freva",
+                "nextgem",
+                "flavour_name",
+                "user_name:flavour_name"
+            ]
+        ),
+        "uniq_key": Path(..., description="Core type")
+    }
+
     @classmethod
     def process_parameters(
         cls, request: Request, *parameters_not_to_process: str
@@ -117,6 +138,17 @@ class FlavourDefinition(BaseModel):
     class Config:
         extra = "forbid"
 
+    @field_validator('flavour_name')
+    @classmethod
+    def validate_flavour_name(cls, v: str) -> str:
+        import re
+        if not re.match(r'^[a-zA-Z0-9_-]+$', v):
+            raise ValueError(
+                "Flavour name can only contain letters, "
+                "numbers, underscores, and hyphens"
+            )
+        return v
+
     @field_validator('mapping')
     @classmethod
     def validate_mapping_keys(cls, v: Dict[str, str]) -> Dict[str, str]:
@@ -139,6 +171,9 @@ class FlavourResponse(BaseModel):
         examples=[{"project": "mip_era", "model": "source_id"}]
     )
     owner: str = Field(examples=["global", "john_doe"])
+    who_created: str = Field(
+        examples=["john_doe", "admin"]
+    )
     created_at: str = Field(examples=["2024-01-15T10:30:00"])
 
 
@@ -182,3 +217,35 @@ class AddUserDataRequestBody(BaseModel):
             {"project": "user-data", "product": "new", "institute": "globe"}
         ],
     )
+
+
+IntakeType = TypedDict(
+    "IntakeType",
+    {
+        "esmcat_version": str,
+        "attributes": List[Dict[str, str]],
+        "assets": Dict[str, str],
+        "id": str,
+        "description": str,
+        "title": str,
+        "last_updated": str,
+        "aggregation_control": Dict[str, Any],
+    },
+)
+
+
+class SearchResult(BaseModel):
+    """Return Model of a uniq key search."""
+
+    total_count: int
+    facets: Dict[str, List[Union[str, int]]]
+    search_results: List[Dict[str, Union[str, float, List[str]]]]
+    facet_mapping: Dict[str, str]
+    primary_facets: List[str]
+
+
+class IntakeCatalogue(BaseModel):
+    """Return Model of a uniq key search."""
+
+    catalogue: IntakeType
+    total_count: int

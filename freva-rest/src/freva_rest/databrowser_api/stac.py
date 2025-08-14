@@ -31,8 +31,9 @@ from freva_rest.utils.stac_utils import (
     parse_datetime,
 )
 
-from .core import Solr, Translator
+from .core import Solr
 from .schema import FlavourType
+from .services import Translator
 
 
 class ZipStream(io.RawIOBase):

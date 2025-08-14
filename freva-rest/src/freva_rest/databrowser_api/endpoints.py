@@ -25,7 +25,7 @@ from freva_rest.config import BUILTIN_FLAVOURS
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 
-from .core import SearchResult, Solr
+from .core import Solr
 from .schema import (
     AddUserDataRequestBody,
     FlavourDefinition,
@@ -33,8 +33,10 @@ from .schema import (
     FlavourListResponse,
     Required,
     SearchFlavours,
+    SearchResult,
     SolrSchema,
 )
+from .services import Flavour
 from .stac import STAC
 
 
@@ -46,7 +48,7 @@ from .stac import STAC
 )
 async def overview(
     current_user: Optional[TokenPayload] = Security(
-        auth.create_auth_dependency(required=False), scopes=["oidc.claims"]
+        auth.create_auth_dependency(required=False)
     ),
 ) -> SearchFlavours:
     """Get all available search flavours and their attributes.
@@ -58,23 +60,14 @@ async def overview(
     searching and filtering datasets.
     """
     user_name = current_user.preferred_username if current_user else "global"
-    solr_instance = Solr(server_config)
-
-    all_flavour_responses = await solr_instance.get_all_flavours(user_name)
-    flavours = [f.flavour_name for f in all_flavour_responses]
-    attributes = {}
-
-    for flavour_response in all_flavour_responses:
-        flavour_name = flavour_response.flavour_name
-        if flavour_name in ("cordex",):
-            attributes[flavour_name] = list(flavour_response.mapping.values())
-        else:
-            cordex_keys = ("rcm_name", "driving_model", "rcm_version")
-            attributes[flavour_name] = [
-                v for v in flavour_response.mapping.values()
-                if v not in cordex_keys
-            ]
-    return SearchFlavours(flavours=flavours, attributes=attributes)
+    flavour_instance = Flavour(server_config)
+    all_flavour_responses = await flavour_instance.get_all_flavours(user_name)
+    solr_instance = Solr(
+        server_config,
+    )
+    return await solr_instance.overview_process(
+        all_flavour_responses, user_name
+    )
 
 
 @app.get(
@@ -88,14 +81,14 @@ async def overview(
     },
 )
 async def metadata_search(
-    flavour: str,
-    uniq_key: Literal["file", "uri"],
+    flavour: str = SolrSchema.path_params["flavour"],
+    uniq_key: Literal["file", "uri"] = SolrSchema.path_params["uniq_key"],
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
     request: Request = Required,
     current_user: Optional[TokenPayload] = Security(
-        auth.create_auth_dependency(required=False), scopes=["oidc.claims"]
+        auth.create_auth_dependency(required=False)
     ),
 ) -> JSONResponse:
     """Query the available metadata.
@@ -138,14 +131,14 @@ async def metadata_search(
     response_class=PlainTextResponse,
 )
 async def data_search(
-    flavour: str,
-    uniq_key: Literal["file", "uri"],
+    flavour: str = SolrSchema.path_params["flavour"],
+    uniq_key: Literal["file", "uri"] = SolrSchema.path_params["uniq_key"],
     start: Annotated[int, SolrSchema.params["start"]] = 0,
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     request: Request = Required,
     current_user: Optional[TokenPayload] = Security(
-        auth.create_auth_dependency(required=False), scopes=["oidc.claims"]
+        auth.create_auth_dependency(required=False)
     ),
 ) -> StreamingResponse:
     """Search for datasets.
@@ -187,15 +180,15 @@ async def data_search(
     response_class=JSONResponse,
 )
 async def intake_catalogue(
-    flavour: str,
-    uniq_key: Literal["file", "uri"],
+    flavour: str = SolrSchema.path_params["flavour"],
+    uniq_key: Literal["file", "uri"] = SolrSchema.path_params["uniq_key"],
     start: Annotated[int, SolrSchema.params["start"]] = 0,
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     max_results: Annotated[int, SolrSchema.params["max_results"]] = -1,
     request: Request = Required,
     current_user: Optional[TokenPayload] = Security(
-        auth.create_auth_dependency(required=False), scopes=["oidc.claims"]
+        auth.create_auth_dependency(required=False)
     ),
 ) -> StreamingResponse:
     """Create an intake catalogue from a freva search.
@@ -245,15 +238,15 @@ async def intake_catalogue(
     response_class=Response,
 )
 async def stac_catalogue(
-    flavour: str,
-    uniq_key: Literal["file", "uri"],
+    flavour: str = SolrSchema.path_params["flavour"],
+    uniq_key: Literal["file", "uri"] = SolrSchema.path_params["uniq_key"],
     start: Annotated[int, SolrSchema.params["start"]] = 0,
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     max_results: Annotated[int, SolrSchema.params["max_results"]] = -1,
     request: Request = Required,
     current_user: Optional[TokenPayload] = Security(
-        auth.create_auth_dependency(required=False), scopes=["oidc.claims"]
+        auth.create_auth_dependency(required=False)
     ),
 ) -> Response:
     """Create a STAC catalogue from a freva search.
@@ -296,8 +289,8 @@ async def stac_catalogue(
     include_in_schema=False,
 )
 async def extended_search(
-    flavour: str,
-    uniq_key: Literal["file", "uri"],
+    flavour: str = SolrSchema.path_params["flavour"],
+    uniq_key: Literal["file", "uri"] = SolrSchema.path_params["uniq_key"],
     start: Annotated[int, SolrSchema.params["start"]] = 0,
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
@@ -324,6 +317,7 @@ async def extended_search(
         start=start,
         multi_version=multi_version,
         translate=translate,
+        current_user=current_user,
         **SolrSchema.process_parameters(request),
     )
     if "zarr-stream" not in server_config.services:
@@ -357,7 +351,7 @@ async def extended_search(
     response_class=PlainTextResponse,
 )
 async def load_data(
-    flavour: str,
+    flavour: str = SolrSchema.path_params["flavour"],
     start: Annotated[int, SolrSchema.params["start"]] = 0,
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
@@ -539,7 +533,6 @@ async def add_custom_flavour(
     specifying the flavour name, enabling customized facet naming for search
     results and metadata.
     """
-
     if flavour_def.is_global and not server_config.is_admin_user(current_user):
         logger.error(
             "Unauthorized attempt to create global flavour by user: %s",
@@ -549,8 +542,8 @@ async def add_custom_flavour(
             status_code=403,
             detail="Only admin users can create global flavours"
         )
-    solr_instance = Solr(config=server_config)
-    return await solr_instance.add_flavour(
+    flavour_instance = Flavour(config=server_config)
+    return await flavour_instance.add_flavour(
         current_user.preferred_username,
         flavour_def
     )
@@ -580,7 +573,7 @@ async def list_flavours(
     ),
     request: Request = Required,
     current_user: Optional[TokenPayload] = Security(
-        auth.create_auth_dependency(required=False), scopes=["oidc.claims"]
+        auth.create_auth_dependency(required=False)
     ),
 
 ) -> FlavourListResponse:
@@ -594,13 +587,12 @@ async def list_flavours(
     flavour, or by owner to show only global flavours or user-specific ones.
     For unauthenticated users, only global flavours are returned.
     """
-    solr = Solr.validate_flavour_parameters(server_config, request)
+    flavour = Flavour.validate_flavour_parameters(server_config, request)
     user_name = (current_user.preferred_username
                  if current_user and current_user.preferred_username
                  else "global")
 
-    all_flavours = await solr.get_all_flavours(user_name, flavour_name, owner)
-
+    all_flavours = await flavour.get_all_flavours(user_name, flavour_name, owner)
     return FlavourListResponse(
         total=len(all_flavours),
         flavours=all_flavours
@@ -625,6 +617,9 @@ async def delete_custom_flavour(
         ..., description="Name of the flavour to delete",
         examples=["nextgem", "custom_project"]
     ),
+    is_global: Annotated[bool, Query(
+        description="Whether the flavour is global (admin only)"
+    )] = False,
     current_user: TokenPayload = Security(
         auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
@@ -652,10 +647,18 @@ async def delete_custom_flavour(
             detail=f"Cannot delete built-in flavour '{flavour_name}'"
         )
 
-    is_global = server_config.is_admin_user(current_user)
+    if is_global and not server_config.is_admin_user(current_user):
+        logger.error(
+            "Unauthorized attempt to create global flavour by user: %s",
+            current_user.preferred_username
+        )
+        raise HTTPException(
+            status_code=403,
+            detail="Only admin users can create global flavours"
+        )
 
-    solr_instance = Solr(config=server_config)
-    return await solr_instance.delete_flavour(
+    flavour_instance = Flavour(config=server_config)
+    return await flavour_instance.delete_flavour(
         current_user.preferred_username,
         flavour_name,
         is_global

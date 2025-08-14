@@ -13,6 +13,9 @@ import typer
 import typer.models
 import xarray as xr
 
+# import pprinr from rich
+from rich import print as pprint
+
 from freva_client import databrowser
 from freva_client.auth import Auth
 from freva_client.utils import exception_handler, logger
@@ -39,7 +42,6 @@ class BuiltinFlavours(str, Enum):
     cmip6 = "cmip6"
     cmip5 = "cmip5"
     cordex = "cordex"
-    nextgems = "nextgems"
     user = "user"
 
 
@@ -140,7 +142,6 @@ def metadata_search(
     flavour: str = typer.Option(
         "freva",
         "--flavour",
-        "-f",
         help=(
             "The Data Reference Syntax (DRS) standard specifying the type "
             "of climate datasets to query."
@@ -291,7 +292,6 @@ def data_search(
     flavour: str = typer.Option(
         "freva",
         "--flavour",
-        "-f",
         help=(
             "The Data Reference Syntax (DRS) standard specifying the type "
             "of climate datasets to query."
@@ -437,7 +437,6 @@ def intake_catalogue(
     flavour: str = typer.Option(
         "freva",
         "--flavour",
-        "-f",
         help=(
             "The Data Reference Syntax (DRS) standard specifying the type "
             "of climate datasets to query."
@@ -586,7 +585,6 @@ def stac_catalogue(
     flavour: str = typer.Option(
         "freva",
         "--flavour",
-        "-f",
         help=(
             "The Data Reference Syntax (DRS) standard specifying the type "
             "of climate datasets to query."
@@ -726,7 +724,6 @@ def count_values(
     flavour: str = typer.Option(
         "freva",
         "--flavour",
-        "-f",
         help=(
             "The Data Reference Syntax (DRS) standard specifying the type "
             "of climate datasets to query."
@@ -1065,6 +1062,11 @@ def flavour_add(
 @exception_handler
 def flavour_delete(
     name: str = typer.Argument(..., help="Name of the flavour to delete"),
+    global_: bool = typer.Option(
+        False,
+        "--global",
+        help="Delete global flavour (requires admin privileges)",
+    ),
     host: Optional[str] = typer.Option(
         None,
         "--host",
@@ -1096,6 +1098,7 @@ def flavour_delete(
     databrowser.flavour(
         action="delete",
         name=name,
+        is_global=global_,
         host=host,
     )
 
@@ -1131,16 +1134,15 @@ def flavour_list(
     global flavours available to all users."""
     logger.set_verbosity(verbose)
     logger.debug("Listing custom flavours")
-    Auth(token_file).authenticate(host=host, _cli=True)
-    flavours = cast(List[Dict[str, Any]], databrowser.flavour(action="list", host=host))
-    flavours_json = json.dumps(flavours)
+    results = cast(Dict[str, Any], databrowser.flavour(action="list", host=host))
+    flavours_json = json.dumps(results["flavours"], indent=2)
     if parse_json:
         print(flavours_json)
     else:
-        print()
+        pprint(f"[yellow]{results.get("Note", "")}[/yellow]")
         print("🎨 Available Data Reference Syntax (DRS) Flavours")
         print("=" * 55)
-        for flavour in flavours:
+        for flavour in results["flavours"]:
             owner_icon = "🌐" if flavour['owner'] == "global" else "👤"
             print(f"  {owner_icon} {flavour['flavour_name']} (by {flavour['owner']})")
             print(f"    Mapping: {flavour['mapping']}")

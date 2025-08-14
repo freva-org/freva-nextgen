@@ -7,7 +7,8 @@ variables.
 
 import logging
 import os
-from functools import cached_property
+import re
+from functools import cached_property, reduce
 from pathlib import Path
 from socket import gethostname
 from typing import (
@@ -83,6 +84,15 @@ def env_to_list(env_var: str, target_type: Type[T]) -> List[T]:
         for k in set(os.getenv(env_var, "").split(","))
         if k.strip()
     ]
+
+
+def _get_in(d: Dict[str, Any], keys: List[str]) -> Any:
+    """Descend into nested dicts."""
+    return reduce(
+        lambda acc, k: acc.get(k, {}) if isinstance(acc, dict) else {},
+        keys,
+        d
+    ) or ""
 
 
 class ServerConfig(BaseModel):
@@ -266,15 +276,24 @@ class ServerConfig(BaseModel):
             ),
         ),
     ] = env_to_list("API_OIDC_AUTH_PORTS", int)
-    admin_list: Annotated[
-        List[str],
+    admins_token_claims: Annotated[
+        Optional[Dict[str, List[str]]],
         Field(
-            title="Admin user list",
+            title="Admin token claim filter.",
             description=(
-                "List of user names that are considered as admin users."
+                "Token claim-based filters for admin users,"
+                "defined as regex patterns. Each filter is a "
+                "mapping from a nested claim path (e.g., "
+                "'resource_access.realm-management.roles' or "
+                "'groups') to a list of Python regular expressions."
+                " If any regex matches the claim's value, the user "
+                "is granted admin. Nested claims are specified by "
+                "dot-separated keys."
             ),
         ),
-    ] = env_to_list("API_ADMIN_LIST", str)
+    ] = (
+        env_to_dict("API_ADMINS_TOKEN_CLAIMS") or None
+    )
 
     def _read_config(self, section: str, key: str) -> Any:
         fallback = self._fallback_config.get(section, {}).get(key, None)
@@ -345,9 +364,10 @@ class ServerConfig(BaseModel):
         self.oidc_auth_ports = self.oidc_auth_ports or self._read_config(
             "oidc", "auth_ports"
         )
-        self.admin_list = self.admin_list or self._read_config(
-            "restAPI", "admin_list"
-        ) or []
+        self.admins_token_claims = (
+            self.admins_token_claims
+            or self._read_config("oidc", "admins_token_claims")
+        ) or {}
 
     @staticmethod
     def get_url(url: str, default_port: Union[str, int]) -> str:
@@ -405,24 +425,26 @@ class ServerConfig(BaseModel):
             self.mongo_client[self.mongo_db]["custom_flavours"],
         )
 
-    # TODO: the Logik of this function needs to be brainstormed.
-    # First and naive solution
     def is_admin_user(self, current_user: BaseModel) -> bool:
-        """Return True if the user holds the 'realm-admin' (or 'admin') role."""
-        if (
-            hasattr(current_user, 'preferred_username')
-            and current_user.preferred_username in self.admin_list
-        ):
-            return True
+        """
+        Return True if any (claim-path -> regex) in `admins_token_claims`
+        matches any value in the current_user's decoded JWT claims.
+        """
+        claims = current_user.model_dump()
 
-        claims = current_user.dict()
-        roles = (
-            claims
-            .get("resource_access", {})
-            .get("realm-management", {})
-            .get("roles", [])
-        )
-        return "realm-admin" in roles or "admin" in roles
+        for path, patterns in (self.admins_token_claims or {}).items():
+            values = _get_in(claims, path.split("."))
+            if not isinstance(values, list):  # pragma: no cover
+                values = [values]
+
+            if any(
+                re.search(pat, val)
+                for val in values if isinstance(val, str)
+                for pat in patterns
+            ):
+                return True
+
+        return False
 
     def power_cycle_mongodb(self) -> None:
         """Reset an existing mongoDB connection."""

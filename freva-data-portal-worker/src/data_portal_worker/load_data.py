@@ -74,15 +74,15 @@ class RedisCacheFactory(redis.Redis):
         conn["ssl"] = conn["ssl_certfile"] is not None
         data_logger.info("Creating redis connection with args: %s", conn)
         super().__init__(
-            host=conn["host"],
-            port=conn["port"],
-            db=conn["db"],
-            username=conn["username"],
-            password=conn["password"],
-            ssl=conn["ssl"],
-            ssl_certfile=conn["ssl_certfile"],
-            ssl_keyfile=conn["ssl_keyfile"],
-            ssl_ca_certs=conn["ssl_ca_certs"],
+            host=cast(str, conn["host"]),
+            port=cast(int, conn["port"]),
+            db=cast(int, conn["db"]),
+            username=cast(Optional[str], conn["username"]),
+            password=cast(Optional[str], conn["password"]),
+            ssl=cast(bool, conn["ssl"]),
+            ssl_certfile=cast(Optional[str], conn["ssl_certfile"]),
+            ssl_keyfile=cast(Optional[str], conn["ssl_keyfile"]),
+            ssl_ca_certs=cast(Optional[str], conn["ssl_ca_certs"]),
             ssl_cert_reqs=ssl.CERT_NONE,
         )
 

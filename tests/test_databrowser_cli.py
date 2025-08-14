@@ -13,7 +13,6 @@ from typer.testing import CliRunner
 from freva_client.auth import Auth
 from freva_client.cli.databrowser_cli import databrowser_app as app
 
-
 def test_overview(cli_runner: CliRunner, test_server: str) -> None:
     """Test the overview sub command."""
     res = cli_runner.invoke(app, ["data-overview", "--host", test_server])
@@ -206,7 +205,7 @@ def test_intake_files_zarr(
         auth_instance._auth_token = token
 
 
-def test_metadata_search(cli_runner: CliRunner, test_server: str) -> None:
+def test_metadata_search(cli_runner: CliRunner, test_server: str, token_file: Path) -> None:
     """Test the metadata-search sub command."""
     res = cli_runner.invoke(app, ["metadata-search", "--host", test_server])
     assert res.exit_code == 0
@@ -228,9 +227,88 @@ def test_metadata_search(cli_runner: CliRunner, test_server: str) -> None:
     )
     assert res.exit_code == 0
     assert isinstance(json.loads(res.stdout), dict)
+    #first add the personal flavour
+    res = cli_runner.invoke(
+        app,
+        [
+            "flavour",
+            "add",
+            "test_cli_flavour",
+            "--host",
+            test_server,
+            "--token-file",
+            str(token_file),
+            "--map",
+            "project=projekt",
+            "--map",
+            "variable=var",
+        ],
+    )
+    assert res.exit_code == 0
+    # then use it in the metadata search command
+    res = cli_runner.invoke(
+        app,
+        [
+            "metadata-search",
+            "--host",
+            test_server,
+            "--token-file",
+            str(token_file),
+            "--flavour",
+            "test_cli_flavour",
+            "--json",
+        ],
+    )
+    assert res.exit_code == 0
+
+    # get metadata the wrong username:flavour
+    res = cli_runner.invoke(
+        app,
+        [
+            "metadata-search",
+            "--host",
+            test_server,
+            "--token-file",
+            str(token_file),
+            "--flavour",
+            "janedoexx:test_cli_fla",
+            "--json",
+        ],
+    )
+
+    assert res.stderr
+    # get metadata the right username:flavour
+    res = cli_runner.invoke(
+        app,
+        [
+            "metadata-search",
+            "--host",
+            test_server,
+            "--token-file",
+            str(token_file),
+            "--flavour",
+            "janedoe:test_cli_flavour",
+            "--json",
+        ],
+    )
+    assert res.exit_code == 0
+    assert isinstance(json.loads(res.stdout), dict)
+    # delete the personal flavour
+    res = cli_runner.invoke(
+        app,
+        [
+            "flavour",
+            "delete",
+            "test_cli_flavour",
+            "--host",
+            test_server,
+            "--token-file",
+            str(token_file),
+        ],
+    )
 
 
-def test_count_values(cli_runner: CliRunner, test_server: str) -> None:
+def test_count_values(cli_runner: CliRunner, test_server: str, token_file: Path) -> None:
     """Test the count sub command."""
     res = cli_runner.invoke(app, ["data-count", "--host", test_server])
     assert res.exit_code == 0
@@ -275,6 +353,55 @@ def test_count_values(cli_runner: CliRunner, test_server: str) -> None:
     )
     assert res.exit_code == 0
     assert json.loads(res.stdout) == 0
+
+    #first add the personal flavour
+    res = cli_runner.invoke(
+        app,
+        [
+            "flavour",
+            "add",
+            "test_cli_flavour",
+            "--host",
+            test_server,
+            "--token-file",
+            str(token_file),
+            "--map",
+            "project=projekt",
+            "--map",
+            "variable=var",
+        ],
+    )
+    assert res.exit_code == 0
+    # then use it in the count command
+    res = cli_runner.invoke(
+        app,
+        [
+            "data-count",
+            "--host",
+            test_server,
+            "--token-file",
+            str(token_file),
+            "--flavour",
+            "test_cli_flavour",
+            "--json",
+        ],
+    )
+    assert res.exit_code == 0
+
+    # delete the personal flavour
+    res = cli_runner.invoke(
+        app,
+        [
+            "flavour",
+            "delete",
+            "test_cli_flavour",
+            "--host",
+            test_server,
+            "--token-file",
+            str(token_file),
+        ],
+    )
+    assert res.exit_code == 0
 
 
 def test_failed_command(

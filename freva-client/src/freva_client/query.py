@@ -889,9 +889,12 @@ class databrowser:
             print(databrowser.overview())
         """
         overview = Config(host).overview.copy()
+        note = overview.pop("Note", None)
+        if note:
+            overview["Note"] = note
         overview["Available search flavours"] = overview.pop("flavours")
         overview["Search attributes by flavour"] = overview.pop("attributes")
-        return yaml.safe_dump(overview)
+        return yaml.safe_dump(overview, sort_keys=False)
 
     @property
     def url(self) -> str:
@@ -1033,8 +1036,6 @@ class databrowser:
                 if result is not None:
                     response_data = result.json()
                     status_message = response_data.get("status")
-                else:
-                    raise ValueError("Failed to add user data")
                 pprint(f"[b][green]{status_message}[green][b]")
             else:
                 raise ValueError("No metadata generated from the input data.")
@@ -1047,9 +1048,6 @@ class databrowser:
                 )
 
             result = this._request("DELETE", url, data=metadata, headers=headers)
-
-            if result is None:
-                raise ValueError("Failed to delete user data")
             pprint("[b][green]User data deleted successfully[green][b]")
 
     @classmethod
@@ -1061,7 +1059,7 @@ class databrowser:
         is_global: bool = False,
         host: Optional[str] = None,
         fail_on_error: bool = False,
-    ) -> Union[None, List[Dict[str, Any]]]:
+    ) -> Union[None, Dict[str, Any]]:
         """Manage custom flavours in the databrowser system.
 
         This method allows user to add, delete, or list custom flavours that
@@ -1138,12 +1136,10 @@ class databrowser:
             host=host,
             fail_on_error=fail_on_error,
         )
-
         cfg = Config(host)
-        auth = Auth()
-        token = auth.authenticate(config=cfg)
-        headers = {"Authorization": f"Bearer {token['access_token']}"}
         if action == "add":
+            token = this._auth.authenticate(config=this._cfg)
+            headers = {"Authorization": f"Bearer {token['access_token']}"}
             if not name or not mapping:
                 raise ValueError(
                     "Both 'name' and 'mapping' are required for add action"
@@ -1155,48 +1151,48 @@ class databrowser:
             }
             result = this._request(
                 "POST",
-                f"{cfg.databrowser_url}/flavours",
+                f"{this._cfg.databrowser_url}/flavours",
                 data=payload,
                 headers=headers,
             )
             if result is not None:
-                pprint("[b][green] Flavour added successfully [green][b]")
+                msg = result.json().get("status", "Flavour added successfully")
+                pprint(f"[b][green] {msg} [/green][/b]")
 
         elif action == "delete":
+            token = this._auth.authenticate(config=this._cfg)
+            headers = {"Authorization": f"Bearer {token['access_token']}"}
             if not name:
                 raise ValueError("'name' is required for delete action")
+            params = {"is_global": "true" if is_global else "false"}
+
             result = this._request(
                 "DELETE",
-                f"{cfg.databrowser_url}/flavours/{name}",
+                f"{this._cfg.databrowser_url}/flavours/{name}",
                 headers=headers,
+                params=params,
             )
             if result is not None:
-                pprint(
-                    "[b][green] Flavour deleted successfully [green][b]"
-                )
-            else:
-                raise ValueError("Failed to delete flavour")
+                msg = result.json().get("status", "Flavour deleted successfully")
+                pprint(f"[b][green] {msg} [/green][/b]")
         elif action == "list":
-            flavours = []
-            try:
-                result = this._request(
-                    "GET", f"{cfg.databrowser_url}/flavours", headers=headers
+            headers = cast(Dict[str, str], this._cfg._get_headers)
+            flavours: List[Dict[str, Any]] = []
+            result = this._request(
+                "GET", f"{cfg.databrowser_url}/flavours", headers=headers
+            )
+            if result is not None:
+                flavours = result.json().get("flavours", [])
+            result_data: Dict[str, Any] = {
+                "flavours": flavours,
+            }
+            if not headers:
+                result_data["Note"] = (
+                    "Displaying only global flavours. "
+                    "Authenticate to see custom user flavours as well."
                 )
-                if result is not None:
-                    flavours = result.json().get("flavours", [])
-            except Exception as e:
-                pprint(
-                    ("[yellow] %s Authentication failed, trying "
-                     "to list global flavours only...[/yellow]", e)
-                )
-                try:
-                    result = this._request(
-                        "GET", f"{cfg.databrowser_url}/flavours", headers={}
-                    )
-                except Exception as e:
-                    if fail_on_error:
-                        raise ValueError("Failed to list flavours") from e
-            return flavours
+
+            return result_data
         return None
 
     def _request(
@@ -1207,20 +1203,20 @@ class databrowser:
         **kwargs: Any,
     ) -> Optional[requests.models.Response]:
         """Request method to handle CRUD operations (GET, POST, PUT, PATCH, DELETE)."""
+        self._cfg.validate_server
         method_upper = method.upper()
         timeout = kwargs.pop("timeout", 30)
         params = kwargs.pop("params", {})
         stream = kwargs.pop("stream", False)
-        headers = kwargs.get("headers", {})
+        kwargs.setdefault("headers", {})
 
         if (
             self._flavour not in self.builtin_flavours
-            and "Authorization" not in headers
+            and "Authorization" not in kwargs["headers"]
         ):
             try:
                 token = self._auth.authenticate(config=self._cfg)
-                headers["Authorization"] = f"Bearer {token['access_token']}"
-                kwargs["headers"] = headers
+                kwargs["headers"]["Authorization"] = f"Bearer {token['access_token']}"
             except Exception:
                 pass
         logger.debug(
@@ -1250,8 +1246,15 @@ class databrowser:
         except (
             requests.exceptions.ConnectionError,
             requests.exceptions.HTTPError,
+            requests.exceptions.InvalidURL,
         ) as error:
-            msg = f"{method_upper} request failed with {error}"
+            server_msg = ""
+            if hasattr(error, 'response') and error.response is not None:
+                error_data = error.response.json()
+                server_msg = f" - {
+                    error_data.get('detail', error_data.get('message', ''))
+                }"
+            msg = f"{method_upper} request failed with: {error}{server_msg}"
             if self._fail_on_error:
                 raise ValueError(msg) from None
             logger.warning(msg)
