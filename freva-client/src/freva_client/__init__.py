@@ -12,6 +12,7 @@ science community. With help of Freva researchers can:
 The code described here is currently in testing phase. The client and server
 library described in the documentation only support searching for data. If you
 need to apply data analysis plugins, please visit the
+official documentation: https://freva-org.github.io/freva-legacy
 """
 
 from .auth import authenticate
