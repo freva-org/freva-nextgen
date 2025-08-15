@@ -5,6 +5,7 @@ import json
 import socket
 import urllib.parse
 import webbrowser
+from getpass import getuser
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from threading import Event, Lock, Thread
@@ -129,11 +130,13 @@ class Auth:
         logger.info("Opening browser for login:\n%s", login_url)
         logger.info(
             "If you are using this on a remote host, you might need to "
-            "forward port %d:\n"
-            "    ssh -L %d:localhost:%d user@remotehost",
+            "increase the login timeout and forward port %d:\n"
+            "    ssh -L %d:localhost:%d %s@%s",
             port,
             port,
             port,
+            getuser(),
+            socket.gethostname(),
         )
         event = Event()
         server = start_local_server(port, event)
