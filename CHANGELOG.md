@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 ## [v2508.1.0]
 ### Added
- - Login timout option for doing the login.
+ - Login timeout option for doing the login.
  - Display better information on how to use port forwarding.
 
 ## [v2507.0.0]
