@@ -17,5 +17,5 @@ need to apply data analysis plugins, please visit the
 from .auth import authenticate
 from .query import databrowser
 
-__version__ = "2508.0.0"
+__version__ = "2508.1.0"
 __all__ = ["authenticate", "databrowser", "__version__"]
