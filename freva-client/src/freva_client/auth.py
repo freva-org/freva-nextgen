@@ -226,9 +226,7 @@ class Auth:
         return self._auth_token
 
     def _refresh(
-        self,
-        url: str,
-        refresh_token: str,
+        self, url: str, refresh_token: str, timeout: Optional[int] = 30
     ) -> Token:
         """Refresh the access_token with a refresh token."""
         try:
@@ -238,7 +236,7 @@ class Auth:
             )
         except (AuthError, KeyError) as error:
             logger.warning("Failed to refresh token: %s", error)
-            return self._login(url)
+            return self._login(url, _timeout=timeout)
 
     def authenticate(
         self,
@@ -262,7 +260,9 @@ class Auth:
             return self._auth_token
         try:
             if strategy == "refresh_token" and token:
-                return self._refresh(cfg.auth_url, token["refresh_token"])
+                return self._refresh(
+                    cfg.auth_url, token["refresh_token"], timeout=timeout
+                )
             if strategy == "browser_auth":
                 return self._login(cfg.auth_url, force=force, _timeout=timeout)
         except AuthError as error:
