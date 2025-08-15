@@ -44,6 +44,11 @@ def authenticate_cli(
         "-f",
         help="Force token recreation, even if current token is still valid.",
     ),
+    timeout: int = typer.Option(
+        30,
+        "--timeout",
+        help="Set the timeout for login in secdonds, 0 for indefinate",
+    ),
     verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
     version: Optional[bool] = typer.Option(
         False,
@@ -59,5 +64,6 @@ def authenticate_cli(
         host=host,
         force=force,
         _cli=True,
+        timeout=timeout,
     )
     print(json.dumps(token, indent=3))

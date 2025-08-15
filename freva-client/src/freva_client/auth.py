@@ -113,7 +113,7 @@ class Auth:
         self,
         auth_url: str,
         force: bool = False,
-        _timeout: int = 30,
+        _timeout: Optional[int] = 30,
     ) -> Token:
         login_endpoint = f"{auth_url}/login"
         token_endpoint = f"{auth_url}/token"
@@ -142,7 +142,7 @@ class Auth:
         try:
             wait_for_port("localhost", port)
             webbrowser.open(login_url)
-            success = event.wait(timeout=_timeout)
+            success = event.wait(timeout=_timeout or None)
             if not success:
                 raise TimeoutError(
                     f"Login did not complete within {_timeout} seconds. "
@@ -243,6 +243,7 @@ class Auth:
         config: Optional[Config] = None,
         *,
         force: bool = False,
+        timeout: Optional[int] = 30,
         _cli: bool = False,
     ) -> Token:
         """Authenticate the user to the host."""
@@ -260,7 +261,7 @@ class Auth:
             if strategy == "refresh_token" and token:
                 return self._refresh(cfg.auth_url, token["refresh_token"])
             if strategy == "browser_auth":
-                return self._login(cfg.auth_url, force=force)
+                return self._login(cfg.auth_url, force=force, _timeout=timeout)
         except AuthError as error:
             reason = str(error)
 
@@ -287,6 +288,7 @@ def authenticate(
     token_file: Optional[Union[Path, str]] = None,
     host: Optional[str] = None,
     force: bool = False,
+    timeout: Optional[int] = 30,
 ) -> Token:
     """Authenticate to the host.
 
@@ -301,6 +303,8 @@ def authenticate(
         The hostname of the REST server.
     force: bool, default: False
         Force token recreation, even if current token is still valid.
+    timeout: int, default: 30
+        Set the timeout, None for indefinate.
 
     Returns
     -------
@@ -313,7 +317,7 @@ def authenticate(
     .. code-block:: python
 
         from freva_client import authenticate
-        token = authenticate()
+        token = authenticate(timeout=120)
         print(token)
 
     Batch mode authentication with a refresh token:
@@ -327,4 +331,5 @@ def authenticate(
     return auth.authenticate(
         host=host,
         force=force,
+        timeout=timeout,
     )
