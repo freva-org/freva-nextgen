@@ -294,7 +294,7 @@ def authenticate(
 
     Parameters
     ----------
-    refresh_token: str, optional
+    token_file: str, optional
         Instead of setting a password, you can set a refresh token to refresh
         the access token. This is recommended for non-interactive environments.
     host: str, optional

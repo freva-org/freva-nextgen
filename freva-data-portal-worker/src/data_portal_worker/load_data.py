@@ -49,6 +49,20 @@ RedisKw = TypedDict(
         "ssl_key": str,
     },
 )
+RedisConnectionDict = TypedDict(
+    "RedisConnectionDict",
+    {
+        "host": str,
+        "port": int,
+        "db": int,
+        "username": Optional[str],
+        "password": Optional[str],
+        "ssl": bool,
+        "ssl_certfile": Optional[str],
+        "ssl_keyfile": Optional[str],
+        "ssl_ca_certs": Optional[str],
+    },
+)
 
 
 class RedisCacheFactory(redis.Redis):
@@ -61,7 +75,7 @@ class RedisCacheFactory(redis.Redis):
             .partition(":")
         )
         port_i = int(port or "6379")
-        conn = {
+        conn: RedisConnectionDict = {
             "host": host,
             "port": port_i,
             "db": db,
@@ -70,8 +84,8 @@ class RedisCacheFactory(redis.Redis):
             "ssl_certfile": os.getenv("API_REDIS_SSL_CERTFILE") or None,
             "ssl_keyfile": os.getenv("API_REDIS_SSL_KEYFILE") or None,
             "ssl_ca_certs": os.getenv("API_REDIS_SSL_CERTFILE") or None,
+            "ssl": os.getenv("API_REDIS_SSL_CERTFILE") is not None,
         }
-        conn["ssl"] = conn["ssl_certfile"] is not None
         data_logger.info("Creating redis connection with args: %s", conn)
         super().__init__(
             host=conn["host"],
