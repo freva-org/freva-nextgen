@@ -438,7 +438,7 @@ class Flavour:
     async def delete_flavour(
         self,
         user_name: str,
-        flavour_name: str,
+        input_flavour_name: str,
         is_global: bool = False,
     ) -> FlavourDeleteResponse:
         """
@@ -471,10 +471,14 @@ class Flavour:
             Status 500 if there's an error deleting from MongoDB.
         """
         translator = await self.validate_and_get_flavour(
-            self._config, flavour_name, user_name
+            self._config, input_flavour_name, user_name
         )
         flavour_name = translator.flavour
-        if flavour_name.lower() in [f.lower() for f in BUILTIN_FLAVOURS]:
+        if (
+            flavour_name.lower()
+            in [f.lower() for f in BUILTIN_FLAVOURS]
+            and input_flavour_name != flavour_name
+        ):
             logger.error(
                 "Attempt to delete built-in flavour: %s by user: %s",
                 flavour_name,
@@ -573,7 +577,7 @@ class Flavour:
             raise HTTPException(status_code=422, detail=await get_error_details())
 
         translator = Translator(flavour, translate=True, config=config)
-        if flavour not in BUILTIN_FLAVOURS:
+        if flavour not in BUILTIN_FLAVOURS and owner == user_name:
             custom_flavour = next(
                 (f for f in all_flavours if f.flavour_name == flavour), None
             )
