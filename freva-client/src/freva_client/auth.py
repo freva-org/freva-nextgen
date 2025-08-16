@@ -5,6 +5,7 @@ import json
 import socket
 import urllib.parse
 import webbrowser
+from getpass import getuser
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from threading import Event, Lock, Thread
@@ -113,7 +114,7 @@ class Auth:
         self,
         auth_url: str,
         force: bool = False,
-        _timeout: int = 30,
+        _timeout: Optional[int] = 30,
     ) -> Token:
         login_endpoint = f"{auth_url}/login"
         token_endpoint = f"{auth_url}/token"
@@ -129,11 +130,13 @@ class Auth:
         logger.info("Opening browser for login:\n%s", login_url)
         logger.info(
             "If you are using this on a remote host, you might need to "
-            "forward port %d:\n"
-            "    ssh -L %d:localhost:%d user@remotehost",
+            "increase the login timeout and forward port %d:\n"
+            "    ssh -L %d:localhost:%d %s@%s",
             port,
             port,
             port,
+            getuser(),
+            socket.gethostname(),
         )
         event = Event()
         server = start_local_server(port, event)
@@ -142,7 +145,7 @@ class Auth:
         try:
             wait_for_port("localhost", port)
             webbrowser.open(login_url)
-            success = event.wait(timeout=_timeout)
+            success = event.wait(timeout=_timeout or None)
             if not success:
                 raise TimeoutError(
                     f"Login did not complete within {_timeout} seconds. "
@@ -223,9 +226,7 @@ class Auth:
         return self._auth_token
 
     def _refresh(
-        self,
-        url: str,
-        refresh_token: str,
+        self, url: str, refresh_token: str, timeout: Optional[int] = 30
     ) -> Token:
         """Refresh the access_token with a refresh token."""
         try:
@@ -235,7 +236,7 @@ class Auth:
             )
         except (AuthError, KeyError) as error:
             logger.warning("Failed to refresh token: %s", error)
-            return self._login(url)
+            return self._login(url, _timeout=timeout)
 
     def authenticate(
         self,
@@ -243,6 +244,7 @@ class Auth:
         config: Optional[Config] = None,
         *,
         force: bool = False,
+        timeout: Optional[int] = 30,
         _cli: bool = False,
     ) -> Token:
         """Authenticate the user to the host."""
@@ -258,9 +260,11 @@ class Auth:
             return self._auth_token
         try:
             if strategy == "refresh_token" and token:
-                return self._refresh(cfg.auth_url, token["refresh_token"])
+                return self._refresh(
+                    cfg.auth_url, token["refresh_token"], timeout=timeout
+                )
             if strategy == "browser_auth":
-                return self._login(cfg.auth_url, force=force)
+                return self._login(cfg.auth_url, force=force, _timeout=timeout)
         except AuthError as error:
             reason = str(error)
 
@@ -287,6 +291,7 @@ def authenticate(
     token_file: Optional[Union[Path, str]] = None,
     host: Optional[str] = None,
     force: bool = False,
+    timeout: Optional[int] = 30,
 ) -> Token:
     """Authenticate to the host.
 
@@ -301,6 +306,8 @@ def authenticate(
         The hostname of the REST server.
     force: bool, default: False
         Force token recreation, even if current token is still valid.
+    timeout: int, default: 30
+        Set the timeout, None for indefinate.
 
     Returns
     -------
@@ -313,7 +320,7 @@ def authenticate(
     .. code-block:: python
 
         from freva_client import authenticate
-        token = authenticate()
+        token = authenticate(timeout=120)
         print(token)
 
     Batch mode authentication with a refresh token:
@@ -327,4 +334,5 @@ def authenticate(
     return auth.authenticate(
         host=host,
         force=force,
+        timeout=timeout,
     )
