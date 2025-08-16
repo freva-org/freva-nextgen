@@ -21,7 +21,6 @@ from fastapi.responses import (
 from fastapi_third_party_auth import IDToken as TokenPayload
 
 from freva_rest.auth import auth
-from freva_rest.config import BUILTIN_FLAVOURS
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 
@@ -58,6 +57,8 @@ async def overview(
     REST API. The DRS standards define the structure and metadata organisation
     for climate datasets, and each standard offers specific attributes for
     searching and filtering datasets.
+
+    **Note:** Authentication required to access personal flavours.
     """
     user_name = current_user.preferred_username if current_user else "global"
     flavour_instance = Flavour(server_config)
@@ -100,6 +101,8 @@ async def metadata_search(
     datasets, such as experiment, model, institute, and more. This method
     provides a comprehensive view of the available facets and their
     corresponding counts based on the provided search criteria.
+
+    **Note:** Authentication required to access personal flavours.
     """
     solr_search = await Solr.validate_parameters(
         server_config,
@@ -149,6 +152,8 @@ async def data_search(
     `databrowser` method provides a flexible and efficient way to query
     datasets matching specific search criteria and retrieve a list of data
     files or locations that meet the query parameters.
+
+    **Note:** Authentication required to access personal flavours.
     """
     solr_search = await Solr.validate_parameters(
         server_config,
@@ -199,6 +204,8 @@ async def intake_catalogue(
     easy organization, discovery, and access to Earth System Model (ESM) data.
     The generated catalogue can be used by tools compatible with intake-esm,
     such as Pangeo.
+
+    **Note:** Authentication required to access personal flavours.
     """
     solr_search = await Solr.validate_parameters(
         server_config,
@@ -256,6 +263,8 @@ async def stac_catalogue(
     data catalouging, enabling consistent discovery and access of climate
     datasets, satellite imagery and spatiotemporal data. It provides a
     common language for describing geospatial information and related metadata.
+
+    **Note:** Authentication required to access personal flavours.
     """
     stac_instance = await STAC.validate_parameters(
         server_config,
@@ -636,17 +645,6 @@ async def delete_custom_flavour(
     deleted, it will no longer be available for use in databrowser searches
     and will be removed from the flavour listings.
     """
-    if flavour_name.lower() in [f.lower() for f in BUILTIN_FLAVOURS]:
-        logger.error(
-            "Attempt to delete built-in flavour: %s by user: %s",
-            flavour_name,
-            current_user.preferred_username
-        )
-        raise HTTPException(
-            status_code=422,
-            detail=f"Cannot delete built-in flavour '{flavour_name}'"
-        )
-
     if is_global and not server_config.is_admin_user(current_user):
         logger.error(
             "Unauthorized attempt to create global flavour by user: %s",

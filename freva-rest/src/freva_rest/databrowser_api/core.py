@@ -339,73 +339,6 @@ class Solr:
                 )
             yield response.status_code, response_data
 
-    @classmethod
-    async def _validate_and_get_flavour(
-        cls, config: ServerConfig, flavour: str, user_name: str
-    ) -> Translator:
-        """Validate flavour exists and return configured translator."""
-        temp_flavour = Flavour(config)
-        original_flavour = flavour
-        owner = None
-
-        async def get_error_details() -> str:
-            all_available = [
-                f.flavour_name for f in await temp_flavour.get_all_flavours(user_name)
-            ]
-            suggested = [f for f in all_available if flavour in f]
-            message_parts = [
-                (
-                    f"Invalid flavour '{original_flavour}'. "
-                    "Available flavours: {all_available}"
-                )
-            ]
-
-            if suggested:
-                message_parts.append(f"Did you mean: {suggested}")
-
-            if ":" in original_flavour:
-                message_parts.append(
-                    "For personal flavours, use either directly "
-                    "'<YOUR PERSONAL FLAVOUR>' or namespaced "
-                    f"'{user_name}:<YOUR PERSONAL FLAVOUR>' as flavour."
-                )
-            return ". ".join(message_parts) + "."
-
-        if ":" in flavour:
-            input_username, flavour = flavour.split(":", 1)
-            if input_username != user_name:
-                logger.error(
-                    (
-                        "'%s' attempted to access flavour '%s' "
-                        "of user '%s' which is not allowed."
-                    ),
-                    user_name, flavour, input_username
-                )
-                raise HTTPException(status_code=422, detail=await get_error_details())
-            owner = user_name
-
-        all_flavours = await temp_flavour.get_all_flavours(
-            user_name,
-            flavour_name=flavour,
-            owner=owner
-        )
-        if not any(f.flavour_name == flavour for f in all_flavours):
-            logger.error(
-                "%s attempted to use invalid flavour '%s'",
-                user_name,
-                original_flavour
-            )
-            raise HTTPException(status_code=422, detail=await get_error_details())
-
-        translator = Translator(flavour, translate=True, config=config)
-        if flavour not in BUILTIN_FLAVOURS:
-            custom_flavour = next(
-                (f for f in all_flavours if f.flavour_name == flavour), None
-            )
-            if custom_flavour:
-                translator.forward_lookup.update(custom_flavour.mapping)
-        return translator
-
     @staticmethod
     def _validate_query_params(
         query: Dict[str, Any],
@@ -459,7 +392,7 @@ class Solr:
         """
         user_name = current_user.preferred_username if current_user else "global"
 
-        translator = await cls._validate_and_get_flavour(config, flavour, user_name)
+        translator = await Flavour.validate_and_get_flavour(config, flavour, user_name)
         translator.translate = translate
         valid_facets = translator.valid_facets
         version_param = translator.translate_facets(["version"])[0]

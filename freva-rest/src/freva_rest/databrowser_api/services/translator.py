@@ -362,7 +362,11 @@ class Flavour:
             Status 500 if there's an error inserting into MongoDB.
         """
         effective_owner = "global" if flavour_def.is_global else user_name
-        if flavour_def.flavour_name.lower() in [f.lower() for f in BUILTIN_FLAVOURS]:
+        if (
+            flavour_def.is_global
+            and flavour_def.flavour_name.lower()
+            in [f.lower() for f in BUILTIN_FLAVOURS]
+        ):
             logger.warning(
                 ("'%s' has chosen '%s' as flavour name, "
                  "but this conflicts with a global flavours."),
@@ -466,23 +470,21 @@ class Flavour:
         HTTPException
             Status 500 if there's an error deleting from MongoDB.
         """
-        effective_user = "global" if is_global else user_name
-
-        existing_flavours = await self.query_flavour_mongo(effective_user, flavour_name)
-        matching_flavours = [f for f in existing_flavours if f.owner == effective_user]
-        if not matching_flavours:
-            flavour_type = "global" if is_global else "personal"
-            logger.warning(
-                "'%s' tried to delete %s flavour '%s', but it does not exist.",
-                user_name,
-                flavour_type,
-                flavour_name
+        translator = await self.validate_and_get_flavour(
+            self._config, flavour_name, user_name
+        )
+        flavour_name = translator.flavour
+        if flavour_name.lower() in [f.lower() for f in BUILTIN_FLAVOURS]:
+            logger.error(
+                "Attempt to delete built-in flavour: %s by user: %s",
+                flavour_name,
+                user_name
             )
             raise HTTPException(
-                status_code=404,
-                detail=f"{flavour_type.capitalize()} flavour '{flavour_name}' not found"
+                status_code=422,
+                detail=f"Cannot delete built-in flavour '{flavour_name}'"
             )
-
+        effective_user = "global" if is_global else user_name
         try:
             await self._config.mongo_collection_flavours.delete_one({
                 "flavour_name": flavour_name,
@@ -511,6 +513,73 @@ class Flavour:
                 error
             )
             raise HTTPException(500, "Failed to delete flavour")
+
+    @classmethod
+    async def validate_and_get_flavour(
+        cls, config: ServerConfig, flavour: str, user_name: str
+    ) -> Translator:
+        """Validate flavour exists and return configured translator."""
+        temp_flavour = Flavour(config)
+        original_flavour = flavour
+        owner = None
+
+        async def get_error_details() -> str:
+            all_available = [
+                f.flavour_name for f in await temp_flavour.get_all_flavours(user_name)
+            ]
+            suggested = [f for f in all_available if flavour in f]
+            message_parts = [
+                (
+                    f"Invalid flavour '{original_flavour}'. "
+                    "Available flavours: {all_available}"
+                )
+            ]
+
+            if suggested:
+                message_parts.append(f"Did you mean: {suggested}")
+
+            if ":" in original_flavour:
+                message_parts.append(
+                    "For personal flavours, use either directly "
+                    "'<YOUR PERSONAL FLAVOUR>' or namespaced "
+                    f"'{user_name}:<YOUR PERSONAL FLAVOUR>' as flavour."
+                )
+            return ". ".join(message_parts) + "."
+
+        if ":" in flavour:
+            input_username, flavour = flavour.split(":", 1)
+            if input_username != user_name:
+                logger.error(
+                    (
+                        "'%s' attempted to access flavour '%s' "
+                        "of user '%s' which is not allowed."
+                    ),
+                    user_name, flavour, input_username
+                )
+                raise HTTPException(status_code=422, detail=await get_error_details())
+            owner = user_name
+
+        all_flavours = await temp_flavour.get_all_flavours(
+            user_name,
+            flavour_name=flavour,
+            owner=owner
+        )
+        if not any(f.flavour_name == flavour for f in all_flavours):
+            logger.error(
+                "%s attempted to use invalid flavour '%s'",
+                user_name,
+                original_flavour
+            )
+            raise HTTPException(status_code=422, detail=await get_error_details())
+
+        translator = Translator(flavour, translate=True, config=config)
+        if flavour not in BUILTIN_FLAVOURS:
+            custom_flavour = next(
+                (f for f in all_flavours if f.flavour_name == flavour), None
+            )
+            if custom_flavour:
+                translator.forward_lookup.update(custom_flavour.mapping)
+        return translator
 
     @classmethod
     def validate_flavour_parameters(

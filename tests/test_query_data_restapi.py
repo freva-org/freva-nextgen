@@ -601,7 +601,8 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         f"{test_server}/databrowser/flavours/non_existent_flavour",
         headers={"Authorization": f"Bearer {auth['access_token']}"}
     )
-    assert res7.status_code == 404
+    print(res7.text)
+    assert res7.status_code == 422
 
     # invalid params 422
     res8 = requests.get(
@@ -657,7 +658,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         },
         "is_global": False
     }
-    res12 = requests.post(
+    requests.post(
         f"{test_server}/databrowser/flavours",
         json=flavour_with_same_name,
         headers={"Authorization": f"Bearer {auth['access_token']}"}
@@ -679,4 +680,26 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         f"{test_server}/databrowser/flavours/test_flavour",
         headers={"Authorization": f"Bearer {auth['access_token']}"}
     )
+    # admin add a personal flavour
+    admin_personal_flavour = {
+        "flavour_name": "test_flavour",
+        "mapping": {
+            "project": "my_project",
+            "variable": "my_variable"
+        },
+        "is_global": False
+    }
+    with mock.patch("freva_rest.rest.server_config.admins_token_claims", {"resource_access.realm-management.roles":"admin"}):
+        res14 = requests.post(
+            f"{test_server}/databrowser/flavours",
+            json=admin_personal_flavour,
+            headers={"Authorization": f"Bearer {auth_admin['access_token']}"}
+        )
+        assert res14.status_code == 201
+    # another user tries to delete the personal flavour of admin
+    res15 = requests.delete(
+        f"{test_server}/databrowser/flavours/test_flavour",
+        headers={"Authorization": f"Bearer {auth['access_token']}"}
+    )
+    assert res15.status_code == 422
 
