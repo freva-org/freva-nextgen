@@ -1,12 +1,20 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [v2508.1.0]
+### Added
+ - Login timeout option for doing the login.
+ - Display better information on how to use port forwarding.
+
 ## [v2507.0.0]
 ### Changed
  - Internal changes.
  - Cli bug fix
  - Fix STAC-API 405 status code on preflight OPTIONS
  - Polish the STAC-API docs
+ - Fix an issue regarding get_metadata on user-data
+ - Aadd better helper on item assets of STAC
+ - Change the freva-client to 2508.0.0
 
 ## [v2506.0.1]
 ### Changed

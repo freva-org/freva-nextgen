@@ -4,7 +4,7 @@ from urllib.parse import parse_qs
 from fastapi import Query, Request
 from pydantic import BaseModel, Field
 
-STAC_VERSION = "1.1.0"
+STAC_VERSION = "1.0.0"
 
 CONFORMANCE_URLS = [
     "https://api.stacspec.org/v1.0.0/core",

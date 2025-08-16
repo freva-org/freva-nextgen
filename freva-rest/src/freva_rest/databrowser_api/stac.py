@@ -27,6 +27,7 @@ from freva_rest.utils.stac_utils import (
     Asset,
     Item,
     Link,
+    generate_local_access_desc,
     parse_bbox,
     parse_datetime,
 )
@@ -314,16 +315,7 @@ class STAC(Solr):
             [freva-client](https://freva-org.github.io/freva-nextgen/)
             """
         )  # noqa: E501
-        local_access_desc = dedent(
-            f"""
-            # Accessing data locally where the data is stored
-            ```python
-            import xarray as xr
-            ds = xr.open_mfdataset('{id}')
-            ```
-            💡: Ensure required xarray packages are installed.
-            """
-        )
+        local_access_desc = generate_local_access_desc(id)
         item_id = "item" + str(self.count_item)
         bbox = result.get("bbox")
         if bbox:
@@ -573,19 +565,6 @@ class STAC(Solr):
             """
         )
 
-        local_access_desc = dedent(
-            f"""
-            # Accessing data locally where the data is stored
-
-            ```python
-            import xarray as xr
-            ds = xr.open_mfdataset(list('{str(self.assets_prereqs.get("full_endpoint"))
-                                          .replace("stac-catalogue", "data-search")}'))
-            ```
-
-            💡: Please make sure to have the required xarray packages installed.
-            """
-        )
         collection_spatial = [[
             self.spatial_extent["minx"],
             self.spatial_extent["miny"],
@@ -658,15 +637,6 @@ class STAC(Solr):
                 description=stac_static_desc,
                 roles=["metadata"],
                 media_type="application/zip",
-            ),
-            "local-access": Asset(
-                href=str(self.assets_prereqs.get("full_endpoint")).replace(
-                    "stac-catalogue", "data-search"
-                ),
-                title="Access data locally",
-                description=local_access_desc,
-                roles=["data"],
-                media_type="application/netcdf",
             ),
             "zarr-access": Asset(
                 href=(

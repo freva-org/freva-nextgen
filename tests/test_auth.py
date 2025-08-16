@@ -114,7 +114,7 @@ def test_authenticate_with_refresh_token_failed(
     """Test authentication using a refresh token."""
     token = deepcopy(auth_instance._auth_token)
 
-    def mock_login(url: str, port: int = 0) -> None:
+    def mock_login(url: str, port: int = 0, _timeout: int = 30) -> None:
         raise AuthError("foo")
 
     try:

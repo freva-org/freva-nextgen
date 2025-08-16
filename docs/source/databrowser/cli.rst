@@ -347,7 +347,7 @@ Adding and Deleting User Data
 
 You can manage your personal datasets within the databrowser by adding or deleting user-specific data. This functionality allows you to include your own data files into the databrowser, making them accessible for analysis and retrieval alongside other datasets.
 
-Before using the `user-data` commands, you need to create an access token and authenticate with the system. Please refer to the :ref:`auth` chapter for more details on token creation and authentication.
+Before using the `user-data` commands, you need to create an access token and authenticate with the system. Please refer to the :ref:`auth` chapter for more details on token creation and authentication.  
 
 Adding User Data
 ~~~~~~~~~~~~~~~~
@@ -356,14 +356,13 @@ To add your data to the databrowser, use the `user-data add` command. You'll nee
 
 .. code:: console
 
-    token=$(freva-client auth -u janedoe | jq -r .access_token)
     freva-client databrowser user-data add \
         --path freva-rest/src/freva_rest/databrowser_api/mock/ \
         --facet project=cordex \
         --facet experiment=rcp85 \
         --facet model=mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1 \
         --facet variable=tas \
-        --access-token $token
+        --token-file ~/.access_token
 
 
 This command adds the specified data files to the databrowser and tags them with the provided metadata. These search filters help in indexing and searching your data within the system.
@@ -375,11 +374,10 @@ If you need to remove your data from the databrowser, use the `user-data delete`
 
 .. code:: console
 
-    token=$(freva-client auth -u janedoe | jq -r .access_token)
     freva-client databrowser user-data delete \
         --search-key project=cordex \
         --search-key experiment=rcp85 \
-        --access-token $token
+        --token-file ~/.access_token
 
 This command deletes all data entries that match the specified search keys from the databrowser.
 
