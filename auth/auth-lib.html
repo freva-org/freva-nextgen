@@ -11,12 +11,12 @@
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://freva-org.github.io/auth/auth-lib.html" />
 <meta property="og:site_name" content="Freva Databrowser" />
-<meta property="og:description" content="The freva-client python library offers a very simple interface to interact with the authentication system. Client software freva evaluation system framework (freva): Freva, the free evaluation syst..." />
-<meta name="description" content="The freva-client python library offers a very simple interface to interact with the authentication system. Client software freva evaluation system framework (freva): Freva, the free evaluation syst..." />
+<meta property="og:description" content="The freva-client python library offers a very simple interface to interact with the authentication system. Using the command line interface: Token creation and refreshing can also be achieved with ..." />
+<meta name="description" content="The freva-client python library offers a very simple interface to interact with the authentication system. Using the command line interface: Token creation and refreshing can also be achieved with ..." />
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>Authentication using the freva-client library &#8212; Freva Databrowser 2508.0.0 documentation</title>
+    <title>Authentication using the freva-client library &#8212; Freva Databrowser 2508.1.0 documentation</title>
   
   
   
@@ -49,7 +49,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=989044f6"></script>
+    <script src="../_static/documentation_options.js?v=e9450eaf"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -135,8 +135,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2508.0.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2508.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2508.1.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2508.1.0 documentation - Home"/>
   
   
 </a></div>
@@ -407,31 +407,19 @@
 <span id="auth-lib"></span><h1>Authentication using the freva-client library<a class="headerlink" href="#authentication-using-the-freva-client-library" title="Link to this heading">#</a></h1>
 <p>The freva-client python library offers a very simple interface to interact
 with the authentication system.</p>
-<p id="module-freva_client">Client software freva evaluation system framework (freva):</p>
-<p>Freva, the free evaluation system framework, is a data search and analysis
-platform developed by the atmospheric science community for the atmospheric
-science community. With help of Freva researchers can:</p>
-<ul class="simple">
-<li><p>quickly and intuitively search for data stored at typical data centers that
-host many datasets.</p></li>
-<li><p>create a common interface for user defined data analysis tools.</p></li>
-<li><p>apply data analysis tools in a reproducible manner.</p></li>
-</ul>
-<p>The code described here is currently in testing phase. The client and server
-library described in the documentation only support searching for data. If you
-need to apply data analysis plugins, please visit the</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="freva_client.authenticate">
-<span class="sig-prename descclassname"><span class="pre">freva_client.</span></span><span class="sig-name descname"><span class="pre">authenticate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">token_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Token</span></span></span><a class="headerlink" href="#freva_client.authenticate" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">freva_client.</span></span><span class="sig-name descname"><span class="pre">authenticate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">token_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Token</span></span></span><a class="headerlink" href="#freva_client.authenticate" title="Link to this definition">#</a></dt>
 <dd><p>Authenticate to the host.</p>
 <p>This method generates a new access token that should be used for restricted methods.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>refresh_token</strong> (<em>str</em><em>, </em><em>optional</em>) – Instead of setting a password, you can set a refresh token to refresh
+<li><p><strong>token_file</strong> (<em>str</em><em>, </em><em>optional</em>) – Instead of setting a password, you can set a refresh token to refresh
 the access token. This is recommended for non-interactive environments.</p></li>
 <li><p><strong>host</strong> (<em>str</em><em>, </em><em>optional</em>) – The hostname of the REST server.</p></li>
 <li><p><strong>force</strong> (<em>bool</em><em>, </em><em>default: False</em>) – Force token recreation, even if current token is still valid.</p></li>
+<li><p><strong>timeout</strong> (<em>int</em><em>, </em><em>default: 30</em>) – Set the timeout, None for indefinate.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -444,7 +432,7 @@ the access token. This is recommended for non-interactive environments.</p></li>
 <p class="rubric">Examples</p>
 <p>Interactive authentication:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">authenticate</span>
-<span class="n">token</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">()</span>
+<span class="n">token</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">120</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -476,27 +464,34 @@ Options:
                      a `refresh token` containing a refresh_token key.
   -f, --force        Force token recreation, even if current token is still
                      valid.
+  --timeout INTEGER  Set the timeout for login in secdonds, 0 for indefinate
+                     [default: 30]
   -v                 Increase verbosity  [default: 0]
   -V, --version      Show version an exit
   --help             Show this message and exit.
 
 </pre></div>
 </div>
-<p>You can create a token using your user name and password. For security reasons
-you can not pass your password as an argument to the command line interface.
-This means that you can only create a new token with help of a valid refresh
-token in a non-interactive session. Such as a batch job.</p>
-<p>Therefore you want to store your token data securely in a file, and use the
-refresh token to create new tokens:</p>
+<p>You can create a token using your user name and password.</p>
+<p>In the process of token generation, you would want to store your token data <em>securely</em>
+in a file, and use it as a refresh token to create new ones, eventually:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client auth  &gt; ~/.mytoken.json</span>
-<span class="go">chmod 600 ~/.mytoken.json</span>
+<span class="go">chmod 600  ~/.mytoken.json</span>
 </pre></div>
 </div>
-<p>Later you can use the <a class="reference external" href="https://jqlang.github.io/jq/">jq json command line parser</a>
-to read the refresh token from and use it to create new access tokens.</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client auth --token-file ~/.mytoken.json &gt; ~/.mytoken.json</span>
+<p>For security reasons you cannot pass your password as an argument to the command line
+interface. This means that, in a <em>non-interactive</em> session such as a batch job, you
+will have two options:</p>
+<ol class="arabic">
+<li><p>Either use the valid token with <code class="docutils literal notranslate"><span class="pre">--token-file</span> <span class="pre">&lt;my_token_file&gt;</span></code>.</p></li>
+<li><p>Or, if you want to create a new one, you will <em>only</em> be able to do it with help
+of an already pre-existing valid refresh token.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client auth --token-file ~/.my_old_token.json &gt; ~/.my_new_token.json</span>
+<span class="go">chmod 600 ~/.my_new_token.json</span>
 </pre></div>
 </div>
+</li>
+</ol>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>Avoid storing access tokens insecurely. Access tokens are sensitive and

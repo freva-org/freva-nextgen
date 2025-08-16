@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>The databrowser command line interface &#8212; Freva Databrowser 2508.0.0 documentation</title>
+    <title>The databrowser command line interface &#8212; Freva Databrowser 2508.1.0 documentation</title>
   
   
   
@@ -49,7 +49,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=989044f6"></script>
+    <script src="../_static/documentation_options.js?v=e9450eaf"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -135,8 +135,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2508.0.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2508.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2508.1.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2508.1.0 documentation - Home"/>
   
   
 </a></div>
@@ -963,14 +963,13 @@ are associated with files on the tape archive.</p>
 <section id="adding-user-data">
 <h3>Adding User Data<a class="headerlink" href="#adding-user-data" title="Link to this heading">#</a></h3>
 <p>To add your data to the databrowser, use the <cite>user-data add</cite> command. You’ll need to provide the paths to your data files, and any metadata you’d like to associate with your data.</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">token=$(freva-client auth -u janedoe | jq -r .access_token)</span>
-<span class="go">freva-client databrowser user-data add \</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser user-data add \</span>
 <span class="go">    --path freva-rest/src/freva_rest/databrowser_api/mock/ \</span>
 <span class="go">    --facet project=cordex \</span>
 <span class="go">    --facet experiment=rcp85 \</span>
 <span class="go">    --facet model=mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1 \</span>
 <span class="go">    --facet variable=tas \</span>
-<span class="go">    --access-token $token</span>
+<span class="go">    --token-file ~/.access_token</span>
 </pre></div>
 </div>
 <p>This command adds the specified data files to the databrowser and tags them with the provided metadata. These search filters help in indexing and searching your data within the system.</p>
@@ -978,11 +977,10 @@ are associated with files on the tape archive.</p>
 <section id="deleting-user-data">
 <h3>Deleting User Data<a class="headerlink" href="#deleting-user-data" title="Link to this heading">#</a></h3>
 <p>If you need to remove your data from the databrowser, use the <cite>user-data delete</cite> command. Provide your the search keys (facets) that identify the user data you wish to delete.</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">token=$(freva-client auth -u janedoe | jq -r .access_token)</span>
-<span class="go">freva-client databrowser user-data delete \</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser user-data delete \</span>
 <span class="go">    --search-key project=cordex \</span>
 <span class="go">    --search-key experiment=rcp85 \</span>
-<span class="go">    --access-token $token</span>
+<span class="go">    --token-file ~/.access_token</span>
 </pre></div>
 </div>
 <p>This command deletes all data entries that match the specified search keys from the databrowser.</p>

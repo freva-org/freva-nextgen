@@ -6,8 +6,7 @@ Authentication using the freva-client library
 The freva-client python library offers a very simple interface to interact
 with the authentication system.
 
-.. automodule:: freva_client
-   :members: authenticate
+.. autofunction:: freva_client.authenticate
 
 .. _auth_cli:
 
@@ -28,25 +27,29 @@ sub command of the command line interface
    res = run(["freva-client", "auth", "--help"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
-You can create a token using your user name and password. For security reasons
-you can not pass your password as an argument to the command line interface.
-This means that you can only create a new token with help of a valid refresh
-token in a non-interactive session. Such as a batch job.
+You can create a token using your user name and password. 
 
-Therefore you want to store your token data securely in a file, and use the
-refresh token to create new tokens:
+In the process of token generation, you would want to store your token data *securely*
+in a file, and use it as a refresh token to create new ones, eventually:
 
 .. code:: console
 
     freva-client auth  > ~/.mytoken.json
-    chmod 600 ~/.mytoken.json
+    chmod 600  ~/.mytoken.json
 
-Later you can use the `jq json command line parser <https://jqlang.github.io/jq/>`_
-to read the refresh token from and use it to create new access tokens.
 
-.. code:: console
+For security reasons you cannot pass your password as an argument to the command line
+interface. This means that, in a *non-interactive* session such as a batch job, you
+will have two options:
 
-    freva-client auth --token-file ~/.mytoken.json > ~/.mytoken.json
+1. Either use the valid token with ``--token-file <my_token_file>``.
+2. Or, if you want to create a new one, you will *only* be able to do it with help
+   of an already pre-existing valid refresh token.
+
+   .. code:: console
+
+       freva-client auth --token-file ~/.my_old_token.json > ~/.my_new_token.json
+       chmod 600 ~/.my_new_token.json
 
 
 .. warning::

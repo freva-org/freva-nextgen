@@ -41,7 +41,7 @@ This documentation describes the *freva-client* library, its
 command line interface (cli) and the REST API. The *freva-client* library
 described in this documentation only support searching for data. If you
 need to apply data analysis plugins, please visit the
-`official documentation <https://freva-org.github.io/freva>`_
+`official documentation <https://freva-org.github.io/freva-legacy>`_
 
 .. _install+configure:
 
