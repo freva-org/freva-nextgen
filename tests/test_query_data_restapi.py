@@ -586,7 +586,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         headers={"Authorization": f"Bearer {auth['access_token']}"}
     )
     assert res5.status_code == 422
-    assert "Cannot delete built-in flavour" in res5.json()["detail"]
+    assert "built-in or does not exist" in res5.json()["detail"]
 
     # adding flavour without authentication
     res6 = requests.post(
@@ -680,7 +680,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         f"{test_server}/databrowser/flavours/test_flavour",
         headers={"Authorization": f"Bearer {auth['access_token']}"}
     )
-    # admin add a personal flavour
+    # a user add a personal flavour
     admin_personal_flavour = {
         "flavour_name": "test_flavour",
         "mapping": {
@@ -696,10 +696,55 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
             headers={"Authorization": f"Bearer {auth_admin['access_token']}"}
         )
         assert res14.status_code == 201
-    # another user tries to delete the personal flavour of admin
+    # another user tries to delete the personal flavour of another user
     res15 = requests.delete(
         f"{test_server}/databrowser/flavours/test_flavour",
         headers={"Authorization": f"Bearer {auth['access_token']}"}
     )
     assert res15.status_code == 422
 
+    # flush the flavour
+    with mock.patch("freva_rest.rest.server_config.admins_token_claims", {"resource_access.realm-management.roles":"admin"}):
+        requests.delete(
+            f"{test_server}/databrowser/flavours/test_flavour",
+            headers={"Authorization": f"Bearer {auth_admin['access_token']}"}
+        )
+    
+    # user add a personal flavour with the name of build-in flavour: cmip6
+    freva_flavour = {
+        "flavour_name": "cmip6",
+        "mapping": {
+            "project": "my_project",
+            "variable": "my_variable"
+        },
+        "is_global": False
+    }
+    res16 = requests.post(
+        f"{test_server}/databrowser/flavours",
+        json=freva_flavour,
+        headers={"Authorization": f"Bearer {auth['access_token']}"}
+    )
+    assert res16.status_code == 201
+    # query the flavours
+    res17 = requests.get(
+        f"{test_server}/databrowser/overview",
+        headers={"Authorization": f"Bearer {auth['access_token']}"}
+    )
+    assert res17.status_code == 200
+    flavours = res17.json()["flavours"]
+    assert any(f == "janedoe:cmip6" for f in flavours)
+
+    # delete the flavour
+    res18 = requests.delete(
+        f"{test_server}/databrowser/flavours/janedoe:cmip6",
+        headers={"Authorization": f"Bearer {auth['access_token']}"}
+    )
+    assert res18.status_code == 200
+
+    # delete the built-in flavour
+    with mock.patch("freva_rest.rest.server_config.admins_token_claims", {"resource_access.realm-management.roles":"admin"}):
+        res18 = requests.delete(
+            f"{test_server}/databrowser/flavours/cmip6?is_global=true",
+            headers={"Authorization": f"Bearer {auth_admin['access_token']}"}
+        )
+        assert res18.status_code == 422

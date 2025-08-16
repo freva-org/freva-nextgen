@@ -44,6 +44,7 @@ class Config:
     ) -> None:
         self.databrowser_url = f"{self.get_api_url(host)}/databrowser"
         self.auth_url = f"{self.get_api_url(host)}/auth/v2"
+        self.get_api_main_url = self.get_api_url(host)
         self.uniq_key = uniq_key
         self.flavour = flavour
 
@@ -51,7 +52,7 @@ class Config:
     def validate_server(self) -> bool:
         """Ping the databrowser to check if it is reachable."""
         try:
-            res = requests.get(f"{self.databrowser_url}/ping", timeout=15)
+            res = requests.get(f"{self.get_api_main_url}/ping", timeout=15)
             return res.status_code == 200
         except Exception as e:
             raise ValueError(

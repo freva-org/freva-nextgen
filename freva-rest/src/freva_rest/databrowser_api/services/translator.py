@@ -474,11 +474,7 @@ class Flavour:
             self._config, input_flavour_name, user_name
         )
         flavour_name = translator.flavour
-        if (
-            flavour_name.lower()
-            in [f.lower() for f in BUILTIN_FLAVOURS]
-            and input_flavour_name != flavour_name
-        ):
+        if flavour_name.lower() in BUILTIN_FLAVOURS and is_global:
             logger.error(
                 "Attempt to delete built-in flavour: %s by user: %s",
                 flavour_name,
@@ -490,11 +486,21 @@ class Flavour:
             )
         effective_user = "global" if is_global else user_name
         try:
-            await self._config.mongo_collection_flavours.delete_one({
+            result = await self._config.mongo_collection_flavours.delete_one({
                 "flavour_name": flavour_name,
                 "owner": effective_user
             })
-
+            if result.deleted_count == 0:
+                logger.error(
+                    "user '%s' tried to delete %s flavour '%s'",
+                    user_name,
+                    flavour_name,
+                    effective_user
+                )
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Flavour '{flavour_name}' is built-in or does not exist"
+                )
             flavour_type = "global" if is_global else "personal"
             logger.info(
                 "Deleted %s flavour '%s' for user '%s'",
@@ -508,7 +514,8 @@ class Flavour:
                     f"'{flavour_name}' deleted successfully"
                 )
             })
-
+        except HTTPException:
+            raise
         except Exception as error:
             logger.error(
                 "user '%s' failed to delete flavour '%s': %s",
@@ -577,7 +584,7 @@ class Flavour:
             raise HTTPException(status_code=422, detail=await get_error_details())
 
         translator = Translator(flavour, translate=True, config=config)
-        if flavour not in BUILTIN_FLAVOURS and owner == user_name:
+        if owner in (None, user_name) and user_name != "global":
             custom_flavour = next(
                 (f for f in all_flavours if f.flavour_name == flavour), None
             )
