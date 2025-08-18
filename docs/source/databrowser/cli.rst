@@ -306,6 +306,20 @@ for getting all ocean reanalysis datasets you can apply the ``--facet`` flag:
 
     freva-client databrowser metadata-search -e realm=ocean --facet 'rean*'
 
+Filtering metadata results
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can filter the metadata results to include only specific facet keys using the 
+``--include-only`` flag. This is useful when you only need information about 
+certain metadata categories:
+
+.. code:: console
+
+    freva-client databrowser metadata-search fs_type=s3 --include-only realm --include-only time_frequency --include-only experiment
+
+This will return metadata for only the specified facets (realm, time_frequency, and experiment), 
+making the output more focused and easier to process.
+
 
 Expert tip: Getting metadata for certain files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

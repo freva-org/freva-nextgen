@@ -131,6 +131,16 @@ def metadata_search(
             " containing era5, regardless of project, product etc."
         ),
     ),
+    facet_fields: Optional[List[str]] = typer.Option(
+        None,
+        "--facet-fields",
+        "-ff",
+        help=(
+            "Return only the specified facet keys. For example "
+            "--facet-fields realm --facet-fields experiment will only return "
+            "metadata for 'realm' and 'experiment' facets."
+        ),
+    ),
     flavour: Flavours = typer.Option(
         "freva",
         "--flavour",
@@ -221,6 +231,7 @@ def metadata_search(
     logger.debug("Search the databrowser")
     result = databrowser.metadata_search(
         *(facets or []),
+        facet_fields=facet_fields,
         time=time or "",
         time_select=time_select.value,
         bbox=bbox or None,

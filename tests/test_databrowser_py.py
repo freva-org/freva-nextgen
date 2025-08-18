@@ -40,7 +40,9 @@ def test_search_files(test_server: str) -> None:
         == 0
         == 0
     )
-
+    db_filtered = databrowser(host=test_server, facet_fields=['project', 'model'])
+    assert set(db_filtered.metadata.keys()) <= {'project', 'model'}
+    assert len(db_filtered.metadata) <= 2
 
 def test_count_values(test_server: str) -> None:
     """Test counting the facets."""
@@ -61,7 +63,6 @@ def test_count_values(test_server: str) -> None:
     assert isinstance(counts2["dataset"], dict)
     entry = list(counts2["dataset"].keys())[0]
     assert isinstance(counts2["dataset"][entry], int)
-
 
 def test_metadata_search(test_server: str) -> None:
     """Test the metadata search."""

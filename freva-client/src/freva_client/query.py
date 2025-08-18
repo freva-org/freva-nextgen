@@ -218,12 +218,24 @@ class databrowser:
            }
         )
 
+    You can also filter the metadata to only include specific facets.
+
+    .. code-block:: python
+
+        from freva_client import databrowser
+        db = databrowser(
+            "era5*",
+            realm="atmos",
+            facet_fields=['project', 'model', 'experiment']
+        )
+        print(db.metadata)
 
     """
 
     def __init__(
         self,
         *facets: str,
+        facet_fields: Optional[Collection[str]] = None,
         uniq_key: Literal["file", "uri"] = "file",
         flavour: Literal[
             "freva", "cmip6", "cmip5", "cordex", "nextgems", "user"
@@ -263,6 +275,7 @@ class databrowser:
             self._params["bbox_select"] = bbox_select
         if facets:
             self._add_search_keyword_args_from_facet(facets, facet_search)
+        self._facet_fields = facet_fields
 
     def _add_search_keyword_args_from_facet(
         self, facets: Tuple[str, ...], search_kw: Dict[str, List[str]]
@@ -643,6 +656,16 @@ class databrowser:
             from freva_client import databrowser
             print(databrowser.count_values("reana*", realm="ocean", flavour="cmip6"))
 
+        Count only specific facets:
+
+        .. code-block:: python
+
+            from freva_client import databrowser
+            era5_counts = databrowser.count_values(
+                "era5*",
+                facet_fields=['project', 'model'],
+            )
+            print(era5_counts)
         """
         this = cls(
             *facets,
@@ -687,15 +710,19 @@ class databrowser:
 
 
         """
-        return {
+        result = {
             k: v[::2]
             for (k, v) in self._facet_search(extended_search=True).items()
         }
+        if self._facet_fields is not None:
+            result = {k: v for k, v in result.items() if k in self._facet_fields}
+        return result
 
     @classmethod
     def metadata_search(
         cls,
         *facets: str,
+        facet_fields: Optional[Collection[str]] = None,
         flavour: Literal[
             "freva", "cmip6", "cmip5", "cordex", "nextgems", "user"
         ] = "freva",
@@ -722,6 +749,9 @@ class databrowser:
             positional arguments to search of any matching entries. For example
             'era5' would allow you to search for any entries
             containing era5, regardless of project, product etc.
+        facet_fields: Optional[Collection[str]], default: None
+            If given, only the search facets that are in this collection will
+            be returned. If not given, all search facets will be returned.
         flavour: str, default: freva
             The Data Reference Syntax (DRS) standard specifying the type of climate
             datasets to query.
@@ -816,6 +846,17 @@ class databrowser:
             res = databrowser.metadata_search(file="/arch/*CPC/*")
             print(res)
 
+        Return only specific facets: for example project and realm:
+
+        .. code-block:: python
+
+            from freva_client import databrowser
+            selected = databrowser.metadata_search(
+                "era5*",
+                facet_fields=['project', 'realm']
+            )
+            print(selected)
+
         Sometimes you don't exactly know the exact names of the search keys and
         want retrieve all file objects that match a certain category. For
         example for getting all ocean reanalysis datasets you can apply the
@@ -845,6 +886,7 @@ class databrowser:
         """
         this = cls(
             *facets,
+            facet_fields=facet_fields,
             flavour=flavour,
             time=time,
             time_select=time_select,
@@ -857,12 +899,16 @@ class databrowser:
             stream_zarr=False,
             **search_keys,
         )
-        return {
+        result = {
             k: v[::2]
             for (k, v) in this._facet_search(
                 extended_search=extended_search
             ).items()
         }
+
+        if facet_fields is not None:
+            result = {k: v for k, v in result.items() if k in facet_fields}
+        return result
 
     @classmethod
     def overview(cls, host: Optional[str] = None) -> str:
