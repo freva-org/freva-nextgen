@@ -310,12 +310,12 @@ Filtering metadata results
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can filter the metadata results to include only specific facet keys using the 
-``--include-only`` flag. This is useful when you only need information about 
+``--facet-fields`` flag. This is useful when you only need information about 
 certain metadata categories:
 
 .. code:: console
 
-    freva-client databrowser metadata-search fs_type=s3 --include-only realm --include-only time_frequency --include-only experiment
+    freva-client databrowser metadata-search fs_type=s3 --facet-fields realm --facet-fields time_frequency --facet-fields experiment
 
 This will return metadata for only the specified facets (realm, time_frequency, and experiment), 
 making the output more focused and easier to process.
