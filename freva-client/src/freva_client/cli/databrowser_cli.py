@@ -244,10 +244,9 @@ def metadata_search(
         **(parse_cli_args(search_keys or [])),
     )
     if parse_json:
-        print(json.dumps(result))
+        print(result.to_json())
         return
-    for key, values in result.items():
-        print(f"{key}: {', '.join(values)}")
+    print(result)
 
 
 @databrowser_app.command(

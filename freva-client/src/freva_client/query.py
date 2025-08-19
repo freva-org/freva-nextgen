@@ -21,6 +21,7 @@ from typing import (
 
 import intake
 import intake_esm
+import pandas as pd
 import requests
 import xarray as xr
 import yaml
@@ -690,7 +691,7 @@ class databrowser:
         return counts
 
     @cached_property
-    def metadata(self) -> Dict[str, List[str]]:
+    def metadata(self) -> pd.DataFrame:
         """Get the metadata (facets) for the current databrowser query.
 
         You can retrieve all information that is associated with your current
@@ -710,13 +711,18 @@ class databrowser:
 
 
         """
-        result = {
-            k: v[::2]
-            for (k, v) in self._facet_search(extended_search=True).items()
-        }
-        if self._facet_fields is not None:
-            result = {k: v for k, v in result.items() if k in self._facet_fields}
-        return result
+        return (
+            pd.DataFrame([
+                (k, v[::2])
+                for k, v in self._facet_search(extended_search=True).items()
+            ], columns=["facet", "values"])
+            .explode("values")
+            .query(
+                "facet in @self._facet_fields"
+                if self._facet_fields else "facet == facet"
+            )
+            .groupby("facet")["values"].apply(list)
+        )
 
     @classmethod
     def metadata_search(
@@ -735,7 +741,7 @@ class databrowser:
         fail_on_error: bool = False,
         extended_search: bool = False,
         **search_keys: Union[str, List[str]],
-    ) -> Dict[str, List[str]]:
+    ) -> pd.DataFrame:
         """Search for data attributes (facets) in the databrowser.
 
         The method queries the databrowser for available search facets (keys)
@@ -899,16 +905,19 @@ class databrowser:
             stream_zarr=False,
             **search_keys,
         )
-        result = {
-            k: v[::2]
-            for (k, v) in this._facet_search(
-                extended_search=extended_search
-            ).items()
-        }
-
-        if facet_fields is not None:
-            result = {k: v for k, v in result.items() if k in facet_fields}
-        return result
+        return (
+            pd.DataFrame(
+                [
+                    (k, v[::2])
+                    for k, v in this._facet_search(
+                        extended_search=extended_search
+                    ).items()
+                ], columns=["facet", "values"]
+            )
+            .explode("values")
+            .query("facet in @this._facet_fields" if facet_fields else "facet == facet")
+            .groupby("facet")["values"].apply(list)
+        )
 
     @classmethod
     def overview(cls, host: Optional[str] = None) -> str:
