@@ -309,17 +309,21 @@ for getting all ocean reanalysis datasets you can apply the ``--facet`` flag:
 Filtering metadata results
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can filter the metadata results to include only specific facet keys using the 
-``--facet-fields`` flag. This is useful when you only need information about 
-certain metadata categories:
+You can filter the metadata results using standard command-line tools:
+
+Using grep to filter pandas output:
 
 .. code:: console
 
-    freva-client databrowser metadata-search fs_type=s3 --facet-fields realm --facet-fields time_frequency --facet-fields experiment
+   freva-client databrowser metadata-search | grep -E '(project|realm)'
 
-This will return metadata for only the specified facets (realm, time_frequency, and experiment), 
-making the output more focused and easier to process.
+Using jq to filter JSON output:
 
+.. code:: console
+
+   freva-client databrowser metadata-search --json | jq 'with_entries(select(.key | IN("experiment", "realm")))'
+
+These methods allow you to focus on specific metadata categories and make the output more targeted and easier to process.
 
 Expert tip: Getting metadata for certain files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

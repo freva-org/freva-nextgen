@@ -227,8 +227,7 @@ class databrowser:
         db = databrowser(
             "era5*",
             realm="atmos",
-            facet_fields=['project', 'model', 'experiment']
-        )
+        )[['project', 'model', 'experiment']]
         print(db.metadata)
 
     """
@@ -236,7 +235,6 @@ class databrowser:
     def __init__(
         self,
         *facets: str,
-        facet_fields: Optional[Collection[str]] = None,
         uniq_key: Literal["file", "uri"] = "file",
         flavour: Literal[
             "freva", "cmip6", "cmip5", "cordex", "nextgems", "user"
@@ -276,7 +274,6 @@ class databrowser:
             self._params["bbox_select"] = bbox_select
         if facets:
             self._add_search_keyword_args_from_facet(facets, facet_search)
-        self._facet_fields = facet_fields
 
     def _add_search_keyword_args_from_facet(
         self, facets: Tuple[str, ...], search_kw: Dict[str, List[str]]
@@ -664,8 +661,7 @@ class databrowser:
             from freva_client import databrowser
             era5_counts = databrowser.count_values(
                 "era5*",
-                facet_fields=['project', 'model'],
-            )
+            )[['project', 'model']]
             print(era5_counts)
         """
         this = cls(
@@ -709,6 +705,18 @@ class databrowser:
             db = databrowser(uri="slk:///arch/*/CPC/*")
             print(db.metadata)
 
+        To retrieve only a limited set of metadata you can
+        specify the facets you are interested in:
+
+        .. code-block:: python
+
+            from freva_client import databrowser
+            db = databrowser(
+                "era5*",
+                realm="atmos",
+            )
+            print(db.metadata[['project', 'model', 'experiment']])
+
 
         """
         return (
@@ -717,10 +725,6 @@ class databrowser:
                 for k, v in self._facet_search(extended_search=True).items()
             ], columns=["facet", "values"])
             .explode("values")
-            .query(
-                "facet in @self._facet_fields"
-                if self._facet_fields else "facet == facet"
-            )
             .groupby("facet")["values"].apply(list)
         )
 
@@ -728,7 +732,6 @@ class databrowser:
     def metadata_search(
         cls,
         *facets: str,
-        facet_fields: Optional[Collection[str]] = None,
         flavour: Literal[
             "freva", "cmip6", "cmip5", "cordex", "nextgems", "user"
         ] = "freva",
@@ -755,9 +758,6 @@ class databrowser:
             positional arguments to search of any matching entries. For example
             'era5' would allow you to search for any entries
             containing era5, regardless of project, product etc.
-        facet_fields: Optional[Collection[str]], default: None
-            If given, only the search facets that are in this collection will
-            be returned. If not given, all search facets will be returned.
         flavour: str, default: freva
             The Data Reference Syntax (DRS) standard specifying the type of climate
             datasets to query.
@@ -859,8 +859,7 @@ class databrowser:
             from freva_client import databrowser
             selected = databrowser.metadata_search(
                 "era5*",
-                facet_fields=['project', 'realm']
-            )
+            )[['project', 'realm']]
             print(selected)
 
         Sometimes you don't exactly know the exact names of the search keys and
@@ -892,7 +891,6 @@ class databrowser:
         """
         this = cls(
             *facets,
-            facet_fields=facet_fields,
             flavour=flavour,
             time=time,
             time_select=time_select,
@@ -915,7 +913,6 @@ class databrowser:
                 ], columns=["facet", "values"]
             )
             .explode("values")
-            .query("facet in @this._facet_fields" if facet_fields else "facet == facet")
             .groupby("facet")["values"].apply(list)
         )
 
