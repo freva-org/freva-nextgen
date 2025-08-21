@@ -61,4 +61,22 @@ if [ "$HTTP_STATUS" -ge 300 ]; then
   echo "Failed to create user. HTTP status: $HTTP_STATUS"
   exit 1
 fi
+
+echo "Assigning realm-admin role to $NEW_USER for managing the global Flavours"
+
+USER_ID=$(curl -s "http://$KEYCLOAK_HOST/admin/realms/$REALM/users?username=$NEW_USER" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id')
+
+CLIENT_ID=$(curl -s "http://$KEYCLOAK_HOST/admin/realms/$REALM/clients?clientId=realm-management" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id')
+
+ROLE_DATA=$(curl -s "http://$KEYCLOAK_HOST/admin/realms/$REALM/clients/$CLIENT_ID/roles/realm-admin" \
+  -H "Authorization: Bearer $ADMIN_TOKEN")
+
+curl -s -X POST \
+  "http://$KEYCLOAK_HOST/admin/realms/$REALM/users/$USER_ID/role-mappings/clients/$CLIENT_ID" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "[$ROLE_DATA]" > /dev/null
+
 echo -e "\nUser $NEW_USER created with password '$NEW_PASSWORD'"

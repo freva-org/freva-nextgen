@@ -1,14 +1,16 @@
 """Schema definitions for the FastAPI endpoints."""
 
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Literal, Union
 from urllib.parse import parse_qs
 
-from fastapi import Query, Request
-from pydantic import BaseModel
+from fastapi import Path, Query, Request
+from pydantic import BaseModel, Field, field_validator
+from typing_extensions import TypedDict
 
-from .core import FlavourType
+from freva_rest.rest import server_config
 
 Required: Any = Ellipsis
+FlavourType = Literal["freva", "cmip6", "cmip5", "cordex", "user"]
 
 
 class LoadFiles(BaseModel):
@@ -62,6 +64,26 @@ class SolrSchema:
         ),
     }
 
+    path_params: Dict[str, Any] = {
+        "flavour": Path(
+            ...,
+            description=(
+                "DRS flavour: built-in (freva, cmip6, cmip5, cordex, user)"
+                " or custom flavours."
+                " For custom flavours, use '`flavour_name`' or "
+                "'`username:flavour_name`' format when conflicts exist"
+                " with the global flavours."
+            ),
+            examples=[
+                "freva",
+                "nextgem",
+                "flavour_name",
+                "user_name:flavour_name"
+            ]
+        ),
+        "uniq_key": Path(..., description="Core type")
+    }
+
     @classmethod
     def process_parameters(
         cls, request: Request, *parameters_not_to_process: str
@@ -86,5 +108,144 @@ class FacetResults(BaseModel):
 class SearchFlavours(BaseModel):
     """Schema for search flavours."""
 
-    flavours: List[FlavourType]
-    attributes: Dict[FlavourType, List[str]]
+    flavours: List[Union[FlavourType, str]]
+    attributes: Dict[Union[FlavourType, str], List[str]]
+
+
+class FlavourDefinition(BaseModel):
+    """Schema for flavour definition."""
+    flavour_name: str = Field(
+        ...,
+        description="Name of the custom flavour",
+        examples=["nextgem", "custom_project"]
+    )
+    mapping: Dict[str, str] = Field(
+        ...,
+        description="Facet mapping dictionary",
+        examples=[{
+            "project": "mip_era",
+            "model": "source_id",
+            "experiment": "experiment_id",
+            "variable": "variable_id"
+        }]
+    )
+    is_global: bool = Field(
+        False,
+        description="Make flavour available to all users",
+        examples=[False, True]
+    )
+
+    class Config:
+        extra = "forbid"
+
+    @field_validator('flavour_name')
+    @classmethod
+    def validate_flavour_name(cls, v: str) -> str:
+        import re
+        if not re.match(r'^[a-zA-Z0-9_-]+$', v):
+            raise ValueError(
+                "Flavour name can only contain letters, "
+                "numbers, underscores, and hyphens"
+            )
+        return v
+
+    @field_validator('mapping')
+    @classmethod
+    def validate_mapping_keys(cls, v: Dict[str, str]) -> Dict[str, str]:
+        """Validate that mapping keys are valid freva facets."""
+        valid_facets = set(server_config.solr_fields)
+        valid_facets.update({"time", "bbox", "user"})
+        invalid_keys = set(v.keys()) - valid_facets
+        if invalid_keys:  # pragma: no cover
+            raise ValueError(
+                f"Invalid mapping keys: {sorted(invalid_keys)}. "
+                f"Valid freva facets are: {sorted(valid_facets)}"
+            )
+        return v
+
+
+class FlavourResponse(BaseModel):
+    """Response schema for flavour queries."""
+    flavour_name: str = Field(examples=["nextgem", "cordex"])
+    mapping: Dict[str, str] = Field(
+        examples=[{"project": "mip_era", "model": "source_id"}]
+    )
+    owner: str = Field(examples=["global", "john_doe"])
+    who_created: str = Field(
+        examples=["john_doe", "admin"]
+    )
+    created_at: str = Field(examples=["2024-01-15T10:30:00"])
+
+
+class FlavourListResponse(BaseModel):
+    total: int = Field(examples=[1])
+    flavours: List[FlavourResponse]
+
+
+class FlavourDeleteResponse(BaseModel):
+    """Response schema for flavour deletion."""
+    status: str = Field(
+        examples=[
+            "Personal flavour 'nextgem' deleted successfully",
+            "Global flavour 'custom_project' deleted successfully"
+        ]
+    )
+
+
+class AddUserDataRequestBody(BaseModel):
+    """Request body schema for adding user data."""
+
+    user_metadata: List[Dict[str, str]] = Field(
+        ...,
+        description="List of user metadata objects or strings to be"
+        " added to the databrowser.",
+        examples=[
+            [
+                {
+                    "variable": "tas",
+                    "time_frequency": "mon",
+                    "time": "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",
+                    "file": "path of the file",
+                },
+            ]
+        ],
+    )
+    facets: Dict[str, Any] = Field(
+        ...,
+        description="Key-value pairs representing metadata search attributes.",
+        examples=[
+            {"project": "user-data", "product": "new", "institute": "globe"}
+        ],
+    )
+
+
+IntakeType = TypedDict(
+    "IntakeType",
+    {
+        "esmcat_version": str,
+        "attributes": List[Dict[str, str]],
+        "assets": Dict[str, str],
+        "id": str,
+        "description": str,
+        "title": str,
+        "last_updated": str,
+        "aggregation_control": Dict[str, Any],
+    },
+)
+
+
+class SearchResult(BaseModel):
+    """Return Model of a uniq key search."""
+
+    total_count: int
+    facets: Dict[str, List[Union[str, int]]]
+    search_results: List[Dict[str, Union[str, float, List[str]]]]
+    facet_mapping: Dict[str, str]
+    primary_facets: List[str]
+
+
+class IntakeCatalogue(BaseModel):
+    """Return Model of a uniq key search."""
+
+    catalogue: IntakeType
+    total_count: int

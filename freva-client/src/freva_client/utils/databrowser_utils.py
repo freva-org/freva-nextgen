@@ -44,8 +44,20 @@ class Config:
     ) -> None:
         self.databrowser_url = f"{self.get_api_url(host)}/databrowser"
         self.auth_url = f"{self.get_api_url(host)}/auth/v2"
+        self.get_api_main_url = self.get_api_url(host)
         self.uniq_key = uniq_key
-        self._flavour = flavour
+        self.flavour = flavour
+
+    @cached_property
+    def validate_server(self) -> bool:
+        """Ping the databrowser to check if it is reachable."""
+        try:
+            res = requests.get(f"{self.get_api_main_url}/ping", timeout=15)
+            return res.status_code == 200
+        except Exception as e:
+            raise ValueError(
+                f"Could not connect to {self.databrowser_url}: {e}"
+            ) from None
 
     def _read_ini(self, path: Path) -> str:
         """Read an ini file."""
@@ -83,15 +95,39 @@ class Config:
         return ""
 
     @cached_property
+    def _get_headers(self) -> Optional[Dict[str, str]]:
+        """Get the headers for requests."""
+        from freva_client.auth import Auth
+
+        from .auth_utils import load_token
+        auth = Auth()
+        token = auth._auth_token or load_token(auth.token_file)
+        if token and "access_token" in token:
+            return {"Authorization": f"Bearer {token['access_token']}"}
+        return None
+
+    @cached_property
     def overview(self) -> Dict[str, Any]:
-        """Get an overview of the all databrowser flavours and search keys."""
+        """Get an overview of all databrowser flavours
+        and search keys including custom flavours."""
+        headers = self._get_headers
         try:
-            res = requests.get(f"{self.databrowser_url}/overview", timeout=15)
+            res = requests.get(
+                f"{self.databrowser_url}/overview",
+                headers=headers,
+                timeout=15
+            )
+            data = cast(Dict[str, Any], res.json())
+            if not headers:
+                data["Note"] = (
+                    "Displaying only global flavours. "
+                    "Authenticate to see custom user flavours as well."
+                )
+            return data
         except requests.exceptions.ConnectionError:
             raise ValueError(
                 f"Could not connect to {self.databrowser_url}"
             ) from None
-        return cast(Dict[str, Any], res.json())
 
     def _get_databrowser_host_from_config(self) -> str:
         """Get the config file order."""
@@ -119,17 +155,6 @@ class Config:
             " configuration defining a databrowser host or"
             " set a host name using the `host` key"
         )
-
-    @cached_property
-    def flavour(self) -> str:
-        """Get the flavour."""
-        flavours = self.overview.get("flavours", [])
-        if self._flavour not in flavours:
-            raise ValueError(
-                f"Search {self._flavour} not available, select from"
-                f" {','.join(flavours)}"
-            )
-        return self._flavour
 
     @property
     def search_url(self) -> str:
@@ -207,7 +232,6 @@ class Config:
 
 class UserDataHandler:
     """Class for processing user data.
-
     This class is used for processing user data and extracting metadata
     from the data files.
     """

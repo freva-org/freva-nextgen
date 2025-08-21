@@ -19,6 +19,7 @@ from typing import (
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 from fastapi import Request
+from fastapi_third_party_auth import IDToken as TokenPayload
 
 from freva_rest.config import ServerConfig
 from freva_rest.logger import logger
@@ -31,7 +32,9 @@ from freva_rest.utils.stac_utils import (
     parse_datetime,
 )
 
-from .core import FlavourType, Solr, Translator
+from .core import Solr
+from .schema import FlavourType
+from .services import Translator
 
 
 class ZipStream(io.RawIOBase):
@@ -81,7 +84,7 @@ class STAC(Solr):
         config: ServerConfig,
         *,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: FlavourType = "freva",
+        flavour: Union[FlavourType, str] = "freva",
         start: int = 0,
         multi_version: bool = True,
         translate: bool = True,
@@ -119,10 +122,11 @@ class STAC(Solr):
         config: ServerConfig,
         *,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: FlavourType = "freva",
+        flavour: Union[FlavourType, str] = "freva",
         start: int = 0,
         multi_version: bool = False,
         translate: bool = True,
+        current_user: Optional[TokenPayload] = None,
         **query: list[str],
     ) -> "STAC":
         """Use Solr validate_parameters and return a STAC validated_parameters
@@ -134,6 +138,7 @@ class STAC(Solr):
             start=start,
             multi_version=multi_version,
             translate=translate,
+            current_user=current_user,
             **query
         )
 
@@ -347,7 +352,7 @@ class STAC(Solr):
 
         properties = {
             **{
-                k: result.get(k)
+                self.translator.forward_lookup.get(k, k): result.get(k)
                 for k in self._config.solr_fields
                 if k in result and result.get(k) is not None
             },
