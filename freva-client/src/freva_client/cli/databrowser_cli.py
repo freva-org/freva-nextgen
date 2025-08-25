@@ -16,7 +16,7 @@ from freva_client import databrowser
 from freva_client.auth import Auth
 from freva_client.utils import exception_handler, logger
 
-from .cli_utils import parse_cli_args, version_callback
+from .cli_utils import parse_cli_args, print_df, version_callback
 
 
 class UniqKeys(str, Enum):
@@ -233,10 +233,9 @@ def metadata_search(
         **(parse_cli_args(search_keys or [])),
     )
     if parse_json:
-        print(json.dumps(result))
+        print(result.to_json())
         return
-    for key, values in result.items():
-        print(f"{key}: {', '.join(values)}")
+    print_df(result)
 
 
 @databrowser_app.command(
