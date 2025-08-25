@@ -214,7 +214,11 @@ def test_metadata_search(cli_runner: CliRunner, test_server: str) -> None:
     )
     assert res.exit_code == 0
     assert isinstance(json.loads(res.stdout), dict)
-
+    res = cli_runner.invoke(
+        app,
+        ["metadata-search", "--host", test_server, "cmor_table=inst"],
+    )
+    assert res.exit_code == 0
 
 def test_count_values(cli_runner: CliRunner, test_server: str) -> None:
     """Test the count sub command."""
