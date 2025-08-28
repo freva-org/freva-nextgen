@@ -542,7 +542,7 @@ class Flavour:
             message_parts = [
                 (
                     f"Invalid flavour '{original_flavour}'. "
-                    "Available flavours: {all_available}"
+                    f"Available flavours: {all_available}"
                 )
             ]
 

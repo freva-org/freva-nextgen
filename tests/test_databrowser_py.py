@@ -446,7 +446,13 @@ def test_flavour_operations(test_server: str, auth_instance: Auth, auth: Token) 
         db = databrowser(flavour="test_flavour_client", host=test_server)
         # not fail even if no results since flavour is custom
         assert len(db) >= 0
-        
+
+        # checking count values with custom flavour
+        db_count = databrowser.count_values(
+            "projekt", flavour="test_flavour_client", host=test_server
+        )
+        assert isinstance(db_count, dict)
+
         # deleting the custom flavour
         databrowser.flavour(
             action="delete",

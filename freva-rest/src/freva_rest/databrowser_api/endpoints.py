@@ -400,6 +400,7 @@ async def load_data(
         start=start,
         multi_version=multi_version,
         translate=translate,
+        current_user=current_user,
         **SolrSchema.process_parameters(request, "catalogue-type"),
     )
     _, total_count = await solr_search.init_stream()
@@ -512,7 +513,7 @@ async def delete_user_data(
 
 @app.post(
     "/api/freva-nextgen/databrowser/flavours",
-    tags=["Data search"],
+    tags=["Flavour management"],
     status_code=201,
     response_class=JSONResponse,
     responses={
@@ -560,7 +561,7 @@ async def add_custom_flavour(
 
 @app.get(
     "/api/freva-nextgen/databrowser/flavours",
-    tags=["Data search"],
+    tags=["Flavour management"],
     status_code=200,
     response_model=FlavourListResponse,
     responses={
@@ -610,7 +611,7 @@ async def list_flavours(
 
 @app.delete(
     "/api/freva-nextgen/databrowser/flavours/{flavour_name}",
-    tags=["Data search"],
+    tags=["Flavour management"],
     status_code=200,
     response_model=FlavourDeleteResponse,
     responses={

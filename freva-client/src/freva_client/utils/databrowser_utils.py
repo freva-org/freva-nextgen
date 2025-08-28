@@ -40,13 +40,15 @@ class Config:
         self,
         host: Optional[str] = None,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: str = "freva",
+        flavour: Optional[str] = None,
     ) -> None:
         self.databrowser_url = f"{self.get_api_url(host)}/databrowser"
         self.auth_url = f"{self.get_api_url(host)}/auth/v2"
         self.get_api_main_url = self.get_api_url(host)
         self.uniq_key = uniq_key
-        self.flavour = flavour
+        self.flavour = flavour or self._get_databrowser_params_from_config().get(
+            "flavour", ""
+        ) or "freva"
 
     @cached_property
     def validate_server(self) -> bool:
@@ -59,8 +61,18 @@ class Config:
                 f"Could not connect to {self.databrowser_url}: {e}"
             ) from None
 
-    def _read_ini(self, path: Path) -> str:
-        """Read an ini file."""
+    def _read_ini(self, path: Path) -> Dict[str, str]:
+        """Read an ini file.
+
+        Parameters
+        ----------
+        path : Path
+            Path to the ini configuration file.
+        Returns
+        -------
+        Dict[str, str]
+            Dictionary with the configuration.
+        """
         ini_parser = ConfigParser(interpolation=ExtendedInterpolation())
         ini_parser.read_string(path.read_text())
         config = ini_parser["evaluation_system"]
@@ -71,28 +83,62 @@ class Config:
         port = port or config.get("databrowser.port", "")
         if port:
             host = f"{host}:{port}"
-        return f"{scheme}://{host}"
+        host = f"{scheme}://{host}"
+        flavour = config.get("databrowser.default_flavour", "")
+        return {
+            "host": host,
+            "flavour": flavour,
+        }
 
-    def _read_toml(self, path: Path) -> str:
-        """Read a new style toml config file."""
+    def _read_toml(self, path: Path) -> Dict[str, str]:
+        """Read a new style toml config file.
+
+        Parameters
+        ----------
+        path : Path
+            Path to the toml configuration file.
+        Returns
+        -------
+        Dict[str, str]
+            Dictionary with the configuration.
+        """
         try:
             config = tomli.loads(path.read_text()).get("freva", {})
-            scheme, host = self._split_url(cast(str, config["host"]))
+            scheme, host = self._split_url(cast(str, config.get("host", "")))
+            flavour = config.get("default_flavour", "")
         except (tomli.TOMLDecodeError, KeyError):
-            return ""
+            return {}
         host, _, port = host.partition(":")
         if port:
             host = f"{host}:{port}"
-        return f"{scheme}://{host}"
+        host = f"{scheme}://{host}"
+        return {
+            "host": host,
+            "flavour": flavour,
+        }
 
-    def _read_config(self, path: Path, file_type: Literal["toml", "ini"]) -> str:
-        """Read the configuration."""
+    def _read_config(
+            self, path: Path, file_type: Literal["toml", "ini"]
+    ) -> Dict[str, str]:
+        """Read the configuration.
+
+        Parameters
+        ----------
+        path : Path
+            Path to the configuration file.
+        file_type : Literal["toml", "ini"]
+            Type of the configuration file.
+        Returns
+        -------
+        Dict[str, str]
+            Dictionary with the configuration.
+        """
         data_types = {"toml": self._read_toml, "ini": self._read_ini}
         try:
             return data_types[file_type](path)
         except KeyError:
             pass
-        return ""
+        return {}
 
     @cached_property
     def _get_headers(self) -> Optional[Dict[str, str]]:
@@ -129,7 +175,7 @@ class Config:
                 f"Could not connect to {self.databrowser_url}"
             ) from None
 
-    def _get_databrowser_host_from_config(self) -> str:
+    def _get_databrowser_params_from_config(self) -> Dict[str, str]:
         """Get the config file order."""
 
         eval_conf = self.get_dirs(user=False) / "evaluation_system.conf"
@@ -147,9 +193,14 @@ class Config:
         }
         for config_path, config_type in paths.items():
             if config_path.is_file():
-                host = self._read_config(config_path, config_type)
+                config_data = self._read_config(config_path, config_type)
+                host = config_data.get("host", "")
+                flavour = config_data.get("flavour", "")
                 if host:
-                    return host
+                    return {
+                        "host": host,
+                        "flavour": flavour
+                    }
         raise ValueError(
             "No databrowser host configured, please use a"
             " configuration defining a databrowser host or"
@@ -197,7 +248,7 @@ class Config:
 
     def get_api_url(self, url: Optional[str]) -> str:
         """Construct the databrowser url from a given hostname."""
-        url = url or self._get_databrowser_host_from_config()
+        url = url or self._get_databrowser_params_from_config().get("host", "")
         scheme, hostname = self._split_url(url)
         hostname, _, port = hostname.partition(":")
         if port:

@@ -421,7 +421,12 @@ To see all custom flavours available to you, use the `flavour list` command:
 
     freva-client databrowser flavour list
 
-This will display both personal flavours you've created and ``global`` flavours available to all users. You can also output the results in JSON format:
+.. note::
+    The `flavour list` command does not require authentication and will show global flavours available to all users.
+
+This will display both personal flavours you've created and ``global`` flavours available to all users.
+
+You can also output the results in JSON format:
 
 .. code:: console
 

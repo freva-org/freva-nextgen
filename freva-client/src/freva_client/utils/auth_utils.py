@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 from typing import Literal, Optional, TypedDict, Union, cast
 
+import requests
 from appdirs import user_cache_dir
 
 TOKEN_EXPIRY_BUFFER = 60  # seconds
@@ -238,3 +239,40 @@ def wait_for_port(host: str, port: int, timeout: float = 5.0) -> None:
     raise TimeoutError(
         f"Port {port} on {host} did not open within {timeout} seconds."
     )
+
+
+def requires_authentication(
+        flavour: Optional[str],
+        zarr: bool = False,
+        databrowser_url: Optional[str] = None
+) -> bool:
+    """Check if authentication is required.
+    
+    Parameters
+    ----------
+    flavour : str or None
+        The data flavour to check.
+    zarr : bool, default: False
+        Whether the request is for zarr data.
+    databrowser_url : str or None
+        The URL of the databrowser to query for available flavours.
+        If None, the function will skip querying and assume authentication
+        is required for non-default flavours.
+    """
+    if zarr:
+        return True
+    if not flavour or flavour in {"freva", "cmip6", "cmip5", "cordex", "user"}:
+        return False
+    try:
+        response = requests.get(f"{databrowser_url}/flavours", timeout=30)
+        response.raise_for_status()
+        result = {"flavours": response.json().get("flavours", [])}
+        if result and "flavours" in result:
+            global_flavour_names = {
+                f["flavour_name"] for f in result["flavours"]
+            }
+            return flavour not in global_flavour_names
+    except Exception:
+        pass
+
+    return True

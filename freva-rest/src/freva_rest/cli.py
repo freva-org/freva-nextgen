@@ -44,8 +44,8 @@ environment variables are evaluated:
 - ``API_OIDC_CLIENT_SECRET``: You can set a client secret, if you have
 - ``API_OIDC_TOKEN_CLAIMS``:  Valid token claims, to check against
 - ``API_SERVICES``:  The services the api should serve.
-- ``API_ADMIN_LIST``: List of admin users, that are allowed to add new
-                      global Flavours.
+- ``API_ADMINS_TOKEN_CLAIMS``:  Valid admin token claims, to check if a user
+                                is admin to enable admin endpoints for.
 
 📝  You can override the path to the default config file using the
     ``API_CONFIG`` environment variable. The default location of this config
