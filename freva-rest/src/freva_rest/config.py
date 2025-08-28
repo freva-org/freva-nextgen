@@ -7,7 +7,8 @@ variables.
 
 import logging
 import os
-from functools import cached_property
+import re
+from functools import cached_property, reduce
 from pathlib import Path
 from socket import gethostname
 from typing import (
@@ -33,7 +34,7 @@ from pydantic import BaseModel, Field
 from .logger import logger, logger_file_handle
 
 ConfigItem = Union[str, int, float, None]
-
+BUILTIN_FLAVOURS = ["freva", "cmip6", "cmip5", "cordex", "user"]
 T = TypeVar("T", str, int)
 
 
@@ -83,6 +84,15 @@ def env_to_list(env_var: str, target_type: Type[T]) -> List[T]:
         for k in set(os.getenv(env_var, "").split(","))
         if k.strip()
     ]
+
+
+def _get_in(d: Dict[str, Any], keys: List[str]) -> Any:
+    """Descend into nested dicts."""
+    return reduce(
+        lambda acc, k: acc.get(k, {}) if isinstance(acc, dict) else {},
+        keys,
+        d
+    ) or ""
 
 
 class ServerConfig(BaseModel):
@@ -266,9 +276,27 @@ class ServerConfig(BaseModel):
             ),
         ),
     ] = env_to_list("API_OIDC_AUTH_PORTS", int)
+    admins_token_claims: Annotated[
+        Optional[Dict[str, List[str]]],
+        Field(
+            title="Admin token claim filter.",
+            description=(
+                "Token claim-based filters for admin users,"
+                "defined as regex patterns. Each filter is a "
+                "mapping from a nested claim path (e.g., "
+                "'resource_access.realm-management.roles' or "
+                "'groups') to a list of Python regular expressions."
+                " If any regex matches the claim's value, the user "
+                "is granted admin. Nested claims are specified by "
+                "dot-separated keys."
+            ),
+        ),
+    ] = (
+        env_to_dict("API_ADMINS_TOKEN_CLAIMS") or None
+    )
 
     def _read_config(self, section: str, key: str) -> Any:
-        fallback = self._fallback_config[section][key] or None
+        fallback = self._fallback_config.get(section, {}).get(key, None)
         return self._config.get(section, {}).get(key, fallback)
 
     def model_post_init(self, __context: Any = None) -> None:
@@ -336,6 +364,10 @@ class ServerConfig(BaseModel):
         self.oidc_auth_ports = self.oidc_auth_ports or self._read_config(
             "oidc", "auth_ports"
         )
+        self.admins_token_claims = (
+            self.admins_token_claims
+            or self._read_config("oidc", "admins_token_claims")
+        ) or {}
 
     @staticmethod
     def get_url(url: str, default_port: Union[str, int]) -> str:
@@ -384,6 +416,35 @@ class ServerConfig(BaseModel):
             AsyncIOMotorCollection,
             self.mongo_client[self.mongo_db]["user_data"],
         )
+
+    @property
+    def mongo_collection_flavours(self) -> AsyncIOMotorCollection:
+        """Define the mongoDB collection for custom flavours."""
+        return cast(
+            AsyncIOMotorCollection,
+            self.mongo_client[self.mongo_db]["custom_flavours"],
+        )
+
+    def is_admin_user(self, current_user: BaseModel) -> bool:
+        """
+        Return True if any (claim-path -> regex) in `admins_token_claims`
+        matches any value in the current_user's decoded JWT claims.
+        """
+        claims = current_user.model_dump()
+
+        for path, patterns in (self.admins_token_claims or {}).items():
+            values = _get_in(claims, path.split("."))
+            if not isinstance(values, list):  # pragma: no cover
+                values = [values]
+
+            if any(
+                re.search(pat, val)
+                for val in values if isinstance(val, str)
+                for pat in patterns
+            ):
+                return True
+
+        return False
 
     def power_cycle_mongodb(self) -> None:
         """Reset an existing mongoDB connection."""

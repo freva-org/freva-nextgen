@@ -10,7 +10,6 @@ from freva_client import databrowser
 from freva_client.auth import Auth, AuthError, Token
 from freva_client.utils.logger import DatabrowserWarning
 
-
 def test_search_files(test_server: str) -> None:
     """Test searching for files."""
     db = databrowser(host=test_server)
@@ -103,9 +102,6 @@ def test_bad_queries(test_server: str) -> None:
         databrowser.metadata_search(
             host=test_server, foo="bar", fail_on_error=True
         )
-    db = databrowser(host=test_server, foo="bar", flavour="foo")  # type: ignore
-    with pytest.raises(ValueError):
-        len(db)
 
 
 def test_repr(test_server: str) -> None:
@@ -118,6 +114,11 @@ def test_repr(test_server: str) -> None:
     assert "flavour" in overview
     assert "cmip6" in overview
     assert "freva" in overview
+
+    # test overview with a non-existing host
+    with pytest.raises(ValueError):
+        databrowser.overview(host="foo.bar.de:7777")
+
 
 
 def test_intake_without_zarr(test_server: str) -> None:
@@ -392,3 +393,103 @@ def test_add_userdata_wild_card(
         )
     finally:
         auth_instance._auth_token = token
+
+
+def test_flavour_operations(test_server: str, auth_instance: Auth, auth: Token) -> None:
+    """Test query flavour add, list, and delete operations."""
+    from copy import deepcopy
+
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance._auth_token = auth
+        
+        # listing flavours
+        result = databrowser.flavour(action="list", host=test_server)
+        assert isinstance(result["flavours"], list)
+        assert len(result["flavours"]) >= 5
+        flavour_names = [f["flavour_name"] for f in result["flavours"]]
+        assert "freva" in flavour_names
+        assert "cmip6" in flavour_names
+        
+        # adding a custom flavour
+        custom_mapping = {
+            "project": "projekt", 
+            "variable": "variable_name",
+            "model": "modell"
+        }
+        databrowser.flavour(
+            action="add",
+            name="test_flavour_client",
+            mapping=custom_mapping,
+            is_global=False,
+            host=test_server
+        )
+        
+        # custom flavour appears in list
+        result_after = databrowser.flavour(action="list", host=test_server)
+        assert len(result_after["flavours"]) > len(result["flavours"])
+        new_flavour_names = [f["flavour_name"] for f in result_after["flavours"]]
+        assert f"test_flavour_client" in new_flavour_names
+        valid_token = deepcopy(auth_instance._auth_token)
+        auth_instance._auth_token["access_token"] = "foo"
+        # deleting a flavour with invalid token raises an error
+        with pytest.raises(ValueError):
+            databrowser.flavour(
+                action="list",
+                host="http://non-existent-host:9999",
+                fail_on_error=True
+            )
+
+        auth_instance._auth_token = valid_token
+        # custom flavour can be used in searches
+        
+        db = databrowser(flavour="test_flavour_client", host=test_server)
+        # not fail even if no results since flavour is custom
+        assert len(db) >= 0
+        
+        # deleting the custom flavour
+        databrowser.flavour(
+            action="delete",
+            name="test_flavour_client",
+            host=test_server
+        )
+        
+        # custom flavour is gone
+        flavours_final = databrowser.flavour(action="list", host=test_server)
+        final_flavour_names = [f["flavour_name"] for f in flavours_final["flavours"]]
+        assert "test_flavour_client" not in final_flavour_names
+        assert len(flavours_final["flavours"]) == len(result["flavours"])
+    finally:
+        auth_instance._auth_token = token
+
+
+def test_flavour_error_cases(test_server: str, auth_instance: Auth, auth: Token) -> None:
+    """Test flavour error handling."""
+    from copy import deepcopy
+    
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance._auth_token = auth
+        # wrong facet key
+        custom_mapping = {
+            "projecta": "projekt",
+        }
+        Added = databrowser.flavour(action="add", name="test_flavour_no_auth", mapping=custom_mapping, host=test_server)
+        assert Added is None
+
+        # test the missing name and mapping parameters
+        with pytest.raises(ValueError, match="Both 'name' and 'mapping' are required"):
+            databrowser.flavour(action="add", host=test_server)
+        
+        # deleting flavour without name
+        with pytest.raises(ValueError, match="'name' is required for delete action"):
+            databrowser.flavour(action="delete", host=test_server)
+
+    finally:
+        auth_instance._auth_token = token
+
+
+def test_flavour_without_auth(test_server: str) -> None:
+    """Test listing flavours without authentication"""
+    flavours = databrowser.flavour(action="list", host=test_server)
+    assert isinstance(flavours, dict)
