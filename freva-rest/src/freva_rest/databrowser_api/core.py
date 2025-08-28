@@ -3,16 +3,14 @@
 import json
 import uuid
 from contextlib import asynccontextmanager
-from dataclasses import dataclass
 from datetime import datetime
-from functools import cached_property
 from typing import (
     Any,
     AsyncIterator,
     Dict,
-    Iterable,
     List,
     Literal,
+    Optional,
     Sequence,
     Sized,
     Tuple,
@@ -23,9 +21,8 @@ from typing import (
 import httpx
 from dateutil.parser import ParserError, parse
 from fastapi import HTTPException
-from pydantic import BaseModel
+from fastapi_third_party_auth import IDToken as TokenPayload
 from pymongo import UpdateOne, errors
-from typing_extensions import TypedDict
 
 from freva_rest import __version__
 from freva_rest.config import ServerConfig
@@ -34,298 +31,17 @@ from freva_rest.logger import logger
 from freva_rest.utils.base_utils import create_redis_connection
 from freva_rest.utils.stats_utils import store_api_statistics
 
-FlavourType = Literal["freva", "cmip6", "cmip5", "cordex", "nextgems", "user"]
-IntakeType = TypedDict(
-    "IntakeType",
-    {
-        "esmcat_version": str,
-        "attributes": List[Dict[str, str]],
-        "assets": Dict[str, str],
-        "id": str,
-        "description": str,
-        "title": str,
-        "last_updated": str,
-        "aggregation_control": Dict[str, Any],
-    },
+from .schema import (
+    FlavourResponse,
+    FlavourType,
+    IntakeCatalogue,
+    IntakeType,
+    SearchFlavours,
+    SearchResult,
 )
+from .services import Flavour, Translator
 
-
-class SearchResult(BaseModel):
-    """Return Model of a uniq key search."""
-
-    total_count: int
-    facets: Dict[str, List[Union[str, int]]]
-    search_results: List[Dict[str, Union[str, float, List[str]]]]
-    facet_mapping: Dict[str, str]
-    primary_facets: List[str]
-
-
-class IntakeCatalogue(BaseModel):
-    """Return Model of a uniq key search."""
-
-    catalogue: IntakeType
-    total_count: int
-
-
-@dataclass
-class Translator:
-    """Class that defines the flavour translation.
-
-    Parameters
-    ----------
-    flavour: str
-        The target flavour, the facet names should be translated to.
-    translate: bool, default: True
-        Translate the search keys. Not translating (default: True) can be
-        useful if the actual translation of the facets should be done on the
-        client side.
-
-    Attributes
-    ----------
-    """
-
-    flavour: str
-    translate: bool = True
-    flavours: tuple[FlavourType, ...] = (
-        "freva",
-        "cmip6",
-        "cmip5",
-        "cordex",
-        "nextgems",
-        "user",
-    )
-
-    @property
-    def facet_hierarchy(self) -> list[str]:
-        """Define the hierarchy of facets that define a dataset."""
-        return [
-            "project",
-            "product",
-            "institute",
-            "model",
-            "experiment",
-            "time_frequency",
-            "realm",
-            "variable",
-            "ensemble",
-            "cmor_table",
-            "fs_type",
-            "grid_label",
-            "grid_id",
-            "format",
-        ]
-
-    @property
-    def _freva_facets(self) -> Dict[str, str]:
-        """Define the freva search facets and their relevance"""
-        return {
-            "project": "primary",
-            "product": "primary",
-            "institute": "primary",
-            "model": "primary",
-            "experiment": "primary",
-            "time_frequency": "primary",
-            "realm": "primary",
-            "variable": "primary",
-            "ensemble": "primary",
-            "time_aggregation": "primary",
-            "fs_type": "secondary",
-            "grid_label": "secondary",
-            "cmor_table": "secondary",
-            "driving_model": "secondary",
-            "format": "secondary",
-            "grid_id": "secondary",
-            "level_type": "secondary",
-            "rcm_name": "secondary",
-            "rcm_version": "secondary",
-            "dataset": "secondary",
-            "time": "secondary",
-            "bbox": "secondary",
-            "user": "secondary",
-        }
-
-    @property
-    def _cmip5_lookup(self) -> Dict[str, str]:
-        """Define the search facets for the cmip5 standard."""
-        return {
-            "experiment": "experiment",
-            "ensemble": "member_id",
-            "fs_type": "fs_type",
-            "grid_label": "grid_label",
-            "institute": "institution_id",
-            "model": "model_id",
-            "project": "project",
-            "product": "product",
-            "realm": "realm",
-            "variable": "variable",
-            "time": "time",
-            "bbox": "bbox",
-            "time_aggregation": "time_aggregation",
-            "time_frequency": "time_frequency",
-            "cmor_table": "cmor_table",
-            "dataset": "dataset",
-            "driving_model": "driving_model",
-            "format": "format",
-            "grid_id": "grid_id",
-            "level_type": "level_type",
-            "rcm_name": "rcm_name",
-            "rcm_version": "rcm_version",
-        }
-
-    @property
-    def _cmip6_lookup(self) -> Dict[str, str]:
-        """Define the search facets for the cmip6 standard."""
-        return {
-            "experiment": "experiment_id",
-            "ensemble": "member_id",
-            "fs_type": "fs_type",
-            "grid_label": "grid_label",
-            "institute": "institution_id",
-            "model": "source_id",
-            "project": "mip_era",
-            "product": "activity_id",
-            "realm": "realm",
-            "variable": "variable_id",
-            "time": "time",
-            "bbox": "bbox",
-            "time_aggregation": "time_aggregation",
-            "time_frequency": "frequency",
-            "cmor_table": "table_id",
-            "dataset": "dataset",
-            "driving_model": "driving_model",
-            "format": "format",
-            "grid_id": "grid_id",
-            "level_type": "level_type",
-            "rcm_name": "rcm_name",
-            "rcm_version": "rcm_version",
-        }
-
-    @property
-    def _cordex_lookup(self) -> Dict[str, str]:
-        """Define the search facets for the cordex5 standard."""
-        return {
-            "experiment": "experiment",
-            "ensemble": "ensemble",
-            "fs_type": "fs_type",
-            "grid_label": "grid_label",
-            "institute": "institution",
-            "model": "model",
-            "project": "project",
-            "product": "domain",
-            "realm": "realm",
-            "variable": "variable",
-            "time": "time",
-            "bbox": "bbox",
-            "time_aggregation": "time_aggregation",
-            "time_frequency": "time_frequency",
-            "cmor_table": "cmor_table",
-            "dataset": "dataset",
-            "driving_model": "driving_model",
-            "format": "format",
-            "grid_id": "grid_id",
-            "level_type": "level_type",
-            "rcm_name": "rcm_name",
-            "rcm_version": "rcm_version",
-        }
-
-    @property
-    def _nextgems_lookup(self) -> Dict[str, str]:
-        """Define the search facets for the cmip5 standard."""
-        return {
-            "experiment": "simulation_id",
-            "ensemble": "member_id",
-            "fs_type": "fs_type",
-            "grid_label": "grid_label",
-            "institute": "institution_id",
-            "model": "source_id",
-            "project": "project",
-            "product": "experiment_id",
-            "realm": "realm",
-            "variable": "variable_id",
-            "time": "time",
-            "bbox": "bbox",
-            "time_aggregation": "time_reduction",
-            "time_frequency": "time_frequency",
-            "cmor_table": "cmor_table",
-            "dataset": "dataset",
-            "driving_model": "driving_model",
-            "format": "format",
-            "grid_id": "grid_id",
-            "level_type": "level_type",
-            "rcm_name": "rcm_name",
-            "rcm_version": "rcm_version",
-        }
-
-    @cached_property
-    def forward_lookup(self) -> Dict[str, str]:
-        """Define how things get translated from the freva standard"""
-
-        return {
-            "freva": {k: k for k in self._freva_facets},
-            "cmip6": self._cmip6_lookup,
-            "cmip5": self._cmip5_lookup,
-            "cordex": self._cordex_lookup,
-            "nextgems": self._nextgems_lookup,
-            "user": {k: k for k in self._freva_facets},
-        }[self.flavour]
-
-    @cached_property
-    def valid_facets(self) -> list[str]:
-        """Get all valid facets for a flavour."""
-        if self.translate:
-            return list(self.forward_lookup.values())
-        return list(self.forward_lookup.keys())
-
-    @property
-    def cordex_keys(self) -> Tuple[str, ...]:
-        """Define the keys that make a cordex dataset."""
-        return ("rcm_name", "driving_model", "rcm_version")
-
-    @cached_property
-    def primary_keys(self) -> list[str]:
-        """Define which search facets are primary for which standard."""
-        if self.translate:
-            _keys = [
-                self.forward_lookup[k]
-                for (k, v) in self._freva_facets.items()
-                if v == "primary"
-            ]
-        else:
-            _keys = [k for (k, v) in self._freva_facets.items() if v == "primary"]
-        if self.flavour in ("cordex",):
-            for key in self.cordex_keys:
-                _keys.append(key)
-        return _keys
-
-    @cached_property
-    def backward_lookup(self) -> Dict[str, str]:
-        """Translate the schema to the freva standard."""
-        return {v: k for (k, v) in self.forward_lookup.items()}
-
-    def translate_facets(
-        self,
-        facets: Iterable[str],
-        backwards: bool = False,
-    ) -> List[str]:
-        """Translate the facets names to a given flavour."""
-        if self.translate:
-            if backwards:
-                return [self.backward_lookup.get(f, f) for f in facets]
-            return [self.forward_lookup.get(f, f) for f in facets]
-        return list(facets)
-
-    def translate_query(
-        self,
-        query: Dict[str, Any],
-        backwards: bool = False,
-    ) -> Dict[str, Any]:
-        """Translate the queries names to a given flavour."""
-        return dict(
-            zip(
-                self.translate_facets(query.keys(), backwards=backwards),
-                query.values(),
-            )
-        )
+BUILTIN_FLAVOURS = ["freva", "cmip6", "cmip5", "cordex", "user"]
 
 
 class Solr:
@@ -360,7 +76,6 @@ class Solr:
 
     timeout: httpx.Timeout = httpx.Timeout(30)
     """30 seconds for timeout."""
-
     batch_size: int = 150
     """Maximum solr batch query size for one single query result."""
     suffixes = [".nc", ".nc4", ".grb", ".grib", ".tar", ".zarr"]
@@ -388,7 +103,7 @@ class Solr:
         config: ServerConfig,
         *,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: FlavourType = "freva",
+        flavour: Union[FlavourType, str] = "freva",
         start: int = 0,
         multi_version: bool = True,
         translate: bool = True,
@@ -398,7 +113,7 @@ class Solr:
         self._config = config
         self.uniq_key = uniq_key
         self.multi_version = multi_version
-        self.translator = _translator or Translator(flavour, translate)
+        self.translator = _translator or Translator(flavour, translate, config=config)
         try:
             self.time = self.adjust_time_string(
                 query.pop("time", [""])[0],
@@ -421,6 +136,7 @@ class Solr:
         self.total_duplicated_files = 0
         self.current_batch: List[Dict[str, str]] = []
         self.suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", "zar"]
+
         # TODO: If one adds a dataset from cloud storage, the file system type
         # should be changed to cloud storage type. We need to find an approach
         # to determine the file system
@@ -541,6 +257,26 @@ class Solr:
                 else:
                     self.query[actual_key] = str(value)
 
+    async def overview_process(
+            self,
+            all_flavour_responses: List[FlavourResponse],
+            user_name: str
+    ) -> SearchFlavours:
+        flavours = []
+        attributes = {}
+        translator = Translator("freva")
+        for flavour_response in all_flavour_responses:
+            flavour_name = flavour_response.flavour_name
+            flavours.append(flavour_name)
+            if flavour_name in ("cordex",):
+                attributes[flavour_name] = list(flavour_response.mapping.values())
+            else:
+                attributes[flavour_name] = [
+                    v for v in flavour_response.mapping.values()
+                    if v not in translator.cordex_keys
+                ]
+        return SearchFlavours(flavours=flavours, attributes=attributes)
+
     @asynccontextmanager
     async def _session_get(self) -> AsyncIterator[Tuple[int, Dict[str, Any]]]:
         """Wrap the get request round a try and catch statement."""
@@ -603,16 +339,31 @@ class Solr:
                 )
             yield response.status_code, response_data
 
+    @staticmethod
+    def _validate_query_params(
+        query: Dict[str, Any],
+        valid_facets: list[str],
+        uniq_keys: Tuple[str, str] = ("file", "uri")
+    ) -> None:
+        """Validate query parameters against valid facets."""
+        allowed_params = ("time_select", "bbox_select", "zarr_stream") + uniq_keys
+
+        for key in query:
+            clean_key = key.lower().replace("_not_", "")
+            if clean_key not in valid_facets and clean_key not in allowed_params:
+                raise HTTPException(status_code=422, detail="Could not validate input.")
+
     @classmethod
     async def validate_parameters(
         cls,
         config: ServerConfig,
         *,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: FlavourType = "freva",
+        flavour: Union[FlavourType, str] = "freva",
         start: int = 0,
         multi_version: bool = False,
         translate: bool = True,
+        current_user: Optional[TokenPayload] = None,
         **query: list[str],
     ) -> "Solr":
         """Create an instance of an Solr class with parameter validation.
@@ -635,19 +386,21 @@ class Solr:
             Use versioned datasets in stead of latest versions.
         translate: bool, default: True
             Translate the output to the required DRS flavour.
+        current_user: Optional[TokenPayload], default: None
+            The current user token payload, used to determine the preferred username
+            for flavour validation.
         """
-        translator = Translator(flavour, translate)
+        user_name = current_user.preferred_username if current_user else "global"
+
+        translator = await Flavour.validate_and_get_flavour(config, flavour, user_name)
+        translator.translate = translate
         valid_facets = translator.valid_facets
-        if multi_version:
-            valid_facets = translator.valid_facets + ["version"]
-        for key in query:
-            key = key.lower().replace("_not_", "")
-            if (
-                key not in valid_facets
-                and key not in ("time_select", "bbox_select", "zarr_stream")
-                + cls.uniq_keys
-            ):
-                raise HTTPException(status_code=422, detail="Could not validate input.")
+        version_param = translator.translate_facets(["version"])[0]
+
+        if not multi_version and version_param in query:
+            raise HTTPException(status_code=422, detail="Could not validate input.")
+        cls._validate_query_params(query, valid_facets, cls.uniq_keys)
+
         return Solr(
             config,
             flavour=flavour,
@@ -945,15 +698,20 @@ class Solr:
         )
 
     def _process_catalogue_result(self, out: Dict[str, List[Sized]]) -> Dict[str, Any]:
-        return {
-            k: (
-                out[k][0]
-                if isinstance(out.get(k), list) and len(out[k]) == 1
-                else out.get(k)
-            )
-            for k in [self.uniq_key] + self.translator.facet_hierarchy
-            if out.get(k)
-        }
+        result = {}
+        for freva_key in [self.uniq_key] + self.translator.facet_hierarchy:
+            if out.get(freva_key):
+
+                translated_key = self.translator.forward_lookup.get(
+                    freva_key, freva_key
+                )
+                result[translated_key] = (
+                    out[freva_key][0]
+                    if isinstance(out.get(freva_key), list)
+                    and len(out[freva_key]) == 1
+                    else out.get(freva_key)
+                )
+        return result
 
     async def _iterintake(self) -> AsyncIterator[str]:
         encoder = json.JSONEncoder(indent=3)

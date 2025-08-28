@@ -7,10 +7,14 @@ import json
 from enum import Enum
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import typer
+import typer.models
 import xarray as xr
+
+# import pprinr from rich
+from rich import print as pprint
 
 from freva_client import databrowser
 from freva_client.auth import Auth
@@ -26,14 +30,18 @@ class UniqKeys(str, Enum):
     uri = "uri"
 
 
-class Flavours(str, Enum):
-    """Literal implementation for the cli."""
+class FlavourAction(str, Enum):
+    add = "add"
+    delete = "delete"
+    list = "list"
 
+
+class BuiltinFlavours(str, Enum):
+    """Literal implementation for the cli."""
     freva = "freva"
     cmip6 = "cmip6"
     cmip5 = "cmip5"
     cordex = "cordex"
-    nextgems = "nextgems"
     user = "user"
 
 
@@ -131,10 +139,9 @@ def metadata_search(
             " containing era5, regardless of project, product etc."
         ),
     ),
-    flavour: Flavours = typer.Option(
+    flavour: str = typer.Option(
         "freva",
         "--flavour",
-        "-f",
         help=(
             "The Data Reference Syntax (DRS) standard specifying the type "
             "of climate datasets to query."
@@ -200,6 +207,16 @@ def metadata_search(
     parse_json: bool = typer.Option(
         False, "-j", "--json", help="Parse output in json format."
     ),
+    token_file: Optional[Path] = typer.Option(
+        None,
+        "--token-file",
+        "-tf",
+        help=(
+            "Instead of authenticating via code based authentication flow "
+            "you can set the path to the json file that contains a "
+            "`refresh token` containing a refresh_token key."
+        ),
+    ),
     verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
     version: Optional[bool] = typer.Option(
         False,
@@ -219,13 +236,15 @@ def metadata_search(
     """
     logger.set_verbosity(verbose)
     logger.debug("Search the databrowser")
+    if flavour not in BuiltinFlavours.__members__:
+        Auth(token_file).authenticate(host=host, _cli=True)
     result = databrowser.metadata_search(
         *(facets or []),
         time=time or "",
         time_select=time_select.value,
         bbox=bbox or None,
         bbox_select=bbox_select.value,
-        flavour=flavour.value,
+        flavour=flavour,
         host=host,
         extended_search=extended_search,
         multiversion=multiversion,
@@ -269,10 +288,9 @@ def data_search(
             "based on file paths or Uniform Resource Identifiers"
         ),
     ),
-    flavour: Flavours = typer.Option(
+    flavour: str = typer.Option(
         "freva",
         "--flavour",
-        "-f",
         help=(
             "The Data Reference Syntax (DRS) standard specifying the type "
             "of climate datasets to query."
@@ -360,13 +378,14 @@ def data_search(
     """
     logger.set_verbosity(verbose)
     logger.debug("Search the databrowser")
+
     result = databrowser(
         *(facets or []),
         time=time or "",
         time_select=time_select.value,
         bbox=bbox or None,
         bbox_select=bbox_select.value,
-        flavour=flavour.value,
+        flavour=flavour,
         uniq_key=uniq_key.value,
         host=host,
         fail_on_error=False,
@@ -374,7 +393,7 @@ def data_search(
         stream_zarr=zarr,
         **(parse_cli_args(search_keys or [])),
     )
-    if zarr:
+    if zarr or flavour not in BuiltinFlavours.__members__:
         Auth(token_file).authenticate(host=host, _cli=True)
     if parse_json:
         print(json.dumps(sorted(result)))
@@ -414,10 +433,9 @@ def intake_catalogue(
             "based on file paths or Uniform Resource Identifiers"
         ),
     ),
-    flavour: Flavours = typer.Option(
+    flavour: str = typer.Option(
         "freva",
         "--flavour",
-        "-f",
         help=(
             "The Data Reference Syntax (DRS) standard specifying the type "
             "of climate datasets to query."
@@ -507,7 +525,7 @@ def intake_catalogue(
 ) -> None:
     """Create an intake catalogue for climate datasets based on the specified "
     "Data Reference Syntax (DRS) standard (flavour) and the type of search "
-    result (uniq_key), which can be either “file” or “uri”."""
+    result (uniq_key), which can be either "file" or "uri"."""
     logger.set_verbosity(verbose)
     logger.debug("Search the databrowser")
     result = databrowser(
@@ -516,7 +534,7 @@ def intake_catalogue(
         time_select=time_select.value,
         bbox=bbox or None,
         bbox_select=bbox_select.value,
-        flavour=flavour.value,
+        flavour=flavour,
         uniq_key=uniq_key.value,
         host=host,
         fail_on_error=False,
@@ -524,7 +542,7 @@ def intake_catalogue(
         stream_zarr=zarr,
         **(parse_cli_args(search_keys or [])),
     )
-    if zarr:
+    if zarr or flavour not in BuiltinFlavours.__members__:
         Auth(token_file).authenticate(host=host, _cli=True)
     with NamedTemporaryFile(suffix=".json") as temp_f:
         result._create_intake_catalogue_file(str(filename or temp_f.name))
@@ -563,10 +581,9 @@ def stac_catalogue(
             "based on file paths or Uniform Resource Identifiers"
         ),
     ),
-    flavour: Flavours = typer.Option(
+    flavour: str = typer.Option(
         "freva",
         "--flavour",
-        "-f",
         help=(
             "The Data Reference Syntax (DRS) standard specifying the type "
             "of climate datasets to query."
@@ -618,6 +635,16 @@ def stac_catalogue(
             "the hostname is read from a config file"
         ),
     ),
+    token_file: Optional[Path] = typer.Option(
+        None,
+        "--token-file",
+        "-tf",
+        help=(
+            "Instead of authenticating via code based authentication flow "
+            "you can set the path to the json file that contains a "
+            "`refresh token` containing a refresh_token key."
+        ),
+    ),
     verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
     multiversion: bool = typer.Option(
         False,
@@ -653,7 +680,7 @@ def stac_catalogue(
         time_select=time_select.value,
         bbox=bbox or None,
         bbox_select=bbox_select.value,
-        flavour=flavour.value,
+        flavour=flavour,
         uniq_key=uniq_key.value,
         host=host,
         fail_on_error=False,
@@ -661,6 +688,8 @@ def stac_catalogue(
         stream_zarr=False,
         **(parse_cli_args(search_keys or [])),
     )
+    if flavour not in BuiltinFlavours.__members__:
+        Auth(token_file).authenticate(host=host, _cli=True)
     print(result.stac_catalogue(filename=filename))
 
 
@@ -691,10 +720,9 @@ def count_values(
         "-d",
         help=("Separate the count by search facets."),
     ),
-    flavour: Flavours = typer.Option(
+    flavour: str = typer.Option(
         "freva",
         "--flavour",
-        "-f",
         help=(
             "The Data Reference Syntax (DRS) standard specifying the type "
             "of climate datasets to query."
@@ -760,6 +788,16 @@ def count_values(
     parse_json: bool = typer.Option(
         False, "-j", "--json", help="Parse output in json format."
     ),
+    token_file: Optional[Path] = typer.Option(
+        None,
+        "--token-file",
+        "-tf",
+        help=(
+            "Instead of authenticating via code based authentication flow "
+            "you can set the path to the json file that contains a "
+            "`refresh token` containing a refresh_token key."
+        ),
+    ),
     verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
     version: Optional[bool] = typer.Option(
         False,
@@ -787,6 +825,10 @@ def count_values(
         bbox or search_kws.pop("bbox", None),
     )
     facets = facets or []
+    if flavour not in BuiltinFlavours.__members__:
+        # We need authentication here, because then user
+        # is able get the user data flavour
+        Auth(token_file).authenticate(host=host, _cli=True)
     if detail:
         result = databrowser.count_values(
             *facets,
@@ -794,7 +836,7 @@ def count_values(
             time_select=time_select.value,
             bbox=bbox or None,
             bbox_select=bbox_select.value,
-            flavour=flavour.value,
+            flavour=flavour,
             host=host,
             extended_search=extended_search,
             multiversion=multiversion,
@@ -809,7 +851,7 @@ def count_values(
                 time_select=time_select.value,
                 bbox=bbox or None,
                 bbox_select=bbox_select.value,
-                flavour=flavour.value,
+                flavour=flavour,
                 host=host,
                 multiversion=multiversion,
                 fail_on_error=False,
@@ -944,3 +986,163 @@ def user_data_delete(
             key, value = search_key.split("=", 1)
             search_key_dict[key] = value
     databrowser.userdata(action="delete", metadata=search_key_dict, host=host)
+
+
+flavour_app = typer.Typer(help="Manage custom flavours")
+databrowser_app.add_typer(flavour_app, name="flavour")
+
+
+@flavour_app.command("add", help="Add a new custom flavour.")
+@exception_handler
+def flavour_add(
+    name: str = typer.Argument(..., help="Name of the flavour to add"),
+    mapping: List[str] = typer.Option(
+        [],
+        "--map",
+        "-m",
+        help="Key-value mappings in the format key=value",
+    ),
+    global_: bool = typer.Option(
+        False,
+        "--global",
+        help="Make the flavour available to all users (requires admin privileges)",
+    ),
+    host: Optional[str] = typer.Option(
+        None,
+        "--host",
+        help=(
+            "Set the hostname of the databrowser. If not set (default), "
+            "the hostname is read from a config file."
+        ),
+    ),
+    token_file: Optional[Path] = typer.Option(
+        None,
+        "--token-file",
+        "-tf",
+        help=(
+            "Instead of authenticating via code based authentication flow "
+            "you can set the path to the json file that contains a "
+            "`refresh token` containing a refresh_token key."
+        ),
+    ),
+    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
+) -> None:
+    """Add a new custom flavour to the databrowser.
+    This command allows user to create custom DRS (Data Reference Syntax)
+    flavours that define how search facets are mapped to different data
+    standards."""
+    logger.set_verbosity(verbose)
+    logger.debug(f"Adding flavour '{name}' with mapping {mapping} and global={global_}")
+    Auth(token_file).authenticate(host=host, _cli=True)
+    mapping_dict = {}
+    for map_item in mapping:
+        if "=" not in map_item:
+            logger.error(
+                f"Invalid mapping format: {map_item}. Expected format: key=value."
+            )
+            raise typer.Exit(code=1)
+        key, value = map_item.split("=", 1)
+        mapping_dict[key] = value
+
+    if not mapping_dict:
+        logger.error("At least one mapping must be provided using --map")
+        raise typer.Exit(code=1)
+
+    databrowser.flavour(
+        action="add",
+        name=name,
+        mapping=mapping_dict,
+        is_global=global_,
+        host=host,
+    )
+
+
+@flavour_app.command("delete", help="Delete an existing custom flavour.")
+@exception_handler
+def flavour_delete(
+    name: str = typer.Argument(..., help="Name of the flavour to delete"),
+    global_: bool = typer.Option(
+        False,
+        "--global",
+        help="Delete global flavour (requires admin privileges)",
+    ),
+    host: Optional[str] = typer.Option(
+        None,
+        "--host",
+        help=(
+            "Set the hostname of the databrowser. If not set (default), "
+            "the hostname is read from a config file."
+        ),
+    ),
+    token_file: Optional[Path] = typer.Option(
+        None,
+        "--token-file",
+        "-tf",
+        help=(
+            "Instead of authenticating via code based authentication flow "
+            "you can set the path to the json file that contains a "
+            "`refresh token` containing a refresh_token key."
+        ),
+    ),
+    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
+) -> None:
+    """Delete a custom flavour from the databrowser.
+    This command removes a custom flavour that was previously created.
+    You can only delete flavours that you own, unless you are an admin
+    user who can delete global flavours."""
+    logger.set_verbosity(verbose)
+    logger.debug(f"Deleting flavour '{name}'")
+    Auth(token_file).authenticate(host=host, _cli=True)
+
+    databrowser.flavour(
+        action="delete",
+        name=name,
+        is_global=global_,
+        host=host,
+    )
+
+
+@flavour_app.command("list", help="List all available custom flavours.")
+@exception_handler
+def flavour_list(
+    host: Optional[str] = typer.Option(
+        None,
+        "--host",
+        help=(
+            "Set the hostname of the databrowser. If not set (default), "
+            "the hostname is read from a config file."
+        ),
+    ),
+    parse_json: bool = typer.Option(
+        False, "-j", "--json", help="Parse output in json format."
+    ),
+    token_file: Optional[Path] = typer.Option(
+        None,
+        "--token-file",
+        "-tf",
+        help=(
+            "Instead of authenticating via code based authentication flow "
+            "you can set the path to the json file that contains a "
+            "`refresh token` containing a refresh_token key."
+        ),
+    ),
+    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
+) -> None:
+    """List all custom flavours available to the current user.
+    This command shows both personal flavours created by the user and
+    global flavours available to all users."""
+    logger.set_verbosity(verbose)
+    logger.debug("Listing custom flavours")
+    results = cast(Dict[str, Any], databrowser.flavour(action="list", host=host))
+    flavours_json = json.dumps(results["flavours"], indent=2)
+    if parse_json:
+        print(flavours_json)
+    else:
+        pprint(f"[yellow]{results.get('Note', '')}[/yellow]")
+        print("🎨 Available Data Reference Syntax (DRS) Flavours")
+        print("=" * 55)
+        for flavour in results["flavours"]:
+            owner_icon = "🌐" if flavour['owner'] == "global" else "👤"
+            print(f"  {owner_icon} {flavour['flavour_name']} (by {flavour['owner']})")
+            print(f"    Mapping: {flavour['mapping']}")
+            print()

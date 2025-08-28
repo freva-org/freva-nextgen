@@ -180,7 +180,10 @@ def auth_instance() -> Iterator[Auth]:
     """Fixture to provide a fresh Auth instance for each test."""
     auth = Auth()
     auth._auth_token = mock_token_data()
-    yield auth
+    try:
+        yield auth
+    finally:
+        auth._auth_token = None
 
 
 @pytest.fixture(scope="function")
@@ -289,38 +292,52 @@ def test_server() -> Iterator[str]:
         asyncio.run(shutdown_data_loader())
         asyncio.run(flush_cache())
 
-
 @pytest.fixture(scope="module")
-def auth(test_server: str) -> Iterator[Token]:
-    """Create a valid acccess token."""
-    server_config = ServerConfig()
-    data = {
-        "client_id": server_config.oidc_client_id or "",
-        "client_secret": server_config.oidc_client_secret or "",
-        "grant_type": "password",
-        "password": "janedoe123",
-        "username": "janedoe",
+def auth(test_server: str):
+    """Factory to create auth tokens for different user types."""
+    def _create_auth(user_type: str = "user") -> Token:
+        from getpass import getuser
+        server_config = ServerConfig()
+        user_configs = {
+            "user": {"username": "janedoe", "password": "janedoe123"},
+            "admin": {"username": getuser(), "password": "secret"},
+        }
+        config = user_configs.get(user_type, user_configs["user"])
+        data = {
+            "client_id": server_config.oidc_client_id or "",
+            "client_secret": server_config.oidc_client_secret or "",
+            "grant_type": "password",
+            **config
+        }
+        res = requests.post(
+            server_config.oidc_overview["token_endpoint"],
+            data={k: v for (k, v) in data.items() if v.strip()},
+        )
+        return _build_token(res.json())
+    user_token = _create_auth("user")
+    admin_token = _create_auth("admin")
+    
+    return {
+        **user_token,
+        "admin": admin_token
     }
-    res = requests.post(
-        server_config.oidc_overview["token_endpoint"],
-        data={k: v for (k, v) in data.items() if v.strip()},
-    )
-    token_data = res.json()
-    expires_at = (
-        token_data.get("exp")
-        or token_data.get("expires")
-        or token_data.get("expires_at")
-    )
+
+def _build_token(token_data: dict) -> Token:
+    """Helper to build Token object from response."""
     now = datetime.datetime.now(datetime.timezone.utc).timestamp()
+    expires_at = (
+        token_data.get("exp") or
+        token_data.get("expires") or
+        token_data.get("expires_at") or
+        now + token_data.get("expires_in", 180)
+    )
     refresh_expires_at = (
-        token_data.get("refresh_exp")
-        or token_data.get("refresh_expires")
-        or token_data.get("refresh_expires_at")
+        token_data.get("refresh_exp") or
+        token_data.get("refresh_expires") or
+        token_data.get("refresh_expires_at") or
+        now + token_data.get("refresh_expires_in", 180)
     )
-    expires_at = expires_at or now + token_data.get("expires_in", 180)
-    refresh_expires_at = refresh_expires_at or now + token_data.get(
-        "refresh_expires_in", 180
-    )
+
     return Token(
         access_token=token_data["access_token"],
         token_type=token_data["token_type"],
@@ -329,7 +346,6 @@ def auth(test_server: str) -> Iterator[Token]:
         refresh_expires=int(refresh_expires_at),
         scope=token_data["scope"],
     )
-
 
 @pytest.fixture(scope="module")
 def token_file(auth: Token) -> Path:

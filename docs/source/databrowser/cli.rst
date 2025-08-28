@@ -398,3 +398,60 @@ If you need to remove your data from the databrowser, use the `user-data delete`
         --token-file ~/.access_token
 
 This command deletes all data entries that match the specified search keys from the databrowser.
+
+
+Managing Custom Flavours
+-------------------------
+
+You can create and manage custom Data Reference Syntax (DRS) flavours that define how search facets are mapped to different data standards. This allows you to create personalized search interfaces that match your specific data organization needs.
+
+Before using the `flavour` commands for adding or deleting flavours, you need to create an access token and authenticate with the system. Please refer to the :ref:`auth` chapter for more details on token creation and authentication.
+
+Adding Custom Flavours
+~~~~~~~~~~~~~~~~~~~~~~
+
+To create a new custom flavour, use the `flavour add` command. You'll need to provide a name for your flavour and specify how search facets should be mapped.
+
+.. code:: console
+
+    freva-client databrowser flavour add my-custom-flavour \
+        --map project=activity_id \
+        --map model=source_id \
+        --map experiment=experiment_id
+
+This command creates a personal flavour named "my-custom-flavour" that maps the standard search keys to different attribute names.
+
+To create a global flavour that all users can access (requires admin privileges):
+
+.. code:: console
+
+    freva-client databrowser flavour add global-flavour \
+        --map project=activity_id \
+        --map model=source_id \
+        --global
+
+Listing Available Flavours
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To see all custom flavours available to you, use the `flavour list` command:
+
+.. code:: console
+
+    freva-client databrowser flavour list
+
+This will display both personal flavours you've created and ``global`` flavours available to all users. You can also output the results in JSON format:
+
+.. code:: console
+
+    freva-client databrowser flavour list --json
+
+Deleting Custom Flavours
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+To remove a custom flavour you no longer need, use the `flavour delete` command:
+
+.. code:: console
+
+    freva-client databrowser flavour delete my-custom-flavour
+
+This command removes the specified flavour from the system. You can only delete flavours that you own, unless you are an admin user who can delete global flavours.

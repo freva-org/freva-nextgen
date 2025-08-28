@@ -236,9 +236,7 @@ class databrowser:
         self,
         *facets: str,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems", "user"
-        ] = "freva",
+        flavour: str = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -254,6 +252,7 @@ class databrowser:
         self._cfg = Config(host, uniq_key=uniq_key, flavour=flavour)
         self._flavour = flavour
         self._stream_zarr = stream_zarr
+        self.builtin_flavours = {"freva", "cmip6", "cmip5", "cordex", "user"}
         facet_search: Dict[str, List[str]] = defaultdict(list)
         for key, value in search_keys.items():
             if isinstance(value, str):
@@ -550,9 +549,7 @@ class databrowser:
     def count_values(
         cls,
         *facets: str,
-        flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems", "user"
-        ] = "freva",
+        flavour: str = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -732,9 +729,7 @@ class databrowser:
     def metadata_search(
         cls,
         *facets: str,
-        flavour: Literal[
-            "freva", "cmip6", "cmip5", "cordex", "nextgems", "user"
-        ] = "freva",
+        flavour: str = "freva",
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -946,9 +941,12 @@ class databrowser:
             print(databrowser.overview())
         """
         overview = Config(host).overview.copy()
+        note = overview.pop("Note", None)
+        if note:
+            overview["Note"] = note
         overview["Available search flavours"] = overview.pop("flavours")
         overview["Search attributes by flavour"] = overview.pop("attributes")
-        return yaml.safe_dump(overview)
+        return yaml.safe_dump(overview, sort_keys=False)
 
     @property
     def url(self) -> str:
@@ -1090,8 +1088,6 @@ class databrowser:
                 if result is not None:
                     response_data = result.json()
                     status_message = response_data.get("status")
-                else:
-                    raise ValueError("Failed to add user data")
                 pprint(f"[b][green]{status_message}[green][b]")
             else:
                 raise ValueError("No metadata generated from the input data.")
@@ -1104,10 +1100,152 @@ class databrowser:
                 )
 
             result = this._request("DELETE", url, data=metadata, headers=headers)
-
-            if result is None:
-                raise ValueError("Failed to delete user data")
             pprint("[b][green]User data deleted successfully[green][b]")
+
+    @classmethod
+    def flavour(
+        cls,
+        action: Literal["add", "delete", "list"],
+        name: Optional[str] = None,
+        mapping: Optional[Dict[str, str]] = None,
+        is_global: bool = False,
+        host: Optional[str] = None,
+        fail_on_error: bool = False,
+    ) -> Union[None, Dict[str, Any]]:
+        """Manage custom flavours in the databrowser system.
+
+        This method allows user to add, delete, or list custom flavours that
+        define how search facets are mapped to different Data Reference Syntax
+        (DRS) standards.
+
+        Parameters
+        ~~~~~~~~~~
+        action : Literal["add", "delete", "list"]
+            The action to perform: "add" to create a new flavour, "delete"
+            to remove an existing flavour, or "list" to retrieve all available
+            custom flavours.
+        name : str, optional
+            The name of the flavour to add or delete (required for "add" and
+            "delete" actions).
+        mapping : Dict[str, str], optional
+            A dictionary mapping facet names to their corresponding values in
+            the new flavour (required for "add" action).
+        is_global : bool, default: False
+            Whether to make the flavour available to all users (requires admin
+            privileges) or just the current user.
+        host : str, optional
+            Override the host name of the databrowser server. This is usually
+            the url where the freva web site can be found. Such as
+            www.freva.dkrz.de. By default no host name is given and the host
+            name will be taken from the freva config file.
+        fail_on_error : bool, optional
+            Make the call fail if the connection to the databrowser could not
+            be established.
+
+        Returns
+        ~~~~~~~
+        Union[None, List[Dict[str, Any]]]
+            For "list" action, returns a list of dictionaries containing flavour
+            information. For "add" and "delete" actions, returns None.
+
+        Raises
+        ~~~~~~
+        ValueError
+            If the operation fails, required parameters are missing, or the
+            flavour name conflicts with built-in flavours.
+
+        Example
+        ~~~~~~~
+
+        Adding a custom flavour:
+
+        .. code-block:: python
+
+            from freva_client import databrowser
+            databrowser.flavour(
+                action="add",
+                name="klimakataster",
+                mapping={"project": "Projekt", "model": "Modell"},
+                is_global=False
+            )
+
+        Listing all custom flavours:
+
+        .. code-block:: python
+
+            from freva_client import databrowser
+            flavours = databrowser.flavour(action="list")
+            print(flavours)
+
+        Deleting a custom flavour:
+
+        .. code-block:: python
+
+            from freva_client import databrowser
+            databrowser.flavour(action="delete", name="klimakataster")
+        """
+        this = cls(
+            host=host,
+            fail_on_error=fail_on_error,
+        )
+        cfg = Config(host)
+        if action == "add":
+            token = this._auth.authenticate(config=this._cfg)
+            headers = {"Authorization": f"Bearer {token['access_token']}"}
+            if not name or not mapping:
+                raise ValueError(
+                    "Both 'name' and 'mapping' are required for add action"
+                )
+            payload = {
+                "flavour_name": name,
+                "mapping": mapping,
+                "is_global": is_global,
+            }
+            result = this._request(
+                "POST",
+                f"{this._cfg.databrowser_url}/flavours",
+                data=payload,
+                headers=headers,
+            )
+            if result is not None:
+                msg = result.json().get("status", "Flavour added successfully")
+                pprint(f"[b][green] {msg} [/green][/b]")
+
+        elif action == "delete":
+            token = this._auth.authenticate(config=this._cfg)
+            headers = {"Authorization": f"Bearer {token['access_token']}"}
+            if not name:
+                raise ValueError("'name' is required for delete action")
+            params = {"is_global": "true" if is_global else "false"}
+
+            result = this._request(
+                "DELETE",
+                f"{this._cfg.databrowser_url}/flavours/{name}",
+                headers=headers,
+                params=params,
+            )
+            if result is not None:
+                msg = result.json().get("status", "Flavour deleted successfully")
+                pprint(f"[b][green] {msg} [/green][/b]")
+        elif action == "list":
+            headers = cast(Dict[str, str], this._cfg._get_headers)
+            flavours: List[Dict[str, Any]] = []
+            result = this._request(
+                "GET", f"{cfg.databrowser_url}/flavours", headers=headers
+            )
+            if result is not None:
+                flavours = result.json().get("flavours", [])
+            result_data: Dict[str, Any] = {
+                "flavours": flavours,
+            }
+            if not headers:
+                result_data["Note"] = (
+                    "Displaying only global flavours. "
+                    "Authenticate to see custom user flavours as well."
+                )
+
+            return result_data
+        return None
 
     def _request(
         self,
@@ -1117,11 +1255,22 @@ class databrowser:
         **kwargs: Any,
     ) -> Optional[requests.models.Response]:
         """Request method to handle CRUD operations (GET, POST, PUT, PATCH, DELETE)."""
+        self._cfg.validate_server
         method_upper = method.upper()
         timeout = kwargs.pop("timeout", 30)
         params = kwargs.pop("params", {})
         stream = kwargs.pop("stream", False)
+        kwargs.setdefault("headers", {})
 
+        if (
+            self._flavour not in self.builtin_flavours
+            and "Authorization" not in kwargs["headers"]
+        ):
+            try:
+                token = self._auth.authenticate(config=self._cfg)
+                kwargs["headers"]["Authorization"] = f"Bearer {token['access_token']}"
+            except Exception:
+                pass
         logger.debug(
             "%s request to %s with data: %s and parameters: %s",
             method_upper,
@@ -1149,8 +1298,15 @@ class databrowser:
         except (
             requests.exceptions.ConnectionError,
             requests.exceptions.HTTPError,
+            requests.exceptions.InvalidURL,
         ) as error:
-            msg = f"{method_upper} request failed with {error}"
+            server_msg = ""
+            if hasattr(error, 'response') and error.response is not None:
+                error_data = error.response.json()
+                server_msg = (
+                    f" - {error_data.get('detail', error_data.get('message', ''))}"
+                )
+            msg = f"{method_upper} request failed with: {error}{server_msg}"
             if self._fail_on_error:
                 raise ValueError(msg) from None
             logger.warning(msg)
