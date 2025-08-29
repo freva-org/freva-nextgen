@@ -1253,12 +1253,13 @@ class databrowser:
             if hasattr(error, 'response') and error.response is not None:
                 try:
                     error_data = error.response.json()
+                    error_var = {error_data.get(
+                        'detail', error_data.get(
+                            'message', error_data.get('error', '')
+                        )
+                    )}
                     server_msg = (
-                        f" - {error_data.get(
-                            'detail', error_data.get(
-                                'message', error_data.get('error', '')
-                            )
-                        )}"
+                        f" - {error_var}"
                     )
                 except Exception:
                     pass

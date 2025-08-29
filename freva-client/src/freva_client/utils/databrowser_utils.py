@@ -46,9 +46,7 @@ class Config:
         self.auth_url = f"{self.get_api_url(host)}/auth/v2"
         self.get_api_main_url = self.get_api_url(host)
         self.uniq_key = uniq_key
-        self.flavour = flavour or self._get_databrowser_params_from_config().get(
-            "flavour", ""
-        ) or "freva"
+        self.flavour = self.get_flavour(flavour)
 
     @cached_property
     def validate_server(self) -> bool:
@@ -60,6 +58,19 @@ class Config:
             raise ValueError(
                 f"Could not connect to {self.databrowser_url}: {e}"
             ) from None
+
+    def get_flavour(self, flavour: Optional[str]) -> str:
+        """Get the current flavour."""
+        if flavour:
+            return flavour
+        else:
+            try:
+                config_flavour = self._get_databrowser_params_from_config().get(
+                    "flavour", ""
+                )
+                return config_flavour or "freva"
+            except ValueError:
+                return "freva"
 
     def _read_ini(self, path: Path) -> Dict[str, str]:
         """Read an ini file.

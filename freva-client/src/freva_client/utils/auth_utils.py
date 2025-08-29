@@ -247,7 +247,7 @@ def requires_authentication(
         databrowser_url: Optional[str] = None
 ) -> bool:
     """Check if authentication is required.
-    
+
     Parameters
     ----------
     flavour : str or None

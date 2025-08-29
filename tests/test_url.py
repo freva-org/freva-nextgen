@@ -14,16 +14,19 @@ def test_invalid_eval_config(invalid_eval_conf_file: Path) -> None:
     assert invalid_eval_conf_file.is_file()
     with pytest.raises(ValueError):
         databrowser()
-    with pytest.raises(ValueError, match="No databrowser host configured, please use a configuration defining a databrowser host or set a host name using the `host` key"):
-        databrowser(host="www.example.com")
+    db = databrowser(host="www.example.com:8080")
+    assert (
+        db.url == "http://www.example.com:8080/api/freva-nextgen/databrowser"
+    )
+
 
 def test_invalid_freva_config(invalid_freva_conf_file: Path) -> None:
     """Test if loading an invalid freva config file fails."""
     assert invalid_freva_conf_file.is_file()
     with pytest.raises(ValueError):
         databrowser()
-    with pytest.raises(ValueError, match="No databrowser host configured, please use a configuration defining a databrowser host or set a host name using the `host` key"):
-        databrowser(host="www.example.com")
+    db = databrowser(host="https://www.example.com")
+    assert db.url == "https://www.example.com/api/freva-nextgen/databrowser"
 
 
 def test_valid_eval_config(valid_eval_conf_file: Path) -> None:
@@ -65,3 +68,5 @@ def test_valid_freva_config(valid_freva_config: Path) -> None:
             assert db.url == (
                 "https://www.freva.com/api/freva-nextgen/databrowser"
             )
+        # test if custom flavour is read correctly
+        assert db._flavour == "cmip6"
