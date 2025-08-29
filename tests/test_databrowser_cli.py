@@ -487,7 +487,33 @@ def test_flavour_commands(
         assert len(flavours_after) > initial_count
         flavour_names = [f["flavour_name"] for f in flavours_after]
         assert "test_cli_flavour" in flavour_names
-        
+
+        # check the metadata-search with the new personal flavour
+        res = cli_runner.invoke(
+            app,
+            [
+                "metadata-search",
+                "--host", test_server,
+                "--token-file", str(token_file),
+                "--flavour", "test_cli_flavour",
+                "--json"
+            ]
+        )
+        assert res.exit_code == 0
+
+        # check the count with the new personal flavour
+        res = cli_runner.invoke(
+            app,
+            [
+                "data-count",
+                "--host", test_server,
+                "--token-file", str(token_file),
+                "--flavour", "test_cli_flavour",
+                "--json"
+            ]
+        )
+        assert res.exit_code == 0
+
         # deleting the custom flavour
         res = cli_runner.invoke(
             app,
