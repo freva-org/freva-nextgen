@@ -21,7 +21,7 @@ from urllib.parse import urlencode, urljoin
 
 import aiohttp
 from fastapi import Depends, Form, HTTPException, Query, Request, Security
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.security import (
     HTTPAuthorizationCredentials,
     HTTPBearer,
@@ -295,6 +295,45 @@ async def get_token_status(
     return cast(TokenPayload, id_token)
 
 
+@app.get(
+    "/api/freva-nextgen/.well-known/openid-configuration",
+    tags=["Authentication"],
+    response_class=JSONResponse,
+    responses={
+        200: {
+            "description": ("Metadata for interacting with the OIDC provider."),
+            "content": {
+                "application/json": {
+                    "example": {
+                        "issuer": "http://localhost:8080/realms/freva",
+                        "authorization_endpoint": "http://localhost:8080/realms/...",
+                        "token_endpoint": "http://localhost:8080/realms/...",
+                    }
+                },
+            },
+        },
+        503: {"description": "Could not connect of OIDC server."},
+    },
+)
+async def well_kown_url() -> JSONResponse:
+    """Get configuration information about the identity provider in use."""
+
+    try:
+        async with aiohttp.ClientSession(
+            timeout=TIMEOUT, raise_for_status=True
+        ) as session:
+            async with session.get(auth.discovery_url) as res:
+                return JSONResponse(
+                    content=await res.json(), status_code=res.status
+                )
+    except Exception as error:
+        raise HTTPException(
+            status_code=503, detail="Could not connect of OIDC server."
+        ) from error
+
+        return False
+
+
 async def oicd_request(
     method: Literal["GET", "POST"],
     endpoint: str,
@@ -324,9 +363,9 @@ async def oicd_request(
             logger.error(error)
             raise HTTPException(status_code=401) from error
         except Exception as error:
-            logger.error("Could not connect to OIDC server")
-            logger.exception(error)
-            raise HTTPException(status_code=503) from error
+            raise HTTPException(
+                status_code=503, detail="Could not connect to OIDC server"
+            ) from error
 
 
 @app.get("/api/freva-nextgen/auth/v2/userinfo", tags=["Authentication"])

@@ -137,8 +137,109 @@ then be included in the authorization header for secured endpoints.
                 return 0;
             }
 
+
 ---
 
+
+.. http:get:: /api/freva-nextgen/.well-known/openid-configuration
+
+    Get configuration information about the identity provider in use.
+
+
+    :statuscode 200: Metadata for interacting with the OIDC provider.
+    :statuscode 503: OIDC Identiy Provider server unavailable.
+    :resheader Content-Type: ``application/json``:  Metadata for interacting with
+                                                    the OIDC provider.
+
+
+    Example Request
+    ~~~~~~~~~~~~~~~
+
+    .. sourcecode:: http
+
+        GET /api/freva-nextgen/.well-known/openid-configuration HTTP/1.1
+        host: www.freva.dkrz.de
+
+    Example Response
+    ~~~~~~~~~~~~~~~~
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        {
+            "issuer": "http://localhost:8080/realms/freva",
+            "authorization_endpoint": "http://localhost:8080/realms/freva/protocol/openid-connect/auth",
+            "token_endpoint": "http://localhost:8080/realms/freva/protocol/openid-connect/token"
+        }
+
+    Code examples
+    ~~~~~~~~~~~~~
+    Below you can find example usages of this request in different scripting and
+    programming languages
+
+    .. tabs::
+
+        .. code-tab:: bash
+            :caption: Shell
+
+            curl -X GET https://www.freva.drkz.de/api/freva-nextgen/.well-known/openid-configuration
+
+        .. code-tab:: python
+            :caption: Python
+
+            import requests
+            response = requests.get(
+              "https://www.freva.drkz.de/api/freva-nextgen/.well-known/openid-configuration",
+            )
+            token_data = response.json()
+
+        .. code-tab:: r
+            :caption: gnuR
+
+            library(httr)
+
+            response <- GET(
+               "https://www.freva.drkz.de/api/freva-nextgen/.well-known/openid-configuration"
+            )
+            token_data <- content(response, "parsed")
+
+        .. code-tab:: julia
+            :caption: Julia
+
+            using HTTP
+            using JSON
+
+            response = HTTP.get(
+              "https://www.freva.drkz.de/api/freva-nextgen/.well-known/openid-configuration"
+            )
+            token_data = JSON.parse(String(response.body))
+
+        .. code-tab:: c
+            :caption: C/C++
+
+            #include <stdio.h>
+            #include <curl/curl.h>
+
+            int main() {
+                CURL *curl;
+                CURLcode res;
+
+                curl_global_init(CURL_GLOBAL_DEFAULT);
+                curl = curl_easy_init();
+                if(curl) {
+                    struct curl_slist *headers = NULL;
+
+                    curl_easy_setopt(curl, CURLOPT_URL, "https://www.freva.drkz.de/api/freva-nextgen/.well-known/openid-configuration");
+                    res = curl_easy_perform(curl);
+                    curl_easy_cleanup(curl);
+                }
+                curl_global_cleanup();
+                return 0;
+            }
+
+---
 
 .. http:get:: /api/freva-nextgen/auth/v2/status
 
