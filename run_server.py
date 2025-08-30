@@ -5,8 +5,6 @@ import json
 import os
 import sys
 import tempfile
-import time
-import urllib.request
 from base64 import b64encode
 from pathlib import Path
 from subprocess import Popen, run
