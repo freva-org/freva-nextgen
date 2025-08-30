@@ -295,7 +295,7 @@ async def get_token_status(
     return cast(TokenPayload, id_token)
 
 
-async def oicd_request(
+async def ocid_request(
     method: Literal["GET", "POST"],
     endpoint: str,
     headers: Optional[Dict[str, str]] = None,
@@ -340,7 +340,7 @@ async def userinfo(
         return UserInfo(**get_userinfo(token_data))
     except ValidationError:
         authorization = dict(request.headers)["authorization"]
-        token_data = await oicd_request(
+        token_data = await ocid_request(
             "GET",
             "userinfo_endpoint",
             headers={"Authorization": authorization},
@@ -437,6 +437,15 @@ async def login(
             examples=["login"],
         ),
     ] = Prompt.none,
+    offline_access: bool = Query(
+        False,
+        title="Request a long term token.",
+        description=(
+            "If true, include ``scope=offline_access`` to obtain an "
+            "offline refresh token with a long TTL. This must be"
+            " supported by the Authentication system."
+        ),
+    ),
 ) -> RedirectResponse:
     """
     Initiate the OpenID Connect authorization code flow.
@@ -462,11 +471,16 @@ async def login(
         "response_type": "code",
         "client_id": server_config.oidc_client_id,
         "redirect_uri": redirect_uri,
-        "scope": "openid profile",
+        "scope": (
+            "openid profile"
+            if offline_access is False
+            else "openid profile offline_access"
+        ),
         "state": state,
         "nonce": nonce,
         "prompt": prompt.value.replace("none", ""),
     }
+    print(query)
     query = {k: v for (k, v) in query.items() if v}
     auth_url = (
         f"{server_config.oidc_overview['authorization_endpoint']}"
@@ -545,7 +559,7 @@ async def callback(
         "code": code,
         "redirect_uri": redirect_uri,
     }
-    token_data: Dict[str, Union[str, int]] = await oicd_request(
+    token_data: Dict[str, Union[str, int]] = await ocid_request(
         "POST", "token_endpoint", data={k: v for (k, v) in data.items() if v}
     )
     return token_data
@@ -603,7 +617,7 @@ async def fetch_or_refresh_token(
         raise HTTPException(
             status_code=400, detail="Missing code or refresh_token"
         )
-    token_data = await oicd_request(
+    token_data = await ocid_request(
         "POST",
         "token_endpoint",
         data={k: v for (k, v) in data.items() if v},
