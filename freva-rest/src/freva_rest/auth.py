@@ -480,7 +480,6 @@ async def login(
         "nonce": nonce,
         "prompt": prompt.value.replace("none", ""),
     }
-    print(query)
     query = {k: v for (k, v) in query.items() if v}
     auth_url = (
         f"{server_config.oidc_overview['authorization_endpoint']}"
