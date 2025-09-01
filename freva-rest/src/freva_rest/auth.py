@@ -331,8 +331,6 @@ async def well_kown_url() -> JSONResponse:
             status_code=503, detail="Could not connect of OIDC server."
         ) from error
 
-        return False
-
 
 async def oicd_request(
     method: Literal["GET", "POST"],
