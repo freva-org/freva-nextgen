@@ -2,21 +2,42 @@
 
 import asyncio
 import json
-from typing import Annotated, Any, Dict, Optional
+import uuid
+from typing import Annotated, Any, Dict, List, Optional
 
 import cloudpickle
 from fastapi import Path, Query, Security, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse, Response
 from fastapi_third_party_auth import IDToken as TokenPayload
+from pydantic import BaseModel, Field
 
 from freva_rest.auth import auth
-from freva_rest.rest import app
+from freva_rest.logger import logger
+from freva_rest.rest import app, server_config
 from freva_rest.utils.base_utils import create_redis_connection
 
 ZARRAY_JSON = ".zarray"
 ZGROUP_JSON = ".zgroup"
 ZATTRS_JSON = ".zattrs"
+
+
+class LoadResponse(BaseModel):
+    """Response schema returning the URL of the future Zarr dataset."""
+
+    urls: List[str] = Field(
+        ...,
+        description=(
+            "URLs where the converted Zarr dataset will be available "
+            "after the asynchronous conversion has finished."
+        ),
+        title="Zarr URLs",
+        examples=[
+            [
+                f"{server_config.proxy}/api/freva-nextgen/data-portal/zarr/abc123.zarr"
+            ]
+        ],
+    )
 
 
 async def read_redis_data(
@@ -67,6 +88,77 @@ async def read_redis_data(
             detail=lookup.get(task_status, "unknown"),
         )
     return p_data[subkey]
+
+
+@app.get(
+    "/api/freva-nextgen/data-portal/zarr/convert",
+    summary="Request asynchronous Zarr conversion",
+    description=(
+        "Submit a file or object path to be converted into a Zarr store.  "
+        "This endpoint only publishes a message to the data‑portal worker via "
+        "a broker; it does **not** verify that the path exists or perform the "
+        "conversion itself.  It returns a URL containing a UUID where the Zarr "
+        "dataset will be available once processing is complete.  "
+        "\n\n"
+        "If the data‑loading service cannot access the file , "
+        "it will record the failure and the returned Zarr dataset will be in "
+        "a failed state with a reason.  You can query the status endpoint to "
+        "check whether the conversion succeeded or failed."
+    ),
+    tags=["Load data"],
+    status_code=200,
+    responses={
+        401: {"description": "Unauthorised / not a valid token."},
+        503: {"description": "If the service is currently unavailable."},
+        500: {"description": "Internal error while publishing to the broker."},
+    },
+    response_class=JSONResponse,
+)
+async def load_files(
+    path: Annotated[
+        List[str],
+        Query(
+            title="Path to data.",
+            description="Absolute or object‑store paths to the data files to convert.",
+            examples=["/work/abc1234/myuser/my-data.nc"],
+        ),
+    ],
+    current_user: TokenPayload = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
+) -> LoadResponse:
+    """Publish a conversion request to the data‑portal worker.
+
+    - **path**: absolute filesystem or object‑store path to the input file.
+    - **returns**: a URL containing a UUID where the Zarr store will be served.
+    - **note**: this function does **not** check that the input path exists or
+      is readable by; that check occurs asynchronously in the worker.
+    """
+    if "zarr-stream" not in (server_config.services or []):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service not enabled.",
+        )
+    out_paths: List[str] = []
+    try:
+        cache = await create_redis_connection()
+        api_path = f"{server_config.proxy}/api/freva-nextgen/data-portal/zarr"
+        for _path in path if isinstance(path, list) else [path]:
+            uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, _path))
+            out_paths.append(f"{api_path}/{uuid5}.zarr")
+            await cache.publish(
+                "data-portal",
+                json.dumps({"uri": {"path": _path, "uuid": uuid5}}).encode(
+                    "utf-8"
+                ),
+            )
+    except Exception as pub_err:
+        logger.error("Failed to publish to Redis: %s", pub_err)
+        raise HTTPException(
+            status_code=500,
+            detail="Internal error, service not able to publish.",
+        )
+    return LoadResponse(urls=out_paths)
 
 
 @app.get(
