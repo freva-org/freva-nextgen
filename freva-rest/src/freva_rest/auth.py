@@ -332,7 +332,7 @@ async def well_kown_url() -> JSONResponse:
         ) from error
 
 
-async def oicd_request(
+async def oidc_request(
     method: Literal["GET", "POST"],
     endpoint: str,
     headers: Optional[Dict[str, str]] = None,
@@ -377,7 +377,7 @@ async def userinfo(
         return UserInfo(**get_userinfo(token_data))
     except ValidationError:
         authorization = dict(request.headers)["authorization"]
-        token_data = await oicd_request(
+        token_data = await oidc_request(
             "GET",
             "userinfo_endpoint",
             headers={"Authorization": authorization},
@@ -582,7 +582,7 @@ async def callback(
         "code": code,
         "redirect_uri": redirect_uri,
     }
-    token_data: Dict[str, Union[str, int]] = await oicd_request(
+    token_data: Dict[str, Union[str, int]] = await oidc_request(
         "POST", "token_endpoint", data={k: v for (k, v) in data.items() if v}
     )
     return token_data
@@ -640,7 +640,7 @@ async def fetch_or_refresh_token(
         raise HTTPException(
             status_code=400, detail="Missing code or refresh_token"
         )
-    token_data = await oicd_request(
+    token_data = await oidc_request(
         "POST",
         "token_endpoint",
         data={k: v for (k, v) in data.items() if v},
