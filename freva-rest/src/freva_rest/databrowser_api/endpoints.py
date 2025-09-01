@@ -513,7 +513,7 @@ async def delete_user_data(
 
 @app.post(
     "/api/freva-nextgen/databrowser/flavours",
-    tags=["Flavour management"],
+    tags=["Data search"],
     status_code=201,
     response_class=JSONResponse,
     responses={
@@ -561,7 +561,7 @@ async def add_custom_flavour(
 
 @app.get(
     "/api/freva-nextgen/databrowser/flavours",
-    tags=["Flavour management"],
+    tags=["Data search"],
     status_code=200,
     response_model=FlavourListResponse,
     responses={
@@ -611,7 +611,7 @@ async def list_flavours(
 
 @app.delete(
     "/api/freva-nextgen/databrowser/flavours/{flavour_name}",
-    tags=["Flavour management"],
+    tags=["Data search"],
     status_code=200,
     response_model=FlavourDeleteResponse,
     responses={

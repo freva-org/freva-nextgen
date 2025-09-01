@@ -261,13 +261,13 @@ def requires_authentication(
     """
     if zarr:
         return True
-    if not flavour or flavour in {"freva", "cmip6", "cmip5", "cordex", "user"}:
+    if flavour in {"freva", "cmip6", "cmip5", "cordex", "user", None}:
         return False
     try:
         response = requests.get(f"{databrowser_url}/flavours", timeout=30)
         response.raise_for_status()
         result = {"flavours": response.json().get("flavours", [])}
-        if result and "flavours" in result:
+        if "flavours" in result:
             global_flavour_names = {
                 f["flavour_name"] for f in result["flavours"]
             }
