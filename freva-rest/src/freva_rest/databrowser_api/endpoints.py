@@ -400,6 +400,7 @@ async def load_data(
         start=start,
         multi_version=multi_version,
         translate=translate,
+        current_user=current_user,
         **SolrSchema.process_parameters(request, "catalogue-type"),
     )
     _, total_count = await solr_search.init_stream()

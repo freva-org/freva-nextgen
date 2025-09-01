@@ -28,7 +28,12 @@ from rich import print as pprint
 
 from .auth import Auth
 from .utils import logger
-from .utils.auth_utils import Token, choose_token_strategy, load_token
+from .utils.auth_utils import (
+    Token,
+    choose_token_strategy,
+    load_token,
+    requires_authentication,
+)
 from .utils.databrowser_utils import Config, UserDataHandler
 
 __all__ = ["databrowser"]
@@ -225,7 +230,7 @@ class databrowser:
         self,
         *facets: str,
         uniq_key: Literal["file", "uri"] = "file",
-        flavour: str = "freva",
+        flavour: Optional[str] = None,
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -239,7 +244,7 @@ class databrowser:
         self._auth = Auth()
         self._fail_on_error = fail_on_error
         self._cfg = Config(host, uniq_key=uniq_key, flavour=flavour)
-        self._flavour = flavour
+        self._flavour = self._cfg.flavour
         self._stream_zarr = stream_zarr
         self.builtin_flavours = {"freva", "cmip6", "cmip5", "cordex", "user"}
         facet_search: Dict[str, List[str]] = defaultdict(list)
@@ -288,12 +293,10 @@ class databrowser:
 
     def __iter__(self) -> Iterator[str]:
         query_url = self._cfg.search_url
-        headers = {}
         if self._stream_zarr:
             query_url = self._cfg.zarr_loader_url
-            token = self._auth.authenticate(config=self._cfg)
-            headers = {"Authorization": f"Bearer {token['access_token']}"}
-        result = self._request("GET", query_url, headers=headers, stream=True)
+
+        result = self._request("GET", query_url, stream=True)
         if result is not None:
             try:
                 for res in result.iter_lines():
@@ -367,11 +370,7 @@ class databrowser:
         kwargs: Dict[str, Any] = {"stream": True}
         url = self._cfg.intake_url
         if self._stream_zarr:
-            token = self._auth.authenticate(config=self._cfg)
             url = self._cfg.zarr_loader_url
-            kwargs["headers"] = {
-                "Authorization": f"Bearer {token['access_token']}"
-            }
             kwargs["params"] = {"catalogue-type": "intake"}
         result = self._request("GET", url, **kwargs)
         if result is None:
@@ -538,7 +537,7 @@ class databrowser:
     def count_values(
         cls,
         *facets: str,
-        flavour: str = "freva",
+        flavour: Optional[str] = None,
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -693,7 +692,7 @@ class databrowser:
     def metadata_search(
         cls,
         *facets: str,
-        flavour: str = "freva",
+        flavour: Optional[str] = None,
         time: Optional[str] = None,
         host: Optional[str] = None,
         time_select: Literal["flexible", "strict", "file"] = "flexible",
@@ -1211,14 +1210,16 @@ class databrowser:
         kwargs.setdefault("headers", {})
 
         if (
-            self._flavour not in self.builtin_flavours
+            requires_authentication(
+                self._flavour,
+                self._stream_zarr,
+                self._cfg.databrowser_url
+            )
             and "Authorization" not in kwargs["headers"]
         ):
-            try:
-                token = self._auth.authenticate(config=self._cfg)
-                kwargs["headers"]["Authorization"] = f"Bearer {token['access_token']}"
-            except Exception:
-                pass
+            token = self._auth.authenticate(config=self._cfg)
+            kwargs["headers"]["Authorization"] = f"Bearer {token['access_token']}"
+
         logger.debug(
             "%s request to %s with data: %s and parameters: %s",
             method_upper,
@@ -1250,10 +1251,18 @@ class databrowser:
         ) as error:
             server_msg = ""
             if hasattr(error, 'response') and error.response is not None:
-                error_data = error.response.json()
-                server_msg = (
-                    f" - {error_data.get('detail', error_data.get('message', ''))}"
-                )
+                try:
+                    error_data = error.response.json()
+                    error_var = {error_data.get(
+                        'detail', error_data.get(
+                            'message', error_data.get('error', '')
+                        )
+                    )}
+                    server_msg = (
+                        f" - {error_var}"
+                    )
+                except Exception:
+                    pass
             msg = f"{method_upper} request failed with: {error}{server_msg}"
             if self._fail_on_error:
                 raise ValueError(msg) from None

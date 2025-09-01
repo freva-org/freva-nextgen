@@ -68,3 +68,5 @@ def test_valid_freva_config(valid_freva_config: Path) -> None:
             assert db.url == (
                 "https://www.freva.com/api/freva-nextgen/databrowser"
             )
+        # test if custom flavour is read correctly
+        assert db._flavour == "cmip6"

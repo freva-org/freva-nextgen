@@ -201,7 +201,7 @@ def valid_freva_config() -> Iterator[Path]:
             freva_config = Path(temp_dir) / "share" / "freva" / "freva.toml"
             freva_config.parent.mkdir(exist_ok=True, parents=True)
             freva_config.write_text(
-                "[freva]\nhost = 'https://www.freva.com:80/api'"
+                "[freva]\nhost = 'https://www.freva.com:80/api'\ndefault_flavour = 'cmip6'\n"
             )
             yield Path(temp_dir)
 
@@ -219,7 +219,6 @@ def invalid_freva_conf_file() -> Iterator[Path]:
         ):
             freva_config.write_text("[freva]\nhost = https://freva_conf/api")
             yield freva_config
-
 
 @pytest.fixture(scope="function")
 def free_port() -> Iterator[int]:

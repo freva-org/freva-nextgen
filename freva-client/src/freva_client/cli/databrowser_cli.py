@@ -19,6 +19,7 @@ from rich import print as pprint
 from freva_client import databrowser
 from freva_client.auth import Auth
 from freva_client.utils import exception_handler, logger
+from freva_client.utils.auth_utils import requires_authentication
 
 from .cli_utils import parse_cli_args, version_callback
 
@@ -139,8 +140,8 @@ def metadata_search(
             " containing era5, regardless of project, product etc."
         ),
     ),
-    flavour: str = typer.Option(
-        "freva",
+    flavour: Optional[str] = typer.Option(
+        None,
         "--flavour",
         help=(
             "The Data Reference Syntax (DRS) standard specifying the type "
@@ -236,7 +237,7 @@ def metadata_search(
     """
     logger.set_verbosity(verbose)
     logger.debug("Search the databrowser")
-    if flavour not in BuiltinFlavours.__members__:
+    if requires_authentication(flavour=flavour, databrowser_url=host):
         Auth(token_file).authenticate(host=host, _cli=True)
     result = databrowser.metadata_search(
         *(facets or []),
@@ -289,8 +290,8 @@ def data_search(
             "based on file paths or Uniform Resource Identifiers"
         ),
     ),
-    flavour: str = typer.Option(
-        "freva",
+    flavour: Optional[str] = typer.Option(
+        None,
         "--flavour",
         help=(
             "The Data Reference Syntax (DRS) standard specifying the type "
@@ -394,7 +395,7 @@ def data_search(
         stream_zarr=zarr,
         **(parse_cli_args(search_keys or [])),
     )
-    if zarr or flavour not in BuiltinFlavours.__members__:
+    if requires_authentication(flavour=flavour, zarr=zarr, databrowser_url=host):
         Auth(token_file).authenticate(host=host, _cli=True)
     if parse_json:
         print(json.dumps(sorted(result)))
@@ -434,8 +435,8 @@ def intake_catalogue(
             "based on file paths or Uniform Resource Identifiers"
         ),
     ),
-    flavour: str = typer.Option(
-        "freva",
+    flavour: Optional[str] = typer.Option(
+        None,
         "--flavour",
         help=(
             "The Data Reference Syntax (DRS) standard specifying the type "
@@ -543,7 +544,7 @@ def intake_catalogue(
         stream_zarr=zarr,
         **(parse_cli_args(search_keys or [])),
     )
-    if zarr or flavour not in BuiltinFlavours.__members__:
+    if requires_authentication(flavour=flavour, zarr=zarr, databrowser_url=host):
         Auth(token_file).authenticate(host=host, _cli=True)
     with NamedTemporaryFile(suffix=".json") as temp_f:
         result._create_intake_catalogue_file(str(filename or temp_f.name))
@@ -582,8 +583,8 @@ def stac_catalogue(
             "based on file paths or Uniform Resource Identifiers"
         ),
     ),
-    flavour: str = typer.Option(
-        "freva",
+    flavour: Optional[str] = typer.Option(
+        None,
         "--flavour",
         help=(
             "The Data Reference Syntax (DRS) standard specifying the type "
@@ -689,7 +690,7 @@ def stac_catalogue(
         stream_zarr=False,
         **(parse_cli_args(search_keys or [])),
     )
-    if flavour not in BuiltinFlavours.__members__:
+    if requires_authentication(flavour=flavour, databrowser_url=host):
         Auth(token_file).authenticate(host=host, _cli=True)
     print(result.stac_catalogue(filename=filename))
 
@@ -721,8 +722,8 @@ def count_values(
         "-d",
         help=("Separate the count by search facets."),
     ),
-    flavour: str = typer.Option(
-        "freva",
+    flavour: Optional[str] = typer.Option(
+        None,
         "--flavour",
         help=(
             "The Data Reference Syntax (DRS) standard specifying the type "
@@ -826,9 +827,7 @@ def count_values(
         bbox or search_kws.pop("bbox", None),
     )
     facets = facets or []
-    if flavour not in BuiltinFlavours.__members__:
-        # We need authentication here, because then user
-        # is able get the user data flavour
+    if requires_authentication(flavour=flavour, databrowser_url=host):
         Auth(token_file).authenticate(host=host, _cli=True)
     if detail:
         result = databrowser.count_values(

@@ -17,3 +17,8 @@
 ## You can set a port by separating <hostname:port>
 ## for example freva.example.org:7777
 # host = ""
+
+##
+## The default flavour to use when accessing freva. You can simply list
+## the flavours you want to use and choose one as default.
+# default_flavour = "cmip6"
