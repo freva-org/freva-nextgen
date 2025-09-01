@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-__version__ = "2507.0.0"
+__version__ = "2509.0.0"
 __all__ = ["__version__"]
 
 REST_URL = (

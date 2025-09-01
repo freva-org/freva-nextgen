@@ -1,6 +1,12 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [v2509.0.0]
+### Added
+- Custom databrowser search flavours for the restAPI and the client
+- .well-known endpoint for cleints that need to interact with the OIDC server.
+- Possibility to create long lived offline tokens.
+
 ## [v2508.1.0]
 ### Added
  - Login timeout option for doing the login.
