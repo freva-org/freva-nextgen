@@ -64,6 +64,14 @@ def test_missing_ocid_server(test_server: str, mocker: MockerFixture) -> None:
                 headers={"Authorization": "Bearer foo"},
             )
             assert res2.status_code == 200
+            res3 = requests.get(f"{test_server}/.well-known/openid-configuration")
+            assert res3.status_code == 503
+
+
+def test_well_kown_endpoint(test_server: str) -> None:
+    """Test the .well-kown oidc endpoint when it is available."""
+    res = requests.get(f"{test_server}/.well-known/openid-configuration")
+    assert res.status_code == 200
 
 
 def test_authenticate_with_refresh_token(
