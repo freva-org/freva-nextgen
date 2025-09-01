@@ -67,11 +67,6 @@ services:
     entrypoint: ["sh", "/create-user.sh"]
     networks:
       - freva-rest
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://keycloak:8080/realms/freva/.well-known/openid-configuration"]
-      interval: 2s
-      timeout: 1s
-      retries: 60
 
   mongodb:
     networks:
@@ -86,9 +81,6 @@ services:
       - "27017:27017"
     volumes:
       - ./mongo-userdata-init.js:/docker-entrypoint-initdb.d/mongo-userdata-init.js:ro
-    depends_on:
-      keycloak-bootstrap:
-        condition: service_healthy
 
 
 networks:
