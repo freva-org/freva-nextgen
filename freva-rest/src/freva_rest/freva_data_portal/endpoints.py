@@ -14,7 +14,10 @@ from pydantic import BaseModel, Field
 from freva_rest.auth import auth
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
-from freva_rest.utils.base_utils import create_redis_connection, publish_dataset
+from freva_rest.utils.base_utils import (
+    create_redis_connection,
+    publish_dataset,
+)
 
 ZARRAY_JSON = ".zarray"
 ZGROUP_JSON = ".zgroup"
