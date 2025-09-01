@@ -306,6 +306,24 @@ for getting all ocean reanalysis datasets you can apply the ``--facet`` flag:
 
     freva-client databrowser metadata-search -e realm=ocean --facet 'rean*'
 
+Filtering metadata results
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can filter the metadata results using standard command-line tools:
+
+Using grep to filter pandas output:
+
+.. code:: console
+
+   freva-client databrowser metadata-search | grep -E '(project|realm)'
+
+Using jq to filter JSON output:
+
+.. code:: console
+
+   freva-client databrowser metadata-search --json | jq 'with_entries(select(.key | IN("experiment", "realm")))'
+
+These methods allow you to focus on specific metadata categories and make the output more targeted and easier to process.
 
 Expert tip: Getting metadata for certain files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
