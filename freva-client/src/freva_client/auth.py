@@ -122,6 +122,7 @@ class Auth:
         redirect_uri = REDIRECT_URI.format(port=port)
         params = {
             "redirect_uri": redirect_uri,
+            "offline_access": "true",
         }
         if force:
             params["prompt"] = "login"

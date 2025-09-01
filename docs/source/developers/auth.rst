@@ -617,10 +617,11 @@ Follow these steps:
 
    .. sourcecode:: http
 
-      GET /api/freva-nextgen/auth/v2/login?redirect_uri=https://your-sp.com/callback HTTP/1.1
+      GET /api/freva-nextgen/auth/v2/login?redirect_uri=https://your-sp.com/callback?offline_access=true HTTP/1.1
       host: www.freva.dkrz.de
 
    - The ``redirect_uri`` must be a publicly accessible endpoint on your service that handles the code exchange.
+   - The ``offline_access`` parameter can be used to request an onffline token with a long TTL.
 
 2. **User authenticates** via the upstream Identity Provider (e.g., Keycloak).
 3. **The Identity Provider redirects back** to your service's ``/callback`` endpoint with a `code` and `state` query parameter.
