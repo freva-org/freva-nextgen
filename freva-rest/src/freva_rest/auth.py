@@ -21,7 +21,7 @@ from urllib.parse import urlencode, urljoin
 
 import aiohttp
 from fastapi import Depends, Form, HTTPException, Query, Request, Security
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.security import (
     HTTPAuthorizationCredentials,
     HTTPBearer,
@@ -295,7 +295,44 @@ async def get_token_status(
     return cast(TokenPayload, id_token)
 
 
-async def oidc_request(
+@app.get(
+    "/api/freva-nextgen/.well-known/openid-configuration",
+    tags=["Authentication"],
+    response_class=JSONResponse,
+    responses={
+        200: {
+            "description": ("Metadata for interacting with the OIDC provider."),
+            "content": {
+                "application/json": {
+                    "example": {
+                        "issuer": "http://localhost:8080/realms/freva",
+                        "authorization_endpoint": "http://localhost:8080/realms/...",
+                        "token_endpoint": "http://localhost:8080/realms/...",
+                    }
+                },
+            },
+        },
+        503: {"description": "Could not connect of OIDC server."},
+    },
+)
+async def well_kown_url() -> JSONResponse:
+    """Get configuration information about the identity provider in use."""
+
+    try:
+        async with aiohttp.ClientSession(
+            timeout=TIMEOUT, raise_for_status=True
+        ) as session:
+            async with session.get(auth.discovery_url) as res:
+                return JSONResponse(
+                    content=await res.json(), status_code=res.status
+                )
+    except Exception as error:
+        raise HTTPException(
+            status_code=503, detail="Could not connect of OIDC server."
+        ) from error
+
+
+async def oicd_request(
     method: Literal["GET", "POST"],
     endpoint: str,
     headers: Optional[Dict[str, str]] = None,
@@ -340,7 +377,7 @@ async def userinfo(
         return UserInfo(**get_userinfo(token_data))
     except ValidationError:
         authorization = dict(request.headers)["authorization"]
-        token_data = await oidc_request(
+        token_data = await oicd_request(
             "GET",
             "userinfo_endpoint",
             headers={"Authorization": authorization},
@@ -437,15 +474,6 @@ async def login(
             examples=["login"],
         ),
     ] = Prompt.none,
-    offline_access: bool = Query(
-        False,
-        title="Request a long term token.",
-        description=(
-            "If true, include ``scope=offline_access`` to obtain an "
-            "offline refresh token with a long TTL. This must be"
-            " supported by the Authentication system."
-        ),
-    ),
 ) -> RedirectResponse:
     """
     Initiate the OpenID Connect authorization code flow.
@@ -471,11 +499,7 @@ async def login(
         "response_type": "code",
         "client_id": server_config.oidc_client_id,
         "redirect_uri": redirect_uri,
-        "scope": (
-            "openid profile"
-            if offline_access is False
-            else "openid profile offline_access"
-        ),
+        "scope": "openid profile",
         "state": state,
         "nonce": nonce,
         "prompt": prompt.value.replace("none", ""),
@@ -558,7 +582,7 @@ async def callback(
         "code": code,
         "redirect_uri": redirect_uri,
     }
-    token_data: Dict[str, Union[str, int]] = await oidc_request(
+    token_data: Dict[str, Union[str, int]] = await oicd_request(
         "POST", "token_endpoint", data={k: v for (k, v) in data.items() if v}
     )
     return token_data
@@ -616,7 +640,7 @@ async def fetch_or_refresh_token(
         raise HTTPException(
             status_code=400, detail="Missing code or refresh_token"
         )
-    token_data = await oidc_request(
+    token_data = await oicd_request(
         "POST",
         "token_endpoint",
         data={k: v for (k, v) in data.items() if v},
