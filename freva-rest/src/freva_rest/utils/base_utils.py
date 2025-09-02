@@ -1,7 +1,9 @@
 """Various utilities for the restAPI."""
 
+import json
 import re
 import ssl
+import uuid
 from typing import Any, Dict, List, Optional, cast
 
 import jwt
@@ -11,6 +13,7 @@ from typing_extensions import NotRequired, TypedDict
 
 from freva_rest.config import ServerConfig
 from freva_rest.logger import logger
+from freva_rest.rest import server_config
 
 REDIS_CACHE: Optional[redis.Redis] = None
 CACHING_SERVICES = set(("zarr-stream",))
@@ -141,3 +144,29 @@ def str_to_int(inp_str: Optional[str], default: int) -> int:
         return int(inp_str)
     except ValueError:
         return default
+
+
+async def publish_dataset(path: str, cache: Optional[redis.Redis] = None) -> str:
+    """Publish a path on disk for zarr conversion to the broker.
+
+    Parameters
+    ----------
+    path:
+        The path that needs to be converted.
+    cache:
+        An instance of an already established Redis connection.
+
+    Returns
+    -------
+    str:
+        The url to the converted zarr endpoint
+
+    """
+    cache = cache or await create_redis_connection()
+    uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, path))
+    api_path = f"{server_config.proxy}/api/freva-nextgen/data-portal/zarr"
+    await cache.publish(
+        "data-portal",
+        json.dumps({"uri": {"path": path, "uuid": uuid5}}).encode("utf-8"),
+    )
+    return f"{api_path}/{uuid5}.zarr"

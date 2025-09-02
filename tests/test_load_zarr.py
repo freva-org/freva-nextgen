@@ -13,6 +13,26 @@ import xarray as xr
 from pytest_mock import MockerFixture
 
 
+def test_zarr_conversion(test_server: str, auth: Dict[str, str]) -> None:
+    """Test the single file loading functionlity."""
+    token = auth["access_token"]
+    files = requests.get(
+        f"{test_server}/databrowser/data-search/freva/file",
+        params={"dataset": "cmip6-fs"},
+    ).text.splitlines()
+    res = requests.get(
+        f"{test_server}/data-portal/zarr/convert",
+        params={"path": files},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=3,
+    )
+    assert res.status_code == 200
+    out = res.json()
+    assert "urls" in out
+    assert isinstance(out["urls"], list)
+    assert len(out["urls"]) == len(files)
+
+
 def test_load_files_success(test_server: str, auth: Dict[str, str]) -> None:
     """Test loading single files."""
     token = auth["access_token"]
@@ -189,7 +209,7 @@ def test_no_broker(
     test_server: str, auth: Dict[str, str], mocker: MockerFixture
 ) -> None:
     """Test the behviour if no broker is present."""
-    mocker.patch("freva_rest.databrowser_api.core.create_redis_connection", None)
+    mocker.patch("freva_rest.utils.base_utils.create_redis_connection", "foo")
     res = requests.get(
         f"{test_server}/databrowser/load/freva/",
         params={"dataset": "cmip6-fs"},
@@ -199,6 +219,16 @@ def test_no_broker(
     )
     file = list(res.iter_lines(decode_unicode=True))[0]
     assert "error" in file
+    mocker.patch(
+        "freva_rest.freva_data_portal.endpoints.create_redis_connection", "foo"
+    )
+    res = requests.get(
+        f"{test_server}/data-portal/zarr/convert",
+        params={"path": ["/foo/bar.nc"]},
+        headers={"Authorization": f"Bearer {auth['access_token']}"},
+        timeout=7,
+    )
+    assert res.status_code == 500
 
 
 def test_no_cache(
@@ -223,4 +253,11 @@ def test_no_cache(
                 headers={"Authorization": f"Bearer {auth['access_token']}"},
                 timeout=7,
             )
-        assert res.status_code == 503
+            assert res.status_code == 503
+            res = requests.get(
+                f"{test_server}/data-portal/zarr/convert",
+                params={"path": ["/foo/bar.nc"]},
+                headers={"Authorization": f"Bearer {auth['access_token']}"},
+                timeout=7,
+            )
+            assert res.status_code == 503
