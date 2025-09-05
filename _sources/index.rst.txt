@@ -112,6 +112,14 @@ on Linux):
     ## for example freva.example.org:7777
     # host = ""
 
+    ##
+    ## The default flavour (DRS standard) for the databrowser to use when accessing freva.
+    ## Options: freva, cmip5, cmip6, cordex, user, or custom gloabl flavours
+    ## that is visible to all users
+    ## If it has not been defined, the default is `freva``
+    # default_flavour = ""
+
+
 To permanently set or override the freva server host name you have to set
 the ``host`` variable in that file. In most cases this variable can be
 set to the url of the freva web site you are using, for example

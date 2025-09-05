@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>The databrowser command line interface &#8212; Freva Databrowser 2508.1.0 documentation</title>
+    <title>The databrowser command line interface &#8212; Freva Databrowser 2509.0.0 documentation</title>
   
   
   
@@ -49,7 +49,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=e9450eaf"></script>
+    <script src="../_static/documentation_options.js?v=65e07bb0"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -135,8 +135,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2508.1.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2508.1.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2509.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2509.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -448,10 +448,9 @@ Options:
                                   determines whether the search will be based
                                   on file paths or Uniform Resource
                                   Identifiers  [default: file]
-  -f, --flavour [freva|cmip6|cmip5|cordex|nextgems|user]
-                                  The Data Reference Syntax (DRS) standard
+  --flavour TEXT                  The Data Reference Syntax (DRS) standard
                                   specifying the type of climate datasets to
-                                  query.  [default: freva]
+                                  query.
   -ts, --time-select [strict|flexible|file]
                                   Operator that specifies how the time period
                                   is selected. Choose from flexible (default),
@@ -695,10 +694,9 @@ Options:
                                   determines whether the search will be based
                                   on file paths or Uniform Resource
                                   Identifiers  [default: file]
-  -f, --flavour [freva|cmip6|cmip5|cordex|nextgems|user]
-                                  The Data Reference Syntax (DRS) standard
+  --flavour TEXT                  The Data Reference Syntax (DRS) standard
                                   specifying the type of climate datasets to
-                                  query.  [default: freva]
+                                  query.
   -ts, --time-select [strict|flexible|file]
                                   Operator that specifies how the time period
                                   is selected. Choose from flexible (default),
@@ -803,10 +801,9 @@ Options:
                                   determines whether the search will be based
                                   on file paths or Uniform Resource
                                   Identifiers  [default: file]
-  -f, --flavour [freva|cmip6|cmip5|cordex|nextgems|user]
-                                  The Data Reference Syntax (DRS) standard
+  --flavour TEXT                  The Data Reference Syntax (DRS) standard
                                   specifying the type of climate datasets to
-                                  query.  [default: freva]
+                                  query.
   -ts, --time-select [strict|flexible|file]
                                   Operator that specifies how the time period
                                   is selected. Choose from flexible (default),
@@ -857,6 +854,10 @@ Options:
   --host TEXT                     Set the hostname of the databrowser, if not
                                   set (default) the hostname is read from a
                                   config file
+  -tf, --token-file PATH          Instead of authenticating via code based
+                                  authentication flow you can set the path to
+                                  the json file that contains a `refresh
+                                  token` containing a refresh_token key.
   -v                              Increase verbosity  [default: 0]
   --multi-version                 Select all versions and not just the latest
                                   version (default).
@@ -929,6 +930,19 @@ for getting all ocean reanalysis datasets you can apply the <code class="docutil
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser metadata-search -e realm=ocean --facet &#39;rean*&#39;</span>
 </pre></div>
 </div>
+<section id="filtering-metadata-results">
+<h3>Filtering metadata results<a class="headerlink" href="#filtering-metadata-results" title="Link to this heading">#</a></h3>
+<p>You can filter the metadata results using standard command-line tools:</p>
+<p>Using grep to filter pandas output:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser metadata-search | grep -E &#39;(project|realm)&#39;</span>
+</pre></div>
+</div>
+<p>Using jq to filter JSON output:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser metadata-search --json | jq &#39;with_entries(select(.key | IN(&quot;experiment&quot;, &quot;realm&quot;)))&#39;</span>
+</pre></div>
+</div>
+<p>These methods allow you to focus on specific metadata categories and make the output more targeted and easier to process.</p>
+</section>
 <section id="expert-tip-getting-metadata-for-certain-files">
 <h3>Expert tip: Getting metadata for certain files<a class="headerlink" href="#expert-tip-getting-metadata-for-certain-files" title="Link to this heading">#</a></h3>
 <p>In some cases it might be useful to retrieve metadata for certain
@@ -984,6 +998,53 @@ are associated with files on the tape archive.</p>
 </pre></div>
 </div>
 <p>This command deletes all data entries that match the specified search keys from the databrowser.</p>
+</section>
+</section>
+<section id="managing-custom-flavours">
+<h2>Managing Custom Flavours<a class="headerlink" href="#managing-custom-flavours" title="Link to this heading">#</a></h2>
+<p>You can create and manage custom Data Reference Syntax (DRS) flavours that define how search facets are mapped to different data standards. This allows you to create personalized search interfaces that match your specific data organization needs.</p>
+<p>Before using the <cite>flavour</cite> commands for adding or deleting flavours, you need to create an access token and authenticate with the system. Please refer to the <a class="reference internal" href="../auth/index.html#auth"><span class="std std-ref">Authentication &amp; Authorization</span></a> chapter for more details on token creation and authentication.</p>
+<section id="adding-custom-flavours">
+<h3>Adding Custom Flavours<a class="headerlink" href="#adding-custom-flavours" title="Link to this heading">#</a></h3>
+<p>To create a new custom flavour, use the <cite>flavour add</cite> command. You’ll need to provide a name for your flavour and specify how search facets should be mapped.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser flavour add my-custom-flavour \</span>
+<span class="go">    --map project=activity_id \</span>
+<span class="go">    --map model=source_id \</span>
+<span class="go">    --map experiment=experiment_id</span>
+</pre></div>
+</div>
+<p>This command creates a personal flavour named “my-custom-flavour” that maps the standard search keys to different attribute names.</p>
+<p>To create a global flavour that all users can access (requires admin privileges):</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser flavour add global-flavour \</span>
+<span class="go">    --map project=activity_id \</span>
+<span class="go">    --map model=source_id \</span>
+<span class="go">    --global</span>
+</pre></div>
+</div>
+</section>
+<section id="listing-available-flavours">
+<h3>Listing Available Flavours<a class="headerlink" href="#listing-available-flavours" title="Link to this heading">#</a></h3>
+<p>To see all custom flavours available to you, use the <cite>flavour list</cite> command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser flavour list</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <cite>flavour list</cite> command does not require authentication and will show global flavours available to all users.</p>
+</div>
+<p>This will display both personal flavours you’ve created and <code class="docutils literal notranslate"><span class="pre">global</span></code> flavours available to all users.</p>
+<p>You can also output the results in JSON format:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser flavour list --json</span>
+</pre></div>
+</div>
+</section>
+<section id="deleting-custom-flavours">
+<h3>Deleting Custom Flavours<a class="headerlink" href="#deleting-custom-flavours" title="Link to this heading">#</a></h3>
+<p>To remove a custom flavour you no longer need, use the <cite>flavour delete</cite> command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client databrowser flavour delete my-custom-flavour</span>
+</pre></div>
+</div>
+<p>This command removes the specified flavour from the system. You can only delete flavours that you own, unless you are an admin user who can delete global flavours.</p>
 </section>
 </section>
 </section>
@@ -1045,6 +1106,7 @@ are associated with files on the tape archive.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#creating-stac-catalogue">Creating STAC Catalogue</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#query-the-number-of-occurrences">Query the number of occurrences</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#retrieving-the-available-metadata">Retrieving the available metadata</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#filtering-metadata-results">Filtering metadata results</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#expert-tip-getting-metadata-for-certain-files">Expert tip: Getting metadata for certain files</a></li>
 </ul>
 </li>
@@ -1052,6 +1114,12 @@ are associated with files on the tape archive.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-and-deleting-user-data">Adding and Deleting User Data</a><ul class="visible nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-user-data">Adding User Data</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deleting-user-data">Deleting User Data</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#managing-custom-flavours">Managing Custom Flavours</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-custom-flavours">Adding Custom Flavours</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#listing-available-flavours">Listing Available Flavours</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deleting-custom-flavours">Deleting Custom Flavours</a></li>
 </ul>
 </li>
 </ul>
