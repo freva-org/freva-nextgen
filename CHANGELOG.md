@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 - Custom databrowser search flavours for the restAPI and the client
 - .well-known endpoint for cleints that need to interact with the OIDC server.
 - Possibility to create long lived offline tokens.
+- New endpoints for directly streaming data based on file paths.
 
 ## [v2508.1.0]
 ### Added
