@@ -9,6 +9,7 @@ import pytest
 from freva_client import databrowser
 from freva_client.auth import Auth, AuthError, Token
 from freva_client.utils.logger import DatabrowserWarning
+import pandas as pd
 
 def test_search_files(test_server: str) -> None:
     """Test searching for files."""
@@ -40,7 +41,6 @@ def test_search_files(test_server: str) -> None:
         == 0
     )
 
-
 def test_count_values(test_server: str) -> None:
     """Test counting the facets."""
     db = databrowser(host=test_server)
@@ -61,17 +61,18 @@ def test_count_values(test_server: str) -> None:
     entry = list(counts2["dataset"].keys())[0]
     assert isinstance(counts2["dataset"][entry], int)
 
-
 def test_metadata_search(test_server: str) -> None:
     """Test the metadata search."""
     db = databrowser(host=test_server)
-    assert isinstance(db.metadata, dict)
+    assert isinstance(db.metadata, pd.Series)
     metadata = databrowser.metadata_search(host=test_server)
-    assert isinstance(metadata, dict)
+    assert isinstance(metadata, pd.Series)
     assert len(db.metadata) > len(metadata)
     metadata = databrowser.metadata_search(host=test_server, extended_search=True)
     assert len(db.metadata) == len(metadata)
-
+    db_filtered = databrowser(host=test_server)
+    assert set(db_filtered.metadata[['project', 'model']].keys()) <= {'project', 'model'}
+    assert len(db_filtered.metadata[['project', 'model']]) <= 2
 
 def test_bad_hostnames() -> None:
     """Test the behaviour of non existing host queries."""

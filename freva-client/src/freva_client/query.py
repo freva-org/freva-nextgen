@@ -21,6 +21,7 @@ from typing import (
 
 import intake
 import intake_esm
+import pandas as pd
 import requests
 import xarray as xr
 import yaml
@@ -223,6 +224,16 @@ class databrowser:
            }
         )
 
+    You can also filter the metadata to only include specific facets.
+
+    .. code-block:: python
+
+        from freva_client import databrowser
+        db = databrowser(
+            "era5*",
+            realm="atmos",
+        )[['project', 'model', 'experiment']]
+        print(db.metadata)
 
     """
 
@@ -639,6 +650,15 @@ class databrowser:
             from freva_client import databrowser
             print(databrowser.count_values("reana*", realm="ocean", flavour="cmip6"))
 
+        Count only specific facets:
+
+        .. code-block:: python
+
+            from freva_client import databrowser
+            era5_counts = databrowser.count_values(
+                "era5*",
+            )[['project', 'model']]
+            print(era5_counts)
         """
         this = cls(
             *facets,
@@ -663,7 +683,7 @@ class databrowser:
         return counts
 
     @cached_property
-    def metadata(self) -> Dict[str, List[str]]:
+    def metadata(self) -> pd.DataFrame:
         """Get the metadata (facets) for the current databrowser query.
 
         You can retrieve all information that is associated with your current
@@ -681,12 +701,28 @@ class databrowser:
             db = databrowser(uri="slk:///arch/*/CPC/*")
             print(db.metadata)
 
+        To retrieve only a limited set of metadata you can
+        specify the facets you are interested in:
+
+        .. code-block:: python
+
+            from freva_client import databrowser
+            db = databrowser(
+                "era5*",
+                realm="atmos",
+            )
+            print(db.metadata[['project', 'model', 'experiment']])
+
 
         """
-        return {
-            k: v[::2]
-            for (k, v) in self._facet_search(extended_search=True).items()
-        }
+        return (
+            pd.DataFrame([
+                (k, v[::2])
+                for k, v in self._facet_search(extended_search=True).items()
+            ], columns=["facet", "values"])
+            .explode("values")
+            .groupby("facet")["values"].apply(list)
+        )
 
     @classmethod
     def metadata_search(
@@ -702,7 +738,7 @@ class databrowser:
         fail_on_error: bool = False,
         extended_search: bool = False,
         **search_keys: Union[str, List[str]],
-    ) -> Dict[str, List[str]]:
+    ) -> pd.DataFrame:
         """Search for data attributes (facets) in the databrowser.
 
         The method queries the databrowser for available search facets (keys)
@@ -810,6 +846,16 @@ class databrowser:
             res = databrowser.metadata_search(file="/arch/*CPC/*")
             print(res)
 
+        Return only specific facets: for example project and realm:
+
+        .. code-block:: python
+
+            from freva_client import databrowser
+            selected = databrowser.metadata_search(
+                "era5*",
+            )[['project', 'realm']]
+            print(selected)
+
         Sometimes you don't exactly know the exact names of the search keys and
         want retrieve all file objects that match a certain category. For
         example for getting all ocean reanalysis datasets you can apply the
@@ -851,12 +897,18 @@ class databrowser:
             stream_zarr=False,
             **search_keys,
         )
-        return {
-            k: v[::2]
-            for (k, v) in this._facet_search(
-                extended_search=extended_search
-            ).items()
-        }
+        return (
+            pd.DataFrame(
+                [
+                    (k, v[::2])
+                    for k, v in this._facet_search(
+                        extended_search=extended_search
+                    ).items()
+                ], columns=["facet", "values"]
+            )
+            .explode("values")
+            .groupby("facet")["values"].apply(list)
+        )
 
     @classmethod
     def overview(cls, host: Optional[str] = None) -> str:
