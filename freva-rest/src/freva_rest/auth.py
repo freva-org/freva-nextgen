@@ -474,6 +474,15 @@ async def login(
             examples=["login"],
         ),
     ] = Prompt.none,
+    offline_access: bool = Query(
+        False,
+        title="Request a long term token.",
+        description=(
+            "If true, include ``scope=offline_access`` to obtain an "
+            "offline refresh token with a long TTL. This must be"
+            " supported by the Authentication system."
+        ),
+    ),
 ) -> RedirectResponse:
     """
     Initiate the OpenID Connect authorization code flow.
@@ -499,7 +508,11 @@ async def login(
         "response_type": "code",
         "client_id": server_config.oidc_client_id,
         "redirect_uri": redirect_uri,
-        "scope": "openid profile",
+        "scope": (
+            "openid profile"
+            if offline_access is False
+            else "openid profile offline_access"
+        ),
         "state": state,
         "nonce": nonce,
         "prompt": prompt.value.replace("none", ""),
