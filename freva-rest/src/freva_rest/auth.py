@@ -441,15 +441,6 @@ async def system_user(
 
 
 @app.get(
-    "/api/freva-nextgen/auth/v2/auth-ports",
-    tags=["Authentication"],
-)
-async def valid_ports() -> AuthPorts:
-    """Get the open id connect configuration."""
-    return AuthPorts(valid_ports=server_config.oidc_auth_ports)
-
-
-@app.get(
     "/api/freva-nextgen/auth/v2/login",
     tags=["Authentication"],
     response_class=RedirectResponse,
@@ -617,12 +608,12 @@ async def device_flow() -> DeviceStartResponse:
     js = await oidc_request(
         "POST",
         "device_authorization_endpoint",
-        data={k: v for k, v in data.items() if v},
+        data=data,
     )
     for k in ("device_code", "user_code", "verification_uri", "expires_in"):
         if k not in js:
             raise HTTPException(
-                502, detail={"error": "upstream_malformed_response", "missing": k}
+                502, detail=f"upstream_malformed_response, missing: {k}"
             )
     return DeviceStartResponse(
         device_code=js["device_code"],
