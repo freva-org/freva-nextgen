@@ -2,6 +2,7 @@
 
 import json
 import os
+import random
 import sys
 import time
 import webbrowser
@@ -224,6 +225,7 @@ class DeviceAuthClient:
         interval = max(1, base_interval)
         with _clock(self.timeout):
             while True:
+                sleep = interval + random.uniform(-0.2, 0.4)
                 if (
                     self.timeout is not None
                     and time.monotonic() - start > self.timeout
@@ -243,10 +245,10 @@ class DeviceAuthClient:
                         else None
                     )
                     if err is None or "authorization_pending" in err:
-                        time.sleep(interval)
+                        time.sleep(sleep)
                     elif "slow_down" in err:
                         interval += 5
-                        time.sleep(interval)
+                        time.sleep(sleep)
                     elif "expired_token" in err or "access_denied" in err:
                         raise AuthError(f"Device flow failed: {err}")
                     else:
@@ -260,7 +262,10 @@ class DeviceAuthClient:
         resp = self.session.post(
             url,
             data=data,
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Connection": "close",
+            },
             timeout=30,
         )
         if resp.status_code >= 400:

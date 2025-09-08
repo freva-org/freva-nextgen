@@ -2,6 +2,7 @@
 
 import datetime
 import json
+import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
@@ -78,7 +79,10 @@ class Auth:
         )
         response = client.login(
             token_normalizer=self.get_token,
-            auto_open=is_interactive_auth_possible(),
+            auto_open=int(
+                os.getenv("BROWSER_SESSION")
+                or int(is_interactive_auth_possible())
+            ),
         )
         return self.set_token(
             access_token=response["access_token"],
