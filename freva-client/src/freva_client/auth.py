@@ -14,7 +14,7 @@ from .utils.auth_utils import (
     Token,
     choose_token_strategy,
     get_default_token_file,
-    is_job_env,
+    is_interactive_auth_possible,
     load_token,
 )
 from .utils.databrowser_utils import Config
@@ -77,7 +77,8 @@ class Auth:
             timeout=_timeout,
         )
         response = client.login(
-            token_normalizer=self.get_token, auto_open=is_job_env() is False
+            token_normalizer=self.get_token,
+            auto_open=is_interactive_auth_possible(),
         )
         return self.set_token(
             access_token=response["access_token"],

@@ -5,12 +5,14 @@ import os
 import sys
 import time
 import webbrowser
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import (
     Any,
     Callable,
     Dict,
+    Iterator,
     Literal,
     Optional,
     TypedDict,
@@ -19,12 +21,58 @@ from typing import (
 )
 
 import requests
+import rich.console
+import rich.spinner
 from appdirs import user_cache_dir
+from rich.live import Live
 
 from freva_client.utils import logger
 
 TOKEN_EXPIRY_BUFFER = 60  # seconds
 TOKEN_ENV_VAR = "FREVA_TOKEN_FILE"
+
+
+BROWSER_MESSAGE = """Will attempt to open the auth url in your browser.
+
+If this doesn't work, try opening the following url:
+
+{interactive}{uri}{interactive_end}
+
+You might have to enter the this code manually {interactive}{user_code}{interactive_end}
+"""
+
+NON_INTERACTIVE_MESSAGE = """
+
+Visit the following url to authorise your session:
+
+{interactive}{uri}{interactive_end}
+
+You might have to enter the this code manually {interactive}{user_code}{interactive_end}
+
+"""
+
+
+@contextmanager
+def _clock(timeout: Optional[int] = None) -> Iterator[None]:
+    Console = rich.console.Console(
+        force_terminal=is_interactive_shell(), stderr=True
+    )
+    txt = f"- Timeout: {timeout:>3,.0f}s " if timeout else ""
+    interactive = int(Console.is_terminal)
+    if int(os.getenv("INTERACIVE_SESSION", str(interactive))):
+        spinner = rich.spinner.Spinner(
+            "moon", text=f"[b]Waiting for code {txt}... [/]"
+        )
+        live = Live(
+            spinner, console=Console, refresh_per_second=2.5, transient=True
+        )
+        try:
+            live.start()
+            yield
+        finally:
+            live.stop()
+    else:
+        yield
 
 
 class AuthError(Exception):
@@ -116,21 +164,37 @@ class DeviceAuthClient:
 
         uri = init.get("verification_uri_complete") or init["verification_uri"]
         user_code = init["user_code"]
-        logger.info(
-            "To authorize this device, visit:\n  %s\nand enter the code: %s",
-            uri,
-            user_code,
+
+        Console = rich.console.Console(
+            force_terminal=is_interactive_shell(), stderr=True
+        )
+        pprint = Console.print if Console.is_terminal else print
+        interactive, interactive_end = (
+            ("[b]", "[/b]") if Console.is_terminal else ("", "")
         )
 
         if auto_open and init.get("verification_uri_complete"):
             try:
-                webbrowser.open(init["verification_uri_complete"])
-                logger.info(
-                    "Opened your browser. If it didn't appear, use the URL above."
+                pprint(
+                    BROWSER_MESSAGE.format(
+                        user_code=user_code,
+                        uri=uri,
+                        interactive=interactive,
+                        interactive_end=interactive_end,
+                    )
                 )
+                webbrowser.open(init["verification_uri_complete"])
             except Exception as error:
                 logger.warning("Could not auto-open browser: %s", error)
-
+        else:
+            pprint(
+                NON_INTERACTIVE_MESSAGE.format(
+                    user_code=user_code,
+                    uri=uri,
+                    interactive=interactive,
+                    interactive_end=interactive_end,
+                )
+            )
         return self._poll_for_token(
             device_code=init["device_code"],
             base_interval=int(init.get("interval", 5)),
@@ -158,37 +222,36 @@ class DeviceAuthClient:
         """
         start = time.monotonic()
         interval = max(1, base_interval)
+        with _clock(self.timeout):
+            while True:
+                if (
+                    self.timeout is not None
+                    and time.monotonic() - start > self.timeout
+                ):
+                    raise AuthError(
+                        "Login did not complete within the allotted time; "
+                        "approve the request in your browser and try again."
+                    )
 
-        while True:
-            if (
-                self.timeout is not None
-                and time.monotonic() - start > self.timeout
-            ):
-                raise AuthError(
-                    "Login did not complete within the allotted time; "
-                    "approve the request in your browser and try again."
-                )
-
-            data = {"device-code": device_code}
-
-            try:
-                return cast(Token, self._post_form(self.token_endpoint, data))
-            except AuthError as error:
-                err = (
-                    error.detail.get("error")
-                    if isinstance(error.detail, dict)
-                    else None
-                )
-                if err is None or "authorization_pending" in err:
-                    time.sleep(interval)
-                elif "slow_down" in err:
-                    interval += 5
-                    time.sleep(interval)
-                elif "expired_token" in err or "access_denied" in err:
-                    raise AuthError(f"Device flow failed: {err}")
-                else:
-                    # Unknown OAuth error
-                    raise
+                data = {"device-code": device_code}
+                try:
+                    return cast(Token, self._post_form(self.token_endpoint, data))
+                except AuthError as error:
+                    err = (
+                        error.detail.get("error")
+                        if isinstance(error.detail, dict)
+                        else None
+                    )
+                    if err is None or "authorization_pending" in err:
+                        time.sleep(interval)
+                    elif "slow_down" in err:
+                        interval += 5
+                        time.sleep(interval)
+                    elif "expired_token" in err or "access_denied" in err:
+                        raise AuthError(f"Device flow failed: {err}")
+                    else:
+                        # Unknown OAuth error
+                        raise  # pragma: no cover
 
     def _post_form(
         self, url: str, data: Optional[Dict[str, str]] = None
@@ -211,8 +274,8 @@ class DeviceAuthClient:
             raise AuthError(f"{url} -> {resp.status_code}", detail=payload)
         try:
             return cast(Dict[str, Any], resp.json())
-        except Exception as e:
-            raise AuthError(f"Invalid JSON from {url}: {e}")
+        except Exception as error:
+            raise AuthError(f"Invalid JSON from {url}: {error}")
 
 
 def get_default_token_file(token_file: Optional[Union[str, Path]] = None) -> Path:
