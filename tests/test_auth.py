@@ -24,6 +24,7 @@ from freva_client.utils.auth_utils import (
     TOKEN_ENV_VAR,
     AuthError,
     DeviceAuthClient,
+    is_job_env,
 )
 
 from .conftest import mock_token_data
@@ -124,7 +125,6 @@ def test_rest_device_token_success(
         return _Resp(200, _token_success_payload())
 
     mocker.patch("aiohttp.ClientSession.request", side_effect=_ok_post)
-    # mocker.patch("httpx.AsyncClient.post", side_effect=_ok_post)
 
     res = requests.post(
         f"{test_server}/auth/v2/token", data={"device-code": "DEV-123"}
@@ -150,6 +150,20 @@ def test_rest_device_token_error_pending(
     assert res.status_code == 400
 
 
+def test_rest_device_upstream_malformed(
+    test_server: str, mocker: MockerFixture
+) -> None:
+    """Proxy token endpoint forwards OAuth errors (authorization_pending)."""
+
+    async def _pending(*args: Any, **kwargs: Any):
+        return _Resp(200, {})
+
+    mocker.patch("aiohttp.ClientSession.request", side_effect=_pending)
+
+    res = requests.post(f"{test_server}/auth/v2/device")
+    assert res.status_code == 502
+
+
 def test_device_login_success(mocker: MockerFixture) -> None:
     """Happy path: start -> pending -> success, with auto-open."""
     # Mock browser open (don’t actually open a window)
@@ -166,13 +180,16 @@ def test_device_login_success(mocker: MockerFixture) -> None:
         return seq.pop(0)
 
     mocker.patch("requests.Session.post", side_effect=_post)
-
-    client = DeviceAuthClient(
-        device_endpoint="https://api.example.com/auth/v2/device",
-        token_endpoint="https://api.example.com/auth/v2/token",
-        timeout=10,
-    )
-    tokens = client.login(auto_open=True)
+    interactive = int(is_job_env())
+    with patch.dict(
+        os.environ, {"INTERACIVE_SESSION": str(interactive)}, clear=False
+    ):
+        client = DeviceAuthClient(
+            device_endpoint="https://api.example.com/auth/v2/device",
+            token_endpoint="https://api.example.com/auth/v2/token",
+            timeout=10,
+        )
+        tokens = client.login(auto_open=True)
     assert "access_token" in tokens and "refresh_token" in tokens
 
 
@@ -194,8 +211,8 @@ def test_device_client_login_success(
         return seq.pop(0)
 
     mocker.patch("requests.Session.post", side_effect=_post)
-
-    tokens = authenticate(host=test_server, force=True)
+    with patch.dict(os.environ, {"INTERACIVE_SESSION": "1"}, clear=False):
+        tokens = authenticate(host=test_server, force=True)
     assert "access_token" in tokens and "refresh_token" in tokens
 
 
@@ -522,12 +539,6 @@ def test_auth_via_code_exchange(test_server: str) -> None:
 
 def test_auth_login_endpoint(test_server: str) -> None:
     """Test the login endpoint."""
-    ports: List[int] = (
-        requests.get(f"{test_server}/auth/v2/auth-ports")
-        .json()
-        .get("valid_ports")
-    )
-
     res = requests.get(
         f"{test_server}/auth/v2/login",
         params={"redirect_uri": "http://localhost/callback"},
@@ -535,7 +546,7 @@ def test_auth_login_endpoint(test_server: str) -> None:
     assert res.status_code == 400
     res = requests.get(
         f"{test_server}/auth/v2/login",
-        params={"redirect_uri": f"http://localhost:{ports[0]}/callback"},
+        params={"redirect_uri": "http://localhost:53105/callback"},
     )
     assert res.status_code == 200
     res = requests.get(f"{test_server}/auth/v2/login")
@@ -745,9 +756,3 @@ def test_token_status(test_server: str, auth: Dict[str, str]) -> None:
         headers={"Authorization": "Bearer foo"},
     )
     assert res2.status_code != 200
-
-
-def test_get_overview(test_server: str) -> None:
-    """Test the open id connect discovery endpoint."""
-    res = requests.get(f"{test_server}/auth/v2/auth-ports")
-    assert res.status_code == 200
