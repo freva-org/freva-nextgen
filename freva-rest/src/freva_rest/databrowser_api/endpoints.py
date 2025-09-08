@@ -66,9 +66,7 @@ async def overview(
     solr_instance = Solr(
         server_config,
     )
-    return await solr_instance.overview_process(
-        all_flavour_responses, user_name
-    )
+    return await solr_instance.overview_process(all_flavour_responses, user_name)
 
 
 @app.get(
@@ -307,16 +305,14 @@ async def extended_search(
     zarr_stream: Annotated[
         bool,
         Query(
-            description="Enable zarr streaming functionality",
-            alias="zarr_stream"
-        )
+            description="Enable zarr streaming functionality", alias="zarr_stream"
+        ),
     ] = False,
     facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
     request: Request = Required,
     current_user: Optional[TokenPayload] = Security(
-        auth.create_auth_dependency(required=False),
-        scopes=["oidc.claims"]
-    )
+        auth.create_auth_dependency(required=False), scopes=["oidc.claims"]
+    ),
 ) -> JSONResponse:
     """This endpoint is used by the databrowser web ui client."""
     solr_search = await Solr.validate_parameters(
@@ -331,14 +327,11 @@ async def extended_search(
     )
     if "zarr-stream" not in server_config.services:
         zarr_stream = False
-    if (
-        zarr_stream
-        and current_user is None
-    ):
+    if zarr_stream and current_user is None:
         logger.error("User not authenticated for zarr stream.")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not authenticated for zarr streaming."
+            detail="User not authenticated for zarr streaming.",
         )
 
     status_code, result = await solr_search.extended_search(
@@ -546,16 +539,14 @@ async def add_custom_flavour(
     if flavour_def.is_global and not server_config.is_admin_user(current_user):
         logger.error(
             "Unauthorized attempt to create global flavour by user: %s",
-            current_user.preferred_username
+            current_user.preferred_username,
         )
         raise HTTPException(
-            status_code=403,
-            detail="Only admin users can create global flavours"
+            status_code=403, detail="Only admin users can create global flavours"
         )
     flavour_instance = Flavour(config=server_config)
     return await flavour_instance.add_flavour(
-        current_user.preferred_username,
-        flavour_def
+        current_user.preferred_username, flavour_def
     )
 
 
@@ -567,25 +558,24 @@ async def add_custom_flavour(
     responses={
         401: {"description": "Unauthorised / not a valid token."},
         422: {"description": "Invalid flavour parameters."},
-        500: {"description": "Internal server error - failed to retrieve flavours."},
+        500: {
+            "description": "Internal server error - failed to retrieve flavours."
+        },
     },
 )
 async def list_flavours(
     flavour_name: Optional[str] = Query(
-        None,
-        description="Filter by specific flavour type",
-        example="nextgem"
+        None, description="Filter by specific flavour type", examples=["nextgem"]
     ),
     owner: Optional[str] = Query(
         None,
         description="Filter by owner ('global' or username)",
-        example="global"
+        example="global",
     ),
     request: Request = Required,
     current_user: Optional[TokenPayload] = Security(
         auth.create_auth_dependency(required=False)
     ),
-
 ) -> FlavourListResponse:
     """Get available flavours for the current user.
 
@@ -598,15 +588,14 @@ async def list_flavours(
     For unauthenticated users, only global flavours are returned.
     """
     flavour = Flavour.validate_flavour_parameters(server_config, request)
-    user_name = (current_user.preferred_username
-                 if current_user and current_user.preferred_username
-                 else "global")
+    user_name = (
+        current_user.preferred_username
+        if current_user and current_user.preferred_username
+        else "global"
+    )
 
     all_flavours = await flavour.get_all_flavours(user_name, flavour_name, owner)
-    return FlavourListResponse(
-        total=len(all_flavours),
-        flavours=all_flavours
-    )
+    return FlavourListResponse(total=len(all_flavours), flavours=all_flavours)
 
 
 @app.delete(
@@ -624,12 +613,13 @@ async def list_flavours(
 )
 async def delete_custom_flavour(
     flavour_name: str = Path(
-        ..., description="Name of the flavour to delete",
-        examples=["nextgem", "custom_project"]
+        ...,
+        description="Name of the flavour to delete",
+        examples=["nextgem", "custom_project"],
     ),
-    is_global: Annotated[bool, Query(
-        description="Whether the flavour is global (admin only)"
-    )] = False,
+    is_global: Annotated[
+        bool, Query(description="Whether the flavour is global (admin only)")
+    ] = False,
     current_user: TokenPayload = Security(
         auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
@@ -649,16 +639,13 @@ async def delete_custom_flavour(
     if is_global and not server_config.is_admin_user(current_user):
         logger.error(
             "Unauthorized attempt to create global flavour by user: %s",
-            current_user.preferred_username
+            current_user.preferred_username,
         )
         raise HTTPException(
-            status_code=403,
-            detail="Only admin users can create global flavours"
+            status_code=403, detail="Only admin users can create global flavours"
         )
 
     flavour_instance = Flavour(config=server_config)
     return await flavour_instance.delete_flavour(
-        current_user.preferred_username,
-        flavour_name,
-        is_global
+        current_user.preferred_username, flavour_name, is_global
     )

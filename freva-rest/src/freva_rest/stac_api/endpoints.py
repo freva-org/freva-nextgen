@@ -35,13 +35,15 @@ from .schema import (
 # use the STAC API from the frontend without any issues.
 class STACCORSMiddleware(BaseHTTPMiddleware):
     def __init__(
-            self, app: ASGIApp, stac_path_prefix: str = "/api/freva-nextgen/stacapi"
+        self, app: ASGIApp, stac_path_prefix: str = "/api/freva-nextgen/stacapi"
     ):
         super().__init__(app)
         self.stac_path_prefix = stac_path_prefix
 
     async def dispatch(
-            self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+        self,
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
     ) -> Response:
         if not request.url.path.startswith(self.stac_path_prefix):
             return await call_next(request)
@@ -201,7 +203,10 @@ async def collection_items(
         title="Bounding Box",
         description="minx,miny,maxx,maxy",
         regex=(
-            r"^-?\d+(\.\d+)?," r"-?\d+(\.\d+)?," r"-?\d+(\.\d+)?," r"-?\d+(\.\d+)?$"
+            r"^-?\d+(\.\d+)?,"
+            r"-?\d+(\.\d+)?,"
+            r"-?\d+(\.\d+)?,"
+            r"-?\d+(\.\d+)?$"
         ),
     ),
 ) -> StreamingResponse:
@@ -225,11 +230,13 @@ async def collection_items(
         "limit": limit,
         "token": token,
         "datetime": datetime,
-        "bbox": bbox
+        "bbox": bbox,
     }
     await stac_instance.store_results(0, 200, "collection_items", query_params)
     return StreamingResponse(
-        stac_instance.get_collection_items(collection_id, limit, token, datetime, bbox),
+        stac_instance.get_collection_items(
+            collection_id, limit, token, datetime, bbox
+        ),
         media_type="application/json",
     )
 
@@ -256,7 +263,10 @@ async def collection_item(
     """
     stac_instance = STACAPI(server_config)
     await stac_instance.store_results(
-        0, 200, "collection_item", {"collection_id": collection_id, "item_id": item_id}
+        0,
+        200,
+        "collection_item",
+        {"collection_id": collection_id, "item_id": item_id},
     )
     item = await stac_instance.get_collection_item(collection_id, item_id)
     return JSONResponse(
@@ -293,7 +303,10 @@ async def search_get(
         title="Bounding Box",
         description="minx,miny,maxx,maxy",
         regex=(
-            r"^-?\d+(\.\d+)?," r"-?\d+(\.\d+)?," r"-?\d+(\.\d+)?," r"-?\d+(\.\d+)?$"
+            r"^-?\d+(\.\d+)?,"
+            r"-?\d+(\.\d+)?,"
+            r"-?\d+(\.\d+)?,"
+            r"-?\d+(\.\d+)?$"
         ),
     ),
     datetime: Optional[str] = Query(
@@ -327,7 +340,7 @@ async def search_get(
             "Free text search query. Comma-separated terms (OR logic)."
             " Case-insensitive search across item properties."
         ),
-        example="climate,temperature,precipitation"
+        examples=["climate,temperature,precipitation"],
     ),
     query: Optional[str] = Query(
         None,
@@ -366,10 +379,12 @@ async def search_get(
     )
     query_params = {
         "collections": collections,
-        "ids": ids, "bbox": bbox,
+        "ids": ids,
+        "bbox": bbox,
         "datetime": datetime,
         "limit": limit,
-        "q": q}
+        "q": q,
+    }
     await stac_instance.store_results(0, 200, "search_get", query_params)
     return StreamingResponse(
         stac_instance.get_search(
@@ -418,9 +433,11 @@ async def search_post(
 
     query_params = {
         "collections": body.collections,
-        "ids": body.ids, "bbox": body.bbox,
-        "datetime": body.datetime, "limit": body.limit,
-        "q": body.q
+        "ids": body.ids,
+        "bbox": body.bbox,
+        "datetime": body.datetime,
+        "limit": body.limit,
+        "q": body.q,
     }
     await stac_instance.store_results(0, 200, "search_post", query_params)
 
