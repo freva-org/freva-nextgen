@@ -88,11 +88,14 @@ def env_to_list(env_var: str, target_type: Type[T]) -> List[T]:
 
 def _get_in(d: Dict[str, Any], keys: List[str]) -> Any:
     """Descend into nested dicts."""
-    return reduce(
-        lambda acc, k: acc.get(k, {}) if isinstance(acc, dict) else {},
-        keys,
-        d
-    ) or ""
+    return (
+        reduce(
+            lambda acc, k: acc.get(k, {}) if isinstance(acc, dict) else {},
+            keys,
+            d,
+        )
+        or ""
+    )
 
 
 class ServerConfig(BaseModel):
@@ -266,16 +269,6 @@ class ServerConfig(BaseModel):
     ] = (
         env_to_dict("API_OIDC_TOKEN_CLAIMS") or None
     )
-    oidc_auth_ports: Annotated[
-        List[int],
-        Field(
-            title="Valid local auth ports.",
-            description=(
-                "List valid redirect portss that being used for authentication"
-                " flow via localhost."
-            ),
-        ),
-    ] = env_to_list("API_OIDC_AUTH_PORTS", int)
     admins_token_claims: Annotated[
         Optional[Dict[str, List[str]]],
         Field(
@@ -361,9 +354,6 @@ class ServerConfig(BaseModel):
         self.redis_host = self.redis_host or self._read_config(
             "cache", "hostname"
         )
-        self.oidc_auth_ports = self.oidc_auth_ports or self._read_config(
-            "oidc", "auth_ports"
-        )
         self.admins_token_claims = (
             self.admins_token_claims
             or self._read_config("oidc", "admins_token_claims")
@@ -439,7 +429,8 @@ class ServerConfig(BaseModel):
 
             if any(
                 re.search(pat, val)
-                for val in values if isinstance(val, str)
+                for val in values
+                if isinstance(val, str)
                 for pat in patterns
             ):
                 return True

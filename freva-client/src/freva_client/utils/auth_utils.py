@@ -2,20 +2,95 @@
 
 import json
 import os
-import socket
+import random
 import sys
 import time
+import webbrowser
+from contextlib import contextmanager
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal, Optional, TypedDict, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    Literal,
+    Optional,
+    TypedDict,
+    Union,
+    cast,
+)
 
 import requests
+import rich.console
+import rich.spinner
 from appdirs import user_cache_dir
+from rich.live import Live
+
+from freva_client.utils import logger
 
 TOKEN_EXPIRY_BUFFER = 60  # seconds
 TOKEN_ENV_VAR = "FREVA_TOKEN_FILE"
 
 
-class Token(TypedDict):
+BROWSER_MESSAGE = """Will attempt to open the auth url in your browser.
+
+If this doesn't work, try opening the following url:
+
+{interactive}{uri}{interactive_end}
+
+You might have to enter the this code manually {interactive}{user_code}{interactive_end}
+"""
+
+NON_INTERACTIVE_MESSAGE = """
+
+Visit the following url to authorise your session:
+
+{interactive}{uri}{interactive_end}
+
+You might have to enter the this code manually {interactive}{user_code}{interactive_end}
+
+"""
+
+
+@contextmanager
+def _clock(timeout: Optional[int] = None) -> Iterator[None]:
+    Console = rich.console.Console(
+        force_terminal=is_interactive_shell(), stderr=True
+    )
+    txt = f"- Timeout: {timeout:>3,.0f}s " if timeout else ""
+    interactive = int(Console.is_terminal)
+    if int(os.getenv("INTERACIVE_SESSION", str(interactive))):
+        spinner = rich.spinner.Spinner(
+            "moon", text=f"[b]Waiting for code {txt}... [/]"
+        )
+        live = Live(
+            spinner, console=Console, refresh_per_second=2.5, transient=True
+        )
+        try:
+            live.start()
+            yield
+        finally:
+            live.stop()
+    else:
+        yield
+
+
+class AuthError(Exception):
+    """Athentication error."""
+
+    def __init__(
+        self, message: str, detail: Optional[Dict[str, str]] = None
+    ) -> None:
+        super().__init__(message)
+        self.message = message
+        self.detail = detail or {}
+
+    def __str__(self) -> str:
+        return f"{self.message}: {self.detail}" if self.detail else self.message
+
+
+class Token(TypedDict, total=False):
     """Token information."""
 
     access_token: str
@@ -26,9 +101,191 @@ class Token(TypedDict):
     scope: str
 
 
-def get_default_token_file() -> Path:
+@dataclass
+class DeviceAuthClient:
+    """
+    Minimal OIDC Device Authorization Grant client.
+
+    Parameters
+    ----------
+    device_endpoint : str
+        Device endpoint URL, e.g. ``{issuer}/protocol/openid-connect/auth/device``.
+    token_endpoint : str
+        Token endpoint URL, e.g. ``{issuer}/protocol/openid-connect/token``.
+    scope : str, optional
+        Space-separated scopes; include ``offline_access`` if you need offline RTs.
+    timeout : int | None, optional
+        Overall timeout (seconds) for user approval. ``None`` waits indefinitely.
+    session : requests.Session | None, optional
+        Reusable HTTP session. A new one is created if omitted.
+
+    Notes
+    -----
+    - For a CLI UX, show both ``verification_uri_complete`` (if present) and
+      ``verification_uri`` + ``user_code`` as fallback.
+    - Polling respects ``interval`` and ``slow_down`` per RFC 8628.
+    """
+
+    device_endpoint: str
+    token_endpoint: str
+    timeout: Optional[int] = 600
+    session: requests.Session = field(default_factory=requests.Session)
+
+    # ---------- Public API ----------
+
+    def login(
+        self,
+        *,
+        auto_open: bool = True,
+        token_normalizer: Optional[Callable[[str, Dict[str, str]], Token]] = None,
+    ) -> Token:
+        """
+        Run the full device flow and return an OIDC token payload.
+
+        Parameters
+        ----------
+        auto_open : bool, optional
+            Attempt to open ``verification_uri_complete`` in a browser.
+        token_normalizer : Callable, optional
+            If provided, called as ``token_normalizer(self.token_endpoint, data)``
+            to normalize/store tokens (e.g., your existing ``self.get_token``).
+            If omitted, the raw token JSON from the token endpoint is returned.
+
+        Returns
+        -------
+        Token
+            The token payload. Includes a refresh token if granted and allowed.
+
+        Raises
+        ------
+        AuthError
+            If the device flow fails or times out.
+        """
+        init = self._authorize()
+
+        uri = init.get("verification_uri_complete") or init["verification_uri"]
+        user_code = init["user_code"]
+
+        Console = rich.console.Console(
+            force_terminal=is_interactive_shell(), stderr=True
+        )
+        pprint = Console.print if Console.is_terminal else print
+        interactive, interactive_end = (
+            ("[b]", "[/b]") if Console.is_terminal else ("", "")
+        )
+
+        if auto_open and init.get("verification_uri_complete"):
+            try:
+                pprint(
+                    BROWSER_MESSAGE.format(
+                        user_code=user_code,
+                        uri=uri,
+                        interactive=interactive,
+                        interactive_end=interactive_end,
+                    )
+                )
+                webbrowser.open(init["verification_uri_complete"])
+            except Exception as error:
+                logger.warning("Could not auto-open browser: %s", error)
+        else:
+            pprint(
+                NON_INTERACTIVE_MESSAGE.format(
+                    user_code=user_code,
+                    uri=uri,
+                    interactive=interactive,
+                    interactive_end=interactive_end,
+                )
+            )
+        return self._poll_for_token(
+            device_code=init["device_code"],
+            base_interval=int(init.get("interval", 5)),
+        )
+
+    # ---------- Internals ----------
+
+    def _authorize(self) -> Dict[str, Any]:
+        """Start device authorization; return the raw init payload."""
+        payload = self._post_form(self.device_endpoint)
+        # Validate essentials
+        for k in ("device_code", "user_code", "verification_uri", "expires_in"):
+            if k not in payload:
+                raise AuthError(f"Device authorization missing '{k}'")
+        return payload
+
+    def _poll_for_token(self, *, device_code: str, base_interval: int) -> Token:
+        """
+        Poll token endpoint until approved/denied/expired; return token JSON.
+
+        Raises
+        ------
+        AuthError
+            On timeout, denial, or other OAuth errors.
+        """
+        start = time.monotonic()
+        interval = max(1, base_interval)
+        with _clock(self.timeout):
+            while True:
+                sleep = interval + random.uniform(-0.2, 0.4)
+                if (
+                    self.timeout is not None
+                    and time.monotonic() - start > self.timeout
+                ):
+                    raise AuthError(
+                        "Login did not complete within the allotted time; "
+                        "approve the request in your browser and try again."
+                    )
+
+                data = {"device-code": device_code}
+                try:
+                    return cast(Token, self._post_form(self.token_endpoint, data))
+                except AuthError as error:
+                    err = (
+                        error.detail.get("error")
+                        if isinstance(error.detail, dict)
+                        else None
+                    )
+                    if err is None or "authorization_pending" in err:
+                        time.sleep(sleep)
+                    elif "slow_down" in err:
+                        interval += 5
+                        time.sleep(sleep)
+                    elif "expired_token" in err or "access_denied" in err:
+                        raise AuthError(f"Device flow failed: {err}")
+                    else:
+                        # Unknown OAuth error
+                        raise  # pragma: no cover
+
+    def _post_form(
+        self, url: str, data: Optional[Dict[str, str]] = None
+    ) -> Dict[str, Any]:
+        """POST x-www-form-urlencoded and return JSON or raise AuthError."""
+        resp = self.session.post(
+            url,
+            data=data,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Connection": "close",
+            },
+            timeout=30,
+        )
+        if resp.status_code >= 400:
+            try:
+                payload = resp.json()
+            except Exception:
+                payload = {
+                    "error": "http_error",
+                    "error_description": resp.text[:300],
+                }
+            raise AuthError(f"{url} -> {resp.status_code}", detail=payload)
+        try:
+            return cast(Dict[str, Any], resp.json())
+        except Exception as error:
+            raise AuthError(f"Invalid JSON from {url}: {error}")
+
+
+def get_default_token_file(token_file: Optional[Union[str, Path]] = None) -> Path:
     """Get the location of the default token file."""
-    path_str = os.getenv(TOKEN_ENV_VAR, "").strip()
+    path_str = token_file or os.getenv(TOKEN_ENV_VAR, "").strip()
 
     path = Path(
         path_str or os.path.join(user_cache_dir("freva"), "auth-token.json")
@@ -224,27 +481,10 @@ def choose_token_strategy(
     return "fail"
 
 
-def wait_for_port(host: str, port: int, timeout: float = 5.0) -> None:
-    """Wait until a TCP port starts accepting connections."""
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.settimeout(0.5)
-            try:
-                if sock.connect_ex((host, port)) == 0:
-                    return
-            except OSError:
-                pass
-        time.sleep(0.05)
-    raise TimeoutError(
-        f"Port {port} on {host} did not open within {timeout} seconds."
-    )
-
-
 def requires_authentication(
-        flavour: Optional[str],
-        zarr: bool = False,
-        databrowser_url: Optional[str] = None
+    flavour: Optional[str],
+    zarr: bool = False,
+    databrowser_url: Optional[str] = None,
 ) -> bool:
     """Check if authentication is required.
 
@@ -268,9 +508,7 @@ def requires_authentication(
         response.raise_for_status()
         result = {"flavours": response.json().get("flavours", [])}
         if "flavours" in result:
-            global_flavour_names = {
-                f["flavour_name"] for f in result["flavours"]
-            }
+            global_flavour_names = {f["flavour_name"] for f in result["flavours"]}
             return flavour not in global_flavour_names
     except Exception:
         pass

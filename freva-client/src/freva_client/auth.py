@@ -2,28 +2,24 @@
 
 import datetime
 import json
-import socket
-import urllib.parse
-import webbrowser
-from getpass import getuser
-from http.server import BaseHTTPRequestHandler, HTTPServer
+import os
 from pathlib import Path
-from threading import Event, Lock, Thread
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import requests
 
 from .utils import logger
 from .utils.auth_utils import (
+    AuthError,
+    DeviceAuthClient,
     Token,
     choose_token_strategy,
     get_default_token_file,
+    is_interactive_auth_possible,
     load_token,
-    wait_for_port,
 )
 from .utils.databrowser_utils import Config
 
-REDIRECT_URI = "http://localhost:{port}/callback"
 AUTH_FAILED_MSG = """Login failed or no valid token found in this environment.
 If you appear to be in a non-interactive or remote session create a new token
 via:
@@ -35,52 +31,11 @@ Then pass the token file using:"
 "    {token_path} or set the $TOKEN_ENV_VAR env. variable."""
 
 
-class AuthError(Exception):
-    """Athentication error."""
-
-    pass
-
-
-class OAuthCallbackHandler(BaseHTTPRequestHandler):
-    def log_message(self, format: str, *args: object) -> None:
-        logger.debug(format, *args)
-
-    def do_GET(self) -> None:
-        query = urllib.parse.urlparse(self.path).query
-        params = urllib.parse.parse_qs(query)
-        if "code" in params:
-            setattr(self.server, "auth_code", params["code"][0])
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b"Login successful! You can close this tab.")
-        else:
-            self.send_response(400)
-            self.end_headers()
-            self.wfile.write(b"Authorization code not found.")
-
-
-def start_local_server(port: int, event: Event) -> HTTPServer:
-    """Start local HTTP server to wait for a single callback."""
-    server = HTTPServer(("localhost", port), OAuthCallbackHandler)
-
-    def handle() -> None:
-        logger.info("Waiting for browser callback on port %s ...", port)
-        while not event.is_set():
-            server.handle_request()
-            if getattr(server, "auth_code", None):
-                event.set()
-
-    thread = Thread(target=handle, daemon=True)
-    thread.start()
-    return server
-
-
 class Auth:
     """Helper class for authentication."""
 
     _instance: Optional["Auth"] = None
     _auth_token: Optional[Token] = None
-    _thread_lock: Lock = Lock()
 
     def __new__(cls, *args: Any, **kwargs: Any) -> "Auth":
         if cls._instance is None:
@@ -113,86 +68,29 @@ class Auth:
     def _login(
         self,
         auth_url: str,
-        force: bool = False,
         _timeout: Optional[int] = 30,
     ) -> Token:
-        login_endpoint = f"{auth_url}/login"
+        device_endpoint = f"{auth_url}/device"
         token_endpoint = f"{auth_url}/token"
-        port = self.find_free_port(auth_url)
-        redirect_uri = REDIRECT_URI.format(port=port)
-        params = {
-            "redirect_uri": redirect_uri,
-            "offline_access": "true",
-        }
-        if force:
-            params["prompt"] = "login"
-        query = urllib.parse.urlencode(params)
-        login_url = f"{login_endpoint}?{query}"
-        logger.info("Opening browser for login:\n%s", login_url)
-        logger.info(
-            "If you are using this on a remote host, you might need to "
-            "increase the login timeout and forward port %d:\n"
-            "    ssh -L %d:localhost:%d %s@%s",
-            port,
-            port,
-            port,
-            getuser(),
-            socket.gethostname(),
+        client = DeviceAuthClient(
+            device_endpoint=device_endpoint,
+            token_endpoint=token_endpoint,
+            timeout=_timeout,
         )
-        event = Event()
-        server = start_local_server(port, event)
-        code: Optional[str] = None
-        reason = "Login failed."
-        try:
-            wait_for_port("localhost", port)
-            webbrowser.open(login_url)
-            success = event.wait(timeout=_timeout or None)
-            if not success:
-                raise TimeoutError(
-                    f"Login did not complete within {_timeout} seconds. "
-                    "Possibly headless environment."
-                )
-            code = getattr(server, "auth_code", None)
-        except Exception as error:
-            logger.warning(
-                "Could not open browser automatically. %s"
-                "Please open the URL manually.",
-                error,
-            )
-            reason = str(error)
-
-        finally:
-            logger.debug("Cleaning up login state")
-            if hasattr(server, "server_close"):
-                try:
-                    server.server_close()
-                except Exception as error:
-                    logger.debug("Failed to close server cleanly: %s", error)
-        if not code:
-            raise AuthError(reason)
-        return self.get_token(
-            token_endpoint,
-            data={
-                "code": code,
-                "redirect_uri": redirect_uri,
-                "grant_type": "authorization_code",
-            },
+        is_interactive_auth = int(
+            os.getenv("BROWSER_SESSION", str(int(is_interactive_auth_possible())))
         )
-
-    @staticmethod
-    def find_free_port(auth_url: str) -> int:
-        """Get a free port where we can start the test server."""
-        ports: List[int] = (
-            requests.get(f"{auth_url}/auth-ports").json().get("valid_ports", [])
+        response = client.login(
+            token_normalizer=self.get_token, auto_open=bool(is_interactive_auth)
         )
-        for port in ports:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                try:
-                    s.bind(("localhost", port))
-                    return port
-                except (OSError, PermissionError):
-                    pass
-        raise OSError("No free ports available for login flow")
+        return self.set_token(
+            access_token=response["access_token"],
+            token_type=response["token_type"],
+            expires=response["expires"],
+            refresh_token=response["refresh_token"],
+            refresh_expires=response["refresh_expires"],
+            scope=response["scope"],
+        )
 
     def set_token(
         self,
@@ -265,7 +163,7 @@ class Auth:
                     cfg.auth_url, token["refresh_token"], timeout=timeout
                 )
             if strategy == "browser_auth":
-                return self._login(cfg.auth_url, force=force, _timeout=timeout)
+                return self._login(cfg.auth_url, _timeout=timeout)
         except AuthError as error:
             reason = str(error)
 

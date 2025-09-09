@@ -40,6 +40,17 @@ TIMEOUT: aiohttp.ClientTimeout = aiohttp.ClientTimeout(total=5)
 """5 seconds for timeout for key cloak interaction."""
 
 
+class DeviceStartResponse(BaseModel):
+    """Response class for the device auth flow."""
+
+    device_code: str
+    user_code: str
+    verification_uri: str
+    verification_uri_complete: Optional[str] = None
+    expires_in: int
+    interval: int = 5
+
+
 class Prompt(str, Enum):
     none = "none"
     login = "login"
@@ -358,10 +369,10 @@ async def oidc_request(
             )
             return cast(Dict[str, Any], await res.json())
         except aiohttp.client_exceptions.ClientResponseError as error:
-            logger.error(error)
+            logger.warning(error)
             raise HTTPException(status_code=401) from error
         except Exception as error:
-            logger.error("Could not connect to OIDC server")
+            logger.warning("Could not connect to OIDC server")
             logger.exception(error)
             raise HTTPException(status_code=503) from error
 
@@ -427,15 +438,6 @@ async def system_user(
         pw_dir=pw_entry.pw_dir,
         pw_shell=pw_entry.pw_shell,
     )
-
-
-@app.get(
-    "/api/freva-nextgen/auth/v2/auth-ports",
-    tags=["Authentication"],
-)
-async def valid_ports() -> AuthPorts:
-    """Get the open id connect configuration."""
-    return AuthPorts(valid_ports=server_config.oidc_auth_ports)
 
 
 @app.get(
@@ -601,6 +603,41 @@ async def callback(
     return token_data
 
 
+@app.post(
+    "/api/freva-nextgen/auth/v2/device",
+    tags=["Authentication"],
+    response_model=DeviceStartResponse,
+)
+async def device_flow() -> DeviceStartResponse:
+    """Start device flow by proxying to the oicd server's `/auth/v2/device`.
+
+    Returns verification URIs and codes as JSON (no redirects).
+    """
+    data = {
+        "scope": "openid offline_access",
+        "client_id": server_config.oidc_client_id,
+        "client_secret": server_config.oidc_client_secret,
+    }
+    js = await oidc_request(
+        "POST",
+        "device_authorization_endpoint",
+        data=data,
+    )
+    for k in ("device_code", "user_code", "verification_uri", "expires_in"):
+        if k not in js:
+            raise HTTPException(
+                502, detail=f"upstream_malformed_response, missing: {k}"
+            )
+    return DeviceStartResponse(
+        device_code=js["device_code"],
+        user_code=js["user_code"],
+        verification_uri=js["verification_uri"],
+        verification_uri_complete=js.get("verification_uri_complete"),
+        expires_in=int(js["expires_in"]),
+        interval=int(js.get("interval", 5)),
+    )
+
+
 @app.post("/api/freva-nextgen/auth/v2/token", tags=["Authentication"])
 async def fetch_or_refresh_token(
     code: Annotated[
@@ -634,6 +671,18 @@ async def fetch_or_refresh_token(
             help="The refresh token used to renew the OAuth2 token",
         ),
     ] = None,
+    device_code: Annotated[
+        Optional[str],
+        Form(
+            title="Device code",
+            alias="device-code",
+            help=(
+                "The code received as part of the OAuth2 authorization "
+                "device code flow."
+            ),
+            examples=["abc123xyz"],
+        ),
+    ] = None,
 ) -> Token:
     """Interact with the openID connect endpoint for client authentication."""
     data: Dict[str, Optional[str]] = {
@@ -649,9 +698,12 @@ async def fetch_or_refresh_token(
     elif refresh_token:
         data["grant_type"] = "refresh_token"
         data["refresh_token"] = refresh_token
+    elif device_code:
+        data["grant_type"] = "urn:ietf:params:oauth:grant-type:device_code"
+        data["device_code"] = device_code
     else:
         raise HTTPException(
-            status_code=400, detail="Missing code or refresh_token"
+            status_code=400, detail="Missing (device) code or refresh_token"
         )
     token_data = await oidc_request(
         "POST",
@@ -673,11 +725,14 @@ async def fetch_or_refresh_token(
     refresh_expires_at = refresh_expires_at or now + token_data.get(
         "refresh_expires_in", 180
     )
-    return Token(
-        access_token=token_data["access_token"],
-        token_type=token_data["token_type"],
-        expires=int(expires_at),
-        refresh_token=token_data["refresh_token"],
-        refresh_expires=int(refresh_expires_at),
-        scope=token_data["scope"],
-    )
+    try:
+        return Token(
+            access_token=token_data["access_token"],
+            token_type=token_data["token_type"],
+            expires=int(expires_at),
+            refresh_token=token_data["refresh_token"],
+            refresh_expires=int(refresh_expires_at),
+            scope=token_data["scope"],
+        )
+    except KeyError:
+        raise HTTPException(status_code=400, detail="Token creation failed.")
