@@ -78,7 +78,7 @@ class Auth:
             timeout=_timeout,
         )
         is_interactive_auth = int(
-            os.getenv("BROWSER_SESSION", str(is_interactive_auth_possible()))
+            os.getenv("BROWSER_SESSION", str(int(is_interactive_auth_possible())))
         )
         response = client.login(
             token_normalizer=self.get_token, auto_open=bool(is_interactive_auth)
