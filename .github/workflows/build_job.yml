@@ -239,5 +239,5 @@ jobs:
       - name: Do the release job
         run: python3 bump.py deploy freva_rest -p freva-rest -v -s solr ${{steps.solr.outputs.tag}}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
           REPO_VERSION: ${{ steps.repository.outputs.tag }}
