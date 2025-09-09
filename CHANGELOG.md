@@ -1,6 +1,10 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+##[v2509.1.0]
+### Changed
+- Switched to device login flow for python-lib and cli clients.
+
 ## [v2509.0.0]
 ### Added
 - Custom databrowser search flavours for the restAPI and the client
