@@ -604,12 +604,12 @@ async def callback(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid state format")
 
-    data: Dict[str, Optional[str]] = {
+    data: Dict[str, str] = {
         "grant_type": "authorization_code",
         "code": code,
         "redirect_uri": redirect_uri,
     }
-    headers = {}
+    headers: Dict[str, str] = {}
     set_request_header(data, headers)
     token_data: Dict[str, Union[str, int]] = await oidc_request(
         "POST",
@@ -631,7 +631,7 @@ async def device_flow() -> DeviceStartResponse:
     Returns verification URIs and codes as JSON (no redirects).
     """
     data = {"scope": "openid offline_access"}
-    headers = {}
+    headers: Dict[str, str] = {}
     set_request_header(data, headers)
     js = await oidc_request(
         "POST",
@@ -701,8 +701,8 @@ async def fetch_or_refresh_token(
     ] = None,
 ) -> Token:
     """Interact with the openID connect endpoint for client authentication."""
-    data: Dict[str, Optional[str]] = {}
-    headers = {}
+    data: Dict[str, str] = {}
+    headers: Dict[str, str] = {}
     if code:
         data["redirect_uri"] = redirect_uri or urljoin(
             server_config.proxy, "/api/freva-nextgen/auth/v2/callback"
