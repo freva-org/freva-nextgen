@@ -1,6 +1,7 @@
 """Definition of routes for authentication."""
 
 import asyncio
+import base64
 import datetime
 import secrets
 from enum import Enum
@@ -192,6 +193,19 @@ class SafeAuth:
                 raise
 
         return dependency
+
+
+def set_request_header(data: Dict[str, str], header: Dict[str, str]) -> None:
+    """Construct the oidc request header."""
+    header["Content-Type"] = "application/x-www-form-urlencoded"
+    if server_config.oidc_client_secret:
+        _auth = base64.b64encode(
+            f"{server_config.oidc_client_id}:"
+            "{server_config.oidc_client_secret}".encode()
+        ).decode()
+        header["Authorization"] = f"Basic {_auth}"
+    else:
+        data["client_id"] = server_config.oidc_client_id
 
 
 auth = SafeAuth(server_config.oidc_discovery_url)
@@ -591,14 +605,17 @@ async def callback(
         raise HTTPException(status_code=400, detail="Invalid state format")
 
     data: Dict[str, Optional[str]] = {
-        "client_id": server_config.oidc_client_id,
-        "client_secret": server_config.oidc_client_secret,
         "grant_type": "authorization_code",
         "code": code,
         "redirect_uri": redirect_uri,
     }
+    headers = {}
+    set_request_header(data, headers)
     token_data: Dict[str, Union[str, int]] = await oidc_request(
-        "POST", "token_endpoint", data={k: v for (k, v) in data.items() if v}
+        "POST",
+        "token_endpoint",
+        data={k: v for (k, v) in data.items() if v},
+        headers=headers,
     )
     return token_data
 
@@ -613,15 +630,14 @@ async def device_flow() -> DeviceStartResponse:
 
     Returns verification URIs and codes as JSON (no redirects).
     """
-    data = {
-        "scope": "openid offline_access",
-        "client_id": server_config.oidc_client_id,
-        "client_secret": server_config.oidc_client_secret,
-    }
+    data = {"scope": "openid offline_access"}
+    headers = {}
+    set_request_header(data, headers)
     js = await oidc_request(
         "POST",
         "device_authorization_endpoint",
         data=data,
+        headers=headers,
     )
     for k in ("device_code", "user_code", "verification_uri", "expires_in"):
         if k not in js:
@@ -685,10 +701,8 @@ async def fetch_or_refresh_token(
     ] = None,
 ) -> Token:
     """Interact with the openID connect endpoint for client authentication."""
-    data: Dict[str, Optional[str]] = {
-        "client_id": server_config.oidc_client_id,
-        "client_secret": server_config.oidc_client_secret,
-    }
+    data: Dict[str, Optional[str]] = {}
+    headers = {}
     if code:
         data["redirect_uri"] = redirect_uri or urljoin(
             server_config.proxy, "/api/freva-nextgen/auth/v2/callback"
@@ -705,10 +719,12 @@ async def fetch_or_refresh_token(
         raise HTTPException(
             status_code=400, detail="Missing (device) code or refresh_token"
         )
+    set_request_header(data, headers)
     token_data = await oidc_request(
         "POST",
         "token_endpoint",
         data={k: v for (k, v) in data.items() if v},
+        headers=headers,
     )
     expires_at = (
         token_data.get("exp")
