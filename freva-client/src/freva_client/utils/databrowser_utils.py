@@ -385,7 +385,7 @@ class UserDataHandler:
     ) -> None:
         for data in validated_userdata:
             metadata = self._get_metadata(data)
-            if isinstance(metadata, Exception) or metadata == {}:
+            if metadata == {}:
                 logger.warning("Error getting metadata: %s", metadata)
             else:
                 self.user_metadata.append(metadata)
