@@ -584,12 +584,11 @@ class Flavour:
             raise HTTPException(status_code=422, detail=await get_error_details())
 
         translator = Translator(flavour, translate=True, config=config)
-        if owner in (None, user_name) and user_name != "global":
-            custom_flavour = next(
-                (f for f in all_flavours if f.flavour_name == flavour), None
-            )
-            if custom_flavour:
-                translator.forward_lookup.update(custom_flavour.mapping)
+        custom_flavour = next(
+            (f for f in all_flavours if f.flavour_name == flavour), None
+        )
+        if custom_flavour:
+            translator.forward_lookup.update(custom_flavour.mapping)
         return translator
 
     @classmethod
