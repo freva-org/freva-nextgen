@@ -1,6 +1,7 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
 ##[v2509.2.0]
 ### Changed
 - Fix config file precedence issue causing malformed host URLs in freva-client
