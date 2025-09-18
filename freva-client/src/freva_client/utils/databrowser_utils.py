@@ -188,30 +188,34 @@ class Config:
 
     def _get_databrowser_params_from_config(self) -> Dict[str, str]:
         """Get the config file order."""
-
         eval_conf = self.get_dirs(user=False) / "evaluation_system.conf"
         freva_config = Path(
             os.environ.get("FREVA_CONFIG")
             or Path(self.get_dirs(user=False)) / "freva.toml"
         )
         paths: Dict[Path, Literal["toml", "ini"]] = {
-            Path(appdirs.user_config_dir("freva")) / "freva.toml": "toml",
-            Path(self.get_dirs(user=True)) / "freva.toml": "toml",
-            freva_config: "toml",
             Path(
                 os.environ.get("EVALUATION_SYSTEM_CONFIG_FILE") or eval_conf
             ): "ini",
+            Path(appdirs.user_config_dir("freva")) / "freva.toml": "toml",
+            Path(self.get_dirs(user=True)) / "freva.toml": "toml",
+            freva_config: "toml",
         }
+
+        result_host = ""
+        result_flavour = ""
+
         for config_path, config_type in paths.items():
             if config_path.is_file():
                 config_data = self._read_config(config_path, config_type)
-                host = config_data.get("host", "")
-                flavour = config_data.get("flavour", "")
-                if host:
-                    return {
-                        "host": host,
-                        "flavour": flavour
-                    }
+                if not result_host and config_data.get("host", ""):
+                    result_host = config_data["host"]
+                if not result_flavour and config_data.get("flavour", ""):
+                    result_flavour = config_data["flavour"]
+
+        if result_host:
+            return {"host": result_host, "flavour": result_flavour}
+
         raise ValueError(
             "No databrowser host configured, please use a"
             " configuration defining a databrowser host or"
