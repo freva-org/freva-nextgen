@@ -42,11 +42,18 @@ class Config:
         uniq_key: Literal["file", "uri"] = "file",
         flavour: Optional[str] = None,
     ) -> None:
-        self.databrowser_url = f"{self.get_api_url(host)}/databrowser"
-        self.auth_url = f"{self.get_api_url(host)}/auth/v2"
-        self.get_api_main_url = self.get_api_url(host)
+        config_host = host or cast(str, self._get_databrowser_param_from_config("host"))
+
+        self.databrowser_url = f"{self.get_api_url(config_host)}/databrowser"
+        self.auth_url = f"{self.get_api_url(config_host)}/auth/v2"
+        self.get_api_main_url = self.get_api_url(config_host)
         self.uniq_key = uniq_key
-        self.flavour = self.get_flavour(flavour)
+        self._flavour = (
+            flavour or self._get_databrowser_param_from_config(
+                "flavour",
+                optional=True
+            )
+        )
 
     @cached_property
     def validate_server(self) -> bool:
@@ -59,18 +66,17 @@ class Config:
                 f"Could not connect to {self.databrowser_url}: {e}"
             ) from None
 
-    def get_flavour(self, flavour: Optional[str]) -> str:
-        """Get the current flavour."""
-        if flavour:
-            return flavour
-        else:
-            try:
-                config_flavour = self._get_databrowser_params_from_config().get(
-                    "flavour", ""
-                )
-                return config_flavour or "freva"
-            except ValueError:
-                return "freva"
+    @property
+    def flavour(self) -> str:
+        """Get the flavour, using server default if not configured."""
+        if self._flavour:
+            return self._flavour
+        try:
+            flavours = self.overview.get("flavours", [])
+            self._flavour = flavours[0] if flavours else "freva"
+        except (ValueError, IndexError, KeyError):
+            self._flavour = "freva"
+        return self._flavour
 
     def _read_ini(self, path: Path) -> Dict[str, str]:
         """Read an ini file.
@@ -115,8 +121,11 @@ class Config:
         """
         try:
             config = tomli.loads(path.read_text()).get("freva", {})
-            scheme, host = self._split_url(cast(str, config.get("host", "")))
+            raw_host = cast(str, config.get("host", ""))
             flavour = config.get("default_flavour", "")
+            if not raw_host:
+                return {"host": "", "flavour": flavour}
+            scheme, host = self._split_url(raw_host)
         except (tomli.TOMLDecodeError, KeyError):
             return {}
         host, _, port = host.partition(":")
@@ -186,40 +195,39 @@ class Config:
                 f"Could not connect to {self.databrowser_url}"
             ) from None
 
-    def _get_databrowser_params_from_config(self) -> Dict[str, str]:
-        """Get the config file order."""
+    def _get_databrowser_param_from_config(
+            self, key: str, optional: bool = False
+    ) -> Optional[str]:
+        """Get a single config parameter following proper precedence."""
         eval_conf = self.get_dirs(user=False) / "evaluation_system.conf"
         freva_config = Path(
             os.environ.get("FREVA_CONFIG")
             or Path(self.get_dirs(user=False)) / "freva.toml"
         )
         paths: Dict[Path, Literal["toml", "ini"]] = {
-            Path(
-                os.environ.get("EVALUATION_SYSTEM_CONFIG_FILE") or eval_conf
-            ): "ini",
             Path(appdirs.user_config_dir("freva")) / "freva.toml": "toml",
             Path(self.get_dirs(user=True)) / "freva.toml": "toml",
             freva_config: "toml",
+            Path(
+                os.environ.get("EVALUATION_SYSTEM_CONFIG_FILE") or eval_conf
+            ): "ini",
         }
-
-        result_host = ""
-        result_flavour = ""
 
         for config_path, config_type in paths.items():
             if config_path.is_file():
                 config_data = self._read_config(config_path, config_type)
-                if not result_host and config_data.get("host", ""):
-                    result_host = config_data["host"]
-                if not result_flavour and config_data.get("flavour", ""):
-                    result_flavour = config_data["flavour"]
-
-        if result_host:
-            return {"host": result_host, "flavour": result_flavour}
+                value = config_data.get(key, "")
+                # we cannot igonore the empty string here, because
+                # it needs to check the next config file
+                if value:
+                    return value if value else None
+        if optional:
+            return None
 
         raise ValueError(
-            "No databrowser host configured, please use a"
-            " configuration defining a databrowser host or"
-            " set a host name using the `host` key"
+            f"No databrowser {key} configured, please use a"
+            f" configuration defining a databrowser {key} or"
+            f" set a host name using the `{key}` key"
         )
 
     @property
@@ -261,9 +269,8 @@ class Config:
         scheme = scheme or "http"
         return scheme, hostname
 
-    def get_api_url(self, url: Optional[str]) -> str:
+    def get_api_url(self, url: str) -> str:
         """Construct the databrowser url from a given hostname."""
-        url = url or self._get_databrowser_params_from_config().get("host", "")
         scheme, hostname = self._split_url(url)
         hostname, _, port = hostname.partition(":")
         if port:

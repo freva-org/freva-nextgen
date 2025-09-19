@@ -221,6 +221,18 @@ def invalid_freva_conf_file() -> Iterator[Path]:
             yield freva_config
 
 @pytest.fixture(scope="function")
+def valid_freva_config_commented_host() -> Iterator[Path]:
+    """Mock a valid freva config path."""
+    with mock.patch.dict(os.environ, _prep_env(), clear=True):
+        with TemporaryDirectory() as temp_dir:
+            freva_config = Path(temp_dir) / "share" / "freva" / "freva.toml"
+            freva_config.parent.mkdir(exist_ok=True, parents=True)
+            freva_config.write_text(
+                "[freva]\n # host = 'https://www.freva.com:80/api'\ndefault_flavour = 'cmip6'\n"
+            )
+            yield freva_config
+
+@pytest.fixture(scope="function")
 def free_port() -> Iterator[int]:
     """Define a free port to run stuff on."""
     yield find_free_port()
