@@ -39,7 +39,7 @@ session required pam_sss.so\n\
         asyncssh \
         cfgrib \
         cloudpickle \
-        cryptography \
+       "cryptography=45.*" \
         bokeh \
         dask \
         distributed \
@@ -61,7 +61,7 @@ session required pam_sss.so\n\
         micromamba install -y -q -c conda-forge --override-channels \
         aiohttp \
         cloudpickle \
-        cryptography \
+       "cryptography=45.*" \
         fastapi \
         fastapi-third-party-auth \
         email-validator \
