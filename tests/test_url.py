@@ -28,6 +28,11 @@ def test_invalid_freva_config(invalid_freva_conf_file: Path) -> None:
     db = databrowser(host="https://www.example.com")
     assert db.url == "https://www.example.com/api/freva-nextgen/databrowser"
 
+def test_empty_host_toml_config(valid_freva_config_commented_host: Path) -> None:
+    """Test TOML with empty host"""
+    assert valid_freva_config_commented_host.is_file()
+    with pytest.raises(ValueError):
+        databrowser()
 
 def test_valid_eval_config(valid_eval_conf_file: Path) -> None:
     """Test if we can load an evaluation system config file."""
