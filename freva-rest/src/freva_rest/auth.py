@@ -195,17 +195,22 @@ class SafeAuth:
         return dependency
 
 
-def set_request_header(data: Dict[str, str], header: Dict[str, str]) -> None:
+def set_request_header(
+    client_id: str,
+    client_secret: Optional[str],
+    data: Dict[str, str],
+    header: Dict[str, str],
+) -> None:
     """Construct the oidc request header."""
     header["Content-Type"] = "application/x-www-form-urlencoded"
-    if server_config.oidc_client_secret:
+    if client_secret:
         _auth = base64.b64encode(
             f"{server_config.oidc_client_id}:"
-            "{server_config.oidc_client_secret}".encode()
+            f"{server_config.oidc_client_secret}".encode()
         ).decode()
         header["Authorization"] = f"Basic {_auth}"
     else:
-        data["client_id"] = server_config.oidc_client_id
+        data["client_id"] = client_id
 
 
 auth = SafeAuth(server_config.oidc_discovery_url)
@@ -310,6 +315,17 @@ class Token(BaseModel):
     refresh_token: str
     refresh_expires: int
     scope: str
+
+
+@app.get(
+    "/api/freva-nextgen/auth/v2/auth-ports",
+    tags=["Authentication"],
+    response_model=AuthPorts,
+    response_description="Pre-defined ports available for code login flow.",
+)
+async def valid_ports() -> AuthPorts:
+    """Get the open id connect configuration."""
+    return AuthPorts(valid_ports=server_config.oidc_auth_ports)
 
 
 @app.get("/api/freva-nextgen/auth/v2/status", tags=["Authentication"])
@@ -610,7 +626,12 @@ async def callback(
         "redirect_uri": redirect_uri,
     }
     headers: Dict[str, str] = {}
-    set_request_header(data, headers)
+    set_request_header(
+        server_config.oidc_client_id,
+        server_config.oidc_client_secret,
+        data,
+        headers,
+    )
     token_data: Dict[str, Union[str, int]] = await oidc_request(
         "POST",
         "token_endpoint",
@@ -632,7 +653,12 @@ async def device_flow() -> DeviceStartResponse:
     """
     data = {"scope": "openid offline_access"}
     headers: Dict[str, str] = {}
-    set_request_header(data, headers)
+    set_request_header(
+        server_config.oidc_client_id,
+        server_config.oidc_client_secret,
+        data,
+        headers,
+    )
     js = await oidc_request(
         "POST",
         "device_authorization_endpoint",
@@ -719,7 +745,12 @@ async def fetch_or_refresh_token(
         raise HTTPException(
             status_code=400, detail="Missing (device) code or refresh_token"
         )
-    set_request_header(data, headers)
+    set_request_header(
+        server_config.oidc_client_id,
+        server_config.oidc_client_secret,
+        data,
+        headers,
+    )
     token_data = await oidc_request(
         "POST",
         "token_endpoint",
