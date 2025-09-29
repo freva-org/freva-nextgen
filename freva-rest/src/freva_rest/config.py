@@ -269,6 +269,16 @@ class ServerConfig(BaseModel):
     ] = (
         env_to_dict("API_OIDC_TOKEN_CLAIMS") or None
     )
+    oidc_auth_ports: Annotated[
+        List[int],
+        Field(
+            title="Valid local auth ports.",
+            description=(
+                "List valid redirect portss that being used for authentication"
+                " flow via localhost."
+            ),
+        ),
+    ] = env_to_list("API_OIDC_AUTH_PORTS", int)
     admins_token_claims: Annotated[
         Optional[Dict[str, List[str]]],
         Field(
@@ -310,6 +320,9 @@ class ServerConfig(BaseModel):
         self._oidc_overview: Optional[Dict[str, Any]] = None
         self.services = (
             self.services or self._read_config("restAPI", "services") or []
+        )
+        self.oidc_auth_ports = self.oidc_auth_ports or self._read_config(
+            "oidc", "auth_ports"
         )
         self.oidc_token_claims = (
             self.oidc_token_claims
