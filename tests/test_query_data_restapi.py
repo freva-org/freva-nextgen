@@ -535,7 +535,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         "flavour_name": "test_flavour_double",
         "mapping": {"project": "my_project", "variable": "my_variable"},
         "is_global": False,
-    }    
+    }
     res_psot_3 = requests.post(
         f"{test_server}/databrowser/flavours",
         json=custom_flavour_double,
@@ -735,6 +735,22 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         assert res_put_10.status_code == 200
         assert "status" in res_put_10.json()
 
+    # PUT: Even admin user cannot update the built-in flavours (422)
+    with mock.patch(
+        "freva_rest.rest.server_config.admins_token_claims",
+        {"resource_access.realm-management.roles": ["admin"]},
+    ):
+        res_put_11 = requests.put(
+            f"{test_server}/databrowser/flavours/freva",
+            json={
+                "flavour_name": "freva",
+                "mapping": {"model": "some_model"},
+                "is_global": True
+            },
+            headers={"Authorization": f"Bearer {auth_admin['access_token']}"},
+        )
+        assert res_put_11.status_code == 422
+        assert "Cannot update built-in flavour" in res_put_11.json()["detail"]
     # ========== DELETE METHOD TESTS ==========
 
     # DELETE: deleting custom personal flavour

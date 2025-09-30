@@ -470,6 +470,17 @@ class Flavour:
         existing = await self.query_flavour_mongo(effective_owner, old_name)
         matching = [f for f in existing if f.owner == effective_owner]
 
+        if old_name.lower() in BUILTIN_FLAVOURS and flavour_def.is_global:
+            logger.warning(
+                "'%s' tried to update built-in flavour '%s'.",
+                user_name,
+                old_name
+            )
+            raise HTTPException(
+                status_code=422,
+                detail=f"Cannot update built-in flavour '{old_name}'"
+            )
+
         if not matching:
             logger.warning(
                 "'%s' tried to update flavour '%s', but it does not exist.",
