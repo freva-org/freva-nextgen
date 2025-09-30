@@ -1848,6 +1848,190 @@ Managing Flavours
                 return 0;
             }
 
+.. http:put:: /api/freva-nextgen/databrowser/flavours/(str:flavour_name)
+
+    This endpoint allows authenticated users to update an existing custom flavour definition.
+    You can update the mapping (partial or complete) and optionally rename the flavour by providing
+    a different ``flavour_name`` in the request body. Admin users can update global flavours,
+    while regular users can only update their own personal flavours.
+
+    :param flavour_name: The current name of the flavour to update.
+    :type flavour_name: str
+    :reqbody flavour_name: The name for the flavour (can be same as current or new name for renaming).
+    :type flavour_name: str
+    :reqbody mapping: Partial or complete dictionary mapping freva standard field names to update.
+                      Only provided keys will be updated; other mappings remain unchanged.
+    :type mapping: dict[str, str]
+    :reqbody is_global: Whether this is a global flavour (admin only).
+    :type is_global: bool
+    :reqheader Authorization: Bearer token for authentication.
+    :reqheader Content-Type: application/json
+
+    :statuscode 200: Flavour updated successfully.
+    :statuscode 401: Unauthorized / not a valid token.
+    :statuscode 403: Forbidden - only admin users can update global flavours.
+    :statuscode 404: Flavour not found.
+    :statuscode 409: Conflict - new flavour name already exists.
+    :statuscode 422: Invalid flavour definition.
+    :statuscode 500: Internal server error - failed to update flavour.
+
+    Example Request
+    ~~~~~~~~~~~~~~~
+
+    .. sourcecode:: http
+
+        PUT /api/freva-nextgen/databrowser/flavours/my_custom_drs HTTP/1.1
+        Host: www.freva.dkrz.de
+        Authorization: Bearer YOUR_ACCESS_TOKEN
+        Content-Type: application/json
+
+        {
+            "flavour_name": "my_custom_drs",
+            "mapping": {
+                "model": "updated_model_name",
+                "experiment": "updated_exp_id"
+            },
+            "is_global": false
+        }
+
+    Example Response
+    ~~~~~~~~~~~~~~~~
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        {
+            "status": "Flavour updated successfully"
+        }
+
+    Code examples
+    ~~~~~~~~~~~~~
+    Below you can find example usages of this request in different scripting and
+    programming languages.
+
+    .. tabs::
+
+        .. code-tab:: bash
+            :caption: Shell
+
+            curl -X PUT \
+            'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs' \
+            -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{
+                "flavour_name": "my_custom_drs",
+                "mapping": {
+                    "model": "updated_model_name",
+                    "experiment": "updated_exp_id"
+                },
+                "is_global": false
+            }'
+
+        .. code-tab:: python
+            :caption: Python
+
+            import requests
+
+            url = "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs"
+            headers = {
+                "Authorization": "Bearer YOUR_ACCESS_TOKEN",
+                "Content-Type": "application/json"
+            }
+            data = {
+                "flavour_name": "my_custom_drs",
+                "mapping": {
+                    "model": "updated_model_name",
+                    "experiment": "updated_exp_id"
+                },
+                "is_global": False
+            }
+
+            response = requests.put(url, headers=headers, json=data)
+            print(response.json())
+
+        .. code-tab:: r
+            :caption: gnuR
+
+            library(httr)
+
+            url <- "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs"
+            headers <- c(Authorization = "Bearer YOUR_ACCESS_TOKEN")
+            body <- list(
+                flavour_name = "my_custom_drs",
+                mapping = list(
+                    model = "updated_model_name",
+                    experiment = "updated_exp_id"
+                ),
+                is_global = FALSE
+            )
+
+            response <- PUT(url, add_headers(.headers = headers), body = body, encode = "json")
+            content <- content(response, "parsed")
+            print(content)
+
+        .. code-tab:: julia
+            :caption: Julia
+
+            using HTTP, JSON
+
+            url = "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs"
+            headers = Dict(
+                "Authorization" => "Bearer YOUR_ACCESS_TOKEN",
+                "Content-Type" => "application/json"
+            )
+            body = JSON.json(Dict(
+                "flavour_name" => "my_custom_drs",
+                "mapping" => Dict(
+                    "model" => "updated_model_name",
+                    "experiment" => "updated_exp_id"
+                ),
+                "is_global" => false
+            ))
+
+            response = HTTP.request("PUT", url, headers = headers, body = body)
+            println(String(response.body))
+
+        .. code-tab:: c
+            :caption: C/C++
+
+            #include <stdio.h>
+            #include <curl/curl.h>
+
+            int main() {
+                CURL *curl;
+                CURLcode res;
+
+                const char *url = "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs";
+                const char *json_data = "{"
+                    "\"flavour_name\": \"my_custom_drs\","
+                    "\"mapping\": {"
+                        "\"model\": \"updated_model_name\","
+                        "\"experiment\": \"updated_exp_id\""
+                    "},"
+                    "\"is_global\": false"
+                "}";
+
+                curl = curl_easy_init();
+                if (curl) {
+                    struct curl_slist *headers = NULL;
+                    headers = curl_slist_append(headers, "Content-Type: application/json");
+                    headers = curl_slist_append(headers, "Authorization: Bearer YOUR_ACCESS_TOKEN");
+
+                    curl_easy_setopt(curl, CURLOPT_URL, url);
+                    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+                    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+                    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_data);
+
+                    res = curl_easy_perform(curl);
+
+                    curl_slist_free_all(headers);
+                    curl_easy_cleanup(curl);
+                }
+                return 0;
+            }
+
 .. http:delete:: /api/freva-nextgen/databrowser/flavours/(str:flavour_name)
 
     This endpoint allows authenticated users to delete a custom flavour definition.
