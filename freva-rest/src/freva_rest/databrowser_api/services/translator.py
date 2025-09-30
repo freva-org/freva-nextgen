@@ -23,6 +23,7 @@ from ..schema import (
     FlavourDeleteResponse,
     FlavourResponse,
     FlavourType,
+    FlavourUpdateDefinition,
 )
 
 BUILTIN_FLAVOURS = ["freva", "cmip6", "cmip5", "cordex", "user"]
@@ -318,7 +319,8 @@ class Flavour:
                     mapping=doc["mapping"],
                     owner=doc["owner"],
                     who_created=doc.get("who_created", ""),
-                    created_at=doc.get("created_at", "")
+                    created_at=doc.get("created_at", ""),
+                    last_modified=doc.get("last_modified", "")
                 )
                 for doc in docs
             ]
@@ -378,7 +380,9 @@ class Flavour:
                 detail=(
                     f"Flavour name '{flavour_def.flavour_name}'"
                     f"conflicts with global flavours. "
-                    f"Please choose another `falvour_name`."
+                    f"Please choose another `falvour_name` or "
+                    f"use update endpoint to modify existing "
+                    f" flavour."
                 )
             )
 
@@ -400,7 +404,8 @@ class Flavour:
                     409,
                     (
                         f"{owner_type.capitalize()} flavour "
-                        f"'{flavour_def.flavour_name}' already exists"
+                        f"'{flavour_def.flavour_name}' already exists. "
+                        f"To change it please use the update endpoint."
                     )
                 )
         except HTTPException as e:
@@ -412,7 +417,8 @@ class Flavour:
             "mapping": flavour_def.mapping,
             "owner": effective_owner,
             "who_created": user_name,
-            "created_at": datetime.now().isoformat()
+            "created_at": datetime.now().isoformat(),
+            "last_modified": datetime.now().isoformat()
         }
 
         try:
@@ -434,6 +440,108 @@ class Flavour:
                 error
             )
             raise HTTPException(status_code=500, detail="Failed to add flavour")
+
+    async def update_flavour(
+        self,
+        user_name: str,
+        old_name: str,
+        flavour_def: FlavourUpdateDefinition,
+    ) -> Dict[str, str]:
+        """
+        Update specific metadata keys and flavour name in
+        an existing flavour definition.
+
+        Parameters
+        ----------
+        user_name: str
+            The username of the user updating the flavour.
+        old_name: str
+            The current name of the flavour to update.
+        flavour_def: FlavourUpdateDefinition
+            The flavour definition with partial mapping to update.
+
+        Returns
+        -------
+        Dict[str, str]
+            A dictionary containing the status message of the operation.
+        """
+        effective_owner = "global" if flavour_def.is_global else user_name
+        target_name = flavour_def.flavour_name or old_name
+        existing = await self.query_flavour_mongo(effective_owner, old_name)
+        matching = [f for f in existing if f.owner == effective_owner]
+
+        if not matching:
+            logger.warning(
+                "'%s' tried to update flavour '%s', but it does not exist.",
+                user_name,
+                old_name
+            )
+            raise HTTPException(
+                status_code=404,
+                detail=f"Flavour '{old_name}' not found"
+            )
+
+        current_flavour = matching[0]
+
+        if target_name != old_name:
+            conflict_check = await self.query_flavour_mongo(
+                effective_owner,
+                target_name
+            )
+            if any(f.owner == effective_owner for f in conflict_check):
+                logger.warning(
+                    "'%s' tried to rename flavour '%s' to '%s', "
+                    "but that name already exists.",
+                    user_name,
+                    old_name,
+                    target_name
+                )
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Flavour '{target_name}' already exists"
+                )
+
+        updated_mapping = {**current_flavour.mapping, **flavour_def.mapping}
+        # Since last_modifed always changes, we check if there are any
+        # important changes happens to avoid unnecessary updates
+        has_meaningful_changes = (
+            target_name != old_name
+            or updated_mapping != current_flavour.mapping
+        )
+
+        update_fields = {
+            "mapping": updated_mapping,
+            "flavour_name": target_name
+        }
+
+        if flavour_def.is_global and has_meaningful_changes:
+            update_fields["who_created"] = user_name
+            update_fields["last_modified"] = datetime.now().isoformat()
+
+        try:
+            result = await self._config.mongo_collection_flavours.update_one(
+                {
+                    "flavour_name": old_name,
+                    "owner": effective_owner
+                },
+                {"$set": update_fields}
+            )
+
+            if result.modified_count == 0:
+                return {"status": f"Flavour '{old_name}' already up to date"}
+
+            logger.info(
+                "Updated flavour '%s' -> '%s' for owner '%s' by user '%s'",
+                old_name,
+                target_name,
+                effective_owner,
+                user_name
+            )
+            return {"status": "Flavour updated successfully"}
+
+        except Exception as error:
+            logger.error("Failed to update flavour '%s': %s", old_name, error)
+            raise HTTPException(status_code=500, detail="Failed to update flavour")
 
     async def delete_flavour(
         self,
@@ -658,7 +766,8 @@ class Flavour:
                     owner="global",
                     who_created="freva",
                     # TODO: any better way to set current time?
-                    created_at=datetime.now().isoformat()
+                    created_at=datetime.now().isoformat(),
+                    last_modified=datetime.now().isoformat()
                 )
             )
         return results
