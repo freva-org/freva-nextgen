@@ -1855,7 +1855,7 @@ Managing Flavours
     a different ``flavour_name`` in the request body. Admin users can update global flavours,
     while regular users can only update their own personal flavours.
 
-    :param flavour_name: The current name of the flavour to update.
+    :param flavour_name: The name of the flavour to update.
     :type flavour_name: str
     :reqbody flavour_name: The name for the flavour (can be same as current or new name for renaming).
     :type flavour_name: str
