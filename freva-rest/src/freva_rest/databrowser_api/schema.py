@@ -209,8 +209,8 @@ class FlavourResponse(BaseModel):
     who_created: str = Field(
         examples=["john_doe", "admin"]
     )
-    created_at: str = Field(examples=["2024-01-15T10:30:00"])
-    last_modified: str = Field(examples=["2024-02-20T14:45:00"])
+    ctime: str = Field(examples=["2024-01-15T10:30:00"])
+    mtime: str = Field(examples=["2024-02-20T14:45:00"])
 
 
 class FlavourListResponse(BaseModel):

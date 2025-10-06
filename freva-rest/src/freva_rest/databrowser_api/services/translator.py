@@ -319,8 +319,8 @@ class Flavour:
                     mapping=doc["mapping"],
                     owner=doc["owner"],
                     who_created=doc.get("who_created", ""),
-                    created_at=doc.get("created_at", ""),
-                    last_modified=doc.get("last_modified", "")
+                    ctime=doc.get("ctime", ""),
+                    mtime=doc.get("mtime", "")
                 )
                 for doc in docs
             ]
@@ -417,8 +417,8 @@ class Flavour:
             "mapping": flavour_def.mapping,
             "owner": effective_owner,
             "who_created": user_name,
-            "created_at": datetime.now().isoformat(),
-            "last_modified": datetime.now().isoformat()
+            "ctime": datetime.now().isoformat(),
+            "mtime": datetime.now().isoformat()
         }
 
         try:
@@ -513,7 +513,7 @@ class Flavour:
                 )
 
         updated_mapping = {**current_flavour.mapping, **flavour_def.mapping}
-        # Since last_modifed always changes, we check if there are any
+        # Since mtime always changes, we check if there are any
         # important changes happens to avoid unnecessary updates
         has_meaningful_changes = (
             target_name != old_name
@@ -527,7 +527,7 @@ class Flavour:
 
         if flavour_def.is_global and has_meaningful_changes:
             update_fields["who_created"] = user_name
-            update_fields["last_modified"] = datetime.now().isoformat()
+            update_fields["mtime"] = datetime.now().isoformat()
 
         try:
             result = await self._config.mongo_collection_flavours.update_one(
@@ -777,8 +777,8 @@ class Flavour:
                     owner="global",
                     who_created="freva",
                     # TODO: any better way to set current time?
-                    created_at=datetime.now().isoformat(),
-                    last_modified=datetime.now().isoformat()
+                    ctime=datetime.now().isoformat(),
+                    mtime=datetime.now().isoformat()
                 )
             )
         return results
