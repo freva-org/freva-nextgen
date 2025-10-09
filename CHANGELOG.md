@@ -1,10 +1,9 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
-
-##[v2509.2.0]
-### Changed
-- Fix config file precedence issue causing malformed host URLs in freva-client
+## [v2510.0.0]
+### Added
+- Fall back to code login flow if device login flow is not available
 
 ##[v2509.1.0]
 ### Changed
