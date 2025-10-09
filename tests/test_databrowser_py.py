@@ -454,17 +454,40 @@ def test_flavour_operations(test_server: str, auth_instance: Auth, auth: Token) 
         )
         assert isinstance(db_count, dict)
 
+        # updating the custom flavour
+        databrowser.flavour(
+            action="update",
+            name="test_flavour_client",
+            mapping={"experiment": "exp_updated"},
+            is_global=False,
+            host=test_server
+        )
+
+        # update with rename
+        databrowser.flavour(
+            action="update",
+            name="test_flavour_client",
+            new_name="test_flavour_client_renamed",
+            is_global=False,
+            host=test_server
+        )
+
+        # verify rename
+        result_renamed = databrowser.flavour(action="list", host=test_server)
+        renamed_names = [f["flavour_name"] for f in result_renamed["flavours"]]
+        assert "test_flavour_client_renamed" in renamed_names
+
         # deleting the custom flavour
         databrowser.flavour(
             action="delete",
-            name="test_flavour_client",
+            name="test_flavour_client_renamed",
             host=test_server
         )
-        
+
         # custom flavour is gone
         flavours_final = databrowser.flavour(action="list", host=test_server)
         final_flavour_names = [f["flavour_name"] for f in flavours_final["flavours"]]
-        assert "test_flavour_client" not in final_flavour_names
+        assert "test_flavour_client_renamed" not in final_flavour_names
         assert len(flavours_final["flavours"]) == len(result["flavours"])
     finally:
         auth_instance._auth_token = token
@@ -487,7 +510,11 @@ def test_flavour_error_cases(test_server: str, auth_instance: Auth, auth: Token)
         # test the missing name and mapping parameters
         with pytest.raises(ValueError, match="Both 'name' and 'mapping' are required"):
             databrowser.flavour(action="add", host=test_server)
-        
+
+        # updating flavour without name
+        with pytest.raises(ValueError, match="'name' is required for update action"):
+            databrowser.flavour(action="update", host=test_server)
+
         # deleting flavour without name
         with pytest.raises(ValueError, match="'name' is required for delete action"):
             databrowser.flavour(action="delete", host=test_server)

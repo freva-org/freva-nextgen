@@ -33,6 +33,7 @@ class UniqKeys(str, Enum):
 
 class FlavourAction(str, Enum):
     add = "add"
+    update = "update"
     delete = "delete"
     list = "list"
 
@@ -1051,6 +1052,73 @@ def flavour_add(
         action="add",
         name=name,
         mapping=mapping_dict,
+        is_global=global_,
+        host=host,
+    )
+
+
+@flavour_app.command("update", help="Update an existing custom flavour.")
+@exception_handler
+def flavour_update(
+    name: str = typer.Argument(..., help="Name of the flavour to update"),
+    mapping: List[str] = typer.Option(
+        [],
+        "--map",
+        "-m",
+        help="Key-value mappings to update in the format key=value",
+    ),
+    new_name: Optional[str] = typer.Option(
+        None,
+        "--new-name",
+        help="New name for the flavour (optional)",
+    ),
+    global_: bool = typer.Option(
+        False,
+        "--global",
+        help="Update global flavour (requires admin privileges)",
+    ),
+    host: Optional[str] = typer.Option(
+        None,
+        "--host",
+        help=(
+            "Set the hostname of the databrowser. If not set (default), "
+            "the hostname is read from a config file."
+        ),
+    ),
+    token_file: Optional[Path] = typer.Option(
+        None,
+        "--token-file",
+        "-tf",
+        help=(
+            "Instead of authenticating via code based authentication flow "
+            "you can set the path to the json file that contains a "
+            "`refresh token` containing a refresh_token key."
+        ),
+    ),
+    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
+) -> None:
+    """Update an existing custom flavour in the databrowser.
+    This command allows partial updates to flavour mappings. Only the keys
+    provided will be updated; other keys remain unchanged."""
+    logger.set_verbosity(verbose)
+    logger.debug(f"Updating flavour '{name}' with mapping {mapping}")
+    Auth(token_file).authenticate(host=host, _cli=True)
+
+    mapping_dict = {}
+    for map_item in mapping:
+        if "=" not in map_item:
+            logger.error(
+                f"Invalid mapping format: {map_item}. Expected format: key=value."
+            )
+            raise typer.Exit(code=1)
+        key, value = map_item.split("=", 1)
+        mapping_dict[key] = value
+
+    databrowser.flavour(
+        action="update",
+        name=name,
+        mapping=mapping_dict if mapping_dict else None,
+        new_name=new_name,
         is_global=global_,
         host=host,
     )

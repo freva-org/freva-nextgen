@@ -430,6 +430,39 @@ To create a global flavour that all users can access (requires admin privileges)
         --map model=source_id \
         --global
 
+Updating Custom Flavours
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+To update an existing custom flavour, use the `flavour update` command. This allows you to modify the facet mappings without recreating the entire flavour. You can update specific keys while keeping others unchanged.
+
+.. code:: console
+
+    freva-client databrowser flavour update my-custom-flavour \
+        --map experiment=new_experiment_id \
+        --map variable=var_name
+
+This command updates only the specified mappings in "my-custom-flavour", leaving other mappings intact.
+
+You can also rename a flavour while updating it:
+
+.. code:: console
+
+    freva-client databrowser flavour update my-custom-flavour \
+        --new-name my-updated-flavour \
+        --map project=new_project_id
+
+To update a global flavour (requires admin privileges):
+
+.. code:: console
+
+    freva-client databrowser flavour update global-flavour \
+        --map model=updated_source_id \
+        --global
+
+.. note::
+    Regular users can only update their own personal flavours. Admin users can update both personal and global flavours. If you only want to rename a flavour, you can use ``--new-name`` without providing any ``--map`` options.
+
+
 Listing Available Flavours
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
