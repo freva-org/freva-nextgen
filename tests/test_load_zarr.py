@@ -54,6 +54,7 @@ def test_load_files_success(test_server: str, auth: Dict[str, str]) -> None:
     files = list(res2.iter_lines(decode_unicode=True))
     assert len(files) == 2
     time.sleep(4)
+    # zarr metadata json
     data = requests.get(
         f"{files[0]}/.zmetadata",
         headers={"Authorization": f"Bearer {token}"},
@@ -61,6 +62,14 @@ def test_load_files_success(test_server: str, auth: Dict[str, str]) -> None:
     )
     assert data.status_code == 200
     assert "metadata" in data.json()
+    # zarr metadata xarray-html-formatted
+    data = requests.get(
+        f"{files[0]}/.zmetadata?format=html",
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=3,
+    )
+    assert data.status_code == 200
+    assert "<div><" in data.text
     data = requests.get(
         f"{files[0]}/.zgroup",
         headers={"Authorization": f"Bearer {token}"},

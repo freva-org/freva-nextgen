@@ -2,12 +2,12 @@
 
 import asyncio
 import json
-from typing import Annotated, Any, Dict, List, Optional
+from typing import Annotated, Any, Dict, List, Optional, Union
 
 import cloudpickle
 from fastapi import Path, Query, Security, status
 from fastapi.exceptions import HTTPException
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi_third_party_auth import IDToken as TokenPayload
 from pydantic import BaseModel, Field
 
@@ -192,6 +192,7 @@ async def get_status(
 @app.get(
     "/api/freva-nextgen/data-portal/zarr/{uuid5}.zarr/.zmetadata",
     tags=["Load data"],
+    response_model=None,
 )
 async def zemtadata(
     uuid5: Annotated[
@@ -206,6 +207,13 @@ async def zemtadata(
             ),
         ),
     ],
+    format: Annotated[
+        str,
+        Query(
+            title="Response format",
+            description="Return metadata as JSON or Xarray-HTML-Format",
+        ),
+    ] = "json",
     timeout: Annotated[
         int,
         Query(
@@ -219,13 +227,19 @@ async def zemtadata(
     current_user: TokenPayload = Security(
         auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
-) -> JSONResponse:
+) -> Union[JSONResponse, HTMLResponse]:
     """Consolidate zarr metadata
 
     This endpoint returns the metadata about the structure and organization of
-    data within the particular zarr store in question.
+    data in two JSON and Xarray-HTML-Format format within the particular zarr store
+    in question.
     """
-
+    if format == "html":
+        dset_cache = await read_redis_data(f"{uuid5}-dset", timeout=timeout)
+        dset = cloudpickle.loads(dset_cache)
+        return HTMLResponse(
+            content=dset._repr_html_()
+        )
     meta: Dict[str, Any] = await read_redis_data(
         uuid5, "json_meta", timeout=timeout
     )
