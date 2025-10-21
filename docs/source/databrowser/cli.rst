@@ -415,9 +415,9 @@ To create a new custom flavour, use the `flavour add` command. You'll need to pr
 .. code:: console
 
     freva-client databrowser flavour add my-custom-flavour \
-        --map project=activity_id \
-        --map model=source_id \
-        --map experiment=experiment_id
+        --map project activity_id \
+        --map model source_id \
+        --map experiment experiment_id
 
 This command creates a personal flavour named "my-custom-flavour" that maps the standard search keys to different attribute names.
 
@@ -426,8 +426,8 @@ To create a global flavour that all users can access (requires admin privileges)
 .. code:: console
 
     freva-client databrowser flavour add global-flavour \
-        --map project=activity_id \
-        --map model=source_id \
+        --map project activity_id \
+        --map model source_id \
         --global
 
 Updating Custom Flavours
@@ -438,8 +438,8 @@ To update an existing custom flavour, use the `flavour update` command. This all
 .. code:: console
 
     freva-client databrowser flavour update my-custom-flavour \
-        --map experiment=new_experiment_id \
-        --map variable=var_name
+        --map experiment new_experiment_id \
+        --map variable var_name
 
 This command updates only the specified mappings in "my-custom-flavour", leaving other mappings intact.
 
@@ -449,14 +449,14 @@ You can also rename a flavour while updating it:
 
     freva-client databrowser flavour update my-custom-flavour \
         --new-name my-updated-flavour \
-        --map project=new_project_id
+        --map project new_project_id
 
 To update a global flavour (requires admin privileges):
 
 .. code:: console
 
     freva-client databrowser flavour update global-flavour \
-        --map model=updated_source_id \
+        --map model updated_source_id \
         --global
 
 .. note::

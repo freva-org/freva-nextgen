@@ -244,9 +244,9 @@ def test_metadata_search(cli_runner: CliRunner, test_server: str, token_file: Pa
             "--token-file",
             str(token_file),
             "--map",
-            "project=projekt",
+            "project projekt",
             "--map",
-            "variable=var",
+            "variable var",
         ],
     )
     assert res.exit_code == 0
@@ -371,9 +371,9 @@ def test_count_values(cli_runner: CliRunner, test_server: str, token_file: Path)
             "--token-file",
             str(token_file),
             "--map",
-            "project=projekt",
+            "project projekt",
             "--map",
-            "variable=var",
+            "variable var",
         ],
     )
     assert res.exit_code == 0
@@ -476,8 +476,8 @@ def test_flavour_commands(
                 "flavour", "add", "test_cli_flavour",
                 "--host", test_server,
                 "--token-file", str(token_file),
-                "--map", "project=projekt",
-                "--map", "variable=var"
+                "--map", "project projekt",
+                "--map", "variable var"
             ]
         )
         assert res.exit_code == 0
@@ -526,7 +526,7 @@ def test_flavour_commands(
                 "flavour", "update", "test_cli_flavour",
                 "--host", test_server,
                 "--token-file", str(token_file),
-                "--map", "experiment=exp_new"
+                "--map", "experiment exp_new"
             ]
         )
         assert res.exit_code == 0
@@ -637,7 +637,7 @@ def test_flavour_error_cases(
         auth_instance._auth_token = None
         res = cli_runner.invoke(
             app, 
-            ["flavour", "add", "test", "--host", test_server, "--map", "a=b"]
+            ["flavour", "add", "test", "--host", test_server, "--map", "a b"]
         )
         assert res.exit_code != 0
         auth_instance._auth_token = None
