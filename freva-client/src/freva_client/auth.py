@@ -11,6 +11,7 @@ import requests
 from .utils import logger
 from .utils.auth_utils import (
     AuthError,
+    CodeAuthClient,
     DeviceAuthClient,
     Token,
     choose_token_strategy,
@@ -72,17 +73,27 @@ class Auth:
     ) -> Token:
         device_endpoint = f"{auth_url}/device"
         token_endpoint = f"{auth_url}/token"
-        client = DeviceAuthClient(
+        device_client = DeviceAuthClient(
             device_endpoint=device_endpoint,
             token_endpoint=token_endpoint,
             timeout=_timeout,
         )
+        code_client = CodeAuthClient(
+            login_endpoint=f"{auth_url}/login",
+            token_endpoint=f"{auth_url}/token",
+            port_endpoint=f"{auth_url}/auth-ports",
+        )
+
         is_interactive_auth = int(
             os.getenv("BROWSER_SESSION", str(int(is_interactive_auth_possible())))
         )
-        response = client.login(
-            token_normalizer=self.get_token, auto_open=bool(is_interactive_auth)
-        )
+        try:
+            response = device_client.login(auto_open=bool(is_interactive_auth))
+        except AuthError as error:
+            if error.status_code == 503:
+                response = code_client.login()
+            else:
+                raise
         return self.set_token(
             access_token=response["access_token"],
             token_type=response["token_type"],
