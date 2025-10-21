@@ -64,7 +64,7 @@ def test_load_files_success(test_server: str, auth: Dict[str, str]) -> None:
     assert "metadata" in data.json()
     # zarr metadata xarray-html-formatted
     data = requests.get(
-        f"{files[0]}/.zmetadata?format=html",
+        f"{files[0]}/view",
         headers={"Authorization": f"Bearer {token}"},
         timeout=3,
     )

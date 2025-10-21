@@ -2,7 +2,7 @@
 
 import asyncio
 import json
-from typing import Annotated, Any, Dict, List, Optional, Union
+from typing import Annotated, Any, Dict, List, Optional
 
 import cloudpickle
 from fastapi import Path, Query, Security, status
@@ -192,7 +192,6 @@ async def get_status(
 @app.get(
     "/api/freva-nextgen/data-portal/zarr/{uuid5}.zarr/.zmetadata",
     tags=["Load data"],
-    response_model=None,
 )
 async def zemtadata(
     uuid5: Annotated[
@@ -207,13 +206,6 @@ async def zemtadata(
             ),
         ),
     ],
-    format: Annotated[
-        str,
-        Query(
-            title="Response format",
-            description="Return metadata as JSON or Xarray-HTML-Format",
-        ),
-    ] = "json",
     timeout: Annotated[
         int,
         Query(
@@ -227,19 +219,13 @@ async def zemtadata(
     current_user: TokenPayload = Security(
         auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
-) -> Union[JSONResponse, HTMLResponse]:
+) -> JSONResponse:
     """Consolidate zarr metadata
 
     This endpoint returns the metadata about the structure and organization of
-    data in two JSON and Xarray-HTML-Format format within the particular zarr store
-    in question.
+    data within the particular zarr store in question.
     """
-    if format == "html":
-        dset_cache = await read_redis_data(f"{uuid5}-dset", timeout=timeout)
-        dset = cloudpickle.loads(dset_cache)
-        return HTMLResponse(
-            content=dset._repr_html_()
-        )
+
     meta: Dict[str, Any] = await read_redis_data(
         uuid5, "json_meta", timeout=timeout
     )
@@ -247,6 +233,55 @@ async def zemtadata(
         content=meta,
         status_code=status.HTTP_200_OK,
     )
+
+
+@app.get(
+    "/api/freva-nextgen/data-portal/zarr/{uuid5}.zarr/view",
+    tags=["Load data"],
+    response_model=None,
+    summary="Get HTML representation of Zarr dataset",
+    description=(
+        "Returns a human-readable HTML representation of the Zarr dataset "
+        "using Xarray's HTML formatter. This endpoint is intended for "
+        "interactive exploration and visualization in web browsers."
+    ),
+    response_class=HTMLResponse,
+)
+async def zarr_html_view(
+    uuid5: Annotated[
+        str,
+        Path(
+            title="uuid",
+            description=(
+                (
+                    "The uuid that was generated, when task to stream data was "
+                    "created."
+                )
+            ),
+        ),
+    ],
+    timeout: Annotated[
+        int,
+        Query(
+            alias="timeout",
+            title="Cache timeout for getting results.",
+            description="Set a timeout to wait for results.",
+            ge=0,
+            le=1500,
+        ),
+    ] = 1,
+    current_user: TokenPayload = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
+) -> HTMLResponse:
+    """Get HTML representation of the Zarr dataset.
+
+    This endpoint provides a human-readable HTML view of the dataset structure
+    and metadata, generated using Xarray's HTML representation method.
+    """
+    dset_cache = await read_redis_data(f"{uuid5}-dset", timeout=timeout)
+    dset = cloudpickle.loads(dset_cache)
+    return HTMLResponse(content=dset._repr_html_())
 
 
 @app.get(
