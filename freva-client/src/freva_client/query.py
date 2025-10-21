@@ -721,7 +721,9 @@ class databrowser:
                 for k, v in self._facet_search(extended_search=True).items()
             ], columns=["facet", "values"])
             .explode("values")
-            .groupby("facet")["values"].apply(list)
+            .groupby("facet")["values"].apply(
+                lambda x: [v for v in x if pd.notna(v)]
+            )
         )
 
     @classmethod
@@ -907,7 +909,9 @@ class databrowser:
                 ], columns=["facet", "values"]
             )
             .explode("values")
-            .groupby("facet")["values"].apply(list)
+            .groupby("facet")["values"].apply(
+                lambda x: [v for v in x if pd.notna(v)]
+            )
         )
 
     @classmethod
