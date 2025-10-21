@@ -269,6 +269,23 @@ class ServerConfig(BaseModel):
     ] = (
         env_to_dict("API_OIDC_TOKEN_CLAIMS") or None
     )
+    oidc_scopes: Annotated[
+        str,
+        Field(
+            title="Scopes",
+            description="Specify the access level the application needs to request. ",
+        ),
+    ] = os.getenv("API_OIDC_SCOPES", "")
+    oidc_auth_ports: Annotated[
+        List[int],
+        Field(
+            title="Valid local auth ports.",
+            description=(
+                "List valid redirect portss that being used for authentication"
+                " flow via localhost."
+            ),
+        ),
+    ] = env_to_list("API_OIDC_AUTH_PORTS", int)
     admins_token_claims: Annotated[
         Optional[Dict[str, List[str]]],
         Field(
@@ -311,6 +328,9 @@ class ServerConfig(BaseModel):
         self.services = (
             self.services or self._read_config("restAPI", "services") or []
         )
+        self.oidc_auth_ports = self.oidc_auth_ports or self._read_config(
+            "oidc", "auth_ports"
+        )
         self.oidc_token_claims = (
             self.oidc_token_claims
             or self._read_config("oidc", "token_claims")
@@ -330,6 +350,7 @@ class ServerConfig(BaseModel):
         self.oidc_client_id = self.oidc_client_id or self._read_config(
             "oidc", "client_id"
         )
+        self.oidc_scopes = self.oidc_scopes or self._read_config("oidc", "scopes")
         self.mongo_host = self.mongo_host or self._read_config(
             "mongo_db", "hostname"
         )

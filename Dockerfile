@@ -35,6 +35,7 @@ session required pam_sss.so\n\
     if [ "${CMD}" = "data-loader-worker" ];then\
         PKGNAME=freva-data-portal-worker && \
         micromamba install -y -q -c conda-forge --override-channels \
+        'python<3.14' \
         appdirs \
         asyncssh \
         cfgrib \
@@ -59,6 +60,7 @@ session required pam_sss.so\n\
         PKGNAME=freva-rest && \
         cp /tmp/app/${PKGNAME}/src/freva_rest/api_config.toml /opt/${CMD}/config && \
         micromamba install -y -q -c conda-forge --override-channels \
+        'python<3.14' \
         aiohttp \
         cloudpickle \
        "cryptography=45.*" \
