@@ -30,6 +30,7 @@ from .schema import (
     FlavourDefinition,
     FlavourDeleteResponse,
     FlavourListResponse,
+    FlavourUpdateDefinition,
     Required,
     SearchFlavours,
     SearchResult,
@@ -547,6 +548,57 @@ async def add_custom_flavour(
     flavour_instance = Flavour(config=server_config)
     return await flavour_instance.add_flavour(
         current_user.preferred_username, flavour_def
+    )
+
+
+@app.put(
+    "/api/freva-nextgen/databrowser/flavours/{flavour_name}",
+    tags=["Data search"],
+    status_code=200,
+    response_class=JSONResponse,
+    responses={
+        401: {"description": "Unauthorised / not a valid token."},
+        404: {"description": "Flavour not found."},
+        422: {"description": "Invalid flavour definition or name mismatch."},
+        403: {
+            "description": "Forbidden - only admin users can update global flavours."
+        },
+        500: {"description": "Internal server error - failed to update flavour."},
+    },
+)
+async def update_custom_flavour(
+    flavour_name: str = Path(
+        ...,
+        description="Name of the flavour to update",
+        examples=["nextgem", "custom_project"],
+    ),
+    flavour_def: FlavourUpdateDefinition = Body(...),
+    current_user: TokenPayload = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
+) -> Dict[str, str]:
+    """Update specific search keys in an existing custom flavour definition.
+
+    This endpoint allows partial updates to flavour mappings. Only the keys
+    provided in the mapping will be updated; other keys remain unchanged.
+    The flavour_name can also be updated as well if the new name does not
+    already exist. Regular users can only update their own personal flavours,
+    while administrators can update both their own personal and all global
+    flavours.
+    """
+
+    if flavour_def.is_global and not server_config.is_admin_user(current_user):
+        logger.error(
+            "Unauthorized attempt to update global flavour by user: %s",
+            current_user.preferred_username,
+        )
+        raise HTTPException(
+            status_code=403,
+            detail="Only admin users can update global flavours"
+        )
+    flavour_instance = Flavour(config=server_config)
+    return await flavour_instance.update_flavour(
+        current_user.preferred_username, flavour_name, flavour_def
     )
 
 

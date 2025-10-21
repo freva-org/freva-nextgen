@@ -3,17 +3,22 @@
 import json
 import os
 import random
+import socket
 import sys
 import time
+import urllib.parse
 import webbrowser
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from getpass import getuser
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
+from threading import Event, Thread
 from typing import (
     Any,
-    Callable,
     Dict,
     Iterator,
+    List,
     Literal,
     Optional,
     TypedDict,
@@ -33,6 +38,7 @@ TOKEN_EXPIRY_BUFFER = 60  # seconds
 TOKEN_ENV_VAR = "FREVA_TOKEN_FILE"
 
 
+REDIRECT_URI = "http://localhost:{port}/callback"
 BROWSER_MESSAGE = """Will attempt to open the auth url in your browser.
 
 If this doesn't work, try opening the following url:
@@ -80,11 +86,15 @@ class AuthError(Exception):
     """Athentication error."""
 
     def __init__(
-        self, message: str, detail: Optional[Dict[str, str]] = None
+        self,
+        message: str,
+        detail: Optional[Dict[str, str]] = None,
+        status_code: int = 500,
     ) -> None:
         super().__init__(message)
         self.message = message
         self.detail = detail or {}
+        self.status_code = status_code
 
     def __str__(self) -> str:
         return f"{self.message}: {self.detail}" if self.detail else self.message
@@ -101,10 +111,165 @@ class Token(TypedDict, total=False):
     scope: str
 
 
+class OAuthCallbackHandler(BaseHTTPRequestHandler):
+    def log_message(self, format: str, *args: object) -> None:
+        logger.debug(format, *args)
+
+    def do_GET(self) -> None:
+        query = urllib.parse.urlparse(self.path).query
+        params = urllib.parse.parse_qs(query)
+        if "code" in params:
+            setattr(self.server, "auth_code", params["code"][0])
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"Login successful! You can close this tab.")
+        else:
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b"Authorization code not found.")
+
+
+@dataclass
+class CodeAuthClient:
+    """Minimal OIDC Code Authorization Grand client.
+
+    Parameters
+    ----------
+    device_endpoint : str
+        Device endpoint URL, e.g. ``{issuer}/protocol/openid-connect/auth/device``.
+    token_endpoint : str
+        Token endpoint URL, e.g. ``{issuer}/protocol/openid-connect/token``.
+    scope : str, optional
+        Space-separated scopes; include ``offline_access`` if you need offline RTs.
+    timeout : int | None, optional
+        Overall timeout (seconds) for user approval. ``None`` waits indefinitely.
+    session : requests.Session | None, optional
+        Reusable HTTP session. A new one is created if omitted.
+
+    """
+
+    login_endpoint: str
+    token_endpoint: str
+    port_endpoint: str
+    timeout: Optional[int] = 600
+    session: requests.Session = field(default_factory=requests.Session)
+
+    @staticmethod
+    def _start_local_server(port: int, event: Event) -> HTTPServer:
+        """Start local HTTP server to wait for a single callback."""
+        server = HTTPServer(("localhost", port), OAuthCallbackHandler)
+
+        def handle() -> None:
+            logger.info("Waiting for browser callback on port %s ...", port)
+            while not event.is_set():
+                server.handle_request()
+                if getattr(server, "auth_code", None):
+                    event.set()
+
+        thread = Thread(target=handle, daemon=True)
+        thread.start()
+        return server
+
+    def _find_free_port(self) -> int:
+        """Get a free port where we can start the test server."""
+        ports: List[int] = (
+            requests.get(self.port_endpoint).json().get("valid_ports", [])
+        )
+        for port in ports:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                try:
+                    s.bind(("localhost", port))
+                    return port
+                except (OSError, PermissionError):
+                    pass
+        raise OSError("No free ports available for login flow")
+
+    @staticmethod
+    def _wait_for_port(host: str, port: int, timeout: float = 5.0) -> None:
+        """Wait until a TCP port starts accepting connections."""
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.settimeout(0.5)
+                try:
+                    if sock.connect_ex((host, port)) == 0:
+                        return
+                except OSError:
+                    pass
+            time.sleep(0.05)
+        raise TimeoutError(
+            f"Port {port} on {host} did not open within {timeout} seconds."
+        )
+
+    def login(
+        self,
+    ) -> Token:
+        """Start the login flow."""
+        port = self._find_free_port()
+        redirect_uri = REDIRECT_URI.format(port=port)
+        params = {
+            "redirect_uri": redirect_uri,
+            "offline_access": "true",
+            "prompt": "consent",
+        }
+        query = urllib.parse.urlencode(params)
+        login_url = f"{self.login_endpoint}?{query}"
+        logger.info("Opening browser for login:\n%s", login_url)
+        logger.info(
+            "If you are using this on a remote host, you might need to "
+            "increase the login timeout and forward port %d:\n"
+            "    ssh -L %d:localhost:%d %s@%s",
+            port,
+            port,
+            port,
+            getuser(),
+            socket.gethostname(),
+        )
+        event = Event()
+        server = self._start_local_server(port, event)
+        code: Optional[str] = None
+        reason = "Login failed."
+        try:
+            self._wait_for_port("localhost", port)
+            webbrowser.open(login_url)
+            success = event.wait(timeout=self.timeout or None)
+            if not success:
+                raise TimeoutError(
+                    f"Login did not complete within {self.timeout} seconds. "
+                    "Possibly headless environment."
+                )
+            code = getattr(server, "auth_code", None)
+        except Exception as error:
+            logger.warning(
+                "Could not open browser automatically. %s"
+                "Please open the URL manually.",
+                error,
+            )
+            reason = str(error)
+
+        finally:
+            logger.debug("Cleaning up login state")
+            if hasattr(server, "server_close"):
+                try:
+                    server.server_close()
+                except Exception as error:
+                    logger.debug("Failed to close server cleanly: %s", error)
+        if not code:
+            raise AuthError(reason)
+        data = {
+            "code": code,
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code",
+        }
+
+        response = requests.post(self.token_endpoint, data=data)
+        response.raise_for_status()
+        return cast(Token, response.json())
+
+
 @dataclass
 class DeviceAuthClient:
-    """
-    Minimal OIDC Device Authorization Grant client.
+    """Minimal OIDC Device Authorization Grant client.
 
     Parameters
     ----------
@@ -137,7 +302,6 @@ class DeviceAuthClient:
         self,
         *,
         auto_open: bool = True,
-        token_normalizer: Optional[Callable[[str, Dict[str, str]], Token]] = None,
     ) -> Token:
         """
         Run the full device flow and return an OIDC token payload.
@@ -146,10 +310,6 @@ class DeviceAuthClient:
         ----------
         auto_open : bool, optional
             Attempt to open ``verification_uri_complete`` in a browser.
-        token_normalizer : Callable, optional
-            If provided, called as ``token_normalizer(self.token_endpoint, data)``
-            to normalize/store tokens (e.g., your existing ``self.get_token``).
-            If omitted, the raw token JSON from the token endpoint is returned.
 
         Returns
         -------
@@ -276,7 +436,11 @@ class DeviceAuthClient:
                     "error": "http_error",
                     "error_description": resp.text[:300],
                 }
-            raise AuthError(f"{url} -> {resp.status_code}", detail=payload)
+            raise AuthError(
+                f"{url} -> {resp.status_code}",
+                detail=payload,
+                status_code=resp.status_code,
+            )
         try:
             return cast(Dict[str, Any], resp.json())
         except Exception as error:

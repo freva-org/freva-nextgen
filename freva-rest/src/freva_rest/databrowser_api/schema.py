@@ -1,6 +1,6 @@
 """Schema definitions for the FastAPI endpoints."""
 
-from typing import Any, Dict, List, Literal, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 from urllib.parse import parse_qs
 
 from fastapi import Path, Query, Request
@@ -164,6 +164,41 @@ class FlavourDefinition(BaseModel):
         return v
 
 
+class FlavourUpdateDefinition(BaseModel):
+    """Schema for partial flavour definition updates.
+    Only `mapping` is required, `flavour_name` and `is_global`
+    are optional.
+    """
+    flavour_name: Optional[str] = Field(
+        None,
+        description="Name of the flavour (must don't exist for new flavours)",
+        examples=["nextgem", "custom_project"]
+    )
+    mapping: Dict[str, str] = Field(
+        ...,
+        description="Partial facet mapping dictionary to merge with existing mapping",
+        examples=[{"model": "updated_model", "experiment": "updated_experiment"}]
+    )
+    is_global: bool = Field(
+        False,
+        description="Whether this is a global flavour"
+    )
+
+    class Config:
+        extra = "forbid"
+
+    @field_validator('flavour_name')
+    @classmethod
+    def validate_flavour_name(cls, v: str) -> str:
+        import re
+        if not re.match(r'^[a-zA-Z0-9_-]+$', v):
+            raise ValueError(
+                "Flavour name can only contain letters, "
+                "numbers, underscores, and hyphens"
+            )
+        return v
+
+
 class FlavourResponse(BaseModel):
     """Response schema for flavour queries."""
     flavour_name: str = Field(examples=["nextgem", "cordex"])
@@ -174,7 +209,8 @@ class FlavourResponse(BaseModel):
     who_created: str = Field(
         examples=["john_doe", "admin"]
     )
-    created_at: str = Field(examples=["2024-01-15T10:30:00"])
+    ctime: str = Field(examples=["2024-01-15T10:30:00"])
+    mtime: str = Field(examples=["2024-02-20T14:45:00"])
 
 
 class FlavourListResponse(BaseModel):
