@@ -269,6 +269,13 @@ class ServerConfig(BaseModel):
     ] = (
         env_to_dict("API_OIDC_TOKEN_CLAIMS") or None
     )
+    oidc_scopes: Annotated[
+        str,
+        Field(
+            title="Scopes",
+            description="Specify the access level the application needs to request. ",
+        ),
+    ] = os.getenv("API_OIDC_SCOPES", "")
     oidc_auth_ports: Annotated[
         List[int],
         Field(
@@ -343,6 +350,7 @@ class ServerConfig(BaseModel):
         self.oidc_client_id = self.oidc_client_id or self._read_config(
             "oidc", "client_id"
         )
+        self.oidc_scopes = self.oidc_scopes or self._read_config("oidc", "scopes")
         self.mongo_host = self.mongo_host or self._read_config(
             "mongo_db", "hostname"
         )

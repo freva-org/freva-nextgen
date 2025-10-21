@@ -506,15 +506,27 @@ async def login(
             examples=["login"],
         ),
     ] = Prompt.none,
-    offline_access: bool = Query(
-        False,
-        title="Request a long term token.",
-        description=(
-            "If true, include ``scope=offline_access`` to obtain an "
-            "offline refresh token with a long TTL. This must be"
-            " supported by the Authentication system."
+    offline_access: Annotated[
+        bool,
+        Query(
+            title="Request a long term token.",
+            description=(
+                "If true, include ``scope=offline_access`` to obtain an "
+                "offline refresh token with a long TTL. This must be"
+                " supported by the Authentication system."
+            ),
         ),
-    ),
+    ] = False,
+    scope: Annotated[
+        Optional[str],
+        Query(
+            title="Scope",
+            description=(
+                "Specify the access level the application needs to request. "
+                f"Defaults to {server_config.oidc_scopes}",
+            ),
+        ),
+    ] = None,
 ) -> RedirectResponse:
     """
     Initiate the OpenID Connect authorization code flow.
@@ -535,16 +547,16 @@ async def login(
 
     if not redirect_uri:
         raise HTTPException(status_code=400, detail="Missing redirect_uri")
+    offline_scope = ["offline_access"] if offline_access else []
+    scopes_list = set(
+        (scope or server_config.oidc_scopes).split() + offline_scope
+    )
 
     query = {
         "response_type": "code",
         "client_id": server_config.oidc_client_id,
         "redirect_uri": redirect_uri,
-        "scope": (
-            "openid profile"
-            if offline_access is False
-            else "openid profile offline_access"
-        ),
+        "scope": " ".join(scopes_list),
         "state": state,
         "nonce": nonce,
         "prompt": prompt.value.replace("none", ""),
