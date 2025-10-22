@@ -996,11 +996,11 @@ databrowser_app.add_typer(flavour_app, name="flavour")
 @exception_handler
 def flavour_add(
     name: str = typer.Argument(..., help="Name of the flavour to add"),
-    mapping: List[Tuple[str, str]] = typer.Option(
+    mapping: List[str] = typer.Option(
         [],
         "--map",
         "-m",
-        help="Key-value mappings. Use: --map <key> <value>",
+        help="Key-value mappings in the format key=value",
     ),
     global_: bool = typer.Option(
         False,
@@ -1034,7 +1034,15 @@ def flavour_add(
     logger.set_verbosity(verbose)
     logger.debug(f"Adding flavour '{name}' with mapping {mapping} and global={global_}")
     Auth(token_file).authenticate(host=host, _cli=True)
-    mapping_dict: Dict[str, str] = dict(mapping) if mapping else {}
+    mapping_dict = {}
+    for map_item in mapping:
+        if "=" not in map_item:
+            logger.error(
+                f"Invalid mapping format: {map_item}. Expected format: key=value."
+            )
+            raise typer.Exit(code=1)
+        key, value = map_item.split("=", 1)
+        mapping_dict[key] = value
 
     if not mapping_dict:
         logger.error("At least one mapping must be provided using --map")
@@ -1053,11 +1061,11 @@ def flavour_add(
 @exception_handler
 def flavour_update(
     name: str = typer.Argument(..., help="Name of the flavour to update"),
-    mapping: List[Tuple[str, str]] = typer.Option(
+    mapping: List[str] = typer.Option(
         [],
         "--map",
         "-m",
-        help="Key-value mappings to update. Use: --map <key> <value>",
+        help="Key-value mappings to update in the format key=value",
     ),
     new_name: Optional[str] = typer.Option(
         None,
@@ -1096,18 +1104,20 @@ def flavour_update(
     logger.debug(f"Updating flavour '{name}' with mapping {mapping}")
     Auth(token_file).authenticate(host=host, _cli=True)
 
-    mapping_dict: Dict[str, str] = dict(mapping) if mapping else {}
-
-    if not mapping_dict and not new_name:
-        logger.error(
-            "At least one of --map or --new-name must be provided for update"
-        )
-        raise typer.Exit(code=1)
+    mapping_dict = {}
+    for map_item in mapping:
+        if "=" not in map_item:
+            logger.error(
+                f"Invalid mapping format: {map_item}. Expected format: key=value."
+            )
+            raise typer.Exit(code=1)
+        key, value = map_item.split("=", 1)
+        mapping_dict[key] = value
 
     databrowser.flavour(
         action="update",
         name=name,
-        mapping=mapping_dict,
+        mapping=mapping_dict if mapping_dict else None,
         new_name=new_name,
         is_global=global_,
         host=host,
