@@ -519,16 +519,48 @@ def test_flavour_commands(
         )
         assert res.exit_code == 0
 
+        # updating the custom flavour
+        res = cli_runner.invoke(
+            app,
+            [
+                "flavour", "update", "test_cli_flavour",
+                "--host", test_server,
+                "--token-file", str(token_file),
+                "--map", "experiment=exp_new"
+            ]
+        )
+        assert res.exit_code == 0
+
+        # update with rename
+        res = cli_runner.invoke(
+            app,
+            [
+                "flavour", "update", "test_cli_flavour",
+                "--host", test_server,
+                "--token-file", str(token_file),
+                "--new-name", "test_cli_flavour_renamed"
+            ]
+        )
+        assert res.exit_code == 0
+
+        # verify rename worked
+        res = cli_runner.invoke(
+            app,
+            ["flavour", "list", "--host", test_server, "--token-file", str(token_file), "--json"]
+        )
+        assert res.exit_code == 0
+        flavour_names = [f["flavour_name"] for f in json.loads(res.stdout)]
+        assert "test_cli_flavour_renamed" in flavour_names
+
         # deleting the custom flavour
         res = cli_runner.invoke(
             app,
             [
-                "flavour", "delete", "test_cli_flavour",
+                "flavour", "delete", "test_cli_flavour_renamed",
                 "--host", test_server,
                 "--token-file", str(token_file)
             ]
         )
-        assert res.exit_code == 0
         
         # flavour was deleted
         res = cli_runner.invoke(
@@ -538,7 +570,7 @@ def test_flavour_commands(
         assert res.exit_code == 0
         flavours_final = json.loads(res.stdout)
         final_names = [f["flavour_name"] for f in flavours_final]
-        assert "test_cli_flavour" not in final_names
+        assert "test_cli_flavour_renamed" not in final_names
         assert len(flavours_final) == initial_count
         
     finally:
@@ -582,7 +614,21 @@ def test_flavour_error_cases(
         # Should fail, because the ValidationError
         # is raised on backend schema
         assert res.exit_code == 1  
-        
+
+        # updating flavour with invalid mapping format
+        res = cli_runner.invoke(
+            app,
+            [
+                "flavour", "update", "test_flavour",
+                "--host", test_server,
+                "--token-file", str(token_file),
+                "--map", "invalid_format"
+            ]
+        )
+        # Should fail, because the ValidationError
+        # is raised on backend schema
+        assert res.exit_code == 1
+
         # list without authentication 
         res = cli_runner.invoke(app, ["flavour", "list", "--host", test_server])
         assert res.exit_code == 0
