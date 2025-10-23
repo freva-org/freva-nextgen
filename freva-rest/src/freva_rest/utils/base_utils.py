@@ -127,7 +127,7 @@ async def create_redis_connection(
         db=0,
     )
     try:
-        await cache.ping()
+        await cache.ping()  # type: ignore[awaitable]
     except Exception as error:
         logger.error("Cloud not connect to redis cache: %s", error)
         raise HTTPException(
