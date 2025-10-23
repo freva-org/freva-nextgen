@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 ## [v2510.0.0]
 ### Added
 - Fall back to code login flow if device login flow is not available
+- Option to adjust existing flavours from CLI
+- New endpoint to display metadata in zarr format.
 
 ##[v2509.1.0]
 ### Changed
