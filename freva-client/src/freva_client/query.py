@@ -1108,8 +1108,9 @@ class databrowser:
     @classmethod
     def flavour(
         cls,
-        action: Literal["add", "delete", "list"],
+        action: Literal["add", "update", "delete", "list"],
         name: Optional[str] = None,
+        new_name: Optional[str] = None,
         mapping: Optional[Dict[str, str]] = None,
         is_global: bool = False,
         host: Optional[str] = None,
@@ -1172,6 +1173,18 @@ class databrowser:
                 is_global=False
             )
 
+        Updating a custom flavour:
+
+        .. code-block:: python
+
+            from freva_client import databrowser
+            databrowser.flavour(
+                action="update",
+                name="klimakataster",
+                mapping={"experiment": "Experiment"},
+                new_name="klimakataster_v2",
+                is_global=False
+            )
         Listing all custom flavours:
 
         .. code-block:: python
@@ -1212,6 +1225,29 @@ class databrowser:
             )
             if result is not None:
                 msg = result.json().get("status", "Flavour added successfully")
+                pprint(f"[b][green] {msg} [/green][/b]")
+
+        elif action == "update":
+            token = this._auth.authenticate(config=this._cfg)
+            headers = {"Authorization": f"Bearer {token['access_token']}"}
+            if not name:
+                raise ValueError("'name' is required for update action")
+
+            payload_update: Dict[str, Any] = {
+                "is_global": is_global,
+                "mapping": mapping or {},
+            }
+            if new_name:
+                payload_update["flavour_name"] = new_name
+
+            result = this._request(
+                "PUT",
+                f"{this._cfg.databrowser_url}/flavours/{name}",
+                data=payload_update,
+                headers=headers,
+            )
+            if result is not None:
+                msg = result.json().get("status", "Flavour updated successfully")
                 pprint(f"[b][green] {msg} [/green][/b]")
 
         elif action == "delete":
