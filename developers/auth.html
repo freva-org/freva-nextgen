@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>The restAPI auth endpoints &#8212; Freva Databrowser 2509.2.0 documentation</title>
+    <title>The restAPI auth endpoints &#8212; Freva Databrowser 2510.0.0 documentation</title>
   
   
   
@@ -49,7 +49,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=864aef02"></script>
+    <script src="../_static/documentation_options.js?v=81973358"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -135,8 +135,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2509.2.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2509.2.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2510.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2510.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -1008,6 +1008,109 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/userinfo&quot;</span><span class="p">);</span>
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_HTTPHEADER</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_cleanup</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="n">curl_global_cleanup</span><span class="p">();</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></div></section>
+</dd></dl>
+
+<p>—</p>
+<dl class="http get">
+<dt class="sig sig-object http" id="get--api-freva-nextgen-auth-v2-logout">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/auth/v2/logout</span></span><a class="headerlink" href="#get--api-freva-nextgen-auth-v2-logout" title="Link to this definition">#</a></dt>
+<dd><p>Logout endpoint that redirects to the identity provider’s logout page.
+This endpoint terminates the user’s session and optionally redirects to a
+specified URL after logout completes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Query Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>post_logout_redirect_uri</strong> – Optional URL to redirect after logout completes.
+Must be registered with the OIDC provider.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.8">307 Temporary Redirect</a></span> – Redirect to IDP logout endpoint</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.1">400 Bad Request</a></span> – Invalid post_logout_redirect_uri</p></li>
+</ul>
+</dd>
+</dl>
+<section id="id13">
+<h2>Example Request<a class="headerlink" href="#id13" title="Link to this heading">#</a></h2>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/freva-nextgen/auth/v2/logout?post_logout_redirect_uri=https://www.freva.dkrz.de/</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<span class="na">host</span><span class="o">:</span> <span class="l">www.freva.dkrz.de</span>
+</pre></div>
+</div>
+</section>
+<section id="id14">
+<h2>Example Response<a class="headerlink" href="#id14" title="Link to this heading">#</a></h2>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">307</span> <span class="ne">Temporary Redirect</span>
+<span class="na">Location</span><span class="o">:</span> <span class="l">https://idp-example.com/realms/freva/protocol/openid-connect/logout?client_id=freva-client&amp;post_logout_redirect_uri=https://freva.dkrz.com/</span>
+</pre></div>
+</div>
+</section>
+<section id="id15">
+<h2>Code examples<a class="headerlink" href="#id15" title="Link to this heading">#</a></h2>
+<p>Below you can find example usages of this request in different scripting and
+programming languages</p>
+<div class="tabs docutils container" data-tabgroup="">
+<ul class="tabbar">
+<li class="tabbutton selected" data-id="0" onclick="sphinx_code_tabs_onclick(this)">
+Shell</li><li class="tabbutton" data-id="1" onclick="sphinx_code_tabs_onclick(this)">
+Python</li><li class="tabbutton" data-id="2" onclick="sphinx_code_tabs_onclick(this)">
+gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(this)">
+Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
+C/C++</li></ul><div class="tab codetab selected" data-id="0">
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/logout?post_logout_redirect_uri=https://www.freva.dkrz.de/&quot;</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="1">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+  <span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/logout&quot;</span><span class="p">,</span>
+  <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;post_logout_redirect_uri&quot;</span><span class="p">:</span> <span class="s2">&quot;https://www.freva.dkrz.de/&quot;</span><span class="p">},</span>
+  <span class="n">allow_redirects</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="2">
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
+
+<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">GET</span><span class="p">(</span>
+<span class="w">   </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/logout&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="n">post_logout_redirect_uri</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="3">
+<div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span>
+
+<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+<span class="w">  </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/logout&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span><span class="s">&quot;post_logout_redirect_uri&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div><div class="tab codetab" data-id="4">
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;curl/curl.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">CURL</span><span class="w"> </span><span class="o">*</span><span class="n">curl</span><span class="p">;</span>
+<span class="w">    </span><span class="n">CURLcode</span><span class="w"> </span><span class="n">res</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">curl_global_init</span><span class="p">(</span><span class="n">CURL_GLOBAL_DEFAULT</span><span class="p">);</span>
+<span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span>
+<span class="w">            </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/logout?post_logout_redirect_uri=https://www.freva.dkrz.de/&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_FOLLOWLOCATION</span><span class="p">,</span><span class="w"> </span><span class="mf">1L</span><span class="p">);</span>
 
 <span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
 <span class="w">        </span><span class="n">curl_easy_cleanup</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
