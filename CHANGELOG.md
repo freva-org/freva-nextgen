@@ -1,24 +1,19 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
-## [v2510.1.0]
-### Added
-- Add logout endpoint to clean the SSO session after use.
-
-
 
 ## [v2510.0.0]
 ### Added
-- Fall back to code login flow if device login flow is not available
 - Option to adjust existing flavours from CLI
 - New endpoint to display metadata in zarr format.
 - Add update flavour endpoint on the Rest
 - Add update flavour as a functionality on the freva-client
 - Add zarr view endpoint to respond Xarray-HTML formatted response
-
+- Add logout endpoint to clean the SSO session after use.
 
 ### Changed
 - Move the client id and secret from search parameter to header
+- Fall back to code login flow if device login flow is not available
 
 
 ##[v2509.1.0]
