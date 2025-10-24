@@ -482,3 +482,11 @@ def test_logout(test_server: str) -> None:
         allow_redirects=False
     )
     assert res1.status_code == 307
+
+    redirect_uri = "https://somewhere.com/afterlogout"
+    res2 = requests.get(
+        f"{test_server}/auth/v2/logout",
+        params={"post_logout_redirect_uri": redirect_uri},
+        allow_redirects=False
+    )
+    assert res2.status_code == 307
