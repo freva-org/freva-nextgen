@@ -573,8 +573,106 @@ then be included in the authorization header for secured endpoints.
                 return 0;
             }
 
+---
+
+
+.. http:get:: /api/freva-nextgen/auth/v2/logout
+
+    Logout endpoint that redirects to the identity provider's logout page.
+    This endpoint terminates the user's session and optionally redirects to a
+    specified URL after logout completes.
+
+    :query post_logout_redirect_uri: Optional URL to redirect after logout completes.
+                                      Must be registered with the OIDC provider.
+    :type post_logout_redirect_uri: str
+    :statuscode 307: Redirect to IDP logout endpoint
+    :statuscode 400: Invalid post_logout_redirect_uri
+
+
+    Example Request
+    ~~~~~~~~~~~~~~~
+
+    .. sourcecode:: http
+
+        GET /api/freva-nextgen/auth/v2/logout?post_logout_redirect_uri=https://www.freva.dkrz.de/ HTTP/1.1
+        host: www.freva.dkrz.de
+
+    Example Response
+    ~~~~~~~~~~~~~~~~
+
+    .. sourcecode:: http
+
+        HTTP/1.1 307 Temporary Redirect
+        Location: https://idp-example.com/realms/freva/protocol/openid-connect/logout?client_id=freva-client&post_logout_redirect_uri=https://freva.dkrz.com/
+
+    Code examples
+    ~~~~~~~~~~~~~
+    Below you can find example usages of this request in different scripting and
+    programming languages
+
+    .. tabs::
+
+        .. code-tab:: bash
+            :caption: Shell
+
+            curl -X GET "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/logout?post_logout_redirect_uri=https://www.freva.dkrz.de/"
+
+        .. code-tab:: python
+            :caption: Python
+
+            import requests
+            response = requests.get(
+              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/logout",
+              params={"post_logout_redirect_uri": "https://www.freva.dkrz.de/"},
+              allow_redirects=True
+            )
+
+        .. code-tab:: r
+            :caption: gnuR
+
+            library(httr)
+
+            response <- GET(
+               "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/logout",
+               query = list(post_logout_redirect_uri = "https://www.freva.dkrz.de/")
+            )
+
+        .. code-tab:: julia
+            :caption: Julia
+
+            using HTTP
+            
+            response = HTTP.get(
+              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/logout",
+              query = Dict("post_logout_redirect_uri" => "https://www.freva.dkrz.de/")
+            )
+
+        .. code-tab:: c
+            :caption: C/C++
+
+            #include <stdio.h>
+            #include <curl/curl.h>
+
+            int main() {
+                CURL *curl;
+                CURLcode res;
+
+                curl_global_init(CURL_GLOBAL_DEFAULT);
+                curl = curl_easy_init();
+                if(curl) {
+                    curl_easy_setopt(curl, CURLOPT_URL, 
+                        "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/logout?post_logout_redirect_uri=https://www.freva.dkrz.de/");
+                    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+                    
+                    res = curl_easy_perform(curl);
+                    curl_easy_cleanup(curl);
+                }
+                curl_global_cleanup();
+                return 0;
+            }
 
 ---
+
 
 Notes on Code-Based Auth Flow
 -----------------------------

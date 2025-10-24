@@ -795,3 +795,36 @@ async def fetch_or_refresh_token(
         )
     except KeyError:
         raise HTTPException(status_code=400, detail="Token creation failed.")
+
+
+@app.get(
+    "/api/freva-nextgen/auth/v2/logout",
+    tags=["Authentication"],
+    responses={
+        307: {"description": "Redirect to IDP logout endpoint"},
+        400: {"description": "Invalid post_logout_redirect_uri."},
+    },
+)
+async def logout(
+    post_logout_redirect_uri: Annotated[
+        Optional[str],
+        Query(
+            title="Post-logout redirect URI",
+            description="Where to redirect after logout completes",
+        ),
+    ] = None,
+) -> RedirectResponse:
+    """
+    Logout endpoint that redirects to IDP's end_session_endpoint.
+    """
+    params = {
+        "client_id": server_config.oidc_client_id,
+    }
+
+    if post_logout_redirect_uri:
+        params["post_logout_redirect_uri"] = post_logout_redirect_uri
+
+    # OIDC logout endpoint
+    logout_url = server_config.oidc_overview["end_session_endpoint"]
+
+    return RedirectResponse(f"{logout_url}?{urlencode(params)}")
