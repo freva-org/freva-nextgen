@@ -474,3 +474,11 @@ def test_token_status(test_server: str, auth: Dict[str, str]) -> None:
         headers={"Authorization": "Bearer foo"},
     )
     assert res2.status_code != 200
+
+def test_logout(test_server: str) -> None:
+    """Test the logout endpoint."""
+    res1 = requests.get(
+        f"{test_server}/auth/v2/logout",
+        allow_redirects=False
+    )
+    assert res1.status_code == 307

@@ -4,7 +4,7 @@ import json
 import re
 import ssl
 import uuid
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Awaitable, Dict, List, Optional, cast
 
 import jwt
 import redis.asyncio as redis
@@ -127,7 +127,7 @@ async def create_redis_connection(
         db=0,
     )
     try:
-        await cache.ping()
+        await cast(Awaitable[bool], cache.ping())
     except Exception as error:
         logger.error("Cloud not connect to redis cache: %s", error)
         raise HTTPException(
