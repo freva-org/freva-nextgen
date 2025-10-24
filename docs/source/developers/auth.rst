@@ -585,7 +585,7 @@ then be included in the authorization header for secured endpoints.
     :query post_logout_redirect_uri: Optional URL to redirect after logout completes.
                                       Must be registered with the OIDC provider.
     :type post_logout_redirect_uri: str
-    :statuscode 307: Redirect to Keycloak logout endpoint
+    :statuscode 307: Redirect to IDP logout endpoint
     :statuscode 400: Invalid post_logout_redirect_uri
 
 
@@ -603,7 +603,7 @@ then be included in the authorization header for secured endpoints.
     .. sourcecode:: http
 
         HTTP/1.1 307 Temporary Redirect
-        Location: https://keycloak.com/realms/freva/protocol/openid-connect/logout?client_id=freva-client&post_logout_redirect_uri=https://freva.dkrz.com/
+        Location: https://idp-example.com/realms/freva/protocol/openid-connect/logout?client_id=freva-client&post_logout_redirect_uri=https://freva.dkrz.com/
 
     Code examples
     ~~~~~~~~~~~~~

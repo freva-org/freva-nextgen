@@ -801,7 +801,7 @@ async def fetch_or_refresh_token(
     "/api/freva-nextgen/auth/v2/logout",
     tags=["Authentication"],
     responses={
-        307: {"description": "Redirect to Keycloak logout endpoint"},
+        307: {"description": "Redirect to IDP logout endpoint"},
         400: {"description": "Invalid post_logout_redirect_uri."},
     },
 )
@@ -815,7 +815,7 @@ async def logout(
     ] = None,
 ) -> RedirectResponse:
     """
-    Logout endpoint that redirects to Keycloak's end_session_endpoint.
+    Logout endpoint that redirects to IDP's end_session_endpoint.
     """
     params = {
         "client_id": server_config.oidc_client_id,
