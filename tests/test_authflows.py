@@ -493,19 +493,17 @@ def test_logout_function(
 
     mocker.patch("webbrowser.open", return_value=True)
 
-    temp_f = NamedTemporaryFile(suffix=".json", delete=False)
-    temp_f.close()
-
-    try:
+    with NamedTemporaryFile(suffix=".json", delete=False) as temp_f:
         with open(temp_f.name, 'w') as f:
             json.dump(mock_token_data(), f)
 
-        with patch.dict(os.environ, {"BROWSER_SESSION": "1"}, clear=False):
-            logout(token_file=temp_f.name, host=test_server)
-        assert not os.path.exists(temp_f.name)
-    finally:
-        if os.path.exists(temp_f.name):
-            os.unlink(temp_f.name)
+        try:
+            with patch.dict(os.environ, {"BROWSER_SESSION": "1"}, clear=False):
+                logout(token_file=temp_f.name, host=test_server)
+            assert not os.path.exists(temp_f.name)
+        finally:
+            if os.path.exists(temp_f.name):
+                os.unlink(temp_f.name)
 
 
 def test_auth_logout_method(
@@ -517,21 +515,20 @@ def test_auth_logout_method(
 
     old_token = deepcopy(auth_instance._auth_token)
 
-    temp_f = NamedTemporaryFile(suffix=".json", delete=False)
-    temp_f.close()
-
     try:
-        with open(temp_f.name, 'w') as f:
-            json.dump(mock_token_data(), f)
-        auth_instance._auth_token = mock_token_data()
+        with NamedTemporaryFile(suffix=".json", delete=False) as temp_f:
+            with open(temp_f.name, 'w') as f:
+                json.dump(mock_token_data(), f)
+            auth_instance._auth_token = mock_token_data()
 
-        auth_instance.token_file = temp_f.name
-        with patch.dict(os.environ, {"BROWSER_SESSION": "1"}, clear=False):
-            auth_instance._logout(host=test_server)
+            auth_instance.token_file = temp_f.name
+            with patch.dict(os.environ, {"BROWSER_SESSION": "1"}, clear=False):
+                auth_instance._logout(host=test_server)
 
-        assert auth_instance._auth_token is None
-        assert not os.path.exists(temp_f.name)
+            assert auth_instance._auth_token is None
+            assert not os.path.exists(temp_f.name)
     finally:
         auth_instance._auth_token = old_token
         if os.path.exists(temp_f.name):
             os.unlink(temp_f.name)
+

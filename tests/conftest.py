@@ -152,11 +152,18 @@ def setup_server() -> Iterator[str]:
 @pytest.fixture(scope="function", autouse=True)
 def user_cache_dir() -> Iterator[str]:
     """Mock the default user token file."""
-    with NamedTemporaryFile(suffix=".json") as temp_f:
-        with mock.patch.dict(
-            os.environ, {TOKEN_ENV_VAR: temp_f.name}, clear=False
-        ):
-            yield temp_f.name
+    # since logout remove the file, we need to keep the delete=False
+    # and remove it manually
+    with NamedTemporaryFile(suffix=".json", delete=False) as temp_f:
+        temp_path = temp_f.name
+        try:
+            with mock.patch.dict(
+                os.environ, {TOKEN_ENV_VAR: temp_path}, clear=False
+            ):
+                yield temp_path
+        finally:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
 
 
 @pytest.fixture(scope="function")
