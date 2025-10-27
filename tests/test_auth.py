@@ -397,21 +397,23 @@ def test_cli_logout(
 
     mocker.patch("webbrowser.open", return_value=True)
 
+    temp_f = NamedTemporaryFile(suffix=".json", delete=False)
+    token_path = Path(temp_f.name)
+    temp_f.close()
+
     try:
-        with NamedTemporaryFile(suffix=".json", delete=False) as temp_f:
-            token_path = Path(temp_f.name)
-            token_path.write_text(json.dumps(mock_token_data()))
-            auth_instance._auth_token = mock_token_data()
+        token_path.write_text(json.dumps(mock_token_data()))
+        auth_instance._auth_token = mock_token_data()
 
-            with patch.dict(os.environ, {TOKEN_ENV_VAR: str(token_path), "BROWSER_SESSION": "1"}, clear=False):
-                res = cli_runner.invoke(
-                    cli_app,
-                    ["auth", "logout", "--host", test_server, "--token-file", str(token_path)]
-                )
+        with patch.dict(os.environ, {TOKEN_ENV_VAR: str(token_path), "BROWSER_SESSION": "1"}, clear=False):
+            res = cli_runner.invoke(
+                cli_app,
+                ["auth", "logout", "--host", test_server, "--token-file", str(token_path)]
+            )
 
-            assert res.exit_code == 0
-            assert "Logged out successfully" in res.stdout
-            assert not token_path.exists()
+        assert res.exit_code == 0
+        assert "Logged out successfully" in res.stdout
+        assert not token_path.exists()
     finally:
         auth_instance._auth_token = old_token
         if token_path.exists():
