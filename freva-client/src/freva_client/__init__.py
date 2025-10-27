@@ -15,8 +15,8 @@ need to apply data analysis plugins, please visit the
 official documentation: https://freva-org.github.io/freva-legacy
 """
 
-from .auth import authenticate
+from .auth import authenticate, logout
 from .query import databrowser
 
 __version__ = "2510.0.0"
-__all__ = ["authenticate", "databrowser", "__version__"]
+__all__ = ["authenticate", "logout", "databrowser", "__version__"]

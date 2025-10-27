@@ -14,11 +14,12 @@ from .cli_utils import version_callback
 
 auth_app = typer.Typer(
     name="auth",
-    help="Create OAuth2 access and refresh token.",
+    help="Authentication commands for OAuth2 tokens.",
     pretty_exceptions_short=False,
 )
 
 
+@auth_app.command("login")
 @exception_handler
 def authenticate_cli(
     host: Optional[str] = typer.Option(
@@ -47,14 +48,14 @@ def authenticate_cli(
     timeout: int = typer.Option(
         30,
         "--timeout",
-        help="Set the timeout for login in secdonds, 0 for indefinate",
+        help="Set the timeout for login in seconds, 0 for indefinite",
     ),
     verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
     version: Optional[bool] = typer.Option(
         False,
         "-V",
         "--version",
-        help="Show version an exit",
+        help="Show version and exit",
         callback=version_callback,
     ),
 ) -> None:
@@ -67,3 +68,36 @@ def authenticate_cli(
         timeout=timeout,
     )
     print(json.dumps(token, indent=3))
+
+
+@auth_app.command("logout")
+@exception_handler
+def logout_cli(
+    host: Optional[str] = typer.Option(
+        None,
+        "--host",
+        help=(
+            "Set the hostname of the databrowser, if not set (default) "
+            "the hostname is read from a config file"
+        ),
+    ),
+    token_file: str = typer.Option(
+        os.getenv(TOKEN_ENV_VAR, "").strip(),
+        "--token-file",
+        help="Path to the token file to delete",
+    ),
+    verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
+    version: Optional[bool] = typer.Option(
+        False,
+        "-V",
+        "--version",
+        help="Show version and exit",
+        callback=version_callback,
+    ),
+) -> None:
+    """Logout and clear authentication tokens."""
+    logger.set_verbosity(verbose)
+    auth = Auth(token_file=token_file or get_default_token_file())
+    auth._logout(host=host)
+
+    print("Logged out successfully. All tokens have been cleared.")

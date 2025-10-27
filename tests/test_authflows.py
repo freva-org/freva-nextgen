@@ -14,7 +14,7 @@ import pytest
 import requests
 from pytest_mock import MockerFixture
 
-from freva_client.auth import Auth, AuthError, authenticate
+from freva_client.auth import Auth, AuthError, authenticate, logout
 from freva_client.utils.auth_utils import (
     TOKEN_ENV_VAR,
     CodeAuthClient,
@@ -479,3 +479,56 @@ def test_request_headers() -> None:
     set_request_header("foo", None, data, header)
     assert "Authorization" not in header
     assert "client_id" in data
+
+
+# ---------------------------
+# Logout tests
+# ---------------------------
+
+
+def test_logout_function(
+    mocker: MockerFixture, test_server: str
+) -> None:
+    """Test the logout() function."""
+
+    mocker.patch("webbrowser.open", return_value=True)
+
+    with NamedTemporaryFile(suffix=".json", delete=False) as temp_f:
+        with open(temp_f.name, 'w') as f:
+            json.dump(mock_token_data(), f)
+
+        try:
+            with patch.dict(os.environ, {"BROWSER_SESSION": "1"}, clear=False):
+                logout(token_file=temp_f.name, host=test_server)
+            assert not os.path.exists(temp_f.name)
+        finally:
+            if os.path.exists(temp_f.name):
+                os.unlink(temp_f.name)
+
+
+def test_auth_logout_method(
+    mocker: MockerFixture, test_server: str, auth_instance: Auth
+) -> None:
+    """Test Auth._logout method."""
+
+    mocker.patch("webbrowser.open", return_value=True)
+
+    old_token = deepcopy(auth_instance._auth_token)
+
+    try:
+        with NamedTemporaryFile(suffix=".json", delete=False) as temp_f:
+            with open(temp_f.name, 'w') as f:
+                json.dump(mock_token_data(), f)
+            auth_instance._auth_token = mock_token_data()
+
+            auth_instance.token_file = temp_f.name
+            with patch.dict(os.environ, {"BROWSER_SESSION": "1"}, clear=False):
+                auth_instance._logout(host=test_server)
+
+            assert auth_instance._auth_token is None
+            assert not os.path.exists(temp_f.name)
+    finally:
+        auth_instance._auth_token = old_token
+        if os.path.exists(temp_f.name):
+            os.unlink(temp_f.name)
+

@@ -344,7 +344,7 @@ def test_cli_auth(
             with patch.dict(
                 os.environ, {TOKEN_ENV_VAR: temp_f.name}, clear=False
             ):
-                res = cli_runner.invoke(cli_app, ["auth", "--host", test_server])
+                res = cli_runner.invoke(cli_app, ["auth", "login", "--host", test_server])
             assert res.exit_code == 0
             assert res.stdout
             assert "access_token" in json.loads(res.stdout)
@@ -353,7 +353,7 @@ def test_cli_auth(
             Path(temp_f.name).write_text(res.stdout)
             res = cli_runner.invoke(
                 cli_app,
-                ["auth", "--host", test_server, "--token-file", temp_f.name],
+                ["auth", "login", "--host", test_server, "--token-file", temp_f.name],
             )
             assert res.exit_code == 0
             assert res.stdout
@@ -379,11 +379,43 @@ def test_cli_auth_failed(
         "freva_client.auth.choose_token_strategy", return_value="browser_auth"
     )
     try:
-        res = cli_runner.invoke(cli_app, ["auth", "--host", test_server])
+        res = cli_runner.invoke(cli_app, ["auth", "login", "--host", test_server])
         assert res.exit_code == 1
 
     finally:
         auth_instance._auth_token = old_token
+
+
+def test_cli_logout(
+    mocker: MockerFixture,
+    test_server: str,
+    cli_runner: CliRunner,
+    auth_instance: Auth,
+) -> None:
+    """Test logout command."""
+    old_token = deepcopy(auth_instance._auth_token)
+
+    mocker.patch("webbrowser.open", return_value=True)
+
+    try:
+        with NamedTemporaryFile(suffix=".json", delete=False) as temp_f:
+            token_path = Path(temp_f.name)
+            token_path.write_text(json.dumps(mock_token_data()))
+            auth_instance._auth_token = mock_token_data()
+
+            with patch.dict(os.environ, {TOKEN_ENV_VAR: str(token_path), "BROWSER_SESSION": "1"}, clear=False):
+                res = cli_runner.invoke(
+                    cli_app,
+                    ["auth", "logout", "--host", test_server, "--token-file", str(token_path)]
+                )
+
+            assert res.exit_code == 0
+            assert "Logged out successfully" in res.stdout
+            assert not token_path.exists()
+    finally:
+        auth_instance._auth_token = old_token
+        if token_path.exists():
+            token_path.unlink()
 
 
 def test_userinfo(

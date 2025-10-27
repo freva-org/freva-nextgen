@@ -103,6 +103,48 @@ class Auth:
             scope=response["scope"],
         )
 
+    def _logout(
+        self,
+        host: Optional[str] = None,
+        config: Optional[Config] = None,
+    ) -> None:
+        """Logout and clear all tokens."""
+        # Logout hirachey: each step is independent, so it means,
+        # if each step passes, it would be a positive step in
+        # securing the user's credentials for any future use.
+
+        # 1. Clear in-memory token
+        self._auth_token = None
+
+        # 2. Delete token files
+        default_token_file = get_default_token_file()
+        for _file in map(
+            Path, set((self.token_file or default_token_file, default_token_file))
+        ):
+            if _file.exists():
+                try:
+                    _file.unlink()
+                    logger.info(f"Deleted token file: {_file}")
+                except Exception as error:
+                    logger.warning(f"Failed to delete token file {_file}: {error}")
+
+        # 3. Session logout on server
+        cfg = config or Config(host)
+        is_interactive = int(
+            os.getenv("BROWSER_SESSION", str(int(is_interactive_auth_possible())))
+        )
+
+        if is_interactive:
+            logout_url = f"{cfg.auth_url}/logout"
+            try:
+                import webbrowser
+                webbrowser.open(logout_url)
+                logger.info("Opening browser for logout...")
+            except Exception as error:
+                logger.debug(f"Could not open browser: {error}")
+
+        logger.info("Logged out successfully. Local tokens cleared.")
+
     def set_token(
         self,
         access_token: str,
@@ -246,3 +288,39 @@ def authenticate(
         force=force,
         timeout=timeout,
     )
+
+
+def logout(
+    *,
+    token_file: Optional[Union[Path, str]] = None,
+    host: Optional[str] = None,
+) -> None:
+    """Logout and clear authentication tokens.
+
+    This method clears local token files and optionally revokes the token on the server.
+
+    Parameters
+    ----------
+    token_file: str, optional
+        Path to the token file to delete. If not specified, uses the default location.
+    host: str, optional
+        The hostname of the REST server.
+
+    Examples
+    --------
+    Interactive authentication:
+
+    .. code-block:: python
+
+        from freva_client import logout
+        logout()
+
+    Batch mode authentication with a refresh token:
+
+    .. code-block:: python
+
+        from freva_client import logout
+        logout(token_file="~/.freva-login-token.json")
+    """
+    auth = Auth(token_file=token_file or None)
+    auth._logout(host=host)

@@ -8,13 +8,14 @@ with the authentication system.
 
 .. autofunction:: freva_client.authenticate
 
+.. autofunction:: freva_client.logout
+
 .. _auth_cli:
 
 Using the command line interface
 ================================
 
-Token creation and refreshing can also be achieved with help of the ``auth``
-sub command of the command line interface
+Token creation and logout can be achieved with the ``auth`` sub command:
 
 .. code:: console
 
@@ -27,16 +28,22 @@ sub command of the command line interface
    res = run(["freva-client", "auth", "--help"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
-You can create a token using your user name and password. 
+Login
+-----
+
+Create an OAuth2 access and refresh token:
+
+.. code:: console
+
+    freva-client auth login
 
 In the process of token generation, you would want to store your token data *securely*
 in a file, and use it as a refresh token to create new ones, eventually:
 
 .. code:: console
 
-    freva-client auth  > ~/.mytoken.json
-    chmod 600  ~/.mytoken.json
-
+    freva-client auth login > ~/.mytoken.json
+    chmod 600 ~/.mytoken.json
 
 For security reasons you cannot pass your password as an argument to the command line
 interface. This means that, in a *non-interactive* session such as a batch job, you
@@ -46,10 +53,25 @@ will have two options:
 2. Or, if you want to create a new one, you will *only* be able to do it with help
    of an already pre-existing valid refresh token.
 
-   .. code:: console
+.. code:: console
 
-       freva-client auth --token-file ~/.my_old_token.json > ~/.my_new_token.json
-       chmod 600 ~/.my_new_token.json
+    freva-client auth login --token-file ~/.my_old_token.json > ~/.my_new_token.json
+    chmod 600 ~/.my_new_token.json
+
+Force token recreation even if current token is valid:
+
+.. code:: console
+
+    freva-client auth login --force
+
+Logout
+------
+
+Clear local tokens and revoke server session:
+
+.. code:: console
+
+    freva-client auth logout
 
 
 .. warning::
