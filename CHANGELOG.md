@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v2510.0.1]
+### Fixd
+Remove the CORS header from STAC-API, since it's supported on Nginx now
+
+
 ## [v2510.0.0]
 ### Added
 - Option to adjust existing flavours from CLI
