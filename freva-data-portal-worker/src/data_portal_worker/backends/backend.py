@@ -58,7 +58,7 @@ def get_xr_engine(file_path: str) -> Optional[str]:
     return None
 
 
-def load_data(inp_file: Union[str, Path]) -> xr.Dataset:
+def load_every_data(inp_file: Union[str, Path]) -> xr.Dataset:
     """Open a dataset with xarray."""
     inp_file = Path(inp_file)
     return xr.open_dataset(
