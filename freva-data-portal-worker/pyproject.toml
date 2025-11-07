@@ -38,6 +38,7 @@ dependencies = [
 "watchfiles",
 "xarray>=2025.3.0",
 "zarr",
+"fsspec",
 ]
 [project.scripts]
 data-loader-worker = "data_portal_worker:cli.run_data_loader"
