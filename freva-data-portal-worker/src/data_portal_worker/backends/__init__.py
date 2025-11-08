@@ -1,10 +1,23 @@
 """Load data files."""
 
+from urllib.parse import urlparse
+
 import xarray as xr
 
-from .backend import load_every_data
+from .posix_and_cloud import posix_and_cloud
 
 
 def load_data(inp_path: str) -> xr.Dataset:
     """Open a datasets."""
-    return load_every_data(inp_path)
+
+    parsed_url = urlparse(inp_path)
+
+    implemented_methods = {
+        "file": posix_and_cloud,
+        "": posix_and_cloud,
+        "http": posix_and_cloud,
+        "https": posix_and_cloud,
+        "s3": posix_and_cloud,
+        "gs": posix_and_cloud,
+    }
+    return implemented_methods[parsed_url.scheme](inp_path)
