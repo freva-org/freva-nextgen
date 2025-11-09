@@ -73,5 +73,5 @@ def posix_and_cloud(inp_file: Union[str, Path]) -> xr.Dataset:
         chunks="auto" if engine != "h5netcdf" else None,
         cache=False,
         decode_coords=False,
-        engine=get_xr_engine(str(target)),
+        engine=engine,
     )
