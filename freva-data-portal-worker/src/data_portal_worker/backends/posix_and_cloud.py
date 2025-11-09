@@ -65,11 +65,12 @@ def posix_and_cloud(inp_file: Union[str, Path]) -> xr.Dataset:
     parsed = urlparse(inp_str)
     target: Union[str, Path]
     target = Path(inp_str) if parsed.scheme in ("", "file") else inp_str
+    engine = get_xr_engine(str(target))
     return xr.open_dataset(
         target,
         decode_cf=False,
         use_cftime=False,
-        chunks="auto",
+        chunks="auto" if engine != "h5netcdf" else None,
         cache=False,
         decode_coords=False,
         engine=get_xr_engine(str(target)),
