@@ -39,7 +39,6 @@ dependencies = [
 "xarray>=2025.3.0",
 "zarr",
 "fsspec",
-"s3fs",
 ]
 [project.scripts]
 data-loader-worker = "data_portal_worker:cli.run_data_loader"

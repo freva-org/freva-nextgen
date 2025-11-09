@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Optional, Union
 from urllib.parse import urlparse
 
-import h5netcdf
 import netCDF4
 import rasterio
 import xarray as xr
@@ -44,7 +43,15 @@ def get_xr_engine(file_path: str) -> Optional[str]:
         pass
 
     try:
-        with h5netcdf.File(file_path, mode="r"):
+        with xr.open_dataset(
+            file_path,
+            engine="h5netcdf",
+            decode_cf=False,
+            use_cftime=False,
+            chunks=None,
+            cache=False,
+            decode_coords=False,
+        ) as _:
             return "h5netcdf"
     except Exception:
         pass
