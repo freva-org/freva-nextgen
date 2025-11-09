@@ -29,7 +29,7 @@ jobs:
       - name: Generate self signed keys
         run: python dev-env/config/dev-utils.py gen-certs
       - name: Set up services
-       /Users/mo/dev/20251108 run: |
+        run: |
           docker compose -f dev-env/docker-compose.yaml up -d --remove-orphans
       - name: Waiting for keycloak
         run: >
