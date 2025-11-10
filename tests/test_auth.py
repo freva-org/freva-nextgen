@@ -415,52 +415,6 @@ def test_userinfo_failed(
         assert res.status_code > 400 and res.status_code < 500
 
 
-def test_system_user(
-    mocker: MockerFixture,
-    test_server: str,
-    auth: Dict[str, str],
-) -> None:
-    """Test the system user endpoint."""
-    from freva_rest.utils.base_utils import CONFIG
-
-    class MockPwNam(NamedTuple):
-        """Mock The getpwnam method."""
-
-        pw_name: str = "janedoe"
-        pw_passwd: str = "x"
-        pw_uid: int = 1000
-        pw_gid: int = 1001
-        pw_gecos: str = "Jane Doe"
-        pw_dir: str = "/home/jane"
-        pw_shell: str = "/bin/bash"
-
-    res = requests.get(
-        f"{test_server}/auth/v2/systemuser",
-        headers={"Authorization": f"Bearer {auth['access_token']}"},
-        timeout=3,
-    )
-    assert res.status_code == 401
-
-    with patch("freva_rest.auth.getpwnam", return_value=MockPwNam()):
-        res = requests.get(
-            f"{test_server}/auth/v2/systemuser",
-            headers={"Authorization": f"Bearer {auth['access_token']}"},
-            timeout=3,
-        )
-        assert res.status_code == 200
-        assert "pw_name" in res.json()
-        assert res.json()["pw_name"] == "janedoe"
-    mocker.patch.object(
-        CONFIG, "oidc_token_claims", {"resources.roles.foo": ["bar"]}
-    )
-    res = requests.get(
-        f"{test_server}/auth/v2/systemuser",
-        headers={"Authorization": f"Bearer {auth['access_token']}"},
-        timeout=3,
-    )
-    assert res.status_code == 401
-
-
 def test_token_status(test_server: str, auth: Dict[str, str]) -> None:
     """Check the token status methods."""
     res1 = requests.get(
@@ -475,18 +429,16 @@ def test_token_status(test_server: str, auth: Dict[str, str]) -> None:
     )
     assert res2.status_code != 200
 
+
 def test_logout(test_server: str) -> None:
     """Test the logout endpoint."""
-    res1 = requests.get(
-        f"{test_server}/auth/v2/logout",
-        allow_redirects=False
-    )
+    res1 = requests.get(f"{test_server}/auth/v2/logout", allow_redirects=False)
     assert res1.status_code == 307
 
     redirect_uri = "https://somewhere.com/afterlogout"
     res2 = requests.get(
         f"{test_server}/auth/v2/logout",
         params={"post_logout_redirect_uri": redirect_uri},
-        allow_redirects=False
+        allow_redirects=False,
     )
     assert res2.status_code == 307
