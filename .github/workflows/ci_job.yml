@@ -93,6 +93,11 @@ jobs:
               - conda-forge
             channel_priority: strict
           init-shell: bash
+
+      - name: Install Python packages
+        shell: bash -l {0}
+        run: |
+          python -m pip install -e ./freva-rest[dev]
       - name: Show environment
         shell: bash -l {0}
         run: |
