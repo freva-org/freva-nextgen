@@ -402,7 +402,7 @@ async def userinfo(
     """Get userinfo for the current token."""
     token_data = {k.lower(): str(v) for (k, v) in dict(id_token).items()}
     authorization = dict(request.headers)["authorization"]
-    return query_user(token_data, authorization)
+    return await query_user(token_data, authorization)
 
 
 @app.get(
@@ -411,7 +411,7 @@ async def userinfo(
     response_model=TokenisedUser,
 )
 @app.get(
-    "/api/freva-nextgen/auth/v2/check_user",
+    "/api/freva-nextgen/auth/v2/checkuser",
     tags=["Authentication"],
     response_model=TokenisedUser,
     response_description="Check if user claim is authorised.",
@@ -424,7 +424,9 @@ async def system_user(
 ) -> TokenisedUser:
     """Check user authorisation and get a  url-safe verion of the username."""
     token_data = {k.lower(): str(v) for (k, v) in dict(id_token).items()}
-    user_data = query_user(token_data, dict(request.headers)["authorization"])
+    user_data = await query_user(
+        token_data, dict(request.headers)["authorization"]
+    )
     username_enc = hashlib.blake2b(
         user_data.username.encode("utf-8"), digest_size=16
     ).digest()
