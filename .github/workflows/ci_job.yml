@@ -80,7 +80,9 @@ jobs:
             python=${{ matrix.python-version }}
             gdal
             rasterio
+            h5py
             h5netcdf
+            hdf5
             netcdf4
             pip
           condarc: |
