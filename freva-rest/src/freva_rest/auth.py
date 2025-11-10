@@ -3,6 +3,7 @@
 import asyncio
 import base64
 import datetime
+import hashlib
 import secrets
 from enum import Enum
 from typing import (
@@ -215,6 +216,18 @@ def set_request_header(
 auth = SafeAuth(server_config.oidc_discovery_url)
 
 
+class TokenisedUser(BaseModel):
+    """Tokenised entries of username/userid."""
+
+    pw_name: Annotated[
+        str,
+        Field(
+            description="Tokenised username string",
+            examples=["xOtAxlh7xZvbvzbuvZkbsw"],
+        ),
+    ]
+
+
 class UserInfo(BaseModel):
     """Basic user info."""
 
@@ -359,18 +372,13 @@ async def oidc_request(
             raise HTTPException(status_code=503) from error
 
 
-@app.get("/api/freva-nextgen/auth/v2/systemuser", include_in_schema=False)
-@app.get("/api/freva-nextgen/auth/v2/userinfo", tags=["Authentication"])
-async def userinfo(
-    id_token: IDToken = Security(auth.create_auth_dependency()),
-    request: Request = Required,
+async def query_user(
+    token_data: Dict[str, str], authorization: Dict[str, str]
 ) -> UserInfo:
-    """Get userinfo for the current token."""
-    token_data = {k.lower(): str(v) for (k, v) in dict(id_token).items()}
+    """Get the information of the User info."""
     try:
         return UserInfo(**get_userinfo(token_data))
     except ValidationError:
-        authorization = dict(request.headers)["authorization"]
         token_data = await oidc_request(
             "GET",
             "userinfo_endpoint",
@@ -384,6 +392,45 @@ async def userinfo(
             )
         except ValidationError:
             raise HTTPException(status_code=404)
+
+
+@app.get("/api/freva-nextgen/auth/v2/userinfo", tags=["Authentication"])
+async def userinfo(
+    id_token: IDToken = Security(auth.create_auth_dependency()),
+    request: Request = Required,
+) -> UserInfo:
+    """Get userinfo for the current token."""
+    token_data = {k.lower(): str(v) for (k, v) in dict(id_token).items()}
+    authorization = dict(request.headers)["authorization"]
+    return query_user(token_data, authorization)
+
+
+@app.get(
+    "/api/freva-nextgen/auth/v2/systemuser",
+    include_in_schema=False,
+    response_model=TokenisedUser,
+)
+@app.get(
+    "/api/freva-nextgen/auth/v2/check_user",
+    tags=["Authentication"],
+    response_model=TokenisedUser,
+    response_description="Check if user claim is authorised.",
+)
+async def system_user(
+    id_token: IDToken = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
+    request: Request = Required,
+) -> TokenisedUser:
+    """Check user authorisation and get a  url-safe verion of the username."""
+    token_data = {k.lower(): str(v) for (k, v) in dict(id_token).items()}
+    user_data = query_user(token_data, dict(request.headers)["authorization"])
+    username_enc = hashlib.blake2b(
+        user_data.username.encode("utf-8"), digest_size=16
+    ).digest()
+    return TokenisedUser(
+        pw_name=base64.urlsafe_b64encode(username_enc).decode("ascii").rstrip("=")
+    )
 
 
 @app.get(
