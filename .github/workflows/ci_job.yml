@@ -95,7 +95,11 @@ jobs:
         shell: bash -l {0}
         run: |
           python -m pip install -e ./freva-rest[dev] -e ./freva-data-portal-worker[full]
-
+      - name: Show environment
+        shell: bash -l {0}
+        run: |
+          micromamba list
+          pip list
       - name: Generate self signed keys
         shell: bash -l {0}
         run: python dev-env/config/dev-utils.py gen-certs
