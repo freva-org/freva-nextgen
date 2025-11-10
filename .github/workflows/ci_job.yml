@@ -25,7 +25,7 @@ jobs:
           create-args: >-
             python
             gdal
-            resterio
+            rasterio
             pip
           condarc: |
             channels:
@@ -79,7 +79,7 @@ jobs:
           create-args: >-
             python=${{ matrix.python-version }}
             gdal
-            resterio
+            rasterio
             pip
           condarc: |
             channels:
