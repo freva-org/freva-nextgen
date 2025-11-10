@@ -175,7 +175,7 @@ def test_bbox_selection(test_server: str) -> None:
         f"{test_server}/databrowser/data-search/freva/file",
         params={"bbox": "-10,10,-91,91"},
     )
-    assert res3.status_code == 500
+    assert res4.status_code == 500
 
 
 def test_primary_facets(test_server: str) -> None:
@@ -794,7 +794,12 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
             headers={"Authorization": f"Bearer {auth_admin['access_token']}"},
         )
         assert res_delete_5.status_code == 200
-
+    # DELETE: delete test_flavour_double created earlier
+    res_delete_6 = requests.delete(
+        f"{test_server}/databrowser/flavours/test_flavour_double",
+        headers={"Authorization": f"Bearer {auth['access_token']}"},
+    )
+    assert res_delete_6.status_code == 200
     # ========== Mixed SCENARIOS ==========
 
     # Scenario: add both global and personal flavour with same name

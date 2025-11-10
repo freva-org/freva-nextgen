@@ -7,8 +7,8 @@ import netCDF4
 import numpy as np
 import rasterio
 import zarr
-
-from data_portal_worker.backends.posix import get_xr_engine
+from unittest.mock import patch
+from data_portal_worker.backends.posix_and_cloud import get_xr_engine
 from data_portal_worker.utils import str_to_int as str_to_int2
 from freva_rest.utils.base_utils import get_userinfo, str_to_int
 
@@ -71,5 +71,7 @@ def test_get_xr_posix_engine() -> None:
         assert get_xr_engine(create_netcdf4_file(temp_dir)) == "netcdf4"
         assert get_xr_engine(create_rasterio_file(temp_dir)) == "rasterio"
         assert get_xr_engine(create_zarr_file(temp_dir)) == "zarr"
+        with patch("h5netcdf.File"):
+            assert get_xr_engine("http://example.com/data.nc") == "h5netcdf"
     with TemporaryDirectory() as temp_dir:
         assert get_xr_engine(temp_dir) is None

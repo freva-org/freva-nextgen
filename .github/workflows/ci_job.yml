@@ -74,13 +74,20 @@ jobs:
         with:
           micromamba-version: "latest"
           environment-name: freva
-          cache-environment: true
-          cache-downloads: true
+          cache-environment: false
+          cache-downloads: false
           create-args: >-
             python=${{ matrix.python-version }}
             gdal
             rasterio
+            h5py
+            h5netcdf
+            hdf5
+            netcdf4
             pip
+            cfgrib
+            xarray
+            cffi
           condarc: |
             channels:
               - conda-forge
@@ -90,8 +97,12 @@ jobs:
       - name: Install Python packages
         shell: bash -l {0}
         run: |
-          python -m pip install -e ./freva-rest[dev] -e ./freva-data-portal-worker[full]
-
+          python -m pip install -e ./freva-rest[dev]
+      - name: Show environment
+        shell: bash -l {0}
+        run: |
+          micromamba list
+          pip list
       - name: Generate self signed keys
         shell: bash -l {0}
         run: python dev-env/config/dev-utils.py gen-certs
@@ -108,7 +119,7 @@ jobs:
 
       - name: Run tests
         shell: bash -l {0}
-        run: tox -e test
+        run: VIRTUALENV_SYSTEM_SITE_PACKAGES=1 tox -e test
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
