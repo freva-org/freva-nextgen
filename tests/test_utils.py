@@ -71,7 +71,7 @@ def test_get_xr_posix_engine() -> None:
         assert get_xr_engine(create_netcdf4_file(temp_dir)) == "netcdf4"
         assert get_xr_engine(create_rasterio_file(temp_dir)) == "rasterio"
         assert get_xr_engine(create_zarr_file(temp_dir)) == "zarr"
-        with patch("data_portal_worker.backends.posix_and_cloud.h5netcdf.File"):
+        with patch("h5netcdf.File"):
             assert get_xr_engine("http://example.com/data.nc") == "h5netcdf"
     with TemporaryDirectory() as temp_dir:
         assert get_xr_engine(temp_dir) is None
