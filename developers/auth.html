@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>The restAPI auth endpoints &#8212; Freva Databrowser 2510.0.1 documentation</title>
+    <title>The restAPI auth endpoints &#8212; Freva Databrowser 2510.1.0 documentation</title>
   
   
   
@@ -49,7 +49,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=25efb741"></script>
+    <script src="../_static/documentation_options.js?v=f0427901"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -135,8 +135,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2510.0.1 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2510.0.1 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2510.1.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2510.1.0 documentation - Home"/>
   
   
 </a></div>
@@ -900,9 +900,11 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 
 <p>—</p>
 <dl class="http get">
-<dt class="sig sig-object http" id="get--api-freva-nextgen-auth-v2-systemuser">
-<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/auth/v2/systemuser</span></span><a class="headerlink" href="#get--api-freva-nextgen-auth-v2-systemuser" title="Link to this definition">#</a></dt>
-<dd><p>Get system information for the user in possession of the oauth token.</p>
+<dt class="sig sig-object http" id="get--api-freva-nextgen-auth-v2-checkuser">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/auth/v2/checkuser</span></span><a class="headerlink" href="#get--api-freva-nextgen-auth-v2-checkuser" title="Link to this definition">#</a></dt>
+<dd><p>Check if user token is authorized.</p>
+<p>This endpoint can be useful to check if a user token can be used to
+perform or access restricted actions and resources.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Request Headers<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -923,7 +925,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 </dl>
 <section id="id10">
 <h2>Example Request<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
-<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">POST</span> <span class="nn">/api/freva-nextgen/auth/v2/systemuser</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">POST</span> <span class="nn">/api/freva-nextgen/auth/v2/checkuser</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
 <span class="na">host</span><span class="o">:</span> <span class="l">www.freva.dkrz.de</span>
 <span class="na">Authorization</span><span class="o">:</span> <span class="l">Bearer your_access_token</span>
 </pre></div>
@@ -935,14 +937,8 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
 <span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;pw_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;janedoe&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;pw_passwd&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;\*&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;pw_uid&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;pw_gid&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1001</span>
-<span class="w">    </span><span class="nt">&quot;pw_gecos&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Jane Doe&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;pw_dir&quot;</span><span class="p">:</span><span class="w">  </span><span class="s2">&quot;/home/jane&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;pw_shell&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/bin/zsh&quot;</span>
-<span class="p">}</span>
+<span class="w">    </span><span class="nt">&quot;pw_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="err">&quot;janedoe,</span>
+<span class="err">}</span>
 </pre></div>
 </div>
 </section>
@@ -958,14 +954,14 @@ Python</li><li class="tabbutton" data-id="2" onclick="sphinx_code_tabs_onclick(t
 gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(this)">
 Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
 C/C++</li></ul><div class="tab codetab selected" data-id="0">
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser<span class="w"> </span><span class="se">\</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/checkuser<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer YOUR_ACCESS_TOKEN&quot;</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="1">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-  <span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/checkuser&quot;</span><span class="p">,</span>
   <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="s2">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">}</span>
 <span class="p">)</span>
 <span class="n">token_data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
@@ -975,7 +971,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
 
 <span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">GET</span><span class="p">(</span>
-<span class="w">   </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/checkuser&quot;</span><span class="p">,</span>
 <span class="w">   </span><span class="nf">add_headers</span><span class="p">(</span><span class="n">Authorization</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">paste</span><span class="p">(</span><span class="s">&quot;Bearer&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;YOUR_ACCESS_TOKEN&quot;</span><span class="p">))</span>
 <span class="p">)</span>
 <span class="n">token_data</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;parsed&quot;</span><span class="p">)</span>
@@ -986,7 +982,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="k">using</span><span class="w"> </span><span class="n">JSON</span>
 
 <span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-<span class="w">  </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/checkuser&quot;</span><span class="p">,</span>
 <span class="w">  </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span><span class="s">&quot;Authorization&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">)</span>
 <span class="p">)</span>
 <span class="n">token_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">))</span>
@@ -1006,7 +1002,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="w">        </span><span class="k">struct</span><span class="w"> </span><span class="nc">curl_slist</span><span class="w"> </span><span class="o">*</span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
 <span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Authorization: Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">);</span>
 
-<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/userinfo&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/checkuser&quot;</span><span class="p">);</span>
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_HTTPHEADER</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="p">);</span>
 
 <span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
