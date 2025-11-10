@@ -85,12 +85,7 @@ def get_userinfo(
     name = output.get("first_name", "") + " " + output.get("last_name", "")
     output["first_name"] = name.partition(" ")[0]
     output["last_name"] = name.rpartition(" ")[-1]
-    return SystemUserInfo(
-        first_name=output["first_name"],
-        last_name=output["last_name"],
-        email=output["email"],
-        username=output["username"],
-    )
+    return cast(SystemUserInfo, output)
 
 
 async def create_redis_connection(

@@ -2,8 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v2510.1.0]
+### Chnaged
+The `systemuser` endpoint will not query the systems user database any longer
+
+
+
 ## [v2510.0.1]
-### Fixd
+### Fixed
 Remove the CORS header from STAC-API, since it's supported on Nginx now
 
 
