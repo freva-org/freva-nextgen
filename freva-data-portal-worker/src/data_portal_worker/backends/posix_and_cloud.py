@@ -1,7 +1,7 @@
 """Load data."""
 
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Optional, Union
 from urllib.parse import urlparse
 
 import h5netcdf
@@ -59,12 +59,16 @@ def posix_and_cloud(inp_file: Union[str, Path]) -> xr.Dataset:
     target: Union[str, Path]
     target = Path(inp_str) if parsed.scheme in ("", "file") else inp_str
     engine = get_xr_engine(str(target))
+    kwargs: dict[str, Any] = {
+        "decode_cf": False,
+        "use_cftime": False,
+        "cache": False,
+        "decode_coords": False,
+        "engine": engine,
+    }
+    if engine != "h5netcdf":
+        kwargs["chunks"] = "auto"
     return xr.open_dataset(
         target,
-        decode_cf=False,
-        use_cftime=False,
-        chunks="auto" if engine != "h5netcdf" else None,
-        cache=False,
-        decode_coords=False,
-        engine=get_xr_engine(str(target)),
+        **kwargs
     )

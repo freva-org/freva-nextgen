@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [v2510.1.0]
+### Added
+Add a support for remote data on data loader
 ### Chnaged
 The `systemuser` endpoint will not query the systems user database any longer
 
