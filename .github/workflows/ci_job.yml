@@ -85,6 +85,9 @@ jobs:
             hdf5
             netcdf4
             pip
+            cfgrib
+            xarray
+            cffi
           condarc: |
             channels:
               - conda-forge
