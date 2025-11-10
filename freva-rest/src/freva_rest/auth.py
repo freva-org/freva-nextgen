@@ -3,7 +3,6 @@
 import asyncio
 import base64
 import datetime
-import hashlib
 import secrets
 from enum import Enum
 from typing import (
@@ -222,8 +221,8 @@ class TokenisedUser(BaseModel):
     pw_name: Annotated[
         str,
         Field(
-            description="Tokenised username string",
-            examples=["xOtAxlh7xZvbvzbuvZkbsw"],
+            description="Username/userid.",
+            examples=["janedoe"],
         ),
     ]
 
@@ -425,12 +424,7 @@ async def system_user(
     user_data = await query_user(
         token_data, dict(request.headers)["authorization"]
     )
-    username_enc = hashlib.blake2b(
-        user_data.username.encode("utf-8"), digest_size=16
-    ).digest()
-    return TokenisedUser(
-        pw_name=base64.urlsafe_b64encode(username_enc).decode("ascii").rstrip("=")
-    )
+    return TokenisedUser(pw_name=user_data.username)
 
 
 @app.get(

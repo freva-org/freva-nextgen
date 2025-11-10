@@ -495,7 +495,7 @@ then be included in the authorization header for secured endpoints.
         Content-Type: application/json
 
         {
-            "pw_name": "vEE_Culsl5kG2zqV_WEchg",
+            "pw_name": "janedoe,
         }
 
     Code examples
