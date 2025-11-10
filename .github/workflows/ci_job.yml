@@ -20,6 +20,8 @@ jobs:
         with:
           micromamba-version: "latest"
           environment-name: freva
+          cache-environment: true
+          cache-downloads: true
           create-args: >-
             python
             gdal
@@ -28,7 +30,6 @@ jobs:
           condarc: |
             channels:
               - conda-forge
-              - defaults
             channel_priority: strict
           init-shell: bash
 
@@ -73,6 +74,8 @@ jobs:
         with:
           micromamba-version: "latest"
           environment-name: freva
+          cache-environment: true
+          cache-downloads: true
           create-args: >-
             python=${{ matrix.python-version }}
             gdal
@@ -81,7 +84,6 @@ jobs:
           condarc: |
             channels:
               - conda-forge
-              - defaults
             channel_priority: strict
           init-shell: bash
 
