@@ -5,7 +5,6 @@ import base64
 import datetime
 import secrets
 from enum import Enum
-from pwd import getpwnam
 from typing import (
     Annotated,
     Any,
@@ -216,49 +215,14 @@ def set_request_header(
 auth = SafeAuth(server_config.oidc_discovery_url)
 
 
-class SystemUser(BaseModel):
-    """Represents a Unix system user as returned by `pwd.getpwnam`.
-
-    This model maps the standard fields of a user's passwd entry and is suitable
-    for serializing system-level account information in APIs. Note that this
-    does not include shadow password data (e.g., from `/etc/shadow`), only what
-    is available from `/etc/passwd`.
-    """
+class TokenisedUser(BaseModel):
+    """Tokenised entries of username/userid."""
 
     pw_name: Annotated[
-        str, Field(description="Username string", examples=["janedoe"])
-    ]
-    pw_passwd: Annotated[
         str,
         Field(
-            default="x",
-            description=(
-                "Password field (usually 'x' for shadow " "password entries)"
-            ),
-            examples=["x"],
-        ),
-    ]
-    pw_uid: Annotated[int, Field(description="User ID (UID)", examples=[1001])]
-    pw_gid: Annotated[int, Field(description="Group ID (GID)", examples=[1001])]
-    pw_gecos: Annotated[
-        str,
-        Field(
-            description="User's full name or additional info (GECOS field)",
-            examples=["Jane Doe"],
-        ),
-    ]
-    pw_dir: Annotated[
-        str,
-        Field(
-            default="",
-            description="User's home directory",
-            examples=["/home/jane"],
-        ),
-    ]
-    pw_shell: Annotated[
-        str,
-        Field(
-            default="", description="User's login shell", examples=["/bin/bash"]
+            description="Username/userid.",
+            examples=["janedoe"],
         ),
     ]
 
@@ -407,17 +371,11 @@ async def oidc_request(
             raise HTTPException(status_code=503) from error
 
 
-@app.get("/api/freva-nextgen/auth/v2/userinfo", tags=["Authentication"])
-async def userinfo(
-    id_token: IDToken = Security(auth.create_auth_dependency()),
-    request: Request = Required,
-) -> UserInfo:
-    """Get userinfo for the current token."""
-    token_data = {k.lower(): str(v) for (k, v) in dict(id_token).items()}
+async def query_user(token_data: Dict[str, str], authorization: str) -> UserInfo:
+    """Get the information of the User info."""
     try:
         return UserInfo(**get_userinfo(token_data))
     except ValidationError:
-        authorization = dict(request.headers)["authorization"]
         token_data = await oidc_request(
             "GET",
             "userinfo_endpoint",
@@ -433,41 +391,40 @@ async def userinfo(
             raise HTTPException(status_code=404)
 
 
+@app.get("/api/freva-nextgen/auth/v2/userinfo", tags=["Authentication"])
+async def userinfo(
+    id_token: IDToken = Security(auth.create_auth_dependency()),
+    request: Request = Required,
+) -> UserInfo:
+    """Get userinfo for the current token."""
+    token_data = {k.lower(): str(v) for (k, v) in dict(id_token).items()}
+    authorization = dict(request.headers)["authorization"]
+    return await query_user(token_data, authorization)
+
+
 @app.get(
     "/api/freva-nextgen/auth/v2/systemuser",
+    include_in_schema=False,
+    response_model=TokenisedUser,
+)
+@app.get(
+    "/api/freva-nextgen/auth/v2/checkuser",
     tags=["Authentication"],
-    response_model=SystemUser,
-    response_description="Information about a system user",
+    response_model=TokenisedUser,
+    response_description="Check if user claim is authorised.",
 )
 async def system_user(
     id_token: IDToken = Security(
         auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
     request: Request = Required,
-) -> SystemUser:
-    """Return the password database entry for the given user name."""
-    keys = ("preferred-username", "user-name", "uid")
+) -> TokenisedUser:
+    """Check user authorisation and get a  url-safe verion of the username."""
     token_data = {k.lower(): str(v) for (k, v) in dict(id_token).items()}
-    uid = ""
-    for key in keys:
-        for _id in set((key, key.replace("-", "_"), key.replace("-", ""))):
-            if token_data.get(_id):
-                uid = token_data[_id]
-        if uid:
-            break
-    try:
-        pw_entry = getpwnam(uid)
-    except KeyError:
-        raise HTTPException(status_code=401, detail="User unkown.")
-    return SystemUser(
-        pw_name=pw_entry.pw_name,
-        pw_passwd=pw_entry.pw_passwd,
-        pw_uid=pw_entry.pw_uid,
-        pw_gid=pw_entry.pw_gid,
-        pw_gecos=pw_entry.pw_gecos,
-        pw_dir=pw_entry.pw_dir,
-        pw_shell=pw_entry.pw_shell,
+    user_data = await query_user(
+        token_data, dict(request.headers)["authorization"]
     )
+    return TokenisedUser(pw_name=user_data.username)
 
 
 @app.get(

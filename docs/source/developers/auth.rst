@@ -463,9 +463,12 @@ then be included in the authorization header for secured endpoints.
 ---
 
 
-.. http:get:: /api/freva-nextgen/auth/v2/systemuser
+.. http:get:: /api/freva-nextgen/auth/v2/checkuser
 
-    Get system information for the user in possession of the oauth token.
+    Check if user token is authorized.
+
+    This endpoint can be useful to check if a user token can be used to
+    perform or access restricted actions and resources.
 
 
     :reqheader Authorization: The OAuth2 access token
@@ -479,7 +482,7 @@ then be included in the authorization header for secured endpoints.
 
     .. sourcecode:: http
 
-        POST /api/freva-nextgen/auth/v2/systemuser HTTP/1.1
+        POST /api/freva-nextgen/auth/v2/checkuser HTTP/1.1
         host: www.freva.dkrz.de
         Authorization: Bearer your_access_token
 
@@ -492,13 +495,7 @@ then be included in the authorization header for secured endpoints.
         Content-Type: application/json
 
         {
-            "pw_name": "janedoe",
-            "pw_passwd": "\*",
-            "pw_uid": 1000,
-            "pw_gid": 1001
-            "pw_gecos": "Jane Doe",
-            "pw_dir":  "/home/jane",
-            "pw_shell": "/bin/zsh"
+            "pw_name": "janedoe,
         }
 
     Code examples
@@ -511,7 +508,7 @@ then be included in the authorization header for secured endpoints.
         .. code-tab:: bash
             :caption: Shell
 
-            curl -X GET https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser \
+            curl -X GET https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/checkuser \
              -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 
         .. code-tab:: python
@@ -519,7 +516,7 @@ then be included in the authorization header for secured endpoints.
 
             import requests
             response = requests.get(
-              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser",
+              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/checkuser",
               headers={"Authorization": "Bearer YOUR_ACCESS_TOKEN"}
             )
             token_data = response.json()
@@ -530,7 +527,7 @@ then be included in the authorization header for secured endpoints.
             library(httr)
 
             response <- GET(
-               "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser",
+               "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/checkuser",
                add_headers(Authorization = paste("Bearer", "YOUR_ACCESS_TOKEN"))
             )
             token_data <- content(response, "parsed")
@@ -542,7 +539,7 @@ then be included in the authorization header for secured endpoints.
             using JSON
 
             response = HTTP.get(
-              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser",
+              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/checkuser",
               headers = Dict("Authorization" => "Bearer YOUR_ACCESS_TOKEN")
             )
             token_data = JSON.parse(String(response.body))
@@ -563,7 +560,7 @@ then be included in the authorization header for secured endpoints.
                     struct curl_slist *headers = NULL;
                     headers = curl_slist_append(headers, "Authorization: Bearer YOUR_ACCESS_TOKEN");
 
-                    curl_easy_setopt(curl, CURLOPT_URL, "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/userinfo");
+                    curl_easy_setopt(curl, CURLOPT_URL, "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/checkuser");
                     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
                     res = curl_easy_perform(curl);
@@ -641,7 +638,7 @@ then be included in the authorization header for secured endpoints.
             :caption: Julia
 
             using HTTP
-            
+
             response = HTTP.get(
               "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/logout",
               query = Dict("post_logout_redirect_uri" => "https://www.freva.dkrz.de/")
@@ -660,10 +657,10 @@ then be included in the authorization header for secured endpoints.
                 curl_global_init(CURL_GLOBAL_DEFAULT);
                 curl = curl_easy_init();
                 if(curl) {
-                    curl_easy_setopt(curl, CURLOPT_URL, 
+                    curl_easy_setopt(curl, CURLOPT_URL,
                         "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/logout?post_logout_redirect_uri=https://www.freva.dkrz.de/");
                     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-                    
+
                     res = curl_easy_perform(curl);
                     curl_easy_cleanup(curl);
                 }
