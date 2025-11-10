@@ -390,14 +390,14 @@ def test_userinfo(
     mocker: MockerFixture, test_server: str, auth: Dict[str, str]
 ) -> None:
     """Test getting the user info."""
-
-    res = requests.get(
-        f"{test_server}/auth/v2/userinfo",
-        headers={"Authorization": f"Bearer {auth['access_token']}"},
-        timeout=3,
-    )
-    assert res.status_code == 200
-    assert "last_name" in res.json()
+    for endpoint in ("userinfo", "systemuser"):
+        res = requests.get(
+            f"{test_server}/auth/v2/{endpoint}",
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+            timeout=3,
+        )
+        assert res.status_code == 200
+        assert "last_name" in res.json()
 
 
 def test_userinfo_failed(
