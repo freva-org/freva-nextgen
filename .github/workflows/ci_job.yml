@@ -74,8 +74,8 @@ jobs:
         with:
           micromamba-version: "latest"
           environment-name: freva
-          cache-environment: true
-          cache-downloads: true
+          cache-environment: false
+          cache-downloads: false
           create-args: >-
             python=${{ matrix.python-version }}
             gdal
