@@ -359,6 +359,7 @@ async def oidc_request(
             raise HTTPException(status_code=503) from error
 
 
+@app.get("/api/freva-nextgen/auth/v2/systemuser", include_in_schema=False)
 @app.get("/api/freva-nextgen/auth/v2/userinfo", tags=["Authentication"])
 async def userinfo(
     id_token: IDToken = Security(auth.create_auth_dependency()),
