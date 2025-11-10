@@ -372,9 +372,7 @@ async def oidc_request(
             raise HTTPException(status_code=503) from error
 
 
-async def query_user(
-    token_data: Dict[str, str], authorization: Dict[str, str]
-) -> UserInfo:
+async def query_user(token_data: Dict[str, str], authorization: str) -> UserInfo:
     """Get the information of the User info."""
     try:
         return UserInfo(**get_userinfo(token_data))
