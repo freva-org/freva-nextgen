@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+
+## [v2510.1.1]
+### Fixed
+Redis connection bug.
+
+
 ## [v2510.1.0]
 ### Added
 Add a support for remote data on data loader
