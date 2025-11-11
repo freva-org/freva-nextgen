@@ -118,8 +118,8 @@ if [ "x$IS_WORKER" = x ]; then
     passwd=$(base64 -d ~/.data-portal-cluster-config.json | jq -r .passwd)
     cache_exp=$(base64 -d ~/.data-portal-cluster-config.json | jq -r .cache_exp)
     TEMP_DIR=$(mktemp -d)
-    ${MAMBA_DIR}/bin/git clone https://github.com/freva-org/freva-nextgen.git $TEMP_DIR || {rm -fr $TEMP_DIR; exit 1}
-    ${MAMBA_DIR}/bin/python -m pip install -U $TEMP_DIR/freva-data-portal-worker || { rm -r $TEMP_DIR; exit 1}
+    ${MAMBA_DIR}/bin/git clone https://github.com/freva-org/freva-nextgen.git $TEMP_DIR || { rm -fr $TEMP_DIR; exit 1; }
+    ${MAMBA_DIR}/bin/python -m pip install -U $TEMP_DIR/freva-data-portal-worker || { rm -r $TEMP_DIR; exit 1; }
     rm -rf $TEMP_DIR
     CMD="${MAMBA_DIR}/bin/python -m data_portal_worker \
         -c ~/.data-portal-cluster-config.json -vv -e \
