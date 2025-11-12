@@ -279,8 +279,9 @@ async def zarr_html_view(
     This endpoint provides a human-readable HTML view of the dataset structure
     and metadata, generated using Xarray's HTML representation method.
     """
-    html_enc = await read_redis_data(uuid5, "repr_html", timeout=timeout)
-    return HTMLResponse(content=html_enc.decode("utf-8"))
+    return HTMLResponse(
+        content=await read_redis_data(uuid5, "repr_html", timeout=timeout)
+    )
 
 
 @app.get(
