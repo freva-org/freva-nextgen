@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v2510.1.2]
+### Fixed
+Bug fixing.
+
 
 ## [v2510.1.1]
 ### Fixed
