@@ -119,7 +119,7 @@ async def create_redis_connection(
         port=CONFIG.redis_port,
         username=CONFIG.redis_user or None,
         password=CONFIG.redis_password or None,
-        ssl=CONFIG.redis_ssl_certfile is not None,
+        ssl=(CONFIG.redis_ssl_certfile or None) is not None,
         ssl_certfile=CONFIG.redis_ssl_certfile or None,
         ssl_keyfile=CONFIG.redis_ssl_keyfile or None,
         ssl_ca_certs=CONFIG.redis_ssl_certfile or None,
