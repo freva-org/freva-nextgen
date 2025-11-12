@@ -36,6 +36,7 @@ LoadDict = TypedDict(
         "reason": str,
         "meta": Optional[Dict[str, Any]],
         "json_meta": Optional[Dict[str, Any]],
+        "repr_html": str,
     },
 )
 RedisKw = TypedDict(
@@ -216,13 +217,15 @@ class DataLoadFactory:
             status_dict["json_meta"] = jsonify_zmetadata(dset, metadata)
             status_dict["meta"] = metadata
             status_dict["status"] = 0
-            # We need to add the xarray to an extra cache entry because the
+            status_dict["repr_html"] = dset._repr_html_()
+            # We need to add the xr dataset to an extra cache entry because the
             # status_dict will be loaded by the rest-api, if the xarray dataset
-            # is present the rest-api code will attempt to instanciate the
-            # pickled dataset object and that might fail because we might or
-            # might not have xarray and all the backends instanciated.
-            # Since the xarray dataset object isn't needed anyway byt the
-            # rest-api we simply add it to a cache entry of its own.
+            # would be present in the status_dict the rest-api code would attempt
+            # to instanciate the pickled dataset object and that might fail
+            # because we might or might not have xarray and all the backends
+            # instanciated. Since the xarray dataset object isn't needed
+            # anyway byt the rest-api we simply add it to a cache entry of its
+            # own.
             self.cache.setex(
                 f"{path_id}-dset", expires_in, cloudpickle.dumps(dset)
             )
@@ -346,6 +349,7 @@ class ProcessQueue(DataLoadFactory):
             "url": "",
             "meta": None,
             "json_meta": None,
+            "repr_html": "<b>No data could be loaded.</b>",
         }
         if data_cache is None:
             self.cache.setex(

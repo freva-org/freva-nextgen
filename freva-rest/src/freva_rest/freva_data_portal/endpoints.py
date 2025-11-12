@@ -279,9 +279,8 @@ async def zarr_html_view(
     This endpoint provides a human-readable HTML view of the dataset structure
     and metadata, generated using Xarray's HTML representation method.
     """
-    dset_cache = await read_redis_data(f"{uuid5}-dset", timeout=timeout)
-    dset = cloudpickle.loads(dset_cache)
-    return HTMLResponse(content=dset._repr_html_())
+    html_enc = await read_redis_data(uuid5, "repr_html", timeout=timeout)
+    return HTMLResponse(content=html_enc.decode("utf-8"))
 
 
 @app.get(
