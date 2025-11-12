@@ -84,6 +84,7 @@ session required pam_sss.so\n\
         typing_extensions \
         uvicorn \
         tomli \
+        xarray \
         zarr; \
     else \
         echo "Invalid CMD argument: $CMD" && exit 1; \
