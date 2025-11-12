@@ -123,6 +123,8 @@ class LoadStatus:
     """Url of the machine that loads the zarr store."""
     json_meta: Optional[Dict[str, Any]] = None
     """Json representation of the zarr metadata."""
+    repr_html: str = "<b>No data could be loaded.</b>"
+    """Html representation of the zarr metadata."""
 
     def dict(self) -> LoadDict:
         """Convert object to dict."""
@@ -133,6 +135,7 @@ class LoadStatus:
             "meta": self.meta,
             "url": self.url,
             "json_meta": self.json_meta,
+            "repr_html": self.repr_html,
         }
 
     @classmethod
@@ -145,6 +148,7 @@ class LoadStatus:
             "obj_path": "",
             "meta": None,
             "json_meta": None,
+            "repr_html": "<b>Data hasn't been loaded.</b>",
         }
         return cls(**_dict)
 
@@ -349,7 +353,7 @@ class ProcessQueue(DataLoadFactory):
             "url": "",
             "meta": None,
             "json_meta": None,
-            "repr_html": "<b>No data could be loaded.</b>",
+            "repr_html": "<b>Data hasn't been loaded.</b>",
         }
         if data_cache is None:
             self.cache.setex(
