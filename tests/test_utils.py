@@ -8,7 +8,10 @@ import numpy as np
 import rasterio
 import zarr
 from unittest.mock import patch
-from data_portal_worker.backends.posix_and_cloud import get_xr_engine
+from data_portal_worker.backends.posix import get_xr_engine as get_xr_engine_posix
+from data_portal_worker.backends.cloud import get_xr_engine as get_xr_engine_cloud
+
+
 from data_portal_worker.utils import str_to_int as str_to_int2
 from freva_rest.utils.base_utils import get_userinfo, str_to_int
 
@@ -68,10 +71,34 @@ def test_get_auth_userinfo() -> None:
 def test_get_xr_posix_engine() -> None:
     """Test the right xarray engine."""
     with TemporaryDirectory() as temp_dir:
-        assert get_xr_engine(create_netcdf4_file(temp_dir)) == "netcdf4"
-        assert get_xr_engine(create_rasterio_file(temp_dir)) == "rasterio"
-        assert get_xr_engine(create_zarr_file(temp_dir)) == "zarr"
-        with patch("h5netcdf.File"):
-            assert get_xr_engine("http://example.com/data.nc") == "h5netcdf"
+        assert get_xr_engine_posix(create_netcdf4_file(temp_dir)) == "netcdf4"
+        assert get_xr_engine_posix(create_rasterio_file(temp_dir)) == "rasterio"
+        assert get_xr_engine_posix(create_zarr_file(temp_dir)) == "zarr"
     with TemporaryDirectory() as temp_dir:
-        assert get_xr_engine(temp_dir) is None
+        assert get_xr_engine_posix(temp_dir) is None
+
+
+def test_get_xr_cloud_engine() -> None:
+    """Test the cloud xarray engine."""
+    with TemporaryDirectory() as temp_dir:
+        zarr_file = create_zarr_file(temp_dir)
+        engine = get_xr_engine_cloud(zarr_file)
+        assert engine == "zarr"
+
+        nc_file = create_netcdf4_file(temp_dir)
+        engine = get_xr_engine_cloud(nc_file)
+        assert engine == "h5netcdf"
+
+        engine = get_xr_engine_cloud(temp_dir)
+        assert engine is None
+
+    with patch("zarr.open") as mock_zarr:
+        mock_zarr.return_value = True
+        engine = get_xr_engine_cloud("https://example.com/data.zarr")
+        assert engine == "zarr"
+
+    with patch("zarr.open", side_effect=Exception), \
+         patch("xarray.open_dataset") as mock_xr:
+        mock_xr.return_value.close = lambda: None
+        engine = get_xr_engine_cloud("s3://bucket/data.nc")
+        assert engine == "h5netcdf"
