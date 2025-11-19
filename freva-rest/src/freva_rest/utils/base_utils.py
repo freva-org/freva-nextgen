@@ -1,10 +1,13 @@
 """Various utilities for the restAPI."""
 
 import base64
+import hmac
 import json
 import re
 import ssl
-from typing import Any, Awaitable, Dict, List, Optional, cast
+import time
+from hashlib import sha256
+from typing import Any, Awaitable, Dict, List, Optional, Tuple, cast
 
 import jwt
 import redis.asyncio as redis
@@ -157,6 +160,14 @@ def b64url_decode(s: str) -> bytes:
     return base64.urlsafe_b64decode(s + pad)
 
 
+def sign_token_path(path: str, expires_at: int) -> Tuple[str, str]:
+    """Create a base64 endcoded token and a signature of that token."""
+    secret = server_config.redis_password
+    token = encode_path_token(path, expires_at)
+    sig = hmac.new(secret.encode("utf-8"), token.encode("utf-8"), sha256).digest()
+    return token, b64url(sig)
+
+
 def encode_path_token(path: str, expires_at: int = 0) -> str:
     """Create a URL-safe token that encodes `path` and expiry.
 
@@ -177,7 +188,13 @@ def decode_path_token(token: str) -> str:
     return cast(str, payload.get("path", ""))
 
 
-async def publish_dataset(path: str, cache: Optional[redis.Redis] = None) -> str:
+async def publish_dataset(
+    path: str,
+    cache: Optional[redis.Redis] = None,
+    public: bool = False,
+    ttl_seconds: int = 86400,
+    publish: bool = False,
+) -> str:
     """Publish a path on disk for zarr conversion to the broker.
 
     Parameters
@@ -186,6 +203,12 @@ async def publish_dataset(path: str, cache: Optional[redis.Redis] = None) -> str
         The path that needs to be converted.
     cache:
         An instance of an already established Redis connection.
+    public: bool, default: False
+        Create a public zarr store.
+    ttl_seconds: int, default: 84600
+        TTL of the public zarr url, if any
+    publish: bool, default: False
+        Send the loading instruction to the broker.
 
     Returns
     -------
@@ -195,9 +218,13 @@ async def publish_dataset(path: str, cache: Optional[redis.Redis] = None) -> str
     """
     cache = cache or await create_redis_connection()
     token = encode_path_token(path)
-    api_path = f"{server_config.proxy}/api/freva-nextgen/data-portal/zarr"
-    await cache.publish(
-        "data-portal",
-        json.dumps({"uri": {"path": path, "uuid": token}}).encode("utf-8"),
-    )
-    return f"{api_path}/{token}.zarr"
+    share_token, sig = sign_token_path(path, int(time.time()) + ttl_seconds)
+    api_path = f"{server_config.proxy}/api/freva-nextgen/data-portal"
+    if publish:
+        await cache.publish(
+            "data-portal",
+            json.dumps({"uri": {"path": path, "uuid": token}}).encode("utf-8"),
+        )
+    if public is True:
+        return f"{api_path}/share/{sig}/{share_token}.zarr"
+    return f"{api_path}/zarr/{token}.zarr"

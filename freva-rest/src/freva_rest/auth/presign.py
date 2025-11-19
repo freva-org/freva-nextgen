@@ -27,7 +27,7 @@ import os
 import re
 import time
 from hashlib import sha256
-from typing import Annotated, Dict, Final, Tuple, cast
+from typing import Annotated, Dict, Final, cast
 
 from fastapi import (
     HTTPException,
@@ -39,7 +39,11 @@ from fastapi_third_party_auth import IDToken as TokenPayload
 from pydantic import AnyHttpUrl, BaseModel, Field
 
 from ..rest import app, server_config
-from ..utils.base_utils import b64url, decode_path_token, encode_path_token
+from ..utils.base_utils import (
+    decode_path_token,
+    encode_path_token,
+    sign_token_path,
+)
 from .oauth2 import auth
 
 # ---------------------------------------------------------------------------
@@ -70,14 +74,6 @@ def path_from_url(path: str) -> str:
     return path
 
 
-def _sign_token_path(path: str, expires_at: int) -> Tuple[str, str]:
-    token = encode_path_token(path, expires_at)
-    sig = hmac.new(
-        SIGNING_SECRET.encode("utf-8"), token.encode("utf-8"), sha256
-    ).digest()
-    return token, b64url(sig)
-
-
 def verify_token(token: str, sig_b64: str) -> Dict[str, str]:
 
     # decode payload
@@ -86,6 +82,7 @@ def verify_token(token: str, sig_b64: str) -> Dict[str, str]:
 
     try:
         payload_bytes = base64.urlsafe_b64decode(pad(token))
+        payload = cast(Dict[str, str], json.loads(payload_bytes))
     except Exception as exc:
         raise HTTPException(
             status_code=400, detail="Invalid share token payload."
@@ -101,7 +98,6 @@ def verify_token(token: str, sig_b64: str) -> Dict[str, str]:
             status_code=403, detail="Invalid share token signature."
         )
 
-    payload = cast(Dict[str, str], json.loads(payload_bytes))
     now = int(time.time())
     if now >= int(payload.get("exp", 0)):
         raise HTTPException(status_code=403, detail="Share link has expired.")
@@ -275,7 +271,7 @@ def create_presigned_url(
     # TODO: we should check if the user is allowed to read the dataset.
     ttl = max(MIN_TTL_SECONDS, min(body.ttl_seconds, MAX_TTL_SECONDS))
     expires_at = int(time.time()) + ttl
-    token, sign = _sign_token_path(path, expires_at)
+    token, sign = sign_token_path(path, expires_at)
     url = (
         f"{server_config.proxy}/api/freva-nextgen/data-portal/share/"
         f"{sign}/{token}.zarr"

@@ -10,9 +10,11 @@ import mock
 import pytest
 import requests
 import xarray as xr
+from fastapi import HTTPException
 from pytest_mock import MockerFixture
 
-from freva_rest.utils.base_utils import encode_path_token
+from freva_rest.auth.presign import verify_token
+from freva_rest.utils.base_utils import encode_path_token, sign_token_path
 
 
 def test_zarr_conversion(test_server: str, auth: Dict[str, str]) -> None:
@@ -307,7 +309,6 @@ def test_presigend_url_failed(
     test_server: str, auth: Dict[str, str], mocker: MockerFixture
 ) -> None:
     """The the functionlity of token/sig verification."""
-    from freva_rest.auth.presign import _sign_token_path
 
     res = requests.get(
         f"{test_server}/databrowser/load/freva/",
@@ -328,7 +329,7 @@ def test_presigend_url_failed(
     sig = res.json()["sig"]
 
     token = f'/zarr/{encode_path_token("/work.foo")}.zarr'
-    token_bad, sig_bad = _sign_token_path(token, -1)
+    token_bad, sig_bad = sign_token_path(token, -1)
 
     # Expired TTL
     res = requests.get(
@@ -343,3 +344,27 @@ def test_presigend_url_failed(
     )
     assert res.status_code == 403
     assert "invalid" in res.json()["detail"].lower()
+
+    # Wrong path
+    res = requests.post(
+        f"{test_server}/data-portal/share-zarr",
+        json={"path": "foo.zarr"},
+        headers={"Authorization": f"Bearer {auth['access_token']}"},
+    )
+    assert res.status_code == 400
+
+    res = requests.post(
+        f"{test_server}/data-portal/share-zarr",
+        json={"path": "/api/freva-nextgen/data-portal/zarr/foo.zarr"},
+        headers={"Authorization": f"Bearer {auth['access_token']}"},
+    )
+    assert res.status_code == 400
+
+    res = requests.get(f"{test_server}/data-portal/share/{sig}/foo.zarr/.zgroup")
+    assert res.status_code >= 400
+
+
+def test_zarr_token_verification() -> None:
+    """Test the token verification."""
+    with pytest.raises(HTTPException, match="Invalid share token"):
+        verify_token("foo", "bar")

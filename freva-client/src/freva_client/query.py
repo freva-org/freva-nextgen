@@ -36,6 +36,7 @@ from .utils.auth_utils import (
     requires_authentication,
 )
 from .utils.databrowser_utils import Config, UserDataHandler
+from .utils.types import ZarrOptionsDict
 
 __all__ = ["databrowser"]
 
@@ -110,6 +111,11 @@ class databrowser:
     stream_zarr: bool, default: False
         Create a zarr stream for all search results. When set to true the
         files are served in zarr format and can be opened from anywhere.
+    zarr_options: dict, default: None
+        Set additional options for creating the dynamic zarr streams. For
+        example if you which to create public instead of a private url that
+        expires in one hour you can set the the following options:
+        ``zarr_options={"public": True, "ttl_seconds": 3600}``
     multiversion: bool, default: False
         Select all versions and not just the latest version (default).
     fail_on_error: bool, default: False
@@ -224,6 +230,19 @@ class databrowser:
            }
         )
 
+    Instead of private access you can also create *public* pre-signed
+    zarr url which can be accessed without authentication. Anyone with this
+    url can access the zarr data sotre.
+
+    .. code-block:: python
+
+        from freva_client import databrowser
+        db = databrowser(dataset="cmip6-fs",
+                         stream_zarr=True,
+                         zarr_options={"public": True, "ttl_seconds": 60)
+             )
+        public_zarr_files = list(db)
+
     You can also filter the metadata to only include specific facets.
 
     .. code-block:: python
@@ -250,9 +269,15 @@ class databrowser:
         stream_zarr: bool = False,
         multiversion: bool = False,
         fail_on_error: bool = False,
+        zarr_options: Optional[Dict[str, Union[int, bool]]] = None,
         **search_keys: Union[str, List[str]],
     ) -> None:
         self._auth = Auth()
+        zarr_options = zarr_options or {}
+        self._zarr_options = ZarrOptionsDict(
+            public=zarr_options.get("public", False),
+            ttl_seconds=zarr_options.get("ttl_seconds", 86400),
+        )
         self._fail_on_error = fail_on_error
         self._cfg = Config(host, uniq_key=uniq_key, flavour=flavour)
         self._flavour = self._cfg.flavour
@@ -304,10 +329,12 @@ class databrowser:
 
     def __iter__(self) -> Iterator[str]:
         query_url = self._cfg.search_url
+        params = {}
         if self._stream_zarr:
             query_url = self._cfg.zarr_loader_url
+            params = self._zarr_options
 
-        result = self._request("GET", query_url, stream=True)
+        result = self._request("GET", query_url, stream=True, params=params)
         if result is not None:
             try:
                 for res in result.iter_lines():
@@ -382,7 +409,11 @@ class databrowser:
         url = self._cfg.intake_url
         if self._stream_zarr:
             url = self._cfg.zarr_loader_url
-            kwargs["params"] = {"catalogue-type": "intake"}
+            kwargs["params"] = {
+                "catalogue-type": "intake",
+                "public": self._zarr_options["public"],
+                "ttl_seconds": self._zarr_options["ttl_seconds"],
+            }
         result = self._request("GET", url, **kwargs)
         if result is None:
             raise ValueError("No results found")
@@ -716,14 +747,16 @@ class databrowser:
 
         """
         return (
-            pd.DataFrame([
-                (k, v[::2])
-                for k, v in self._facet_search(extended_search=True).items()
-            ], columns=["facet", "values"])
-            .explode("values")
-            .groupby("facet")["values"].apply(
-                lambda x: [v for v in x if pd.notna(v)]
+            pd.DataFrame(
+                [
+                    (k, v[::2])
+                    for k, v in self._facet_search(extended_search=True).items()
+                ],
+                columns=["facet", "values"],
             )
+            .explode("values")
+            .groupby("facet")["values"]
+            .apply(lambda x: [v for v in x if pd.notna(v)])
         )
 
     @classmethod
@@ -906,12 +939,12 @@ class databrowser:
                     for k, v in this._facet_search(
                         extended_search=extended_search
                     ).items()
-                ], columns=["facet", "values"]
+                ],
+                columns=["facet", "values"],
             )
             .explode("values")
-            .groupby("facet")["values"].apply(
-                lambda x: [v for v in x if pd.notna(v)]
-            )
+            .groupby("facet")["values"]
+            .apply(lambda x: [v for v in x if pd.notna(v)])
         )
 
     @classmethod
@@ -1303,9 +1336,7 @@ class databrowser:
 
         if (
             requires_authentication(
-                self._flavour,
-                self._stream_zarr,
-                self._cfg.databrowser_url
+                self._flavour, self._stream_zarr, self._cfg.databrowser_url
             )
             and "Authorization" not in kwargs["headers"]
         ):
@@ -1342,17 +1373,18 @@ class databrowser:
             requests.exceptions.InvalidURL,
         ) as error:
             server_msg = ""
-            if hasattr(error, 'response') and error.response is not None:
+            if hasattr(error, "response") and error.response is not None:
                 try:
                     error_data = error.response.json()
-                    error_var = {error_data.get(
-                        'detail', error_data.get(
-                            'message', error_data.get('error', '')
+                    error_var = {
+                        error_data.get(
+                            "detail",
+                            error_data.get(
+                                "message", error_data.get("error", "")
+                            ),
                         )
-                    )}
-                    server_msg = (
-                        f" - {error_var}"
-                    )
+                    }
+                    server_msg = f" - {error_var}"
                 except Exception:
                     pass
             msg = f"{method_upper} request failed with: {error}{server_msg}"

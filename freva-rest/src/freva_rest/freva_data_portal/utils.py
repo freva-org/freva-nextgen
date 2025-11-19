@@ -59,7 +59,7 @@ async def read_redis_data(
 
     data: Optional[bytes] = await cache.get(key)
     if data is None and path:
-        await publish_dataset(path, cache=cache)
+        await publish_dataset(path, cache=cache, publish=True)
         timeout += 1
     npolls = 0
     while data is None:

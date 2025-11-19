@@ -42,17 +42,17 @@ class Config:
         uniq_key: Literal["file", "uri"] = "file",
         flavour: Optional[str] = None,
     ) -> None:
-        config_host = host or cast(str, self._get_databrowser_param_from_config("host"))
+        config_host = host or cast(
+            str, self._get_databrowser_param_from_config("host")
+        )
 
-        self.databrowser_url = f"{self.get_api_url(config_host)}/databrowser"
-        self.auth_url = f"{self.get_api_url(config_host)}/auth/v2"
+        self.api_url = self.get_api_url(config_host)
+        self.databrowser_url = f"{self.api_url}/databrowser"
+        self.auth_url = f"{self.api_url}/auth/v2"
         self.get_api_main_url = self.get_api_url(config_host)
         self.uniq_key = uniq_key
-        self._flavour = (
-            flavour or self._get_databrowser_param_from_config(
-                "flavour",
-                optional=True
-            )
+        self._flavour = flavour or self._get_databrowser_param_from_config(
+            "flavour", optional=True
         )
 
     @cached_property
@@ -138,7 +138,7 @@ class Config:
         }
 
     def _read_config(
-            self, path: Path, file_type: Literal["toml", "ini"]
+        self, path: Path, file_type: Literal["toml", "ini"]
     ) -> Dict[str, str]:
         """Read the configuration.
 
@@ -166,6 +166,7 @@ class Config:
         from freva_client.auth import Auth
 
         from .auth_utils import load_token
+
         auth = Auth()
         token = auth._auth_token or load_token(auth.token_file)
         if token and "access_token" in token:
@@ -179,9 +180,7 @@ class Config:
         headers = self._get_headers
         try:
             res = requests.get(
-                f"{self.databrowser_url}/overview",
-                headers=headers,
-                timeout=15
+                f"{self.databrowser_url}/overview", headers=headers, timeout=15
             )
             data = cast(Dict[str, Any], res.json())
             if not headers:
@@ -196,7 +195,7 @@ class Config:
             ) from None
 
     def _get_databrowser_param_from_config(
-            self, key: str, optional: bool = False
+        self, key: str, optional: bool = False
     ) -> Optional[str]:
         """Get a single config parameter following proper precedence."""
         eval_conf = self.get_dirs(user=False) / "evaluation_system.conf"
@@ -497,7 +496,9 @@ class UserDataHandler:
             _data.setdefault("variable", variables[0])
         elif data_vars:  # pragma: no cover
             _data.setdefault("variable", data_vars[0])
-            logger.info(f"No filtered variables found in {path}, using {data_vars[0]}")
+            logger.info(
+                f"No filtered variables found in {path}, using {data_vars[0]}"
+            )
         else:  # pragma: no cover
             _data.setdefault("variable", None)
             logger.warning(f"No data variables found in {path}")
