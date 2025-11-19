@@ -19,7 +19,12 @@ from freva_rest.utils.base_utils import (
     publish_dataset,
 )
 
-from .utils import STATUS_LOOKUP, load_chunk, load_zarr_metadata, read_redis_data
+from .utils import (
+    STATUS_LOOKUP,
+    load_chunk,
+    load_zarr_metadata,
+    read_redis_data,
+)
 
 
 class LoadResponse(BaseModel):
