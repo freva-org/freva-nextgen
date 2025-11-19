@@ -703,6 +703,7 @@ def stac_catalogue(
         fail_on_error=False,
         multiversion=multiversion,
         stream_zarr=False,
+        zarr_options={},
         **(parse_cli_args(search_keys or [])),
     )
     if requires_authentication(flavour=flavour, databrowser_url=host):
@@ -872,6 +873,7 @@ def count_values(
                 fail_on_error=False,
                 uniq_key="file",
                 stream_zarr=False,
+                zarr_options={},
                 **search_kws,
             )
         )

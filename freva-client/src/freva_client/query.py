@@ -275,7 +275,7 @@ class databrowser:
         self._auth = Auth()
         zarr_options = zarr_options or {}
         self._zarr_options = ZarrOptionsDict(
-            public=zarr_options.get("public", False),
+            public=bool(zarr_options.get("public", False)),
             ttl_seconds=zarr_options.get("ttl_seconds", 86400),
         )
         self._fail_on_error = fail_on_error
@@ -329,10 +329,10 @@ class databrowser:
 
     def __iter__(self) -> Iterator[str]:
         query_url = self._cfg.search_url
-        params = {}
+        params: Dict[str, Any] = {}
         if self._stream_zarr:
             query_url = self._cfg.zarr_loader_url
-            params = self._zarr_options
+            params = dict(self._zarr_options)
 
         result = self._request("GET", query_url, stream=True, params=params)
         if result is not None:
@@ -703,6 +703,7 @@ class databrowser:
             fail_on_error=fail_on_error,
             uniq_key="file",
             stream_zarr=False,
+            zarr_options={},
             **search_keys,
         )
         result = this._facet_search(extended_search=extended_search)
@@ -930,6 +931,7 @@ class databrowser:
             fail_on_error=fail_on_error,
             uniq_key="file",
             stream_zarr=False,
+            zarr_options={},
             **search_keys,
         )
         return (
