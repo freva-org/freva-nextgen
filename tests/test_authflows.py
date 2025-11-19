@@ -420,7 +420,7 @@ def test_authenticate_manual_failure_code_flow(
     mocker.patch(
         "freva_client.auth.CodeAuthClient._wait_for_port", return_value=True
     )
-    with patch("freva_rest.auth.server_config.oidc_auth_ports", [8080]):
+    with patch("freva_rest.auth.oauth2.server_config.oidc_auth_ports", [8080]):
         with pytest.raises(OSError, match="No free ports"):
             authenticate(host=test_server, force=True)
 
@@ -468,7 +468,7 @@ def test_auth_utils(free_port: int) -> None:
 
 
 def test_request_headers() -> None:
-    from freva_rest.auth import set_request_header
+    from freva_rest.auth.oauth2 import set_request_header
 
     header, data = {"Content-Type": "foo"}, {}
     set_request_header("foo", "bar", data, header)

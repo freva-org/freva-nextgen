@@ -12,6 +12,8 @@ import requests
 import xarray as xr
 from pytest_mock import MockerFixture
 
+from freva_rest.utils.base_utils import encode_path_token
+
 
 def test_zarr_conversion(test_server: str, auth: Dict[str, str]) -> None:
     """Test the single file loading functionlity."""
@@ -62,14 +64,6 @@ def test_load_files_success(test_server: str, auth: Dict[str, str]) -> None:
     )
     assert data.status_code == 200
     assert "metadata" in data.json()
-    # zarr metadata xarray-html-formatted
-    data = requests.get(
-        f"{files[0]}/view",
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=3,
-    )
-    assert data.status_code == 200
-    assert "<div><" in data.text
     data = requests.get(
         f"{files[0]}/.zgroup",
         headers={"Authorization": f"Bearer {token}"},
@@ -119,13 +113,49 @@ def test_load_files_success(test_server: str, auth: Dict[str, str]) -> None:
             timeout=3,
         )
         assert data.status_code == 200
+
+
+def test_zarr_utils(test_server: str, auth: Dict[str, str]) -> None:
+    """Test utils"""
+    # zarr metadata xarray-html-formatted
+    token = auth["access_token"]
+    res = requests.get(
+        f"{test_server}/databrowser/load/freva/",
+        params={"dataset": "cmip6-fs"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=3,
+        stream=True,
+    )
+    assert res.status_code == 201
+    files = list(res.iter_lines(decode_unicode=True))
+    print(files)
     data = requests.get(
-        f"{files[0]}/status",
-        params={"timeout": 3},
+        f"{test_server}/data-portal/zarr-utils/html",
+        params={"url": f"{files[0]}", "timeout": 3},
         headers={"Authorization": f"Bearer {token}"},
         timeout=3,
     )
     assert data.status_code == 200
+    assert "<div><" in data.text
+    data = requests.get(
+        f"{test_server}/data-portal/zarr-utils/status",
+        params={"url": f"{files[0]}", "timeout": 3},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=3,
+    )
+    assert data.status_code == 200
+    _id = encode_path_token("foo.zarr")
+    data = requests.get(
+        f"{test_server}/data-portal/zarr-utils/status",
+        params={
+            "url": f"{test_server}/data-portal/zarr/{_id}.zarr",
+            "timeout": 3,
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=3,
+    )
+    assert data.status_code == 200
+    assert data.json()["status"] == 5
 
 
 def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
@@ -166,13 +196,6 @@ def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
         timeout=3,
     )
     assert res2.status_code in (400, 404)
-    data = requests.get(
-        f"{test_server}/data-portal/foo.zarr/status",
-        params={"timeout": 5},
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=7,
-    )
-    assert data.status_code == 404
     with pytest.warns():
         for _ in range(2):
             res3 = requests.get(
@@ -185,33 +208,6 @@ def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
             files = list(res3.iter_lines(decode_unicode=True))
             assert len(files) == 1
             assert res3.status_code == 201
-
-    data = requests.get(
-        f"{files[0]}/status",
-        params={"timeout": 3},
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=3,
-    )
-    assert data.status_code >= 500
-    for _ in range(2):
-        res3 = requests.get(
-            f"{test_server}/databrowser/load/freva/",
-            params={"file": "*.json"},
-            headers={"Authorization": f"Bearer {token}"},
-            stream=True,
-            timeout=3,
-        )
-        assert res3.status_code == 201
-        files = list(res3.iter_lines(decode_unicode=True))
-        assert files
-        time.sleep(4)
-        res = requests.get(
-            f"{files[0]}/status",
-            params={"timeout": 3},
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=3,
-        )
-        assert res.status_code >= 500
 
 
 def test_no_broker(
@@ -244,21 +240,32 @@ def test_no_cache(
     test_server: str, auth: Dict[str, str], mocker: MockerFixture
 ) -> None:
     """Test the behviour if no cache is present."""
-    _id = "c0f32204-57a7-5157-bdc8-a79cee618f70.zarr"
+
+    _id = encode_path_token("foo.zarr")
     mocker.patch("freva_rest.utils.base_utils.REDIS_CACHE", None)
     with mock.patch("freva_rest.utils.base_utils.CONFIG.redis_user", "foo"):
         res = requests.get(
-            f"{test_server}/data-portal/zarr/{_id}/status",
+            f"{test_server}/data-portal/zarr-utils/status",
+            params={"url": f"{test_server}/data-portal/zarr/foo.zarr"},
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+            timeout=7,
+        )
+        assert res.status_code == 400
+        res = requests.get(
+            f"{test_server}/data-portal/zarr-utils/status",
+            params={"url": f"{test_server}/data-portal/zarr/{_id}.zarr"},
             headers={"Authorization": f"Bearer {auth['access_token']}"},
             timeout=7,
         )
         assert res.status_code == 503
+
     with mock.patch("freva_rest.utils.base_utils.CONFIG.services", ""):
         with mock.patch.dict(
             os.environ, {"API_SERVICES": "databrowser"}, clear=False
         ):
             res = requests.get(
-                f"{test_server}/data-portal/zarr/{_id}/status",
+                f"{test_server}/data-portal/zarr-utils/status",
+                params={"url": f"{test_server}/data-portal/zarr/{_id}.zarr"},
                 headers={"Authorization": f"Bearer {auth['access_token']}"},
                 timeout=7,
             )
@@ -270,3 +277,69 @@ def test_no_cache(
                 timeout=7,
             )
             assert res.status_code == 503
+
+
+def test_presigend_url(test_server: str, auth: Dict[str, str]) -> None:
+    """Test pre-signing a url and accessing it."""
+
+    res = requests.get(
+        f"{test_server}/databrowser/load/freva/",
+        params={"dataset": "cmip6-fs"},
+        headers={"Authorization": f"Bearer {auth['access_token']}"},
+        timeout=7,
+        stream=True,
+    )
+    assert res.status_code == 201
+    protected_uri = list(res.iter_lines(decode_unicode=True))[0]
+    res = requests.post(
+        f"{test_server}/data-portal/share-zarr",
+        json={"path": protected_uri},
+        headers={"Authorization": f"Bearer {auth['access_token']}"},
+    )
+    assert res.status_code == 201
+    assert "url" in res.json()
+    public_uri = res.json()["url"]
+    dset = xr.open_dataset(public_uri, engine="zarr")
+    assert "ua" in dset.data_vars
+
+
+def test_presigend_url_failed(
+    test_server: str, auth: Dict[str, str], mocker: MockerFixture
+) -> None:
+    """The the functionlity of token/sig verification."""
+    from freva_rest.auth.presign import _sign_token_path
+
+    res = requests.get(
+        f"{test_server}/databrowser/load/freva/",
+        params={"dataset": "cmip6-fs"},
+        headers={"Authorization": f"Bearer {auth['access_token']}"},
+        timeout=7,
+        stream=True,
+    )
+    assert res.status_code == 201
+    protected_uri = list(res.iter_lines(decode_unicode=True))[0]
+    res = requests.post(
+        f"{test_server}/data-portal/share-zarr",
+        json={"path": protected_uri},
+        headers={"Authorization": f"Bearer {auth['access_token']}"},
+    )
+    assert res.status_code == 201
+    assert "url" in res.json()
+    sig = res.json()["sig"]
+
+    token = f'/zarr/{encode_path_token("/work.foo")}.zarr'
+    token_bad, sig_bad = _sign_token_path(token, -1)
+
+    # Expired TTL
+    res = requests.get(
+        f"{test_server}/data-portal/share/{sig_bad}/{token_bad}.zarr/.zgroup"
+    )
+    assert res.status_code == 403
+    assert "expired" in res.json()["detail"].lower()
+
+    # Wrong signature
+    res = requests.get(
+        f"{test_server}/data-portal/share/{sig}/{token_bad}.zarr/.zgroup"
+    )
+    assert res.status_code == 403
+    assert "invalid" in res.json()["detail"].lower()

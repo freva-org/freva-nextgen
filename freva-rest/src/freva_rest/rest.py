@@ -70,17 +70,20 @@ metadata_tags = [
 ]
 
 if "stacapi" in server_config.services:
-    metadata_tags.append({
-        "name": "STAC API",
-        "description": (
-            "The SpatioTemporal Asset Catalog (STAC) family of specifications"
-            " is a community-driven effort to make geospatial data more discoverable"
-            " and usable. The STAC API is a standard for building APIs that "
-            "provide access to STAC items and collections. The STAC API is "
-            "designed to be simple and easy to use, while also being powerful "
-            "and flexible enough to support a wide range of use cases."
-        ),
-    })
+    metadata_tags.append(
+        {
+            "name": "STAC API",
+            "description": (
+                "The SpatioTemporal Asset Catalog (STAC) family of specifications"
+                " is a community-driven effort to make geospatial data more "
+                "discoverable and usable. The STAC API is a standard for "
+                "building APIs that provide access to STAC items and "
+                "collections. The STAC API is designed to be simple and easy "
+                "to use, while also being powerful and flexible enough to "
+                "support a wide range of use cases."
+            ),
+        }
+    )
 
 
 @asynccontextmanager
@@ -130,13 +133,11 @@ async def custom_redoc_ui_html(request: Request) -> HTMLResponse:
 
 
 @app.get(
-    "/api/freva-nextgen/ping",
-    tags=["System"],
-    summary="Health check endpoint"
+    "/api/freva-nextgen/ping", tags=["System"], summary="Health check endpoint"
 )
 async def ping(request: Request) -> JSONResponse:
     """Health check endpoint that returns
-        `pong` when the API is operational."""
+    `pong` when the API is operational."""
     return JSONResponse(
         content={"ping": "pong"},
         status_code=200,

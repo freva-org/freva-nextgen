@@ -593,8 +593,7 @@ async def update_custom_flavour(
             current_user.preferred_username,
         )
         raise HTTPException(
-            status_code=403,
-            detail="Only admin users can update global flavours"
+            status_code=403, detail="Only admin users can update global flavours"
         )
     flavour_instance = Flavour(config=server_config)
     return await flavour_instance.update_flavour(
@@ -622,7 +621,7 @@ async def list_flavours(
     owner: Optional[str] = Query(
         None,
         description="Filter by owner ('global' or username)",
-        example="global",
+        examples=["global"],
     ),
     request: Request = Required,
     current_user: Optional[TokenPayload] = Security(

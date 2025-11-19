@@ -1,9 +1,9 @@
 """Various utilities for the restAPI."""
 
+import base64
 import json
 import re
 import ssl
-import uuid
 from typing import Any, Awaitable, Dict, List, Optional, cast
 
 import jwt
@@ -146,6 +146,37 @@ def str_to_int(inp_str: Optional[str], default: int) -> int:
         return default
 
 
+def b64url(data: bytes) -> str:
+    """URL-safe base64 without padding."""
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def b64url_decode(s: str) -> bytes:
+    """Decode URL-safe base64 without padding."""
+    pad = "=" * (-len(s) % 4)
+    return base64.urlsafe_b64decode(s + pad)
+
+
+def encode_path_token(path: str, expires_at: int = 0) -> str:
+    """Create a URL-safe token that encodes `path` and expiry.
+
+    Returns an opaque id you can embed in a URL or use as "uuid".
+    """
+    payload = {"path": path, "exp": expires_at}
+    return b64url(
+        json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    )
+
+
+def decode_path_token(token: str) -> str:
+    """Decode a URL-safe token and return the original path.
+
+    Raises ValueError if token is invalid or expired.
+    """
+    payload = json.loads(b64url_decode(token))
+    return cast(str, payload.get("path", ""))
+
+
 async def publish_dataset(path: str, cache: Optional[redis.Redis] = None) -> str:
     """Publish a path on disk for zarr conversion to the broker.
 
@@ -163,10 +194,10 @@ async def publish_dataset(path: str, cache: Optional[redis.Redis] = None) -> str
 
     """
     cache = cache or await create_redis_connection()
-    uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, path))
+    token = encode_path_token(path)
     api_path = f"{server_config.proxy}/api/freva-nextgen/data-portal/zarr"
     await cache.publish(
         "data-portal",
-        json.dumps({"uri": {"path": path, "uuid": uuid5}}).encode("utf-8"),
+        json.dumps({"uri": {"path": path, "uuid": token}}).encode("utf-8"),
     )
-    return f"{api_path}/{uuid5}.zarr"
+    return f"{api_path}/{token}.zarr"
