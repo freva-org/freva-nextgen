@@ -163,6 +163,7 @@ def test_zarr_utils(test_server: str, auth: Dict[str, str]) -> None:
 def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
     """Test for things that can go wrong when loading the data."""
     token = auth["access_token"]
+    _id = encode_path_token("/foobar.zarr")
     res2 = requests.get(
         f"{test_server}/databrowser/load/freva/",
         params={"dataset": "*fs", "project": "cmip6"},
@@ -179,6 +180,13 @@ def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
             timeout=3,
         )
         assert data.status_code in (404, 400)
+        data = requests.get(
+            f"{files[0]}/foo/{attr}",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=3,
+        )
+        assert data.status_code in (404, 400)
+
     data = requests.get(
         f"{files[0]}/lon/.zgroup",
         headers={"Authorization": f"Bearer {token}"},
@@ -186,11 +194,25 @@ def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
     )
     assert data.status_code in (400, 404)
     data = requests.get(
-        f"{test_server}/data-portal/zarr/foobar.zarr/lon/.zmetadata",
+        f"{test_server}/data-portal/zarr/{_id}.zarr/lon/.zmetadata",
         headers={"Authorization": f"Bearer {token}"},
         timeout=3,
     )
+    data = requests.get(
+        f"{test_server}/data-portal/zarr/{_id}.zarr/lon/.zmetadata",
+        headers={"Authorization": f"Bearer {token}"},
+        params={"timeout": 1},
+        timeout=3,
+    )
     assert data.status_code in (404, 400)
+    data = requests.get(
+        f"{test_server}/data-portal/zarr/foo.zarr/lon/.zmetadata",
+        headers={"Authorization": f"Bearer {token}"},
+        params={"timeout": 1},
+        timeout=3,
+    )
+    assert data.status_code in (404, 400)
+
     res2 = requests.get(
         f"{test_server}/databrowser/load/freva/",
         params={"dataset": "foo"},
