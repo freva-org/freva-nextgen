@@ -163,7 +163,7 @@ def test_zarr_utils(test_server: str, auth: Dict[str, str]) -> None:
 def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
     """Test for things that can go wrong when loading the data."""
     token = auth["access_token"]
-    _id = encode_path_token("/foobar.zarr")
+    _id = encode_path_token("/foobar.nc")
     res2 = requests.get(
         f"{test_server}/databrowser/load/freva/",
         params={"dataset": "*fs", "project": "cmip6"},
