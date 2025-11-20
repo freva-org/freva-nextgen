@@ -215,8 +215,8 @@ Request asynchronous Zarr conversion
    :statuscode 500: Internal error while publishing the data request.
    :resheader Content-Type: ``application/json``
 
-    Example Request
-    ~~~~~~~~~~~~~~~
+   Example Request
+   ~~~~~~~~~~~~~~~
 
     .. sourcecode:: http
 
@@ -224,8 +224,8 @@ Request asynchronous Zarr conversion
         Host: www.freva.dkrz.de
         Authorization: Bearer YOUR_ACCESS_TOKEN
 
-    Example Response
-    ~~~~~~~~~~~~~~~~
+   Example Response
+   ~~~~~~~~~~~~~~~~
 
     .. sourcecode:: http
 
@@ -239,8 +239,8 @@ Request asynchronous Zarr conversion
             ]
         }
 
-    Examples
-    ~~~~~~~~
+   Examples
+   ~~~~~~~~
 
     Below are example usages of this request in different languages.
 
@@ -367,8 +367,8 @@ Create a public pre-signed zarr url
    :statuscode 500: Internal error while publishing the data request.
    :resheader Content-Type: ``application/json``
 
-    Example Request
-    ~~~~~~~~~~~~~~~
+   Example Request
+   ~~~~~~~~~~~~~~~
 
     .. sourcecode:: http
 
@@ -376,8 +376,8 @@ Create a public pre-signed zarr url
         Host: www.freva.dkrz.de
         Authorization: Bearer YOUR_ACCESS_TOKEN
 
-    Example Response
-    ~~~~~~~~~~~~~~~~
+   Example Response
+   ~~~~~~~~~~~~~~~~
 
     .. sourcecode:: http
 
@@ -392,8 +392,8 @@ Create a public pre-signed zarr url
             "method": "GET",
         }
 
-    Examples
-    ~~~~~~~~
+   Examples
+   ~~~~~~~~
 
     Below are example usages of this request in different languages.
 
@@ -492,3 +492,281 @@ Create a public pre-signed zarr url
              }
              return 0;
          }
+
+---
+
+.. _databrowser-api-zarr-status:
+
+Checking the status of a dynamically created Zarr dataset
+---------------------------------------------------------
+
+.. http:get:: /api/freva-nextgen/data-portal/zarr-utils/status
+
+   This endpoint returns the current status of a dynamically created Zarr
+   dataset. After submitting an instruction to generate a Zarr dataset,
+   clients can poll this endpoint to track the progress of the conversion
+   process. The response includes a machine-readable integer status code
+   and a human-readable explanation.
+
+   :reqheader Authorization: Bearer token for authentication.
+   :reqheader Content-Type: application/json
+
+   :statuscode 200: Status returned successfully.
+   :statuscode 401: Unauthorised / invalid or missing access token.
+   :statuscode 404: The token is not known to the system.
+   :statuscode 503: The service is currently unavailable.
+
+   :resheader Content-Type: ``application/json``
+
+   Example Request
+   ~~~~~~~~~~~~~~~
+
+   To check the status of a dataset conversion, simply perform a ``GET`` request
+   with a valid access token:
+
+   .. sourcecode:: http
+
+       GET /api/freva-nextgen/data-portal/zarr-utils/status HTTP/1.1
+       Host: www.freva.dkrz.de
+       Authorization: Bearer your_access_token
+
+   Example Response
+   ~~~~~~~~~~~~~~~~
+
+   .. sourcecode:: http
+
+       HTTP/1.1 200 OK
+       Content-Type: application/json
+
+       {
+           "status": 2,
+           "reason": "Dataset is currently being prepared"
+       }
+
+   Example
+   ~~~~~~~
+
+   Below you can find example usages of this request in different scripting and
+   programming languages.
+
+   .. tabs::
+
+       .. code-tab:: bash
+           :caption: Shell
+
+           curl -X GET \
+             'https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr-utils/status' \
+             -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+       .. code-tab:: python
+           :caption: Python
+
+           import requests
+
+           response = requests.get(
+               "https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr-utils/status",
+               headers={"Authorization": "Bearer YOUR_ACCESS_TOKEN"},
+           )
+           status = response.json()
+           print(status["status"], status["reason"])
+
+       .. code-tab:: r
+           :caption: gnuR
+
+           library(httr)
+           response <- GET(
+               "https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr-utils/status",
+               add_headers(Authorization = "Bearer YOUR_ACCESS_TOKEN")
+           )
+           data <- content(response, as = "parsed")
+
+       .. code-tab:: julia
+           :caption: Julia
+
+           using HTTP
+           response = HTTP.get(
+               "https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr-utils/status",
+               headers = Dict("Authorization" => "Bearer YOUR_ACCESS_TOKEN")
+           )
+           status = JSON3.read(String(HTTP.body(response)))
+
+       .. code-tab:: c
+           :caption: C/C++
+
+           #include <stdio.h>
+           #include <curl/curl.h>
+
+           int main() {
+               CURL *curl;
+               CURLcode res;
+
+               curl = curl_easy_init();
+               if (!curl) {
+                   fprintf(stderr, "Failed to initialize curl\n");
+                   return 1;
+               }
+
+               curl_easy_setopt(curl, CURLOPT_URL,
+                   "https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr-utils/status");
+
+               struct curl_slist *headers = NULL;
+               headers = curl_slist_append(headers,
+                   "Authorization: Bearer YOUR_ACCESS_TOKEN");
+               curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+               res = curl_easy_perform(curl);
+               if (res != CURLE_OK) {
+                   fprintf(stderr, "curl_easy_perform() failed: %s\n",
+                           curl_easy_strerror(res));
+               }
+
+               curl_slist_free_all(headers);
+               curl_easy_cleanup(curl);
+
+               return 0;
+           }
+
+---
+
+.. _databrowser-api-zarr-html:
+
+Retrieving an HTML representation of a Zarr dataset
+---------------------------------------------------
+
+.. http:get:: /api/freva-nextgen/data-portal/zarr-utils/html
+
+   This endpoint returns a human-readable HTML representation of a Zarr
+   dataset. Internally, the dataset is opened using Xarray and rendered using
+   its built-in HTML formatter. The resulting HTML document contains a rich,
+   interactive summary that is well-suited for inspection in a web browser.
+
+   This endpoint is intended for interactive exploration only. It does *not*
+   return Zarr data directly and should not be used for programmatic access or
+   large-scale data processing.
+
+   :reqheader Authorization: Bearer token for authentication.
+   :reqheader Content-Type: application/json
+
+   :statuscode 200: HTML representation returned successfully.
+   :statuscode 401: Unauthorised / invalid or missing token.
+   :statuscode 404: Dataset not found or unknown.
+   :statuscode 503: The service is currently unavailable.
+
+   :resheader Content-Type: ``text/html``
+
+
+   Example Request
+   ~~~~~~~~~~~~~~~
+
+   .. sourcecode:: http
+
+       GET /api/freva-nextgen/data-portal/zarr-utils/html HTTP/1.1
+       Host: www.freva.dkrz.de
+       Authorization: Bearer your_access_token
+
+   Example Response
+   ~~~~~~~~~~~~~~~~
+
+   .. sourcecode:: http
+
+       HTTP/1.1 200 OK
+       Content-Type: text/html; charset=UTF-8
+
+       <!DOCTYPE html>
+       <html>
+         <head>
+           <meta charset="utf-8">
+           <title>Xarray Dataset</title>
+         </head>
+         <body>
+           <!-- HTML rendering of the dataset -->
+           <div class="xr-wrap">
+               ...
+           </div>
+         </body>
+       </html>
+
+   Example
+   ~~~~~~~
+
+   Below you can find example usages of this request in different
+   programming languages.
+
+   .. tabs::
+
+       .. code-tab:: bash
+           :caption: Shell
+
+           curl -X GET \
+             'https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr-utils/html' \
+             -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+       .. code-tab:: python
+           :caption: Python
+
+           import requests
+
+           response = requests.get(
+               "https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr-utils/html",
+               headers={"Authorization": "Bearer YOUR_ACCESS_TOKEN"},
+           )
+           html = response.text
+           print(html)
+
+       .. code-tab:: r
+           :caption: gnuR
+
+           library(httr)
+           response <- GET(
+               "https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr-utils/html",
+               add_headers(Authorization = "Bearer YOUR_ACCESS_TOKEN")
+           )
+           html <- content(response, as = "text")
+
+       .. code-tab:: julia
+           :caption: Julia
+
+           using HTTP
+           response = HTTP.get(
+               "https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr-utils/html",
+               headers = Dict("Authorization" => "Bearer YOUR_ACCESS_TOKEN")
+           )
+           html = String(HTTP.body(response))
+
+       .. code-tab:: c
+           :caption: C/C++
+
+           #include <stdio.h>
+           #include <curl/curl.h>
+
+           int main() {
+               CURL *curl;
+               CURLcode res;
+
+               curl = curl_easy_init();
+               if (!curl) {
+                   fprintf(stderr, "Failed to initialize curl\n");
+                   return 1;
+               }
+
+               curl_easy_setopt(
+                   curl, CURLOPT_URL,
+                   "https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr-utils/html"
+               );
+
+               struct curl_slist *headers = NULL;
+               headers = curl_slist_append(headers,
+                   "Authorization: Bearer YOUR_ACCESS_TOKEN");
+               curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+               res = curl_easy_perform(curl);
+               if (res != CURLE_OK) {
+                   fprintf(stderr, "curl_easy_perform() failed: %s\n",
+                           curl_easy_strerror(res));
+               }
+
+               curl_slist_free_all(headers);
+               curl_easy_cleanup(curl);
+
+               return 0;
+           }

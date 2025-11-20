@@ -12,7 +12,6 @@ from fastapi.responses import JSONResponse, Response
 from freva_rest.utils.base_utils import (
     create_redis_connection,
     decode_path_token,
-    encode_path_token,
     publish_dataset,
 )
 
@@ -48,13 +47,16 @@ async def read_redis_data(
     """
 
     cache = await create_redis_connection()
-    path = decode_path_token(token)
+    try:
+        path = decode_path_token(token)
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid path.")
     key = token + token_suffix
     data: Optional[bytes] = await cache.get(key)
     if data is None:
         await publish_dataset(path, cache=cache, publish=True)
         timeout += 1
-    npolls = 0
+    npolls = 0.0
     dt = 0.5
     while data is None:
         npolls += dt
