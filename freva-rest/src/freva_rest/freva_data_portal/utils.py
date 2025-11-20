@@ -32,7 +32,7 @@ async def read_redis_data(
     token: str,
     subkey: Optional[str] = None,
     timeout: int = 1,
-    reload: bool = True,
+    token_suffix: str = "",
 ) -> Any:
     """Read the cache data given by a key.
 
@@ -45,24 +45,20 @@ async def read_redis_data(
         unpickled and and the value of that subkey will be returned
     timeout: int
         Wait for timeout seconds until a not found error is risen.
-    reload: bool
-        Reload missing datasets.
     """
 
     cache = await create_redis_connection()
     path = decode_path_token(token)
-    if reload:
-        key = encode_path_token(path)
-    else:
-        key = token
+    key = token + token_suffix
     data: Optional[bytes] = await cache.get(key)
-    if data is None or reload:
+    if data is None:
         await publish_dataset(path, cache=cache, publish=True)
         timeout += 1
     npolls = 0
+    dt = 0.5
     while data is None:
-        npolls += 1
-        await asyncio.sleep(1)
+        npolls += dt
+        await asyncio.sleep(dt)
         data = await cache.get(key)
         if npolls >= timeout:
             break
@@ -109,11 +105,12 @@ async def load_chunk(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Sub groups are not supported.",
         )
-    chunk_key = f"{_id}-{variable}-{chunk}"
     detail = {"chunk": {"uuid": _id, "variable": variable, "chunk": chunk}}
     cache = await create_redis_connection()
     await cache.publish("data-portal", json.dumps(detail).encode("utf-8"))
-    data: bytes = await read_redis_data(chunk_key, timeout=timeout, reload=False)
+    data: bytes = await read_redis_data(
+        _id, token_suffix=f"-{variable}-{chunk}", timeout=timeout
+    )
     return Response(data, media_type="application/octet-stream")
 
 
