@@ -94,6 +94,11 @@ def test_get_xr_cloud_engine() -> None:
 
         engine = cloud_module.get_xr_engine("s3://bucket/data.nc")
         assert engine == "h5netcdf"
+    with patch.object(cloud_module.zarr, "open", side_effect=Exception), \
+         patch.object(cloud_module, "_is_hdf5", return_value=False):
+
+        engine = cloud_module.get_xr_engine("not-a-zarr-or-hdf5")
+        assert engine is None
     cloud_module = importlib.import_module("data_portal_worker.backends.cloud")
     ## these data are old HDF5 files available online for testing, seems trusty enough
     ## and better than monkey-patching _is_hdf5 or MagicMocking h5py.is_hdf5 or mocking
