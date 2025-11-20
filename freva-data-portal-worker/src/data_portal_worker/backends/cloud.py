@@ -15,7 +15,7 @@ def _is_hdf5(path: str, nbytes: int = 32, timeout: float = 30.0) -> bool:
     """HDF5 probe.
     HTTP Range, write small header to tmp file, h5py.is_hdf5
     """
-    headers = {"Range": f"bytes=0-{nbytes-1}"}
+    headers = {"Range": f"bytes=0-{nbytes - 1}"}
     with requests.get(path, headers=headers, stream=True, timeout=timeout) as r:
         r.raise_for_status()
         header = r.raw.read(nbytes)
