@@ -126,6 +126,26 @@ def test_load_files_success(test_server: str, auth: Dict[str, str]) -> None:
         timeout=3,
     )
     assert data.status_code == 200
+    # obs-swfit dataset
+    res4 = requests.get(
+        f"{test_server}/databrowser/load/freva/",
+        params={"dataset": "obs-swfit"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=3,
+        stream=True,
+    )
+    assert res4.status_code == 201
+    swfit_files = list(res4.iter_lines(decode_unicode=True))
+    assert len(swfit_files) == 1
+    time.sleep(4)
+    dset4 = xr.open_dataset(
+        swfit_files[0],
+        engine="zarr",
+        storage_options={"headers": {"Authorization": f"Bearer {token}"}},
+    )
+    dset4.load()
+    assert "pr" in dset4
+    dset4.close()
 
 
 def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
