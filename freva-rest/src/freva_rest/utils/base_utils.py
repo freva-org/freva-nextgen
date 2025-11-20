@@ -150,14 +150,13 @@ def str_to_int(inp_str: Optional[str], default: int) -> int:
 
 
 def b64url(data: bytes) -> str:
-    """URL-safe base64 without padding."""
-    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+    """URL-safe base64 with padding."""
+    return base64.urlsafe_b64encode(data).decode("ascii")
 
 
 def b64url_decode(s: str) -> bytes:
-    """Decode URL-safe base64 without padding."""
-    pad = "=" * (-len(s) % 4)
-    return base64.urlsafe_b64decode(s + pad)
+    """Decode URL-safe base64 with padding."""
+    return base64.urlsafe_b64decode(s)
 
 
 def sign_token_path(path: str, expires_at: int) -> Tuple[str, str]:
@@ -220,6 +219,7 @@ async def publish_dataset(
     token = encode_path_token(path)
     share_token, sig = sign_token_path(path, int(time.time()) + ttl_seconds)
     api_path = f"{server_config.proxy}/api/freva-nextgen/data-portal"
+    path = path.replace("file:///", "/")
     if publish:
         await cache.publish(
             "data-portal",

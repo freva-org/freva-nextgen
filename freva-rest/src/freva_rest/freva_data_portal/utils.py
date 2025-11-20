@@ -50,15 +50,13 @@ async def read_redis_data(
     """
 
     cache = await create_redis_connection()
+    path = decode_path_token(token)
     if reload:
-        path = decode_path_token(token)
         key = encode_path_token(path)
     else:
-        path = ""
         key = token
-
     data: Optional[bytes] = await cache.get(key)
-    if data is None and path:
+    if data is None or reload:
         await publish_dataset(path, cache=cache, publish=True)
         timeout += 1
     npolls = 0

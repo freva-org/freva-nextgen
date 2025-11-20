@@ -76,12 +76,8 @@ def path_from_url(path: str) -> str:
 
 def verify_token(token: str, sig_b64: str) -> Dict[str, str]:
 
-    # decode payload
-    def pad(s: str) -> str:
-        return s + "=" * (-len(s) % 4)
-
     try:
-        payload_bytes = base64.urlsafe_b64decode(pad(token))
+        payload_bytes = base64.urlsafe_b64decode(token)
         payload = cast(Dict[str, str], json.loads(payload_bytes))
     except Exception as exc:
         raise HTTPException(
@@ -91,7 +87,7 @@ def verify_token(token: str, sig_b64: str) -> Dict[str, str]:
     expected_sig = hmac.new(
         SIGNING_SECRET.encode("utf-8"), token.encode("utf-8"), sha256
     ).digest()
-    real_sig_bytes = base64.urlsafe_b64decode(pad(sig_b64))
+    real_sig_bytes = base64.urlsafe_b64decode(sig_b64)
 
     if not hmac.compare_digest(expected_sig, real_sig_bytes):
         raise HTTPException(
