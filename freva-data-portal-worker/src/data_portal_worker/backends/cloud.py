@@ -1,37 +1,44 @@
 """Load data."""
 
+import os
+import tempfile
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 
+import h5py
+import requests
 import xarray as xr
 import zarr
 
 
+def _is_hdf5(path: str, nbytes: int = 32, timeout: float = 30.0) -> bool:
+    """HDF5 probe.
+    HTTP Range, write small header to tmp file, h5py.is_hdf5
+    """
+    headers = {"Range": f"bytes=0-{nbytes-1}"}
+    with requests.get(path, headers=headers, stream=True, timeout=timeout) as r:
+        r.raise_for_status()
+        header = r.raw.read(nbytes)
+
+    fd, tmp_path = tempfile.mkstemp()
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(header)
+        return cast(bool, h5py.is_hdf5(tmp_path))
+    finally:
+        os.remove(tmp_path)
+
+
 def get_xr_engine(file_path: str) -> Optional[str]:
-    """Get the engine and possibly dataset to open
-    the xarray dataset."""
+    """Get the engine to open an xarray dataset."""
     try:
         _ = zarr.open(file_path, mode="r")
         return "zarr"
     except Exception:
         pass
 
-    try:
-        # the cheapest way to check for h5netcdf
-        # compatibility via xarray is to keep chunks=None
-        # and close the dataset right away
-        xr.open_dataset(
-            file_path,
-            engine="h5netcdf",
-            decode_cf=False,
-            use_cftime=False,
-            chunks=None,
-            cache=False,
-            decode_coords=False,
-        ).close()
+    if _is_hdf5(file_path):
         return "h5netcdf"
-    except Exception:
-        pass
 
     return None
 
@@ -39,17 +46,16 @@ def get_xr_engine(file_path: str) -> Optional[str]:
 def cloud(inp_file: Union[str, Path]) -> xr.Dataset:
     """Open a dataset with xarray."""
     inp_str = str(inp_file)
-    engine = get_xr_engine(str(inp_str))
+    engine = get_xr_engine(inp_str)
+
     kwargs: Dict[str, Any] = {
         "decode_cf": False,
         "use_cftime": False,
         "cache": False,
         "decode_coords": False,
-        "engine": engine
+        "engine": engine,
     }
     if engine != "h5netcdf":
         kwargs["chunks"] = "auto"
-    return xr.open_dataset(
-        inp_str,
-        **kwargs
-    )
+
+    return xr.open_dataset(inp_str, **kwargs)
