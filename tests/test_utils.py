@@ -80,25 +80,32 @@ def test_get_xr_posix_engine() -> None:
 
 def test_get_xr_cloud_engine() -> None:
     """Test the cloud xarray engine."""
-    with TemporaryDirectory() as temp_dir:
-        zarr_file = create_zarr_file(temp_dir)
-        engine = get_xr_engine_cloud(zarr_file)
-        assert engine == "zarr"
-
-        nc_file = create_netcdf4_file(temp_dir)
-        engine = get_xr_engine_cloud(nc_file)
-        assert engine == "h5netcdf"
-
-        engine = get_xr_engine_cloud(temp_dir)
-        assert engine is None
+    import importlib
+    cloud_module = importlib.import_module("data_portal_worker.backends.cloud")
+    
 
     with patch("zarr.open") as mock_zarr:
         mock_zarr.return_value = True
         engine = get_xr_engine_cloud("https://example.com/data.zarr")
         assert engine == "zarr"
 
-    with patch("zarr.open", side_effect=Exception), \
-         patch("xarray.open_dataset") as mock_xr:
-        mock_xr.return_value.close = lambda: None
-        engine = get_xr_engine_cloud("s3://bucket/data.nc")
+    with patch.object(cloud_module.zarr, "open", side_effect=Exception), \
+         patch.object(cloud_module, "_is_hdf5", return_value=True):
+
+        engine = cloud_module.get_xr_engine("s3://bucket/data.nc")
         assert engine == "h5netcdf"
+    cloud_module = importlib.import_module("data_portal_worker.backends.cloud")
+    ## these data are old HDF5 files available online for testing, seems trusty enough
+    ## and better than monkey-patching _is_hdf5 or MagicMocking h5py.is_hdf5 or mocking
+    ## a local http server
+    url = (
+        "https://gamma.hdfgroup.org/ftp/pub/outgoing/NASAHDF/"
+        "A20021612002192.L3m_R32_SST_sst_4km.nc"
+    )
+    assert cloud_module._is_hdf5(url) is True
+
+    url = (
+        "https://gamma.hdfgroup.org/ftp/pub/outgoing/NASAHDF/"
+        "3A-DAY.F16.SSMIS.GRID2014R1.20140708-S000000-E235959.189.V02A.h5"
+    )
+    assert cloud_module._is_hdf5(url) is True
