@@ -150,13 +150,14 @@ def str_to_int(inp_str: Optional[str], default: int) -> int:
 
 
 def b64url(data: bytes) -> str:
-    """URL-safe base64 with padding."""
-    return base64.urlsafe_b64encode(data).decode("ascii")
+    """URL-safe base64 without padding."""
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
 
 
 def b64url_decode(s: str) -> bytes:
     """Decode URL-safe base64 with padding."""
-    return base64.urlsafe_b64decode(s)
+    pad = "=" * (-len(s) % 4)
+    return base64.urlsafe_b64decode(s + pad)
 
 
 def sign_token_path(path: str, expires_at: int) -> Tuple[str, str]:
