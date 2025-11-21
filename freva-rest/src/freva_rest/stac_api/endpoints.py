@@ -140,7 +140,7 @@ async def collection_items(
         title="Token",
         description="Pagination token in format direction:collection_id:item_id, \
                     where direction is 'next' or 'prev'.",
-        regex=r"^(?:next|prev):[^:]+:[^:]+$",
+        pattern=r"^(?:next|prev):[^:]+:[^:]+$",
     ),
     datetime: Optional[str] = Query(
         None,
@@ -148,7 +148,7 @@ async def collection_items(
         description=(
             "Datetime range (RFC 3339) format: start-date/end-date or exact-date"
         ),
-        regex=(
+        pattern=(
             r"^"
             r"\d{4}-\d{2}-\d{2}"
             r"(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)?"
@@ -163,7 +163,7 @@ async def collection_items(
         None,
         title="Bounding Box",
         description="minx,miny,maxx,maxy",
-        regex=(
+        pattern=(
             r"^-?\d+(\.\d+)?,"
             r"-?\d+(\.\d+)?,"
             r"-?\d+(\.\d+)?,"
@@ -263,7 +263,7 @@ async def search_get(
         None,
         title="Bounding Box",
         description="minx,miny,maxx,maxy",
-        regex=(
+        pattern=(
             r"^-?\d+(\.\d+)?,"
             r"-?\d+(\.\d+)?,"
             r"-?\d+(\.\d+)?,"
@@ -276,7 +276,7 @@ async def search_get(
         description=(
             "Datetime range (RFC 3339) format: start-date/end-date or exact-date"
         ),
-        regex=(
+        pattern=(
             r"^"
             r"\d{4}-\d{2}-\d{2}"
             r"(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)?"
@@ -292,7 +292,7 @@ async def search_get(
         None,
         title="Token",
         description="Pagination token in format direction:search:item_id",
-        regex=r"^(?:next|prev):search:[^:]+$",
+        pattern=r"^(?:next|prev):search:[^:]+$",
     ),
     q: Optional[str] = Query(
         None,

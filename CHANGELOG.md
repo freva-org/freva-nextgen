@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v2511.0.0]
+### Added
+- Support for creating public pre-sigend zarr stores.
+- On-demand loading for zarr stores.
+
 ## [v2510.1.2]
 ### Fixed
 Bug fixing.

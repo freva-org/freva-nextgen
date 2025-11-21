@@ -30,9 +30,9 @@ from fastapi.security import (
 from fastapi_third_party_auth import Auth, IDToken
 from pydantic import BaseModel, Field, ValidationError
 
-from .logger import logger
-from .rest import app, server_config
-from .utils.base_utils import get_userinfo, token_field_matches
+from ..logger import logger
+from ..rest import app, server_config
+from ..utils.base_utils import get_userinfo, token_field_matches
 
 Required: Any = Ellipsis
 

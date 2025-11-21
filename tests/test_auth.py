@@ -6,7 +6,7 @@ from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, NamedTuple, Optional
+from typing import Any, Dict, Optional
 from unittest.mock import AsyncMock, patch
 
 import jwt
@@ -417,7 +417,7 @@ def test_userinfo_failed(
 ) -> None:
     """Test failing user info."""
 
-    mocker.patch("freva_rest.auth.get_userinfo", return_value={})
+    mocker.patch("freva_rest.auth.oauth2.get_userinfo", return_value={})
     with patch("aiohttp.ClientSession.request", new=mock_request):
         res = requests.get(
             f"{test_server}/auth/v2/userinfo",

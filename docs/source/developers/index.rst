@@ -15,5 +15,6 @@ reference pages:
    auth
    auth_example
    databrowser
+   userdata
    zarr
    stac

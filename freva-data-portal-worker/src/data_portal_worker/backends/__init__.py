@@ -20,4 +20,4 @@ def load_data(inp_path: str) -> xr.Dataset:
         "s3": posix_and_cloud,
         "gs": posix_and_cloud,
     }
-    return implemented_methods[parsed_url.scheme](inp_path)
+    return implemented_methods.get(parsed_url.scheme, posix_and_cloud)(inp_path)
