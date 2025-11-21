@@ -454,6 +454,22 @@ def test_token_status(test_server: str, auth: Dict[str, str]) -> None:
     assert res2.status_code != 200
 
 
+def test_wrong_token_claims(
+    test_server: str, mocker: MockerFixture, auth: Dict[str, str]
+) -> None:
+    """Test rejection for wrong token claims."""
+    with mocker.patch(
+        "freva_rest.auth.oauth2.token_field_matches", return_value=False
+    ):
+        res = requests.get(
+            f"{test_server}/data-portal/zarr-utils/status",
+            params={"url": "foo.zar"},
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+        )
+        assert res.status_code == 401
+        assert "token claims" in res.json()["detail"]
+
+
 # ---------------------------
 # Other utilities.
 # ---------------------------

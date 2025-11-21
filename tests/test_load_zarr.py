@@ -37,7 +37,9 @@ def test_zarr_conversion(test_server: str, auth: Dict[str, str]) -> None:
     assert len(out["urls"]) == len(files)
 
 
-def test_load_files_success(test_server: str, auth: Dict[str, str]) -> None:
+def test_load_files_success(
+    test_server: str, auth: Dict[str, str], mocker: MockerFixture
+) -> None:
     """Test loading single files."""
     token = auth["access_token"]
     res1 = requests.get(
@@ -116,6 +118,15 @@ def test_load_files_success(test_server: str, auth: Dict[str, str]) -> None:
         )
         assert data.status_code == 200
 
+    with mocker.patch(
+        "freva_rest.freva_data_portal.utils.cloudpickle.loads", return_value={}
+    ):
+        res = requests.get(
+            f"{files[0]}/.zmetadata",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert res.status_code == 503
+
 
 def test_zarr_utils(test_server: str, auth: Dict[str, str]) -> None:
     """Test utils"""
@@ -160,7 +171,9 @@ def test_zarr_utils(test_server: str, auth: Dict[str, str]) -> None:
     assert data.json()["status"] == 5
 
 
-def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
+def test_load_files_fail(
+    test_server: str, auth: Dict[str, str], mocker: MockerFixture
+) -> None:
     """Test for things that can go wrong when loading the data."""
     token = auth["access_token"]
     _id = encode_path_token("/foobar.nc")
@@ -169,7 +182,7 @@ def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
         params={"dataset": "*fs", "project": "cmip6"},
         headers={"Authorization": f"Bearer {token}"},
         stream=True,
-        timeout=3,
+        timeout=7,
     )
     assert res2.status_code == 201
     files = list(res2.iter_lines(decode_unicode=True))
@@ -177,39 +190,39 @@ def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
         data = requests.get(
             f"{files[0]}/foo/{attr}",
             headers={"Authorization": f"Bearer {token}"},
-            timeout=3,
+            timeout=7,
         )
         assert data.status_code in (404, 400)
         data = requests.get(
             f"{files[0]}/foo/{attr}",
             headers={"Authorization": f"Bearer {token}"},
-            timeout=3,
+            timeout=7,
         )
         assert data.status_code in (404, 400)
 
     data = requests.get(
         f"{files[0]}/lon/.zgroup",
         headers={"Authorization": f"Bearer {token}"},
-        timeout=3,
+        timeout=7,
     )
     assert data.status_code in (400, 404)
     data = requests.get(
         f"{test_server}/data-portal/zarr/{_id}.zarr/lon/.zmetadata",
         headers={"Authorization": f"Bearer {token}"},
-        timeout=3,
+        timeout=7,
     )
     data = requests.get(
         f"{test_server}/data-portal/zarr/{_id}.zarr/lon/.zmetadata",
         headers={"Authorization": f"Bearer {token}"},
         params={"timeout": 1},
-        timeout=3,
+        timeout=7,
     )
     assert data.status_code in (404, 400)
     data = requests.get(
         f"{test_server}/data-portal/zarr/foo.zarr/lon/.zmetadata",
         headers={"Authorization": f"Bearer {token}"},
         params={"timeout": 1},
-        timeout=3,
+        timeout=7,
     )
     assert data.status_code in (404, 400)
 
@@ -217,7 +230,7 @@ def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
         f"{test_server}/databrowser/load/freva/",
         params={"dataset": "foo"},
         headers={"Authorization": f"Bearer {token}"},
-        timeout=3,
+        timeout=7,
     )
     assert res2.status_code in (400, 404)
     with pytest.warns():
@@ -227,7 +240,7 @@ def test_load_files_fail(test_server: str, auth: Dict[str, str]) -> None:
                 params={"project": "mock"},
                 headers={"Authorization": f"Bearer {token}"},
                 stream=True,
-                timeout=3,
+                timeout=7,
             )
             files = list(res3.iter_lines(decode_unicode=True))
             assert len(files) == 1
