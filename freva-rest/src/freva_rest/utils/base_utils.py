@@ -1,10 +1,13 @@
 """Various utilities for the restAPI."""
 
+import base64
+import hmac
 import json
 import re
 import ssl
-import uuid
-from typing import Any, Awaitable, Dict, List, Optional, cast
+import time
+from hashlib import sha256
+from typing import Any, Awaitable, Dict, List, Optional, Tuple, cast
 
 import jwt
 import redis.asyncio as redis
@@ -146,7 +149,52 @@ def str_to_int(inp_str: Optional[str], default: int) -> int:
         return default
 
 
-async def publish_dataset(path: str, cache: Optional[redis.Redis] = None) -> str:
+def b64url(data: bytes) -> str:
+    """URL-safe base64 without padding."""
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def b64url_decode(s: str) -> bytes:
+    """Decode URL-safe base64 with padding."""
+    pad = "=" * (-len(s) % 4)
+    return base64.urlsafe_b64decode(s + pad)
+
+
+def sign_token_path(path: str, expires_at: int) -> Tuple[str, str]:
+    """Create a base64 endcoded token and a signature of that token."""
+    secret = server_config.redis_password
+    token = encode_path_token(path, expires_at)
+    sig = hmac.new(secret.encode("utf-8"), token.encode("utf-8"), sha256).digest()
+    return token, b64url(sig)
+
+
+def encode_path_token(path: str, expires_at: int = 0) -> str:
+    """Create a URL-safe token that encodes `path` and expiry.
+
+    Returns an opaque id you can embed in a URL or use as "uuid".
+    """
+    payload = {"path": path, "exp": expires_at}
+    return b64url(
+        json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    )
+
+
+def decode_path_token(token: str) -> str:
+    """Decode a URL-safe token and return the original path.
+
+    Raises ValueError if token is invalid or expired.
+    """
+    payload = json.loads(b64url_decode(token))
+    return cast(str, payload.get("path", ""))
+
+
+async def publish_dataset(
+    path: str,
+    cache: Optional[redis.Redis] = None,
+    public: bool = False,
+    ttl_seconds: int = 86400,
+    publish: bool = False,
+) -> str:
     """Publish a path on disk for zarr conversion to the broker.
 
     Parameters
@@ -155,6 +203,12 @@ async def publish_dataset(path: str, cache: Optional[redis.Redis] = None) -> str
         The path that needs to be converted.
     cache:
         An instance of an already established Redis connection.
+    public: bool, default: False
+        Create a public zarr store.
+    ttl_seconds: int, default: 84600
+        TTL of the public zarr url, if any
+    publish: bool, default: False
+        Send the loading instruction to the broker.
 
     Returns
     -------
@@ -163,10 +217,15 @@ async def publish_dataset(path: str, cache: Optional[redis.Redis] = None) -> str
 
     """
     cache = cache or await create_redis_connection()
-    uuid5 = str(uuid.uuid5(uuid.NAMESPACE_URL, path))
-    api_path = f"{server_config.proxy}/api/freva-nextgen/data-portal/zarr"
-    await cache.publish(
-        "data-portal",
-        json.dumps({"uri": {"path": path, "uuid": uuid5}}).encode("utf-8"),
-    )
-    return f"{api_path}/{uuid5}.zarr"
+    token = encode_path_token(path)
+    share_token, sig = sign_token_path(path, int(time.time()) + ttl_seconds)
+    api_path = f"{server_config.proxy}/api/freva-nextgen/data-portal"
+    path = path.replace("file:///", "/")
+    if publish:
+        await cache.publish(
+            "data-portal",
+            json.dumps({"uri": {"path": path, "uuid": token}}).encode("utf-8"),
+        )
+    if public is True:
+        return f"{api_path}/share/{sig}/{share_token}.zarr"
+    return f"{api_path}/zarr/{token}.zarr"

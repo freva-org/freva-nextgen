@@ -304,6 +304,15 @@ class ServerConfig(BaseModel):
     ] = (
         env_to_dict("API_ADMINS_TOKEN_CLAIMS") or None
     )
+    session_cookie_name: Annotated[
+        str,
+        Field(
+            title="Cookie name",
+            description=(
+                "Name of the cookie used for storing session " "information."
+            ),
+        ),
+    ] = os.getenv("API_SESSION_COOKIE_NAME", "")
 
     def _read_config(self, section: str, key: str) -> Any:
         fallback = self._fallback_config.get(section, {}).get(key, None)
@@ -327,6 +336,10 @@ class ServerConfig(BaseModel):
         self._oidc_overview: Optional[Dict[str, Any]] = None
         self.services = (
             self.services or self._read_config("restAPI", "services") or []
+        )
+        self.session_cookie_name = self.session_cookie_name or self._read_config(
+            "oidc",
+            "session_cookie_name",
         )
         self.oidc_auth_ports = self.oidc_auth_ports or self._read_config(
             "oidc", "auth_ports"

@@ -21,6 +21,7 @@ from fastapi.responses import (
 from fastapi_third_party_auth import IDToken as TokenPayload
 
 from freva_rest.auth import auth
+from freva_rest.auth.presign import MAX_TTL_SECONDS, MIN_TTL_SECONDS
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 
@@ -368,6 +369,22 @@ async def load_data(
             ),
         ),
     ] = None,
+    public: Annotated[
+        bool,
+        Query(
+            title="Public Zarr.",
+            description="Create a pre-signed zarr url that is public",
+        ),
+    ] = False,
+    ttl_seconds: Annotated[
+        int,
+        Query(
+            title="TTL of Public Zarr.",
+            description="Time in seconds the public zarr url is valid for.",
+            ge=MIN_TTL_SECONDS,
+            le=MAX_TTL_SECONDS,
+        ),
+    ] = 86400,
     request: Request = Required,
     current_user: TokenPayload = Security(
         auth.create_auth_dependency(), scopes=["oidc.claims"]
@@ -395,7 +412,9 @@ async def load_data(
         multi_version=multi_version,
         translate=translate,
         current_user=current_user,
-        **SolrSchema.process_parameters(request, "catalogue-type"),
+        **SolrSchema.process_parameters(
+            request, "catalogue-type", "ttl_seconds", "public"
+        ),
     )
     _, total_count = await solr_search.init_stream()
     status_code = status.HTTP_201_CREATED
@@ -403,7 +422,9 @@ async def load_data(
         status_code = status.HTTP_400_BAD_REQUEST
     await solr_search.store_results(total_count, status_code)
     return StreamingResponse(
-        solr_search.zarr_response(catalogue_type, total_count),
+        solr_search.zarr_response(
+            catalogue_type, total_count, public=public, ttl_seconds=ttl_seconds
+        ),
         status_code=status_code,
         media_type="text/plain",
     )
@@ -593,8 +614,7 @@ async def update_custom_flavour(
             current_user.preferred_username,
         )
         raise HTTPException(
-            status_code=403,
-            detail="Only admin users can update global flavours"
+            status_code=403, detail="Only admin users can update global flavours"
         )
     flavour_instance = Flavour(config=server_config)
     return await flavour_instance.update_flavour(
@@ -622,7 +642,7 @@ async def list_flavours(
     owner: Optional[str] = Query(
         None,
         description="Filter by owner ('global' or username)",
-        example="global",
+        examples=["global"],
     ),
     request: Request = Required,
     current_user: Optional[TokenPayload] = Security(

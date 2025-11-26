@@ -1,8 +1,6 @@
 """Definition of endpoints for loading/streaming and manipulating data."""
 
-import asyncio
-import json
-from typing import Annotated, Any, Dict, List, Optional
+from typing import Annotated, List
 
 import cloudpickle
 from fastapi import Path, Query, Security, status
@@ -12,16 +10,21 @@ from fastapi_third_party_auth import IDToken as TokenPayload
 from pydantic import BaseModel, Field
 
 from freva_rest.auth import auth
+from freva_rest.auth.presign import path_from_url, verify_token
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 from freva_rest.utils.base_utils import (
     create_redis_connection,
+    encode_path_token,
     publish_dataset,
 )
 
-ZARRAY_JSON = ".zarray"
-ZGROUP_JSON = ".zgroup"
-ZATTRS_JSON = ".zattrs"
+from .utils import (
+    STATUS_LOOKUP,
+    load_chunk,
+    load_zarr_metadata,
+    read_redis_data,
+)
 
 
 class LoadResponse(BaseModel):
@@ -42,54 +45,29 @@ class LoadResponse(BaseModel):
     )
 
 
-async def read_redis_data(
-    key: str,
-    subkey: Optional[str] = None,
-    timeout: int = 1,
-) -> Any:
-    """Read the cache data given by a key.
+class ZarrStatus(BaseModel):
+    """Schema for the zarr loading status."""
 
-    Parameters
-    ----------
-    key: str
-        The key under which the data is stored.
-    subkey: str|None
-        If the data under key is a pickled dict the the will be
-        unpickled and and the value of that subkey will be returned
-    timeout: int
-        Wait for timeout seconds until a not found error is risen.
-    """
-
-    cache = await create_redis_connection()
-    data: Optional[bytes] = await cache.get(key)
-    npolls = 0
-    while data is None:
-        npolls += 1
-        await asyncio.sleep(1)
-        data = await cache.get(key)
-        if npolls >= timeout:
-            break
-    if data is None:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND,
-            detail=f"{key} uuid does not exist (anymore).",
-        )
-    if not subkey:
-        return data
-    lookup = {
-        0: "finished, ok",
-        1: "finished, failed",
-        2: "waiting",
-        3: "processing",
-    }
-    p_data: Dict[str, Any] = cloudpickle.loads(data)
-    task_status = p_data.get("status", 1)
-    if task_status != 0:
-        raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=lookup.get(task_status, "unknown"),
-        )
-    return p_data[subkey]
+    status: Annotated[
+        int,
+        Field(
+            title="Status",
+            description=(
+                "Integer representation of the status"
+                "the following status codes are defined:\n"
+                f"{str(STATUS_LOOKUP)}"
+            ),
+            examples=list(STATUS_LOOKUP.keys()),
+        ),
+    ]
+    reason: Annotated[
+        str,
+        Field(
+            title="Reason",
+            description="Human readable status",
+            examples=list(STATUS_LOOKUP.values()),
+        ),
+    ]
 
 
 @app.get(
@@ -99,7 +77,7 @@ async def read_redis_data(
         "Submit a file or object path to be converted into a Zarr store.  "
         "This endpoint only publishes a message to the data‑portal worker via "
         "a broker; it does **not** verify that the path exists or perform the "
-        "conversion itself.  It returns a URL containing a UUID where the Zarr "
+        "conversion itself.  It returns a URL containing a token where the Zarr "
         "dataset will be available once processing is complete.  "
         "\n\n"
         "If the data‑loading service cannot access the file , "
@@ -125,14 +103,11 @@ async def load_files(
             examples=["/work/abc1234/myuser/my-data.nc"],
         ),
     ],
-    current_user: TokenPayload = Security(
-        auth.create_auth_dependency(), scopes=["oidc.claims"]
-    ),
 ) -> LoadResponse:
     """Publish a conversion request to the data‑portal worker.
 
     - **path**: absolute filesystem or object‑store path to the input file.
-    - **returns**: a URL containing a UUID where the Zarr store will be served.
+    - **returns**: a URL containing a token where the Zarr store will be served.
     - **note**: this function does **not** check that the input path exists or
       is readable by; that check occurs asynchronously in the worker.
     """
@@ -147,27 +122,29 @@ async def load_files(
 
 
 @app.get(
-    "/api/freva-nextgen/data-portal/zarr/{uuid5}.zarr/status",
+    "/api/freva-nextgen/data-portal/zarr-utils/status",
     tags=["Load data"],
     status_code=200,
+    summary="Check the status of a loaded dataset.",
     responses={
         401: {"description": "Unauthorised / not a valid token."},
-        404: {"description": "If the uuid is not known to the system."},
+        404: {"description": "If the token is not known to the system."},
         503: {"description": "If the service is currently unavailable."},
     },
-    response_class=JSONResponse,
+    description=(
+        "Once an instruction to create a a dynamic zarr dataset has"
+        " been submitted the `/status/` endpoint can be used to check"
+        " progress of the data conversion."
+    ),
+    response_model=ZarrStatus,
 )
 async def get_status(
-    uuid5: Annotated[
+    url: Annotated[
         str,
-        Path(
-            title="uuid",
-            description=(
-                (
-                    "The uuid that was generated, when task to stream data was "
-                    "created."
-                )
-            ),
+        Query(
+            title="URL to zarr store",
+            description="The fully qualified url to the zarr store.",
+            examples=[f"{server_config.proxy}/api/data-portal/zarr/1234.zarr"],
         ),
     ],
     timeout: Annotated[
@@ -176,6 +153,7 @@ async def get_status(
             alias="timeout",
             title="Cache timeout for getting results.",
             description="Set a timeout to wait for results.",
+            examples=[10],
             ge=0,
             le=1500,
         ),
@@ -183,24 +161,31 @@ async def get_status(
     current_user: TokenPayload = Security(
         auth.create_auth_dependency(), scopes=["oidc.claims"]
     ),
-) -> JSONResponse:
+) -> ZarrStatus:
     """Get the status of a loading process."""
-    meta: Dict[str, Any] = await read_redis_data(uuid5, "status", timeout=timeout)
-    return JSONResponse(content={"status": meta}, status_code=status.HTTP_200_OK)
+    path = path_from_url(url)
+    token = encode_path_token(path)
+    cache = await create_redis_connection()
+    status = (
+        cloudpickle.loads(
+            await cache.get(token) or cloudpickle.dumps({"status": 5})
+        )
+    ).get("status", 5)
+    return ZarrStatus(status=status, reason=STATUS_LOOKUP.get(status, "Unkown"))
 
 
 @app.get(
-    "/api/freva-nextgen/data-portal/zarr/{uuid5}.zarr/.zmetadata",
+    "/api/freva-nextgen/data-portal/zarr/{token}.zarr/.zmetadata",
     tags=["Load data"],
 )
 async def zemtadata(
-    uuid5: Annotated[
+    token: Annotated[
         str,
         Path(
-            title="uuid",
+            title="token",
             description=(
                 (
-                    "The uuid that was generated, when task to stream data was "
+                    "The token that was generated, when task to stream data was "
                     "created."
                 )
             ),
@@ -225,18 +210,57 @@ async def zemtadata(
     This endpoint returns the metadata about the structure and organization of
     data within the particular zarr store in question.
     """
-
-    meta: Dict[str, Any] = await read_redis_data(
-        uuid5, "json_meta", timeout=timeout
-    )
-    return JSONResponse(
-        content=meta,
-        status_code=status.HTTP_200_OK,
-    )
+    return await load_zarr_metadata(token, timeout=timeout)
 
 
 @app.get(
-    "/api/freva-nextgen/data-portal/zarr/{uuid5}.zarr/view",
+    "/api/freva-nextgen/data-portal/share/{sig}/{token}.zarr/.zmetadata",
+    tags=["Load data"],
+)
+async def zemtadata_shared(
+    sig: Annotated[
+        str,
+        Path(
+            title="Signature",
+            description=(
+                "The signature which was created by the /share-zarr endpoint."
+            ),
+        ),
+    ],
+    token: Annotated[
+        str,
+        Path(
+            title="token",
+            description=(
+                (
+                    "The token that was generated, when task to stream data was "
+                    "created."
+                )
+            ),
+        ),
+    ],
+    timeout: Annotated[
+        int,
+        Query(
+            alias="timeout",
+            title="Cache timeout for getting results.",
+            description="Set a timeout to wait for results.",
+            ge=0,
+            le=1500,
+        ),
+    ] = 1,
+) -> JSONResponse:
+    """Consolidate zarr metadata
+
+    This endpoint returns the metadata about the structure and organization of
+    data within the particular zarr store in question.
+    """
+    payload = verify_token(token, sig)
+    return await load_zarr_metadata(payload["_id"], timeout=timeout)
+
+
+@app.get(
+    "/api/freva-nextgen/data-portal/zarr-utils/html",
     tags=["Load data"],
     response_model=None,
     summary="Get HTML representation of Zarr dataset",
@@ -248,16 +272,12 @@ async def zemtadata(
     response_class=HTMLResponse,
 )
 async def zarr_html_view(
-    uuid5: Annotated[
+    url: Annotated[
         str,
-        Path(
-            title="uuid",
-            description=(
-                (
-                    "The uuid that was generated, when task to stream data was "
-                    "created."
-                )
-            ),
+        Query(
+            title="URL to zarr store",
+            description="The fully qualified url to the zarr store.",
+            examples=[f"{server_config.proxy}/api/data-portal/zarr/1234.zarr"],
         ),
     ],
     timeout: Annotated[
@@ -279,24 +299,26 @@ async def zarr_html_view(
     This endpoint provides a human-readable HTML view of the dataset structure
     and metadata, generated using Xarray's HTML representation method.
     """
+    path = path_from_url(url)
+    token = encode_path_token(path)
     return HTMLResponse(
-        content=await read_redis_data(uuid5, "repr_html", timeout=timeout)
+        content=await read_redis_data(token, "repr_html", timeout=timeout)
     )
 
 
 @app.get(
-    "/api/freva-nextgen/data-portal/zarr/{uuid5}.zarr/.zgroup",
+    "/api/freva-nextgen/data-portal/zarr/{token}.zarr/.zgroup",
     tags=["Load data"],
     status_code=status.HTTP_200_OK,
 )
 async def zgroup(
-    uuid5: Annotated[
+    token: Annotated[
         str,
         Path(
-            title="uuid",
+            title="token",
             description=(
                 (
-                    "The uuid that was generated, when task to stream data was "
+                    "The token that was generated, when task to stream data was "
                     "created."
                 )
             ),
@@ -324,27 +346,71 @@ async def zgroup(
     organizing and managing the structure of data within a Zarr group,
     allowing users to access and manipulate arrays and subgroups efficiently.
     """
-    meta: Dict[str, Any] = await read_redis_data(
-        uuid5, "json_meta", timeout=timeout
-    )
-    return JSONResponse(
-        content=meta["metadata"][".zgroup"],
-        status_code=status.HTTP_200_OK,
-    )
+    return await load_zarr_metadata(token, ".zgroup", timeout)
 
 
 @app.get(
-    "/api/freva-nextgen/data-portal/zarr/{uuid5}.zarr/.zattrs",
+    "/api/freva-nextgen/data-portal/share/{sig}/{token}.zarr/.zgroup",
+    tags=["Load data"],
+    status_code=status.HTTP_200_OK,
+)
+async def zgroup_shared(
+    sig: Annotated[
+        str,
+        Path(
+            title="Signature",
+            description=(
+                "The signature which was created by the /share-zarr endpoint."
+            ),
+        ),
+    ],
+    token: Annotated[
+        str,
+        Path(
+            title="token",
+            description=(
+                (
+                    "The token that was generated, when task to stream data was "
+                    "created."
+                )
+            ),
+        ),
+    ],
+    timeout: Annotated[
+        int,
+        Query(
+            alias="timeout",
+            title="Cache timeout for getting results.",
+            description="Set a timeout to wait for results.",
+            ge=0,
+            le=1500,
+        ),
+    ] = 1,
+) -> JSONResponse:
+    """Zarr group data.
+
+    This `.zarrgroup` metadata includes information about the arrays and
+    subgroups contained within the group, as well as their attributes such as
+    data types, shapes, and chunk sizes. The `.zarrgroup` endpoint helps in
+    organizing and managing the structure of data within a Zarr group,
+    allowing users to access and manipulate arrays and subgroups efficiently.
+    """
+    payload = verify_token(token, sig)
+    return await load_zarr_metadata(payload["_id"], ".zgroup", timeout)
+
+
+@app.get(
+    "/api/freva-nextgen/data-portal/zarr/{token}.zarr/.zattrs",
     tags=["Load data"],
 )
 async def zattrs(
-    uuid5: Annotated[
+    token: Annotated[
         str,
         Path(
-            title="uuid",
+            title="token",
             description=(
                 (
-                    "The uuid that was generated, when task to stream data was "
+                    "The token that was generated, when task to stream data was "
                     "created."
                 )
             ),
@@ -371,26 +437,69 @@ async def zattrs(
     or arrays, such as descriptions, units, creation dates, or any other
     custom metadata relevant to the data.
     """
-    meta: Dict[str, Any] = await read_redis_data(
-        uuid5, "json_meta", timeout=timeout
-    )
-    return JSONResponse(
-        content=meta["metadata"][".zattrs"], status_code=status.HTTP_200_OK
-    )
+    return await load_zarr_metadata(token, ".zattrs", timeout)
 
 
 @app.get(
-    "/api/freva-nextgen/data-portal/zarr/{uuid5}.zarr/{variable}/{chunk}",
+    "/api/freva-nextgen/data-portal/share/{sig}/{token}.zarr/.zattrs",
+    tags=["Load data"],
+)
+async def zattrs_shared(
+    sig: Annotated[
+        str,
+        Path(
+            title="Signature",
+            description=(
+                "The signature which was created by the /share-zarr endpoint."
+            ),
+        ),
+    ],
+    token: Annotated[
+        str,
+        Path(
+            title="token",
+            description=(
+                (
+                    "The token that was generated, when task to stream data was "
+                    "created."
+                )
+            ),
+        ),
+    ],
+    timeout: Annotated[
+        int,
+        Query(
+            alias="timeout",
+            title="Cache timeout for getting results.",
+            description="Set a timeout to wait for results.",
+            ge=0,
+            le=1500,
+        ),
+    ] = 1,
+) -> JSONResponse:
+    """Get zarr Attributes.
+
+    Get metadata attributes associated with the dataset or arrays within the
+    dataset. These attributes provide additional information about the dataset
+    or arrays, such as descriptions, units, creation dates, or any other
+    custom metadata relevant to the data.
+    """
+    payload = verify_token(token, sig)
+    return await load_zarr_metadata(payload["_id"], ".zattrs", timeout)
+
+
+@app.get(
+    "/api/freva-nextgen/data-portal/zarr/{token}.zarr/{variable}/{chunk}",
     tags=["Load data"],
 )
 async def chunk_data(
-    uuid5: Annotated[
+    token: Annotated[
         str,
         Path(
-            title="uuid",
+            title="token",
             description=(
                 (
-                    "The uuid that was generated, when task to stream data was "
+                    "The token that was generated, when task to stream data was "
                     "created."
                 )
             ),
@@ -425,30 +534,59 @@ async def chunk_data(
 
     This method reads the zarr data."""
 
-    if ZARRAY_JSON in chunk or ZATTRS_JSON in chunk:
-        json_meta: Dict[str, Any] = await read_redis_data(
-            uuid5, "json_meta", timeout=timeout
-        )
-        if ZATTRS_JSON in chunk:
-            key = f"{variable}/{ZATTRS_JSON}"
-        else:
-            key = f"{variable}/{ZARRAY_JSON}"
-        try:
-            content = json_meta["metadata"][key]
-        except KeyError as error:
-            raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(error))
-        return JSONResponse(
-            content=content,
-            status_code=status.HTTP_200_OK,
-        )
-    if ZGROUP_JSON in chunk:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Sub groups are not supported.",
-        )
-    chunk_key = f"{uuid5}-{variable}-{chunk}"
-    detail = {"chunk": {"uuid": uuid5, "variable": variable, "chunk": chunk}}
-    cache = await create_redis_connection()
-    await cache.publish("data-portal", json.dumps(detail).encode("utf-8"))
-    data: bytes = await read_redis_data(chunk_key, timeout=timeout)
-    return Response(data, media_type="application/octet-stream")
+    return await load_chunk(token, variable, chunk, timeout)
+
+
+@app.get(
+    "/api/freva-nextgen/data-portal/share/{sig}/{token}.zarr/{variable}/{chunk}",
+    tags=["Load data"],
+)
+async def chunk_data_shared(
+    sig: Annotated[
+        str,
+        Path(
+            title="Signature",
+            description=(
+                "The signature which was created by the /share-zarr endpoint."
+            ),
+        ),
+    ],
+    token: Annotated[
+        str,
+        Path(
+            title="token",
+            description=(
+                (
+                    "The token that was generated, when task to stream data was "
+                    "created."
+                )
+            ),
+        ),
+    ],
+    variable: Annotated[
+        str,
+        Path(
+            title="variable",
+            description=("The variable name that should be read."),
+        ),
+    ],
+    chunk: Annotated[
+        str,
+        Path(title="chunk", description="The chnuk number that should be read."),
+    ],
+    timeout: Annotated[
+        int,
+        Query(
+            alias="timeout",
+            title="Cache timeout for getting results.",
+            description="Set a timeout to wait for results.",
+            ge=0,
+            le=1500,
+        ),
+    ] = 1,
+) -> Response:
+    """Get a zarr array chunk.
+
+    This method reads the zarr data."""
+    payload = verify_token(token, sig)
+    return await load_chunk(payload["_id"], variable, chunk, timeout)

@@ -4,12 +4,13 @@ from copy import deepcopy
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import pandas as pd
 import pytest
 
 from freva_client import databrowser
 from freva_client.auth import Auth, AuthError, Token
 from freva_client.utils.logger import DatabrowserWarning
-import pandas as pd
+
 
 def test_search_files(test_server: str) -> None:
     """Test searching for files."""
@@ -41,6 +42,7 @@ def test_search_files(test_server: str) -> None:
         == 0
     )
 
+
 def test_count_values(test_server: str) -> None:
     """Test counting the facets."""
     db = databrowser(host=test_server)
@@ -61,6 +63,7 @@ def test_count_values(test_server: str) -> None:
     entry = list(counts2["dataset"].keys())[0]
     assert isinstance(counts2["dataset"][entry], int)
 
+
 def test_metadata_search(test_server: str) -> None:
     """Test the metadata search."""
     db = databrowser(host=test_server)
@@ -71,8 +74,12 @@ def test_metadata_search(test_server: str) -> None:
     metadata = databrowser.metadata_search(host=test_server, extended_search=True)
     assert len(db.metadata) == len(metadata)
     db_filtered = databrowser(host=test_server)
-    assert set(db_filtered.metadata[['project', 'model']].keys()) <= {'project', 'model'}
-    assert len(db_filtered.metadata[['project', 'model']]) <= 2
+    assert set(db_filtered.metadata[["project", "model"]].keys()) <= {
+        "project",
+        "model",
+    }
+    assert len(db_filtered.metadata[["project", "model"]]) <= 2
+
 
 def test_bad_hostnames() -> None:
     """Test the behaviour of non existing host queries."""
@@ -119,7 +126,6 @@ def test_repr(test_server: str) -> None:
     # test overview with a non-existing host
     with pytest.raises(ValueError):
         databrowser.overview(host="foo.bar.de:7777")
-
 
 
 def test_intake_without_zarr(test_server: str) -> None:
@@ -170,8 +176,29 @@ def test_intake_with_zarr(
     assert hasattr(cat, "df")
 
 
+def test_intake_with_public_zarr(
+    test_server: str, auth_instance: Auth, auth: Token
+) -> None:
+    """Test public zarr stores with intake."""
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance._auth_token = auth
+        db = databrowser(
+            host=test_server,
+            dataset="cmip6-fs",
+            stream_zarr=True,
+            zarr_options={"public": True},
+        )
+        cat = db.intake_catalogue()
+        assert hasattr(cat, "df")
+        assert "share" in cat.df.iloc[0]["uri"]
+    finally:
+        auth_instance._auth_token = token
+
+
 def test_zarr_stream(test_server: str, auth_instance: Auth, auth: Token) -> None:
     """Test creating zarr endpoints for loading."""
+
     token = deepcopy(auth_instance._auth_token)
     try:
         auth_instance._auth_token = None
@@ -181,6 +208,27 @@ def test_zarr_stream(test_server: str, auth_instance: Auth, auth: Token) -> None
         auth_instance._auth_token = auth
         files = list(db)
         assert len(files) == 2
+    finally:
+        auth_instance._auth_token = token
+
+
+def test_public_zarr_stream(
+    test_server: str, auth_instance: Auth, auth: Token
+) -> str:
+    """Test if we can generate public zarr urls."""
+    import xarray as xr
+
+    token = deepcopy(auth_instance._auth_token)
+    try:
+        auth_instance._auth_token = auth
+        db = databrowser(
+            host=test_server,
+            dataset="cmip6-fs",
+            stream_zarr=True,
+            zarr_options={"public": True},
+        )
+        files = list(db)
+        xr.open_dataset(files[0], engine="zarr")
     finally:
         auth_instance._auth_token = token
 
@@ -396,14 +444,16 @@ def test_add_userdata_wild_card(
         auth_instance._auth_token = token
 
 
-def test_flavour_operations(test_server: str, auth_instance: Auth, auth: Token) -> None:
+def test_flavour_operations(
+    test_server: str, auth_instance: Auth, auth: Token
+) -> None:
     """Test query flavour add, list, and delete operations."""
     from copy import deepcopy
 
     token = deepcopy(auth_instance._auth_token)
     try:
         auth_instance._auth_token = auth
-        
+
         # listing flavours
         result = databrowser.flavour(action="list", host=test_server)
         assert isinstance(result["flavours"], list)
@@ -411,21 +461,21 @@ def test_flavour_operations(test_server: str, auth_instance: Auth, auth: Token) 
         flavour_names = [f["flavour_name"] for f in result["flavours"]]
         assert "freva" in flavour_names
         assert "cmip6" in flavour_names
-        
+
         # adding a custom flavour
         custom_mapping = {
-            "project": "projekt", 
+            "project": "projekt",
             "variable": "variable_name",
-            "model": "modell"
+            "model": "modell",
         }
         databrowser.flavour(
             action="add",
             name="test_flavour_client",
             mapping=custom_mapping,
             is_global=False,
-            host=test_server
+            host=test_server,
         )
-        
+
         # custom flavour appears in list
         result_after = databrowser.flavour(action="list", host=test_server)
         assert len(result_after["flavours"]) > len(result["flavours"])
@@ -438,12 +488,12 @@ def test_flavour_operations(test_server: str, auth_instance: Auth, auth: Token) 
             databrowser.flavour(
                 action="list",
                 host="http://non-existent-host:9999",
-                fail_on_error=True
+                fail_on_error=True,
             )
 
         auth_instance._auth_token = valid_token
         # custom flavour can be used in searches
-        
+
         db = databrowser(flavour="test_flavour_client", host=test_server)
         # not fail even if no results since flavour is custom
         assert len(db) >= 0
@@ -460,7 +510,7 @@ def test_flavour_operations(test_server: str, auth_instance: Auth, auth: Token) 
             name="test_flavour_client",
             mapping={"experiment": "exp_updated"},
             is_global=False,
-            host=test_server
+            host=test_server,
         )
 
         # update with rename
@@ -469,7 +519,7 @@ def test_flavour_operations(test_server: str, auth_instance: Auth, auth: Token) 
             name="test_flavour_client",
             new_name="test_flavour_client_renamed",
             is_global=False,
-            host=test_server
+            host=test_server,
         )
 
         # verify rename
@@ -479,24 +529,26 @@ def test_flavour_operations(test_server: str, auth_instance: Auth, auth: Token) 
 
         # deleting the custom flavour
         databrowser.flavour(
-            action="delete",
-            name="test_flavour_client_renamed",
-            host=test_server
+            action="delete", name="test_flavour_client_renamed", host=test_server
         )
 
         # custom flavour is gone
         flavours_final = databrowser.flavour(action="list", host=test_server)
-        final_flavour_names = [f["flavour_name"] for f in flavours_final["flavours"]]
+        final_flavour_names = [
+            f["flavour_name"] for f in flavours_final["flavours"]
+        ]
         assert "test_flavour_client_renamed" not in final_flavour_names
         assert len(flavours_final["flavours"]) == len(result["flavours"])
     finally:
         auth_instance._auth_token = token
 
 
-def test_flavour_error_cases(test_server: str, auth_instance: Auth, auth: Token) -> None:
+def test_flavour_error_cases(
+    test_server: str, auth_instance: Auth, auth: Token
+) -> None:
     """Test flavour error handling."""
     from copy import deepcopy
-    
+
     token = deepcopy(auth_instance._auth_token)
     try:
         auth_instance._auth_token = auth
@@ -504,19 +556,30 @@ def test_flavour_error_cases(test_server: str, auth_instance: Auth, auth: Token)
         custom_mapping = {
             "projecta": "projekt",
         }
-        Added = databrowser.flavour(action="add", name="test_flavour_no_auth", mapping=custom_mapping, host=test_server)
+        Added = databrowser.flavour(
+            action="add",
+            name="test_flavour_no_auth",
+            mapping=custom_mapping,
+            host=test_server,
+        )
         assert Added is None
 
         # test the missing name and mapping parameters
-        with pytest.raises(ValueError, match="Both 'name' and 'mapping' are required"):
+        with pytest.raises(
+            ValueError, match="Both 'name' and 'mapping' are required"
+        ):
             databrowser.flavour(action="add", host=test_server)
 
         # updating flavour without name
-        with pytest.raises(ValueError, match="'name' is required for update action"):
+        with pytest.raises(
+            ValueError, match="'name' is required for update action"
+        ):
             databrowser.flavour(action="update", host=test_server)
 
         # deleting flavour without name
-        with pytest.raises(ValueError, match="'name' is required for delete action"):
+        with pytest.raises(
+            ValueError, match="'name' is required for delete action"
+        ):
             databrowser.flavour(action="delete", host=test_server)
 
     finally:

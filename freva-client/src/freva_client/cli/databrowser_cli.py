@@ -40,6 +40,7 @@ class FlavourAction(str, Enum):
 
 class BuiltinFlavours(str, Enum):
     """Literal implementation for the cli."""
+
     freva = "freva"
     cmip6 = "cmip6"
     cmip5 = "cmip5"
@@ -305,6 +306,12 @@ def data_search(
         help=SelectMethod.get_help("time"),
     ),
     zarr: bool = typer.Option(False, "--zarr", help="Create zarr stream files."),
+    public: bool = typer.Option(
+        False, "--public", help="Make any zarr url public"
+    ),
+    ttl_seconds: int = typer.Option(
+        86400, "--ttl-seconds", help="Set the expiry time of any public zarr urls"
+    ),
     token_file: Optional[Path] = typer.Option(
         None,
         "--token-file",
@@ -393,6 +400,7 @@ def data_search(
         fail_on_error=False,
         multiversion=multiversion,
         stream_zarr=zarr,
+        zarr_options={"public": public, "ttl_seconds": ttl_seconds},
         **(parse_cli_args(search_keys or [])),
     )
     if requires_authentication(flavour=flavour, zarr=zarr, databrowser_url=host):
@@ -484,6 +492,12 @@ def intake_catalogue(
     zarr: bool = typer.Option(
         False, "--zarr", help="Create zarr stream files, as catalogue targets."
     ),
+    public: bool = typer.Option(
+        False, "--public", help="Make any zarr url public"
+    ),
+    ttl_seconds: int = typer.Option(
+        86400, "--ttl-seconds", help="Set the expiry time of any public zarr urls"
+    ),
     token_file: Optional[Path] = typer.Option(
         None,
         "--token-file",
@@ -542,6 +556,7 @@ def intake_catalogue(
         fail_on_error=False,
         multiversion=multiversion,
         stream_zarr=zarr,
+        zarr_options={"public": public, "ttl_seconds": ttl_seconds},
         **(parse_cli_args(search_keys or [])),
     )
     if requires_authentication(flavour=flavour, zarr=zarr, databrowser_url=host):
@@ -688,6 +703,7 @@ def stac_catalogue(
         fail_on_error=False,
         multiversion=multiversion,
         stream_zarr=False,
+        zarr_options={},
         **(parse_cli_args(search_keys or [])),
     )
     if requires_authentication(flavour=flavour, databrowser_url=host):
@@ -857,6 +873,7 @@ def count_values(
                 fail_on_error=False,
                 uniq_key="file",
                 stream_zarr=False,
+                zarr_options={},
                 **search_kws,
             )
         )
@@ -1032,7 +1049,9 @@ def flavour_add(
     flavours that define how search facets are mapped to different data
     standards."""
     logger.set_verbosity(verbose)
-    logger.debug(f"Adding flavour '{name}' with mapping {mapping} and global={global_}")
+    logger.debug(
+        f"Adding flavour '{name}' with mapping {mapping} and global={global_}"
+    )
     Auth(token_file).authenticate(host=host, _cli=True)
     mapping_dict = {}
     for map_item in mapping:
@@ -1209,7 +1228,9 @@ def flavour_list(
         print("🎨 Available Data Reference Syntax (DRS) Flavours")
         print("=" * 55)
         for flavour in results["flavours"]:
-            owner_icon = "🌐" if flavour['owner'] == "global" else "👤"
-            print(f"  {owner_icon} {flavour['flavour_name']} (by {flavour['owner']})")
+            owner_icon = "🌐" if flavour["owner"] == "global" else "👤"
+            print(
+                f"  {owner_icon} {flavour['flavour_name']} (by {flavour['owner']})"
+            )
             print(f"    Mapping: {flavour['mapping']}")
             print()
