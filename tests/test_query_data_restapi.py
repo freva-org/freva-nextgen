@@ -517,7 +517,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
     res_post_1 = requests.post(
         f"{test_server}/databrowser/flavours", json=custom_flavour
     )
-    assert res_post_1.status_code == 403
+    assert res_post_1.status_code == 401
 
     # POST: adding a custom personal flavour
     res_psot_2 = requests.post(
@@ -624,7 +624,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
             "is_global": False
         },
     )
-    assert res_put_1.status_code == 403
+    assert res_put_1.status_code == 401
 
     # PUT: updating personal flavour successfully (partial update)
     res_put_2 = requests.put(
