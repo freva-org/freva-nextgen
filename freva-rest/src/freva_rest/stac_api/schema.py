@@ -1,12 +1,13 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Final, List, Optional, Tuple, Union, cast
 from urllib.parse import parse_qs
 
 from fastapi import Query, Request
 from pydantic import BaseModel, ConfigDict, Field
+from pydantic.config import JsonValue
 
 STAC_VERSION = "1.0.0"
 
-CONFORMANCE_URLS = [
+CONFORMANCE_URLS: Final[List[str]] = [
     "https://api.stacspec.org/v1.0.0/core",
     "https://api.stacspec.org/v1.0.0/item-search",
     "https://api.stacspec.org/v1.0.0/collections",
@@ -117,7 +118,9 @@ class ConformanceResponse(BaseModel):
         description="List of conformance URLs that this API implementation conforms to",
     )
     model_config = ConfigDict(
-        json_schema_extra={"example": {"conformsTo": CONFORMANCE_URLS}}
+        json_schema_extra={
+            "example": {"conformsTo": cast(list[JsonValue], CONFORMANCE_URLS)}
+        }
     )
 
 
