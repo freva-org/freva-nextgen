@@ -30,7 +30,7 @@ You can the to following methods
 - :py:meth:`freva_client.databrowser.count_values`: You can count the
   occurrences of search results with this method.
 
-- :py:meth:`freva_client.databrowser.userdata`: This calss method lets you
+- :py:meth:`freva_client.databrowser.userdata`: This class method lets you
   *add* or *delete* your own metadata.
 
 Library Reference

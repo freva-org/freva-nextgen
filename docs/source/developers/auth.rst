@@ -147,7 +147,7 @@ then be included in the authorization header for secured endpoints.
 
 
     :statuscode 200: Metadata for interacting with the OIDC provider.
-    :statuscode 503: OIDC Identiy Provider server unavailable.
+    :statuscode 503: OIDC Identity Provider server unavailable.
     :resheader Content-Type: ``application/json``:  Metadata for interacting with
                                                     the OIDC provider.
 

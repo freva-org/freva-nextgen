@@ -1,6 +1,6 @@
 .. _auth_example:
 
-Integrating Authentiction into your Web Applications
+Integrating Authentication into your Web Applications
 ----------------------------------------------------
 Freva supports OAuth2-based authentication using the Authorization Code Flow.
 
@@ -55,7 +55,7 @@ This returns an OAuth2 access token and optional refresh token.
 3. Retrieve User Info (optional):
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Use the gnerated access token to fetch the user's identity:
+Use the generated access token to fetch the user's identity:
 
 .. sourcecode:: http
 
@@ -95,7 +95,7 @@ You can download the example file here: :download:`dash_auth_example.py <dash_au
 **Security Notes**
 
 - *Redirect URI*: Must match the URI registered with the identity provider.
-                    Contact your freindly freva admins for advice.
+                    Contact your friendly freva admins for advice.
 - *Session Secret*: Set ``server.secret_key`` using a secure environment variable in production.
 - *HTTPS*: Always use HTTPS in production to protect token integrity.
 - Use a WSGI-compatible server like Gunicorn for deployment:
