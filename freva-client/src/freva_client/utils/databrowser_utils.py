@@ -309,6 +309,7 @@ class UserDataHandler:
     """
 
     def __init__(self, userdata_items: List[Union[str, xr.Dataset]]) -> None:
+        # codespell:disable-next-line
         self._suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", ".zar"]
         self.user_metadata: List[
             Dict[str, Union[str, List[str], Dict[str, str], None]]

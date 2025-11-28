@@ -136,6 +136,7 @@ class Solr:
         self.total_ingested_files = 0
         self.total_duplicated_files = 0
         self.current_batch: List[Dict[str, str]] = []
+        # codespell:disable-next-line
         self.suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", ".zar"]
 
         # TODO: If one adds a dataset from cloud storage, the file system type

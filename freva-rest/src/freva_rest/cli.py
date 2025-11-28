@@ -121,7 +121,7 @@ def _is_type_annotation(annotation: Any, target_type: Type[Any]) -> bool:
 
 
 class VersionAction(argparse._VersionAction):
-    """Custom Action for displaying the programm versions."""
+    """Custom Action for displaying the program's versions."""
 
     def __call__(
         self,

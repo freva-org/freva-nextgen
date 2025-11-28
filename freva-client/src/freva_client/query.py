@@ -1220,6 +1220,7 @@ class databrowser:
                 new_name="klimakataster_v2",
                 is_global=False
             )
+
         Listing all custom flavours:
 
         .. code-block:: python

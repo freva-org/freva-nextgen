@@ -1,7 +1,7 @@
 .. _auth_example:
 
 Integrating Authentication into your Web Applications
-----------------------------------------------------
+-----------------------------------------------------
 Freva supports OAuth2-based authentication using the Authorization Code Flow.
 
 You can use the authentication endpoints of Freva's RestAPI to secure your
