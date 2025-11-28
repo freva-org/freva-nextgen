@@ -121,7 +121,7 @@ def _is_type_annotation(annotation: Any, target_type: Type[Any]) -> bool:
 
 
 class VersionAction(argparse._VersionAction):
-    """Custom Action for displaying the programm versions."""
+    """Custom Action for displaying the program's versions."""
 
     def __call__(
         self,
@@ -236,7 +236,7 @@ def get_cert_file(
 def cli(argv: Optional[List[str]] = None) -> None:
     """Start the freva rest API."""
     cfg = ServerConfig()
-    parser = create_arg_parser(cfg.model_fields)
+    parser = create_arg_parser(ServerConfig.model_fields)
     parser.add_argument(
         "--dev", action="store_true", help="Enable development mode"
     )
@@ -250,7 +250,7 @@ def cli(argv: Optional[List[str]] = None) -> None:
     parser.add_argument(
         "--redis-ssl-certdir",
         help=(
-            "The directory where the certficates are stored."
+            "The directory where the certificates are stored."
             " This can be used to instead of setting the cert, and key files."
         ),
         type=Path,

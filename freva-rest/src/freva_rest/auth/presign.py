@@ -186,7 +186,7 @@ class PresignUrlResponse(BaseModel):
         str,
         Field(
             title="Signature",
-            description="Signature that validates the rquested data.",
+            description="Signature that validates the requested data.",
         ),
     ]
     expires_at: Annotated[

@@ -47,7 +47,7 @@ def authenticate_cli(
     timeout: int = typer.Option(
         30,
         "--timeout",
-        help="Set the timeout for login in secdonds, 0 for indefinate",
+        help="Set the timeout for login in secdonds, 0 for indefinite",
     ),
     verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
     version: Optional[bool] = typer.Option(

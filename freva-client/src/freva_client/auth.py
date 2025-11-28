@@ -217,7 +217,7 @@ def authenticate(
     force: bool, default: False
         Force token recreation, even if current token is still valid.
     timeout: int, default: 30
-        Set the timeout, None for indefinate.
+        Set the timeout, None for indefinite.
 
     Returns
     -------

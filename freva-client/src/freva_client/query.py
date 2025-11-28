@@ -232,7 +232,7 @@ class databrowser:
 
     Instead of private access you can also create *public* pre-signed
     zarr url which can be accessed without authentication. Anyone with this
-    url can access the zarr data sotre.
+    url can access the zarr data store.
 
     .. code-block:: python
 
@@ -1204,7 +1204,7 @@ class databrowser:
             databrowser.flavour(
                 action="add",
                 name="klimakataster",
-                mapping={"project": "Projekt", "model": "Modell"},
+                mapping={"project": "Projekt", "model": "Model"},
                 is_global=False
             )
 
@@ -1220,6 +1220,7 @@ class databrowser:
                 new_name="klimakataster_v2",
                 is_global=False
             )
+
         Listing all custom flavours:
 
         .. code-block:: python

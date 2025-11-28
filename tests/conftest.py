@@ -14,6 +14,7 @@ from typing import Dict, Iterator
 
 import jwt
 import mock
+import pymongo
 import pytest
 import requests
 import uvicorn
@@ -46,7 +47,12 @@ def run_test_server(port: int) -> None:
         ):
             load_data()
             uvicorn.run(
-                app, host="0.0.0.0", port=port, reload=False, workers=None
+                app,
+                host="0.0.0.0",
+                port=port,
+                reload=False,
+                workers=None,
+                log_level=50,
             )
 
 
@@ -220,6 +226,7 @@ def invalid_freva_conf_file() -> Iterator[Path]:
             freva_config.write_text("[freva]\nhost = https://freva_conf/api")
             yield freva_config
 
+
 @pytest.fixture(scope="function")
 def valid_freva_config_commented_host() -> Iterator[Path]:
     """Mock a valid freva config path."""
@@ -231,6 +238,7 @@ def valid_freva_config_commented_host() -> Iterator[Path]:
                 "[freva]\n # host = 'https://www.freva.com:80/api'\ndefault_flavour = 'cmip6'\n"
             )
             yield freva_config
+
 
 @pytest.fixture(scope="function")
 def free_port() -> Iterator[int]:
@@ -303,11 +311,30 @@ def test_server() -> Iterator[str]:
         asyncio.run(shutdown_data_loader())
         asyncio.run(flush_cache())
 
+
+@pytest.fixture(scope="function")
+def flavour_server(test_server: str) -> Iterator[str]:
+
+    server_config = ServerConfig()
+    mongo_client = pymongo.MongoClient(server_config.mongo_url)
+    col = mongo_client[server_config.mongo_db]["custom_flavours"]
+    original_docs = list(col.find({}))
+    try:
+        col.delete_many({})
+        yield test_server
+    finally:
+        col.delete_many({})
+        if original_docs:
+            col.insert_many(original_docs)
+
+
 @pytest.fixture(scope="module")
 def auth(test_server: str):
     """Factory to create auth tokens for different user types."""
+
     def _create_auth(user_type: str = "user") -> Token:
         from getpass import getuser
+
         server_config = ServerConfig()
         user_configs = {
             "user": {"username": "janedoe", "password": "janedoe123"},
@@ -318,35 +345,34 @@ def auth(test_server: str):
             "client_id": server_config.oidc_client_id or "",
             "client_secret": server_config.oidc_client_secret or "",
             "grant_type": "password",
-            **config
+            **config,
         }
         res = requests.post(
             server_config.oidc_overview["token_endpoint"],
             data={k: v for (k, v) in data.items() if v.strip()},
         )
         return _build_token(res.json())
+
     user_token = _create_auth("user")
     admin_token = _create_auth("admin")
-    
-    return {
-        **user_token,
-        "admin": admin_token
-    }
+
+    return {**user_token, "admin": admin_token}
+
 
 def _build_token(token_data: dict) -> Token:
     """Helper to build Token object from response."""
     now = datetime.datetime.now(datetime.timezone.utc).timestamp()
     expires_at = (
-        token_data.get("exp") or
-        token_data.get("expires") or
-        token_data.get("expires_at") or
-        now + token_data.get("expires_in", 180)
+        token_data.get("exp")
+        or token_data.get("expires")
+        or token_data.get("expires_at")
+        or now + token_data.get("expires_in", 180)
     )
     refresh_expires_at = (
-        token_data.get("refresh_exp") or
-        token_data.get("refresh_expires") or
-        token_data.get("refresh_expires_at") or
-        now + token_data.get("refresh_expires_in", 180)
+        token_data.get("refresh_exp")
+        or token_data.get("refresh_expires")
+        or token_data.get("refresh_expires_at")
+        or now + token_data.get("refresh_expires_in", 180)
     )
 
     return Token(
@@ -357,6 +383,7 @@ def _build_token(token_data: dict) -> Token:
         refresh_expires=int(refresh_expires_at),
         scope=token_data["scope"],
     )
+
 
 @pytest.fixture(scope="module")
 def token_file(auth: Token) -> Path:

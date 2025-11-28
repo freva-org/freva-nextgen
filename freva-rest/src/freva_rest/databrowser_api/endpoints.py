@@ -463,7 +463,7 @@ async def post_user_data(
             )
         except HTTPException as error:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=422,
                 detail=f"Invalid request data: {error}",
             )
         status_msg = await solr_instance.add_user_metadata(

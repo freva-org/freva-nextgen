@@ -82,11 +82,13 @@ description = "Create the documentation."
 deps = -e ./freva-rest[docs]
        -e ./freva-client
        -e ./freva-data-portal-worker[full]
+       codespell
 setenv =
     FREVA_CONFIG = {toxinidir}/dev-env/freva.toml
     FREVA_NO_RICH_PANELS = 1
 allowlist_externals = make
-commands = make -C docs clean
+commands = codespell {posargs: --quiet-level=2} docs/source
+           make -C docs clean
            make -C docs html
 [testenv:lint]
 description = "Check code quality."
@@ -97,6 +99,9 @@ deps = -e ./freva-rest
        isort
        flake8
        pytest-stub
+       pydocstyle
+       codespell
+       bandit[toml]
 commands =
     python3 -m isort --check --profile black -t py312 -l 79 freva-rest/src
     python3 -m isort --check --profile black -t py312 -l 79 freva-client/src
@@ -104,6 +109,7 @@ commands =
     python3 -m flake8 freva-client/src --count --max-complexity=10 --ignore=F405,F403,E704,W503,C901 --max-line-length=88 --statistics --show-source
     python3 -m flake8 freva-rest/src --count --max-complexity=10 --ignore=F405,F403,W503,E704,C901,E203 --max-line-length=88 --statistics --show-source
     python3 -m flake8 freva-data-portal-worker/src --count --max-complexity=10 --ignore=F405,E704,F403,W503,C901,E203 --max-line-length=88 --statistics --show-source
+    codespell {posargs: --quiet-level=2} freva-client/src/ freva-rest/src/ freva-data-portal-worker/src/ -L zar
 [testenv:types]
 description = "Static type checking."
 deps = ./freva-rest
