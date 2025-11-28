@@ -82,11 +82,13 @@ description = "Create the documentation."
 deps = -e ./freva-rest[docs]
        -e ./freva-client
        -e ./freva-data-portal-worker[full]
+       codespell
 setenv =
     FREVA_CONFIG = {toxinidir}/dev-env/freva.toml
     FREVA_NO_RICH_PANELS = 1
 allowlist_externals = make
-commands = make -C docs clean
+commands = codespell {posargs: --quiet-level=2} docs/source
+           make -C docs clean
            make -C docs html
 [testenv:lint]
 description = "Check code quality."
