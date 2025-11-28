@@ -59,7 +59,7 @@ class Prompt(str, Enum):
 
 
 class AuthPorts(BaseModel):
-    """Response for vaid authports."""
+    """Response for valid authports."""
 
     valid_ports: Annotated[
         List[int],
@@ -419,7 +419,7 @@ async def system_user(
     ),
     request: Request = Required,
 ) -> TokenisedUser:
-    """Check user authorisation and get a  url-safe verion of the username."""
+    """Check user authorisation and get a  url-safe version of the username."""
     token_data = {k.lower(): str(v) for (k, v) in dict(id_token).items()}
     user_data = await query_user(
         token_data, dict(request.headers)["authorization"]

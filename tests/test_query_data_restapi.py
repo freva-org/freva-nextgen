@@ -482,15 +482,14 @@ def test_mongo_parameter_insert(test_server: str, cfg: ServerConfig) -> None:
         == 0
     )
 
-def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
-    """Test all flavour endpoints: list, add, update, delete."""
-    print(auth)
-    auth_admin = auth["admin"]
 
+def test_flavours_endpoints(flavour_server: str, auth: Dict[str, str]) -> None:
+    """Test all flavour endpoints: list, add, update, delete."""
+    auth_admin = auth["admin"]
     # ========== GET METHOD TESTS ==========
 
     # GET: listing flavours without authentication
-    res1 = requests.get(f"{test_server}/databrowser/flavours")
+    res1 = requests.get(f"{flavour_server}/databrowser/flavours")
     assert res1.status_code == 200
     flavours_data = res1.json()
     assert "total" in flavours_data
@@ -502,32 +501,31 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
 
     # GET: listing flavours with invalid query parameter returns 422
     res8 = requests.get(
-        f"{test_server}/databrowser/flavours", params={"invalid_param": "test"}
+        f"{flavour_server}/databrowser/flavours", params={"invalid_param": "test"}
     )
     assert res8.status_code == 422
 
     # ========== POST METHOD TESTS ==========
 
-    # POST: adding flavour without authentication returns 403
+    # POST: adding flavour without authentication returns 401
     custom_flavour = {
         "flavour_name": "test_flavour",
         "mapping": {"project": "my_project", "variable": "my_variable"},
         "is_global": False,
     }
     res_post_1 = requests.post(
-        f"{test_server}/databrowser/flavours", json=custom_flavour
+        f"{flavour_server}/databrowser/flavours", json=custom_flavour
     )
-    assert res_post_1.status_code == 403
+    assert res_post_1.status_code == 401
 
     # POST: adding a custom personal flavour
     res_psot_2 = requests.post(
-        f"{test_server}/databrowser/flavours",
+        f"{flavour_server}/databrowser/flavours",
         json=custom_flavour,
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
     assert res_psot_2.status_code == 201
     assert "status" in res_psot_2.json()
-
 
     # POST: adding a double custom personal flavour with different name
     # for other usage in later tests
@@ -537,7 +535,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         "is_global": False,
     }
     res_psot_3 = requests.post(
-        f"{test_server}/databrowser/flavours",
+        f"{flavour_server}/databrowser/flavours",
         json=custom_flavour_double,
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
@@ -546,7 +544,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
 
     # POST: getting 409 for duplicate flavour
     res_post_2_duplicate = requests.post(
-        f"{test_server}/databrowser/flavours",
+        f"{flavour_server}/databrowser/flavours",
         json=custom_flavour,
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
@@ -559,7 +557,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         "is_global": False,
     }
     res_post_4 = requests.post(
-        f"{test_server}/databrowser/flavours",
+        f"{flavour_server}/databrowser/flavours",
         json=flavour_with_restriction_char,
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
@@ -572,7 +570,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         "is_global": True,
     }
     res_post_5 = requests.post(
-        f"{test_server}/databrowser/flavours",
+        f"{flavour_server}/databrowser/flavours",
         json=conflict_map,
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
@@ -584,7 +582,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         {"resource_access.realm-management.roles": ["admin"]},
     ):
         res_post_6 = requests.post(
-            f"{test_server}/databrowser/flavours",
+            f"{flavour_server}/databrowser/flavours",
             json={
                 "flavour_name": "testx",
                 "is_global": True,
@@ -596,7 +594,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
 
         # Test: cannot add global flavour with same name as existing (409)
         res_post_7 = requests.post(
-            f"{test_server}/databrowser/flavours",
+            f"{flavour_server}/databrowser/flavours",
             json=conflict_map,
             headers={"Authorization": f"Bearer {auth_admin['access_token']}"},
         )
@@ -604,7 +602,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
 
     # POST: listing flavours with authentication shows custom flavours
     res_post_8 = requests.get(
-        f"{test_server}/databrowser/flavours",
+        f"{flavour_server}/databrowser/flavours",
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
     assert res_post_8.status_code == 200
@@ -615,24 +613,27 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
 
     # ========== PUT METHOD TESTS ==========
 
-    # PUT: updating flavour without authentication returns 403
+    # PUT: updating flavour without authentication returns 401
     res_put_1 = requests.put(
-        f"{test_server}/databrowser/flavours/test_flavour",
+        f"{flavour_server}/databrowser/flavours/test_flavour",
         json={
             "flavour_name": "test_flavour",
             "mapping": {"model": "updated_model"},
-            "is_global": False
+            "is_global": False,
         },
     )
-    assert res_put_1.status_code == 403
+    assert res_put_1.status_code == 401
 
     # PUT: updating personal flavour successfully (partial update)
     res_put_2 = requests.put(
-        f"{test_server}/databrowser/flavours/test_flavour",
+        f"{flavour_server}/databrowser/flavours/test_flavour",
         json={
             "flavour_name": "test_flavour",
-            "mapping": {"model": "updated_model", "experiment": "updated_experiment"},
-            "is_global": False
+            "mapping": {
+                "model": "updated_model",
+                "experiment": "updated_experiment",
+            },
+            "is_global": False,
         },
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
@@ -641,26 +642,29 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
 
     # PUT: verify flavour was updated with new keys
     res_put_3 = requests.get(
-        f"{test_server}/databrowser/flavours",
+        f"{flavour_server}/databrowser/flavours",
         params={"flavour_name": "test_flavour"},
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
     assert res_put_3.status_code == 200
     updated_flavour = next(
-        f for f in res_put_3.json()["flavours"] if f["flavour_name"] == "test_flavour"
+        f
+        for f in res_put_3.json()["flavours"]
+        if f["flavour_name"] == "test_flavour"
     )
     assert updated_flavour["mapping"]["model"] == "updated_model"
     assert updated_flavour["mapping"]["experiment"] == "updated_experiment"
-    assert updated_flavour["mapping"]["project"] == "my_project"  # Original key preserved
-
+    assert (
+        updated_flavour["mapping"]["project"] == "my_project"
+    )  # Original key preserved
 
     # PUT: Update the flavour with non-valid flavour name returns 422
     res_put_5 = requests.put(
-        f"{test_server}/databrowser/flavours/test_flavour",
+        f"{flavour_server}/databrowser/flavours/test_flavour",
         json={
             "flavour_name": "invalid:flav></*'our",
             "mapping": {"model": "some_model"},
-            "is_global": False
+            "is_global": False,
         },
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
@@ -668,7 +672,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
 
     # PUT: updating an already up-to-date flavour
     res_put_6 = requests.put(
-        f"{test_server}/databrowser/flavours/test_flavour",
+        f"{flavour_server}/databrowser/flavours/test_flavour",
         json={
             "flavour_name": "test_flavour",
             "mapping": {
@@ -676,7 +680,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
                 "experiment": "updated_experiment",
                 "project": "my_project",
             },
-            "is_global": False
+            "is_global": False,
         },
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
@@ -684,11 +688,11 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
 
     # PUT: updating flavour with name change but the flavour exists already returns 409
     res_put_7 = requests.put(
-        f"{test_server}/databrowser/flavours/test_flavour",
+        f"{flavour_server}/databrowser/flavours/test_flavour",
         json={
             "flavour_name": "test_flavour_double",
             "mapping": {"model": "some_model"},
-            "is_global": False
+            "is_global": False,
         },
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
@@ -696,11 +700,11 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
 
     # PUT: updating non-existent flavour returns 404
     res_put_8 = requests.put(
-        f"{test_server}/databrowser/flavours/non_existent",
+        f"{flavour_server}/databrowser/flavours/non_existent",
         json={
             "flavour_name": "non_existent",
             "mapping": {"model": "some_model"},
-            "is_global": False
+            "is_global": False,
         },
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
@@ -708,11 +712,11 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
 
     # PUT: non-admin user cannot update global flavour (403)
     res_put_9 = requests.put(
-        f"{test_server}/databrowser/flavours/testx",
+        f"{flavour_server}/databrowser/flavours/testx",
         json={
             "flavour_name": "testx",
             "mapping": {"model": "new_model"},
-            "is_global": True
+            "is_global": True,
         },
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
@@ -724,11 +728,11 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         {"resource_access.realm-management.roles": ["admin"]},
     ):
         res_put_10 = requests.put(
-            f"{test_server}/databrowser/flavours/testx",
+            f"{flavour_server}/databrowser/flavours/testx",
             json={
                 "flavour_name": "testx",
                 "mapping": {"model": "admin_updated_model"},
-                "is_global": True
+                "is_global": True,
             },
             headers={"Authorization": f"Bearer {auth_admin['access_token']}"},
         )
@@ -741,11 +745,11 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         {"resource_access.realm-management.roles": ["admin"]},
     ):
         res_put_11 = requests.put(
-            f"{test_server}/databrowser/flavours/freva",
+            f"{flavour_server}/databrowser/flavours/freva",
             json={
                 "flavour_name": "freva",
                 "mapping": {"model": "some_model"},
-                "is_global": True
+                "is_global": True,
             },
             headers={"Authorization": f"Bearer {auth_admin['access_token']}"},
         )
@@ -755,7 +759,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
 
     # DELETE: deleting custom personal flavour
     res_delete_1 = requests.delete(
-        f"{test_server}/databrowser/flavours/test_flavour",
+        f"{flavour_server}/databrowser/flavours/test_flavour",
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
     assert res_delete_1.status_code == 200
@@ -763,7 +767,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
 
     # DELETE: built-in flavours cannot be deleted
     res_delete_2 = requests.delete(
-        f"{test_server}/databrowser/flavours/freva",
+        f"{flavour_server}/databrowser/flavours/freva",
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
     assert res_delete_2.status_code == 422
@@ -771,7 +775,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
 
     # DELETE: deleting non-existent flavour returns 422
     res_delete_3 = requests.delete(
-        f"{test_server}/databrowser/flavours/non_existent_flavour",
+        f"{flavour_server}/databrowser/flavours/non_existent_flavour",
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
     print(res_delete_3.text)
@@ -779,7 +783,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
 
     # DELETE: non-admin user cannot delete global flavour (403)
     res_delete_4 = requests.delete(
-        f"{test_server}/databrowser/flavours/testx?is_global=true",
+        f"{flavour_server}/databrowser/flavours/testx?is_global=true",
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
     assert res_delete_4.status_code == 403
@@ -790,13 +794,13 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         {"resource_access.realm-management.roles": "admin"},
     ):
         res_delete_5 = requests.delete(
-            f"{test_server}/databrowser/flavours/testx?is_global=true",
+            f"{flavour_server}/databrowser/flavours/testx?is_global=true",
             headers={"Authorization": f"Bearer {auth_admin['access_token']}"},
         )
         assert res_delete_5.status_code == 200
     # DELETE: delete test_flavour_double created earlier
     res_delete_6 = requests.delete(
-        f"{test_server}/databrowser/flavours/test_flavour_double",
+        f"{flavour_server}/databrowser/flavours/test_flavour_double",
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
     assert res_delete_6.status_code == 200
@@ -816,7 +820,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         {"resource_access.realm-management.roles": ["admin"]},
     ):
         res11 = requests.post(
-            f"{test_server}/databrowser/flavours",
+            f"{flavour_server}/databrowser/flavours",
             json=flavour_with_same_name,
             headers={"Authorization": f"Bearer {auth_admin['access_token']}"},
         )
@@ -831,7 +835,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         "is_global": False,
     }
     res12 = requests.post(
-        f"{test_server}/databrowser/flavours",
+        f"{flavour_server}/databrowser/flavours",
         json=flavour_with_same_name,
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
@@ -839,7 +843,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
 
     # Test: both global and personal flavours appear in listing
     res13 = requests.get(
-        f"{test_server}/databrowser/flavours",
+        f"{flavour_server}/databrowser/flavours",
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
     flavour_names = [f["flavour_name"] for f in res13.json()["flavours"]]
@@ -853,12 +857,12 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         {"resource_access.realm-management.roles": "admin"},
     ):
         requests.delete(
-            f"{test_server}/databrowser/flavours/test_flavour?is_global=true",
+            f"{flavour_server}/databrowser/flavours/test_flavour?is_global=true",
             headers={"Authorization": f"Bearer {auth_admin['access_token']}"},
         )
 
     requests.delete(
-        f"{test_server}/databrowser/flavours/test_flavour",
+        f"{flavour_server}/databrowser/flavours/test_flavour",
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
 
@@ -873,7 +877,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         {"resource_access.realm-management.roles": "admin"},
     ):
         res14 = requests.post(
-            f"{test_server}/databrowser/flavours",
+            f"{flavour_server}/databrowser/flavours",
             json=admin_personal_flavour,
             headers={"Authorization": f"Bearer {auth_admin['access_token']}"},
         )
@@ -881,7 +885,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
 
     # Test: another user cannot delete someone else's personal flavour
     res15 = requests.delete(
-        f"{test_server}/databrowser/flavours/test_flavour",
+        f"{flavour_server}/databrowser/flavours/test_flavour",
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
     assert res15.status_code == 422
@@ -892,7 +896,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         {"resource_access.realm-management.roles": "admin"},
     ):
         requests.delete(
-            f"{test_server}/databrowser/flavours/test_flavour",
+            f"{flavour_server}/databrowser/flavours/test_flavour",
             headers={"Authorization": f"Bearer {auth_admin['access_token']}"},
         )
 
@@ -903,7 +907,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         "is_global": False,
     }
     res16 = requests.post(
-        f"{test_server}/databrowser/flavours",
+        f"{flavour_server}/databrowser/flavours",
         json=freva_flavour,
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
@@ -911,7 +915,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
 
     # Test: personal flavour appears with user prefix in overview
     res17 = requests.get(
-        f"{test_server}/databrowser/overview",
+        f"{flavour_server}/databrowser/overview",
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
     assert res17.status_code == 200
@@ -920,7 +924,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
 
     # Test: delete personal flavour with user prefix
     res18 = requests.delete(
-        f"{test_server}/databrowser/flavours/janedoe:cmip6",
+        f"{flavour_server}/databrowser/flavours/janedoe:cmip6",
         headers={"Authorization": f"Bearer {auth['access_token']}"},
     )
     assert res18.status_code == 200
@@ -931,7 +935,7 @@ def test_flavours_endpoints(test_server: str, auth: Dict[str, str]) -> None:
         {"resource_access.realm-management.roles": "admin"},
     ):
         res18 = requests.delete(
-            f"{test_server}/databrowser/flavours/cmip6?is_global=true",
+            f"{flavour_server}/databrowser/flavours/cmip6?is_global=true",
             headers={"Authorization": f"Bearer {auth_admin['access_token']}"},
         )
         assert res18.status_code == 422

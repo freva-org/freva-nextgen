@@ -225,9 +225,9 @@ class DataLoadFactory:
             # We need to add the xr dataset to an extra cache entry because the
             # status_dict will be loaded by the rest-api, if the xarray dataset
             # would be present in the status_dict the rest-api code would attempt
-            # to instanciate the pickled dataset object and that might fail
+            # to instantiate the pickled dataset object and that might fail
             # because we might or might not have xarray and all the backends
-            # instanciated. Since the xarray dataset object isn't needed
+            # instantiated. Since the xarray dataset object isn't needed
             # anyway byt the rest-api we simply add it to a cache entry of its
             # own.
             self.cache.setex(

@@ -136,7 +136,7 @@ class Solr:
         self.total_ingested_files = 0
         self.total_duplicated_files = 0
         self.current_batch: List[Dict[str, str]] = []
-        self.suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", "zar"]
+        self.suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", ".zar"]
 
         # TODO: If one adds a dataset from cloud storage, the file system type
         # should be changed to cloud storage type. We need to find an approach
@@ -653,7 +653,7 @@ class Solr:
                 logger.info(
                     "[MONGO] Successfully inserted or updated "
                     "%s records into MongoDB."
-                    "%s records aleady up-to-date.",
+                    "%s records already up-to-date.",
                     successful_upsert,
                     result.matched_count,
                 )

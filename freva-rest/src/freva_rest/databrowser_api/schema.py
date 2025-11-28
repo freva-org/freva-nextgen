@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Literal, Optional, Union
 from urllib.parse import parse_qs
 
 from fastapi import Path, Query, Request
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing_extensions import TypedDict
 
 from freva_rest.rest import server_config
@@ -78,10 +78,10 @@ class SolrSchema:
                 "freva",
                 "nextgem",
                 "flavour_name",
-                "user_name:flavour_name"
-            ]
+                "user_name:flavour_name",
+            ],
         ),
-        "uniq_key": Path(..., description="Core type")
+        "uniq_key": Path(..., description="Core type"),
     }
 
     @classmethod
@@ -114,42 +114,44 @@ class SearchFlavours(BaseModel):
 
 class FlavourDefinition(BaseModel):
     """Schema for flavour definition."""
+
     flavour_name: str = Field(
         ...,
         description="Name of the custom flavour",
-        examples=["nextgem", "custom_project"]
+        examples=["nextgem", "custom_project"],
     )
     mapping: Dict[str, str] = Field(
         ...,
         description="Facet mapping dictionary",
-        examples=[{
-            "project": "mip_era",
-            "model": "source_id",
-            "experiment": "experiment_id",
-            "variable": "variable_id"
-        }]
+        examples=[
+            {
+                "project": "mip_era",
+                "model": "source_id",
+                "experiment": "experiment_id",
+                "variable": "variable_id",
+            }
+        ],
     )
     is_global: bool = Field(
         False,
         description="Make flavour available to all users",
-        examples=[False, True]
+        examples=[False, True],
     )
+    model_config = ConfigDict(extra="forbid")
 
-    class Config:
-        extra = "forbid"
-
-    @field_validator('flavour_name')
+    @field_validator("flavour_name")
     @classmethod
     def validate_flavour_name(cls, v: str) -> str:
         import re
-        if not re.match(r'^[a-zA-Z0-9_-]+$', v):
+
+        if not re.match(r"^[a-zA-Z0-9_-]+$", v):
             raise ValueError(
                 "Flavour name can only contain letters, "
                 "numbers, underscores, and hyphens"
             )
         return v
 
-    @field_validator('mapping')
+    @field_validator("mapping")
     @classmethod
     def validate_mapping_keys(cls, v: Dict[str, str]) -> Dict[str, str]:
         """Validate that mapping keys are valid freva facets."""
@@ -169,29 +171,26 @@ class FlavourUpdateDefinition(BaseModel):
     Only `mapping` is required, `flavour_name` and `is_global`
     are optional.
     """
+
     flavour_name: Optional[str] = Field(
         None,
         description="Name of the flavour (must don't exist for new flavours)",
-        examples=["nextgem", "custom_project"]
+        examples=["nextgem", "custom_project"],
     )
     mapping: Dict[str, str] = Field(
         ...,
         description="Partial facet mapping dictionary to merge with existing mapping",
-        examples=[{"model": "updated_model", "experiment": "updated_experiment"}]
+        examples=[{"model": "updated_model", "experiment": "updated_experiment"}],
     )
-    is_global: bool = Field(
-        False,
-        description="Whether this is a global flavour"
-    )
+    is_global: bool = Field(False, description="Whether this is a global flavour")
+    model_config = ConfigDict(extra="forbid")
 
-    class Config:
-        extra = "forbid"
-
-    @field_validator('flavour_name')
+    @field_validator("flavour_name")
     @classmethod
     def validate_flavour_name(cls, v: str) -> str:
         import re
-        if not re.match(r'^[a-zA-Z0-9_-]+$', v):
+
+        if not re.match(r"^[a-zA-Z0-9_-]+$", v):
             raise ValueError(
                 "Flavour name can only contain letters, "
                 "numbers, underscores, and hyphens"
@@ -201,14 +200,13 @@ class FlavourUpdateDefinition(BaseModel):
 
 class FlavourResponse(BaseModel):
     """Response schema for flavour queries."""
+
     flavour_name: str = Field(examples=["nextgem", "cordex"])
     mapping: Dict[str, str] = Field(
         examples=[{"project": "mip_era", "model": "source_id"}]
     )
     owner: str = Field(examples=["global", "john_doe"])
-    who_created: str = Field(
-        examples=["john_doe", "admin"]
-    )
+    who_created: str = Field(examples=["john_doe", "admin"])
     ctime: str = Field(examples=["2024-01-15T10:30:00"])
     mtime: str = Field(examples=["2024-02-20T14:45:00"])
 
@@ -220,10 +218,11 @@ class FlavourListResponse(BaseModel):
 
 class FlavourDeleteResponse(BaseModel):
     """Response schema for flavour deletion."""
+
     status: str = Field(
         examples=[
             "Personal flavour 'nextgem' deleted successfully",
-            "Global flavour 'custom_project' deleted successfully"
+            "Global flavour 'custom_project' deleted successfully",
         ]
     )
 

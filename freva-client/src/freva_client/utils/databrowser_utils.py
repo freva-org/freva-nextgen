@@ -216,7 +216,7 @@ class Config:
             if config_path.is_file():
                 config_data = self._read_config(config_path, config_type)
                 value = config_data.get(key, "")
-                # we cannot igonore the empty string here, because
+                # we cannot ignore the empty string here, because
                 # it needs to check the next config file
                 if value:
                     return value if value else None
@@ -309,7 +309,7 @@ class UserDataHandler:
     """
 
     def __init__(self, userdata_items: List[Union[str, xr.Dataset]]) -> None:
-        self._suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", "zar"]
+        self._suffixes = [".nc", ".nc4", ".grb", ".grib", ".zarr", ".zar"]
         self.user_metadata: List[
             Dict[str, Union[str, List[str], Dict[str, str], None]]
         ] = []

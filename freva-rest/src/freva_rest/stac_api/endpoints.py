@@ -116,7 +116,7 @@ async def collection(collection_id: str) -> JSONResponse:
     )
     collection = await stacapi_instance.get_collection(collection_id)
     return JSONResponse(
-        collection.dict(exclude_none=True), media_type="application/json"
+        collection.model_dump(exclude_none=True), media_type="application/json"
     )
 
 

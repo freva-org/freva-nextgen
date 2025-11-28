@@ -171,7 +171,7 @@ async def get_status(
             await cache.get(token) or cloudpickle.dumps({"status": 5})
         )
     ).get("status", 5)
-    return ZarrStatus(status=status, reason=STATUS_LOOKUP.get(status, "Unkown"))
+    return ZarrStatus(status=status, reason=STATUS_LOOKUP.get(status, "Unknown"))
 
 
 @app.get(

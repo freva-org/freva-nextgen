@@ -42,7 +42,7 @@ metadata_tags = [
         "description": (
             "The following endpoints can be used to search for data."
             "Search queries can be refined by applying "
-            "`key=value` based contraints."
+            "`key=value` based constraints."
         ),
     },
     {
@@ -56,7 +56,7 @@ metadata_tags = [
         "name": "Load data",
         "description": (
             "With help of the following endpoints you can "
-            "conviniently load and access data via `zarr`."
+            "conveniently load and access data via `zarr`."
         ),
     },
     {

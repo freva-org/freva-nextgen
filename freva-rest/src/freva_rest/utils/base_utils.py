@@ -25,7 +25,7 @@ CONFIG = ServerConfig()
 
 
 class SystemUserInfo(TypedDict):
-    """Encoded token inforamation."""
+    """Encoded token information."""
 
     email: NotRequired[str]
     last_name: NotRequired[str]
@@ -161,7 +161,7 @@ def b64url_decode(s: str) -> bytes:
 
 
 def sign_token_path(path: str, expires_at: int) -> Tuple[str, str]:
-    """Create a base64 endcoded token and a signature of that token."""
+    """Create a base64 encoded token and a signature of that token."""
     secret = server_config.redis_password
     token = encode_path_token(path, expires_at)
     sig = hmac.new(secret.encode("utf-8"), token.encode("utf-8"), sha256).digest()

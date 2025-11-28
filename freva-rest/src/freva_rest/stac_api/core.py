@@ -113,7 +113,9 @@ class STACAPI:
             if (
                 key not in ["datetime", "bbox", "limit", "token", "q"]
             ) and caller_name == "collection_items":
-                raise HTTPException(status_code=422, detail="Could not validate input.")
+                raise HTTPException(
+                    status_code=422, detail="Could not validate input."
+                )
 
         return cls(
             config=config,
@@ -135,13 +137,14 @@ class STACAPI:
         """Get all project facets from Solr."""
         await self._set_solr_query()
         self.solr_object.set_query_params(
-            facet_field=["project"],
-            rows=self.batch_size
+            facet_field=["project"], rows=self.batch_size
         )
         async with self.solr_object._session_get() as res:
             _, search = res
         project_facets = (
-            search.get("facet_counts", {}).get("facet_fields", {}).get("project", [])
+            search.get("facet_counts", {})
+            .get("facet_fields", {})
+            .get("project", [])
         )
         if project_facets == []:  # pragma: no cover
             logger.error("No project facets found in Solr response.")
@@ -160,7 +163,7 @@ class STACAPI:
         num_results: int,
         status: int,
         endpoint: str,
-        query_params: Optional[Dict[str, Any]] = None
+        query_params: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Store STAC API query statistics.
 
@@ -183,12 +186,12 @@ class STACAPI:
             endpoint=endpoint,
             query_params=query_params or {},
             uniq_key=self.uniq_key,
-            limit=self.limit
+            limit=self.limit,
         )
 
     async def get_landing_page(self) -> Dict[str, Any]:
         """Get the STAC API landing page."""
-        # TODO: We need to outsource the harcoded detail
+        # TODO: We need to outsource the hardcoded detail
         # and description to somewhere else
         collection_ids = await self.get_all_project_facets()
         response = {
@@ -209,7 +212,8 @@ class STACAPI:
                 {
                     "rel": "conformance",
                     "href": (
-                        self.config.proxy + "/api/freva-nextgen/stacapi/conformance"
+                        self.config.proxy
+                        + "/api/freva-nextgen/stacapi/conformance"
                     ),
                     "type": "application/json",
                     "title": "Conformance Classes",
@@ -217,21 +221,24 @@ class STACAPI:
                 {
                     "rel": "data",
                     "href": (
-                        self.config.proxy + "/api/freva-nextgen/stacapi/collections"
+                        self.config.proxy
+                        + "/api/freva-nextgen/stacapi/collections"
                     ),
                     "type": "application/json",
                     "title": "Data Collections",
                 },
                 {
                     "rel": "search",
-                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/search",
+                    "href": self.config.proxy
+                    + "/api/freva-nextgen/stacapi/search",
                     "type": "application/geo+json",
                     "title": "STAC search",
                     "method": "POST",
                 },
                 {
                     "rel": "search",
-                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/search",
+                    "href": self.config.proxy
+                    + "/api/freva-nextgen/stacapi/search",
                     "type": "application/geo+json",
                     "title": "STAC search",
                     "method": "GET",
@@ -240,20 +247,23 @@ class STACAPI:
                     "rel": "http://www.opengis.net/def/rel/ogc/1.0/queryables",
                     "type": "application/schema+json",
                     "title": "Queryables",
-                    "href": self.config.proxy + "/api/freva-nextgen/stacapi/queryables",
-                    "method": "GET"
+                    "href": self.config.proxy
+                    + "/api/freva-nextgen/stacapi/queryables",
+                    "method": "GET",
                 },
                 {
                     "rel": "service-desc",
                     "type": "application/vnd.oai.openapi+json;version=3.0",
                     "title": "OpenAPI service description",
-                    "href": self.config.proxy + "/api/freva-nextgen/help/openapi.json",
+                    "href": self.config.proxy
+                    + "/api/freva-nextgen/help/openapi.json",
                 },
                 {
                     "rel": "service-doc",
                     "type": "text/html",
                     "title": "OpenAPI service documentation",
-                    "href": self.config.proxy + "/api/freva-nextgen/help#tag/STAC-API",
+                    "href": self.config.proxy
+                    + "/api/freva-nextgen/help#tag/STAC-API",
                 },
             ],
         }
@@ -298,7 +308,7 @@ class STACAPI:
             # it seems with None it's still valid
             extent=STACExtent(
                 spatial={"bbox": [[-180, -90, 180, 90]]},
-                temporal={"interval": [[None, None]]}
+                temporal={"interval": [[None, None]]},
             ),
             links=[
                 STACLinks(
@@ -313,7 +323,7 @@ class STACAPI:
                     title="Collection",
                     method="GET",
                     merge=True,
-                    body=None
+                    body=None,
                 ),
                 STACLinks(
                     rel="parent",
@@ -382,10 +392,10 @@ class STACAPI:
                         "evaluation, providing access to various datasets and tools."
                     ),
                     roles=["producer", "processor", "host"],
-                    url=self.config.proxy + "/api/freva-nextgen/stacapi"
+                    url=self.config.proxy + "/api/freva-nextgen/stacapi",
                 )
             ],
-            assets=None
+            assets=None,
         )
 
     async def get_collections(self) -> AsyncGenerator[str, None]:
@@ -400,7 +410,7 @@ class STACAPI:
                 yield ","
             else:
                 first_item = False
-            yield collection.json(exclude_none=True)
+            yield collection.model_dump_json(exclude_none=True)
         links = [
             STACLinks(
                 rel="self",
@@ -427,7 +437,7 @@ class STACAPI:
                 title="Root",
                 method="GET",
                 merge=True,
-                body=None
+                body=None,
             ),
         ]
         yield f'], "links": {json.dumps(jsonable_encoder(links))}}}'
@@ -541,8 +551,10 @@ class STACAPI:
                 "media_type": "application/json",
             },
             {
-                "rel": "root", "target": base_url + "/",
-                "media_type": "application/json"},
+                "rel": "root",
+                "target": base_url + "/",
+                "media_type": "application/json",
+            },
             {
                 "rel": "parent",
                 "target": f"{base_url}/collections/{collection_id}",
@@ -555,9 +567,7 @@ class STACAPI:
             },
         ]
         for link_info in links_to_add:
-            if not any(
-                link.rel == link_info["rel"] for link in item.links
-            ):
+            if not any(link.rel == link_info["rel"] for link in item.links):
                 link = Link(
                     rel=link_info["rel"],
                     href=link_info["target"],
@@ -568,7 +578,9 @@ class STACAPI:
 
         assets = {
             "freva-databrowser": Asset(
-                href=(f"{self.config.proxy}/databrowser/?" f"{self.uniq_key}={id}"),
+                href=(
+                    f"{self.config.proxy}/databrowser/?" f"{self.uniq_key}={id}"
+                ),
                 media_type="text/html",
                 title="Freva Web DataBrowser",
                 description=(
@@ -621,7 +633,7 @@ class STACAPI:
         token: Optional[str],
         base_url: str,
         base_params: Dict[str, Any],
-        context_id: str = "collection"
+        context_id: str = "collection",
     ) -> AsyncGenerator[str, None]:
         """Shared pagination logic for both collection items and search."""
         direction = "next"
@@ -638,12 +650,12 @@ class STACAPI:
         # Setup basic query parameters
         self.solr_object.set_query_params(
             facet_field=self.config.solr_fields + ["time", "bbox"],
-            fl=[self.uniq_key] + self.config.solr_fields + [
-                "time", "bbox", "_version_"
-            ],
+            fl=[self.uniq_key]
+            + self.config.solr_fields
+            + ["time", "bbox", "_version_"],
             sort="_version_ asc,file asc",
             fq=filters,
-            rows=0
+            rows=0,
         )
 
         # Get total count before pagination
@@ -662,9 +674,7 @@ class STACAPI:
 
         # Update query with pagination filters
         self.solr_object.set_query_params(
-            fq=filters,
-            cursorMark="*",
-            rows=self.batch_size
+            fq=filters, cursorMark="*", rows=self.batch_size
         )
 
         yield '{"type":"FeatureCollection","features":['
@@ -826,7 +836,8 @@ class STACAPI:
             coords = [float(c) for c in bbox.split(",")]
             minx, miny, maxx, maxy = coords
             bbox_fq = (
-                "{{!field f=bbox}}" "Intersects(ENVELOPE({minx},{maxx},{maxy},{miny}))"
+                "{{!field f=bbox}}"
+                "Intersects(ENVELOPE({minx},{maxx},{maxy},{miny}))"
             ).format(minx=minx, maxx=maxx, maxy=maxy, miny=miny)
             filters.append(bbox_fq)
 
@@ -842,12 +853,12 @@ class STACAPI:
         # Set all parameters at once
         self.solr_object.set_query_params(
             facet_field=self.config.solr_fields + ["time", "bbox"],
-            fl=[self.uniq_key] + self.config.solr_fields + [
-                "time", "bbox", "_version_"
-            ],
+            fl=[self.uniq_key]
+            + self.config.solr_fields
+            + ["time", "bbox", "_version_"],
             sort="_version_ asc,file asc",
             fq=[f"project:{collection_id}", f"_version_:{item_id}"],
-            rows=1
+            rows=1,
         )
 
         async with self.solr_object._session_get() as res:
@@ -926,10 +937,12 @@ class STACAPI:
                     if isinstance(value, str):
                         escaped_value = value
                         for char in self.solr_object.escape_chars:
-                            escaped_value = escaped_value.replace(char, f'\\{char}')
+                            escaped_value = escaped_value.replace(
+                                char, f"\\{char}"
+                            )
                         return [f'{field}:"{escaped_value}"']
                     else:
-                        return [f'{field}:{value}']
+                        return [f"{field}:{value}"]
             return []
 
         elif op in ["<>", "!=", "neq"]:
@@ -946,10 +959,12 @@ class STACAPI:
                     if isinstance(value, str):
                         escaped_value = value
                         for char in self.solr_object.escape_chars:
-                            escaped_value = escaped_value.replace(char, f'\\{char}')
+                            escaped_value = escaped_value.replace(
+                                char, f"\\{char}"
+                            )
                         return [f'-{field}:"{escaped_value}"']
                     else:
-                        return [f'-{field}:{value}']
+                        return [f"-{field}:{value}"]
             return []
 
         elif op in ["<", "lt"]:
@@ -960,7 +975,7 @@ class STACAPI:
                     field = prop["property"]
                     if field == "collection":
                         field = "project"
-                    return [f'{field}:{{* TO {value}}}']
+                    return [f"{field}:{{* TO {value}}}"]
             return []
 
         elif op in ["<=", "lte"]:
@@ -971,7 +986,7 @@ class STACAPI:
                     field = prop["property"]
                     if field == "collection":
                         field = "project"
-                    return [f'{field}:[* TO {value}]']
+                    return [f"{field}:[* TO {value}]"]
             return []
 
         elif op in [">", "gt"]:
@@ -982,7 +997,7 @@ class STACAPI:
                     field = prop["property"]
                     if field == "collection":
                         field = "project"
-                    return [f'{field}:{{{value} TO *}}']
+                    return [f"{field}:{{{value} TO *}}"]
             return []
 
         elif op in [">=", "gte"]:
@@ -993,7 +1008,7 @@ class STACAPI:
                     field = prop["property"]
                     if field == "collection":
                         field = "project"
-                    return [f'{field}:[{value} TO *]']
+                    return [f"{field}:[{value} TO *]"]
             return []
 
         elif op == "isNull":
@@ -1003,7 +1018,7 @@ class STACAPI:
                     field = prop["property"]
                     if field == "collection":
                         field = "project"  # pragma: no cover
-                    return [f'-{field}:[* TO *]']
+                    return [f"-{field}:[* TO *]"]
             return []
 
         # Spatial operators
@@ -1021,7 +1036,7 @@ class STACAPI:
                             minx, maxx = min(lons), max(lons)
                             miny, maxy = min(lats), max(lats)
                             bbox_str = f"ENVELOPE({minx},{maxx},{maxy},{miny})"
-                            return [f'{{!field f=bbox}}Intersects({bbox_str})']
+                            return [f"{{!field f=bbox}}Intersects({bbox_str})"]
             return []
 
         # Temporal operators
@@ -1032,9 +1047,9 @@ class STACAPI:
                 if isinstance(prop, dict) and prop.get("property") == "datetime":
                     if isinstance(timestamp, dict) and "timestamp" in timestamp:
                         ts = timestamp["timestamp"]
-                        return [f'time:{{{ts} TO *}}']
+                        return [f"time:{{{ts} TO *}}"]
                     elif isinstance(timestamp, str):
-                        return [f'time:{{{timestamp} TO *}}']
+                        return [f"time:{{{timestamp} TO *}}"]
             return []
 
         elif op == "t_before":
@@ -1044,9 +1059,9 @@ class STACAPI:
                 if isinstance(prop, dict) and prop.get("property") == "datetime":
                     if isinstance(timestamp, dict) and "timestamp" in timestamp:
                         ts = timestamp["timestamp"]
-                        return [f'time:{{* TO {ts}}}']
+                        return [f"time:{{* TO {ts}}}"]
                     elif isinstance(timestamp, str):
-                        return [f'time:{{* TO {timestamp}}}']
+                        return [f"time:{{* TO {timestamp}}}"]
             return []
 
         elif op == "t_during":
@@ -1056,10 +1071,14 @@ class STACAPI:
                 if isinstance(prop, dict) and prop.get("property") == "datetime":
                     if isinstance(interval, dict) and "interval" in interval:
                         start, end = interval["interval"]
-                        return [f'{{!field f=time op=Intersects}}[{start} TO {end}]']
+                        return [
+                            f"{{!field f=time op=Intersects}}[{start} TO {end}]"
+                        ]
                     elif isinstance(interval, list) and len(interval) == 2:
                         start, end = interval
-                        return [f'{{!field f=time op=Intersects}}[{start} TO {end}]']
+                        return [
+                            f"{{!field f=time op=Intersects}}[{start} TO {end}]"
+                        ]
             return []
 
         return []
@@ -1104,7 +1123,9 @@ class STACAPI:
         # CQL2 filter handling
         if filter:
             try:
-                filter_obj = json.loads(filter) if isinstance(filter, str) else filter
+                filter_obj = (
+                    json.loads(filter) if isinstance(filter, str) else filter
+                )
                 cql2_filters = self._parse_cql2_filter(filter_obj)
                 filters.extend(cql2_filters)
             except (json.JSONDecodeError, Exception) as e:
@@ -1204,7 +1225,9 @@ class STACAPI:
         # Convert filter dict to JSON string for processing req
         filter_str = None
         if filter:
-            filter_str = json.dumps(filter) if isinstance(filter, dict) else str(filter)
+            filter_str = (
+                json.dumps(filter) if isinstance(filter, dict) else str(filter)
+            )
 
         # execute get_search with converted parameters
         async for chunk in self.get_search(
@@ -1226,12 +1249,16 @@ class STACAPI:
         """Fetch current facets to use it in the search filter."""
         try:
             await self._set_solr_query()
-            _, search_result = await self.solr_object.extended_search([], max_results=0)
+            _, search_result = await self.solr_object.extended_search(
+                [], max_results=0
+            )
 
             facet_values = {}
             for facet_name, facet_data in search_result.facets.items():
                 if isinstance(facet_data, list) and len(facet_data) > 1:
-                    values = [str(facet_data[i]) for i in range(0, len(facet_data), 2)]
+                    values = [
+                        str(facet_data[i]) for i in range(0, len(facet_data), 2)
+                    ]
                     if values:
                         facet_values[facet_name] = values
 
@@ -1243,31 +1270,28 @@ class STACAPI:
     async def get_queryables(self) -> Dict[str, Any]:
         """Get global queryables schema."""
         properties = {
-            "id": {
-                "description": "Item identifier",
-                "type": "string"
-            },
+            "id": {"description": "Item identifier", "type": "string"},
             "collection": {
                 "description": "Collection identifier",
-                "type": "string"
+                "type": "string",
             },
             "geometry": {
                 "description": "Item geometry",
-                "$ref": "https://geojson.org/schema/Geometry.json"
+                "$ref": "https://geojson.org/schema/Geometry.json",
             },
             "datetime": {
                 "description": "Item datetime",
                 "type": "string",
                 "format": "date-time",
-                "pattern": r"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?)$"
+                "pattern": r"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?)$",
             },
             "bbox": {
                 "description": "Bounding box of the item",
                 "type": "array",
                 "items": {"type": "number"},
                 "minItems": 4,
-                "maxItems": 6
-            }
+                "maxItems": 6,
+            },
         }
 
         # Fetch dynamic facets and add them as properties
@@ -1277,7 +1301,7 @@ class STACAPI:
                 properties[facet_name] = {
                     "description": f"Search facet: {facet_name}",
                     "type": "string",
-                    "enum": facet_values
+                    "enum": facet_values,
                 }
 
         queryables_schema = {
@@ -1290,34 +1314,37 @@ class STACAPI:
                 " filtering items across all collections"
             ),
             "properties": properties,
-            "additionalProperties": True
+            "additionalProperties": True,
         }
 
         return queryables_schema
 
-    async def get_collection_queryables(self, collection_id: str) -> Dict[str, Any]:
+    async def get_collection_queryables(
+        self, collection_id: str
+    ) -> Dict[str, Any]:
         """Get collection-specific queryables schema."""
         collection_ids = await self.get_all_project_facets()
         if collection_id not in collection_ids:
             raise HTTPException(
-                status_code=404,
-                detail=f"Collection {collection_id} not found"
+                status_code=404, detail=f"Collection {collection_id} not found"
             )
 
         global_queryables = await self.get_queryables()
 
         # Update the schema ID and title for this specific collection
         collection_queryables = global_queryables.copy()
-        collection_queryables.update({
-            "$id": (
-                f"{self.config.proxy}/api/freva-nextgen/"
-                f"stacapi/collections/{collection_id}/queryables"
-            ),
-            "title": f"Queryables for Collection {collection_id}",
-            "description": (
-                "Queryable properties available for"
-                f" filtering items in collection {collection_id}"
-            )
-        })
+        collection_queryables.update(
+            {
+                "$id": (
+                    f"{self.config.proxy}/api/freva-nextgen/"
+                    f"stacapi/collections/{collection_id}/queryables"
+                ),
+                "title": f"Queryables for Collection {collection_id}",
+                "description": (
+                    "Queryable properties available for"
+                    f" filtering items in collection {collection_id}"
+                ),
+            }
+        )
 
         return collection_queryables

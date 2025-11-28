@@ -41,7 +41,7 @@ class ZipStream(io.RawIOBase):
     """Custom unseekable stream that buffers writes and
     flushes its content after writing.
 
-    In spite of having simillar libraries for this purpose,
+    In spite of having similar libraries for this purpose,
     we designed this lean class to have a better control
     on memory usage and to have a better understanding
     of the underlying mechanism. Most of existing libraries

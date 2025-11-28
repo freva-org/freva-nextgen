@@ -7,7 +7,7 @@ class ZarrOptionsDict(TypedDict):
     """This dict repr holds information on how to handle zarr url requests."""
 
     public: bool
-    """Flag indicating wheter or not we need to create a public zarr ulr."""
+    """Flag indicating whether or not we need to create a public zarr ulr."""
 
     ttl_seconds: int
     """TTL of the link in seconds."""

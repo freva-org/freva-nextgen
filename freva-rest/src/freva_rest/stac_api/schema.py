@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from urllib.parse import parse_qs
 
 from fastapi import Query, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 STAC_VERSION = "1.0.0"
 
@@ -23,12 +23,13 @@ CONFORMANCE_URLS = [
     "http://www.opengis.net/spec/cql2/1.0/conf/cql2-text",
     "https://api.stacspec.org/v1.0.0/collections",
     "https://api.stacspec.org/v1.0.0/item-search#query",
-    "https://api.stacspec.org/v1.0.0-rc.2/item-search#filter"
+    "https://api.stacspec.org/v1.0.0-rc.2/item-search#filter",
 ]
 
 
 class STACLinks(BaseModel):
     """STAC Links model"""
+
     href: str = Field(..., description="Link URL")
     rel: str = Field(..., description="Link relation")
     type: Optional[str] = Field(None, description="Media type")
@@ -42,12 +43,14 @@ class STACLinks(BaseModel):
 
 class STACExtent(BaseModel):
     """STAC Extent model."""
+
     spatial: Dict[str, Any] = Field(..., description="Spatial extent")
     temporal: Dict[str, Any] = Field(..., description="Temporal extent")
 
 
 class STACProvider(BaseModel):
     """STAC Provider model."""
+
     name: str = Field(..., description="Provider name")
     description: Optional[str] = Field(None, description="Provider description")
     roles: Optional[List[str]] = Field(None, description="Provider roles")
@@ -56,6 +59,7 @@ class STACProvider(BaseModel):
 
 class LandingPageResponse(BaseModel):
     """STAC API Landing Page response model."""
+
     type: str = Field("Catalog", description="Type of STAC object")
     stac_version: str = Field(STAC_VERSION, description="STAC version")
     id: str = Field(..., description="Catalog identifier")
@@ -63,9 +67,8 @@ class LandingPageResponse(BaseModel):
     description: str = Field(..., description="Catalog description")
     links: List[STACLinks] = Field(..., description="Navigation links")
     conformsTo: Optional[List[str]] = Field(None, description="Conformance URLs")
-
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "type": "Catalog",
                 "stac_version": "1.1.0",
@@ -76,52 +79,51 @@ class LandingPageResponse(BaseModel):
                     {
                         "rel": "self",
                         "type": "application/json",
-                        "href": "/api/freva-nextgen/stacapi/"
+                        "href": "/api/freva-nextgen/stacapi/",
                     },
                     {
                         "rel": "conformance",
                         "type": "application/json",
-                        "href": "/api/freva-nextgen/stacapi/conformance"
+                        "href": "/api/freva-nextgen/stacapi/conformance",
                     },
                     {
                         "rel": "collections",
                         "type": "application/json",
-                        "href": "/api/freva-nextgen/stacapi/collections"
+                        "href": "/api/freva-nextgen/stacapi/collections",
                     },
                     {
                         "rel": "search",
                         "type": "application/geo+json",
                         "href": "/api/freva-nextgen/stacapi/search",
-                        "method": "GET"
+                        "method": "GET",
                     },
                     {
                         "rel": "search",
                         "type": "application/geo+json",
                         "href": "/api/freva-nextgen/stacapi/search",
-                        "method": "POST"
-                    }
-                ]
+                        "method": "POST",
+                    },
+                ],
             }
         }
+    )
 
 
 class ConformanceResponse(BaseModel):
     """STAC API Conformance response model."""
+
     conformsTo: List[str] = Field(
         default=CONFORMANCE_URLS,
-        description="List of conformance URLs that this API implementation conforms to"
+        description="List of conformance URLs that this API implementation conforms to",
     )
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "conformsTo": CONFORMANCE_URLS
-            }
-        }
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"conformsTo": CONFORMANCE_URLS}}
+    )
 
 
 class STACCollection(BaseModel):
     """STAC Collection response model."""
+
     type: str = Field("Collection", description="Type of STAC object")
     stac_version: str = Field(STAC_VERSION, description="STAC version")
     id: str = Field(..., description="Collection identifier")
@@ -139,10 +141,11 @@ class STACCollection(BaseModel):
     summaries: Optional[Dict[str, Any]] = Field(
         None, description="Collection summaries"
     )
-    assets: Optional[Dict[str, Any]] = Field(None, description="Collection assets")
-
-    class Config:
-        json_schema_extra = {
+    assets: Optional[Dict[str, Any]] = Field(
+        None, description="Collection assets"
+    )
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "type": "Collection",
                 "stac_version": "1.1.0",
@@ -151,18 +154,18 @@ class STACCollection(BaseModel):
                 "description": "A collection of data",
                 "license": "proprietary",
                 "extent": {
-                    "spatial": {
-                        "bbox": [[-180, -90, 180, 90]]
-                    },
+                    "spatial": {"bbox": [[-180, -90, 180, 90]]},
                     "temporal": {
-                        "interval": [["2000-01-01T00:00:00Z", "2023-12-31T23:59:59Z"]]
-                    }
+                        "interval": [
+                            ["2000-01-01T00:00:00Z", "2023-12-31T23:59:59Z"]
+                        ]
+                    },
                 },
                 "links": [
                     {
                         "rel": "self",
                         "type": "application/json",
-                        "href": "/api/freva-nextgen/stacapi/collections/observations"
+                        "href": "/api/freva-nextgen/stacapi/collections/observations",
                     },
                     {
                         "rel": "items",
@@ -170,20 +173,23 @@ class STACCollection(BaseModel):
                         "href": (
                             "/api/freva-nextgen/stacapi/"
                             "collections/observations/items"
-                        )
-                    }
-                ]
+                        ),
+                    },
+                ],
             }
         }
+    )
 
 
 class CollectionsResponse(BaseModel):
     """STAC Collections list response model."""
-    collections: List[STACCollection] = Field(..., description="List of collections")
-    links: List[STACLinks] = Field(..., description="Navigation links")
 
-    class Config:
-        json_schema_extra = {
+    collections: List[STACCollection] = Field(
+        ..., description="List of collections"
+    )
+    links: List[STACLinks] = Field(..., description="Navigation links")
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "collections": [
                     {
@@ -197,26 +203,31 @@ class CollectionsResponse(BaseModel):
                             "spatial": {"bbox": [[-180, -90, 180, 90]]},
                             "temporal": {
                                 "interval": [
-                                    ["2000-01-01T00:00:00Z", "2023-12-31T23:59:59Z"]
+                                    [
+                                        "2000-01-01T00:00:00Z",
+                                        "2023-12-31T23:59:59Z",
+                                    ]
                                 ]
-                            }
+                            },
                         },
-                        "links": []
+                        "links": [],
                     }
                 ],
                 "links": [
                     {
                         "rel": "self",
                         "type": "application/json",
-                        "href": "/api/freva-nextgen/stacapi/collections"
+                        "href": "/api/freva-nextgen/stacapi/collections",
                     }
-                ]
+                ],
             }
         }
+    )
 
 
 class STACItem(BaseModel):
     """STAC Item response model."""
+
     type: str = Field("Feature", description="GeoJSON type")
     stac_version: str = Field(STAC_VERSION, description="STAC version")
     id: str = Field(..., description="Item identifier")
@@ -235,26 +246,29 @@ class STACItem(BaseModel):
     stac_extensions: Optional[List[str]] = Field(
         None, description="STAC extensions used"
     )
-
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "type": "Feature",
                 "stac_version": "1.1.0",
                 "id": "12345678",
                 "geometry": {
                     "type": "Polygon",
-                    "coordinates": [[[-180, -90],
-                                     [180, -90],
-                                     [180, 90],
-                                     [-180, 90],
-                                     [-180, -90]]]
+                    "coordinates": [
+                        [
+                            [-180, -90],
+                            [180, -90],
+                            [180, 90],
+                            [-180, 90],
+                            [-180, -90],
+                        ]
+                    ],
                 },
                 "bbox": [-180, -90, 180, 90],
                 "properties": {
                     "datetime": "2023-01-01T00:00:00Z",
                     "title": "cmip6 January 2023",
-                    "description": "Monthly cmip data for January 2023"
+                    "description": "Monthly cmip data for January 2023",
                 },
                 "collection": "cmip6",
                 "links": [
@@ -264,7 +278,7 @@ class STACItem(BaseModel):
                         "href": (
                             "/api/freva-nextgen/stacapi/collections/"
                             "cmip6/items/12345678"
-                        )
+                        ),
                     }
                 ],
                 "assets": {
@@ -273,37 +287,29 @@ class STACItem(BaseModel):
                         "type": "application/netcdf",
                         "title": "data asset",
                     }
-                }
+                },
             }
         }
+    )
 
 
 class ItemCollectionResponse(BaseModel):
     """STAC Item Collection response model (FeatureCollection)."""
+
     type: str = Field("FeatureCollection", description="GeoJSON type")
-    features: List[STACItem] = Field(
-        ...,
-        description="List of STAC items"
-    )
-    links: List[STACLinks] = Field(
-        ...,
-        description="Navigation links"
-    )
+    features: List[STACItem] = Field(..., description="List of STAC items")
+    links: List[STACLinks] = Field(..., description="Navigation links")
     numberMatched: Optional[int] = Field(
-        None,
-        description="Total number of items that match the search criteria"
+        None, description="Total number of items that match the search criteria"
     )
     numberReturned: int = Field(
-        ...,
-        description="Number of items returned in this response"
+        ..., description="Number of items returned in this response"
     )
     timeStamp: Optional[str] = Field(
-        None,
-        description="Timestamp when the response was generated"
+        None, description="Timestamp when the response was generated"
     )
-
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "type": "FeatureCollection",
                 "features": [
@@ -311,16 +317,11 @@ class ItemCollectionResponse(BaseModel):
                         "type": "Feature",
                         "stac_version": "1.1.0",
                         "id": "12345678",
-                        "geometry": {
-                            "type": "Point",
-                            "coordinates": [0, 0]
-                        },
-                        "properties": {
-                            "datetime": "2023-01-01T00:00:00Z"
-                        },
+                        "geometry": {"type": "Point", "coordinates": [0, 0]},
+                        "properties": {"datetime": "2023-01-01T00:00:00Z"},
                         "collection": "cmip6",
                         "links": [],
-                        "assets": {}
+                        "assets": {},
                     }
                 ],
                 "numberMatched": 100,
@@ -329,7 +330,7 @@ class ItemCollectionResponse(BaseModel):
                     {
                         "rel": "self",
                         "type": "application/geo+json",
-                        "href": "/api/freva-nextgen/stacapi/search?limit=10"
+                        "href": "/api/freva-nextgen/stacapi/search?limit=10",
                     },
                     {
                         "rel": "next",
@@ -337,99 +338,88 @@ class ItemCollectionResponse(BaseModel):
                         "href": (
                             "/api/freva-nextgen/stacapi/search?limit=10&"
                             "token=next:search:12345678"
-                        )
-                    }
-                ]
+                        ),
+                    },
+                ],
             }
         }
+    )
 
 
 class QueryablesResponse(BaseModel):
     """STAC Queryables response model (JSON Schema)."""
+
     schema_: str = Field(
         "https://json-schema.org/draft/2019-09/schema",
-        alias="$schema", description="JSON Schema version"
+        alias="$schema",
+        description="JSON Schema version",
     )
     type: str = Field("object", description="Schema type")
     title: Optional[str] = Field(None, description="Schema title")
     description: Optional[str] = Field(None, description="Schema description")
     properties: Dict[str, Any] = Field(..., description="Queryable properties")
     additional_properties: Optional[bool] = Field(
-        None, alias="additionalProperties",
-        description="Allow additional properties"
+        None,
+        alias="additionalProperties",
+        description="Allow additional properties",
     )
-
-    class Config:
-        validate_by_name = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        validate_by_name=True,
+        json_schema_extra={
             "example": {
                 "$schema": "https://json-schema.org/draft/2019-09/schema",
                 "type": "object",
                 "title": "Queryables",
                 "description": "Queryable properties for STAC items",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "description": "Item identifier"
-                    },
+                    "id": {"type": "string", "description": "Item identifier"},
                     "collection": {
                         "type": "string",
-                        "description": "Collection identifier"
+                        "description": "Collection identifier",
                     },
                     "datetime": {
                         "type": "string",
                         "format": "date-time",
-                        "description": "Item datetime"
+                        "description": "Item datetime",
                     },
                     "geometry": {
                         "type": "object",
-                        "description": "Item geometry"
-                    }
-                }
+                        "description": "Item geometry",
+                    },
+                },
             }
-        }
+        },
+    )
 
 
 class PingResponse(BaseModel):
     """Ping/Health check response model."""
-    message: str = Field(..., description="Health check message")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "message": "PONG"
-            }
-        }
+    message: str = Field(..., description="Health check message")
+    model_config = ConfigDict(json_schema_extra={"example": {"message": "PONG"}})
 
 
 class SearchPostRequest(BaseModel):
     """STAC API search POST request model with enhanced validation."""
 
     collections: Optional[List[str]] = Field(
-        None,
-        description="Array of collection IDs to search"
+        None, description="Array of collection IDs to search"
     )
     ids: Optional[List[str]] = Field(
-        None,
-        description="Array of item IDs to search"
+        None, description="Array of item IDs to search"
     )
     bbox: Optional[Tuple[float, float, float, float]] = Field(
         None,
         description="Bounding box [minx, miny, maxx, maxy]",
     )
     intersects: Optional[Dict[str, Any]] = Field(
-        None,
-        description="GeoJSON geometry for spatial intersection"
+        None, description="GeoJSON geometry for spatial intersection"
     )
     datetime: Optional[str] = Field(
-        None,
-        description="Datetime range in RFC 3339 format"
+        None, description="Datetime range in RFC 3339 format"
     )
     limit: Optional[int] = Field(
-        10,
-        description="Maximum number of items to return",
-        ge=1,
-        le=1000
+        10, description="Maximum number of items to return", ge=1, le=1000
     )
     token: Optional[str] = Field(None, description="Pagination token")
 
@@ -442,20 +432,16 @@ class SearchPostRequest(BaseModel):
         examples=["cmip6", "amip", "temp"],
     )
     query: Optional[Dict[str, Any]] = Field(
-        None,
-        description="Additional property-based queries"
+        None, description="Additional property-based queries"
     )
     sortby: Optional[List[Dict[str, str]]] = Field(
-        None,
-        description="Sort criteria with field and direction"
+        None, description="Sort criteria with field and direction"
     )
     fields: Optional[Dict[str, List[str]]] = Field(
-        None,
-        description="Fields to include or exclude"
+        None, description="Fields to include or exclude"
     )
     filter: Optional[Dict[str, Any]] = Field(
-        None,
-        description="CQL filter expression"
+        None, description="CQL filter expression"
     )
 
 
@@ -494,9 +480,7 @@ class STACAPISchema:
     }
 
     @classmethod
-    def process_parameters(
-        cls, request: Request
-    ) -> Dict[str, list[str]]:
+    def process_parameters(cls, request: Request) -> Dict[str, list[str]]:
         """Convert Starlette Request QueryParams to a dictionary."""
 
         query = parse_qs(str(request.query_params))
@@ -508,25 +492,30 @@ class STACAPISchema:
 
 class CONFORMANCE(BaseModel):
     """STAC Conformance response model."""
+
     conformsTo: List[str] = Field(
-        default=CONFORMANCE_URLS,
-        description="List of conformance URLs"
+        default=CONFORMANCE_URLS, description="List of conformance URLs"
     )
 
 
 class STACConformance(BaseModel):
     """STAC Conformance response model."""
+
     conformsTo: List[str] = Field(..., description="List of conformance URLs")
 
 
 class STACCollections(BaseModel):
     """STAC Collections response model."""
-    collections: List[STACCollection] = Field(..., description="List of collections")
+
+    collections: List[STACCollection] = Field(
+        ..., description="List of collections"
+    )
     links: List[STACLinks] = Field(..., description="Navigation links")
 
 
 class STACItemCollection(BaseModel):
     """STAC Item Collection response model."""
+
     type: str = Field("FeatureCollection", description="GeoJSON type")
     features: List[STACItem] = Field(..., description="List of STAC items")
     links: List[STACLinks] = Field(..., description="Navigation links")
