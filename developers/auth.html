@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>The restAPI auth endpoints &#8212; Freva Databrowser 2510.1.2 documentation</title>
+    <title>The restAPI auth endpoints &#8212; Freva Databrowser 2511.0.0 documentation</title>
   
   
   
@@ -49,7 +49,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=63c27772"></script>
+    <script src="../_static/documentation_options.js?v=7ce70c1e"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
     <link rel="icon" href="../_static/logo.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Integrating Authentiction into your Web Applications" href="auth_example.html" />
+    <link rel="next" title="Integrating Authentication into your Web Applications" href="auth_example.html" />
     <link rel="prev" title="Developer REST API Overview" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -135,8 +135,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2510.1.2 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2510.1.2 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2511.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2511.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -341,8 +341,9 @@
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">The restAPI auth endpoints</a></li>
-<li class="toctree-l1"><a class="reference internal" href="auth_example.html">Integrating Authentiction into your Web Applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auth_example.html">Integrating Authentication into your Web Applications</a></li>
 <li class="toctree-l1"><a class="reference internal" href="databrowser.html">Databrowser Rest API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userdata.html">Managing User Data and search Mappings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="zarr.html">Zarr Streaming API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stac.html">STAC API</a></li>
 
@@ -562,7 +563,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <dt class="field-odd">Status Codes<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.1">200 OK</a></span> – Metadata for interacting with the OIDC provider.</p></li>
-<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.4">503 Service Unavailable</a></span> – OIDC Identiy Provider server unavailable.</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.4">503 Service Unavailable</a></span> – OIDC Identity Provider server unavailable.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Response Headers<span class="colon">:</span></dt>
@@ -937,8 +938,8 @@ perform or access restricted actions and resources.</p>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
 <span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;pw_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="err">&quot;janedoe,</span>
-<span class="err">}</span>
+<span class="w">   </span><span class="nt">&quot;pw_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;janedoe&quot;</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 </section>
@@ -1201,7 +1202,7 @@ token exchange <strong>server-side</strong> to protect credentials.</p></li>
 </div>
 <p>This is the recommended approach for implementing a standards-compliant
 OAuth2 Authorization Code Flow as a Service Provider. A detailed example
-is given in the <a class="reference internal" href="auth_example.html#auth-example"><span class="std std-ref">Integrating Authentiction into your Web Applications</span></a> section.</p>
+is given in the <a class="reference internal" href="auth_example.html#auth-example"><span class="std std-ref">Integrating Authentication into your Web Applications</span></a> section.</p>
 </section>
 </section>
 </section>
@@ -1230,7 +1231,7 @@ is given in the <a class="reference internal" href="auth_example.html#auth-examp
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Integrating Authentiction into your Web Applications</p>
+        <p class="prev-next-title">Integrating Authentication into your Web Applications</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta property="og:title" content="Integrating Authentiction into your Web Applications" />
+<meta property="og:title" content="Integrating Authentication into your Web Applications" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://freva-org.github.io/developers/auth_example.html" />
 <meta property="og:site_name" content="Freva Databrowser" />
@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>Integrating Authentiction into your Web Applications &#8212; Freva Databrowser 2510.1.2 documentation</title>
+    <title>Integrating Authentication into your Web Applications &#8212; Freva Databrowser 2511.0.0 documentation</title>
   
   
   
@@ -49,7 +49,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=63c27772"></script>
+    <script src="../_static/documentation_options.js?v=7ce70c1e"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -135,8 +135,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2510.1.2 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2510.1.2 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2511.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2511.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -341,8 +341,9 @@
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="auth.html">The restAPI auth endpoints</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Integrating Authentiction into your Web Applications</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Integrating Authentication into your Web Applications</a></li>
 <li class="toctree-l1"><a class="reference internal" href="databrowser.html">Databrowser Rest API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userdata.html">Managing User Data and search Mappings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="zarr.html">Zarr Streaming API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stac.html">STAC API</a></li>
 
@@ -389,7 +390,7 @@
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">Developer REST API Overview</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Integrating Authentiction into your Web Applications</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Integrating Authentication into your Web Applications</span></li>
   </ul>
 </nav>
 </div>
@@ -406,8 +407,8 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="integrating-authentiction-into-your-web-applications">
-<span id="auth-example"></span><h1>Integrating Authentiction into your Web Applications<a class="headerlink" href="#integrating-authentiction-into-your-web-applications" title="Link to this heading">#</a></h1>
+  <section id="integrating-authentication-into-your-web-applications">
+<span id="auth-example"></span><h1>Integrating Authentication into your Web Applications<a class="headerlink" href="#integrating-authentication-into-your-web-applications" title="Link to this heading">#</a></h1>
 <p>Freva supports OAuth2-based authentication using the Authorization Code Flow.</p>
 <p>You can use the authentication endpoints of Freva’s RestAPI to secure your
 web applications with OpenID Connect (OIDC) authentication flow and creating
@@ -449,7 +450,7 @@ with the following query parameters:</p>
 </section>
 <section id="retrieve-user-info-optional">
 <h3>3. Retrieve User Info (optional):<a class="headerlink" href="#retrieve-user-info-optional" title="Link to this heading">#</a></h3>
-<p>Use the gnerated access token to fetch the user’s identity:</p>
+<p>Use the generated access token to fetch the user’s identity:</p>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/freva-nextgen/auth/v2/userinfo</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
 <span class="na">host</span><span class="o">:</span> <span class="l">www.freva.dkrz.de</span>
 <span class="na">Authorization</span><span class="o">:</span> <span class="l">Bearer access_token</span>
@@ -612,7 +613,7 @@ Plotly graph.</p>
 <p><strong>Security Notes</strong></p>
 <ul>
 <li><dl class="simple">
-<dt><em>Redirect URI</em>: Must match the URI registered with the identity provider.</dt><dd><p>Contact your freindly freva admins for advice.</p>
+<dt><em>Redirect URI</em>: Must match the URI registered with the identity provider.</dt><dd><p>Contact your friendly freva admins for advice.</p>
 </dd>
 </dl>
 </li>

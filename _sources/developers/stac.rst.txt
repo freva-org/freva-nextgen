@@ -32,8 +32,8 @@ Landing Page
 
 .. http:get:: /api/freva-nextgen/stacapi/
 
-    Get the STAC API landing page which provides information about the API version, 
-    title, description, and links to collections and other resources. This serves 
+    Get the STAC API landing page which provides information about the API version,
+    title, description, and links to collections and other resources. This serves
     as the entry point for exploring available collections and items.
 
     :statuscode 200: STAC API landing page returned successfully
@@ -146,7 +146,7 @@ Conformance Classes
 
 .. http:get:: /api/freva-nextgen/stacapi/conformance
 
-    Get the conformance classes that the STAC API implementation conforms to. 
+    Get the conformance classes that the STAC API implementation conforms to.
     This provides information about the supported features and capabilities of the API.
 
     :statuscode 200: Conformance classes returned successfully
@@ -239,8 +239,8 @@ Collections
 
 .. http:get:: /api/freva-nextgen/stacapi/collections
 
-    List all collections available in the STAC API. Each collection represents 
-    a group of related items and provides metadata including ID, title, 
+    List all collections available in the STAC API. Each collection represents
+    a group of related items and provides metadata including ID, title,
     description, and spatial/temporal extents.
 
     :statuscode 200: Collections list returned successfully
@@ -352,7 +352,7 @@ Get Collection
 
 .. http:get:: /api/freva-nextgen/stacapi/collections/(str:collection_id)
 
-    Get a specific collection by its ID. Returns detailed metadata about 
+    Get a specific collection by its ID. Returns detailed metadata about
     the collection including its extent, license, and available links.
 
     :param collection_id: The unique identifier for the collection
@@ -463,7 +463,7 @@ Get Collection Items
 
 .. http:get:: /api/freva-nextgen/stacapi/collections/(str:collection_id)/items
 
-    Get items from a specific collection. Items can be filtered using various 
+    Get items from a specific collection. Items can be filtered using various
     query parameters such as limit, datetime range, and bounding box.
 
     :param collection_id: The unique identifier for the collection
@@ -473,7 +473,7 @@ Get Collection Items
     :query token: Pagination token in format "direction:collection_id:item_id"
     :type token: str
     :query datetime: Datetime range in RFC 3339 format (start-date/end-date or exact-date)
-    :type datetime: str  
+    :type datetime: str
     :query bbox: Bounding box as "minx,miny,maxx,maxy"
     :type bbox: str
 
@@ -567,7 +567,7 @@ Get Collection Items
                 "https://www.freva.dkrz.de/api/freva-nextgen/stacapi/collections/observations/items",
                 query = list(
                     limit = 10,
-                    datetime = "2016-01-01/2016-12-31", 
+                    datetime = "2016-01-01/2016-12-31",
                     bbox = "-10,40,10,60"
                 )
             )
@@ -618,7 +618,7 @@ Get Collection Item Details
 
 .. http:get:: /api/freva-nextgen/stacapi/collections/(str:collection_id)/items/(str:item_id)
 
-    Get a specific item from a collection. Returns detailed metadata about 
+    Get a specific item from a collection. Returns detailed metadata about
     the dataset including its geometry, properties, assets, and links.
 
     :param collection_id: The unique identifier for the collection
@@ -735,7 +735,7 @@ Search (GET)
 
 .. http:get:: /api/freva-nextgen/stacapi/search
 
-    Search for items across collections using query parameters. Supports spatial, 
+    Search for items across collections using query parameters. Supports spatial,
     temporal, and property-based filtering with free text search capabilities.
 
     :query collections: Comma-separated list of collection IDs to search
@@ -779,7 +779,7 @@ Search (GET)
             "features": [
                 {
                     "type": "Feature",
-                    "stac_version": "1.1.0", 
+                    "stac_version": "1.1.0",
                     "id": "1834103571652542466",
                     "properties": {
                         "variable": ["pr"],
@@ -816,7 +816,7 @@ Search (GET)
                 "https://www.freva.dkrz.de/api/freva-nextgen/stacapi/search",
                 params={
                     "collections": "observations,cmip6",
-                    "q": "precipitation,temperature", 
+                    "q": "precipitation,temperature",
                     "bbox": "-180,-90,180,90",
                     "datetime": "2020-01-01/2020-12-31",
                     "limit": 20
@@ -885,13 +885,13 @@ Search (POST)
 
 .. http:post:: /api/freva-nextgen/stacapi/search
 
-    Search for items across collections using a JSON request body. Provides 
-    the same functionality as the GET endpoint but allows for more complex 
+    Search for items across collections using a JSON request body. Provides
+    the same functionality as the GET endpoint but allows for more complex
     search parameters and supports arrays for certain fields.
 
     :reqbody collections: List of collection IDs to search
     :type collections: list[str]
-    :reqbody ids: List of item IDs to search  
+    :reqbody ids: List of item IDs to search
     :type ids: list[str]
     :reqbody bbox: Bounding box as [minx, miny, maxx, maxy]
     :type bbox: list[float]
@@ -1040,7 +1040,7 @@ Queryables
 
 .. http:get:: /api/freva-nextgen/stacapi/queryables
 
-    Get global queryables schema. Returns a JSON Schema document describing 
+    Get global queryables schema. Returns a JSON Schema document describing
     the properties that can be used in filter expressions across all collections.
 
     :statuscode 200: Queryables schema returned successfully
@@ -1075,7 +1075,7 @@ Queryables
                 },
                 "datetime": {
                     "description": "Item datetime",
-                    "type": "string", 
+                    "type": "string",
                     "format": "date-time"
                 },
                 "variable": {
@@ -1147,7 +1147,7 @@ Collection Queryables
 
 .. http:get:: /api/freva-nextgen/stacapi/collections/(str:collection_id)/queryables
 
-    Get collection-specific queryables schema. Returns a JSON Schema document 
+    Get collection-specific queryables schema. Returns a JSON Schema document
     describing the properties available for filtering items in a specific collection.
 
     :param collection_id: The unique identifier for the collection
@@ -1231,7 +1231,7 @@ The Freva STAC-API is fully compatible with STAC-compliant tools and libraries. 
 - **Python**: `pystac-client`, `pystac`, `stackstac`
 
 Integration Example with Python
--------------------
+-------------------------------
 
 .. tabs::
 

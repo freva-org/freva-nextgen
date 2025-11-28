@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>Developer REST API Overview &#8212; Freva Databrowser 2510.1.2 documentation</title>
+    <title>Developer REST API Overview &#8212; Freva Databrowser 2511.0.0 documentation</title>
   
   
   
@@ -49,7 +49,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=63c27772"></script>
+    <script src="../_static/documentation_options.js?v=7ce70c1e"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -135,8 +135,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2510.1.2 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2510.1.2 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2511.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2511.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -337,8 +337,9 @@
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="auth.html">The restAPI auth endpoints</a></li>
-<li class="toctree-l1"><a class="reference internal" href="auth_example.html">Integrating Authentiction into your Web Applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auth_example.html">Integrating Authentication into your Web Applications</a></li>
 <li class="toctree-l1"><a class="reference internal" href="databrowser.html">Databrowser Rest API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userdata.html">Managing User Data and search Mappings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="zarr.html">Zarr Streaming API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stac.html">STAC API</a></li>
 
@@ -412,7 +413,7 @@ reference pages:</p>
 <li class="toctree-l2"><a class="reference internal" href="auth.html#notes-on-code-based-auth-flow">Notes on Code-Based Auth Flow</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="auth_example.html">Integrating Authentiction into your Web Applications</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="auth_example.html">Integrating Authentication into your Web Applications</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="auth_example.html#authentication-flow">Authentication Flow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="auth_example.html#dash-example">Dash Example</a></li>
 </ul>
@@ -423,13 +424,19 @@ reference pages:</p>
 <li class="toctree-l2"><a class="reference internal" href="databrowser.html#searching-for-metadata">Searching for metadata</a></li>
 <li class="toctree-l2"><a class="reference internal" href="databrowser.html#generating-a-stac-catalogue">Generating a STAC Catalogue</a></li>
 <li class="toctree-l2"><a class="reference internal" href="databrowser.html#generating-an-intake-esm-catalogue">Generating an intake-esm catalogue</a></li>
-<li class="toctree-l2"><a class="reference internal" href="databrowser.html#creating-zarr-endpoints-for-streaming-data">Creating zarr endpoints for streaming data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="databrowser.html#adding-and-deleting-user-data-in-databrowser">Adding and deleting User Data in Databrowser</a></li>
-<li class="toctree-l2"><a class="reference internal" href="databrowser.html#managing-flavours">Managing Flavours</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="userdata.html">Managing User Data and search Mappings</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userdata.html#adding-and-deleting-user-data-in-databrowser">Adding and deleting User Data in Databrowser</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userdata.html#managing-flavours">Managing Flavours</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="zarr.html">Zarr Streaming API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="zarr.html#creating-zarr-endpoints-for-streaming-data">Creating zarr endpoints for streaming data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="zarr.html#request-asynchronous-zarr-conversion">Request asynchronous Zarr conversion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zarr.html#create-a-public-pre-signed-zarr-url">Create a public pre-signed zarr url</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zarr.html#checking-the-status-of-a-dynamically-created-zarr-dataset">Checking the status of a dynamically created Zarr dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zarr.html#retrieving-an-html-representation-of-a-zarr-dataset">Retrieving an HTML representation of a Zarr dataset</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="stac.html">STAC API</a><ul>
