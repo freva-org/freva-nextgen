@@ -37,7 +37,7 @@ jobs:
         id: check-prerelease
         run: |
           TAG="${{ steps.get-tag.outputs.tag }}"
-          DEV_TAG="${{ github.event_name == 'workflow_dispatch' && inputs.tag || "" }}"
+          DEV_TAG="${{ github.event_name == 'workflow_dispatch' && inputs.tag || '' }}"
           IS_PRERELEASE="false"
           if [ -z "$DEV_TAG" ];then
              TAG="${DEV_TAG%-dev}""
