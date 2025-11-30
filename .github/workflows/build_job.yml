@@ -9,6 +9,11 @@ permissions:
 
 "on":
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Custom tag of the docker image (a '-dev' will be auto appended)."
+        required: true
+        type: string
   push:
     tags:
       - "v*.*.*"
@@ -32,14 +37,13 @@ jobs:
         id: check-prerelease
         run: |
           TAG="${{ steps.get-tag.outputs.tag }}"
+          DEV_TAG="${{ github.event_name == 'workflow_dispatch' && inputs.tag || "" }}"
           IS_PRERELEASE="false"
-          if [[ "$TAG" == *"-dev"* || "$TAG" == *"-beta"* || "$TAG" == *"-alpha"* ]]; then
-            echo "ghcr.io/freva-org/freva-rest-api-dev" > image.txt
-            IS_PRERELEASE="true"
-          else
-            echo "ghcr.io/freva-org/freva-rest-api" > image.txt
+          if [ -z "$DEV_TAG" ];then
+             TAG="${DEV_TAG%-dev}""
+             IS_PRERELEASE="true"
           fi
-          echo "${{ steps.get-tag.outputs.tag }}" > tag.txt
+          echo "$TAG" > tag.txt
           echo "$IS_PRERELEASE" > is_prerelease.txt
           echo "is_prerelease=$IS_PRERELEASE" >> "$GITHUB_OUTPUT"
 
@@ -48,7 +52,6 @@ jobs:
         with:
           name: release-metadata
           path: |
-            image.txt
             tag.txt
             is_prerelease.txt
   tests:
@@ -138,7 +141,6 @@ jobs:
 
       - name: Read Metadata
         run: |
-          IMAGE=$(cat image.txt)
           TAG=$(cat tag.txt)
           IS_PRERELEASE=$(cat is_prerelease.txt)
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
@@ -173,8 +175,8 @@ jobs:
           push: true
           no-cache: true
           tags: |
-            ${{ env.IMAGE }}:${{ env.TAG }}
-            ${{ env.IMAGE }}:${{ env.IS_PRERELEASE == 'false' && 'latest' || env.TAG }}
+            ghcr.io/freva-org/freva-rest-api:${{ env.TAG }}
+            ghcr.io/freva-org/freva-rest-api:${{ env.IS_PRERELEASE == 'false' && 'latest' || env.TAG }}
 
       - name: Build and push freva-data-loader image
         uses: docker/build-push-action@v4
@@ -190,7 +192,7 @@ jobs:
           no-cache: true
           tags: |
             ghcr.io/freva-org/freva-data-loader:${{ env.TAG }}
-            ghcr.io/freva-org/freva-data-loader:latest
+            ghcr.io/freva-org/freva-data-loader:${{ env.IS_PRERELEASE == 'false' && 'latest' || env.TAG }}
 
 
   pypi:
@@ -256,7 +258,7 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v2
         with:
-          app-id: ${{ vars.REVA_BOT_APP_ID }}
+          app-id: ${{ vars.FREVA_BOT_APP_ID }}
           private-key: ${{ secrets.FREVA_BOT_PRIVATE_KEY }}
           owner: freva-org
           repositories: |
