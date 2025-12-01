@@ -48,14 +48,14 @@ jobs:
       - name: Check if tag is a pre-release
         id: check-prerelease
         run: |
-          TAG="${{ steps.get-tag.outputs.tag }}"
           RC="${{ github.event_name == 'workflow_dispatch' && inputs.rc || '' }}"
           IS_PRERELEASE="false"
           if [ "$RC" ];then
-             TAG=$(python3 rc.py rc $RC freva_rest -p freva-rest)
+             python3 rc.py rc $RC freva_rest -p freva-rest 1> tag.txt
              IS_PRERELEASE="true"
+          else
+            echo ${{ steps.get-tag.outputs.tag }} 1> tag.txt
           fi
-          echo "$TAG" > tag.txt
           echo "$IS_PRERELEASE" > is_prerelease.txt
           echo "is_prerelease=$IS_PRERELEASE" >> "$GITHUB_OUTPUT"
 
@@ -153,8 +153,8 @@ jobs:
 
       - name: Read Metadata
         run: |
-          TAG=$(cat tag.txt)
-          IS_PRERELEASE=$(cat is_prerelease.txt)
+          TAG=$(tail -1 tag.txt)
+          IS_PRERELEASE=$(tail -1 is_prerelease.txt)
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
           echo "TAG=$TAG" >> $GITHUB_ENV
           echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_ENV
