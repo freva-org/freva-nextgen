@@ -40,11 +40,6 @@ jobs:
       - name: Getting realease job
         run: curl -Ls -o rc.py https://raw.githubusercontent.com/freva-org/freva-admin/main/release.py
 
-      - name: Get tag
-        id: get-tag
-        run: |
-          echo "tag=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
-
       - name: Check if tag is a pre-release
         id: check-prerelease
         run: |
@@ -54,7 +49,7 @@ jobs:
              python3 rc.py rc $RC freva_rest -p freva-rest 1> tag.txt
              IS_PRERELEASE="true"
           else
-            echo ${{ steps.get-tag.outputs.tag }} 1> tag.txt
+            python3 freva-rest/src/freva_rest/__init__.py 1> tag.txt
           fi
           echo "$IS_PRERELEASE" > is_prerelease.txt
           echo "is_prerelease=$IS_PRERELEASE" >> "$GITHUB_OUTPUT"
