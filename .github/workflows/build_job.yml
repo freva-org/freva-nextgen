@@ -1,3 +1,4 @@
+---
 name: Build and publish the container image
 run-name: ${{ github.actor }} is preparing the next release
 
@@ -9,6 +10,11 @@ permissions:
 
 "on":
   workflow_dispatch:
+    inputs:
+      rc:
+        description: "Release candicated number for this release."
+        required: true
+        type: integer
   push:
     tags:
       - "v*.*.*"
@@ -23,23 +29,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Get tag
-        id: get-tag
-        run: |
-          echo "tag=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+      - name: Set up Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.X"
+
+      - name: Installing dependencies
+        run: pip install git-python packaging tomli requests
+
+      - name: Getting realease job
+        run: curl -Ls -o rc.py https://raw.githubusercontent.com/freva-org/freva-admin/main/release.py
 
       - name: Check if tag is a pre-release
         id: check-prerelease
         run: |
-          TAG="${{ steps.get-tag.outputs.tag }}"
+          RC="${{ github.event_name == 'workflow_dispatch' && inputs.rc || '' }}"
           IS_PRERELEASE="false"
-          if [[ "$TAG" == *"-dev"* || "$TAG" == *"-beta"* || "$TAG" == *"-alpha"* ]]; then
-            echo "ghcr.io/freva-org/freva-rest-api-dev" > image.txt
-            IS_PRERELEASE="true"
+          if [ "$RC" ];then
+             python3 rc.py rc $RC freva_rest -p freva-rest 1> tag.txt
+             IS_PRERELEASE="true"
           else
-            echo "ghcr.io/freva-org/freva-rest-api" > image.txt
+            python3 freva-rest/src/freva_rest/__init__.py 1> tag.txt
           fi
-          echo "${{ steps.get-tag.outputs.tag }}" > tag.txt
           echo "$IS_PRERELEASE" > is_prerelease.txt
           echo "is_prerelease=$IS_PRERELEASE" >> "$GITHUB_OUTPUT"
 
@@ -48,7 +59,6 @@ jobs:
         with:
           name: release-metadata
           path: |
-            image.txt
             tag.txt
             is_prerelease.txt
   tests:
@@ -138,9 +148,8 @@ jobs:
 
       - name: Read Metadata
         run: |
-          IMAGE=$(cat image.txt)
-          TAG=$(cat tag.txt)
-          IS_PRERELEASE=$(cat is_prerelease.txt)
+          TAG=$(tail -1 tag.txt)
+          IS_PRERELEASE=$(tail -1 is_prerelease.txt)
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
           echo "TAG=$TAG" >> $GITHUB_ENV
           echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_ENV
@@ -173,8 +182,8 @@ jobs:
           push: true
           no-cache: true
           tags: |
-            ${{ env.IMAGE }}:${{ env.TAG }}
-            ${{ env.IMAGE }}:${{ env.IS_PRERELEASE == 'false' && 'latest' || env.TAG }}
+            ghcr.io/freva-org/freva-rest-api:${{ env.TAG }}
+            ghcr.io/freva-org/freva-rest-api:${{ env.IS_PRERELEASE == 'false' && 'latest' || env.TAG }}
 
       - name: Build and push freva-data-loader image
         uses: docker/build-push-action@v4
@@ -190,7 +199,7 @@ jobs:
           no-cache: true
           tags: |
             ghcr.io/freva-org/freva-data-loader:${{ env.TAG }}
-            ghcr.io/freva-org/freva-data-loader:latest
+            ghcr.io/freva-org/freva-data-loader:${{ env.IS_PRERELEASE == 'false' && 'latest' || env.TAG }}
 
 
   pypi:
@@ -240,13 +249,6 @@ jobs:
         with:
           python-version: "3.X"
 
-      - name: Pull the latest solr image
-        run: docker pull solr:latest
-
-      - name: Get the latest solr version
-        id: solr
-        run: echo tag=$(docker inspect solr:latest -f '{{index .Config.Labels "org.opencontainers.image.version"}}') >> $GITHUB_OUTPUT
-
       - name: Get tag
         id: repository
         run: |
@@ -259,8 +261,18 @@ jobs:
       - name: Getting realease job
         run: curl -Ls -o bump.py https://raw.githubusercontent.com/freva-org/freva-admin/main/release.py
 
+      - name: Create GitHub App token for freva-admin (freva-bot)
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.FREVA_BOT_APP_ID }}
+          private-key: ${{ secrets.FREVA_BOT_PRIVATE_KEY }}
+          owner: freva-org
+          repositories: |
+            freva-admin
+
       - name: Do the release job
-        run: python3 bump.py deploy freva_rest -p freva-rest -v -s solr ${{steps.solr.outputs.tag}}
+        run: python3 bump.py deploy freva_rest -p freva-rest -v
         env:
-          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          DEPLOY_BOT_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO_VERSION: ${{ steps.repository.outputs.tag }}
