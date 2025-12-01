@@ -1,3 +1,4 @@
+---
 name: Build and publish the container image
 run-name: ${{ github.actor }} is preparing the next release
 
@@ -10,10 +11,10 @@ permissions:
 "on":
   workflow_dispatch:
     inputs:
-      tag:
-        description: "Custom tag of the docker image (a '-dev' will be auto appended)."
+      rc:
+        description: "Release candicated number for this release."
         required: true
-        type: string
+        type: integer
   push:
     tags:
       - "v*.*.*"
@@ -28,6 +29,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.X"
+
+      - name: Installing dependencies
+        run: pip install git-python packaging tomli requests
+
+      - name: Getting realease job
+        run: curl -Ls -o rc.py https://raw.githubusercontent.com/freva-org/freva-admin/main/release.py
+
       - name: Get tag
         id: get-tag
         run: |
@@ -37,10 +49,10 @@ jobs:
         id: check-prerelease
         run: |
           TAG="${{ steps.get-tag.outputs.tag }}"
-          DEV_TAG="${{ github.event_name == 'workflow_dispatch' && inputs.tag || '' }}"
+          RC="${{ github.event_name == 'workflow_dispatch' && inputs.rc || '' }}"
           IS_PRERELEASE="false"
-          if [ -z "$DEV_TAG" ];then
-             TAG="${DEV_TAG%-dev}""
+          if [ "$RC" ];then
+             TAG=$(python3 rc.py rc $RC freva_rest -p freva-rest)
              IS_PRERELEASE="true"
           fi
           echo "$TAG" > tag.txt
