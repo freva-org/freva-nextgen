@@ -22,14 +22,14 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    cast,
     overload,
 )
 
 import requests
 import tomli
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
 from pydantic import BaseModel, Field
+from pymongo import AsyncMongoClient
+from pymongo.asynchronous.collection import AsyncCollection
 
 from .logger import logger, logger_file_handle
 
@@ -331,7 +331,7 @@ class ServerConfig(BaseModel):
             self._config = self._fallback_config
         self.debug = bool(self.debug)
         self.set_debug(self.debug)
-        self._mongo_client: Optional[AsyncIOMotorClient] = None
+        self._mongo_client: Optional[AsyncMongoClient[Any]] = None
         self._solr_fields = self._get_solr_fields()
         self._oidc_overview: Optional[Dict[str, Any]] = None
         self.services = (
@@ -417,37 +417,33 @@ class ServerConfig(BaseModel):
         return int(url.split("://")[-1].partition(":")[-1])
 
     @property
-    def mongo_client(self) -> AsyncIOMotorClient:
+    def mongo_client(self) -> AsyncMongoClient[Any]:
         """Create an async connection client to the mongodb."""
         if self._mongo_client is None:
-            self._mongo_client = AsyncIOMotorClient(
+            self._mongo_client = AsyncMongoClient(
                 self.mongo_url, serverSelectionTimeoutMS=5000
             )
         return self._mongo_client
 
     @property
-    def mongo_collection_search(self) -> AsyncIOMotorCollection:
+    def mongo_collection_search(self) -> AsyncCollection[Any]:
         """Define the mongoDB collection for databrowser searches."""
-        return cast(
-            AsyncIOMotorCollection,
-            self.mongo_client[self.mongo_db]["search_queries"],
-        )
+        return self.mongo_client[self.mongo_db]["search_queries"]
 
     @property
-    def mongo_collection_userdata(self) -> AsyncIOMotorCollection:
+    def mongo_collection_share_key(self) -> AsyncCollection[Any]:
+        """Define the mongoDB collection zarr shared keys."""
+        return self.mongo_client[self.mongo_db]["zarr_shared_keys"]
+
+    @property
+    def mongo_collection_userdata(self) -> AsyncCollection[Any]:
         """Define the mongoDB collection for user data information."""
-        return cast(
-            AsyncIOMotorCollection,
-            self.mongo_client[self.mongo_db]["user_data"],
-        )
+        return self.mongo_client[self.mongo_db]["user_data"]
 
     @property
-    def mongo_collection_flavours(self) -> AsyncIOMotorCollection:
+    def mongo_collection_flavours(self) -> AsyncCollection[Any]:
         """Define the mongoDB collection for custom flavours."""
-        return cast(
-            AsyncIOMotorCollection,
-            self.mongo_client[self.mongo_db]["custom_flavours"],
-        )
+        return self.mongo_client[self.mongo_db]["custom_flavours"]
 
     def is_admin_user(self, current_user: BaseModel) -> bool:
         """
@@ -474,7 +470,7 @@ class ServerConfig(BaseModel):
     def power_cycle_mongodb(self) -> None:
         """Reset an existing mongoDB connection."""
         if self._mongo_client is not None:
-            self._mongo_client.close()
+            _ = self._mongo_client.close()
         self._mongo_client = None
 
     def reload(self) -> None:

@@ -93,10 +93,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     Things before yield are executed on startup. Things after on teardown.
     """
     try:
+        _ = await server_config.mongo_collection_share_key.create_index(
+            [("expires_at", 1)],
+            expireAfterSeconds=0,
+        )
         yield
     finally:
         try:  # pragma: no cover
-            server_config.mongo_client.close()
+            await server_config.mongo_client.close()
         except Exception as error:
             logger.warning("Could not shutdown mongodb connection: %s", error)
 

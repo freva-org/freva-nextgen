@@ -508,7 +508,7 @@ def is_jupyter_notebook() -> bool:
         True if inside a Jupyter notebook or Jupyter kernel.
     """
     try:
-        from IPython import get_ipython  # type: ignore[attr-defined]
+        from IPython import get_ipython
 
         return get_ipython() is not None  # pragma: no cover
     except Exception:

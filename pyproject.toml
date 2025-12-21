@@ -109,7 +109,7 @@ commands =
     python3 -m flake8 freva-client/src --count --max-complexity=10 --ignore=F405,F403,E704,W503,C901 --max-line-length=88 --statistics --show-source
     python3 -m flake8 freva-rest/src --count --max-complexity=10 --ignore=F405,F403,W503,E704,C901,E203 --max-line-length=88 --statistics --show-source
     python3 -m flake8 freva-data-portal-worker/src --count --max-complexity=10 --ignore=F405,E704,F403,W503,C901,E203 --max-line-length=88 --statistics --show-source
-    codespell {posargs: --quiet-level=2} freva-client/src/ freva-rest/src/ freva-data-portal-worker/src/ -L zar
+    codespell {posargs: --quiet-level=2} freva-client/src/ freva-rest/src/ freva-data-portal-worker/src/ -L zar -L Callendar -L Reay -L Wirth -L Yau
 [testenv:types]
 description = "Static type checking."
 deps = ./freva-rest
