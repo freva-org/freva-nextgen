@@ -385,7 +385,7 @@ Create a public pre-signed zarr url
         Content-Type: application/json
 
         {
-            "url": "https://www.freva.dkrz.de/api/freva-nextgen/data-portal/share/AbCdEF/123e4567.zarr",
+            "url": "https://www.freva.dkrz.de/api/freva-nextgen/data-portal/share/hRNJcEug/surly-lemon-sponge.zarr",
             "sig": "AbCdEf",
             "token": "123e4567",
             "expires": 1763540778,
