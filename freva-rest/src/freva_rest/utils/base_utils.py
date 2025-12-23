@@ -31,7 +31,7 @@ class CacheKwArgs(TypedDict):
     password: Optional[str]
     ssl: bool
     ssl_certfile: Optional[str]
-    ssl_key: Optional[str]
+    ssl_keyfile: Optional[str]
     ssl_ca_certs: Optional[str]
     db: int
 
