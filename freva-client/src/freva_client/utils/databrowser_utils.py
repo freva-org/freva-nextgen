@@ -74,7 +74,14 @@ class Config:
         try:
             flavours = self.overview.get("flavours", [])
             self._flavour = flavours[0] if flavours else "freva"
-        except (ValueError, IndexError, KeyError):
+        except (
+            ValueError,
+            IndexError,
+            KeyError,
+            requests.exceptions.ConnectionError,
+            requests.exceptions.HTTPError,
+            requests.exceptions.ReadTimeout,
+        ):
             self._flavour = "freva"
         return self._flavour
 
@@ -180,7 +187,7 @@ class Config:
         headers = self._get_headers
         try:
             res = requests.get(
-                f"{self.databrowser_url}/overview", headers=headers, timeout=15
+                f"{self.databrowser_url}/overview", headers=headers, timeout=3
             )
             data = cast(Dict[str, Any], res.json())
             if not headers:
