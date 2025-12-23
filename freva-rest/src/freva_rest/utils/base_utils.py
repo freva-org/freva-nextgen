@@ -4,7 +4,6 @@ import base64
 import hmac
 import json
 import re
-import ssl
 import time
 from hashlib import sha256
 from typing import Any, Awaitable, Dict, List, Optional, Tuple, cast
@@ -18,10 +17,66 @@ from freva_rest.config import ServerConfig
 from freva_rest.logger import logger
 from freva_rest.rest import server_config
 
-REDIS_CACHE: Optional[redis.Redis] = None
 CACHING_SERVICES = set(("zarr-stream",))
 """All the services that need the redis cache."""
 CONFIG = ServerConfig()
+
+
+class CacheKwArgs(TypedDict):
+    """Connection arguments for the cache."""
+
+    host: str
+    port: int
+    username: Optional[str]
+    password: Optional[str]
+    ssl: bool
+    ssl_certfile: Optional[str]
+    ssl_key: Optional[str]
+    ssl_ca_certs: Optional[str]
+    db: int
+
+
+class RedisCache(redis.Redis):
+    """Define a custom redis cache."""
+
+    def __init__(self, db: int = 0) -> None:
+        self._kwargs = CacheKwArgs(
+            host=CONFIG.redis_url,
+            port=CONFIG.redis_port,
+            username=CONFIG.redis_user or None,
+            password=CONFIG.redis_password or None,
+            ssl=(CONFIG.redis_ssl_certfile or None) is not None,
+            ssl_certfile=CONFIG.redis_ssl_certfile or None,
+            ssl_keyfile=CONFIG.redis_ssl_keyfile or None,
+            ssl_ca_certs=CONFIG.redis_ssl_certfile or None,
+            db=0,
+        )
+        logger.info("Creating redis connection using: %s", self._kwargs)
+        self._connection_checked = False
+        super().__init__(**self._kwargs)
+
+    async def check_connection(self) -> None:
+        if self._connection_checked is True:
+            return None
+        if CACHING_SERVICES - set(CONFIG.services or []) == CACHING_SERVICES:
+            # All services that would need caching are disabled.
+            # If this is the case and we ended up here, we shouldn't be here.
+            # tell the users.
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Service not enabled.",
+            )
+        try:
+            await cast(Awaitable[bool], self.ping())
+        except Exception as error:
+            logger.error("Cloud not connect to redis cache: %s", error)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Cache gone.",
+            ) from None
+
+
+Cache = RedisCache()
 
 
 class SystemUserInfo(TypedDict):
@@ -91,55 +146,6 @@ def get_userinfo(
     return cast(SystemUserInfo, output)
 
 
-async def create_redis_connection(
-    cache: Optional[redis.Redis] = REDIS_CACHE,
-) -> redis.Redis:
-    """Reuse a potentially created redis connection."""
-    kwargs = dict(
-        host=CONFIG.redis_url,
-        port=CONFIG.redis_port,
-        username=CONFIG.redis_user or None,
-        password=CONFIG.redis_password or None,
-        ssl=(CONFIG.redis_ssl_certfile or None) is not None,
-        ssl_certfile=CONFIG.redis_ssl_certfile or None,
-        ssl_keyfile=CONFIG.redis_ssl_keyfile or None,
-        ssl_ca_certs=CONFIG.redis_ssl_certfile or None,
-        db=0,
-    )
-    if CACHING_SERVICES - set(CONFIG.services or []) == CACHING_SERVICES:
-        # All services that would need caching are disabled.
-        # If this is the case and we ended up here, we shouldn't be here.
-        # tell the users.
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Service not enabled.",
-        )
-
-    if cache is None:
-        logger.info("Creating redis connection using: %s", kwargs)
-    cache = cache or redis.Redis(
-        host=CONFIG.redis_url,
-        port=CONFIG.redis_port,
-        username=CONFIG.redis_user or None,
-        password=CONFIG.redis_password or None,
-        ssl=(CONFIG.redis_ssl_certfile or None) is not None,
-        ssl_certfile=CONFIG.redis_ssl_certfile or None,
-        ssl_keyfile=CONFIG.redis_ssl_keyfile or None,
-        ssl_ca_certs=CONFIG.redis_ssl_certfile or None,
-        ssl_cert_reqs=ssl.CERT_NONE,
-        db=0,
-    )
-    try:
-        await cast(Awaitable[bool], cache.ping())
-    except Exception as error:
-        logger.error("Cloud not connect to redis cache: %s", error)
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Cache gone.",
-        ) from None
-    return cache
-
-
 def str_to_int(inp_str: Optional[str], default: int) -> int:
     """Convert an integer from a string. If it's not working return default."""
     inp_str = inp_str or ""
@@ -190,7 +196,6 @@ def decode_path_token(token: str) -> str:
 
 async def publish_dataset(
     path: str,
-    cache: Optional[redis.Redis] = None,
     public: bool = False,
     ttl_seconds: int = 86400,
     publish: bool = False,
@@ -216,13 +221,13 @@ async def publish_dataset(
         The url to the converted zarr endpoint
 
     """
-    cache = cache or await create_redis_connection()
+    await Cache.check_connection()
     token = encode_path_token(path)
     share_token, sig = sign_token_path(path, int(time.time()) + ttl_seconds)
     api_path = f"{server_config.proxy}/api/freva-nextgen/data-portal"
     path = path.replace("file:///", "/")
     if publish:
-        await cache.publish(
+        await Cache.publish(
             "data-portal",
             json.dumps({"uri": {"path": path, "uuid": token}}).encode("utf-8"),
         )
