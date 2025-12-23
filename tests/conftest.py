@@ -27,7 +27,7 @@ from freva_client.utils.auth_utils import TOKEN_ENV_VAR, Token
 from freva_rest.api import app
 from freva_rest.config import ServerConfig
 from freva_rest.databrowser_api.mock import read_data
-from freva_rest.utils.base_utils import create_redis_connection
+from freva_rest.utils.base_utils import Cache
 
 
 def load_data() -> None:
@@ -114,15 +114,15 @@ def run_loader_process(port: int) -> None:
 
 async def flush_cache() -> None:
     """Flush the redis cache."""
-    cache = await create_redis_connection()
-    await cache.flushdb()
+    await Cache.check_connection()
+    await Cache.flushdb()
 
 
 async def shutdown_data_loader() -> None:
     """Cancel the data loader process."""
-    cache = await create_redis_connection()
+    await Cache.check_connection()
     for _ in range(5):
-        await cache.publish(
+        await Cache.publish(
             "data-portal", json.dumps({"shutdown": True}).encode("utf-8")
         )
         time.sleep(1)
