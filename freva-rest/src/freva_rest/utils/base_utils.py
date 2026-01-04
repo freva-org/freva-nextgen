@@ -4,7 +4,8 @@ import base64
 import hmac
 import json
 import re
-import time
+import ssl
+from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from typing import Any, Awaitable, Dict, List, Optional, Tuple, cast
 
@@ -17,10 +18,20 @@ from freva_rest.config import ServerConfig
 from freva_rest.logger import logger
 from freva_rest.rest import server_config
 
+from .exceptions import EmptyError
+from .namegenerator import generate_names, generate_slug
+
 CACHING_SERVICES = set(("zarr-stream",))
 """All the services that need the redis cache."""
 CONFIG = ServerConfig()
 
+class PresignDict(TypedDict):
+    """The response of the pre sign process."""
+
+    signature: str
+    expires_at: datetime
+    token: str
+    key: str
 
 class CacheKwArgs(TypedDict):
     """Connection arguments for the cache."""
@@ -147,6 +158,55 @@ def get_userinfo(
     return cast(SystemUserInfo, output)
 
 
+async def create_redis_connection(
+    cache: Optional[redis.Redis] = REDIS_CACHE,
+) -> redis.Redis:
+    """Reuse a potentially created redis connection."""
+    kwargs = dict(
+        host=CONFIG.redis_url,
+        port=CONFIG.redis_port,
+        username=CONFIG.redis_user or None,
+        password=CONFIG.redis_password or None,
+        ssl=(CONFIG.redis_ssl_certfile or None) is not None,
+        ssl_certfile=CONFIG.redis_ssl_certfile or None,
+        ssl_keyfile=CONFIG.redis_ssl_keyfile or None,
+        ssl_ca_certs=CONFIG.redis_ssl_certfile or None,
+        db=0,
+    )
+    if CACHING_SERVICES - set(CONFIG.services or []) == CACHING_SERVICES:
+        # All services that would need caching are disabled.
+        # If this is the case and we ended up here, we shouldn't be here.
+        # tell the users.
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service not enabled.",
+        )
+
+    if cache is None:
+        logger.info("Creating redis connection using: %s", kwargs)
+    cache = cache or redis.Redis(
+        host=CONFIG.redis_url,
+        port=CONFIG.redis_port,
+        username=CONFIG.redis_user or None,
+        password=CONFIG.redis_password or None,
+        ssl=(CONFIG.redis_ssl_certfile or None) is not None,
+        ssl_certfile=CONFIG.redis_ssl_certfile or None,
+        ssl_keyfile=CONFIG.redis_ssl_keyfile or None,
+        ssl_ca_certs=CONFIG.redis_ssl_certfile or None,
+        ssl_cert_reqs=ssl.CERT_NONE,
+        db=0,
+    )
+    try:
+        await cast(Awaitable[bool], cache.ping())
+    except Exception as error:
+        logger.error("Cloud not connect to redis cache: %s", error)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Cache gone.",
+        ) from None
+    return cache
+
+
 def str_to_int(inp_str: Optional[str], default: int) -> int:
     """Convert an integer from a string. If it's not working return default."""
     inp_str = inp_str or ""
@@ -167,7 +227,7 @@ def b64url_decode(s: str) -> bytes:
     return base64.urlsafe_b64decode(s + pad)
 
 
-def sign_token_path(path: str, expires_at: int) -> Tuple[str, str]:
+def sign_token_path(path: str, expires_at: float) -> Tuple[str, str]:
     """Create a base64 encoded token and a signature of that token."""
     secret = server_config.redis_password
     token = encode_path_token(path, expires_at)
@@ -175,7 +235,7 @@ def sign_token_path(path: str, expires_at: int) -> Tuple[str, str]:
     return token, b64url(sig)
 
 
-def encode_path_token(path: str, expires_at: int = 0) -> str:
+def encode_path_token(path: str, expires_at: float = 0.0) -> str:
     """Create a URL-safe token that encodes `path` and expiry.
 
     Returns an opaque id you can embed in a URL or use as "uuid".
@@ -233,5 +293,6 @@ async def publish_dataset(
             json.dumps({"uri": {"path": path, "uuid": token}}).encode("utf-8"),
         )
     if public is True:
-        return f"{api_path}/share/{sig}/{share_token}.zarr"
+        res = await add_ttl_key_to_db_and_cache(path, ttl_seconds, cache=cache)
+        return f"{api_path}/share/{res['key']}.zarr"
     return f"{api_path}/zarr/{token}.zarr"
