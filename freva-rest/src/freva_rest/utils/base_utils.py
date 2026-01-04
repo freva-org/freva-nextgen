@@ -74,6 +74,7 @@ class RedisCache(redis.Redis):
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Cache gone.",
             ) from None
+        self._connection_checked = True
 
 
 Cache = RedisCache()
