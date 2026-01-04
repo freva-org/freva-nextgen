@@ -113,6 +113,8 @@ async def load_files(
     """
     try:
         return LoadResponse(urls=[await publish_dataset(_p) for _p in path])
+    except HTTPException as error:
+        raise HTTPException(detail=error.detail, status_code=error.status_code)
     except Exception as error:
         logger.error("Error while publishing data for zarr-conversion: %s", error)
         raise HTTPException(detail="Internal error.", status_code=500) from error
