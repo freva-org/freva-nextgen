@@ -256,7 +256,7 @@ def test_extended_search(test_server: str, auth: Dict[str, str]) -> None:
         params={"facets": "activity_id", "max-results": 1, "zarr_stream": True},
     )
     assert res9.status_code == 401
-    with mock.patch("freva_rest.utils.base_utils.create_redis_connection", "foo"):
+    with mock.patch("freva_rest.utils.base_utils.Cache", "foo"):
         res10 = requests.get(
             f"{test_server}/databrowser/extended-search/cmip6/uri",
             params={

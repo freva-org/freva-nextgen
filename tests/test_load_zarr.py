@@ -14,7 +14,7 @@ from fastapi import HTTPException
 from pytest_mock import MockerFixture
 
 from freva_rest.auth.presign import verify_token
-from freva_rest.utils.base_utils import encode_path_token, sign_token_path
+from freva_rest.utils.base_utils import Cache, encode_path_token, sign_token_path
 
 
 def test_zarr_conversion(test_server: str, auth: Dict[str, str]) -> None:
@@ -170,6 +170,18 @@ def test_zarr_utils(test_server: str, auth: Dict[str, str]) -> None:
     assert data.status_code == 200
     assert data.json()["status"] == 5
 
+    for _ in range(2):
+        res3 = requests.get(
+            f"{test_server}/databrowser/load/freva/",
+            params={"project": "mock"},
+            headers={"Authorization": f"Bearer {token}"},
+            stream=True,
+            timeout=7,
+        )
+        files = list(res3.iter_lines(decode_unicode=True))
+        assert len(files) == 1
+        assert res3.status_code == 201
+
 
 def test_load_files_fail(
     test_server: str, auth: Dict[str, str], mocker: MockerFixture
@@ -232,26 +244,13 @@ def test_load_files_fail(
         headers={"Authorization": f"Bearer {token}"},
         timeout=7,
     )
-    assert res2.status_code in (400, 404)
-    with pytest.warns():
-        for _ in range(2):
-            res3 = requests.get(
-                f"{test_server}/databrowser/load/freva/",
-                params={"project": "mock"},
-                headers={"Authorization": f"Bearer {token}"},
-                stream=True,
-                timeout=7,
-            )
-            files = list(res3.iter_lines(decode_unicode=True))
-            assert len(files) == 1
-            assert res3.status_code == 201
 
 
 def test_no_broker(
     test_server: str, auth: Dict[str, str], mocker: MockerFixture
 ) -> None:
     """Test the behviour if no broker is present."""
-    mocker.patch("freva_rest.utils.base_utils.create_redis_connection", "foo")
+    mocker.patch("freva_rest.utils.base_utils.Cache", "foo")
     res = requests.get(
         f"{test_server}/databrowser/load/freva/",
         params={"dataset": "cmip6-fs"},
@@ -261,9 +260,7 @@ def test_no_broker(
     )
     file = list(res.iter_lines(decode_unicode=True))[0]
     assert "error" in file
-    mocker.patch(
-        "freva_rest.freva_data_portal.endpoints.create_redis_connection", "foo"
-    )
+    mocker.patch("freva_rest.freva_data_portal.endpoints.Cache", "foo")
     res = requests.get(
         f"{test_server}/data-portal/zarr/convert",
         params={"path": ["/foo/bar.nc"]},
@@ -279,41 +276,37 @@ def test_no_cache(
     """Test the behviour if no cache is present."""
 
     _id = encode_path_token("foo.zarr")
-    mocker.patch("freva_rest.utils.base_utils.REDIS_CACHE", None)
-    with mock.patch("freva_rest.utils.base_utils.CONFIG.redis_user", "foo"):
-        res = requests.get(
-            f"{test_server}/data-portal/zarr-utils/status",
-            params={"url": f"{test_server}/data-portal/zarr/foo.zarr"},
-            headers={"Authorization": f"Bearer {auth['access_token']}"},
-            timeout=7,
-        )
-        assert res.status_code == 400
-        res = requests.get(
-            f"{test_server}/data-portal/zarr-utils/status",
-            params={"url": f"{test_server}/data-portal/zarr/{_id}.zarr"},
-            headers={"Authorization": f"Bearer {auth['access_token']}"},
-            timeout=7,
-        )
-        assert res.status_code == 503
-
-    with mock.patch("freva_rest.utils.base_utils.CONFIG.services", ""):
-        with mock.patch.dict(
-            os.environ, {"API_SERVICES": "databrowser"}, clear=False
-        ):
+    checked = Cache._connection_checked
+    try:
+        with mock.patch("freva_rest.utils.base_utils.CONFIG.redis_user", "foo"):
             res = requests.get(
                 f"{test_server}/data-portal/zarr-utils/status",
-                params={"url": f"{test_server}/data-portal/zarr/{_id}.zarr"},
+                params={"url": f"{test_server}/data-portal/zarr/foo.zarr"},
                 headers={"Authorization": f"Bearer {auth['access_token']}"},
                 timeout=7,
             )
-            assert res.status_code == 503
-            res = requests.get(
-                f"{test_server}/data-portal/zarr/convert",
-                params={"path": ["/foo/bar.nc"]},
-                headers={"Authorization": f"Bearer {auth['access_token']}"},
-                timeout=7,
-            )
-            assert res.status_code == 503
+            assert res.status_code == 400
+        Cache._connection_checked = False
+        with mock.patch("freva_rest.utils.base_utils.CONFIG.services", ""):
+            with mock.patch.dict(
+                os.environ, {"API_SERVICES": "databrowser"}, clear=False
+            ):
+                res = requests.get(
+                    f"{test_server}/data-portal/zarr-utils/status",
+                    params={"url": f"{test_server}/data-portal/zarr/{_id}.zarr"},
+                    headers={"Authorization": f"Bearer {auth['access_token']}"},
+                    timeout=7,
+                )
+                assert res.status_code == 503
+                res = requests.get(
+                    f"{test_server}/data-portal/zarr/convert",
+                    params={"path": ["/foo/bar.nc"]},
+                    headers={"Authorization": f"Bearer {auth['access_token']}"},
+                    timeout=7,
+                )
+                assert res.status_code == 503
+    finally:
+        Cache._connection_checked = checked
 
 
 def test_presigend_url(test_server: str, auth: Dict[str, str]) -> None:

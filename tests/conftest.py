@@ -21,13 +21,13 @@ import uvicorn
 from typer.testing import CliRunner
 
 from data_portal_worker.cli import _main as run_data_loader
+from data_portal_worker.load_data import RedisCacheFactory as Cache
 from freva_client.auth import Auth
 from freva_client.utils import logger
 from freva_client.utils.auth_utils import TOKEN_ENV_VAR, Token
 from freva_rest.api import app
 from freva_rest.config import ServerConfig
 from freva_rest.databrowser_api.mock import read_data
-from freva_rest.utils.base_utils import Cache
 
 
 def load_data() -> None:
@@ -112,20 +112,15 @@ def run_loader_process(port: int) -> None:
         run_data_loader(Path(temp_f.name), port=port, dev=True)
 
 
-async def flush_cache() -> None:
-    """Flush the redis cache."""
-    await Cache.check_connection()
-    await Cache.flushdb()
-
-
-async def shutdown_data_loader() -> None:
+def shutdown_data_loader() -> None:
     """Cancel the data loader process."""
-    await Cache.check_connection()
+    cache = Cache()
     for _ in range(5):
-        await Cache.publish(
+        cache.publish(
             "data-portal", json.dumps({"shutdown": True}).encode("utf-8")
         )
         time.sleep(1)
+    cache.flushdb()
 
 
 def _prep_env(**config: str) -> Dict[str, str]:
@@ -141,7 +136,8 @@ def _prep_env(**config: str) -> Dict[str, str]:
 def setup_server() -> Iterator[str]:
     """Start the test server."""
     port = find_free_port()
-    asyncio.run(flush_cache())
+    cache = Cache()
+    cache.flushdb()
     thread1 = threading.Thread(target=run_test_server, args=(port,))
     thread1.daemon = True
     thread1.start()
@@ -308,8 +304,7 @@ def test_server() -> Iterator[str]:
     env["REDIS_PASS"] = os.getenv("API_REDIS_PASSWORD", "")
     with mock.patch.dict(os.environ, env, clear=True):
         yield from setup_server()
-        asyncio.run(shutdown_data_loader())
-        asyncio.run(flush_cache())
+        shutdown_data_loader()
 
 
 @pytest.fixture(scope="function")
