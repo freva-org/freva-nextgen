@@ -255,7 +255,7 @@ async def zemtadata_shared(
     This endpoint returns the metadata about the structure and organization of
     data within the particular zarr store in question.
     """
-    payload = verify_token(token, sig)
+    payload = await verify_token(token, sig)
     return await load_zarr_metadata(payload["_id"], timeout=timeout)
 
 
@@ -395,7 +395,7 @@ async def zgroup_shared(
     organizing and managing the structure of data within a Zarr group,
     allowing users to access and manipulate arrays and subgroups efficiently.
     """
-    payload = verify_token(token, sig)
+    payload = await verify_token(token, sig)
     return await load_zarr_metadata(payload["_id"], ".zgroup", timeout)
 
 
@@ -484,7 +484,7 @@ async def zattrs_shared(
     or arrays, such as descriptions, units, creation dates, or any other
     custom metadata relevant to the data.
     """
-    payload = verify_token(token, sig)
+    payload = await verify_token(token, sig)
     return await load_zarr_metadata(payload["_id"], ".zattrs", timeout)
 
 
@@ -588,5 +588,5 @@ async def chunk_data_shared(
     """Get a zarr array chunk.
 
     This method reads the zarr data."""
-    payload = verify_token(token, sig)
+    payload = await verify_token(token, sig)
     return await load_chunk(payload["_id"], variable, chunk, timeout)

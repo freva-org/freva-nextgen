@@ -39,11 +39,13 @@ from pydantic import AnyHttpUrl, BaseModel, Field
 
 from ..rest import app, server_config
 from ..utils.base_utils import (
+    add_ttl_key_to_db_and_cache,
     b64url_decode,
     decode_path_token,
     encode_path_token,
-    sign_token_path,
+    get_token_from_cache,
 )
+from ..utils.exceptions import EmptyError
 from .oauth2 import auth
 
 # ---------------------------------------------------------------------------
@@ -74,11 +76,15 @@ def path_from_url(path: str) -> str:
     return path
 
 
-def verify_token(token: str, sig_b64: str) -> Dict[str, str]:
+async def verify_token(key: str, slug: str) -> Dict[str, str]:
 
     try:
+        token, sig_b64 = await get_token_from_cache(slug)
         payload_bytes = b64url_decode(token)
         payload = cast(Dict[str, str], json.loads(payload_bytes))
+    except EmptyError as error:
+        raise HTTPException(status_code=403, detail=str(error))
+
     except Exception as exc:
         raise HTTPException(
             status_code=400, detail="Invalid share token payload."
@@ -190,14 +196,14 @@ class PresignUrlResponse(BaseModel):
         ),
     ]
     expires_at: Annotated[
-        int,
+        float,
         Field(
             title="Expiry timestamp",
             description=(
                 "Unix timestamp (seconds since epoch) when the URL "
                 "becomes invalid."
             ),
-            examples=[int(time.time()) + 600],
+            examples=[time.time() + 600],
         ),
     ]
     method: Annotated[
@@ -231,8 +237,8 @@ class PresignUrlResponse(BaseModel):
                     "example": {
                         "url": (
                             "https://api.example.org"
-                            "/api/freva-nextgen/data-portal/zarr/"
-                            "123e4567.zarr"
+                            "/api/freva-nextgen/data-portal/share/"
+                            "MTc2NjEzNzY5Ng/sunny-chestnut-snail.zarr"
                             "?expires=1731600000&sig=AbCdEf..."
                         ),
                         "expires_at": int(time.time()) + 600,
@@ -249,7 +255,7 @@ class PresignUrlResponse(BaseModel):
         },
     },
 )
-def create_presigned_url(
+async def create_presigned_url(
     request: Request,
     body: PresignUrlRequest,
     token: TokenPayload = Security(
@@ -266,16 +272,15 @@ def create_presigned_url(
     path = path_from_url(_normalise_path(str(body.path)))
     # TODO: we should check if the user is allowed to read the dataset.
     ttl = max(MIN_TTL_SECONDS, min(body.ttl_seconds, MAX_TTL_SECONDS))
-    expires_at = int(time.time()) + ttl
-    token, sign = sign_token_path(path, expires_at)
+    res = await add_ttl_key_to_db_and_cache(path, ttl)
     url = (
         f"{server_config.proxy}/api/freva-nextgen/data-portal/share/"
-        f"{sign}/{token}.zarr"
+        f"{res['key']}.zarr"
     )
     return PresignUrlResponse(
         url=cast(AnyHttpUrl, url),
-        token=token,
-        sig=sign,
-        expires_at=expires_at,
+        token=res["token"],
+        sig=res["signature"],
+        expires_at=res["expires_at"].timestamp(),
         method=body.method.upper(),
     )

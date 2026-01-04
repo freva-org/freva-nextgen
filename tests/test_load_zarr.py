@@ -2,11 +2,13 @@
 
 import os
 import time
+from datetime import datetime, timedelta, timezone
 from tempfile import NamedTemporaryFile
 from typing import Dict
 
 import intake
 import mock
+import pymongo
 import pytest
 import requests
 import xarray as xr
@@ -316,7 +318,7 @@ def test_no_cache(
             assert res.status_code == 503
 
 
-def test_presigend_url(test_server: str, auth: Dict[str, str]) -> None:
+def test_presigned_url(test_server: str, auth: Dict[str, str]) -> None:
     """Test pre-signing a url and accessing it."""
 
     res = requests.get(
@@ -340,66 +342,131 @@ def test_presigend_url(test_server: str, auth: Dict[str, str]) -> None:
     assert "ua" in dset.data_vars
 
 
-def test_presigend_url_failed(
-    test_server: str, auth: Dict[str, str], mocker: MockerFixture
+def test_presigned_url_failed(
+    test_server: str,
+    auth: Dict[str, str],
+    mocker: MockerFixture,
 ) -> None:
     """The the functionlity of token/sig verification."""
+    from freva_rest.utils.base_utils import server_config
 
-    res = requests.get(
-        f"{test_server}/databrowser/load/freva/",
-        params={"dataset": "cmip6-fs"},
-        headers={"Authorization": f"Bearer {auth['access_token']}"},
-        timeout=7,
-        stream=True,
-    )
-    assert res.status_code == 201
-    protected_uri = list(res.iter_lines(decode_unicode=True))[0]
-    res = requests.post(
-        f"{test_server}/data-portal/share-zarr",
-        json={"path": protected_uri},
-        headers={"Authorization": f"Bearer {auth['access_token']}"},
-    )
-    assert res.status_code == 201
-    assert "url" in res.json()
-    sig = res.json()["sig"]
+    collection = pymongo.MongoClient(server_config.mongo_url)[
+        server_config.mongo_db
+    ]["zarr_shared_keys"]
+    collection.delete_many({"_id": {"$in": ["foo", "bar", "baz"]}})
+    try:
 
-    token = f'/zarr/{encode_path_token("/work.foo")}.zarr'
-    token_bad, sig_bad = sign_token_path(token, -1)
+        res = requests.get(
+            f"{test_server}/databrowser/load/freva/",
+            params={"dataset": "cmip6-fs"},
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+            timeout=7,
+            stream=True,
+        )
+        assert res.status_code == 201
+        protected_uri = list(res.iter_lines(decode_unicode=True))[0]
+        res = requests.post(
+            f"{test_server}/data-portal/share-zarr",
+            json={"path": protected_uri},
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+        )
+        assert res.status_code == 201
+        assert "url" in res.json()
+        sig = res.json()["sig"]
 
-    # Expired TTL
-    res = requests.get(
-        f"{test_server}/data-portal/share/{sig_bad}/{token_bad}.zarr/.zgroup"
-    )
-    assert res.status_code == 403
-    assert "expired" in res.json()["detail"].lower()
+        token = f'/zarr/{encode_path_token("/work.foo")}.zarr'
+        token_bad, sig_bad = sign_token_path(token, -1)
 
-    # Wrong signature
-    res = requests.get(
-        f"{test_server}/data-portal/share/{sig}/{token_bad}.zarr/.zgroup"
-    )
-    assert res.status_code == 403
-    assert "invalid" in res.json()["detail"].lower()
+        # Missing token
+        res = requests.get(
+            f"{test_server}/data-portal/share/foo/bar.zarr/.zgroup"
+        )
+        assert res.status_code == 403
+        assert "doesn't exist" in res.json()["detail"].lower()
+        # Expiried TTL
+        now = datetime.now(timezone.utc) + timedelta(seconds=120)
+        return_value = {
+            "token": token_bad,
+            "signature": sig_bad,
+            "expires_at": now,
+            "_id": "foo",
+        }
+        collection.replace_one(
+            {
+                "_id": "foo",
+            },
+            return_value,
+            upsert=True,
+        )
 
-    # Wrong path
-    res = requests.post(
-        f"{test_server}/data-portal/share-zarr",
-        json={"path": "foo.zarr"},
-        headers={"Authorization": f"Bearer {auth['access_token']}"},
-    )
-    assert res.status_code == 400
+        res = requests.get(
+            f"{test_server}/data-portal/share/foo/bar.zarr/.zgroup"
+        )
+        assert res.status_code == 403
+        assert "expired" in res.json()["detail"].lower()
+        # Wrong signature
+        return_value = {
+            "token": token_bad,
+            "signature": "bar",
+            "expires_at": now,
+            "_id": "bar",
+        }
+        collection.replace_one(
+            {
+                "_id": "bar",
+            },
+            return_value,
+            upsert=True,
+        )
+        res = requests.get(
+            f"{test_server}/data-portal/share/bar/foo.zarr/.zgroup"
+        )
+        assert res.status_code == 403
+        assert "invalid" in res.json()["detail"].lower()
+        # Wrong token
+        return_value = {
+            "token": "token_bad",
+            "signature": "bar",
+            "expires_at": now,
+            "_id": "baz",
+        }
+        collection.replace_one(
+            {
+                "_id": "baz",
+            },
+            return_value,
+            upsert=True,
+        )
+        res = requests.get(
+            f"{test_server}/data-portal/share/baz/foo.zarr/.zgroup"
+        )
+        assert res.status_code == 400
+        assert "invalid" in res.json()["detail"].lower()
 
-    res = requests.post(
-        f"{test_server}/data-portal/share-zarr",
-        json={"path": "/api/freva-nextgen/data-portal/zarr/foo.zarr"},
-        headers={"Authorization": f"Bearer {auth['access_token']}"},
-    )
-    assert res.status_code == 400
+        # Wrong path
+        res = requests.post(
+            f"{test_server}/data-portal/share-zarr",
+            json={"path": "foo.zarr"},
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+        )
+        assert res.status_code == 400
 
-    res = requests.get(f"{test_server}/data-portal/share/{sig}/foo.zarr/.zgroup")
-    assert res.status_code >= 400
+        res = requests.post(
+            f"{test_server}/data-portal/share-zarr",
+            json={"path": "/api/freva-nextgen/data-portal/zarr/foo.zarr"},
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+        )
+        assert res.status_code == 400
+
+        res = requests.get(
+            f"{test_server}/data-portal/share/{sig}/foo.zarr/.zgroup"
+        )
+        assert res.status_code >= 400
+    finally:
+        collection.delete_many({"_id": {"$in": ["foo", "bar"]}})
 
 
-def test_zarr_token_verification() -> None:
+async def test_zarr_token_verification() -> None:
     """Test the token verification."""
     with pytest.raises(HTTPException, match="Invalid share token"):
-        verify_token("foo", "bar")
+        await verify_token("foob", "bar")

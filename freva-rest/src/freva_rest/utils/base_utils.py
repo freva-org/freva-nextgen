@@ -5,7 +5,7 @@ import hmac
 import json
 import re
 import ssl
-import time
+from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from typing import Any, Awaitable, Dict, List, Optional, Tuple, cast
 
@@ -18,10 +18,22 @@ from freva_rest.config import ServerConfig
 from freva_rest.logger import logger
 from freva_rest.rest import server_config
 
+from .exceptions import EmptyError
+from .namegenerator import generate_names, generate_slug
+
 REDIS_CACHE: Optional[redis.Redis] = None
 CACHING_SERVICES = set(("zarr-stream",))
 """All the services that need the redis cache."""
 CONFIG = ServerConfig()
+
+
+class PresignDict(TypedDict):
+    """The response of the pre sign process."""
+
+    signature: str
+    expires_at: datetime
+    token: str
+    key: str
 
 
 class SystemUserInfo(TypedDict):
@@ -160,7 +172,7 @@ def b64url_decode(s: str) -> bytes:
     return base64.urlsafe_b64decode(s + pad)
 
 
-def sign_token_path(path: str, expires_at: int) -> Tuple[str, str]:
+def sign_token_path(path: str, expires_at: float) -> Tuple[str, str]:
     """Create a base64 encoded token and a signature of that token."""
     secret = server_config.redis_password
     token = encode_path_token(path, expires_at)
@@ -168,7 +180,7 @@ def sign_token_path(path: str, expires_at: int) -> Tuple[str, str]:
     return token, b64url(sig)
 
 
-def encode_path_token(path: str, expires_at: int = 0) -> str:
+def encode_path_token(path: str, expires_at: float = 0.0) -> str:
     """Create a URL-safe token that encodes `path` and expiry.
 
     Returns an opaque id you can embed in a URL or use as "uuid".
@@ -186,6 +198,81 @@ def decode_path_token(token: str) -> str:
     """
     payload = json.loads(b64url_decode(token))
     return cast(str, payload.get("path", ""))
+
+
+async def get_token_from_cache(
+    _id: str, cache: Optional[redis.Redis] = None
+) -> Tuple[str, str]:
+    """Get the token and signature from cache.
+
+    1. Use redis as hot lookup.
+    2. Redis has no entries -> MongoDB lookup
+    3. Add entry back to redis for hot lookup with updated TTL
+    """
+    cache = cache or await create_redis_connection()
+    data = json.loads(
+        await cast(Awaitable[Optional[str]], cache.get(_id)) or "{}"
+    )
+    token, sig = data.get("token"), data.get("signature")
+    if token and sig:
+        return token, sig
+    now = datetime.now(timezone.utc)
+    doc = cast(
+        PresignDict,
+        await server_config.mongo_collection_share_key.find_one({"_id": _id})
+        or {},
+    )
+    print("flof", doc, "bar", server_config.mongo_collection_share_key.find_one)
+    expires_at = doc.get("expires_at", now).replace(tzinfo=timezone.utc)
+    ttl_remaining = expires_at - now
+    if ttl_remaining.total_seconds() <= 0 or not doc:
+        await server_config.mongo_collection_share_key.delete_one({"_id": _id})
+        raise EmptyError("The shared link has expired or doesn't exist.")
+    await cache.set(
+        _id,
+        json.dumps(
+            {
+                "signature": doc["signature"],
+                "token": doc["token"],
+            }
+        ),
+    )
+    await cache.expire(_id, int(ttl_remaining.total_seconds()))
+    ttl = await cache.ttl(_id)
+    logger.debug("Sig %s was added with a new ttl of %i", _id, ttl)
+    return doc["token"], doc["signature"]
+
+
+async def add_ttl_key_to_db_and_cache(
+    path: str, ttl_seconds: int, cache: Optional[redis.Redis] = None
+) -> PresignDict:
+    """Create an entry of a signature."""
+
+    cache = cache or await create_redis_connection()
+    expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl_seconds)
+    token, signature = sign_token_path(path, expires_at.timestamp())
+    _id = generate_slug()
+    mapping = {"signature": signature, "token": token}
+    doc = cast(
+        Optional[PresignDict],
+        await server_config.mongo_collection_share_key.find_one({"_id": _id}),
+    )
+    if not doc or not doc.get("_id"):
+        await server_config.mongo_collection_share_key.replace_one(
+            {"_id": _id},
+            {**{"_id": _id, "expires_at": expires_at}, **mapping},
+            upsert=True,
+        )
+    await cache.set(_id, json.dumps(mapping))
+    await cache.expire(_id, ttl_seconds)
+    ttl = await cache.ttl(_id)
+    logger.debug("Sig %s was added with a ttl of %i", _id, ttl)
+    return PresignDict(
+        key=f"{_id}/{generate_names()}",
+        expires_at=expires_at,
+        token=token,
+        signature=signature,
+    )
 
 
 async def publish_dataset(
@@ -218,7 +305,6 @@ async def publish_dataset(
     """
     cache = cache or await create_redis_connection()
     token = encode_path_token(path)
-    share_token, sig = sign_token_path(path, int(time.time()) + ttl_seconds)
     api_path = f"{server_config.proxy}/api/freva-nextgen/data-portal"
     path = path.replace("file:///", "/")
     if publish:
@@ -227,5 +313,6 @@ async def publish_dataset(
             json.dumps({"uri": {"path": path, "uuid": token}}).encode("utf-8"),
         )
     if public is True:
-        return f"{api_path}/share/{sig}/{share_token}.zarr"
+        res = await add_ttl_key_to_db_and_cache(path, ttl_seconds, cache=cache)
+        return f"{api_path}/share/{res['key']}.zarr"
     return f"{api_path}/zarr/{token}.zarr"
