@@ -5,12 +5,26 @@ import os
 import ssl
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, Literal, Optional, Tuple, TypedDict, cast
+from typing import (
+    Any,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Type,
+    TypedDict,
+    cast,
+)
 
 import cloudpickle
 import redis
 import xarray as xr
 from dask.distributed import Client, LocalCluster
+from redis.backoff import ExponentialBackoff
+from redis.client import PubSub
+from redis.exceptions import ConnectionError, TimeoutError
+from redis.retry import Retry
 from xarray.backends.zarr import encode_zarr_variable
 
 from .backends import load_data
@@ -27,64 +41,67 @@ ZARR_FORMAT = 2
 ZARRAY_JSON = ".zarray"
 
 CLIENT: Optional[Client] = None
-LoadDict = TypedDict(
-    "LoadDict",
-    {
-        "status": Literal[0, 1, 2, 3],
-        "url": str,
-        "obj_path": str,
-        "reason": str,
-        "meta": Optional[Dict[str, Any]],
-        "json_meta": Optional[Dict[str, Any]],
-        "repr_html": str,
-    },
-)
-RedisKw = TypedDict(
-    "RedisKw",
-    {
-        "user": str,
-        "passwd": str,
-        "host": str,
-        "port": int,
-        "ssl_cert": str,
-        "ssl_key": str,
-    },
-)
-RedisConnectionDict = TypedDict(
-    "RedisConnectionDict",
-    {
-        "host": str,
-        "port": int,
-        "db": int,
-        "username": Optional[str],
-        "password": Optional[str],
-        "ssl": bool,
-        "ssl_certfile": Optional[str],
-        "ssl_keyfile": Optional[str],
-        "ssl_ca_certs": Optional[str],
-    },
-)
+RedisError = [
+    ConnectionError,
+    TimeoutError,
+    ConnectionResetError,
+]
+
+
+class LoadDict(TypedDict):
+    """Definition of the job payload."""
+
+    status: Literal[0, 1, 2, 3]
+    url: str
+    obj_path: str
+    reason: str
+    meta: Optional[Dict[str, Any]]
+    json_meta: Optional[Dict[str, Any]]
+    repr_html: str
+
+
+class RedisKw(TypedDict, total=False):
+    """Essential arguments for creating a redis connection."""
+
+    user: str
+    passwd: str
+    host: str
+    port: int
+    ssl_cert: str
+    ssl_key: str
+
+
+class RedisConnectionDict(TypedDict, total=False):
+    """Connection arguments for the Redis connection."""
+
+    host: str
+    port: int
+    db: int
+    username: Optional[str]
+    password: Optional[str]
+    ssl: bool
+    ssl_certfile: Optional[str]
+    ssl_keyfile: Optional[str]
+    ssl_ca_certs: Optional[str]
+    ssl_cert_reqs: ssl.VerifyMode
+    health_check_interval: int
+    retry: Retry
+    retry_on_error: List[Type[Exception]]
+    retry_on_timeout: bool
+    socket_keepalive: bool
 
 
 class RedisCacheFactory(redis.Redis):
     """Define a custom redis cache."""
 
-    def __init__(self, db: int = 0) -> None:
-        self.db = db
+    def __init__(self, db: int = 0, retry_interval: int = 30) -> None:
+        self._db = db
+        self._retry = Retry(ExponentialBackoff(cap=10, base=0.1), retries=25)
+        self._retry_interval = retry_interval
         conn = self.connection_args
+        data_logger.info("Creating redis connection using: %s", conn)
 
-        super().__init__(
-            host=conn["host"],
-            port=conn["port"],
-            db=conn["db"],
-            username=conn["username"],
-            password=conn["password"],
-            ssl=conn["ssl"],
-            ssl_certfile=conn["ssl_certfile"],
-            ssl_keyfile=conn["ssl_keyfile"],
-            ssl_ca_certs=conn["ssl_ca_certs"],
-            ssl_cert_reqs=ssl.CERT_NONE,
-        )
+        super().__init__(**conn)
 
     @property
     def connection_args(self) -> RedisConnectionDict:
@@ -98,13 +115,18 @@ class RedisCacheFactory(redis.Redis):
         return RedisConnectionDict(
             host=host,
             port=port_i,
-            db=self.db,
+            db=self._db,
             username=os.getenv("API_REDIS_USER") or None,
             password=os.getenv("API_REDIS_PASSWORD") or None,
             ssl_certfile=os.getenv("API_REDIS_SSL_CERTFILE") or None,
             ssl_keyfile=os.getenv("API_REDIS_SSL_KEYFILE") or None,
             ssl_ca_certs=os.getenv("API_REDIS_SSL_CERTFILE") or None,
             ssl=os.getenv("API_REDIS_SSL_CERTFILE") is not None,
+            health_check_interval=self._retry_interval,
+            socket_keepalive=True,
+            retry=self._retry,
+            retry_on_error=RedisError + [OSError],
+            retry_on_timeout=True,
         )
 
 
@@ -306,23 +328,41 @@ class ProcessQueue(DataLoadFactory):
         self.client = get_dask_client(dev_mode=dev_mode)
         self.dev_mode = dev_mode
 
-    def run_for_ever(self, channel: str) -> None:
+    def _close_pubsub(
+        self, pubsub: Optional[PubSub], recycle: bool = False
+    ) -> None:
+        if pubsub is not None:
+            try:
+                pubsub.close()
+            except Exception:
+                pass
+
+    def run_for_ever(
+        self, channel: str, backoff_sec: float = 0.2, max_backoff_sec: float = 5.0
+    ) -> None:
         """Start the listener daemon."""
         data_logger.info("Starting data-loading daemon")
-        pubsub = self.cache.pubsub()
-        pubsub.subscribe(channel)
+        pubsub: Optional[PubSub] = None
         data_logger.info("Broker will listen for messages now")
         while True:
-            message = pubsub.get_message()
-            if message and message["type"] == "message":
-                try:
+            try:
+                if pubsub is None:
+                    pubsub = self.cache.pubsub()
+                    pubsub.subscribe(channel)
+                message = pubsub.get_message()
+                if message and message["type"] == "message":
                     self.redis_callback(message["data"])
-                except KeyboardInterrupt:
-                    raise
-                except Exception as error:
-                    data_logger.exception(error)
-            else:
-                time.sleep(0.1)
+                else:
+                    time.sleep(0.1)
+            except KeyboardInterrupt:
+                raise
+            except (*RedisError,):
+                backoff_sec = min(max_backoff_sec, backoff_sec * 2)
+                self._close_pubsub(pubsub)
+                pubsub = None
+                time.sleep(backoff_sec)
+            except Exception as error:
+                data_logger.exception(error)
 
     def redis_callback(
         self,
