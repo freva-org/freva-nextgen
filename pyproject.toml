@@ -1,4 +1,6 @@
 [tool.pytest.ini_options]
+log_cli = false
+log_cli_level = "ERROR"
 env = [
     "API_MONGO_HOST=localhost:27017",
     "API_MONGO_DB=search_stats",
@@ -19,7 +21,6 @@ env = [
     "API_CONFIG={PWD}/freva-rest/src/freva_rest/api_config.toml",
     "JUPYTER_PLATFORM_DIRS=1",
     "FREVA_BATCH_JOB=foo",
-
 ]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
@@ -73,6 +74,7 @@ deps = -e ./freva-rest[tests]
        -e ./freva-client
        -e ./freva-data-portal-worker[full]
        setuptools
+       IPython
 
 commands =
     python3 -m pytest -vv --cov=freva-rest --cov=freva-client --cov=freva-data-portal-worker --cov-report=html:coverage_report --junitxml report.xml --cov-report xml tests/
@@ -83,6 +85,7 @@ deps = -e ./freva-rest[docs]
        -e ./freva-client
        -e ./freva-data-portal-worker[full]
        codespell
+       IPython
 setenv =
     FREVA_CONFIG = {toxinidir}/dev-env/freva.toml
     FREVA_NO_RICH_PANELS = 1
@@ -116,7 +119,6 @@ deps = ./freva-rest
        ./freva-client
        ./freva-data-portal-worker[full]
        mypy
-       motor-stubs
        pytest-stub
        appdirs
 commands_post =

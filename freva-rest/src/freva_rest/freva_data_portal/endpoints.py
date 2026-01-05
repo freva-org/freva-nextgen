@@ -14,7 +14,7 @@ from freva_rest.auth.presign import path_from_url, verify_token
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 from freva_rest.utils.base_utils import (
-    create_redis_connection,
+    Cache,
     encode_path_token,
     publish_dataset,
 )
@@ -111,11 +111,10 @@ async def load_files(
     - **note**: this function does **not** check that the input path exists or
       is readable by; that check occurs asynchronously in the worker.
     """
-    cache = await create_redis_connection()
     try:
-        return LoadResponse(
-            urls=[await publish_dataset(_p, cache=cache) for _p in path]
-        )
+        return LoadResponse(urls=[await publish_dataset(_p) for _p in path])
+    except HTTPException as error:
+        raise HTTPException(detail=error.detail, status_code=error.status_code)
     except Exception as error:
         logger.error("Error while publishing data for zarr-conversion: %s", error)
         raise HTTPException(detail="Internal error.", status_code=500) from error
@@ -165,10 +164,10 @@ async def get_status(
     """Get the status of a loading process."""
     path = path_from_url(url)
     token = encode_path_token(path)
-    cache = await create_redis_connection()
+    await Cache.check_connection()
     status = (
         cloudpickle.loads(
-            await cache.get(token) or cloudpickle.dumps({"status": 5})
+            await Cache.get(token) or cloudpickle.dumps({"status": 5})
         )
     ).get("status", 5)
     return ZarrStatus(status=status, reason=STATUS_LOOKUP.get(status, "Unknown"))

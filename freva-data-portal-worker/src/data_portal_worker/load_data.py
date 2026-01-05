@@ -70,24 +70,9 @@ class RedisCacheFactory(redis.Redis):
     """Define a custom redis cache."""
 
     def __init__(self, db: int = 0) -> None:
-        host, _, port = (
-            (os.environ.get("API_REDIS_HOST") or "localhost")
-            .replace("redis://", "")
-            .partition(":")
-        )
-        port_i = int(port or "6379")
-        conn: RedisConnectionDict = {
-            "host": host,
-            "port": port_i,
-            "db": db,
-            "username": os.getenv("API_REDIS_USER") or None,
-            "password": os.getenv("API_REDIS_PASSWORD") or None,
-            "ssl_certfile": os.getenv("API_REDIS_SSL_CERTFILE") or None,
-            "ssl_keyfile": os.getenv("API_REDIS_SSL_KEYFILE") or None,
-            "ssl_ca_certs": os.getenv("API_REDIS_SSL_CERTFILE") or None,
-            "ssl": os.getenv("API_REDIS_SSL_CERTFILE") is not None,
-        }
-        data_logger.info("Creating redis connection with args: %s", conn)
+        self.db = db
+        conn = self.connection_args
+
         super().__init__(
             host=conn["host"],
             port=conn["port"],
@@ -99,6 +84,27 @@ class RedisCacheFactory(redis.Redis):
             ssl_keyfile=conn["ssl_keyfile"],
             ssl_ca_certs=conn["ssl_ca_certs"],
             ssl_cert_reqs=ssl.CERT_NONE,
+        )
+
+    @property
+    def connection_args(self) -> RedisConnectionDict:
+        """Define the arguments for the redis connection."""
+        host, _, port = (
+            (os.environ.get("API_REDIS_HOST") or "localhost")
+            .replace("redis://", "")
+            .partition(":")
+        )
+        port_i = int(port or "6379")
+        return RedisConnectionDict(
+            host=host,
+            port=port_i,
+            db=self.db,
+            username=os.getenv("API_REDIS_USER") or None,
+            password=os.getenv("API_REDIS_PASSWORD") or None,
+            ssl_certfile=os.getenv("API_REDIS_SSL_CERTFILE") or None,
+            ssl_keyfile=os.getenv("API_REDIS_SSL_KEYFILE") or None,
+            ssl_ca_certs=os.getenv("API_REDIS_SSL_CERTFILE") or None,
+            ssl=os.getenv("API_REDIS_SSL_CERTFILE") is not None,
         )
 
 
