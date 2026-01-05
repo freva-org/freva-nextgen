@@ -74,6 +74,7 @@ deps = -e ./freva-rest[tests]
        -e ./freva-client
        -e ./freva-data-portal-worker[full]
        setuptools
+       IPython
 
 commands =
     python3 -m pytest -vv --cov=freva-rest --cov=freva-client --cov=freva-data-portal-worker --cov-report=html:coverage_report --junitxml report.xml --cov-report xml tests/
@@ -117,7 +118,6 @@ deps = ./freva-rest
        ./freva-client
        ./freva-data-portal-worker[full]
        mypy
-       motor-stubs
        pytest-stub
        appdirs
 commands_post =

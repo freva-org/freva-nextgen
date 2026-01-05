@@ -25,6 +25,7 @@ CACHING_SERVICES = set(("zarr-stream",))
 """All the services that need the redis cache."""
 CONFIG = ServerConfig()
 
+
 class PresignDict(TypedDict):
     """The response of the pre sign process."""
 
@@ -32,6 +33,7 @@ class PresignDict(TypedDict):
     expires_at: datetime
     token: str
     key: str
+
 
 class CacheKwArgs(TypedDict):
     """Connection arguments for the cache."""
@@ -45,6 +47,7 @@ class CacheKwArgs(TypedDict):
     ssl_keyfile: Optional[str]
     ssl_ca_certs: Optional[str]
     db: int
+    ssl_cert_reqs: ssl.VerifyMode
 
 
 class RedisCache(redis.Redis):
@@ -60,6 +63,7 @@ class RedisCache(redis.Redis):
             ssl_certfile=CONFIG.redis_ssl_certfile or None,
             ssl_keyfile=CONFIG.redis_ssl_keyfile or None,
             ssl_ca_certs=CONFIG.redis_ssl_certfile or None,
+            ssl_cert_reqs=ssl.CERT_NONE,
             db=0,
         )
         logger.info("Creating redis connection using: %s", self._kwargs)
@@ -158,55 +162,6 @@ def get_userinfo(
     return cast(SystemUserInfo, output)
 
 
-async def create_redis_connection(
-    cache: Optional[redis.Redis] = REDIS_CACHE,
-) -> redis.Redis:
-    """Reuse a potentially created redis connection."""
-    kwargs = dict(
-        host=CONFIG.redis_url,
-        port=CONFIG.redis_port,
-        username=CONFIG.redis_user or None,
-        password=CONFIG.redis_password or None,
-        ssl=(CONFIG.redis_ssl_certfile or None) is not None,
-        ssl_certfile=CONFIG.redis_ssl_certfile or None,
-        ssl_keyfile=CONFIG.redis_ssl_keyfile or None,
-        ssl_ca_certs=CONFIG.redis_ssl_certfile or None,
-        db=0,
-    )
-    if CACHING_SERVICES - set(CONFIG.services or []) == CACHING_SERVICES:
-        # All services that would need caching are disabled.
-        # If this is the case and we ended up here, we shouldn't be here.
-        # tell the users.
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Service not enabled.",
-        )
-
-    if cache is None:
-        logger.info("Creating redis connection using: %s", kwargs)
-    cache = cache or redis.Redis(
-        host=CONFIG.redis_url,
-        port=CONFIG.redis_port,
-        username=CONFIG.redis_user or None,
-        password=CONFIG.redis_password or None,
-        ssl=(CONFIG.redis_ssl_certfile or None) is not None,
-        ssl_certfile=CONFIG.redis_ssl_certfile or None,
-        ssl_keyfile=CONFIG.redis_ssl_keyfile or None,
-        ssl_ca_certs=CONFIG.redis_ssl_certfile or None,
-        ssl_cert_reqs=ssl.CERT_NONE,
-        db=0,
-    )
-    try:
-        await cast(Awaitable[bool], cache.ping())
-    except Exception as error:
-        logger.error("Cloud not connect to redis cache: %s", error)
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Cache gone.",
-        ) from None
-    return cache
-
-
 def str_to_int(inp_str: Optional[str], default: int) -> int:
     """Convert an integer from a string. If it's not working return default."""
     inp_str = inp_str or ""
@@ -255,6 +210,76 @@ def decode_path_token(token: str) -> str:
     return cast(str, payload.get("path", ""))
 
 
+async def get_token_from_cache(_id: str) -> Tuple[str, str]:
+    """Get the token and signature from cache.
+
+    1. Use redis as hot lookup.
+    2. Redis has no entries -> MongoDB lookup
+    3. Add entry back to redis for hot lookup with updated TTL
+    """
+    await Cache.check_connection()
+    data = json.loads(
+        await cast(Awaitable[Optional[str]], Cache.get(_id)) or "{}"
+    )
+    token, sig = data.get("token"), data.get("signature")
+    if token and sig:
+        return token, sig
+    now = datetime.now(timezone.utc)
+    doc = cast(
+        PresignDict,
+        await server_config.mongo_collection_share_key.find_one({"_id": _id})
+        or {},
+    )
+    expires_at = doc.get("expires_at", now).replace(tzinfo=timezone.utc)
+    ttl_remaining = expires_at - now
+    if ttl_remaining.total_seconds() <= 0 or not doc:
+        await server_config.mongo_collection_share_key.delete_one({"_id": _id})
+        raise EmptyError("The shared link has expired or doesn't exist.")
+    await Cache.set(
+        _id,
+        json.dumps(
+            {
+                "signature": doc["signature"],
+                "token": doc["token"],
+            }
+        ),
+    )
+    await Cache.expire(_id, int(ttl_remaining.total_seconds()))
+    ttl = await Cache.ttl(_id)
+    logger.debug("Sig %s was added with a new ttl of %i", _id, ttl)
+    return doc["token"], doc["signature"]
+
+
+async def add_ttl_key_to_db_and_cache(path: str, ttl_seconds: int) -> PresignDict:
+    """Create an entry of a signature."""
+
+    await Cache.check_connection()
+    expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl_seconds)
+    token, signature = sign_token_path(path, expires_at.timestamp())
+    _id = generate_slug()
+    mapping = {"signature": signature, "token": token}
+    doc = cast(
+        Optional[PresignDict],
+        await server_config.mongo_collection_share_key.find_one({"_id": _id}),
+    )
+    if not doc or not doc.get("_id"):
+        await server_config.mongo_collection_share_key.replace_one(
+            {"_id": _id},
+            {**{"_id": _id, "expires_at": expires_at}, **mapping},
+            upsert=True,
+        )
+    await Cache.set(_id, json.dumps(mapping))
+    await Cache.expire(_id, ttl_seconds)
+    ttl = await Cache.ttl(_id)
+    logger.debug("Sig %s was added with a ttl of %i", _id, ttl)
+    return PresignDict(
+        key=f"{_id}/{generate_names()}",
+        expires_at=expires_at,
+        token=token,
+        signature=signature,
+    )
+
+
 async def publish_dataset(
     path: str,
     public: bool = False,
@@ -267,8 +292,6 @@ async def publish_dataset(
     ----------
     path:
         The path that needs to be converted.
-    cache:
-        An instance of an already established Redis connection.
     public: bool, default: False
         Create a public zarr store.
     ttl_seconds: int, default: 84600
@@ -284,7 +307,6 @@ async def publish_dataset(
     """
     await Cache.check_connection()
     token = encode_path_token(path)
-    share_token, sig = sign_token_path(path, int(time.time()) + ttl_seconds)
     api_path = f"{server_config.proxy}/api/freva-nextgen/data-portal"
     path = path.replace("file:///", "/")
     if publish:
@@ -293,6 +315,6 @@ async def publish_dataset(
             json.dumps({"uri": {"path": path, "uuid": token}}).encode("utf-8"),
         )
     if public is True:
-        res = await add_ttl_key_to_db_and_cache(path, ttl_seconds, cache=cache)
+        res = await add_ttl_key_to_db_and_cache(path, ttl_seconds)
         return f"{api_path}/share/{res['key']}.zarr"
     return f"{api_path}/zarr/{token}.zarr"
