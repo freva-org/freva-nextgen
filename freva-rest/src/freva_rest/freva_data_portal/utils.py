@@ -10,7 +10,7 @@ from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse, Response
 
 from freva_rest.utils.base_utils import (
-    create_redis_connection,
+    Cache,
     decode_path_token,
     publish_dataset,
 )
@@ -46,22 +46,22 @@ async def read_redis_data(
         Wait for timeout seconds until a not found error is risen.
     """
 
-    cache = await create_redis_connection()
+    await Cache.check_connection()
     try:
         path = decode_path_token(token)
     except (UnicodeDecodeError, json.JSONDecodeError):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid path.")
     key = token + token_suffix
-    data: Optional[bytes] = await cache.get(key)
+    data: Optional[bytes] = await Cache.get(key)
     if data is None:
-        await publish_dataset(path, cache=cache, publish=True)
+        await publish_dataset(path, publish=True)
         timeout += 1
     npolls = 0.0
     dt = 0.5
     while data is None:
         npolls += dt
         await asyncio.sleep(dt)
-        data = await cache.get(key)
+        data = await Cache.get(key)
         if npolls >= timeout:
             break
     if data is None:
@@ -108,8 +108,8 @@ async def load_chunk(
             detail="Sub groups are not supported.",
         )
     detail = {"chunk": {"uuid": _id, "variable": variable, "chunk": chunk}}
-    cache = await create_redis_connection()
-    await cache.publish("data-portal", json.dumps(detail).encode("utf-8"))
+    await Cache.check_connection()
+    await Cache.publish("data-portal", json.dumps(detail).encode("utf-8"))
     data: bytes = await read_redis_data(
         _id, token_suffix=f"-{variable}-{chunk}", timeout=timeout
     )
