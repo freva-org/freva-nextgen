@@ -122,6 +122,7 @@ class RedisCacheFactory(redis.Redis):
             ssl_keyfile=os.getenv("API_REDIS_SSL_KEYFILE") or None,
             ssl_ca_certs=os.getenv("API_REDIS_SSL_CERTFILE") or None,
             ssl=os.getenv("API_REDIS_SSL_CERTFILE") is not None,
+            ssl_cert_reqs=ssl.CERT_NONE,
             health_check_interval=self._retry_interval,
             socket_keepalive=True,
             retry=self._retry,
