@@ -85,6 +85,7 @@ deps = -e ./freva-rest[docs]
        -e ./freva-client
        -e ./freva-data-portal-worker[full]
        codespell
+       IPython
 setenv =
     FREVA_CONFIG = {toxinidir}/dev-env/freva.toml
     FREVA_NO_RICH_PANELS = 1
