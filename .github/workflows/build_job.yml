@@ -207,6 +207,11 @@ jobs:
     needs: [tests, build-and-push-image, docs, release-type-determination]
     if: needs.release-type-determination.outputs.is_prerelease == 'false'
     runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
       -
         name: Checkout
@@ -229,7 +234,6 @@ jobs:
         name: publish distribution 📦 to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
           skip-existing: true
           verbose: true
           packages-dir: freva-client/dist
