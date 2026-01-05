@@ -323,8 +323,15 @@ class DataLoadFactory:
 class ProcessQueue(DataLoadFactory):
     """Class that can load datasets on different object stores."""
 
-    def __init__(self, dev_mode: bool = False) -> None:
+    def __init__(
+        self,
+        dev_mode: bool = False,
+        backoff_sec: float = 0.2,
+        max_backoff_sec: float = 5.0,
+    ) -> None:
         super().__init__()
+        self._backoff_sec = backoff_sec
+        self._max_backoff_sec = max_backoff_sec
         self.client = get_dask_client(dev_mode=dev_mode)
         self.dev_mode = dev_mode
 
@@ -332,14 +339,14 @@ class ProcessQueue(DataLoadFactory):
         self, pubsub: Optional[PubSub], recycle: bool = False
     ) -> None:
         if pubsub is not None:
+            self.backoff_sec = min(self._max_backoff_sec, self._backoff_sec * 2)
             try:
                 pubsub.close()
             except Exception:
                 pass
+            time.sleep(self.backoff_sec)
 
-    def run_for_ever(
-        self, channel: str, backoff_sec: float = 0.2, max_backoff_sec: float = 5.0
-    ) -> None:
+    def run_for_ever(self, channel: str) -> None:
         """Start the listener daemon."""
         data_logger.info("Starting data-loading daemon")
         pubsub: Optional[PubSub] = None
@@ -355,12 +362,11 @@ class ProcessQueue(DataLoadFactory):
                 else:
                     time.sleep(0.1)
             except KeyboardInterrupt:
-                raise
-            except (*RedisError,):
-                backoff_sec = min(max_backoff_sec, backoff_sec * 2)
                 self._close_pubsub(pubsub)
-                pubsub = None
-                time.sleep(backoff_sec)
+                raise KeyboardInterrupt("Exiting")
+            except (*RedisError,):
+                self._close_pubsub(pubsub)  # pragma: no cover
+                pubsub = None  # pragma: no cover
             except Exception as error:
                 data_logger.exception(error)
 

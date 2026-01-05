@@ -75,7 +75,10 @@ def test_data_loader_cli(mocker: MockerFixture, loader_config: bytes) -> None:
             ]
         )
         mock_reload.assert_called_once_with(
-            Path.cwd(),
+            Path.cwd()
+            / "freva-data-portal-worker"
+            / "src"
+            / "data_portal_worker",
             target=mock_run,
             args=(Path(temp_f.name),),
             kwargs=dict(
