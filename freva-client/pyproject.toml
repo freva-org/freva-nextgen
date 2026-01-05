@@ -20,6 +20,7 @@ classifiers = [
                "Programming Language :: Python :: 3.11",
                "Programming Language :: Python :: 3.12",
                "Programming Language :: Python :: 3.13",
+               "Programming Language :: Python :: 3.14",
 ]
 requires-python = ">=3.8"
 dependencies = [
@@ -31,6 +32,8 @@ dependencies = [
 "setuptools",
 "tomli",
 "typer",
+"pandas",
+"xarray",
 ]
 [project.scripts]
 freva-client = "freva_client:cli.app"
