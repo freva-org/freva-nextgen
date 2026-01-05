@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>Databrowser Rest API &#8212; Freva Databrowser 2511.0.0 documentation</title>
+    <title>Databrowser Rest API &#8212; Freva Databrowser 2601.0.0 documentation</title>
   
   
   
@@ -49,9 +49,9 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=7ce70c1e"></script>
-    <script src="../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/documentation_options.js?v=d36ad1d6"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>
     <script>let toggleHintShow = 'Click to show';</script>
@@ -135,8 +135,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2511.0.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2511.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2601.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2601.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -561,7 +561,7 @@ curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span
 <span id="databrowser-api-search"></span><h2>Searching for datasets locations<a class="headerlink" href="#searching-for-datasets-locations" title="Link to this heading">#</a></h2>
 <dl class="http get">
 <dt class="sig sig-object http" id="get--api-freva-nextgen-databrowser-data-search-(str-flavour)-(str-uniq_key)">
-<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/databrowser/data-search/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">flavour</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">uniq_key</span></em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-freva-nextgen-databrowser-data-search-(str-flavour)-(str-uniq_key)" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/databrowser/data-search/</span></span><span class="sig-paren">(</span><span class="property"><span class="pre">str:</span> </span><em class="sig-param"><span class="pre">flavour</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/</span></span><span class="sig-paren">(</span><span class="property"><span class="pre">str:</span> </span><em class="sig-param"><span class="pre">uniq_key</span></em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-freva-nextgen-databrowser-data-search-(str-flavour)-(str-uniq_key)" title="Link to this definition">#</a></dt>
 <dd><p>This endpoint allows you to search for climate datasets based on the specified
 Data Reference Syntax (DRS) standard (<cite>flavour</cite>) and the type of search result
 (<cite>uniq_key</cite>), which can be either “file” or “uri”. The <cite>databrowser</cite> method
@@ -737,7 +737,7 @@ effortlessly in the Freva Databrowser REST API!</p>
 <span id="databrowser-api-search-facets"></span><h2>Searching for metadata<a class="headerlink" href="#searching-for-metadata" title="Link to this heading">#</a></h2>
 <dl class="http get">
 <dt class="sig sig-object http" id="get--api-freva-nextgen-databrowser-metadata-search-(str-flavour)-(str-uniq_key)">
-<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/databrowser/metadata-search/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">flavour</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">uniq_key</span></em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-freva-nextgen-databrowser-metadata-search-(str-flavour)-(str-uniq_key)" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/databrowser/metadata-search/</span></span><span class="sig-paren">(</span><span class="property"><span class="pre">str:</span> </span><em class="sig-param"><span class="pre">flavour</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/</span></span><span class="sig-paren">(</span><span class="property"><span class="pre">str:</span> </span><em class="sig-param"><span class="pre">uniq_key</span></em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-freva-nextgen-databrowser-metadata-search-(str-flavour)-(str-uniq_key)" title="Link to this definition">#</a></dt>
 <dd><p>This endpoint allows you to search metadata (facets) based on the
 specified Data Reference Syntax (DRS) standard (<cite>flavour</cite>) and the type of
 search result (<cite>uniq_key</cite>), which can be either <cite>file</cite> or <cite>uri</cite>.
@@ -964,7 +964,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <h2>Generating a STAC Catalogue<a class="headerlink" href="#generating-a-stac-catalogue" title="Link to this heading">#</a></h2>
 <dl class="http get">
 <dt class="sig sig-object http" id="get--api-freva-nextgen-databrowser-stac-catalogue-(str-flavour)-(str-uniq_key)">
-<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/databrowser/stac-catalogue/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">flavour</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">uniq_key</span></em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-freva-nextgen-databrowser-stac-catalogue-(str-flavour)-(str-uniq_key)" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/databrowser/stac-catalogue/</span></span><span class="sig-paren">(</span><span class="property"><span class="pre">str:</span> </span><em class="sig-param"><span class="pre">flavour</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/</span></span><span class="sig-paren">(</span><span class="property"><span class="pre">str:</span> </span><em class="sig-param"><span class="pre">uniq_key</span></em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-freva-nextgen-databrowser-stac-catalogue-(str-flavour)-(str-uniq_key)" title="Link to this definition">#</a></dt>
 <dd><p>This endpoint transforms Freva databrowser search results into a static SpatioTemporal Asset Catalog (STAC).
 STAC is an open standard for geospatial data cataloguing, enabling consistent discovery and access of climate datasets,
 satellite imagery and spatiotemporal data. It provides a common language for describing geospatial information and related metadata.</p>
@@ -1123,7 +1123,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span id="databrowser-api-intake"></span><h2>Generating an intake-esm catalogue<a class="headerlink" href="#generating-an-intake-esm-catalogue" title="Link to this heading">#</a></h2>
 <dl class="http get">
 <dt class="sig sig-object http" id="get--api-freva-nextgen-databrowser-intake-catalogue-(str-flavour)-(str-uniq_key)">
-<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/databrowser/intake-catalogue/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">flavour</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">uniq_key</span></em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-freva-nextgen-databrowser-intake-catalogue-(str-flavour)-(str-uniq_key)" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/databrowser/intake-catalogue/</span></span><span class="sig-paren">(</span><span class="property"><span class="pre">str:</span> </span><em class="sig-param"><span class="pre">flavour</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/</span></span><span class="sig-paren">(</span><span class="property"><span class="pre">str:</span> </span><em class="sig-param"><span class="pre">uniq_key</span></em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-freva-nextgen-databrowser-intake-catalogue-(str-flavour)-(str-uniq_key)" title="Link to this definition">#</a></dt>
 <dd><p>This endpoint generates an intake-esm catalogue in JSON format from a <cite>freva</cite>
 search. The catalogue includes metadata about the datasets found in the search
 results. Intake-esm is a data cataloging system that allows easy organization,
@@ -1410,7 +1410,7 @@ The actual response will include more datasets in the <cite>catalog_dict</cite> 
 
   <p class="copyright">
     
-      © Copyright 2025, DKRZ.
+      © Copyright 2026, DKRZ.
       <br/>
     
   </p>
@@ -1419,7 +1419,7 @@ The actual response will include more datasets in the <cite>catalog_dict</cite> 
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
     <br/>
   </p>
 </div>

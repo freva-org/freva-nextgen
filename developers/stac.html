@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>STAC API &#8212; Freva Databrowser 2511.0.0 documentation</title>
+    <title>STAC API &#8212; Freva Databrowser 2601.0.0 documentation</title>
   
   
   
@@ -49,9 +49,9 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=7ce70c1e"></script>
-    <script src="../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/documentation_options.js?v=d36ad1d6"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>
     <script>let toggleHintShow = 'Click to show';</script>
@@ -134,8 +134,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2511.0.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2511.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2601.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2601.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -768,7 +768,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span id="stacapi-collection-details"></span><h3>Get Collection<a class="headerlink" href="#get-collection" title="Link to this heading">#</a></h3>
 <dl class="http get">
 <dt class="sig sig-object http" id="get--api-freva-nextgen-stacapi-collections-(str-collection_id)">
-<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/stacapi/collections/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">collection_id</span></em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-freva-nextgen-stacapi-collections-(str-collection_id)" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/stacapi/collections/</span></span><span class="sig-paren">(</span><span class="property"><span class="pre">str:</span> </span><em class="sig-param"><span class="pre">collection_id</span></em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-freva-nextgen-stacapi-collections-(str-collection_id)" title="Link to this definition">#</a></dt>
 <dd><p>Get a specific collection by its ID. Returns detailed metadata about
 the collection including its extent, license, and available links.</p>
 <dl class="field-list simple">
@@ -887,7 +887,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span id="stacapi-collection-items"></span><h3>Get Collection Items<a class="headerlink" href="#get-collection-items" title="Link to this heading">#</a></h3>
 <dl class="http get">
 <dt class="sig sig-object http" id="get--api-freva-nextgen-stacapi-collections-(str-collection_id)-items">
-<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/stacapi/collections/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">collection_id</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/items</span></span><a class="headerlink" href="#get--api-freva-nextgen-stacapi-collections-(str-collection_id)-items" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/stacapi/collections/</span></span><span class="sig-paren">(</span><span class="property"><span class="pre">str:</span> </span><em class="sig-param"><span class="pre">collection_id</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/items</span></span><a class="headerlink" href="#get--api-freva-nextgen-stacapi-collections-(str-collection_id)-items" title="Link to this definition">#</a></dt>
 <dd><p>Get items from a specific collection. Items can be filtered using various
 query parameters such as limit, datetime range, and bounding box.</p>
 <dl class="field-list simple">
@@ -1050,7 +1050,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span id="stacapi-collection-item-details"></span><h3>Get Collection Item Details<a class="headerlink" href="#get-collection-item-details" title="Link to this heading">#</a></h3>
 <dl class="http get">
 <dt class="sig sig-object http" id="get--api-freva-nextgen-stacapi-collections-(str-collection_id)-items-(str-item_id)">
-<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/stacapi/collections/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">collection_id</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/items/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">item_id</span></em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-freva-nextgen-stacapi-collections-(str-collection_id)-items-(str-item_id)" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/stacapi/collections/</span></span><span class="sig-paren">(</span><span class="property"><span class="pre">str:</span> </span><em class="sig-param"><span class="pre">collection_id</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/items/</span></span><span class="sig-paren">(</span><span class="property"><span class="pre">str:</span> </span><em class="sig-param"><span class="pre">item_id</span></em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-freva-nextgen-stacapi-collections-(str-collection_id)-items-(str-item_id)" title="Link to this definition">#</a></dt>
 <dd><p>Get a specific item from a collection. Returns detailed metadata about
 the dataset including its geometry, properties, assets, and links.</p>
 <dl class="field-list simple">
@@ -1609,7 +1609,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span id="stacapi-collection-queryables"></span><h3>Collection Queryables<a class="headerlink" href="#collection-queryables" title="Link to this heading">#</a></h3>
 <dl class="http get">
 <dt class="sig sig-object http" id="get--api-freva-nextgen-stacapi-collections-(str-collection_id)-queryables">
-<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/stacapi/collections/</span></span><span class="sig-paren">(</span><em class="property"><span class="pre">str:</span> </em><em class="sig-param"><span class="pre">collection_id</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/queryables</span></span><a class="headerlink" href="#get--api-freva-nextgen-stacapi-collections-(str-collection_id)-queryables" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/stacapi/collections/</span></span><span class="sig-paren">(</span><span class="property"><span class="pre">str:</span> </span><em class="sig-param"><span class="pre">collection_id</span></em><span class="sig-paren">)</span><span class="sig-name descname"><span class="pre">/queryables</span></span><a class="headerlink" href="#get--api-freva-nextgen-stacapi-collections-(str-collection_id)-queryables" title="Link to this definition">#</a></dt>
 <dd><p>Get collection-specific queryables schema. Returns a JSON Schema document
 describing the properties available for filtering items in a specific collection.</p>
 <dl class="field-list simple">
@@ -1829,7 +1829,7 @@ Python with pystac-client</li></ul><div class="tab codetab selected" data-id="0"
 
   <p class="copyright">
     
-      © Copyright 2025, DKRZ.
+      © Copyright 2026, DKRZ.
       <br/>
     
   </p>
@@ -1838,7 +1838,7 @@ Python with pystac-client</li></ul><div class="tab codetab selected" data-id="0"
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
     <br/>
   </p>
 </div>
