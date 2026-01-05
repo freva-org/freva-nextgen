@@ -23,7 +23,7 @@ import xarray as xr
 from dask.distributed import Client, LocalCluster
 from redis.backoff import ExponentialBackoff
 from redis.client import PubSub
-from redis.exceptions import ConnectionError, TimeoutError
+from redis.exceptions import RedisError
 from redis.retry import Retry
 from xarray.backends.zarr import encode_zarr_variable
 
@@ -41,11 +41,6 @@ ZARR_FORMAT = 2
 ZARRAY_JSON = ".zarray"
 
 CLIENT: Optional[Client] = None
-RedisError = [
-    ConnectionError,
-    TimeoutError,
-    ConnectionResetError,
-]
 
 
 class LoadDict(TypedDict):
@@ -126,7 +121,7 @@ class RedisCacheFactory(redis.Redis):
             health_check_interval=self._retry_interval,
             socket_keepalive=True,
             retry=self._retry,
-            retry_on_error=RedisError + [OSError],
+            retry_on_error=[RedisError, OSError],
             retry_on_timeout=True,
         )
 
@@ -365,7 +360,7 @@ class ProcessQueue(DataLoadFactory):
             except KeyboardInterrupt:
                 self._close_pubsub(pubsub)
                 raise KeyboardInterrupt("Exiting")
-            except (*RedisError,):
+            except RedisError:
                 self._close_pubsub(pubsub)  # pragma: no cover
                 pubsub = None  # pragma: no cover
             except Exception as error:
