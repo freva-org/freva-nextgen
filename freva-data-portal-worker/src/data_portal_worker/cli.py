@@ -7,7 +7,7 @@ import os
 from base64 import b64decode
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List, Optional, Union, cast
+from typing import List, Optional, Union
 
 import appdirs
 from watchfiles import run_process
@@ -47,11 +47,14 @@ def get_redis_config(
             data_logger.warning(
                 "Could not decode file: %s: %s", config_file, error
             )
-    cache_config.setdefault("user", redis_user or "")
-    cache_config.setdefault("passwd", redis_password or "")
-    cache_config.setdefault("ssl_key", read_file_content(redis_ssl_keyfile))
-    cache_config.setdefault("ssl_cert", read_file_content(redis_ssl_certfile))
-    return cast(RedisKw, cache_config)
+    return RedisKw(
+        user=cache_config.get("user", redis_user or ""),
+        passwd=cache_config.get("passwd", redis_password or ""),
+        ssl_key=cache_config.get("ssl_key", read_file_content(redis_ssl_keyfile)),
+        ssl_cert=cache_config.get(
+            "ssl_cert", read_file_content(redis_ssl_certfile)
+        ),
+    )
 
 
 def _main(
@@ -213,7 +216,7 @@ def run_data_loader(argv: Optional[List[str]] = None) -> None:
     }
     if args.dev:
         run_process(
-            Path.cwd(),
+            Path(__file__).parent,
             target=_main,
             args=(args.config_file.expanduser(),),
             kwargs=kwargs,

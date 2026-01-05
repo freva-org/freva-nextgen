@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v2601.0.0]
+### Added
+- Faster redis connections.
+- Better pre-sigend public zarr-store urls.
+- Lazy import of 'slow' dependencies.
+- Fix issues #65 - recycling redis connections.
+
 ## [v2511.0.0]
 ### Added
 - Support for creating public pre-sigend zarr stores.
