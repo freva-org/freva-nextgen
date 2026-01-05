@@ -19,11 +19,7 @@ from typing import (
     cast,
 )
 
-import intake
-import intake_esm
-import pandas as pd
 import requests
-import xarray as xr
 import yaml
 from rich import print as pprint
 
@@ -36,6 +32,7 @@ from .utils.auth_utils import (
     requires_authentication,
 )
 from .utils.databrowser_utils import Config, UserDataHandler
+from .utils.lazy import intake, intake_esm, pd, xr
 from .utils.types import ZarrOptionsDict
 
 __all__ = ["databrowser"]
@@ -463,7 +460,7 @@ class databrowser:
             token = self._auth.authenticate(config=self._cfg)
         return token
 
-    def intake_catalogue(self) -> intake_esm.core.esm_datastore:
+    def intake_catalogue(self) -> "intake_esm.core.esm_datastore":
         """Create an intake esm catalogue object from the search.
 
         This method creates a intake-esm catalogue from the current object
@@ -715,7 +712,7 @@ class databrowser:
         return counts
 
     @cached_property
-    def metadata(self) -> pd.DataFrame:
+    def metadata(self) -> "pd.DataFrame":
         """Get the metadata (facets) for the current databrowser query.
 
         You can retrieve all information that is associated with your current
@@ -774,7 +771,7 @@ class databrowser:
         fail_on_error: bool = False,
         extended_search: bool = False,
         **search_keys: Union[str, List[str]],
-    ) -> pd.DataFrame:
+    ) -> "pd.DataFrame":
         """Search for data attributes (facets) in the databrowser.
 
         The method queries the databrowser for available search facets (keys)
@@ -1020,7 +1017,7 @@ class databrowser:
     def userdata(
         cls,
         action: Literal["add", "delete"],
-        userdata_items: Optional[List[Union[str, xr.Dataset]]] = None,
+        userdata_items: Optional[List[Union[str, "xr.Dataset"]]] = None,
         metadata: Optional[Dict[str, str]] = None,
         host: Optional[str] = None,
         fail_on_error: bool = False,
