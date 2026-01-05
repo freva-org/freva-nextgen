@@ -7,11 +7,14 @@ import re
 import ssl
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
-from typing import Any, Awaitable, Dict, List, Optional, Tuple, cast
+from typing import Any, Awaitable, Dict, List, Optional, Tuple, Type, cast
 
 import jwt
 import redis.asyncio as redis
 from fastapi import HTTPException, status
+from redis.asyncio.retry import Retry
+from redis.backoff import ExponentialBackoff
+from redis.exceptions import RedisError
 from typing_extensions import NotRequired, TypedDict
 
 from freva_rest.config import ServerConfig
@@ -35,7 +38,7 @@ class PresignDict(TypedDict):
     key: str
 
 
-class CacheKwArgs(TypedDict):
+class CacheKwArgs(TypedDict, total=False):
     """Connection arguments for the cache."""
 
     host: str
@@ -48,12 +51,17 @@ class CacheKwArgs(TypedDict):
     ssl_ca_certs: Optional[str]
     db: int
     ssl_cert_reqs: ssl.VerifyMode
+    health_check_interval: int
+    retry: Retry
+    retry_on_error: List[Type[Exception]]
+    retry_on_timeout: bool
+    socket_keepalive: bool
 
 
 class RedisCache(redis.Redis):
     """Define a custom redis cache."""
 
-    def __init__(self, db: int = 0) -> None:
+    def __init__(self, db: int = 0, retry_interval: int = 30) -> None:
         self._kwargs = CacheKwArgs(
             host=CONFIG.redis_url,
             port=CONFIG.redis_port,
@@ -64,7 +72,12 @@ class RedisCache(redis.Redis):
             ssl_keyfile=CONFIG.redis_ssl_keyfile or None,
             ssl_ca_certs=CONFIG.redis_ssl_certfile or None,
             ssl_cert_reqs=ssl.CERT_NONE,
-            db=0,
+            db=db,
+            health_check_interval=retry_interval,
+            socket_keepalive=True,
+            retry=Retry(ExponentialBackoff(cap=10, base=0.1), retries=25),
+            retry_on_error=[RedisError, TimeoutError, OSError],
+            retry_on_timeout=True,
         )
         logger.info("Creating redis connection using: %s", self._kwargs)
         self._connection_checked = False
