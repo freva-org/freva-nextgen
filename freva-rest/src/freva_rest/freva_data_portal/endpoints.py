@@ -24,6 +24,9 @@ from .utils import (
     load_chunk,
     load_zarr_metadata,
     read_redis_data,
+    ZARRAY_JSON,
+    ZGROUP_JSON,
+    ZATTRS_JSON,
 )
 
 
@@ -588,4 +591,181 @@ async def chunk_data_shared(
 
     This method reads the zarr data."""
     payload = await verify_token(token, sig)
-    return await load_chunk(payload["_id"], variable, chunk, timeout)
+   @app.get(
+    "/api/freva-nextgen/data-portal/zarr/{token}.zarr/{zarr_key:path}",
+    tags=["Load data"],
+)
+async def zarr_key_data(
+    token: Annotated[
+        str,
+        Path(
+            title="token",
+            description=(
+                (
+                    "The token that was generated, when task to stream data "
+                    "was created."
+                )
+            ),
+        ),
+    ],
+    zarr_key: Annotated[
+        str,
+        Path(
+            title="zarr_key",
+            description=(
+                "A slash-separated key within the zarr store.  Clients like "
+                "xarray and zarr will request keys such as '.zmetadata', "
+                "'var/.zarray', 'group/var/0.0.0', etc.  This endpoint will "
+                "dispatch to the appropriate handler based on the key suffix."
+            ),
+        ),
+    ],
+    timeout: Annotated[
+        int,
+        Query(
+            alias="timeout",
+            title="Cache timeout for getting results.",
+            description="Set a timeout to wait for results.",
+            ge=0,
+            le=1500,
+        ),
+    ] = 1,
+    current_user: TokenPayload = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
+) -> Response:
+    """
+    Serve arbitrary Zarr metadata or chunk keys.
+
+    Zarr clients access stores by issuing HTTP GET requests on a hierarchy of
+    keys rather than downloading a single monolithic file.  This endpoint
+    enables clients to access any key under the `{token}.zarr` namespace,
+    whether it refers to root-level metadata (e.g. `.zmetadata`, `.zgroup`,
+    `.zattrs`), variable-specific metadata (e.g. `tas/.zarray`), or data
+    chunks (e.g. `tas/0.0.0`).  For root-level metadata keys we call
+    ``load_zarr_metadata``, and for all other keys we delegate to
+    ``load_chunk`` using the parent path as the variable and the final
+    segment as the chunk identifier.
+    """
+    # Root-level keys: `.zmetadata`, `.zgroup` and `.zattrs` have no
+    # variable context and therefore need special handling.  We explicitly
+    # check for these cases and call the appropriate metadata loader.
+    if zarr_key == ".zmetadata":
+        return await load_zarr_metadata(token, timeout=timeout)
+    if zarr_key == ZGROUP_JSON:
+        return await load_zarr_metadata(token, ZGROUP_JSON, timeout)
+    if zarr_key == ZATTRS_JSON:
+        return await load_zarr_metadata(token, ZATTRS_JSON, timeout)
+    if zarr_key == ZARRAY_JSON or zarr_key == ZATTRS_JSON:
+        # Requests like `/.../.zarray` or `/.../.zattrs` at the root level are
+        # invalid because a variable path is required.  Return a descriptive
+        # error rather than delegating to the chunk loader, which would
+        # misinterpret these keys.
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A variable name must precede .zarray or .zattrs",
+        )
+    # The remaining keys must include at least one slash to separate the
+    # variable path from the final chunk or metadata suffix.  Without a
+    # slash, the request is malformed.
+    if "/" not in zarr_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Invalid zarr key: expected a slash-separated variable/chunk "
+                f"path. Received '{zarr_key}'."
+            ),
+        )
+    parts = zarr_key.split("/")
+    variable = "/".join(parts[:-1])
+    chunk = parts[-1]
+    # Delegate to load_chunk.  It will detect `.zarray` and `.zattrs`
+    # requests at the variable level and return the metadata accordingly,
+    # otherwise it will stream the requested data chunk.
+    return await load_chunk(token, variable, chunk, timeout)
+
+@app.get(
+    "/api/freva-nextgen/data-portal/share/{sig}/{token}.zarr/{zarr_key:path}",
+    tags=["Load data"],
+)
+async def zarr_key_data_shared(
+    sig: Annotated[
+        str,
+        Path(
+            title="Signature",
+            description=(
+                "The signature which was created by the /share-zarr endpoint."
+            ),
+        ),
+    ],
+    token: Annotated[
+        str,
+        Path(
+            title="token",
+            description=(
+                (
+                    "The token that was generated, when task to stream data "
+                    "was created."
+                )
+            ),
+        ),
+    ],
+    zarr_key: Annotated[
+        str,
+        Path(
+            title="zarr_key",
+            description=(
+                "A slash-separated key within the zarr store.  Clients like "
+                "xarray and zarr will request keys such as '.zmetadata', "
+                "'var/.zarray', 'group/var/0.0.0', etc.  This endpoint will "
+                "dispatch to the appropriate handler based on the key suffix."
+            ),
+        ),
+    ],
+    timeout: Annotated[
+        int,
+        Query(
+            alias="timeout",
+            title="Cache timeout for getting results.",
+            description="Set a timeout to wait for results.",
+            ge=0,
+            le=1500,
+        ),
+    ] = 1,
+) -> Response:
+    """
+    Serve arbitrary Zarr metadata or chunk keys for shared datasets.
+
+    This endpoint mirrors ``zarr_key_data`` but first verifies the provided
+    signature and decodes the token before dispatching.  The remainder of
+    the logic is identical to the non-shared catch-all route.
+    """
+    payload = await verify_token(token, sig)
+    _id = payload["_id"]
+    # Handle root-level metadata keys
+    if zarr_key == ".zmetadata":
+        return await load_zarr_metadata(_id, timeout=timeout)
+    if zarr_key == ZGROUP_JSON:
+        return await load_zarr_metadata(_id, ZGROUP_JSON, timeout)
+    if zarr_key == ZATTRS_JSON:
+        return await load_zarr_metadata(_id, ZATTRS_JSON, timeout)
+    if zarr_key == ZARRAY_JSON or zarr_key == ZATTRS_JSON:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A variable name must precede .zarray or .zattrs",
+        )
+    if "/" not in zarr_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Invalid zarr key: expected a slash-separated variable/chunk "
+                f"path. Received '{zarr_key}'."
+            ),
+        )
+    parts = zarr_key.split("/")
+    variable = "/".join(parts[:-1])
+    chunk = parts[-1]
+    return await load_chunk(_id, variable, chunk, timeout)
+ return await load_chunk(payload["_id"], variable, chunk, timeout)
+
+
