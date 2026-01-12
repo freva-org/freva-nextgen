@@ -331,3 +331,50 @@ async def publish_dataset(
         res = await add_ttl_key_to_db_and_cache(path, ttl_seconds)
         return f"{api_path}/share/{res['key']}.zarr"
     return f"{api_path}/zarr/{token}.zarr"
+
+
+async def publish_aggregation(
+    paths: list[str],
+    assembly: Optional[Dict[str, Any]] = None,
+    public: bool = False,
+    ttl_seconds: int = 86400,
+    publish: bool = False,
+) -> str:
+    """
+    Publish a collection of paths for aggregation and conversion to zarr.
+
+    Parameters
+    ----------
+    paths:
+        A sequence of file paths to aggregate into one dataset.
+    assembly: dict, optional
+        A plan dict describing how to aggregate the datasets.
+        If None, the worker will infer a plan.
+    public: bool, default False
+        Create a public zarr store.
+    ttl_seconds: int, default 86400
+        TTL of the public zarr url, if any.
+    publish: bool, default False
+        Send the loading instruction to the broker.
+
+    Returns
+    -------
+    str
+        The url to the aggregated zarr endpoint.
+    """
+    # Normalize the paths by removing the file scheme
+    norm_paths = [p.replace("file:///", "/") for p in paths]
+    # Generate a token based on the concatenated paths
+    token = encode_path_token(",".join(norm_paths))
+    api_path = f"{server_config.proxy}/api/freva-nextgen/data-portal"
+    # Publish message to the broker if requested
+    if publish:
+        message: Dict[str, Any] = {"paths": {"paths": norm_paths, "uuid": token}}
+        if assembly is not None:
+            message["paths"]["assembly"] = assembly
+        await Cache.publish(
+            "data-portal",
+            json.dumps(message).encode("utf-8"),
+        )
+    # Note: public sharing of aggregated datasets is not implemented yet
+    return f"{api_path}/zarr/{token}.zarr"
