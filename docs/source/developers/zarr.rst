@@ -305,6 +305,80 @@ Request asynchronous Zarr conversion
               headers = headers,
               query = query,
             )
+Generic Zarr key retrieval
+--------------------------
+
+In addition to the specific metadata and chunk routes listed above, the
+data portal also exposes a catch‑all endpoint that serves arbitrary keys
+from a Zarr store.  This interface is compatible with remote storage
+backends used by :mod:`xarray` and :mod:`zarr`, allowing clients to
+access consolidated metadata, per‑variable metadata and individual chunk
+payloads via HTTP.
+
+.. http:get:: /api/freva-nextgen/data-portal/zarr/{token}.zarr/{zarr_key}
+    :synopsis: Retrieve arbitrary metadata or chunk from a remote Zarr store
+
+    Retrieve metadata or chunk data from the store identified by ``token``.
+    The ``zarr_key`` parameter must contain the slash‑separated key within
+    the Zarr store.  The following conventions apply:
+
+    * Root‑level keys such as ``.zmetadata``, ``.zgroup`` and ``.zattrs``
+      return the consolidated metadata, group information and attributes
+      for the entire store.  These keys have no variable prefix.
+    * Keys of the form ``<variable>/.zarray`` and ``<variable>/.zattrs``
+      return the array encoding and variable attributes for the specified
+      variable.  Replace ``<variable>`` with the actual variable name.
+    * Data chunk keys use the pattern ``<variable>/<chunk>`` where
+      ``chunk`` encodes the chunk indices separated by dots.  For
+      example, ``tas/0.0.0`` requests the first chunk of the variable
+      ``tas``.
+
+    :param token: Unique identifier returned by the load endpoint when a
+       dataset has been registered for streaming.  Each token corresponds
+       to one Zarr store.
+    :param zarr_key: Slash‑separated key within the Zarr store.  Refer
+       to the descriptions above for valid patterns.
+
+    :status 200: The requested metadata or chunk was found and is
+       returned in the response body.
+    :status 400: The key is malformed or refers to a metadata file that
+       requires a variable context (for example ``foo/.zarray`` at the
+       root level).
+    :status 404: The requested key does not exist in the store.
+
+    **Example**
+
+    To retrieve the consolidated metadata for a store, use ``.zmetadata``
+    as the key::
+
+        curl -X GET \
+            "https://api.freva.de/api/freva-nextgen/data-portal/zarr/<token>.zarr/.zmetadata"
+
+    You can open a remote store directly in :mod:`xarray` using the
+    :mod:`fsspec` interface::
+
+        import fsspec
+        import xarray as xr
+
+        mapper = fsspec.get_mapper(
+            "https://api.freva.de/api/freva-nextgen/data-portal/zarr/<token>.zarr"
+        )
+        dset = xr.open_zarr(mapper, consolidated=True)
+        dset.load()
+
+.. http:get:: /api/freva-nextgen/data-portal/share/{sig}/{token}.zarr/{zarr_key}
+    :synopsis: Retrieve arbitrary metadata or chunk from a shared Zarr store
+
+    This endpoint mirrors the behaviour of the previous one but requires
+    a valid ``sig`` parameter obtained from :http:post:`share-zarr`.  The
+    signature authenticates the request and maps to the underlying token.
+
+    **Example**
+
+    Retrieve the consolidated metadata for a shared store::
+
+        curl -X GET \
+            "https://api.freva.de/api/freva-nextgen/data-portal/share/<sig>/<token>.zarr/.zmetadata"
             zarr_locations = JSON.parse(String(response.body))["urls"]
 
         .. code-tab:: c
