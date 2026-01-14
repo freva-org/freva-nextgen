@@ -22,6 +22,11 @@ from fastapi_third_party_auth import IDToken as TokenPayload
 
 from freva_rest.auth import auth
 from freva_rest.auth.presign import MAX_TTL_SECONDS, MIN_TTL_SECONDS
+from freva_rest.freva_data_portal.utils import (
+    AggregationPlan,
+    ConcatOptions,
+    MergeOptions,
+)
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 
@@ -385,6 +390,86 @@ async def load_data(
             le=MAX_TTL_SECONDS,
         ),
     ] = 86400,
+    aggregate: Annotated[
+        Optional[Literal["auto", "merge", "concat"]],
+        Query(
+            title="Aggregte Data",
+            description=(
+                "If data needs to be aggregated, "
+                "instruct which aggregation method should be used  "
+                "(auto, merge or concat). If set to auto the system will "
+                "try to infer a plan."
+            ),
+            examples=["concat"],
+        ),
+    ] = None,
+    join: Annotated[
+        Optional[Literal["outer", "inner", "exact", "left", "right"]],
+        Query(
+            title="Join Mode",
+            description=(
+                "How to align coordinate indexes across inputs "
+                "(outer, inner, exact, left, right)."
+            ),
+            examples=["inner"],
+        ),
+    ] = None,
+    compat: Annotated[
+        Optional[Literal["no_conflicts", "equals", "override"]],
+        Query(
+            title="Compat Mode",
+            description=(
+                "How to treat variables with same name. "
+                " choose from: equals, no_conflicts, override."
+            ),
+            examples=["no_conflicts"],
+        ),
+    ] = None,
+    data_vars: Annotated[
+        Optional[Literal["minimal", "different", "all"]],
+        Query(
+            title="Variable concat.",
+            alias="data-vars",
+            description=(
+                "Which data variables to concatenate (minimal, different, all)"
+            ),
+            examples=["minimal"],
+        ),
+    ] = None,
+    coords: Annotated[
+        Optional[Literal["minimal", "different", "all"]],
+        Query(
+            title="Coordinate concat.",
+            description=(
+                "Which data coordinates to concatenate (minimal, different, all)"
+            ),
+            examples=["minimal"],
+        ),
+    ] = None,
+    dim: Annotated[
+        Optional[str],
+        Query(
+            title="Dim",
+            description=(
+                "Dimension to concatenate along. If it does not exist,"
+                "a new dimension is created."
+            ),
+            examples=["tas"],
+        ),
+    ] = None,
+    group_by: Annotated[
+        Optional[str],
+        Query(
+            title="Group by",
+            alias="group-by",
+            description=(
+                "If set, forces grouping by a signature key. "
+                "Otherwise grouping is attempted only when direct combine "
+                "fails."
+            ),
+            examples=["ensemble"],
+        ),
+    ] = None,
     request: Request = Required,
     current_user: TokenPayload = Security(
         auth.create_auth_dependency(), scopes=["oidc.claims"]
@@ -413,17 +498,43 @@ async def load_data(
         translate=translate,
         current_user=current_user,
         **SolrSchema.process_parameters(
-            request, "catalogue-type", "ttl_seconds", "public"
+            request,
+            "catalogue-type",
+            "ttl_seconds",
+            "public",
+            "aggregate",
+            "join",
+            "compat",
+            "data-vars",
+            "coords",
+            "dim",
+            "group-by",
         ),
     )
     _, total_count = await solr_search.init_stream()
     status_code = status.HTTP_201_CREATED
+    aggregation_plan = AggregationPlan(
+        mode=aggregate,
+        concat=ConcatOptions(
+            dim=dim,
+            compat=compat,
+            join=join,
+            data_vars=data_vars,
+            coords=coords,
+        ),
+        merge=MergeOptions(compat=compat, join=join),
+        group_by=group_by,
+    )
     if total_count < 1:
         status_code = status.HTTP_400_BAD_REQUEST
     await solr_search.store_results(total_count, status_code)
     return StreamingResponse(
         solr_search.zarr_response(
-            catalogue_type, total_count, public=public, ttl_seconds=ttl_seconds
+            catalogue_type,
+            total_count,
+            public=public,
+            ttl_seconds=ttl_seconds,
+            aggregation_plan=aggregation_plan,
         ),
         status_code=status_code,
         media_type="text/plain",

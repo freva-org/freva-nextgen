@@ -2,11 +2,14 @@
 
 import logging
 import os
+from collections.abc import Mapping
+from html import escape
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from socket import gethostname
-from typing import Optional
+from typing import Optional, Union
 
+import xarray as xr
 from platformdirs import user_log_dir
 
 try:
@@ -49,3 +52,46 @@ def str_to_int(inp: Optional[str], default: int) -> int:
         return int(inp)
     except (TypeError, ValueError):
         return default
+
+
+XrGroups = Mapping[str, xr.Dataset]
+
+
+def xr_repr_html(
+    groups: XrGroups, *, title: str | None = None, open_first: bool = True
+) -> str:
+    """
+    Return HTML for either:
+      - a single xarray.Dataset (native ds._repr_html_())
+      - a mapping of named group datasets rendered as <details> accordions
+
+    The returned HTML is self-contained and can be stored/transmitted.
+    """
+    if not groups:
+        return "<div class='xr-groups-empty'><i>(no groups)</i></div>"
+    parts: list[str] = []
+    if title:
+        parts.append(f"<h3 style='margin:0 0 .5rem 0'>{escape(title)}</h3>")
+
+    parts.append("<div class='xr-groups' style='margin-top:.25rem'>")
+
+    first = True
+    for name, ds in groups.items():
+        ds_html = ds._repr_html_().replace("xarray.Dataset", "Dataset")  # type: ignore[attr-defined]
+        is_open = " open" if (open_first and first) else ""
+        first = False
+
+        parts.append(
+            "<details style='margin:.35rem 0; border:1px solid #ddd; "
+            "border-radius:6px; padding:.35rem .5rem'"
+            f"{is_open}>"
+            "<summary style='cursor:pointer; font-weight:600'>"
+            f"Group: {escape(str(name))}</summary>"
+            "<div style='margin-top:.35rem'>"
+            f"{ds_html}"
+            "</div>"
+            "</details>"
+        )
+
+    parts.append("</div>")
+    return "".join(parts)

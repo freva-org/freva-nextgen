@@ -7,7 +7,7 @@ import re
 import ssl
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
-from typing import Any, Awaitable, Dict, List, Optional, Tuple, Type, cast
+from typing import Any, Awaitable, Dict, List, Optional, Tuple, Type, Union, cast
 
 import jwt
 import redis.asyncio as redis
@@ -195,7 +195,9 @@ def b64url_decode(s: str) -> bytes:
     return base64.urlsafe_b64decode(s + pad)
 
 
-def sign_token_path(path: str, expires_at: float) -> Tuple[str, str]:
+def sign_token_path(
+    path: Union[str, List[str]], expires_at: float
+) -> Tuple[str, str]:
     """Create a base64 encoded token and a signature of that token."""
     secret = server_config.redis_password
     token = encode_path_token(path, expires_at)
@@ -203,7 +205,9 @@ def sign_token_path(path: str, expires_at: float) -> Tuple[str, str]:
     return token, b64url(sig)
 
 
-def encode_path_token(path: str, expires_at: float = 0.0) -> str:
+def encode_path_token(
+    path: Union[str, List[str]], expires_at: float = 0.0
+) -> str:
     """Create a URL-safe token that encodes `path` and expiry.
 
     Returns an opaque id you can embed in a URL or use as "uuid".
@@ -263,7 +267,9 @@ async def get_token_from_cache(_id: str) -> Tuple[str, str]:
     return doc["token"], doc["signature"]
 
 
-async def add_ttl_key_to_db_and_cache(path: str, ttl_seconds: int) -> PresignDict:
+async def add_ttl_key_to_db_and_cache(
+    path: Union[List[str], str], ttl_seconds: int
+) -> PresignDict:
     """Create an entry of a signature."""
 
     await Cache.check_connection()
@@ -291,46 +297,6 @@ async def add_ttl_key_to_db_and_cache(path: str, ttl_seconds: int) -> PresignDic
         token=token,
         signature=signature,
     )
-
-
-async def publish_dataset(
-    path: str,
-    public: bool = False,
-    ttl_seconds: int = 86400,
-    publish: bool = False,
-) -> str:
-    """Publish a path on disk for zarr conversion to the broker.
-
-    Parameters
-    ----------
-    path:
-        The path that needs to be converted.
-    public: bool, default: False
-        Create a public zarr store.
-    ttl_seconds: int, default: 84600
-        TTL of the public zarr url, if any
-    publish: bool, default: False
-        Send the loading instruction to the broker.
-
-    Returns
-    -------
-    str:
-        The url to the converted zarr endpoint
-
-    """
-    await Cache.check_connection()
-    token = encode_path_token(path)
-    api_path = f"{server_config.proxy}/api/freva-nextgen/data-portal"
-    path = path.replace("file:///", "/")
-    if publish:
-        await Cache.publish(
-            "data-portal",
-            json.dumps({"uri": {"path": path, "uuid": token}}).encode("utf-8"),
-        )
-    if public is True:
-        res = await add_ttl_key_to_db_and_cache(path, ttl_seconds)
-        return f"{api_path}/share/{res['key']}.zarr"
-    return f"{api_path}/zarr/{token}.zarr"
 
 
 async def publish_aggregation(
