@@ -26,8 +26,11 @@ from pymongo import UpdateOne, errors
 from freva_rest import __version__
 from freva_rest.config import ServerConfig
 from freva_rest.exceptions import ValidationError
+from freva_rest.freva_data_portal.base_utils import (
+    AggregationPlan,
+    publish_datasets,
+)
 from freva_rest.logger import logger
-from freva_rest.utils.base_utils import publish_dataset
 from freva_rest.utils.stats_utils import store_api_statistics
 
 from .schema import (
@@ -962,7 +965,11 @@ class Solr:
             yield f"{result[self.uniq_key]}\n"
 
     async def publish_to_zarr_stream(
-        self, doc: Dict[str, Any], public: bool = False, ttl_seconds: int = 86400
+        self,
+        doc: Dict[str, Any],
+        public: bool = False,
+        ttl_seconds: int = 86400,
+        aggregation_plan: Optional[AggregationPlan] = None,
     ) -> str:
         """Publish URI to Redis for zarr streaming.
 
@@ -974,6 +981,8 @@ class Solr:
             Create a public zarr store.
         ttl_seconds: int, default: 84600
             TTL of the public zarr url, if any
+        aggregation_plan: dict, optional
+            A plan on how to aggregate datasets into one zarr store.
 
         Returns
         -------
@@ -982,7 +991,7 @@ class Solr:
         """
         uri = doc[self.uniq_key]
         try:
-            return await publish_dataset(
+            return await publish_datasets(
                 uri, public=public, ttl_seconds=ttl_seconds
             )
         except Exception as pub_err:
@@ -995,6 +1004,7 @@ class Solr:
         num_results: int,
         public: bool = False,
         ttl_seconds: int = 84600,
+        aggregation_plan: Optional[AggregationPlan] = None,
     ) -> AsyncIterator[str]:
         """Create a zarr endpoint from a given search.
         Parameters
@@ -1007,6 +1017,8 @@ class Solr:
             Create a public zarr store.
         ttl_seconds: int, default: 84600
             TTL of the public zarr url, if any
+        aggregation_plan: dict, optional
+            A plan on how to aggregate datasets into one zarr store.
 
         Returns
         -------
@@ -1023,7 +1035,10 @@ class Solr:
             prefix = suffix = ""
 
             zarr_path = await self.publish_to_zarr_stream(
-                result, public=public, ttl_seconds=ttl_seconds
+                result,
+                public=public,
+                ttl_seconds=ttl_seconds,
+                aggregation_plan=aggregation_plan,
             )
 
             if catalogue_type == "intake":

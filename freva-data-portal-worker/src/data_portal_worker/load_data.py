@@ -27,13 +27,12 @@ from redis.exceptions import RedisError
 from redis.retry import Retry
 from xarray.backends.zarr import encode_zarr_variable
 
+from .aggregator import AggregationPlan, DatasetAggregator, write_grouped_zarr
 from .backends import load_data
-from .utils import data_logger, str_to_int
+from .utils import data_logger, str_to_int, xr_repr_html
 from .zarr_utils import (
-    create_zmetadata,
     encode_chunk,
     get_data_chunk,
-    jsonify_zmetadata,
 )
 
 ZARR_CONSOLIDATED_FORMAT = 1
@@ -224,10 +223,12 @@ class DataLoadFactory:
 
     def from_object_path(
         self,
-        input_path: str,
+        input_paths: List[str],
         path_id: str,
+        assembly: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Create a zarr object from an input path."""
+        agg = DatasetAggregator()
         status_dict = LoadStatus.from_dict(
             cast(
                 Optional[LoadDict],
@@ -237,15 +238,16 @@ class DataLoadFactory:
         expires_in = str_to_int(os.environ.get("API_CACHE_EXP"), 3600)
         status_dict["status"] = 3
         self.cache.setex(path_id, expires_in, cloudpickle.dumps(status_dict))
-        data_logger.debug("Reading %s", input_path)
+        data_logger.debug("Reading %s", ",".join(input_paths))
         try:
-            data_logger.info(input_path)
-            dset = load_data(input_path)
-            metadata = create_zmetadata(dset)
-            status_dict["json_meta"] = jsonify_zmetadata(dset, metadata)
-            status_dict["meta"] = metadata
+            dsets = agg.aggregator(
+                [load_data(p) for p in input_paths], job_id=path_id, plan=assembly
+            )
+            combined_meta = write_grouped_zarr(dsets)
+            status_dict["json_meta"] = combined_meta
+            status_dict["meta"] = combined_meta.get("meta")
             status_dict["status"] = 0
-            status_dict["repr_html"] = dset._repr_html_()
+            status_dict["repr_html"] = xr_repr_html(dsets)
             # We need to add the xr dataset to an extra cache entry because the
             # status_dict will be loaded by the rest-api, if the xarray dataset
             # would be present in the status_dict the rest-api code would attempt
@@ -255,7 +257,7 @@ class DataLoadFactory:
             # anyway byt the rest-api we simply add it to a cache entry of its
             # own.
             self.cache.setex(
-                f"{path_id}-dset", expires_in, cloudpickle.dumps(dset)
+                f"{path_id}-dset", expires_in, cloudpickle.dumps(dsets)
             )
         except Exception as error:
             data_logger.exception("Could not process %s: %s", path_id, error)
@@ -377,7 +379,11 @@ class ProcessQueue(DataLoadFactory):
             data_logger.warning("could not decode message")
             return
         if "uri" in message:
-            self.spawn(message["uri"]["path"], message["uri"]["uuid"])
+            self.spawn(
+                message["uri"]["paths"],
+                message["uri"]["uuid"],
+                assembly=message["uri"].get("assembly"),
+            )
         elif "chunk" in message:
             self.get_zarr_chunk(
                 message["chunk"]["uuid"],
@@ -388,10 +394,15 @@ class ProcessQueue(DataLoadFactory):
             if message["shutdown"] is True and self.dev_mode is True:
                 raise KeyboardInterrupt("Shutdown client")
 
-    def spawn(self, inp_obj: str, uuid5: str) -> str:
-        """Subumit a new data loading task to the process pool."""
+    def spawn(
+        self,
+        inp_objs: List[str],
+        uuid5: str,
+        assembly: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        """Submit a new data loading task to the process pool."""
         data_logger.debug(
-            "Assigning %s to %s for future processing", inp_obj, uuid5
+            "Assigning %s to %s for future processing", inp_objs, uuid5
         )
         data_cache: Optional[bytes] = cast(Optional[bytes], self.cache.get(uuid5))
         status_dict: LoadDict = {
@@ -409,11 +420,11 @@ class ProcessQueue(DataLoadFactory):
                 str_to_int(os.environ.get("API_CACHE_EXP"), 3600),
                 cloudpickle.dumps(status_dict),
             )
-            self.from_object_path(inp_obj, uuid5)
+            self.from_object_path(inp_objs, uuid5, assembly=assembly)
         else:
             status_dict = cast(LoadDict, cloudpickle.loads(data_cache))
             if status_dict["status"] in (1, 2):
                 # Failed job, let's retry
-                self.from_object_path(inp_obj, uuid5)
+                self.from_object_path(inp_objs, uuid5, assembly=assembly)
 
         return status_dict["obj_path"]
