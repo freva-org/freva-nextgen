@@ -3,6 +3,7 @@
 import asyncio
 import base64
 import datetime
+import hashlib
 import secrets
 from enum import Enum
 from typing import (
@@ -391,6 +392,56 @@ async def query_user(token_data: Dict[str, str], authorization: str) -> UserInfo
             raise HTTPException(status_code=404)
 
 
+async def get_username(
+    current_user: Optional[IDToken],
+    request: Request
+) -> Optional[str]:
+    """Extract username from token and if it was not
+    available try to fetch it from userinfo endpoint
+    as a fallback.
+
+    Returns None if username cannot be determined.
+    """
+    if not current_user:
+        return None
+
+    # Helper to check multiple username scenarios
+    def _extract_username(obj: Any,
+                          fields: List[str] = [
+                              "preferred_username",
+                              "username",
+                              "user_name"
+                          ]) -> Optional[str]:
+        for field in fields:
+            value = getattr(obj, field, None)
+            if value:
+                return cast(Optional[str], value)
+        return None
+
+    # 1. Try common username fields from token first - valid for the
+    # majority of OIDC providers
+    username = _extract_username(current_user)
+    if username:
+        return username
+
+    # 2. Fallback: fetch from userinfo API
+    # this fallback defined specifically for OIDC providers that do not
+    # include username in the token (e.g. Helmholtz AAI)
+    authorization = dict(request.headers).get("authorization")
+    if authorization:
+        token_data = {k.lower(): str(v) for (k, v) in dict(current_user).items()}
+        try:
+            user_data = await query_user(token_data, authorization)
+            username = _extract_username(user_data)
+            if username:
+                return username
+        except HTTPException:
+            pass
+
+    # 3. Last resort: return 'sub' claim as username, otherwise None
+    return getattr(current_user, 'sub', None)
+
+
 @app.get("/api/freva-nextgen/auth/v2/userinfo", tags=["Authentication"])
 async def userinfo(
     id_token: IDToken = Security(auth.create_auth_dependency()),
@@ -504,11 +555,19 @@ async def login(
 
     if not redirect_uri:
         raise HTTPException(status_code=400, detail="Missing redirect_uri")
+
+    # Important: PKCE is now mandatory in latest OAuth 2.1
+    code_verifier = secrets.token_urlsafe(32)
+    code_challenge = base64.urlsafe_b64encode(
+        hashlib.sha256(code_verifier.encode()).digest()
+    ).decode().rstrip('=')
+
+    state = f"{secrets.token_urlsafe(16)}|{redirect_uri}|{code_verifier}"
+    nonce = secrets.token_urlsafe(16)
     offline_scope = ["offline_access"] if offline_access else []
     scopes_list = set(
         (scope or server_config.oidc_scopes).split() + offline_scope
     )
-
     query = {
         "response_type": "code",
         "client_id": server_config.oidc_client_id,
@@ -517,6 +576,8 @@ async def login(
         "state": state,
         "nonce": nonce,
         "prompt": prompt.value.replace("none", ""),
+        "code_challenge": code_challenge,
+        "code_challenge_method": "S256",
     }
     query = {k: v for (k, v) in query.items() if v}
     auth_url = (
@@ -585,7 +646,7 @@ async def callback(
         raise HTTPException(status_code=400, detail="Missing code or state")
 
     try:
-        state_token, redirect_uri = state.split("|", 1)
+        state_token, redirect_uri, code_verifier = state.split("|", 2)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid state format")
 
@@ -593,6 +654,7 @@ async def callback(
         "grant_type": "authorization_code",
         "code": code,
         "redirect_uri": redirect_uri,
+        "code_verifier": code_verifier,
     }
     headers: Dict[str, str] = {}
     set_request_header(
@@ -694,6 +756,7 @@ async def fetch_or_refresh_token(
             examples=["abc123xyz"],
         ),
     ] = None,
+    code_verifier: Optional[str] = Form(None),
 ) -> Token:
     """Interact with the openID connect endpoint for client authentication."""
     data: Dict[str, str] = {}
@@ -704,6 +767,8 @@ async def fetch_or_refresh_token(
         )
         data["grant_type"] = "authorization_code"
         data["code"] = code
+        if code_verifier:
+            data["code_verifier"] = code_verifier
     elif refresh_token:
         data["grant_type"] = "refresh_token"
         data["refresh_token"] = refresh_token
@@ -758,7 +823,7 @@ async def fetch_or_refresh_token(
     "/api/freva-nextgen/auth/v2/logout",
     tags=["Authentication"],
     responses={
-        307: {"description": "Redirect to IDP logout endpoint"},
+        307: {"description": "Redirect to post-logout URI"},
         400: {"description": "Invalid post_logout_redirect_uri."},
     },
 )
@@ -772,16 +837,21 @@ async def logout(
     ] = None,
 ) -> RedirectResponse:
     """
-    Logout endpoint that redirects to IDP's end_session_endpoint.
+    Logout endpoint - redirects to IDP logout if supported, otherwise local redirect.
     """
-    params = {
-        "client_id": server_config.oidc_client_id,
-    }
+    redirect_target = post_logout_redirect_uri or "/"
+    end_session_endpoint = server_config.oidc_overview.get("end_session_endpoint")
 
-    if post_logout_redirect_uri:
-        params["post_logout_redirect_uri"] = post_logout_redirect_uri
+    if end_session_endpoint:
+        params = {"client_id": server_config.oidc_client_id}
+        if post_logout_redirect_uri:
+            params["post_logout_redirect_uri"] = post_logout_redirect_uri
 
-    # OIDC logout endpoint
-    logout_url = server_config.oidc_overview["end_session_endpoint"]
+        redirect_target = f"{end_session_endpoint}?{urlencode(params)}"
+    else:
+        logger.warning(
+            "OIDC provider does not support end_session_endpoint. "
+            "Performing local logout only."
+        )
 
-    return RedirectResponse(f"{logout_url}?{urlencode(params)}")
+    return RedirectResponse(redirect_target)

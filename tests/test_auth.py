@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Optional
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, Mock, PropertyMock
 
 import jwt
 import pytest
@@ -15,6 +15,7 @@ import requests
 from aiohttp import ClientTimeout
 from pytest_mock import MockerFixture
 from typer.testing import CliRunner
+from fastapi import HTTPException
 
 from freva_client.auth import Auth
 from freva_client.cli import app as cli_app
@@ -194,7 +195,7 @@ def test_callback(test_server: str):
 
     params = {
         "code": "fake",
-        "state": "teststate|http://localhost:8080/callback",
+        "state": "teststate|http://localhost:8080/callback|dummy_code_verifier",
     }
 
     with patch("aiohttp.ClientSession.request", new=mock_request):
@@ -231,6 +232,7 @@ def test_auth_via_code_exchange(test_server: str) -> None:
             data={
                 "code": "fake",
                 "redirect_uri": "http://localhost:8080/callback",
+                "code_verifier": "dummy_code_verifier",
             },
         )
 
@@ -442,7 +444,7 @@ def test_token_status(test_server: str, auth: Dict[str, str]) -> None:
     assert res2.status_code != 200
 
 
-def test_logout(test_server: str) -> None:
+def test_logout(test_server: str, mocker: MockerFixture) -> None:
     """Test the logout endpoint."""
     res1 = requests.get(f"{test_server}/auth/v2/logout", allow_redirects=False)
     assert res1.status_code == 307
@@ -454,3 +456,73 @@ def test_logout(test_server: str) -> None:
         allow_redirects=False,
     )
     assert res2.status_code == 307
+
+    # no end_session_endpoint
+    mocker.patch(
+        "freva_rest.config.ServerConfig.oidc_overview",
+        new_callable=PropertyMock,
+        return_value={}
+    )
+
+    res3 = requests.get(f"{test_server}/auth/v2/logout", allow_redirects=False)
+    assert res3.status_code == 307
+    assert res3.headers["location"] == "/"
+
+    res4 = requests.get(
+        f"{test_server}/auth/v2/logout",
+        params={"post_logout_redirect_uri": redirect_uri},
+        allow_redirects=False,
+    )
+    assert res4.status_code == 307
+    assert res4.headers["location"] == redirect_uri
+
+
+@pytest.mark.asyncio
+async def test_get_username_fallback_userinfo(mocker: MockerFixture):
+    """Test fallback to userinfo when token lacks username.
+    HelmholtzAAI case"""
+    from freva_rest.auth.oauth2 import get_username
+
+    mock_user = Mock(
+        preferred_username=None,
+        username=None,
+        user_name=None,
+        sub="456"
+    )
+    mock_user.keys.return_value = ["sub"]
+    mock_user.__getitem__ = lambda self, k: "456" if k == "sub" else None
+
+    mock_request = Mock(headers={"authorization": "Bearer xyz"})
+
+    mock_userinfo = Mock(
+        preferred_username=None,
+        username="from_userinfo_endpoint",
+        user_name=None
+    )
+
+    mocker.patch("freva_rest.auth.oauth2.query_user", return_value=mock_userinfo)
+    
+    result = await get_username(mock_user, mock_request)
+    assert result == "from_userinfo_endpoint"
+
+
+@pytest.mark.asyncio
+async def test_get_username_fallback_sub(mocker: MockerFixture):
+    """Test final fallback to sub when userinfo also fails."""
+    from freva_rest.auth.oauth2 import get_username
+    
+    mock_user = Mock(
+        preferred_username=None,
+        username=None,
+        user_name=None,
+        sub="randomnumebr"
+    )
+    mock_user.keys.return_value = ["sub"]
+    mock_user.__getitem__ = lambda self, k: "randomnumebr" if k == "sub" else None
+    
+    mock_request = Mock(headers={"authorization": "Bearer xyz"})
+    
+    mocker.patch("freva_rest.auth.oauth2.query_user", side_effect=HTTPException(404))
+    
+    result = await get_username(mock_user, mock_request)
+    assert result == "randomnumebr"

@@ -9,7 +9,6 @@ from typing import (
     Dict,
     List,
     Literal,
-    Optional,
     Sequence,
     Sized,
     Tuple,
@@ -20,7 +19,6 @@ from typing import (
 import httpx
 from dateutil.parser import ParserError, parse
 from fastapi import HTTPException
-from fastapi_third_party_auth import IDToken as TokenPayload
 from pymongo import UpdateOne, errors
 
 from freva_rest import __version__
@@ -366,7 +364,7 @@ class Solr:
         start: int = 0,
         multi_version: bool = False,
         translate: bool = True,
-        current_user: Optional[TokenPayload] = None,
+        user_name: str = "global",
         **query: list[str],
     ) -> "Solr":
         """Create an instance of an Solr class with parameter validation.
@@ -389,12 +387,9 @@ class Solr:
             Use versioned datasets in stead of latest versions.
         translate: bool, default: True
             Translate the output to the required DRS flavour.
-        current_user: Optional[TokenPayload], default: None
-            The current user token payload, used to determine the preferred username
-            for flavour validation.
+        user_name: str, default: "global"
+            The current user name for flavour validation.
         """
-        user_name = current_user.preferred_username if current_user else "global"
-
         translator = await Flavour.validate_and_get_flavour(
             config, flavour, user_name
         )
