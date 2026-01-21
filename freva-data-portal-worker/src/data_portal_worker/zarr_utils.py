@@ -1,7 +1,6 @@
 """Utilities for working with zarr storages."""
 
 import base64
-from copy import deepcopy
 from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import dask.array
@@ -92,6 +91,7 @@ def extract_zarray(
         """helper function to extract fill value from DataArray."""
         fill_value = da.attrs.pop("_FillValue", None)
         return encode_fill_value(fill_value, dtype)
+
     meta = {
         "compressor": encoding.get(
             "compressor", da.encoding.get("compressor", default_compressor)
@@ -105,7 +105,7 @@ def extract_zarray(
         "zarr_format": ZARR_FORMAT,
     }
 
-    if meta["chunks"] is None or meta["chunks"] == 'auto':
+    if meta["chunks"] is None or meta["chunks"] == "auto":
         meta["chunks"] = da.shape
 
     # validate chunks
@@ -153,13 +153,12 @@ def create_zmetadata(dataset: xr.Dataset) -> Dict[str, Any]:
 
 def jsonify_zmetadata(
     dataset: xr.Dataset,
-    zmetadata: Dict[str, Any],
 ) -> Dict[str, Any]:
     """Helper function to convert zmetadata dictionary to a json
     compatible dictionary.
 
     """
-    zjson = deepcopy(zmetadata)
+    zjson = create_zmetadata(dataset)
 
     for key in list(dataset.variables):
         # convert compressor to dict
@@ -236,44 +235,46 @@ def get_data_chunk(
         return cast(np.typing.NDArray[Any], chunk_data)
 
 
-def encode_fill_value(v: Any, dtype: np.dtype[Any], object_codec: Any = None) -> Any:
+def encode_fill_value(
+    v: Any, dtype: np.dtype[Any], object_codec: Any = None
+) -> Any:
     """Encode fill value for zarr array."""
     # early out
     if v is None:
         return v
-    if dtype.kind == 'V' and dtype.hasobject:
+    if dtype.kind == "V" and dtype.hasobject:
         if object_codec is None:
-            raise ValueError('missing object_codec for object array')
+            raise ValueError("missing object_codec for object array")
         v = object_codec.encode(v)
-        v = str(base64.standard_b64encode(v), 'ascii')
+        v = str(base64.standard_b64encode(v), "ascii")
         return v
-    if dtype.kind == 'f':
+    if dtype.kind == "f":
         if np.isnan(v):
-            return 'NaN'
+            return "NaN"
         elif np.isposinf(v):
-            return 'Infinity'
+            return "Infinity"
         elif np.isneginf(v):
-            return '-Infinity'
+            return "-Infinity"
         else:
             return float(v)
-    elif dtype.kind in 'ui':
+    elif dtype.kind in "ui":
         return int(v)
-    elif dtype.kind == 'b':
+    elif dtype.kind == "b":
         return bool(v)
-    elif dtype.kind in 'c':
+    elif dtype.kind in "c":
         c = cast(np.complex128, np.dtype(complex).type())
         v = (
             encode_fill_value(v.real, c.real.dtype, object_codec),
             encode_fill_value(v.imag, c.imag.dtype, object_codec),
         )
         return v
-    elif dtype.kind in 'SV':
-        v = str(base64.standard_b64encode(v), 'ascii')
+    elif dtype.kind in "SV":
+        v = str(base64.standard_b64encode(v), "ascii")
         return v
-    elif dtype.kind == 'U':
+    elif dtype.kind == "U":
         return v
-    elif dtype.kind in 'mM':
-        return int(v.view('i8'))
+    elif dtype.kind in "mM":
+        return int(v.view("i8"))
     else:
         return v
 

@@ -109,6 +109,7 @@ class Token(TypedDict, total=False):
     refresh_token: str
     refresh_expires: int
     scope: str
+    headers: Dict[str, str]
 
 
 class OAuthCallbackHandler(BaseHTTPRequestHandler):
@@ -508,7 +509,7 @@ def is_jupyter_notebook() -> bool:
         True if inside a Jupyter notebook or Jupyter kernel.
     """
     try:
-        from IPython import get_ipython
+        from IPython.core.getipython import get_ipython
 
         return get_ipython() is not None  # pragma: no cover
     except Exception:

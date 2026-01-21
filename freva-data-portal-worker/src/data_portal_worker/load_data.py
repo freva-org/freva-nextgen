@@ -5,31 +5,32 @@ import os
 import ssl
 import time
 from dataclasses import dataclass
+from enum import Enum
 from typing import (
     Any,
     Dict,
     List,
-    Literal,
     Optional,
     Tuple,
     Type,
     TypedDict,
+    Union,
     cast,
 )
 
 import cloudpickle
-import redis
+import numcodecs
 import xarray as xr
 from dask.distributed import Client, LocalCluster
 from redis.backoff import ExponentialBackoff
-from redis.client import PubSub
+from redis.client import PubSub, Redis
 from redis.exceptions import RedisError
 from redis.retry import Retry
 from xarray.backends.zarr import encode_zarr_variable
 
-from .aggregator import AggregationPlan, DatasetAggregator, write_grouped_zarr
+from .aggregator import DatasetAggregator, write_grouped_zarr
 from .backends import load_data
-from .utils import data_logger, str_to_int, xr_repr_html
+from .utils import JSONObject, data_logger, str_to_int, xr_repr_html
 from .zarr_utils import (
     encode_chunk,
     get_data_chunk,
@@ -42,15 +43,31 @@ ZARRAY_JSON = ".zarray"
 CLIENT: Optional[Client] = None
 
 
-class LoadDict(TypedDict):
+class StateEnum(Enum):
+
+    finished_ok = 0
+    finished_failed = 1
+    finished_not_found = 2
+    waiting = 3
+    processing = 4
+    ukown = 5
+
+    @classmethod
+    def from_exception(cls, error: Exception) -> int:
+        """Define which error state we should assign."""
+        if isinstance(error, (FileNotFoundError, KeyError)):
+            return cls.finished_not_found.value
+        return cls.finished_failed.value
+
+
+class LoadDict(TypedDict, total=False):
     """Definition of the job payload."""
 
-    status: Literal[0, 1, 2, 3]
+    status: int
     url: str
     obj_path: str
     reason: str
-    meta: Optional[Dict[str, Any]]
-    json_meta: Optional[Dict[str, Any]]
+    data: Optional[Union[bytes, JSONObject]]
     repr_html: str
 
 
@@ -85,7 +102,7 @@ class RedisConnectionDict(TypedDict, total=False):
     socket_keepalive: bool
 
 
-class RedisCacheFactory(redis.Redis):
+class RedisCacheFactory(Redis):
     """Define a custom redis cache."""
 
     def __init__(self, db: int = 0, retry_interval: int = 30) -> None:
@@ -129,23 +146,23 @@ class RedisCacheFactory(redis.Redis):
 class LoadStatus:
     """Schema defining the status of loading dataset."""
 
-    status: Literal[0, 1, 2, 3]
+    status: int
     """Status of the submitted jobs:
         0: exit success
         1: exit failed
-        2: in queue (submitted)
-        3: in progress
+        2: exit, file not found
+        3: in queue (submitted)
+        4: in progress
+        5: gone
     """
     obj_path: str
     """url of the zarr dataset once finished."""
     reason: str
-    """if status = 1 reasone why opening the dataset failed."""
-    meta: Optional[Dict[str, Any]] = None
-    """Meta data of the zarr store"""
+    """eason why opening the dataset failed."""
     url: str = ""
     """Url of the machine that loads the zarr store."""
-    json_meta: Optional[Dict[str, Any]] = None
-    """Json representation of the zarr metadata."""
+    data: Optional[Union[bytes, JSONObject]] = None
+    """Json representation of the zarr metadata or the zarr chunk."""
     repr_html: str = "<b>No data could be loaded.</b>"
     """Html representation of the zarr metadata."""
 
@@ -154,25 +171,23 @@ class LoadStatus:
         return {
             "status": self.status,
             "obj_path": self.obj_path,
-            "reason": self.reason,
-            "meta": self.meta,
             "url": self.url,
-            "json_meta": self.json_meta,
+            "data": self.data,
             "repr_html": self.repr_html,
+            "reason": self.reason,
         }
 
     @classmethod
-    def from_dict(cls, load_dict: Optional[LoadDict]) -> "LoadStatus":
+    def from_dict(cls, load_dict: LoadDict) -> "LoadStatus":
         """Create an instance of the class from a normal python dict."""
-        _dict = load_dict or {
-            "status": 2,
-            "reason": "",
-            "url": "",
-            "obj_path": "",
-            "meta": None,
-            "json_meta": None,
-            "repr_html": "<b>Data hasn't been loaded.</b>",
-        }
+        _dict = LoadDict(
+            status=load_dict.get("status") or StateEnum.waiting.value,
+            reason=load_dict.get("reason", ""),
+            url=load_dict.get("url", ""),
+            obj_path=load_dict.get("obj_path", ""),
+            data=load_dict.get("data"),
+            repr_html=load_dict.get("repr_html", cls.repr_html),
+        )
         return cls(**_dict)
 
 
@@ -212,10 +227,10 @@ class DataLoadFactory:
     """
 
     def __init__(self) -> None:
-        self._cache: Optional[RedisCacheFactory] = None
+        self._cache: Optional[Redis] = None
 
     @property
-    def cache(self) -> RedisCacheFactory:
+    def cache(self) -> Redis:
         """Get or create the cache."""
         if self._cache is None:
             self._cache = RedisCacheFactory()
@@ -225,29 +240,27 @@ class DataLoadFactory:
         self,
         input_paths: List[str],
         path_id: str,
-        assembly: Optional[Dict[str, Any]] = None,
+        assembly: Optional[Dict[str, Optional[str]]] = None,
     ) -> None:
         """Create a zarr object from an input path."""
         agg = DatasetAggregator()
-        status_dict = LoadStatus.from_dict(
-            cast(
-                Optional[LoadDict],
-                cloudpickle.loads(self.cache.get(path_id)),
-            )
-        ).dict()
+        data = cast(
+            LoadDict,
+            cloudpickle.loads(self.cache.get(path_id) or b"\x80\x05}\x94."),
+        )
+        status_dict = LoadStatus.from_dict(data).dict()
         expires_in = str_to_int(os.environ.get("API_CACHE_EXP"), 3600)
-        status_dict["status"] = 3
+        status_dict["status"] = StateEnum.processing.value
         self.cache.setex(path_id, expires_in, cloudpickle.dumps(status_dict))
         data_logger.debug("Reading %s", ",".join(input_paths))
         try:
-            dsets = agg.aggregator(
+            dsets = agg.aggregate(
                 [load_data(p) for p in input_paths], job_id=path_id, plan=assembly
             )
             combined_meta = write_grouped_zarr(dsets)
-            status_dict["json_meta"] = combined_meta
-            status_dict["meta"] = combined_meta.get("meta")
-            status_dict["status"] = 0
+            status_dict["data"] = combined_meta
             status_dict["repr_html"] = xr_repr_html(dsets)
+            pkls = cloudpickle.dumps(dsets)
             # We need to add the xr dataset to an extra cache entry because the
             # status_dict will be loaded by the rest-api, if the xarray dataset
             # would be present in the status_dict the rest-api code would attempt
@@ -256,12 +269,11 @@ class DataLoadFactory:
             # instantiated. Since the xarray dataset object isn't needed
             # anyway byt the rest-api we simply add it to a cache entry of its
             # own.
-            self.cache.setex(
-                f"{path_id}-dset", expires_in, cloudpickle.dumps(dsets)
-            )
+            status_dict["status"] = 0
+            self.cache.setex(f"{path_id}-dset", expires_in, pkls)
         except Exception as error:
             data_logger.exception("Could not process %s: %s", path_id, error)
-            status_dict["status"] = 1
+            status_dict["status"] = StateEnum.from_exception(error)
             status_dict["reason"] = str(error)
         self.cache.setex(
             path_id,
@@ -273,26 +285,38 @@ class DataLoadFactory:
         self,
         key: str,
         chunk: str,
-        variable: str,
+        var_group: str,
     ) -> None:
         """Read the zarr metadata from the cache."""
-        pickle_data, dset = self.load_object(key)
-        meta = cast(Dict[str, Any], pickle_data["meta"])
-        arr_meta = meta["metadata"][f"{variable}/{ZARRAY_JSON}"]
-        data = encode_chunk(
-            get_data_chunk(
-                encode_zarr_variable(
-                    dset.variables[variable], name=variable
-                ).data,
-                chunk,
-                out_shape=arr_meta["chunks"],
-            ).tobytes(),
-            filters=arr_meta["filters"],
-            compressor=arr_meta["compressor"],
+        group, _, variable = var_group.rpartition("/")
+        group = group or "root"
+        try:
+            meta, dsets = self.load_object(key)
+            arr_meta = meta["metadata"][f"{var_group}/{ZARRAY_JSON}"]
+            data = encode_chunk(
+                get_data_chunk(
+                    encode_zarr_variable(
+                        dsets[group].variables[variable], name=variable
+                    ).data,
+                    chunk,
+                    out_shape=arr_meta["chunks"],
+                ).tobytes(),
+                filters=arr_meta["filters"],
+                compressor=numcodecs.get_codec(arr_meta["compressor"]),
+            )
+            package = LoadDict(data=data, status=0, reason="")
+        except Exception as error:
+            data_logger.exception(error)
+            package = dict(
+                reason=str(error), status=StateEnum.from_exception(error)
+            )
+        self.cache.setex(
+            f"{key}-{var_group}-{chunk}", 360, cloudpickle.dumps(package)
         )
-        self.cache.setex(f"{key}-{variable}-{chunk}", 360, data)
 
-    def load_object(self, key: str) -> Tuple[LoadDict, xr.Dataset]:
+    def load_object(
+        self, key: str
+    ) -> Tuple[Dict[str, Any], Dict[str, xr.Dataset]]:
         """Load a cached dataset.
 
         Parameters
@@ -309,13 +333,13 @@ class DataLoadFactory:
                       which means that there is a load status != 0
         KeyError: If the key doesn't exist in the cache (anymore).
         """
-        metadata_cache = self.cache.get(key)
+        metadata_cache = cast(Optional[bytes], self.cache.get(key))
         dset_cache = self.cache.get(f"{key}-dset")
         if metadata_cache is None or dset_cache is None:
             raise KeyError(f"{key} uuid does not exist (anymore).")
-        load_dict = cast(LoadDict, cloudpickle.loads(metadata_cache))
-        dset = cast(xr.Dataset, cloudpickle.loads(dset_cache))
-        return load_dict, dset
+        load_dict: LoadDict = cloudpickle.loads(metadata_cache)
+        dsets = cast(Dict[str, xr.Dataset], cloudpickle.loads(dset_cache))
+        return cast(Dict[str, Any], load_dict["data"]), dsets
 
 
 class ProcessQueue(DataLoadFactory):
@@ -380,7 +404,7 @@ class ProcessQueue(DataLoadFactory):
             return
         if "uri" in message:
             self.spawn(
-                message["uri"]["paths"],
+                message["uri"]["path"],
                 message["uri"]["uuid"],
                 assembly=message["uri"].get("assembly"),
             )
@@ -398,23 +422,26 @@ class ProcessQueue(DataLoadFactory):
         self,
         inp_objs: List[str],
         uuid5: str,
-        assembly: Optional[Dict[str, Any]] = None,
+        assembly: Optional[Dict[str, Optional[str]]] = None,
     ) -> str:
         """Submit a new data loading task to the process pool."""
         data_logger.debug(
             "Assigning %s to %s for future processing", inp_objs, uuid5
         )
-        data_cache: Optional[bytes] = cast(Optional[bytes], self.cache.get(uuid5))
+        data_cache = cast(
+            Optional[LoadDict],
+            cloudpickle.loads(self.cache.get(uuid5) or b"\x80\x05}\x94."),
+        )
+
         status_dict: LoadDict = {
             "status": 2,
             "obj_path": f"/api/freva-data-portal/zarr/{uuid5}.zarr",
             "reason": "",
             "url": "",
-            "meta": None,
-            "json_meta": None,
+            "data": None,
             "repr_html": "<b>Data hasn't been loaded.</b>",
         }
-        if data_cache is None:
+        if not data_cache:
             self.cache.setex(
                 uuid5,
                 str_to_int(os.environ.get("API_CACHE_EXP"), 3600),
@@ -422,9 +449,8 @@ class ProcessQueue(DataLoadFactory):
             )
             self.from_object_path(inp_objs, uuid5, assembly=assembly)
         else:
-            status_dict = cast(LoadDict, cloudpickle.loads(data_cache))
-            if status_dict["status"] in (1, 2):
+            if data_cache["status"] in (1, 2):
                 # Failed job, let's retry
                 self.from_object_path(inp_objs, uuid5, assembly=assembly)
-
-        return status_dict["obj_path"]
+        data_cache = data_cache or status_dict
+        return data_cache["obj_path"]

@@ -24,7 +24,7 @@ import yaml
 from rich import print as pprint
 
 from .auth import Auth
-from .utils import logger
+from .utils import do_request, logger
 from .utils.auth_utils import (
     Token,
     choose_token_strategy,
@@ -34,6 +34,7 @@ from .utils.auth_utils import (
 from .utils.databrowser_utils import Config, UserDataHandler
 from .utils.lazy import intake, intake_esm, pd, xr
 from .utils.types import ZarrOptionsDict
+from .zarr_utils import convert
 
 __all__ = ["databrowser"]
 
@@ -112,7 +113,7 @@ class databrowser:
         Set additional options for creating the dynamic zarr streams. For
         example if you which to create public instead of a private url that
         expires in one hour you can set the the following options:
-        ``zarr_options={"public": True, "ttl_seconds": 3600}``
+        ``zarr_options={"public": True, "ttl_seconds": 3600}``.
     multiversion: bool, default: False
         Select all versions and not just the latest version (default).
     fail_on_error: bool, default: False
@@ -216,16 +217,47 @@ class databrowser:
     .. code-block:: python
 
         from freva_client import authenticate
-        token_info = authenticate()
+        token_info = authenticate()["headers"]
         import xarray as xr
         dset = xr.open_dataset(
            zarr_files[0],
            chunks="auto",
            engine="zarr",
-           storage_options={"header":
-                {"Authorization": f"Bearer {token_info['access_token']}"}
-           }
+           storage_options=token_info,
         )
+
+    In many cases it is more useful to combine multiple source files into
+    `one` aggregated dataset. Aggregation instructions can be set by by using
+    the :py:meth:`freva_client.databrowser.aggregate` method.
+    If the set  ``{"aggregate": "auto"`` the service will try to infer the best
+    aggregation.
+
+    .. code-block: python
+
+        from freva_client import authenticate, databrowser
+        storage_options = authenticate()["headers"]
+
+        db = databrowser(dataset="agg")
+        dset = xr.open_zarr(
+            db.aggregate("auto"),
+            storage_options=storage_options
+        )
+
+    You can also be more specific on the aggregation operation
+
+    .. code-block: python
+
+        from freva_client import databrowser
+        storage_options = authenticate()["headers"]
+        db = databrowser(dataset="agg")
+        dset = xr.open_zarr(
+            db.aggregate("concat", join="inner", dim="ensemble"),
+            storage_options=storage_options
+        )
+
+
+    Both of the above examples with result in a unified zarr store that
+    combines all datasets that were found with the query.
 
     Instead of private access you can also create *public* pre-signed
     zarr url which can be accessed without authentication. Anyone with this
@@ -266,16 +298,17 @@ class databrowser:
         stream_zarr: bool = False,
         multiversion: bool = False,
         fail_on_error: bool = False,
-        zarr_options: Optional[Dict[str, Union[int, bool]]] = None,
+        zarr_options: Optional[Dict[str, Union[int, float, bool]]] = None,
         **search_keys: Union[str, List[str]],
     ) -> None:
         self._auth = Auth()
         zarr_options = zarr_options or {}
         self._zarr_options = ZarrOptionsDict(
             public=bool(zarr_options.get("public", False)),
-            ttl_seconds=zarr_options.get("ttl_seconds", 86400),
+            ttl_seconds=float(zarr_options.get("ttl_seconds", 86400.0)),
         )
         self._fail_on_error = fail_on_error
+        self._host = host
         self._cfg = Config(host, uniq_key=uniq_key, flavour=flavour)
         self._flavour = self._cfg.flavour
         self._stream_zarr = stream_zarr
@@ -324,13 +357,9 @@ class databrowser:
             search_kw = {primary_key: ["NotAvailable"]}
         self._params.update(search_kw)
 
-    def __iter__(self) -> Iterator[str]:
-        query_url = self._cfg.search_url
-        params: Dict[str, Any] = {}
-        if self._stream_zarr:
-            query_url = self._cfg.zarr_loader_url
-            params = dict(self._zarr_options)
-
+    def _iter(self, to_zarr: bool = False) -> Iterator[str]:
+        query_url = self._cfg.zarr_loader_url if to_zarr else self._cfg.search_url
+        params = dict(self._zarr_options) if to_zarr else {}
         result = self._request("GET", query_url, stream=True, params=params)
         if result is not None:
             try:
@@ -338,6 +367,9 @@ class databrowser:
                     yield res.decode("utf-8")
             except KeyboardInterrupt:
                 pprint("[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr)
+
+    def __iter__(self) -> Iterator[str]:
+        yield from self._iter(to_zarr=self._stream_zarr)
 
     def __repr__(self) -> str:
         params = ", ".join(
@@ -425,6 +457,129 @@ class databrowser:
                 f"Couldn't write catalogue content: {error}"
             ) from None
 
+    def aggregate(
+        self,
+        how: Literal["auto", "merge", "concat"],
+        *,
+        join: Literal["outer", "inner", "exact", "left", "right"] = "outer",
+        compat: Literal["no_conflicts", "equals", "override"] = "override",
+        data_vars: Literal["minimal", "different", "all"] = "minimal",
+        coords: Literal["minimal", "different", "all"] = "minimal",
+        dim: Optional[str] = None,
+        group_by: Optional[str] = None,
+        zarr_options: Optional[Dict[str, Union[float, bool]]] = None,
+    ) -> str:
+        """Define how dataset aggregation should be realised.
+
+        You can define three main modes (``auto``, ``merge`` or ``concat``).
+        Once you've chosen the main aggregation mode. You can fine tune the
+        aggregation using the ``join``, ``compat``, ``data_vars``, ``coords``
+        ``dim`` and ``group_by`` parameters to fine the the aggregation.
+
+        Parameters
+        ----------
+        how: str, choices: auto, merge, concat
+            String indicating how the aggregation should be done:
+            - "auto": let the system choose if the datasets should be concatenated
+              or mereged.
+            - "merge": merge datasets as `variables`
+            - "concat": concatenated datasets along a `dimension`
+        join: str, choices: outer, inner, exact, left, right
+            String indicating how to combine differing indexes
+            - "outer": use the union of object indexes.
+            - "inner": use the intersection of object indexes.
+            - "left": use indexes from the first object with each dimension.
+            - "right": use indexes from the last object with each dimension.
+            - "exact": instead of aligning, errors when indexes to be aligned
+                       are not equal.
+        compat: str, choices: no_conflicts, equals, override
+            String indicating how to compare non-concatenated variables of the
+            same name for:
+
+            - "equals": all values and dimensions must be the same.
+            - "no_conflicts": only values which are not null in both datasets
+              must be equal. The returned dataset then contains the combination
+              of all non-null values.
+            - "override": skip comparing and pick variable from first dataset
+        data_vars: str, choices: minimal, different, all
+            These data variables will be combined together:
+
+            - "minimal": Only data variables in which the dimension already
+              appears are included.
+            - "different":  Data variables which are not equal (ignoring
+               attributes) across all datasets are also concatenated (as well as
+               all for which dimension already appears).
+            - "all": All data variables will be concatenated.
+        coords: str, choices: minimal, different, all
+            These coordinate variables will be combined together:
+
+            - "minimal": Only coordinates in which the dimension already
+               appears are included.
+            - "different":  Coordinates which are not equal (ignoring
+               attributes) across all datasets are also concatenated (as well as
+               all for which dimension already appears).
+            - "all": All coordinates will be concatenated.
+        dim: str
+            Name of the dimension to concatenate along. This can either be a new
+            dimension name, in which case it is added along axis=0, or an
+            existing dimension name, in which case the location of the
+            dimension is unchanged.
+        group_by: str
+            If set, forces grouping by a signature key. Otherwise grouping
+            is attempted only when direct combine fails.
+        zarr_options: dict, default: None
+            Set additional options for creating the dynamic zarr streams. For
+            example if you which to create public instead of a private url that
+            expires in one hour you can set the the following options:
+            ``zarr_options={"public": True, "ttl_seconds": 3600}``.
+
+
+        Examples
+        --------
+
+        .. code-block: python
+
+            from freva_client import authenticate, databrowser
+            storage_options = authenticate()["headers"]
+
+            db = databrowser(dataset="agg")
+            dset = xr.open_zarr(
+                db.aggregate("auto"),
+                storage_options=storage_options
+            )
+
+        You can also be more specific on the aggregation operation
+
+        .. code-block: python
+
+            from freva_client import databrowser
+            storage_options = authenticate()["headers"]
+            db = databrowser(dataset="agg")
+            dset = xr.open_zarr(
+                db.aggregate("concat", join="inner", dim="ensemble"),
+                storage_options=storage_options
+            )
+
+        """
+        paths = list(self._iter(to_zarr=False))
+        zarr_options = zarr_options or {}
+        for key, value in self._zarr_options.items():
+            zarr_options.setdefault(key, cast(Union[bool, float], value))
+        if not paths:
+            raise FileNotFoundError("Query didn't yield any results.")
+        return convert(
+            *paths,
+            aggregate=how,
+            host=self._host,
+            join=join,
+            compat=compat,
+            data_vars=data_vars,
+            coords=coords,
+            dim=dim,
+            group_by=group_by,
+            zarr_options=zarr_options,
+        )[0]
+
     @property
     def auth_token(self) -> Optional[Token]:
         """Get the current OAuth2 token - if it is still valid.
@@ -440,8 +595,9 @@ class databrowser:
 
         .. code-block:: python
 
-            from freva_client import databrowser
             import xarray as xr
+
+            from freva_client import databrowser
             db = databrowser(dataset="cmip6-hsm", stream_zarr=True)
             dset = xr.open_dataset(
                zarr_files[0],
@@ -1328,12 +1484,8 @@ class databrowser:
     ) -> Optional[requests.models.Response]:
         """Request method to handle CRUD operations (GET, POST, PUT, PATCH, DELETE)."""
         self._cfg.validate_server
-        method_upper = method.upper()
-        timeout = kwargs.pop("timeout", 30)
         params = kwargs.pop("params", {})
-        stream = kwargs.pop("stream", False)
         kwargs.setdefault("headers", {})
-
         if (
             requires_authentication(
                 self._flavour, self._stream_zarr, self._cfg.databrowser_url
@@ -1343,52 +1495,11 @@ class databrowser:
             token = self._auth.authenticate(config=self._cfg)
             kwargs["headers"]["Authorization"] = f"Bearer {token['access_token']}"
 
-        logger.debug(
-            "%s request to %s with data: %s and parameters: %s",
-            method_upper,
+        return do_request(
+            method,
             url,
-            data,
-            {**self._params, **params},
+            data=data,
+            fail_on_error=self._fail_on_error,
+            params={**self._params, **params},
+            **kwargs,
         )
-
-        try:
-            req = requests.Request(
-                method=method_upper,
-                url=url,
-                params={**self._params, **params},
-                json=None if method_upper in "GET" else data,
-                **kwargs,
-            )
-            with requests.Session() as session:
-                prepared = session.prepare_request(req)
-                res = session.send(prepared, timeout=timeout, stream=stream)
-                res.raise_for_status()
-                return res
-
-        except KeyboardInterrupt:
-            pprint("[red][b]User interrupt: Exit[/red][/b]", file=sys.stderr)
-        except (
-            requests.exceptions.ConnectionError,
-            requests.exceptions.HTTPError,
-            requests.exceptions.InvalidURL,
-        ) as error:
-            server_msg = ""
-            if hasattr(error, "response") and error.response is not None:
-                try:
-                    error_data = error.response.json()
-                    error_var = {
-                        error_data.get(
-                            "detail",
-                            error_data.get(
-                                "message", error_data.get("error", "")
-                            ),
-                        )
-                    }
-                    server_msg = f" - {error_var}"
-                except Exception:
-                    pass
-            msg = f"{method_upper} request failed with: {error}{server_msg}"
-            if self._fail_on_error:
-                raise ValueError(msg) from None
-            logger.warning(msg)
-        return None

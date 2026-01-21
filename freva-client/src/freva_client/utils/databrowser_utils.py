@@ -48,6 +48,7 @@ class Config:
 
         self.api_url = self.get_api_url(config_host)
         self.databrowser_url = f"{self.api_url}/databrowser"
+        self.data_portal_url = f"{self.api_url}/data-portal"
         self.auth_url = f"{self.api_url}/auth/v2"
         self.get_api_main_url = self.get_api_url(config_host)
         self.uniq_key = uniq_key
@@ -243,7 +244,7 @@ class Config:
             f"{self.databrowser_url}/data-search/{self.flavour}/{self.uniq_key}"
         )
 
-        def zarr_store_url(self, token: str) -> str:
+    def zarr_store_url(self, token: str) -> str:
         """
         Return the base URL for a remote Zarr store.
 
@@ -284,8 +285,6 @@ class Config:
             Base URL of the shared Zarr store.
         """
         return f"{self.databrowser_url}/share/{signature}/{token}.zarr"
-
-
 
     @property
     def zarr_loader_url(self) -> str:

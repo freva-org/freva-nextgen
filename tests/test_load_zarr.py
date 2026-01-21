@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from tempfile import NamedTemporaryFile
 from typing import Dict
 
+import cloudpickle
 import intake
 import mock
 import pymongo
@@ -15,8 +16,9 @@ import xarray as xr
 from fastapi import HTTPException
 from pytest_mock import MockerFixture
 
+from data_portal_worker.load_data import RedisCacheFactory as SyncCache
 from freva_rest.auth.presign import verify_token
-from freva_rest.utils.base_utils import Cache, encode_path_token, sign_token_path
+from freva_rest.utils.base_utils import Cache, encode_cache_token, sign_token_path
 
 
 def test_zarr_conversion(test_server: str, auth: Dict[str, str]) -> None:
@@ -26,9 +28,9 @@ def test_zarr_conversion(test_server: str, auth: Dict[str, str]) -> None:
         f"{test_server}/databrowser/data-search/freva/file",
         params={"dataset": "cmip6-fs"},
     ).text.splitlines()
-    res = requests.get(
+    res = requests.post(
         f"{test_server}/data-portal/zarr/convert",
-        params={"path": files},
+        json={"path": files},
         headers={"Authorization": f"Bearer {token}"},
         timeout=3,
     )
@@ -111,7 +113,6 @@ def test_load_files_success(
         cat = intake.open_esm_datastore(temp_f.name)
     # Smoke test for intake, I don't really know what else todo.
     assert hasattr(cat, "df")
-
     for attr in (".zarray", ".zattrs"):
         data = requests.get(
             f"{files[0]}/lon/{attr}",
@@ -119,15 +120,19 @@ def test_load_files_success(
             timeout=3,
         )
         assert data.status_code == 200
-
-    with mocker.patch(
-        "freva_rest.freva_data_portal.utils.cloudpickle.loads", return_value={}
-    ):
-        res = requests.get(
-            f"{files[0]}/.zmetadata",
+    data = requests.get(
+        f"{files[0]}/bar/.zarray",
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=3,
+    )
+    assert data.status_code == 404
+    for attr in "", ".zarray":
+        data = requests.get(
+            f"{files[0]}/{attr}",
             headers={"Authorization": f"Bearer {token}"},
+            timeout=3,
         )
-        assert res.status_code == 503
+        assert data.status_code == 400
 
 
 def test_zarr_utils(test_server: str, auth: Dict[str, str]) -> None:
@@ -159,7 +164,7 @@ def test_zarr_utils(test_server: str, auth: Dict[str, str]) -> None:
         timeout=3,
     )
     assert data.status_code == 200
-    _id = encode_path_token("foo.zarr")
+    _id = encode_cache_token("foo.zarr")
     data = requests.get(
         f"{test_server}/data-portal/zarr-utils/status",
         params={
@@ -168,6 +173,16 @@ def test_zarr_utils(test_server: str, auth: Dict[str, str]) -> None:
         },
         headers={"Authorization": f"Bearer {token}"},
         timeout=3,
+    )
+    assert data.status_code == 200
+    assert data.json()["status"] == 5
+
+    data = requests.get(
+        f"{test_server}/data-portal/zarr-utils/status",
+        params={
+            "url": f"{test_server}/data-portal/share/foo/bar.zarr",
+            "timeout": 3,
+        },
     )
     assert data.status_code == 200
     assert data.json()["status"] == 5
@@ -190,7 +205,19 @@ def test_load_files_fail(
 ) -> None:
     """Test for things that can go wrong when loading the data."""
     token = auth["access_token"]
-    _id = encode_path_token("/foobar.nc")
+    with NamedTemporaryFile(suffix=".nc") as tf:
+        path = tf.name
+        key = encode_cache_token(path)
+        SyncCache().setex(key, 3, cloudpickle.dumps({"status": 3}))
+        url = f"{test_server}/data-portal/zarr/{key}.zarr"
+
+        res = requests.get(
+            f"{url}/.zmetadata",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert res.status_code == 503
+
+    _id = encode_cache_token(path)
     res2 = requests.get(
         f"{test_server}/databrowser/load/freva/",
         params={"dataset": "*fs", "project": "cmip6"},
@@ -252,7 +279,7 @@ def test_no_broker(
     test_server: str, auth: Dict[str, str], mocker: MockerFixture
 ) -> None:
     """Test the behviour if no broker is present."""
-    mocker.patch("freva_rest.utils.base_utils.Cache", "foo")
+    mocker.patch("freva_rest.freva_data_portal.utils.Cache", "foo")
     res = requests.get(
         f"{test_server}/databrowser/load/freva/",
         params={"dataset": "cmip6-fs"},
@@ -262,10 +289,9 @@ def test_no_broker(
     )
     file = list(res.iter_lines(decode_unicode=True))[0]
     assert "error" in file
-    mocker.patch("freva_rest.freva_data_portal.endpoints.Cache", "foo")
-    res = requests.get(
+    res = requests.post(
         f"{test_server}/data-portal/zarr/convert",
-        params={"path": ["/foo/bar.nc"]},
+        json={"path": ["/foo/bar.nc"]},
         headers={"Authorization": f"Bearer {auth['access_token']}"},
         timeout=7,
     )
@@ -277,17 +303,17 @@ def test_no_cache(
 ) -> None:
     """Test the behviour if no cache is present."""
 
-    _id = encode_path_token("foo.zarr")
+    _id = encode_cache_token("foo.zarr")
     checked = Cache._connection_checked
     try:
-        with mock.patch("freva_rest.utils.base_utils.CONFIG.redis_user", "foo"):
+        with mock.patch("freva_rest.freva_data_portal.endpoints.Cache", "foo"):
             res = requests.get(
                 f"{test_server}/data-portal/zarr-utils/status",
                 params={"url": f"{test_server}/data-portal/zarr/foo.zarr"},
                 headers={"Authorization": f"Bearer {auth['access_token']}"},
                 timeout=7,
             )
-            assert res.status_code == 400
+            assert res.status_code == 503
         Cache._connection_checked = False
         with mock.patch("freva_rest.utils.base_utils.CONFIG.services", ""):
             with mock.patch.dict(
@@ -299,10 +325,10 @@ def test_no_cache(
                     headers={"Authorization": f"Bearer {auth['access_token']}"},
                     timeout=7,
                 )
-                assert res.status_code == 503
-                res = requests.get(
+                assert res.status_code == 200
+                res = requests.post(
                     f"{test_server}/data-portal/zarr/convert",
-                    params={"path": ["/foo/bar.nc"]},
+                    json={"path": ["/foo/bar.nc"]},
                     headers={"Authorization": f"Bearer {auth['access_token']}"},
                     timeout=7,
                 )
@@ -367,8 +393,8 @@ def test_presigned_url_failed(
         assert "url" in res.json()
         sig = res.json()["sig"]
 
-        token = f'/zarr/{encode_path_token("/work.foo")}.zarr'
-        token_bad, sig_bad = sign_token_path(token, -1)
+        token = f'/zarr/{encode_cache_token("/work.foo")}.zarr'
+        token_bad, sig_bad = sign_token_path(token, -1, None)
 
         # Missing token
         res = requests.get(

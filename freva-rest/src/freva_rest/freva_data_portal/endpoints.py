@@ -1,28 +1,23 @@
 """Definition of endpoints for loading/streaming and manipulating data."""
 
-from typing import Annotated, List, Literal, Optional, Union
+from typing import Annotated, Dict, List, Optional, Union
 
 import cloudpickle
-from fastapi import Path, Query, Security
+from fastapi import Path, Query, Request, Security
 from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi_third_party_auth import IDToken as TokenPayload
 from pydantic import BaseModel, Field
 
 from freva_rest.auth import auth
-from freva_rest.auth.presign import path_from_url, verify_token
+from freva_rest.auth.presign import get_cache_token, verify_token
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
-from freva_rest.utils.base_utils import (
-    Cache,
-    encode_path_token,
-)
+from freva_rest.utils.base_utils import Cache
 
+from .schema import ZarrConversion
 from .utils import (
     STATUS_LOOKUP,
-    AggregationPlan,
-    ConcatOptions,
-    MergeOptions,
     process_zarr_data,
     publish_datasets,
     read_redis_data,
@@ -72,7 +67,7 @@ class ZarrStatus(BaseModel):
     ]
 
 
-@app.get(
+@app.post(
     "/api/freva-nextgen/data-portal/zarr/convert",
     summary="Request asynchronous Zarr conversion",
     description=(
@@ -97,98 +92,10 @@ class ZarrStatus(BaseModel):
     response_class=JSONResponse,
 )
 async def load_files(
-    path: Annotated[
-        Union[str, List[str]],
-        Query(
-            title="Path to data.",
-            description=(
-                "Absolute or object‑store paths to the data files to "
-                "convert. You can add multiple files if you whish to aggregate"
-                " data."
-            ),
-            examples=["/work/abc1234/myuser/my-data.nc"],
-        ),
-    ],
-    aggregate: Annotated[
-        Optional[Literal["auto", "merge", "concat"]],
-        Query(
-            title="Aggregte Data",
-            description=(
-                "If data needs to be aggregated, "
-                "instruct which aggregation method should be used  "
-                "(auto, merge or concat). If set to auto the system will "
-                "try to infer a plan."
-            ),
-            examples=["concat"],
-        ),
-    ] = None,
-    join: Annotated[
-        Optional[Literal["outer", "inner", "exact", "left", "right"]],
-        Query(
-            title="Join Mode",
-            description=(
-                "How to align coordinate indexes across inputs "
-                "(outer, inner, exact, left, right)."
-            ),
-            examples=["inner"],
-        ),
-    ] = None,
-    compat: Annotated[
-        Optional[Literal["no_conflicts", "equals", "override"]],
-        Query(
-            title="Compat Mode",
-            description=(
-                "How to treat variables with same name. "
-                " choose from: equals, no_conflicts, override."
-            ),
-            examples=["no_conflicts"],
-        ),
-    ] = None,
-    data_vars: Annotated[
-        Optional[Literal["minimal", "different", "all"]],
-        Query(
-            title="Variable concat.",
-            alias="data-vars",
-            description=(
-                "Which data variables to concatenate (minimal, different, all)"
-            ),
-            examples=["minimal"],
-        ),
-    ] = None,
-    coords: Annotated[
-        Optional[Literal["minimal", "different", "all"]],
-        Query(
-            title="Coordinate concat.",
-            description=(
-                "Which data coordinates to concatenate (minimal, different, all)"
-            ),
-            examples=["minimal"],
-        ),
-    ] = None,
-    dim: Annotated[
-        Optional[str],
-        Query(
-            title="Dim",
-            description=(
-                "Dimension to concatenate along. If it does not exist,"
-                "a new dimension is created."
-            ),
-            examples=["tas"],
-        ),
-    ] = None,
-    group_by: Annotated[
-        Optional[str],
-        Query(
-            title="Group by",
-            alias="group-by",
-            description=(
-                "If set, forces grouping by a signature key. "
-                "Otherwise grouping is attempted only when direct combine "
-                "fails."
-            ),
-            examples=["ensemble"],
-        ),
-    ] = None,
+    convert: ZarrConversion,
+    current_user: TokenPayload = Security(
+        auth.create_auth_dependency(), scopes=["oidc.claims"]
+    ),
 ) -> LoadResponse:
     """Publish a conversion request to the data‑portal worker.
 
@@ -197,28 +104,47 @@ async def load_files(
     - **note**: this function does **not** check that the input path exists or
       is readable by; that check occurs asynchronously in the worker.
     """
-    aggregation_plan = AggregationPlan(
-        mode=aggregate,
-        concat=ConcatOptions(
-            dim=dim,
-            compat=compat,
-            join=join,
-            data_vars=data_vars,
-            coords=coords,
-        ),
-        merge=MergeOptions(compat=compat, join=join),
-        group_by=group_by,
-    )
+    paths = convert.path if isinstance(convert.path, list) else [convert.path]
+    aggregation_plan: Dict[str, Optional[str]] = {
+        "mode": convert.aggregate,
+        "dim": convert.dim,
+        "compat": convert.compat,
+        "join": convert.join,
+        "data_vars": convert.data_vars,
+        "coords": convert.coords,
+        "group_by": convert.group_by,
+    }
+
+    async def publish(path: Union[str, List[str]]) -> str:
+        return await publish_datasets(
+            path,
+            aggregation_plan={k: v for k, v in aggregation_plan.items() if v},
+            ttl_seconds=convert.ttl_seconds,
+            public=convert.public,
+            publish=False,
+        )
 
     try:
-        return LoadResponse(
-            urls=await publish_datasets(path, aggregation_plan=aggregation_plan)
-        )
-    except HTTPException as error:
-        raise HTTPException(detail=error.detail, status_code=error.status_code)
+        if convert.aggregate is None:
+            urls = [await publish(p) for p in paths]
+        else:
+            urls = [await publish(paths)]
+        return LoadResponse(urls=urls)
+    except HTTPException:
+        raise
     except Exception as error:
-        logger.error("Error while publishing data for zarr-conversion: %s", error)
         raise HTTPException(detail="Internal error.", status_code=500) from error
+
+
+def _is_public_zarr_url(url: str) -> bool:
+    """
+    Public URLs are those whose PATH contains /data-portal/share/<keys>
+    and ends with .zarr (adjust if you want).
+    """
+    path_no_suffix = url.removesuffix(".zarr")
+
+    _, split, keys = path_no_suffix.partition("/data-portal/share/")
+    return bool(split and keys)
 
 
 @app.get(
@@ -239,6 +165,7 @@ async def load_files(
     response_model=ZarrStatus,
 )
 async def get_status(
+    request: Request,
     url: Annotated[
         str,
         Query(
@@ -258,20 +185,30 @@ async def get_status(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Security(
-        auth.create_auth_dependency(), scopes=["oidc.claims"]
-    ),
 ) -> ZarrStatus:
     """Get the status of a loading process."""
-    path = path_from_url(url)
-    token = encode_path_token(path)
-    await Cache.check_connection()
-    stat = cloudpickle.loads(
-        await Cache.get(token) or cloudpickle.dumps({"status": 5})
-    )
-    return ZarrStatus(
-        status=stat.get("status", 5), reason=stat.get("reason", "Unkown")
-    )
+    _, split, keys = url.removesuffix(".zarr").partition("/data-portal/share/")
+    if not _is_public_zarr_url(url):
+        auth_header = request.headers.get("authorization")
+        await auth.check_token_from_headers(auth_header, required=True)
+
+    try:
+        if split and keys:
+            slug, key = keys.split("/", 1)
+            payload = await verify_token(key, slug)
+            token = payload["_id"]
+        else:
+            token = get_cache_token(url)
+        await Cache.check_connection()
+        stat = cloudpickle.loads(await Cache.get(token) or b"\x80\x05}\x94.")
+        return ZarrStatus(
+            status=stat.get("status", 5), reason=stat.get("reason", "Unknown")
+        )
+    except HTTPException as error:
+        return ZarrStatus(status=5, reason=error.detail)
+    except Exception as error:
+        logger.warning(error)
+        raise HTTPException(503, "Not available")
 
 
 @app.get(
@@ -314,8 +251,7 @@ async def zarr_html_view(
     This endpoint provides a human-readable HTML view of the dataset structure
     and metadata, generated using Xarray's HTML representation method.
     """
-    path = path_from_url(url)
-    token = encode_path_token(path)
+    token = get_cache_token(url)
     return HTMLResponse(
         content=await read_redis_data(token, "repr_html", timeout=timeout)
     )

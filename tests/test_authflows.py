@@ -461,9 +461,9 @@ def test_wrong_token_claims(
     with mocker.patch(
         "freva_rest.auth.oauth2.token_field_matches", return_value=False
     ):
-        res = requests.get(
-            f"{test_server}/data-portal/zarr-utils/status",
-            params={"url": "foo.zar"},
+        res = requests.post(
+            f"{test_server}/data-portal/zarr/convert",
+            json={"path": ["foo.zar"]},
             headers={"Authorization": f"Bearer {auth['access_token']}"},
         )
         assert res.status_code == 401

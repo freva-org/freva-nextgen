@@ -9,5 +9,5 @@ class ZarrOptionsDict(TypedDict):
     public: bool
     """Flag indicating whether or not we need to create a public zarr ulr."""
 
-    ttl_seconds: int
+    ttl_seconds: float
     """TTL of the link in seconds."""

@@ -3,6 +3,7 @@
 import asyncio
 import datetime
 import json
+import logging
 import os
 import socket
 import threading
@@ -28,6 +29,7 @@ from freva_client.utils.auth_utils import TOKEN_ENV_VAR, Token
 from freva_rest.api import app
 from freva_rest.config import ServerConfig
 from freva_rest.databrowser_api.mock import read_data
+from freva_rest.logger import reset_loggers
 
 
 def load_data() -> None:
@@ -39,7 +41,9 @@ def load_data() -> None:
 
 def run_test_server(port: int) -> None:
     """Start a test server using uvcorn."""
-    logger.setLevel(10)
+    logger.setLevel(logging.WARNING)
+    reset_loggers(logging.WARNING)
+
     with mock.patch("freva_rest.databrowser_api.endpoints.Solr.batch_size", 3):
         with mock.patch(
             "freva_rest.databrowser_api.endpoints.server_config.proxy",
@@ -69,13 +73,15 @@ def mock_token_data(
         "aud": ["freva", "account"],
         "realm_access": {"groups": ["/foo"]},
     }
+    access_token = jwt.encode(token_data, "PyJWK")
     return Token(
-        access_token=jwt.encode(token_data, "PyJWK"),
+        access_token=access_token,
         token_type="Bearer",
         expires=now + valid_for,
         refresh_token="test_refresh_token",
         refresh_expires=now + refresh_for,
         scope="profile email address",
+        # headers={"Authorization": f"Bearer {access_token}"},
     )
 
 
@@ -377,6 +383,9 @@ def _build_token(token_data: dict) -> Token:
         refresh_token=token_data["refresh_token"],
         refresh_expires=int(refresh_expires_at),
         scope=token_data["scope"],
+        headers={
+            "Authorization": f"{token_data['token_type']} {token_data['access_token']}"
+        },
     )
 
 

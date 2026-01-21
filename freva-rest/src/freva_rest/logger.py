@@ -50,7 +50,7 @@ logging.basicConfig(
 )
 
 
-def reset_loggers() -> None:
+def reset_loggers(level: int = logging.INFO) -> None:
     """Unify all loggers that we have currently aboard."""
     for name in logging.root.manager.loggerDict.keys():
         if name != THIS_NAME:
@@ -59,7 +59,7 @@ def reset_loggers() -> None:
                 logger_stream_handle,
             ]
             logging.getLogger(name).propagate = True
-            logging.getLogger(name).level = logging.INFO
+            logging.getLogger(name).level = level
 
 
 reset_loggers()

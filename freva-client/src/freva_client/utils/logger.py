@@ -8,7 +8,7 @@ from rich.console import Console
 from rich.logging import RichHandler
 
 try:
-    from IPython import get_ipython
+    from IPython.core.getipython import get_ipython
 except ImportError:
     get_ipython = lambda: None  # noqa: E731
 

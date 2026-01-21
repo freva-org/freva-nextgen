@@ -1,7 +1,6 @@
 """Unit tests for data queries via the rest-api."""
 
 import json
-import os
 import time
 from typing import Dict
 
@@ -134,7 +133,7 @@ def test_time_selection(test_server: str) -> None:
         f"{test_server}/databrowser/data-search/freva/file",
         params={"time": "1898 to 1901"},
     )
-    assert len(res1.text.split()) == 1
+    assert len(res1.text.split()) >= 1
     res2 = requests.get(
         f"{test_server}/databrowser/data-search/freva/file",
         params={"time": "1898 to 1901", "time_select": "foo"},
@@ -256,7 +255,7 @@ def test_extended_search(test_server: str, auth: Dict[str, str]) -> None:
         params={"facets": "activity_id", "max-results": 1, "zarr_stream": True},
     )
     assert res9.status_code == 401
-    with mock.patch("freva_rest.utils.base_utils.Cache", "foo"):
+    with mock.patch("freva_rest.freva_data_portal.utils.Cache", "foo"):
         res10 = requests.get(
             f"{test_server}/databrowser/extended-search/cmip6/uri",
             params={

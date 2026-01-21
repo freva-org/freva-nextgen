@@ -1,6 +1,6 @@
 """Module for aggregation of xarray datasets."""
 
-import json
+import warnings
 from dataclasses import dataclass
 from typing import (
     Any,
@@ -10,14 +10,18 @@ from typing import (
     List,
     Literal,
     Mapping,
-    MutableMapping,
     Optional,
     Protocol,
+    TypedDict,
+    cast,
 )
 
 import xarray as xr
+from xarray.backends.writers import to_zarr
+from xarray.core.types import ZarrWriteModes
 
-from .zarr_utils import create_zmetadata, jsonify_zmetadata
+from .utils import data_logger
+from .zarr_utils import jsonify_zmetadata
 
 
 class RedisLike(Protocol):
@@ -48,6 +52,10 @@ class AggregationError(RuntimeError):
         self.reason = reason
         self.details = dict(details or {})
 
+    def __str__(self) -> str:
+        details = "\n".join([f"{k}: {v}" for (k, v) in self.details.items()])
+        return f"{self.reason}:\n\n{details}"
+
 
 @dataclass(frozen=True)
 class ConcatOptions:
@@ -71,9 +79,9 @@ class ConcatOptions:
         Which coordinate variables to concatenate ("minimal", "different", "all").
     """
 
-    dim: str
+    dim: Optional[str] = None
     join: Literal["outer", "inner", "exact", "left", "right"] = "outer"
-    compat: Literal["no_conflicts", "equals", "override"] = "no_conflicts"
+    compat: Literal["no_conflicts", "equals", "override"] = "override"
     data_vars: Literal["minimal", "different", "all"] = "all"
     coords: Literal["minimal", "different", "all"] = "minimal"
 
@@ -119,6 +127,18 @@ class AggregationPlan:
     group_by: Optional[str] = None
 
 
+class AggregationOptions(TypedDict, total=False):
+    """Options to construct the aggregation plan."""
+
+    mode: Optional[Literal["auto", "merge", "concat"]]
+    join: Literal["outer", "inner", "exact", "left", "right"]
+    compat: Literal["no_conflicts", "equals", "override"]
+    data_vars: Literal["minimal", "different", "all"]
+    coords: Literal["minimal", "different", "all"]
+    dim: Optional[str]
+    group_by: Optional[str]
+
+
 @dataclass(frozen=True)
 class WriteZarrOptions:
     """
@@ -136,8 +156,7 @@ class WriteZarrOptions:
         Always False here. Consolidation is handled by our `.zmetadata` writer.
     """
 
-    mode: str = "w"
-    compute: bool = True
+    mode: ZarrWriteModes = "w"
     consolidated: bool = False
 
 
@@ -161,7 +180,7 @@ def _guess_concat_dim(dsets: Iterable[xr.Dataset]) -> Optional[str]:
     if "time" in common:
         return "time"
     if common:
-        return sorted(common)[0]
+        return sorted([str(c) for c in common])[0]
     return None
 
 
@@ -174,7 +193,9 @@ def _grid_signature(ds: xr.Dataset) -> str:
 
     You can extend this later (e.g., hash of lat/lon arrays) if needed.
     """
-    dim_sig = ",".join(f"{k}={ds.dims[k]}" for k in sorted(ds.dims.keys()))
+    dim_sig = ",".join(
+        f"{k}={ds.dims[k]}" for k in sorted(map(str, ds.dims.keys()))
+    )
     coord_keys = [
         k for k in ("lat", "lon", "rlat", "rlon", "x", "y") if k in ds.coords
     ]
@@ -190,15 +211,7 @@ def _vars_signature(ds: xr.Dataset) -> str:
     """
     Signature for grouping by variable set.
     """
-    return ",".join(sorted(ds.data_vars.keys()))
-
-
-def _write_json(store: MutableMapping[str, bytes], key: str, obj: Any) -> None:
-    """
-    Write JSON object as UTF-8 bytes to a Zarr store mapping.
-    """
-    data = json.dumps(obj, separators=(",", ":"), sort_keys=True).encode("utf-8")
-    store[key] = data
+    return ",".join(sorted(map(str, ds.data_vars.keys())))
 
 
 def _choose_group_key(ds: xr.Dataset, group_by: str) -> str:
@@ -211,7 +224,6 @@ def _choose_group_key(ds: xr.Dataset, group_by: str) -> str:
 
 def write_grouped_zarr(
     datasets: Mapping[str, xr.Dataset],
-    store: MutableMapping[str, bytes],
     *,
     options: Optional[WriteZarrOptions] = None,
     zmetadata_key: str = ".zmetadata",
@@ -232,9 +244,6 @@ def write_grouped_zarr(
     datasets:
         Mapping of group name to dataset. "root" is special and is written to
         the store root. Other keys are written as Zarr groups under that name.
-    store:
-        A Zarr-compatible mapping (e.g. fsspec mapper or any MutableMapping
-        that accepts bytes values).
     options:
         Write options for `to_zarr`.
     zmetadata_key:
@@ -249,7 +258,7 @@ def write_grouped_zarr(
     -----
     - This function writes each dataset with `consolidated=False`.
     - It then builds a combined `.zmetadata` by:
-      1) generating per-dataset metadata with your existing `create_zmetadata`
+      1) generating per-dataset metadata using `jsonify_zmetadata`
       2) prefixing subgroup keys (e.g. "tas/.zarray" -> "group0/tas/.zarray")
       3) writing one root `.zmetadata` that references all arrays in all groups
 
@@ -260,14 +269,16 @@ def write_grouped_zarr(
 
     # 1) Write datasets into the store (root and groups).
     for name, ds in datasets.items():
-        group = None if name == "root" else name
-        ds.to_zarr(
-            store,
-            group=group,
-            mode=options.mode if name == "root" else "a",
-            consolidated=options.consolidated,
-            compute=options.compute,
-        )
+        group: Optional[str] = None if name == "root" else name
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            to_zarr(
+                ds,
+                group=group,
+                mode=options.mode if name == "root" else "a",
+                consolidated=options.consolidated,
+                compute=True,
+            )
 
     # 2) Build combined consolidated metadata.
     combined_meta: Dict[str, Any] = {}
@@ -276,8 +287,7 @@ def write_grouped_zarr(
 
     for name, ds in datasets.items():
         # Your existing logic.
-        meta = create_zmetadata(ds)
-        json_meta = jsonify_zmetadata(ds, meta)
+        json_meta = jsonify_zmetadata(ds)
 
         # `jsonify_zmetadata` typically returns the dict you serve, i.e.
         # {"zarr_consolidated_format": 1, "metadata": {...}} or similar.
@@ -296,10 +306,6 @@ def write_grouped_zarr(
             group_key = f"{name}/.zgroup"
             if group_key not in combined_meta["metadata"]:
                 combined_meta["metadata"][group_key] = {"zarr_format": 2}
-
-    # 3) Write consolidated metadata at the store root.
-    _write_json(store, zmetadata_key, combined_meta)
-
     return combined_meta
 
 
@@ -334,7 +340,7 @@ class DatasetAggregator:
         datasets: List[xr.Dataset],
         *,
         job_id: str,
-        plan: Optional[AggregationPlan] = None,
+        plan: Optional[Dict[str, Optional[str]]] = None,
     ) -> Dict[str, xr.Dataset]:
         """
         Aggregate datasets according to a plan or inferred strategy.
@@ -361,10 +367,17 @@ class DatasetAggregator:
         """
         if not datasets:
             return {"root": xr.Dataset()}
-
+        agg_plan = cast(
+            AggregationOptions,
+            {k: v for (k, v) in (plan or {}).items() if v is not None},
+        )
         try:
             prepped = [self._apply_regrid(ds) for ds in datasets]
-            inferred = plan or self._infer_plan(prepped)
+            if agg_plan.get("mode", "auto") == "auto":
+                combined = self._simple_combine(prepped, agg_plan)
+                if combined:
+                    return {"root": combined}
+            inferred = self._infer_plan(prepped, agg_plan)
             try:
                 combined = self._combine(prepped, inferred)
                 return {"root": combined}
@@ -375,34 +388,39 @@ class DatasetAggregator:
                     # One group but still failed -> raise original error as reason.
                     raise AggregationError(
                         "Aggregation failed for a single group.",
-                        {"exception": repr(exc)},
+                        {"exception": repr(exc), "detail": str(exc)},
                     ) from exc
 
                 out: Dict[str, xr.Dataset] = {}
                 for idx, (gkey, gsets) in enumerate(groups.items()):
-                    gplan = plan or self._infer_plan(gsets)
+                    gplan = self._infer_plan(gsets, agg_plan)
                     try:
                         out[f"group{idx}"] = self._combine(gsets, gplan)
                     except Exception as gexc:
                         raise AggregationError(
                             "Aggregation failed for at least one group.",
-                            {"group_key": gkey, "exception": repr(gexc)},
+                            {
+                                "group_key": gkey,
+                                "exception": repr(gexc),
+                                "detail": str(gexc),
+                            },
                         ) from gexc
                 return out
 
         except Exception as error:
-            agg_exc = AggregationError(
+            raise AggregationError(
                 "Unexpected aggregation failure.",
-                {"exception": repr(error)},
-            )
-            raise agg_exc from error
+                {"exception": repr(error), "detail": str(error)},
+            ) from None
 
     def _apply_regrid(self, ds: xr.Dataset) -> xr.Dataset:
         if self._regrid is None:
             return ds
         return self._regrid(ds)
 
-    def _infer_plan(self, dsets: list[xr.Dataset]) -> AggregationPlan:
+    def _infer_plan(
+        self, dsets: list[xr.Dataset], plan: AggregationOptions
+    ) -> AggregationPlan:
         """
         Infer whether to merge or concat.
 
@@ -411,28 +429,83 @@ class DatasetAggregator:
         - Else if all share a concat dim (prefer "time") -> concat.
         - Else -> merge.
         """
+        mode = plan.get("mode", "auto")
+        if mode == "merge":
+            return AggregationPlan(
+                mode="merge",
+                merge=MergeOptions(
+                    join=plan.get("join") or MergeOptions.join,
+                    compat=plan.get("compat") or MergeOptions.compat,
+                ),
+            )
+        if mode in ["concat", "auto"]:
+            return AggregationPlan(mode="concat", concat=ConcatOptions())
         var_sets = [set(ds.data_vars.keys()) for ds in dsets]
         union = set.union(*var_sets)
         inter = set.intersection(*var_sets) if var_sets else set()
 
         # Disjoint-ish variables: merge
         if len(inter) == 0 and len(union) > 0:
-            return AggregationPlan(mode="merge", merge=MergeOptions())
+            return AggregationPlan(
+                mode="merge",
+                merge=MergeOptions(
+                    join=plan.get("join") or MergeOptions.join,
+                    compat=plan.get("compat") or MergeOptions.compat,
+                ),
+            )
 
-        concat_dim = _guess_concat_dim(dsets)
+        concat_dim = plan.get("dim") or _guess_concat_dim(dsets)
         if concat_dim is not None:
+            plan["dim"] = concat_dim
             return AggregationPlan(
                 mode="concat",
-                concat=ConcatOptions(dim=concat_dim),
+                concat=ConcatOptions(
+                    dim=plan.get("dim"),
+                    join=plan.get("join") or ConcatOptions.join,
+                    compat=plan.get("compat") or ConcatOptions.compat,
+                    data_vars=plan.get("data_vars") or ConcatOptions.data_vars,
+                    coords=plan.get("coords") or ConcatOptions.coords,
+                ),
             )
-        return AggregationPlan(mode="merge", merge=MergeOptions())
+        return AggregationPlan(
+            mode="merge",
+            merge=MergeOptions(
+                join=plan.get("join") or MergeOptions.join,
+                compat=plan.get("compat") or MergeOptions.compat,
+            ),
+        )
+
+    def _simple_combine(
+        self, dsets: list[xr.Dataset], plan: AggregationOptions
+    ) -> Optional[xr.Dataset]:
+        kwargs = cast(
+            Dict[str, Any], {k: v for (k, v) in plan.items() if v and k != "mode"}
+        )
+        for method in (xr.combine_by_coords, xr.combine_nested):
+            try:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    return cast(
+                        xr.Dataset,
+                        xr.combine_by_coords(
+                            dsets,
+                            combine_attrs="override",
+                            **kwargs,
+                        ),
+                    )
+            except Exception as error:
+                data_logger.warning(
+                    f"Could not use {method} for auto aggregation: {error}"
+                )
+            kwargs["concat_dim"] = plan.get("dim")
+        return None
 
     def _combine(
         self, dsets: list[xr.Dataset], plan: AggregationPlan
     ) -> xr.Dataset:
         if plan.mode == "merge":
-            opts = plan.merge or MergeOptions()
-            return xr.merge(dsets, join=opts.join, compat=opts.compat)
+            m_opts = plan.merge or MergeOptions()
+            return xr.merge(dsets, join=m_opts.join, compat=m_opts.compat)
         if plan.mode == "concat":
             opts = plan.concat
             if opts is None:
@@ -449,7 +522,7 @@ class DatasetAggregator:
                 opts = ConcatOptions(dim=dim)
             return xr.concat(
                 dsets,
-                dim=opts.dim,
+                dim=opts.dim or _guess_concat_dim(dsets),
                 join=opts.join,
                 compat=opts.compat,
                 data_vars=opts.data_vars,

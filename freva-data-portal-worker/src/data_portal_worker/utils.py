@@ -7,7 +7,7 @@ from html import escape
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from socket import gethostname
-from typing import Optional, Union
+from typing import Dict, List, Optional, TypeAlias, Union
 
 import xarray as xr
 from platformdirs import user_log_dir
@@ -44,6 +44,16 @@ logger_file_handle = RotatingFileHandler(
 logger_file_handle.setLevel(logging.INFO)
 data_logger.addHandler(logger_file_handle)
 
+XrGroups = Mapping[str, xr.Dataset]
+JSONScalar: TypeAlias = Union[str, int, float, bool, None]
+JSONValue: TypeAlias = Union[
+    JSONScalar,
+    list["JSONValue"],
+    dict[str, "JSONValue"],
+]
+JSONObject: TypeAlias = Dict[str, JSONValue]
+JSONArray: TypeAlias = List[JSONValue]
+
 
 def str_to_int(inp: Optional[str], default: int) -> int:
     """Convert a string to int."""
@@ -52,9 +62,6 @@ def str_to_int(inp: Optional[str], default: int) -> int:
         return int(inp)
     except (TypeError, ValueError):
         return default
-
-
-XrGroups = Mapping[str, xr.Dataset]
 
 
 def xr_repr_html(
@@ -77,7 +84,7 @@ def xr_repr_html(
 
     first = True
     for name, ds in groups.items():
-        ds_html = ds._repr_html_().replace("xarray.Dataset", "Dataset")  # type: ignore[attr-defined]
+        ds_html = ds._repr_html_().replace("xarray.", "")
         is_open = " open" if (open_first and first) else ""
         first = False
 

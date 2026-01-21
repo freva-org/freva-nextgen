@@ -3960,5 +3960,300 @@
          "2d"
       ],
       "creation_time": "2023-07-15T02:48:42.312Z"
+   },
+   {
+      "project": [
+         "cordex"
+      ],
+      "product": [
+         "eur-11"
+      ],
+      "institute": [
+         "btu"
+      ],
+      "model": [
+         "ec-earth3-veg"
+      ],
+      "experiment": [
+         "historical"
+      ],
+      "time_frequency": [
+         "mon"
+      ],
+      "bbox": [
+         "ENVELOPE(44.594, 64.9646, 72.58528, 21.98791)"
+      ],
+      "realm": [
+         "atmos"
+      ],
+      "cmor_table": [
+         "mon"
+      ],
+      "ensemble": [
+         "r1i1p1f1"
+      ],
+      "variable": [
+         "tas"
+      ],
+      "time": "[2001-01-01T00:00 TO 2010-12-31T23:59]",
+      "file_name": [
+         "$CWD/data/model/tas_EUR-11_EC-Earth-Consortium-EC-Earth3-Veg_historical_r1i1p1f1_CLMcom-BTU-ICON-2-6-5-rc_v1_mon_200101-201012.nc"
+      ],
+      "file": "$CWD/data/model/tas_EUR-11_EC-Earth-Consortium-EC-Earth3-Veg_historical_r1i1p1f1_CLMcom-BTU-ICON-2-6-5-rc_v1_mon_200101-201012.nc",
+      "timestamp": 1688275840.0,
+      "uri": "file:///$CWD/data/model/tas_EUR-11_EC-Earth-Consortium-EC-Earth3-Veg_historical_r1i1p1f1_CLMcom-BTU-ICON-2-6-5-rc_v1_mon_200101-201012.nc",
+      "dataset": [
+         "agg"
+      ],
+      "format": [
+         "nc"
+      ],
+      "grid_label": [
+         "gn"
+      ],
+      "time_aggregation": [
+         "avg"
+      ],
+      "level_type": [
+         "2d"
+      ],
+      "creation_time": "2023-07-15T02:48:42.155Z",
+      "version": "v20210618"
+   },
+   {
+      "project": [
+         "cordex"
+      ],
+      "product": [
+         "eur-11"
+      ],
+      "institute": [
+         "btu"
+      ],
+      "model": [
+         "ec-earth3-veg"
+      ],
+      "experiment": [
+         "historical"
+      ],
+      "time_frequency": [
+         "mon"
+      ],
+      "bbox": [
+         "ENVELOPE(44.594, 64.9646, 72.58528, 21.98791)"
+      ],
+      "realm": [
+         "atmos"
+      ],
+      "cmor_table": [
+         "mon"
+      ],
+      "ensemble": [
+         "r1i1p1f1"
+      ],
+      "variable": [
+         "tas"
+      ],
+      "time": "[2011-01-01T00:00 TO 2014-12-31T23:59]",
+      "file_name": [
+         "$CWD/data/model/tas_EUR-11_EC-Earth-Consortium-EC-Earth3-Veg_historical_r1i1p1f1_CLMcom-BTU-ICON-2-6-5-rc_v1_mon_201101-201412.nc"
+      ],
+      "file": "$CWD/data/model/tas_EUR-11_EC-Earth-Consortium-EC-Earth3-Veg_historical_r1i1p1f1_CLMcom-BTU-ICON-2-6-5-rc_v1_mon_201101-201412.nc",
+      "timestamp": 1688275840.0,
+      "uri": "file:///$CWD/data/model/tas_EUR-11_EC-Earth-Consortium-EC-Earth3-Veg_historical_r1i1p1f1_CLMcom-BTU-ICON-2-6-5-rc_v1_mon_201101-201412.nc",
+      "dataset": [
+         "agg"
+      ],
+      "format": [
+         "nc"
+      ],
+      "grid_label": [
+         "gn"
+      ],
+      "time_aggregation": [
+         "avg"
+      ],
+      "level_type": [
+         "2d"
+      ],
+      "creation_time": "2023-07-15T02:48:42.155Z",
+      "version": "v20210618"
+   },
+   {
+      "project": [
+         "cordex"
+      ],
+      "product": [
+         "eur-11"
+      ],
+      "institute": [
+         "btu"
+      ],
+      "model": [
+         "ec-earth3-veg"
+      ],
+      "experiment": [
+         "historical"
+      ],
+      "time_frequency": [
+         "mon"
+      ],
+      "bbox": [
+         "ENVELOPE(44.594, 64.9646, 72.58528, 21.98791)"
+      ],
+      "realm": [
+         "atmos"
+      ],
+      "cmor_table": [
+         "mon"
+      ],
+      "ensemble": [
+         "r1i1p1f1"
+      ],
+      "variable": [
+         "pr"
+      ],
+      "time": "[2001-01-01T00:00 TO 2010-12-31T23:59]",
+      "file_name": [
+         "$CWD/data/model/pr_EUR-11_EC-Earth-Consortium-EC-Earth3-Veg_historical_r1i1p1f1_CLMcom-BTU-ICON-2-6-5-rc_v1_mon_200101-201012.nc"
+      ],
+      "file": "$CWD/data/model/pr_EUR-11_EC-Earth-Consortium-EC-Earth3-Veg_historical_r1i1p1f1_CLMcom-BTU-ICON-2-6-5-rc_v1_mon_200101-201012.nc",
+      "timestamp": 1688275840.0,
+      "uri": "file:///$CWD/data/model/pr_EUR-11_EC-Earth-Consortium-EC-Earth3-Veg_historical_r1i1p1f1_CLMcom-BTU-ICON-2-6-5-rc_v1_mon_200101-201012.nc",
+      "dataset": [
+         "agg"
+      ],
+      "format": [
+         "nc"
+      ],
+      "grid_label": [
+         "gn"
+      ],
+      "time_aggregation": [
+         "avg"
+      ],
+      "level_type": [
+         "2d"
+      ],
+      "creation_time": "2023-07-15T02:48:42.155Z",
+      "version": "v20210618"
+   },
+   {
+      "project": [
+         "cordex"
+      ],
+      "product": [
+         "eur-11"
+      ],
+      "institute": [
+         "btu"
+      ],
+      "model": [
+         "ec-earth3-veg"
+      ],
+      "experiment": [
+         "historical"
+      ],
+      "time_frequency": [
+         "mon"
+      ],
+      "bbox": [
+         "ENVELOPE(44.594, 64.9646, 72.58528, 21.98791)"
+      ],
+      "realm": [
+         "atmos"
+      ],
+      "cmor_table": [
+         "mon"
+      ],
+      "ensemble": [
+         "r1i1p1f1"
+      ],
+      "variable": [
+         "pr"
+      ],
+      "time": "[2011-01-01T00:00 TO 2014-12-31T23:59]",
+      "file_name": [
+         "$CWD/data/model/pr_EUR-11_EC-Earth-Consortium-EC-Earth3-Veg_historical_r1i1p1f1_CLMcom-BTU-ICON-2-6-5-rc_v1_mon_201101-201412.nc"
+      ],
+      "file": "$CWD/data/model/pr_EUR-11_EC-Earth-Consortium-EC-Earth3-Veg_historical_r1i1p1f1_CLMcom-BTU-ICON-2-6-5-rc_v1_mon_201101-201412.nc",
+      "timestamp": 1688275840.0,
+      "uri": "file:///$CWD/data/model/pr_EUR-11_EC-Earth-Consortium-EC-Earth3-Veg_historical_r1i1p1f1_CLMcom-BTU-ICON-2-6-5-rc_v1_mon_201101-201412.nc",
+      "dataset": [
+         "agg"
+      ],
+      "format": [
+         "nc"
+      ],
+      "grid_label": [
+         "gn"
+      ],
+      "time_aggregation": [
+         "avg"
+      ],
+      "level_type": [
+         "2d"
+      ],
+      "creation_time": "2023-07-15T02:48:42.155Z",
+      "version": "v20210618"
+   },
+   {
+      "project": [
+         "cordex"
+      ],
+      "product": [
+         "eur-11"
+      ],
+      "institute": [
+         "btu"
+      ],
+      "model": [
+         "ec-earth3-veg"
+      ],
+      "experiment": [
+         "historical"
+      ],
+      "time_frequency": [
+         "fx"
+      ],
+      "bbox": [
+         "ENVELOPE(44.594, 64.9646, 72.58528, 21.98791)"
+      ],
+      "realm": [
+         "atmos"
+      ],
+      "cmor_table": [
+         "fx"
+      ],
+      "ensemble": [
+         "r1i1p1f1"
+      ],
+      "variable": [
+         "orog"
+      ],
+      "time": "[0000 TO 9999]",
+      "file_name": [
+         "$CWD/data/model/orog_EUR-11_EC-Earth-Consortium-EC-Earth3-Veg_historical_r0i0p0_CLMcom-BTU-ICON-2-6-5-rc_v1_fx.nc"
+      ],
+      "file": "$CWD/data/model/orog_EUR-11_EC-Earth-Consortium-EC-Earth3-Veg_historical_r0i0p0_CLMcom-BTU-ICON-2-6-5-rc_v1_fx.nc",
+      "timestamp": 1688275840.0,
+      "uri": "file:///$CWD/data/model/orog_EUR-11_EC-Earth-Consortium-EC-Earth3-Veg_historical_r0i0p0_CLMcom-BTU-ICON-2-6-5-rc_v1_fx.nc",
+      "dataset": [
+         "agg"
+      ],
+      "format": [
+         "nc"
+      ],
+      "grid_label": [
+         "gn"
+      ],
+      "time_aggregation": [
+         "avg"
+      ],
+      "level_type": [
+         "2d"
+      ],
+      "creation_time": "2023-07-15T02:48:42.155Z",
+      "version": "v20210618"
    }
 ]

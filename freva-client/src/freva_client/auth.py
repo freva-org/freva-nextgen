@@ -124,6 +124,7 @@ class Auth:
             expires=int(expires or now + expires_in),
             refresh_expires=int(refresh_expires or now + refresh_expires_in),
             scope=scope,
+            headers={"Authorization": f"{token_type} {access_token}"},
         )
         default_token_file = get_default_token_file()
         for _file in map(

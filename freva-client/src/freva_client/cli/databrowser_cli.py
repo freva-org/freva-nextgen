@@ -7,13 +7,19 @@ import json
 from enum import Enum
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 import typer
 import typer.models
 import xarray as xr
-
-# import pprinr from rich
 from rich import print as pprint
 
 from freva_client import databrowser
@@ -22,6 +28,13 @@ from freva_client.utils import exception_handler, logger
 from freva_client.utils.auth_utils import requires_authentication
 
 from .cli_utils import parse_cli_args, print_df, version_callback
+from .zarr_cli import (
+    Aggregate,
+    AggregationCombine,
+    AggregationCompat,
+    AggregationJoin,
+    AggregationOption,
+)
 
 
 class UniqKeys(str, Enum):
@@ -312,6 +325,39 @@ def data_search(
     ttl_seconds: int = typer.Option(
         86400, "--ttl-seconds", help="Set the expiry time of any public zarr urls"
     ),
+    aggregate: Optional[Aggregate] = typer.Option(
+        None, "--aggregate", help="How aggregation should be realised (if any)"
+    ),
+    join: Optional[AggregationJoin] = typer.Option(
+        None,
+        "--join",
+        help="How different indexes should be combined for aggregation.",
+    ),
+    compat: Optional[AggregationCompat] = typer.Option(
+        None,
+        "--compate",
+        help="How to compare non-concatenated variables for aggregation.",
+    ),
+    data_vars: Optional[AggregationCombine] = typer.Option(
+        None,
+        "--data-vars",
+        help="How to combine data variables for aggregation.",
+    ),
+    coords: Optional[AggregationCombine] = typer.Option(
+        None,
+        "--coords",
+        help="How to combine coords for aggregation.",
+    ),
+    dim: Optional[str] = typer.Option(
+        None,
+        "--dim",
+        help="Name of the dimension to concatenate along for aggregation.",
+    ),
+    group_by: Optional[str] = typer.Option(
+        None,
+        "--group-by",
+        help="If set, forces grouping by a signature key for aggregation.",
+    ),
     token_file: Optional[Path] = typer.Option(
         None,
         "--token-file",
@@ -387,6 +433,14 @@ def data_search(
     """
     logger.set_verbosity(verbose)
     logger.debug("Search the databrowser")
+    aggregation_options = AggregationOption(
+        join=AggregationJoin[join] if join else None,
+        compat=AggregationCompat[compat] if compat else None,
+        data_vars=AggregationCombine[data_vars] if data_vars else None,
+        coords=AggregationCombine[coords] if coords else None,
+        dim=dim,
+        group_by=group_by,
+    )
 
     result = databrowser(
         *(facets or []),
@@ -400,12 +454,21 @@ def data_search(
         fail_on_error=False,
         multiversion=multiversion,
         stream_zarr=zarr,
-        zarr_options={"public": public, "ttl_seconds": ttl_seconds},
+        zarr_options={
+            "public": public,
+            "ttl_seconds": ttl_seconds,
+        },
         **(parse_cli_args(search_keys or [])),
     )
-    if requires_authentication(flavour=flavour, zarr=zarr, databrowser_url=host):
+    aggregate = Aggregate[aggregate] if aggregate else None
+    if aggregate is not None or requires_authentication(
+        flavour=flavour, zarr=zarr, databrowser_url=host
+    ):
         Auth(token_file).authenticate(host=host, _cli=True)
-    if parse_json:
+    if aggregate is not None:
+        res = result.aggregate(aggregate.value, **aggregation_options.to_dict())
+        print(res)
+    elif parse_json:
         print(json.dumps(sorted(result)))
     else:
         for res in result:
