@@ -1,5 +1,6 @@
 """Test client functions for zarr."""
 
+import json
 from copy import deepcopy
 from pathlib import Path
 
@@ -160,9 +161,19 @@ def test_enum() -> None:
     assert a1 == a2
 
 
-def test_zarr_aggregate_databrowser_fail(test_server: str) -> None:
+def test_zarr_aggregate_databrowser_fail(
+    test_server: str, auth_instance: Auth, token_file: Path
+) -> None:
     """Test failing databrowser.aggregate."""
-
-    db = databrowser(host=test_server, dataset="foobar")
-    with pytest.raises(FileNotFoundError):
-        db.aggregate("auto")
+    old_token = deepcopy(auth_instance._auth_token)
+    token = json.loads(token_file.read_text())
+    try:
+        auth_instance._auth_token = token
+        db = databrowser(host=test_server, dataset="foobar")
+        with pytest.raises(FileNotFoundError):
+            db.aggregate("auto")
+        db = databrowser(host=test_server, dataset="agg")
+        with pytest.raises(ValueError):
+            db.aggregate("auto", dim="ensemble", compat="inner")
+    finally:
+        auth_instance._auth_token = old_token
