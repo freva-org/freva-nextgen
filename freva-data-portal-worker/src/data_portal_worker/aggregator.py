@@ -24,7 +24,7 @@ from .zarr_utils import jsonify_zmetadata
 
 try:
     from xarray.backends.api import to_zarr
-except ModuleNotFoundError:
+except (ModuleNotFoundError, ImportError):
     from xarray.backends.writers import to_zarr
 
 
