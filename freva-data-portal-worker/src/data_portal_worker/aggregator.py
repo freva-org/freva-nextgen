@@ -23,7 +23,7 @@ from .utils import data_logger
 from .zarr_utils import jsonify_zmetadata
 
 try:
-    from xarray.backends.api import to_zarr  # typing: ignore[attr-defined]
+    from xarray.backends.api import to_zarr  # type: ignore[attr-defined]
 except (ModuleNotFoundError, ImportError):
     from xarray.backends.writers import to_zarr
 

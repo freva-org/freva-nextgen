@@ -46,7 +46,7 @@ def test_convert(test_server: str, auth_instance: Auth, auth: Token) -> None:
             xr.Dataset,
         )
         urls = convert(*files, host=test_server, zarr_options={"public": True})
-        assert isinstance(xr.open_dataset(urls[0]), xr.Dataset)
+        assert isinstance(xr.open_zarr(urls[0]), xr.Dataset)
 
     finally:
         auth_instance._auth_token = token
