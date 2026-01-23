@@ -42,7 +42,7 @@ def test_convert(test_server: str, auth_instance: Auth, auth: Token) -> None:
         headers = {"Authorization": f"Bearer {db.auth_token['access_token']}"}
         urls = convert(*files, host=test_server)
         assert isinstance(
-            xr.open_dataset(urls[0], storage_options={"headers": headers}),
+            xr.open_zarr(urls[0], storage_options={"headers": headers}),
             xr.Dataset,
         )
         urls = convert(*files, host=test_server, zarr_options={"public": True})
