@@ -119,13 +119,19 @@ def test_convert_cli(
         auth_instance._auth_token = token
 
 
-def test_status(test_server: str) -> None:
+def test_status(test_server: str, auth_instance: Auth, token_file: Path) -> None:
     """Test getting the status."""
-    stat = status(
-        "{test_server}/data-portal/share/foo/bar.zarr", host=test_server
-    )
-    assert isinstance(stat, dict)
-    assert stat["status"] == 5
+    old_token = deepcopy(auth_instance._auth_token)
+    token = json.loads(token_file.read_text())
+    try:
+        auth_instance._auth_token = token
+        stat = status(
+            "   {test_server}/data-portal/share/foo/bar.zarr", host=test_server
+        )
+        assert isinstance(stat, dict)
+        assert stat["status"] == 5
+    finally:
+        auth_instance._auth_token = old_token
 
 
 def test_status_cli(
@@ -173,7 +179,10 @@ def test_zarr_aggregate_databrowser_fail(
         with pytest.raises(FileNotFoundError):
             db.aggregate("auto")
         db = databrowser(host=test_server, dataset="agg")
+        files = list(db)
         with pytest.raises(ValueError):
             db.aggregate("auto", dim="ensemble", compat="inner")
+        with pytest.raises(ValueError):
+            convert(*files, aggregate="auto", compat="inner")
     finally:
         auth_instance._auth_token = old_token
