@@ -17,11 +17,15 @@ from typing import (
 )
 
 import xarray as xr
-from xarray.backends.writers import to_zarr
 from xarray.core.types import ZarrWriteModes
 
 from .utils import data_logger
 from .zarr_utils import jsonify_zmetadata
+
+try:
+    from xarray.backends.api import to_zarr
+except ModuleNotFoundError:
+    from xarray.backends.writers import to_zarr
 
 
 class RedisLike(Protocol):
