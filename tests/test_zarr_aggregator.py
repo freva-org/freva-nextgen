@@ -416,3 +416,10 @@ def test_combine_concat_infers_dim_when_opts_none_success() -> None:
     )
     assert "time" in out.dims
     assert out.dims["time"] == 2
+
+
+def test_html_view() -> None:
+    """Test the html view integration."""
+    from data_portal_worker.utils import xr_repr_html
+
+    assert "no groups" in xr_repr_html({}).lower()

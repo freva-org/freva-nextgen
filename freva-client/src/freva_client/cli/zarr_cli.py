@@ -74,9 +74,9 @@ class AggregationOption:
         """Drop all None options."""
         _dict = {}
         for k, v in asdict(self).items():
-            if isinstance(v, str):
+            if isinstance(v, (str, None)):
                 _dict[k] = v
-            elif isinstance(v, Enum):
+            else:
                 _dict[k] = v.value
         return cast(_AggOpts, _dict)
 

@@ -64,9 +64,7 @@ def str_to_int(inp: Optional[str], default: int) -> int:
         return default
 
 
-def xr_repr_html(
-    groups: XrGroups, *, title: str | None = None, open_first: bool = True
-) -> str:
+def xr_repr_html(groups: XrGroups) -> str:
     """
     Return HTML for either:
       - a single xarray.Dataset (native ds._repr_html_())
@@ -77,15 +75,13 @@ def xr_repr_html(
     if not groups:
         return "<div class='xr-groups-empty'><i>(no groups)</i></div>"
     parts: list[str] = []
-    if title:
-        parts.append(f"<h3 style='margin:0 0 .5rem 0'>{escape(title)}</h3>")
 
     parts.append("<div class='xr-groups' style='margin-top:.25rem'>")
 
     first = True
     for name, ds in groups.items():
         ds_html = ds._repr_html_().replace("xarray.", "")
-        is_open = " open" if (open_first and first) else ""
+        is_open = " open" if first else ""
         first = False
 
         parts.append(

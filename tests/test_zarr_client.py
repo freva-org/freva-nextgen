@@ -3,6 +3,7 @@
 from copy import deepcopy
 from pathlib import Path
 
+import pytest
 import requests
 import xarray as xr
 from typer.testing import CliRunner
@@ -148,3 +149,20 @@ def test_status_cli(
         assert res.exit_code == 0
     finally:
         auth_instance._auth_token = token
+
+
+def test_enum() -> None:
+    """Test the enum."""
+    from freva_client.cli.zarr_cli import AggregationCombine, AggregationOption
+
+    a1 = AggregationOption(join="minimal").to_dict()
+    a2 = AggregationOption(join=AggregationCombine.minimal).to_dict()
+    assert a1 == a2
+
+
+def test_zarr_aggregate_databrowser_fail(test_server: str) -> None:
+    """Test failing databrowser.aggregate."""
+
+    db = databrowser(host=test_server, dataset="foobar")
+    with pytest.raises(FileNotFoundError):
+        db.aggregate("auto")
