@@ -232,7 +232,7 @@ class databrowser:
     If the set  ``{"aggregate": "auto"`` the service will try to infer the best
     aggregation.
 
-    .. code-block: python
+    .. code-block:: python
 
         from freva_client import authenticate, databrowser
         storage_options = authenticate()["headers"]
@@ -245,7 +245,7 @@ class databrowser:
 
     You can also be more specific on the aggregation operation
 
-    .. code-block: python
+    .. code-block:: python
 
         from freva_client import databrowser
         storage_options = authenticate()["headers"]
@@ -477,21 +477,22 @@ class databrowser:
         ``dim`` and ``group_by`` parameters to fine the the aggregation.
 
         Parameters
-        ----------
+        ~~~~~~~~~~
+
         how: str, choices: auto, merge, concat
             String indicating how the aggregation should be done:
-            - "auto": let the system choose if the datasets should be concatenated
-              or mereged.
+            - "auto": let the system choose how to aggregate data.
             - "merge": merge datasets as `variables`
             - "concat": concatenated datasets along a `dimension`
+
         join: str, choices: outer, inner, exact, left, right
             String indicating how to combine differing indexes
             - "outer": use the union of object indexes.
             - "inner": use the intersection of object indexes.
             - "left": use indexes from the first object with each dimension.
             - "right": use indexes from the last object with each dimension.
-            - "exact": instead of aligning, errors when indexes to be aligned
-                       are not equal.
+            - "exact": instead of aligning, errors when indexes are not equal.
+
         compat: str, choices: no_conflicts, equals, override
             String indicating how to compare non-concatenated variables of the
             same name for:
@@ -535,9 +536,9 @@ class databrowser:
 
 
         Examples
-        --------
+        ~~~~~~~~
 
-        .. code-block: python
+        .. code-block:: python
 
             from freva_client import authenticate, databrowser
             storage_options = authenticate()["headers"]
@@ -550,7 +551,7 @@ class databrowser:
 
         You can also be more specific on the aggregation operation
 
-        .. code-block: python
+        .. code-block:: python
 
             from freva_client import databrowser
             storage_options = authenticate()["headers"]

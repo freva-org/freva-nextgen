@@ -121,7 +121,7 @@ async def load_files(
             aggregation_plan={k: v for k, v in aggregation_plan.items() if v},
             ttl_seconds=convert.ttl_seconds,
             public=convert.public,
-            publish=False,
+            publish=True,
         )
 
     try:

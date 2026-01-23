@@ -40,18 +40,17 @@ def convert(
     ``dim`` and ``group_by`` parameters to fine the the aggregation.
 
     Parameters
-    ----------
+    ~~~~~~~~~~
+
     paths: str
         Collection of paths that are converted to zarr.
     aggregate: str, choices: None, auto, merge, concat
         None will not aggregate data. The string indicating how the
         aggregation should be done:
-        - "auto": let the system choose if the datasets should be concatenated
-          or mereged.
+        - "auto": let the system choose how to aggregate data.
         - "merge": merge datasets as `variables`
         - "concat": concatenated datasets along a `dimension`
 
-        This option is only taken into account it ``aggregate`` is not None.
     host: str, default: None
         Override the host name of the databrowser server. This is usually the
         url where the freva web site can be found. Such as www.freva.dkrz.de.
@@ -64,8 +63,7 @@ def convert(
         - "inner": use the intersection of object indexes.
         - "left": use indexes from the first object with each dimension.
         - "right": use indexes from the last object with each dimension.
-        - "exact": instead of aligning, errors when indexes to be aligned
-                   are not equal.
+        - "exact": instead of aligning, errors when indexes are not equal.
 
         This option is only taken into account it ``aggregate`` is not None.
     compat: str, choices: no_conflicts, equals, override
@@ -120,10 +118,10 @@ def convert(
         ``zarr_options={"public": True, "ttl_seconds": 3600}``.
 
 
-    Examples
-    --------
+    Example
+    ~~~~~~~
 
-    .. code-block: python
+    .. code-block:: python
 
         from freva_client import authenticate
         from freva_client.zarr_utils import convert
@@ -138,7 +136,7 @@ def convert(
     You can also create zarr stores that are public. For example creating a
     `temporary` public store that is valid for one day.
 
-    .. code-block: python
+    .. code-block:: python
 
         from freva_client import authenticate
         from freva_client.zarr_utils import convert
@@ -155,7 +153,7 @@ def convert(
 
     You can also be more specific on the aggregation operation
 
-    .. code-block: python
+    .. code-block:: python
 
         from freva_client import authenticate
         storage_options = authenticate()["headers"]
@@ -170,10 +168,9 @@ def convert(
             storage_options=storage_options
         )
 
-        The ``zarr_options`` dictionary can be used to request public zarr
-        stores:
+    The ``zarr_options`` dictionary can be used to request public zarr stores:
 
-    .. code-block: python
+    .. code-block:: python
 
         from freva_client import authenticate
         _ = authenticate()
@@ -233,7 +230,8 @@ def status(
 
 
     Parameters
-    ----------
+    ~~~~~~~~~~
+
     url: str
         The url of the zarr store that is should be checked.
     headers: Dict[str, str]
@@ -247,7 +245,8 @@ def status(
 
 
     Returns
-    -------
+    ~~~~~~~
+
     Status: Dict(status=0, reason="")
 
     The status `status` is a int between 0 `reason` represents a human readale

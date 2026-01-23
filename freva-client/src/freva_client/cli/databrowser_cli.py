@@ -335,7 +335,7 @@ def data_search(
     ),
     compat: Optional[AggregationCompat] = typer.Option(
         None,
-        "--compate",
+        "--compat",
         help="How to compare non-concatenated variables for aggregation.",
     ),
     data_vars: Optional[AggregationCombine] = typer.Option(

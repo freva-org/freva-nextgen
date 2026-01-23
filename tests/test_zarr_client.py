@@ -37,7 +37,7 @@ def test_convert(test_server: str, auth_instance: Auth, auth: Token) -> None:
     token = deepcopy(auth_instance._auth_token)
     try:
         auth_instance._auth_token = auth
-        db = databrowser(host=test_server, dataset="agg")
+        db = databrowser(host=test_server, dataset="cmip6-fs")
         files = list(db)
         headers = {"Authorization": f"Bearer {db.auth_token['access_token']}"}
         urls = convert(*files, host=test_server)
@@ -86,7 +86,7 @@ def test_convert_cli(
     token = deepcopy(auth_instance._auth_token)
     try:
         auth_instance._auth_token = None
-        files = list(databrowser(dataset="agg"))
+        files = list(databrowser(dataset="agg", host=test_server))
         res = cli_runner.invoke(
             zarr_app,
             ["convert"]

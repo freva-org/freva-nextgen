@@ -133,6 +133,7 @@ Table of Content
 
    auth/index
    databrowser/index
+   zarr-utils/index
    developers/index
 
 .. warning::

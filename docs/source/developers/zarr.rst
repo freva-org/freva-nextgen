@@ -192,7 +192,7 @@ Creating zarr endpoints for streaming data
 Request asynchronous Zarr conversion
 ------------------------------------
 
-.. http:get:: /api/freva-nextgen/data-portal/zarr/convert
+.. http:post:: /api/freva-nextgen/data-portal/zarr/convert
 
    Submit one or more file or object paths to be converted into Zarr stores.
    This endpoint only publishes a message to the data‑portal worker via a broker;
@@ -205,9 +205,56 @@ Request asynchronous Zarr conversion
    You can query the status endpoint to check whether the conversion succeeded
    or failed.
 
-   :query path: Absolute or object‑store paths to the input files.  Repeat this
-                parameter to submit multiple files.
-   :type path: ``str`` | ``list[str]``
+   :<json string path: Absolute or object‑store paths to the input files. Can be a single
+               path or a list of paths.
+   :<json boolean public: Boolean indicating whether or not the zarr store that should
+                 be created will be anonymously available.
+   :<json integer ttl_seconds: How long should a pulic URL should remain valid, in seconds.
+   :<json string aggregate: The string indicating how the aggregation should be done:
+        - null/omit: Do not aggregate data (default)
+        - "auto": let the system choose if the datasets should be concatenated or mereged.
+        - "merge": merge datasets as `variables`
+        - "concat": concatenated datasets along a `dimension`
+   :<json string join: String indicating how to combine differing indexes:
+
+        - "outer": use the union of object indexes.
+        - "inner": use the intersection of object indexes.
+        - "left": use indexes from the first object with each dimension.
+        - "right": use indexes from the last object with each dimension.
+        - "exact": instead of aligning, errors when indexes to be aligned are not equal.
+
+        This option is only taken into account it ``aggregate`` is set
+   :<json string compat: String indicating how to compare non-concatenated variables of the same name for:
+
+        - "equals": all values and dimensions must be the same.
+        - "no_conflicts": only values which are not null in both datasets
+          must be equal. The returned dataset then contains the combination
+          of all non-null values.
+        - "override": skip comparing and pick variable from first dataset
+
+        This option is only taken into account it ``aggregate`` is set.
+   :<json string data_vars: These data variables will be combined together:
+
+        - "minimal": Only data variables in which the dimension already appears are included.
+        - "different":  Data variables which are not equal (ignoring attributes) across all datasets are also concatenated (as well as all for which dimension already appears).
+        - "all": All data variables will be concatenated.
+
+        This option is only taken into account it ``aggregate`` is set.
+   :<json string coords: These coordinate variables will be combined together:
+
+        - "minimal": Only coordinates in which the dimension already appears are included.
+        - "different":  Coordinates which are not equal (ignoring attributes) across all datasets are also concatenated (as well as all for which dimension already appears).
+        - "all": All coordinates will be concatenated.
+
+        This option is only taken into account it ``aggregate`` is set.
+   :<json string dim:  Name of the dimension to concatenate along. This can either be a new
+                dimension name, in which case it is added along axis=0, or an
+                existing dimension name, in which case the location of the
+                dimension is unchanged.
+
+                This option is only taken into account it ``aggregate`` is set.
+   :<json string group_by: If set, forces grouping by a signature key. Otherwise grouping
+                    is attempted only when direct combine fails.
    :reqheader Authorization: Bearer token for authentication.
    :statuscode 200: JSON object with a ``urls`` array containing the Zarr endpoint URLs.
    :statuscode 401: The user could not be authenticated.
@@ -220,7 +267,7 @@ Request asynchronous Zarr conversion
 
     .. sourcecode:: http
 
-        GET /api/freva-nextgen/data-portal/zarr/convert?path=/work/abc123/myuser/mydata_1.nc&path=/work/abc123/myuser/mydata_2.nc HTTP/1.1
+        POST /api/freva-nextgen/data-portal/zarr/convert?path=/work/abc123/myuser/mydata_1.nc&path=/work/abc123/myuser/mydata_2.nc HTTP/1.1
         Host: www.freva.dkrz.de
         Authorization: Bearer YOUR_ACCESS_TOKEN
 
@@ -249,8 +296,7 @@ Request asynchronous Zarr conversion
         .. code-tab:: bash
             :caption: Shell
 
-            # Use curl with --get (-G) and multiple --data-urlencode parameters
-            curl -G \
+            curl -X POST \
               'https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr/convert' \
               --header "Authorization: Bearer YOUR_ACCESS_TOKEN" \
               --data-urlencode 'path=/work/abc123/myuser/mydata_1.nc' \
@@ -261,9 +307,9 @@ Request asynchronous Zarr conversion
 
             import requests
 
-            response = requests.get(
+            response = requests.post(
                 "https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr/convert",
-                params={
+                json={
                     "path": [
                         "/work/abc123/myuser/mydata_1.nc",
                         "/work/abc123/myuser/mydata_2.nc",
@@ -279,7 +325,7 @@ Request asynchronous Zarr conversion
             library(httr)
             library(jsonlite)
 
-            response <- GET(
+            response <- POST(
               "https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr/convert",
               query = list(path = c(
                 "/work/abc123/myuser/mydata_1.nc",
@@ -300,11 +346,12 @@ Request asynchronous Zarr conversion
                 "/work/abc123/myuser/mydata_1.nc",
                 "/work/abc123/myuser/mydata_2.nc",
             ])
-            response = HTTP.get(
+            response = HTTP.post(
               "https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr/convert";
               headers = headers,
               query = query,
             )
+
 Generic Zarr key retrieval
 --------------------------
 
@@ -370,8 +417,8 @@ payloads via HTTP.
     :synopsis: Retrieve arbitrary metadata or chunk from a shared Zarr store
 
     This endpoint mirrors the behaviour of the previous one but requires
-    a valid ``sig`` parameter obtained from :http:post:`share-zarr`.  The
-    signature authenticates the request and maps to the underlying token.
+    a valid ``sig`` parameter obtained from :http:post:`/api/freva-nextgen/data-portal/zarr/share-zarr`.
+    The signature authenticates the request and maps to the underlying token.
 
     **Example**
 
@@ -427,13 +474,11 @@ Create a public pre-signed zarr url
 
 
 
-   :body path: Fully qualified URL of the resource to pre-sign, relative
+   :<json string path: Fully qualified URL of the resource to pre-sign, relative
                to this API. Must contain  `/api/freva-nextgen/data-portal/zarr/`
                and typically points to a single Zarr url.
-   :type path: ``str``
-   :body ttl_seconds: How long the pre-signed URL should remain valid,
+   :<json integer ttl_seconds: How long the pre-signed URL should remain valid,
                      in seconds.
-   :type ttl_seconds: int
    :reqheader Authorization: Bearer token for authentication.
    :statuscode 200: JSON object with a ``url`` containing the Zarr endpoint URLs.
    :statuscode 401: The user could not be authenticated.
@@ -488,7 +533,7 @@ Create a public pre-signed zarr url
 
          response = requests.post(
              "https://www.freva.dkrz.de/api/freva-nextgen/data-portal/share-zarr",
-             params={
+             json={
                  "path": (
                      "https://www.freva.dkrz.de/api/freva-nextgen/"
                      "data-portal/zarr/432a5670.zarr"

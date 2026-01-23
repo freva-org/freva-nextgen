@@ -248,6 +248,9 @@ class DataLoadFactory:
             LoadDict,
             cloudpickle.loads(self.cache.get(path_id) or b"\x80\x05}\x94."),
         )
+        data["status"] = StateEnum.processing.value
+        data.setdefault("obj_path", f"/api/freva-data-portal/zarr/{path_id}.zarr")
+        data.setdefault("repr_html", "<b>Data hasn't been loaded.</b>")
         status_dict = LoadStatus.from_dict(data).dict()
         expires_in = str_to_int(os.environ.get("API_CACHE_EXP"), 3600)
         status_dict["status"] = StateEnum.processing.value
@@ -269,7 +272,7 @@ class DataLoadFactory:
             # instantiated. Since the xarray dataset object isn't needed
             # anyway byt the rest-api we simply add it to a cache entry of its
             # own.
-            status_dict["status"] = 0
+            status_dict["status"] = StateEnum.finished_ok.value
             self.cache.setex(f"{path_id}-dset", expires_in, pkls)
         except Exception as error:
             data_logger.exception("Could not process %s: %s", path_id, error)
@@ -386,7 +389,7 @@ class ProcessQueue(DataLoadFactory):
             except KeyboardInterrupt:
                 self._close_pubsub(pubsub)
                 raise KeyboardInterrupt("Exiting")
-            except RedisError:
+            except RedisError:  # pragma: no cover
                 self._close_pubsub(pubsub)  # pragma: no cover
                 pubsub = None  # pragma: no cover
             except Exception as error:
@@ -423,34 +426,14 @@ class ProcessQueue(DataLoadFactory):
         inp_objs: List[str],
         uuid5: str,
         assembly: Optional[Dict[str, Optional[str]]] = None,
-    ) -> str:
+    ) -> None:
         """Submit a new data loading task to the process pool."""
         data_logger.debug(
             "Assigning %s to %s for future processing", inp_objs, uuid5
         )
         data_cache = cast(
-            Optional[LoadDict],
+            LoadDict,
             cloudpickle.loads(self.cache.get(uuid5) or b"\x80\x05}\x94."),
         )
-
-        status_dict: LoadDict = {
-            "status": 2,
-            "obj_path": f"/api/freva-data-portal/zarr/{uuid5}.zarr",
-            "reason": "",
-            "url": "",
-            "data": None,
-            "repr_html": "<b>Data hasn't been loaded.</b>",
-        }
-        if not data_cache:
-            self.cache.setex(
-                uuid5,
-                str_to_int(os.environ.get("API_CACHE_EXP"), 3600),
-                cloudpickle.dumps(status_dict),
-            )
+        if data_cache.get("status") in (None, 1, 2):
             self.from_object_path(inp_objs, uuid5, assembly=assembly)
-        else:
-            if data_cache["status"] in (1, 2):
-                # Failed job, let's retry
-                self.from_object_path(inp_objs, uuid5, assembly=assembly)
-        data_cache = data_cache or status_dict
-        return data_cache["obj_path"]

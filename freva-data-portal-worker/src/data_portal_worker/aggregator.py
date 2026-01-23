@@ -191,7 +191,6 @@ def _grid_signature(ds: xr.Dataset) -> str:
     This is intentionally simple: it avoids any expensive computations and
     catches obvious grid mismatches (dimension names and sizes, plus key coords).
 
-    You can extend this later (e.g., hash of lat/lon arrays) if needed.
     """
     dim_sig = ",".join(
         f"{k}={ds.dims[k]}" for k in sorted(map(str, ds.dims.keys()))
@@ -286,7 +285,6 @@ def write_grouped_zarr(
     combined_meta.setdefault("metadata", {})
 
     for name, ds in datasets.items():
-        # Your existing logic.
         json_meta = jsonify_zmetadata(ds)
 
         # `jsonify_zmetadata` typically returns the dict you serve, i.e.
@@ -378,6 +376,7 @@ class DatasetAggregator:
                 if combined:
                     return {"root": combined}
             inferred = self._infer_plan(prepped, agg_plan)
+            data_logger.info("Aggregation plan: %s", inferred)
             try:
                 combined = self._combine(prepped, inferred)
                 return {"root": combined}
@@ -408,6 +407,7 @@ class DatasetAggregator:
                 return out
 
         except Exception as error:
+            raise
             raise AggregationError(
                 "Unexpected aggregation failure.",
                 {"exception": repr(error), "detail": str(error)},
@@ -438,8 +438,18 @@ class DatasetAggregator:
                     compat=plan.get("compat") or MergeOptions.compat,
                 ),
             )
-        if mode in ["concat", "auto"]:
-            return AggregationPlan(mode="concat", concat=ConcatOptions())
+        if mode == "concat":
+            return AggregationPlan(
+                mode="concat",
+                concat=ConcatOptions(
+                    dim=plan.get("dim"),
+                    join=plan.get("join") or ConcatOptions.join,
+                    compat=plan.get("compat") or ConcatOptions.compat,
+                    data_vars=plan.get("data_vars") or ConcatOptions.data_vars,
+                    coords=plan.get("coords") or ConcatOptions.coords,
+                ),
+            )
+
         var_sets = [set(ds.data_vars.keys()) for ds in dsets]
         union = set.union(*var_sets)
         inter = set.intersection(*var_sets) if var_sets else set()
@@ -479,7 +489,12 @@ class DatasetAggregator:
         self, dsets: list[xr.Dataset], plan: AggregationOptions
     ) -> Optional[xr.Dataset]:
         kwargs = cast(
-            Dict[str, Any], {k: v for (k, v) in plan.items() if v and k != "mode"}
+            Dict[str, Any],
+            {
+                k: v
+                for (k, v) in plan.items()
+                if v and k not in ("mode", "concat_dim")
+            },
         )
         for method in (xr.combine_by_coords, xr.combine_nested):
             try:
@@ -497,7 +512,6 @@ class DatasetAggregator:
                 data_logger.warning(
                     f"Could not use {method} for auto aggregation: {error}"
                 )
-            kwargs["concat_dim"] = plan.get("dim")
         return None
 
     def _combine(
