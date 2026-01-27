@@ -19,7 +19,6 @@ from typing import (
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 from fastapi import Request
-from fastapi_third_party_auth import IDToken as TokenPayload
 
 from freva_rest.config import ServerConfig
 from freva_rest.logger import logger
@@ -126,7 +125,7 @@ class STAC(Solr):
         start: int = 0,
         multi_version: bool = False,
         translate: bool = True,
-        current_user: Optional[TokenPayload] = None,
+        user_name: Optional[str] = None,
         **query: list[str],
     ) -> "STAC":
         """Use Solr validate_parameters and return a STAC validated_parameters
@@ -138,7 +137,7 @@ class STAC(Solr):
             start=start,
             multi_version=multi_version,
             translate=translate,
-            current_user=current_user,
+            user_name=user_name,
             **query
         )
 

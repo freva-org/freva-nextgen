@@ -14,6 +14,7 @@ import pytest
 import requests
 from pytest_mock import MockerFixture
 from typer.testing import CliRunner
+from fastapi import HTTPException
 
 from freva_client.auth import Auth
 from freva_client.cli import app as cli_app
