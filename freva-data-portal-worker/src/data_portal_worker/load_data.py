@@ -269,14 +269,11 @@ class DataLoadFactory:
         data_logger.debug("Reading %s", ",".join(input_paths))
         try:
             dsets = {
-                k: opt.opening(d)
+                k: opt.apply(d)
                 for k, d in agg.aggregate(
                     [load_data(p) for p in input_paths],
                     job_id=path_id,
                     plan=assembly,
-                    access_pattern=access_pattern,
-                    map_primary_chunksize=map_primary_chunksize,
-                    chunk_size=f"{chunk_size}MiB",
                 ).items()
             }
             combined_meta = write_grouped_zarr(dsets)
