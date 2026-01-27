@@ -131,9 +131,9 @@ Table of Content
 .. toctree::
    :maxdepth: 1
 
-   auth/index
    databrowser/index
    zarr-utils/index
+   auth/index
    developers/index
 
 .. warning::

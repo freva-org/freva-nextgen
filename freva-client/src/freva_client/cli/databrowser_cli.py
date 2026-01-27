@@ -26,9 +26,11 @@ from freva_client import databrowser
 from freva_client.auth import Auth
 from freva_client.utils import exception_handler, logger
 from freva_client.utils.auth_utils import requires_authentication
+from freva_client.utils.types import ZarrOptionsDict
 
 from .cli_utils import parse_cli_args, print_df, version_callback
 from .zarr_cli import (
+    AccessPattern,
     Aggregate,
     AggregationCombine,
     AggregationCompat,
@@ -368,6 +370,26 @@ def data_search(
             "`refresh token` containing a refresh_token key."
         ),
     ),
+    access_pattern: AccessPattern = typer.Option(
+        "map",
+        "--access-pattern",
+        help="Optimise the chunk sizes for those access pattern.",
+    ),
+    map_primary_chunksize: int = typer.Option(
+        1,
+        "--map-primary-chunksize",
+        help="Chunk sizes of the primary dimension.",
+    ),
+    chunk_size: float = typer.Option(
+        16.0,
+        "--chunk-size",
+        help="Set the target chunk size in megabytes.",
+    ),
+    reload: bool = typer.Option(
+        False,
+        "--reload-zarr",
+        help="Trigger a zarr data-store reload.",
+    ),
     time: Optional[str] = typer.Option(
         None,
         "-t",
@@ -441,6 +463,15 @@ def data_search(
         dim=dim,
         group_by=group_by,
     )
+    zarr_options: ZarrOptionsDict = {
+        "public": public,
+        "ttl_seconds": ttl_seconds,
+        "reload": reload,
+        "access_pattern": access_pattern,
+        "map_primary_chunksize": map_primary_chunksize,
+        "chunk_size": chunk_size,
+    }
+    zarr_options = {k: v for k, v in zarr_options.items() if v is not None}
 
     result = databrowser(
         *(facets or []),
@@ -454,10 +485,7 @@ def data_search(
         fail_on_error=False,
         multiversion=multiversion,
         stream_zarr=zarr,
-        zarr_options={
-            "public": public,
-            "ttl_seconds": ttl_seconds,
-        },
+        zarr_options=zarr_options,
         **(parse_cli_args(search_keys or [])),
     )
     aggregate = Aggregate[aggregate] if aggregate else None
@@ -466,7 +494,11 @@ def data_search(
     ):
         Auth(token_file).authenticate(host=host, _cli=True)
     if aggregate is not None:
-        res = result.aggregate(aggregate.value, **aggregation_options.to_dict())
+        res = result.aggregate(
+            aggregate.value,
+            **aggregation_options.to_dict(),
+            zarr_options=zarr_options,
+        )
         print(res)
     elif parse_json:
         print(json.dumps(sorted(result)))

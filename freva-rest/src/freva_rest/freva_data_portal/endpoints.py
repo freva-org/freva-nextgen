@@ -121,6 +121,10 @@ async def load_files(
             aggregation_plan={k: v for k, v in aggregation_plan.items() if v},
             ttl_seconds=convert.ttl_seconds,
             public=convert.public,
+            access_pattern=convert.access_pattern,
+            map_primary_chunksize=convert.map_primary_chunksize,
+            reload=convert.reload,
+            chunk_size=convert.chunk_size,
             publish=True,
         )
 
@@ -130,9 +134,11 @@ async def load_files(
         else:
             urls = [await publish(paths)]
         return LoadResponse(urls=urls)
-    except HTTPException:
+    except HTTPException as error:
+        logger.exception(error)
         raise
     except Exception as error:
+        logger.exception(error)
         raise HTTPException(detail="Internal error.", status_code=500) from error
 
 
@@ -190,7 +196,9 @@ async def get_status(
     _, split, keys = url.removesuffix(".zarr").partition("/data-portal/share/")
     if not _is_public_zarr_url(url):
         auth_header = request.headers.get("authorization")
-        await auth.check_token_from_headers(auth_header, required=True)
+        await auth.check_token_from_headers(
+            auth_header, required=True, scopes=["oidc.claims"]
+        )
 
     try:
         if split and keys:

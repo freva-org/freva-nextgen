@@ -964,8 +964,7 @@ class Solr:
     async def publish_to_zarr_stream(
         self,
         doc: Dict[str, Any],
-        public: bool = False,
-        ttl_seconds: int = 86400,
+        **zarr_options: Any,
     ) -> str:
         """Publish URI to Redis for zarr streaming.
 
@@ -973,10 +972,6 @@ class Solr:
         ----------
         doc: Dict[str, Any]
             Document containing the URI to be published
-        public: bool, default: False
-            Create a public zarr store.
-        ttl_seconds: int, default: 84600
-            TTL of the public zarr url, if any
 
         Returns
         -------
@@ -985,11 +980,7 @@ class Solr:
         """
         uri = doc[self.uniq_key]
         try:
-            return await publish_datasets(
-                uri,
-                public=public,
-                ttl_seconds=ttl_seconds,
-            )
+            return await publish_datasets(uri, **zarr_options)
         except Exception as pub_err:
             logger.error("Failed to publish to Redis for %s: %s", uri, pub_err)
             return "Internal error, service not able to publish"
@@ -998,8 +989,7 @@ class Solr:
         self,
         catalogue_type: Literal["intake", None],
         num_results: int,
-        public: bool = False,
-        ttl_seconds: int = 84600,
+        **zarr_options: Any,
     ) -> AsyncIterator[str]:
         """Create a zarr endpoint from a given search.
         Parameters
@@ -1008,10 +998,6 @@ class Solr:
             What type of catalogue should be considered, None for no catalouge
         num_results: int
             Number of found objects
-        public: bool, default: False
-            Create a public zarr store.
-        ttl_seconds: int, default: 84600
-            TTL of the public zarr url, if any
 
         Returns
         -------
@@ -1027,11 +1013,7 @@ class Solr:
         async for result in self._solr_page_response():
             prefix = suffix = ""
 
-            zarr_path = await self.publish_to_zarr_stream(
-                result,
-                public=public,
-                ttl_seconds=ttl_seconds,
-            )
+            zarr_path = await self.publish_to_zarr_stream(result, **zarr_options)
 
             if catalogue_type == "intake":
                 if "Internal error" in zarr_path:  # pragma: no cover

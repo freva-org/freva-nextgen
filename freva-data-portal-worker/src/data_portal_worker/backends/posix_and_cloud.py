@@ -52,23 +52,19 @@ def get_xr_engine(file_path: str) -> Optional[str]:
     return None
 
 
-def posix_and_cloud(inp_file: Union[str, Path]) -> xr.Dataset:
+def posix_and_cloud(
+    inp_file: Union[str, Path], chunk_size: float = 16.0, **kwargs: Any
+) -> xr.Dataset:
     """Open a dataset with xarray."""
     inp_str = str(inp_file)
     parsed = urlparse(inp_str)
     target: Union[str, Path]
     target = Path(inp_str) if parsed.scheme in ("", "file") else inp_str
     engine = get_xr_engine(str(target))
-    kwargs: dict[str, Any] = {
-        "decode_cf": False,
-        "use_cftime": False,
-        "cache": False,
-        "decode_coords": False,
-        "engine": engine,
-    }
+    _ = kwargs.pop("chunks", None)
+    for key in ("decode_cf", "use_cftime", "cache", "decode_coords"):
+        kwargs[key] = False
+    kwargs["engine"] = engine
     if engine != "h5netcdf":
         kwargs["chunks"] = "auto"
-    return xr.open_dataset(
-        target,
-        **kwargs
-    )
+    return xr.open_dataset(target, **kwargs).unify_chunks()

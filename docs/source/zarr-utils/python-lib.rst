@@ -26,4 +26,6 @@ xarray fail to open the remote zarr stores but don't give any describtive
 error message. You can then simply occurrences of search results with this
 method.
 
+
 .. autofunction:: freva_client.zarr_utils.status
+.. autoclass:: freva_client.utils.types.ZarrOptions

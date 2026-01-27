@@ -2,6 +2,7 @@
 
 import sys
 from collections import defaultdict
+from dataclasses import asdict
 from fnmatch import fnmatch
 from functools import cached_property
 from pathlib import Path
@@ -33,7 +34,7 @@ from .utils.auth_utils import (
 )
 from .utils.databrowser_utils import Config, UserDataHandler
 from .utils.lazy import intake, intake_esm, pd, xr
-from .utils.types import ZarrOptionsDict
+from .utils.types import ZarrOptions, ZarrOptionsDict
 from .zarr_utils import convert
 
 __all__ = ["databrowser"]
@@ -110,10 +111,30 @@ class databrowser:
         Create a zarr stream for all search results. When set to true the
         files are served in zarr format and can be opened from anywhere.
     zarr_options: dict, default: None
-        Set additional options for creating the dynamic zarr streams. For
-        example if you which to create public instead of a private url that
-        expires in one hour you can set the the following options:
+        Set additional options for creating the dynamic zarr streams. You can
+        set the following options
+        (see also :class:`freva_client.utils.types.ZarrOptions`):
+
+        **Public urls:** If you wish to create public instead of a
+        private url that expires in one hour you can set:
+
         ``zarr_options={"public": True, "ttl_seconds": 3600}``.
+
+        **Access Pattern:** To optimise the chunk size according to your
+        access pattern you can add the ``access_pattern``, ``chunk_size`` and
+        ``map_primary_chunksize`` parameters. ``access_pattern`` can either be
+        ``map`` or ``time_series``. `chunk_size`` should be target chunk size
+        of dataset. If you choose a ``map`` access pattern you can set the
+        chunk size of the primary dimensions, such as time, using the
+        ``map_primary_chunksize`` parameter:
+
+        ``zarr_options={"access_pattern": "time_series", "chunk_size": 2.0}``
+
+        **Force reloading:** To improve access performance data store requests
+        are cached server side. To force a `reload` you can add the
+        ``reaload=True`` option:
+
+        ``zarr_options={"reload": True}```
     multiversion: bool, default: False
         Select all versions and not just the latest version (default).
     fail_on_error: bool, default: False
@@ -131,8 +152,8 @@ class databrowser:
         constraints. This can be useful for reverse searches.
 
 
-    Example
-    ~~~~~~~
+    Examples
+    ~~~~~~~~
 
     Search for the cmorph datasets. Suppose we know that the experiment name
     of this dataset is cmorph therefore we can create in instance of the
@@ -184,6 +205,7 @@ class databrowser:
         db = databrowser(flavour="cmip6", experiment_id="cmorph")
         print(db.metadata)
 
+    **Additional zarr options:***
 
     Sometimes you don't exactly know the exact names of the search keys and
     want retrieve all file objects that match a certain category. For example
@@ -283,6 +305,57 @@ class databrowser:
         )[['project', 'model', 'experiment']]
         print(db.metadata)
 
+    Depending on how you would like to access the data different chunk sizes
+    can make the data access more performant. ``freva_client`` defines two
+    major access patterns ``map`` and ``time_series``. Depending on which
+    of the two access pattern you choose chunk sizes will changed accordingly.
+    For example with ``access_pattern=time_series`` the chunk size will be
+    optimized for time series analysis at given geographical points. ``map``
+    on the other hand optimize access pattern for map comparisons over time
+    dimensions. You can set the ``access_pattern`` and the optimal chunk size
+    in MB by setting the ``access_pattern``, ``chunk_size`` and
+    ``map_primary_chunksize`` entries in the ``zarr_options`` dictionary.
+    ``map_primary_chunksize`` is the chunk size of the major axis, such as time,
+    if the ``access_pattern=map`` is chosen.
+
+    For example you can request an access pattern optimize for time series
+    analysis using the fowlloing ``zarr_options``
+
+    .. code-block:: python
+
+        from freva_client.zarr_utils import convert
+        urls = convert(
+            "/mnt/data/test1.nc",
+            "/mnt/data/test2.nc",
+            zarr_options={"public": True,
+                          "ttl_seconds": 86400,
+                          "chunk_size": 2,
+                          "access_pattern": "time_series"
+                          }
+        )
+        dset = xr.open_zarr(urls[0])
+
+
+    For a ``map`` access pattern that optimises the chunk size for map based
+    analysis you can set the slice size of the primary dimension - often ``time``.
+
+    For example instead of reading one time step after another read 100 time steps
+    at once.
+
+     .. code-block:: python
+
+        from freva_client.zarr_utils import convert
+        urls = convert(
+            "/mnt/data/test1.nc",
+            "/mnt/data/test2.nc",
+            zarr_options={"public": True,
+                          "ttl_seconds": 86400,
+                          "chunk_size": 2,
+                          "map_primary_chunksize": 100
+                          }
+        )
+        dset = xr.open_zarr(urls[0])
+
     """
 
     def __init__(
@@ -298,15 +371,12 @@ class databrowser:
         stream_zarr: bool = False,
         multiversion: bool = False,
         fail_on_error: bool = False,
-        zarr_options: Optional[Dict[str, Union[int, float, bool]]] = None,
+        zarr_options: Optional[ZarrOptionsDict] = None,
         **search_keys: Union[str, List[str]],
     ) -> None:
         self._auth = Auth()
         zarr_options = zarr_options or {}
-        self._zarr_options = ZarrOptionsDict(
-            public=bool(zarr_options.get("public", False)),
-            ttl_seconds=float(zarr_options.get("ttl_seconds", 86400.0)),
-        )
+        self._zarr_options = ZarrOptions.from_dict(zarr_options)
         self._fail_on_error = fail_on_error
         self._host = host
         self._cfg = Config(host, uniq_key=uniq_key, flavour=flavour)
@@ -359,7 +429,7 @@ class databrowser:
 
     def _iter(self, to_zarr: bool = False) -> Iterator[str]:
         query_url = self._cfg.zarr_loader_url if to_zarr else self._cfg.search_url
-        params = dict(self._zarr_options) if to_zarr else {}
+        params = asdict(self._zarr_options) if to_zarr else {}
         result = self._request("GET", query_url, stream=True, params=params)
         if result is not None:
             try:
@@ -418,8 +488,8 @@ class databrowser:
     def __len__(self) -> int:
         """Query the total number of found objects.
 
-        Example
-        ~~~~~~~
+        Examples
+        ~~~~~~~~
         .. code-block:: python
 
             from freva_client import databrowser
@@ -438,11 +508,8 @@ class databrowser:
         url = self._cfg.intake_url
         if self._stream_zarr:
             url = self._cfg.zarr_loader_url
-            kwargs["params"] = {
-                "catalogue-type": "intake",
-                "public": self._zarr_options["public"],
-                "ttl_seconds": self._zarr_options["ttl_seconds"],
-            }
+            kwargs["params"] = asdict(self._zarr_options)
+            kwargs["params"]["catalogue-type"] = ["intake"]
         result = self._request("GET", url, **kwargs)
         if result is None:
             raise ValueError("No results found")
@@ -467,7 +534,7 @@ class databrowser:
         coords: Literal["minimal", "different", "all"] = "minimal",
         dim: Optional[str] = None,
         group_by: Optional[str] = None,
-        zarr_options: Optional[Dict[str, Union[float, bool]]] = None,
+        zarr_options: Optional[ZarrOptionsDict] = None,
     ) -> str:
         """Define how dataset aggregation should be realised.
 
@@ -529,11 +596,31 @@ class databrowser:
             If set, forces grouping by a signature key. Otherwise grouping
             is attempted only when direct combine fails.
         zarr_options: dict, default: None
-            Set additional options for creating the dynamic zarr streams. For
-            example if you which to create public instead of a private url that
-            expires in one hour you can set the the following options:
+            Set additional options for creating the dynamic zarr streams. You can
+            set the following options
+            (see also :class:`freva_client.utils.types.ZarrOptions`):
+
+            **Public urls:** If you wish to create public instead of a
+            private url that expires in one hour you can set:
+
             ``zarr_options={"public": True, "ttl_seconds": 3600}``.
 
+            **Access Pattern:** To optimise the chunk size according to your
+            access pattern you can add the ``access_pattern``, ``chunk_size``
+            and ``map_primary_chunksize`` parameters. ``access_pattern``
+            can either be ``map`` or ``time_series``. `chunk_size``
+            should be target chunk size of dataset. If you choose a ``map``
+            access pattern you can set the
+            chunk size of the primary dimensions, such as time, using the
+            ``map_primary_chunksize`` parameter:
+
+            ``zarr_options={"access_pattern": "time_series", "chunk_size": 2.0}``
+
+            **Force reloading:** To improve access performance data store
+            requests are cached server side. To force a `reload` you can add the
+            ``reaload=True`` option:
+
+            ``zarr_options={"reload": True}```
 
         Examples
         ~~~~~~~~
@@ -561,11 +648,62 @@ class databrowser:
                 storage_options=storage_options
             )
 
+        Depending on how you would like to access the data different chunk sizes
+        can make the data access more performant. ``freva_client`` defines two
+        major access patterns ``map`` and ``time_series``. Depending on which
+        of the two access pattern you choose chunk sizes will changed accordingly.
+        For example with ``access_pattern=time_series`` the chunk size will be
+        optimized for time series analysis at given geographical points. ``map``
+        on the other hand optimize access pattern for map comparisons over time
+        dimensions. You can set the ``access_pattern`` and the optimal chunk size
+        in MB by setting the ``access_pattern``, ``chunk_size`` and
+        ``map_primary_chunksize`` entries in the ``zarr_options`` dictionary.
+        ``map_primary_chunksize`` is the chunk size of the major axis, such as time,
+        if the ``access_pattern=map`` is chosen.
+
+        For example you can request an access pattern optimize for time series
+        analysis using the fowlloing ``zarr_options``
+
+        .. code-block:: python
+
+            from freva_client.zarr_utils import convert
+            urls = convert(
+                "/mnt/data/test1.nc",
+                "/mnt/data/test2.nc",
+                zarr_options={"public": True,
+                              "ttl_seconds": 86400,
+                              "chunk_size": 2,
+                              "access_pattern": "time_series"
+                              }
+            )
+            dset = xr.open_zarr(urls[0])
+
+
+        For a ``map`` access pattern that optimises the chunk size for map based
+        analysis you can set the slice size of the primary dimension - often ``time``.
+
+        For example instead of reading one time step after another read 100 time steps
+        at once.
+
+         .. code-block:: python
+
+            from freva_client.zarr_utils import convert
+            urls = convert(
+                "/mnt/data/test1.nc",
+                "/mnt/data/test2.nc",
+                zarr_options={"public": True,
+                              "ttl_seconds": 86400,
+                              "chunk_size": 2,
+                              "map_primary_chunksize": 100
+                              }
+            )
+            dset = xr.open_zarr(urls[0])
+
         """
         paths = list(self._iter(to_zarr=False))
         zarr_options = zarr_options or {}
-        for key, value in self._zarr_options.items():
-            zarr_options.setdefault(key, cast(Union[bool, float], value))
+        for key, value in asdict(self._zarr_options).items():
+            zarr_options.setdefault(key, value)
         if not paths:
             raise FileNotFoundError("Query didn't yield any results.")
         return convert(
@@ -586,13 +724,13 @@ class databrowser:
         """Get the current OAuth2 token - if it is still valid.
 
         Returns
-        -------
+        ~~~~~~~
         Token:
             If the OAuth2 token exists,is valid and can be used it will
             be returned, None otherwise.
 
-        Example
-        -------
+        Examples
+        ~~~~~~~~
 
         .. code-block:: python
 
@@ -632,8 +770,8 @@ class databrowser:
         ~~~~~~
         ValueError: If user is not authenticated or catalogue creation failed.
 
-        Example
-        ~~~~~~~
+        Examples
+        ~~~~~~~~
         Let's create an intake-esm catalogue that points points allows for
         streaming the target data as zarr:
 
@@ -677,8 +815,8 @@ class databrowser:
         ~~~~~~
         ValueError: If stac-catalogue creation failed.
 
-        Example
-        ~~~~~~~
+        Examples
+        ~~~~~~~~
         Let's create a static STAC catalogue:
 
         .. code-block:: python
@@ -812,8 +950,8 @@ class databrowser:
             Dictionary with the number of objects for each search facet/key
             is given.
 
-        Example
-        ~~~~~~~
+        Examples
+        ~~~~~~~~
 
         .. code-block:: python
 
@@ -876,8 +1014,8 @@ class databrowser:
         databrowser search. This can be useful for reverse searches for example
         for retrieving metadata of object stores or file/directory names.
 
-        Example
-        ~~~~~~~
+        Examples
+        ~~~~~~~~
 
         Reverse search: retrieving meta data from a known file
 
@@ -1000,8 +1138,8 @@ class databrowser:
             Dictionary with a list search facet values for each search facet key
 
 
-        Example
-        ~~~~~~~
+        Examples
+        ~~~~~~~~
 
         .. code-block:: python
 
@@ -1124,8 +1262,8 @@ class databrowser:
         ~~~~~~~
         str: A string representation over what is available.
 
-        Example
-        ~~~~~~~
+        Examples
+        ~~~~~~~~
 
         .. code-block:: python
 
@@ -1144,8 +1282,8 @@ class databrowser:
     def url(self) -> str:
         """Get the url of the databrowser API.
 
-        Example
-        ~~~~~~~
+        Examples
+        ~~~~~~~~
 
         .. code-block:: python
 
@@ -1221,8 +1359,8 @@ class databrowser:
         FileNotFoundError
             If no user data is provided for the "add" action.
 
-        Example
-        ~~~~~~~
+        Examples
+        ~~~~~~~~
 
         Adding user data:
 
@@ -1347,8 +1485,8 @@ class databrowser:
             If the operation fails, required parameters are missing, or the
             flavour name conflicts with built-in flavours.
 
-        Example
-        ~~~~~~~
+        Examples
+        ~~~~~~~~
 
         Adding a custom flavour:
 

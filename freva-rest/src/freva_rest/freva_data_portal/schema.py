@@ -139,3 +139,42 @@ class ZarrConversion(BaseModel):
             le=MAX_TTL_SECONDS,
         ),
     ] = 86400
+    access_pattern: Annotated[
+        Literal["map", "time_series"],
+        Field(
+            title="Access Pattern",
+            description="Optimise the chunk sizes for those access pattern.",
+            examples=["time_series"],
+        ),
+    ] = "map"
+    map_primary_chunksize: Annotated[
+        int,
+        Field(
+            title="Chunk sizes of the primary dimension.",
+            description=(
+                "If access pattern is ``map`` set the chunk sizes of "
+                " the primary axis (e.g time)."
+            ),
+            examples=[100],
+        ),
+    ] = 1
+    reload: Annotated[
+        bool,
+        Field(
+            title="Reload dataset",
+            description=(
+                "Force a server-side cache refresh. By default, "
+                "data store requests are cached to improve performance. "
+                "Set to ``true`` to bypass the cache and fetch fresh data."
+            ),
+            examples=[True],
+        ),
+    ] = False
+    chunk_size: Annotated[
+        float,
+        Field(
+            title="Chunk size",
+            description="Target chunk size in megabytes",
+            examples=[100.5],
+        ),
+    ] = 16.0

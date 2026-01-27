@@ -10,6 +10,7 @@ from typing import (
     Any,
     Dict,
     List,
+    Literal,
     Optional,
     Tuple,
     Type,
@@ -241,6 +242,9 @@ class DataLoadFactory:
         input_paths: List[str],
         path_id: str,
         assembly: Optional[Dict[str, Optional[str]]] = None,
+        map_primary_chunksize: int = 1,
+        access_pattern: Literal["time_series", "map"] = "map",
+        chunk_size: float = 16.0,
     ) -> None:
         """Create a zarr object from an input path."""
         agg = DatasetAggregator()
@@ -258,7 +262,12 @@ class DataLoadFactory:
         data_logger.debug("Reading %s", ",".join(input_paths))
         try:
             dsets = agg.aggregate(
-                [load_data(p) for p in input_paths], job_id=path_id, plan=assembly
+                [load_data(p) for p in input_paths],
+                job_id=path_id,
+                plan=assembly,
+                access_pattern=access_pattern,
+                map_primary_chunksize=map_primary_chunksize,
+                chunk_size=f"{chunk_size}MiB",
             )
             combined_meta = write_grouped_zarr(dsets)
             status_dict["data"] = combined_meta
@@ -410,6 +419,12 @@ class ProcessQueue(DataLoadFactory):
                 message["uri"]["path"],
                 message["uri"]["uuid"],
                 assembly=message["uri"].get("assembly"),
+                access_pattern=message["uri"].get("access_pattern", "map"),
+                map_primary_chunksize=message["uri"].get(
+                    "map_primary_chunksize", 1
+                ),
+                reload=message["uri"].get("reload", False),
+                chunk_size=message["uri"].get("chunk_size", 16.0),
             )
         elif "chunk" in message:
             self.get_zarr_chunk(
@@ -426,6 +441,10 @@ class ProcessQueue(DataLoadFactory):
         inp_objs: List[str],
         uuid5: str,
         assembly: Optional[Dict[str, Optional[str]]] = None,
+        access_pattern: Literal["map", "time_series"] = "map",
+        map_primary_chunksize: int = 1,
+        reload: bool = False,
+        chunk_size: float = 16.0,
     ) -> None:
         """Submit a new data loading task to the process pool."""
         data_logger.debug(
@@ -435,5 +454,12 @@ class ProcessQueue(DataLoadFactory):
             LoadDict,
             cloudpickle.loads(self.cache.get(uuid5) or b"\x80\x05}\x94."),
         )
-        if data_cache.get("status") in (None, 1, 2):
-            self.from_object_path(inp_objs, uuid5, assembly=assembly)
+        if data_cache.get("status") in (None, 1, 2) or reload:
+            self.from_object_path(
+                inp_objs,
+                uuid5,
+                assembly=assembly,
+                access_pattern=access_pattern,
+                map_primary_chunksize=map_primary_chunksize,
+                chunk_size=chunk_size,
+            )

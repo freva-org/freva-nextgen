@@ -49,6 +49,19 @@ Creating zarr endpoints for streaming data
    :type public: bool
    :query ttl_seconds: Set for how many seconds a the public zarr url should be
                        valid for, if any. Default is 86,400 (1 day).
+   :type ttl_seconds: int
+   :query access_pattern: Optimise the chunk sizes for those access pattern,
+                          default: `map`, choose from `map`, `time_series`.
+   :type access_pattern: str
+   :query map_primary_chunksize: If access pattern is `map` set the chunk sizes
+                                 of the primary axis (e.g time).
+   :type map_primary_chunksize: int
+   :query reload: Force a server-side cache refresh. By default,
+                  data store requests are cached to improve performance.
+                  Set to ``true`` to bypass the cache and fetch fresh data
+   :type reload: bool
+   :query chunk_size: Target chunk size in megabytes.
+   :type cunk_size: float
    :query \**search_facets: With any other query parameters you refine your
                             data search. Query parameters could be, depending
                             on the DRS standard flavour ``product``, ``project``
@@ -210,6 +223,15 @@ Request asynchronous Zarr conversion
    :<json boolean public: Boolean indicating whether or not the zarr store that should
                  be created will be anonymously available.
    :<json integer ttl_seconds: How long should a pulic URL should remain valid, in seconds.
+   :<json string access_pattern: Optimise the chunk sizes for those access pattern,
+                          default: `map`, choose from `map`, `time_series`.
+
+   :<json integer query map_primary_chunksize: If access pattern is `map` set the chunk sizes
+                                 of the primary axis (e.g time).
+   :<json boolean reload: Force a server-side cache refresh. By default,
+                  data store requests are cached to improve performance.
+                  Set to ``true`` to bypass the cache and fetch fresh data
+   :<json float chunk_size: Target chunk size in megabytes.
    :<json string aggregate: The string indicating how the aggregation should be done:
         - null/omit: Do not aggregate data (default)
         - "auto": let the system choose if the datasets should be concatenated or mereged.

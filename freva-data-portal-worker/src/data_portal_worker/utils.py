@@ -17,16 +17,33 @@ try:
 except ImportError:
     pass
 
+_LOG_LEVELS = {
+    "DEBUG": logging.DEBUG,
+    "10": logging.DEBUG,
+    "INFO": logging.INFO,
+    "20": logging.INFO,
+    "WARNING": logging.WARNING,
+    "30": logging.WARNING,
+    "ERROR": logging.ERROR,
+    "40": logging.ERROR,
+    "50": logging.CRITICAL,
+    "CRITICAL": logging.CRITICAL,
+}
+DEFAULT_LOG_LEVEL: int = _LOG_LEVELS.get(
+    os.getenv("API_LOGLEVEL", "ERROR"), logging.ERROR
+)
+
+
 BASE_NAME = f"data-loader @ {gethostname()}"
 logging.basicConfig(
-    level="ERROR",
+    level=logging.ERROR,
     format="%(name)s - %(asctime)s - %(levelname)s: %(message)s",
     datefmt="%Y-%m-%dT%H:%M:%S",
 )
 
 data_logger = logging.getLogger(BASE_NAME)
 
-data_logger.setLevel(logging.INFO)
+data_logger.setLevel(DEFAULT_LOG_LEVEL)
 log_dir = (
     Path("/var/log" if os.access("/var/log", os.W_OK) else user_log_dir())
     / "data-loader"
@@ -41,15 +58,15 @@ logger_file_handle = RotatingFileHandler(
     encoding="utf-8",
     delay=False,
 )
-logger_file_handle.setLevel(logging.INFO)
+logger_file_handle.setLevel(DEFAULT_LOG_LEVEL)
 data_logger.addHandler(logger_file_handle)
 
 XrGroups = Mapping[str, xr.Dataset]
 JSONScalar: TypeAlias = Union[str, int, float, bool, None]
 JSONValue: TypeAlias = Union[
     JSONScalar,
-    list["JSONValue"],
-    dict[str, "JSONValue"],
+    List["JSONValue"],
+    Dict[str, "JSONValue"],
 ]
 JSONObject: TypeAlias = Dict[str, JSONValue]
 JSONArray: TypeAlias = List[JSONValue]

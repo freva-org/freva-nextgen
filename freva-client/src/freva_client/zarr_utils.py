@@ -1,11 +1,13 @@
 """Helper functions for zarr utilities."""
 
+from dataclasses import asdict
 from typing import Dict, List, Literal, Optional, TypedDict, Union
 
 from .auth import Auth
 from .utils import do_request
 from .utils.auth_utils import choose_token_strategy, load_token
 from .utils.databrowser_utils import Config
+from .utils.types import ZarrOptions, ZarrOptionsDict
 
 
 class Status(TypedDict):
@@ -25,7 +27,7 @@ def convert(
     coords: Literal["minimal", "different", "all"] = "minimal",
     dim: Optional[str] = None,
     group_by: Optional[str] = None,
-    zarr_options: Optional[Dict[str, Union[bool, float]]] = None,
+    zarr_options: Optional[ZarrOptionsDict] = None,
 ) -> List[str]:
     """Convert data files to a zarr store in the cloud.
 
@@ -112,10 +114,31 @@ def convert(
 
         This option is only taken into account it ``aggregate`` is not None.
     zarr_options: dict, default: None
-        Set additional options for creating the dynamic zarr streams. For
-        example if you which to create public instead of a private url that
-        expires in one hour you can set the the following options:
-        ``zarr_options={"public": True, "ttl_seconds": 3600}``.
+            Set additional options for creating the dynamic zarr streams.
+            You can set the following options
+            (see also :class:`freva_client.utils.types.ZarrOptions`):
+
+            **Public urls:*** If you wish to create public instead of a
+            private url that expires in one hour you can set:
+
+            ``zarr_options={"public": True, "ttl_seconds": 3600}``.
+
+            **Access Pattern:** To optimise the chunk size according to your
+            access pattern you can add the ``access_pattern``, ``chunk_size``
+            and ``map_primary_chunksize`` parameters. ``access_pattern``
+            can either be ``map`` or ``time_series``. `chunk_size``
+            should be target chunk size of dataset. If you choose a ``map``
+            access pattern you can set the
+            chunk size of the primary dimensions, such as time, using the
+            ``map_primary_chunksize`` parameter:
+
+            ``zarr_options={"access_pattern": "time_series", "chunk_size": 2.0}``
+
+            **Force reloading:** To improve access performance data store
+            requests are cached server side. To force a `reload` you can add the
+            ``reaload=True`` option:
+
+            ``zarr_options={"reload": True}```
 
 
     Example
@@ -133,23 +156,76 @@ def convert(
             storage_options=storage_options
         )
 
+    **Public access:**
+
     You can also create zarr stores that are public. For example creating a
     `temporary` public store that is valid for one day.
 
     .. code-block:: python
 
-        from freva_client import authenticate
         from freva_client.zarr_utils import convert
-        storage_options = authenticate()["headers"]
 
         urls = convert(
             "/mnt/data/test1.nc",
             "/mnt/data/test2.nc",
-            zarr_options={public: True, ttl_seconds: 86400}
+            zarr_options={"public": True, "ttl_seconds": 86400}
+        )
+        dset = xr.open_zarr(urls[0])
+
+    **Chunk sizes:***
+
+    Depending on how you would like to access the data different chunk sizes
+    can make the data access more performant. ``freva_client`` defines two
+    major access patterns ``map`` and ``time_series``. Depending on which
+    of the two access pattern you choose chunk sizes will changed accordingly.
+    For example with ``access_pattern=time_series`` the chunk size will be
+    optimized for time series analysis at given geographical points. ``map``
+    on the other hand optimize access pattern for map comparisons over time
+    dimensions. You can set the ``access_pattern`` and the optimal chunk size
+    in MB by setting the ``access_pattern``, ``chunk_size`` and
+    ``map_primary_chunksize`` entries in the ``zarr_options`` dictionary.
+    ``map_primary_chunksize`` is the chunk size of the major axis, such as time,
+    if the ``access_pattern=map`` is chosen.
+
+    For example you can request an access pattern optimize for time series
+    analysis using the fowlloing ``zarr_options``
+
+    .. code-block:: python
+
+        from freva_client.zarr_utils import convert
+        urls = convert(
+            "/mnt/data/test1.nc",
+            "/mnt/data/test2.nc",
+            zarr_options={"public": True,
+                          "ttl_seconds": 86400,
+                          "chunk_size": 2,
+                          "access_pattern": "time_series"
+                          }
         )
         dset = xr.open_zarr(urls[0])
 
 
+    For a ``map`` access pattern that optimises the chunk size for map based
+    analysis you can set the slice size of the primary dimension - often ``time``.
+
+    For example instead of reading one time step after another read 100 time steps
+    at once.
+
+     .. code-block:: python
+
+        from freva_client.zarr_utils import convert
+        urls = convert(
+            "/mnt/data/test1.nc",
+            "/mnt/data/test2.nc",
+            zarr_options={"public": True,
+                          "ttl_seconds": 86400,
+                          "chunk_size": 2,
+                          "map_primary_chunksize": 100
+                          }
+        )
+        dset = xr.open_zarr(urls[0])
+
+    **Dataset aggregation:**
 
     You can also be more specific on the aggregation operation
 
@@ -196,12 +272,8 @@ def convert(
         "group_by": group_by,
         "path": list(paths),
     }
-    zarr_options = zarr_options or {}
-    _zarr_options = {
-        "public": bool(zarr_options.get("public", False)),
-        "ttl_seconds": float(zarr_options.get("ttl_seconds", 86400.0)),
-    }
-    data.update(_zarr_options)
+    _zarr_options = ZarrOptions.from_dict(zarr_options)
+    data.update(asdict(_zarr_options))
     _cfg = Config(host)
     token = Auth().authenticate(config=_cfg)
     headers = {"Authorization": f"{token['token_type']} {token['access_token']}"}

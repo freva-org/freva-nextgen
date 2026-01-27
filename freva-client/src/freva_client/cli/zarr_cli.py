@@ -11,6 +11,7 @@ import typer
 import freva_client.zarr_utils as z_utils
 from freva_client.auth import Auth
 from freva_client.utils import exception_handler, logger
+from freva_client.utils.types import ZarrOptionsDict
 
 from .cli_utils import version_callback
 
@@ -57,6 +58,13 @@ class AggregationCombine(str, Enum):
     minimal = "minimal"
     different = "different"
     all = "all"
+
+
+class AccessPattern(str, Enum):
+    """Literal implementation for the cli."""
+
+    map = "map"
+    time_series = "time_series"
 
 
 @dataclass
@@ -131,6 +139,26 @@ def zarr_convert(
         "--group-by",
         help="If set, forces grouping by a signature key for aggregation.",
     ),
+    access_pattern: AccessPattern = typer.Option(
+        "map",
+        "--access-pattern",
+        help="Optimise the chunk sizes for those access pattern.",
+    ),
+    map_primary_chunksize: int = typer.Option(
+        1,
+        "--map-primary-chunksize",
+        help="Chunk sizes of the primary dimension.",
+    ),
+    chunk_size: float = typer.Option(
+        16.0,
+        "--chunk-size",
+        help="Set the target chunk size in megabytes.",
+    ),
+    reload: bool = typer.Option(
+        False,
+        "--reload-zarr",
+        help="Trigger a zarr data-store reload.",
+    ),
     token_file: Optional[Path] = typer.Option(
         None,
         "--token-file",
@@ -174,10 +202,15 @@ def zarr_convert(
     )
 
     Auth(token_file).authenticate(host=host, _cli=True)
-    zarr_options = {
+    zarr_options: ZarrOptionsDict = {
         "public": public,
         "ttl_seconds": ttl_seconds,
+        "reload": reload,
+        "access_pattern": access_pattern,
+        "map_primary_chunksize": map_primary_chunksize,
+        "chunk_size": chunk_size,
     }
+    zarr_options = {k: v for k, v in zarr_options.items() if v is not None}
 
     results = z_utils.convert(
         *paths,

@@ -3,7 +3,7 @@
 import asyncio
 import json
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 import cloudpickle
 from fastapi import status
@@ -62,6 +62,10 @@ async def publish_datasets(
     ttl_seconds: float = 86400.0,
     publish: bool = False,
     aggregation_plan: Optional[Dict[str, Optional[str]]] = None,
+    access_pattern: Literal["map", "time_series"] = "map",
+    map_primary_chunksize: int = 1,
+    reload: bool = False,
+    chunk_size: float = 16.0,
 ) -> str:
     """Publish a path on disk for zarr conversion to the broker.
 
@@ -78,6 +82,14 @@ async def publish_datasets(
     aggregation_plan: dict, optional
         A plan dict describing how to aggregate the datasets.
         If None, the worker will infer a plan.
+    access_pattern: str
+        Apply chunk size optimisation for this access pattern.
+    map_primary_chunksize: int
+        Size of the primary chunks in map access pattern.
+    reload: bool
+        (Re)trigger the loading of a data set.
+    chunk_size: float
+        Set the target chunk size
 
     Returns
     -------
@@ -90,7 +102,7 @@ async def publish_datasets(
     norm_paths = [p.replace("file:///", "/") for p in paths]
     token = encode_cache_token(norm_paths, assembly=aggregation_plan)
     api_path = f"{server_config.proxy}/api/freva-nextgen/data-portal"
-    if publish:
+    if publish or reload:
         await Cache.publish(
             "data-portal",
             json.dumps(
@@ -99,6 +111,10 @@ async def publish_datasets(
                         "path": norm_paths,
                         "uuid": token,
                         "assembly": aggregation_plan or {},
+                        "access_pattern": access_pattern,
+                        "map_primary_chunksize": map_primary_chunksize,
+                        "reload": reload,
+                        "chunk_size": chunk_size,
                     }
                 }
             ).encode("utf-8"),

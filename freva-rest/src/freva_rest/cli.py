@@ -57,6 +57,7 @@ import asyncio
 import logging
 import os
 import sys
+from copy import deepcopy
 from enum import Enum
 from pathlib import Path
 from socket import gethostname
@@ -79,6 +80,7 @@ from pydantic.fields import FieldInfo
 from rich import print as pprint
 from rich.markdown import Markdown
 from rich_argparse import ArgumentDefaultsRichHelpFormatter
+from uvicorn.config import LOGGING_CONFIG
 
 from freva_rest import __version__
 
@@ -294,6 +296,15 @@ def cli(argv: Optional[List[str]] = None) -> None:
         for core in cfg.solr_cores:
             asyncio.run(read_data(core, cfg.solr_url))
     workers = {False: args.n_workers, True: None}
+    logging_config = deepcopy(LOGGING_CONFIG)
+    level = {
+        logging.CRITICAL: "CRITICAL",
+        logging.ERROR: "ERROR",
+        logging.WARNING: "WARNING",
+        logging.INFO: "INFO",
+        logging.DEBUG: "DEBUG",
+    }.get(cfg.log_level, "INFO")
+    defaults["API_LOGLEVEL"] = level
     with NamedTemporaryFile(suffix=".conf", prefix="env") as temp_f:
         env = "\n".join(
             set(
@@ -304,6 +315,10 @@ def cli(argv: Optional[List[str]] = None) -> None:
                 ]
             )
         )
+        logging_config["loggers"]["uvicorn"]["level"] = level
+        logging_config["loggers"]["uvicorn.error"]["level"] = level
+        logging_config["loggers"]["uvicorn.access"]["level"] = level
+
         Path(temp_f.name).write_text(env, encoding="utf-8")
         uvicorn.run(
             "freva_rest.api:app",
@@ -313,6 +328,7 @@ def cli(argv: Optional[List[str]] = None) -> None:
             log_level=cfg.log_level,
             workers=workers[args.dev or args.reload],
             env_file=temp_f.name,
+            log_config=logging_config,
         )
 
 
