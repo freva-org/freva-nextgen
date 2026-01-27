@@ -195,6 +195,7 @@ class ChunkOptimizer:
         return n * int(group.max_itemsize)
 
     def plan(self, ds: xr.Dataset) -> ChunkPlan:
+
         target_bytes = self._target_bytes()
         limit = int(target_bytes * float(self.overshoot_ratio))
 

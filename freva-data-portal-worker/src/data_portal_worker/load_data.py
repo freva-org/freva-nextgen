@@ -31,6 +31,7 @@ from xarray.backends.zarr import encode_zarr_variable
 
 from .aggregator import DatasetAggregator, write_grouped_zarr
 from .backends import load_data
+from .rechunker import ChunkOptimizer
 from .utils import JSONObject, data_logger, str_to_int, xr_repr_html
 from .zarr_utils import (
     encode_chunk,
@@ -248,6 +249,12 @@ class DataLoadFactory:
     ) -> None:
         """Create a zarr object from an input path."""
         agg = DatasetAggregator()
+        opt = ChunkOptimizer(
+            access_pattern=access_pattern,
+            target=f"{chunk_size}MiB",
+            map_primary_chunksize=map_primary_chunksize,
+        )
+
         data = cast(
             LoadDict,
             cloudpickle.loads(self.cache.get(path_id) or b"\x80\x05}\x94."),
@@ -261,14 +268,17 @@ class DataLoadFactory:
         self.cache.setex(path_id, expires_in, cloudpickle.dumps(status_dict))
         data_logger.debug("Reading %s", ",".join(input_paths))
         try:
-            dsets = agg.aggregate(
-                [load_data(p) for p in input_paths],
-                job_id=path_id,
-                plan=assembly,
-                access_pattern=access_pattern,
-                map_primary_chunksize=map_primary_chunksize,
-                chunk_size=f"{chunk_size}MiB",
-            )
+            dsets = {
+                k: opt.opening(d)
+                for k, d in agg.aggregate(
+                    [load_data(p) for p in input_paths],
+                    job_id=path_id,
+                    plan=assembly,
+                    access_pattern=access_pattern,
+                    map_primary_chunksize=map_primary_chunksize,
+                    chunk_size=f"{chunk_size}MiB",
+                ).items()
+            }
             combined_meta = write_grouped_zarr(dsets)
             status_dict["data"] = combined_meta
             status_dict["repr_html"] = xr_repr_html(dsets)

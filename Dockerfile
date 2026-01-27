@@ -54,7 +54,6 @@ session required pam_sss.so\n\
         requests \
         rioxarray \
         watchfiles \
-        xarray \
         zarr; \
     elif [ "${CMD}" = "freva-rest-server" ];then\
         PKGNAME=freva-rest && \

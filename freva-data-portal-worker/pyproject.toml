@@ -36,7 +36,6 @@ dependencies = [
 "redis",
 "rioxarray",
 "watchfiles",
-"xarray>=2025.3.0",
 "zarr",
 "fsspec",
 ]

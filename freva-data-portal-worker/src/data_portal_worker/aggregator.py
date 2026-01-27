@@ -19,7 +19,6 @@ from typing import (
 import xarray as xr
 from xarray.core.types import ZarrWriteModes
 
-from .rechunker import ChunkOptimizer
 from .utils import data_logger
 from .zarr_utils import jsonify_zmetadata
 
@@ -344,9 +343,6 @@ class DatasetAggregator:
         *,
         job_id: str = "",
         plan: Optional[Dict[str, Optional[str]]] = None,
-        access_pattern: Literal["time_series", "map"] = "map",
-        map_primary_chunksize: int = 1,
-        chunk_size: str = "16.0MiB",
     ) -> Dict[str, xr.Dataset]:
         """
         Aggregate datasets according to a plan or inferred strategy.
@@ -359,19 +355,6 @@ class DatasetAggregator:
             Unique identifier used for caching errors in Redis.
         plan:
             Optional plan. If None, a plan will be inferred.
-        access_pattern: str
-            Access pattern that will guid the chunk size optimisation. Choose
-            from
-            - map:  optimize for slicing a single primary step (e.g. one time)
-              across large secondary axes.
-            - time_series: optimize for long runs along the primary axis at
-              fixed/small secondary axes.
-        chunk_size: str
-            Target chunk sizes
-        map_primary_chunksize: int
-            Size of the primary chunks in map access pattern.
-
-
         Returns
         -------
         dict[str, xarray.Dataset]
@@ -389,22 +372,17 @@ class DatasetAggregator:
             AggregationOptions,
             {k: v for (k, v) in (plan or {}).items() if v is not None},
         )
-        opt = ChunkOptimizer(
-            access_pattern=access_pattern,
-            target=chunk_size,
-            map_primary_chunksize=map_primary_chunksize,
-        )
         try:
             prepped = [self._apply_regrid(ds) for ds in datasets]
             if agg_plan.get("mode", "auto") == "auto":
                 combined = self._simple_combine(prepped, agg_plan)
                 if combined:
-                    return {"root": opt.apply(combined)}
+                    return {"root": combined}
             inferred = self._infer_plan(prepped, agg_plan)
             data_logger.info("Aggregation plan: %s", inferred)
             try:
                 combined = self._combine(prepped, inferred)
-                return {"root": opt.apply(combined)}
+                return {"root": combined}
             except Exception as exc:
                 # Attempt grouping if direct combine fails.
                 groups = self._group(prepped, inferred)
@@ -419,9 +397,7 @@ class DatasetAggregator:
                 for idx, (gkey, gsets) in enumerate(groups.items()):
                     gplan = self._infer_plan(gsets, agg_plan)
                     try:
-                        out[f"group{idx}"] = opt.apply(
-                            self._combine(gsets, gplan)
-                        )
+                        out[f"group{idx}"] = self._combine(gsets, gplan)
                     except Exception as gexc:
                         raise AggregationError(
                             "Aggregation failed for at least one group.",
