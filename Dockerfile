@@ -52,7 +52,6 @@ session required pam_sss.so\n\
         rasterio \
         redis-py \
         requests \
-        rioxarray \
         watchfiles \
         zarr; \
     elif [ "${CMD}" = "freva-rest-server" ];then\

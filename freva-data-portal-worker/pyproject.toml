@@ -34,7 +34,6 @@ dependencies = [
 "netcdf4",
 "rasterio",
 "redis",
-"rioxarray",
 "watchfiles",
 "zarr",
 "fsspec",
