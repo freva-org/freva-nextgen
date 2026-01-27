@@ -566,8 +566,6 @@ async def login(
         provider (SP) implementations that need to integrate code-based
         authentication flows.
     """
-    state = secrets.token_urlsafe(16)
-    nonce = secrets.token_urlsafe(16)
 
     if not redirect_uri:
         raise HTTPException(status_code=400, detail="Missing redirect_uri")
