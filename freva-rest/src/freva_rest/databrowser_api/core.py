@@ -9,6 +9,7 @@ from typing import (
     Dict,
     List,
     Literal,
+    Optional,
     Sequence,
     Sized,
     Tuple,
@@ -364,7 +365,7 @@ class Solr:
         start: int = 0,
         multi_version: bool = False,
         translate: bool = True,
-        user_name: str = "global",
+        user_name: Optional[str] = None,
         **query: list[str],
     ) -> "Solr":
         """Create an instance of an Solr class with parameter validation.
@@ -387,7 +388,7 @@ class Solr:
             Use versioned datasets in stead of latest versions.
         translate: bool, default: True
             Translate the output to the required DRS flavour.
-        user_name: str, default: "global"
+        user_name: Optinonal[str], default: None
             The current user name for flavour validation.
         """
         translator = await Flavour.validate_and_get_flavour(
