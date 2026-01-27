@@ -10,6 +10,7 @@ from freva_client.utils import logger
 from .auth_cli import authenticate_cli
 from .cli_utils import APP_NAME, version_callback
 from .databrowser_cli import databrowser_app
+from .zarr_cli import zarr_app
 
 if os.getenv("FREVA_NO_RICH_PANELS", "0") == "1":
     typer.core.rich = None  # type: ignore
@@ -37,4 +38,5 @@ def main(
 
 
 app.add_typer(databrowser_app, name="databrowser")
+app.add_typer(zarr_app, name="zarr-utils")
 app.command(name="auth", help=authenticate_cli.__doc__)(authenticate_cli)

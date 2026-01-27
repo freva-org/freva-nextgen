@@ -7,7 +7,17 @@ import re
 import ssl
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
-from typing import Any, Awaitable, Dict, List, Optional, Tuple, Type, cast
+from typing import (
+    Any,
+    Awaitable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
 import jwt
 import redis.asyncio as redis
@@ -36,6 +46,7 @@ class PresignDict(TypedDict):
     expires_at: datetime
     token: str
     key: str
+    assembly: Optional[Dict[str, Optional[str]]]
 
 
 class CacheKwArgs(TypedDict, total=False):
@@ -76,7 +87,7 @@ class RedisCache(redis.Redis):
             health_check_interval=retry_interval,
             socket_keepalive=True,
             retry=Retry(ExponentialBackoff(cap=10, base=0.1), retries=25),
-            retry_on_error=[RedisError, TimeoutError, OSError],
+            retry_on_error=[RedisError, OSError],
             retry_on_timeout=True,
         )
         logger.info("Creating redis connection using: %s", self._kwargs)
@@ -115,6 +126,14 @@ class SystemUserInfo(TypedDict):
     last_name: NotRequired[str]
     first_name: NotRequired[str]
     username: NotRequired[str]
+
+
+class CacheTokenPayload(TypedDict):
+    """The information encoded in a cache token."""
+
+    path: List[str]
+    exp: float
+    assembly: Optional[Dict[str, Optional[str]]]
 
 
 def token_field_matches(token: str) -> bool:
@@ -195,32 +214,46 @@ def b64url_decode(s: str) -> bytes:
     return base64.urlsafe_b64decode(s + pad)
 
 
-def sign_token_path(path: str, expires_at: float) -> Tuple[str, str]:
+def sign_token_path(
+    path: Union[str, List[str]],
+    expires_at: float,
+    assembly: Optional[Dict[str, Optional[str]]],
+) -> Tuple[str, str]:
     """Create a base64 encoded token and a signature of that token."""
     secret = server_config.redis_password
-    token = encode_path_token(path, expires_at)
+    token = encode_cache_token(path, expires_at, assembly)
     sig = hmac.new(secret.encode("utf-8"), token.encode("utf-8"), sha256).digest()
     return token, b64url(sig)
 
 
-def encode_path_token(path: str, expires_at: float = 0.0) -> str:
+def encode_cache_token(
+    path: Union[str, List[str]],
+    expires_at: float = 0.0,
+    assembly: Optional[Dict[str, Optional[str]]] = None,
+) -> str:
     """Create a URL-safe token that encodes `path` and expiry.
 
     Returns an opaque id you can embed in a URL or use as "uuid".
     """
-    payload = {"path": path, "exp": expires_at}
+    payload = CacheTokenPayload(
+        path=path if isinstance(path, list) else [path],
+        exp=expires_at,
+        assembly=assembly,
+    )
     return b64url(
         json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
     )
 
 
-def decode_path_token(token: str) -> str:
+def decode_cache_token(token: str) -> CacheTokenPayload:
     """Decode a URL-safe token and return the original path.
 
     Raises ValueError if token is invalid or expired.
     """
     payload = json.loads(b64url_decode(token))
-    return cast(str, payload.get("path", ""))
+    return CacheTokenPayload(
+        path=payload["path"], exp=payload["exp"], assembly=payload["assembly"]
+    )
 
 
 async def get_token_from_cache(_id: str) -> Tuple[str, str]:
@@ -263,14 +296,19 @@ async def get_token_from_cache(_id: str) -> Tuple[str, str]:
     return doc["token"], doc["signature"]
 
 
-async def add_ttl_key_to_db_and_cache(path: str, ttl_seconds: int) -> PresignDict:
+async def add_ttl_key_to_db_and_cache(
+    path: Union[List[str], str],
+    ttl_seconds: float,
+    assembly: Optional[Dict[str, Optional[str]]] = None,
+) -> PresignDict:
     """Create an entry of a signature."""
 
     await Cache.check_connection()
-    expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl_seconds)
-    token, signature = sign_token_path(path, expires_at.timestamp())
+    expires_in = timedelta(seconds=ttl_seconds)
+    expires_at = datetime.now(timezone.utc) + expires_in
+    token, signature = sign_token_path(path, expires_at.timestamp(), assembly)
     _id = generate_slug()
-    mapping = {"signature": signature, "token": token}
+    mapping = {"signature": signature, "token": token, "assembly": assembly}
     doc = cast(
         Optional[PresignDict],
         await server_config.mongo_collection_share_key.find_one({"_id": _id}),
@@ -282,7 +320,7 @@ async def add_ttl_key_to_db_and_cache(path: str, ttl_seconds: int) -> PresignDic
             upsert=True,
         )
     await Cache.set(_id, json.dumps(mapping))
-    await Cache.expire(_id, ttl_seconds)
+    await Cache.expire(_id, expires_in)
     ttl = await Cache.ttl(_id)
     logger.debug("Sig %s was added with a ttl of %i", _id, ttl)
     return PresignDict(
@@ -290,44 +328,5 @@ async def add_ttl_key_to_db_and_cache(path: str, ttl_seconds: int) -> PresignDic
         expires_at=expires_at,
         token=token,
         signature=signature,
+        assembly=assembly,
     )
-
-
-async def publish_dataset(
-    path: str,
-    public: bool = False,
-    ttl_seconds: int = 86400,
-    publish: bool = False,
-) -> str:
-    """Publish a path on disk for zarr conversion to the broker.
-
-    Parameters
-    ----------
-    path:
-        The path that needs to be converted.
-    public: bool, default: False
-        Create a public zarr store.
-    ttl_seconds: int, default: 84600
-        TTL of the public zarr url, if any
-    publish: bool, default: False
-        Send the loading instruction to the broker.
-
-    Returns
-    -------
-    str:
-        The url to the converted zarr endpoint
-
-    """
-    await Cache.check_connection()
-    token = encode_path_token(path)
-    api_path = f"{server_config.proxy}/api/freva-nextgen/data-portal"
-    path = path.replace("file:///", "/")
-    if publish:
-        await Cache.publish(
-            "data-portal",
-            json.dumps({"uri": {"path": path, "uuid": token}}).encode("utf-8"),
-        )
-    if public is True:
-        res = await add_ttl_key_to_db_and_cache(path, ttl_seconds)
-        return f"{api_path}/share/{res['key']}.zarr"
-    return f"{api_path}/zarr/{token}.zarr"

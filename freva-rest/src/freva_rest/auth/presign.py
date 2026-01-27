@@ -26,7 +26,7 @@ import os
 import re
 import time
 from hashlib import sha256
-from typing import Annotated, Dict, Final, cast
+from typing import Annotated, Any, Dict, Final, cast
 
 from fastapi import (
     HTTPException,
@@ -39,10 +39,11 @@ from pydantic import AnyHttpUrl, BaseModel, Field
 
 from ..rest import app, server_config
 from ..utils.base_utils import (
+    CacheTokenPayload,
     add_ttl_key_to_db_and_cache,
     b64url_decode,
-    decode_path_token,
-    encode_path_token,
+    decode_cache_token,
+    encode_cache_token,
     get_token_from_cache,
 )
 from ..utils.exceptions import EmptyError
@@ -61,27 +62,32 @@ MAX_TTL_SECONDS: Final[int] = int(
 MIN_TTL_SECONDS: Final[int] = 60
 
 
-def path_from_url(path: str) -> str:
+def get_cache_token(path: str) -> str:
     """Extract the uuid from a path."""
     pattern = r"/(?:zarr|zarr-utils)/([A-Za-z0-9_-]+)\.zarr"
     match = re.search(pattern, path)
     if match:
-        try:
-            path = decode_path_token(match.group(1))
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="The path does not contain a UUID.",
-            )
-    return path
+        return match.group(1)
+    return ""
+
+
+def payload_from_url(path: str) -> CacheTokenPayload:
+    """Get the token payload from a token."""
+    try:
+        payload = decode_cache_token(get_cache_token(path))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The path does not contain a UUID.",
+        )
+    return payload
 
 
 async def verify_token(key: str, slug: str) -> Dict[str, str]:
-
     try:
         token, sig_b64 = await get_token_from_cache(slug)
         payload_bytes = b64url_decode(token)
-        payload = cast(Dict[str, str], json.loads(payload_bytes))
+        payload = cast(Dict[str, Any], json.loads(payload_bytes))
     except EmptyError as error:
         raise HTTPException(status_code=403, detail=str(error))
 
@@ -89,7 +95,6 @@ async def verify_token(key: str, slug: str) -> Dict[str, str]:
         raise HTTPException(
             status_code=400, detail="Invalid share token payload."
         ) from exc
-
     expected_sig = hmac.new(
         SIGNING_SECRET.encode("utf-8"), token.encode("utf-8"), sha256
     ).digest()
@@ -103,7 +108,9 @@ async def verify_token(key: str, slug: str) -> Dict[str, str]:
     now = int(time.time())
     if now >= int(payload.get("exp", 0)):
         raise HTTPException(status_code=403, detail="Share link has expired.")
-    payload["_id"] = encode_path_token(payload.get("path", ""))
+    payload["_id"] = encode_cache_token(
+        payload.get("path", ""), assembly=payload.get("assembly")
+    )
     return payload
 
 
@@ -269,10 +276,12 @@ async def create_presigned_url(
     short-lived links to individual Zarr chunks. Authorisation rules for
     *who may pre-sign which chunk* can be implemented based on `token`.
     """
-    path = path_from_url(_normalise_path(str(body.path)))
+    payload = payload_from_url(_normalise_path(str(body.path)))
     # TODO: we should check if the user is allowed to read the dataset.
     ttl = max(MIN_TTL_SECONDS, min(body.ttl_seconds, MAX_TTL_SECONDS))
-    res = await add_ttl_key_to_db_and_cache(path, ttl)
+    res = await add_ttl_key_to_db_and_cache(
+        payload["path"], ttl, payload["assembly"]
+    )
     url = (
         f"{server_config.proxy}/api/freva-nextgen/data-portal/share/"
         f"{res['key']}.zarr"

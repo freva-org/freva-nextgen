@@ -48,6 +48,7 @@ class Config:
 
         self.api_url = self.get_api_url(config_host)
         self.databrowser_url = f"{self.api_url}/databrowser"
+        self.data_portal_url = f"{self.api_url}/data-portal"
         self.auth_url = f"{self.api_url}/auth/v2"
         self.get_api_main_url = self.get_api_url(config_host)
         self.uniq_key = uniq_key

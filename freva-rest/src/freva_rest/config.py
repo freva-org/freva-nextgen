@@ -467,12 +467,6 @@ class ServerConfig(BaseModel):
 
         return False
 
-    def power_cycle_mongodb(self) -> None:
-        """Reset an existing mongoDB connection."""
-        if self._mongo_client is not None:
-            _ = self._mongo_client.close()
-        self._mongo_client = None
-
     def reload(self) -> None:
         """Reload the configuration."""
         self.model_post_init()
