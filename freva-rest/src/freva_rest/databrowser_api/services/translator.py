@@ -646,7 +646,7 @@ class Flavour:
 
     @classmethod
     async def validate_and_get_flavour(
-        cls, config: ServerConfig, flavour: str, user_name: str
+        cls, config: ServerConfig, flavour: str, user_name: Optional[str] = None
     ) -> Translator:
         """Validate flavour exists and return configured translator."""
         temp_flavour = Flavour(config)

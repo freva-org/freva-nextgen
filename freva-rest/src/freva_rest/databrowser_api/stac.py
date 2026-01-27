@@ -125,7 +125,7 @@ class STAC(Solr):
         start: int = 0,
         multi_version: bool = False,
         translate: bool = True,
-        user_name: str = "global",
+        user_name: Optional[str] = None,
         **query: list[str],
     ) -> "STAC":
         """Use Solr validate_parameters and return a STAC validated_parameters
