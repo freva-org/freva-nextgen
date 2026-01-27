@@ -28,6 +28,7 @@ exclude_lines =
     except Exception as error:
     except errors.BulkWriteError as bwe:
     except Exception:
+    finally:
     # Don't complain about the Completer class
     class Completer
 

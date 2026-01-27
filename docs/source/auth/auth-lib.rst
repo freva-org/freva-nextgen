@@ -27,7 +27,7 @@ sub command of the command line interface
    res = run(["freva-client", "auth", "--help"], check=True, stdout=PIPE, stderr=PIPE)
    print(res.stdout.decode())
 
-You can create a token using your user name and password. 
+You can create a token using your user name and password.
 
 In the process of token generation, you would want to store your token data *securely*
 in a file, and use it as a refresh token to create new ones, eventually:

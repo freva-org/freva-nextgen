@@ -8,7 +8,19 @@ from .posix_and_cloud import posix_and_cloud
 
 
 def load_data(inp_path: str) -> xr.Dataset:
-    """Open a datasets."""
+    """Open an xarray dataset.
+
+    Parameters
+    ----------
+
+    inp_path: str
+        Uri (Path or URL) to the data object that should be opened.
+
+    Returns
+    -------
+    xr.Dataset
+
+    """
 
     parsed_url = urlparse(inp_path)
 

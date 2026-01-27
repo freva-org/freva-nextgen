@@ -78,8 +78,8 @@ def _main(
         redis_ssl_certfile=redis_ssl_certfile,
         redis_ssl_keyfile=redis_ssl_keyfile,
     )
-
     try:
+        os.environ["API_LOGLEVEL"] = "DEBUG" if dev else "INFO"
         os.environ["DASK_PORT"] = str(port)
         os.environ["API_CACHE_EXP"] = str(exp)
         os.environ["API_REDIS_HOST"] = redis_host

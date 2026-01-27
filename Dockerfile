@@ -52,9 +52,7 @@ session required pam_sss.so\n\
         rasterio \
         redis-py \
         requests \
-        rioxarray \
         watchfiles \
-        xarray \
         zarr; \
     elif [ "${CMD}" = "freva-rest-server" ];then\
         PKGNAME=freva-rest && \

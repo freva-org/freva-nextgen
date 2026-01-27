@@ -391,6 +391,45 @@ async def load_data(
             le=MAX_TTL_SECONDS,
         ),
     ] = 86400,
+    access_pattern: Annotated[
+        Literal["map", "time_series"],
+        Query(
+            title="Access Pattern",
+            description="Optimize the chunks for this access pattern.",
+            examples=["time_series"],
+        ),
+    ] = "map",
+    map_primary_chunksize: Annotated[
+        int,
+        Query(
+            title="Chunk sizes of the primary dimension.",
+            description=(
+                "If access pattern is ``map`` set the chunk sizes of "
+                " the primary axis (e.g time)."
+            ),
+            examples=[100],
+        ),
+    ] = 1,
+    reload: Annotated[
+        bool,
+        Query(
+            title="Reload dataset",
+            description=(
+                "Force a server-side cache refresh. By default, "
+                "data store requests are cached to improve performance. "
+                "Set to ``true`` to bypass the cache and fetch fresh data."
+            ),
+            examples=[True],
+        ),
+    ] = False,
+    chunk_size: Annotated[
+        float,
+        Query(
+            title="Chunk size",
+            description="Target chunk size in megabytes",
+            examples=[100.5],
+        ),
+    ] = 16.0,
     request: Request = Required,
     current_user: TokenPayload = Security(
         auth.create_auth_dependency(), scopes=["oidc.claims"]
@@ -419,7 +458,14 @@ async def load_data(
         translate=translate,
         user_name=user_name,
         **SolrSchema.process_parameters(
-            request, "catalogue-type", "ttl_seconds", "public"
+            request,
+            "catalogue-type",
+            "ttl_seconds",
+            "public",
+            "access_pattern",
+            "map_primary_chunksize",
+            "reload",
+            "chunk_size",
         ),
     )
     _, total_count = await solr_search.init_stream()
@@ -429,7 +475,13 @@ async def load_data(
     await solr_search.store_results(total_count, status_code)
     return StreamingResponse(
         solr_search.zarr_response(
-            catalogue_type, total_count, public=public, ttl_seconds=ttl_seconds
+            catalogue_type,
+            total_count,
+            public=public,
+            ttl_seconds=ttl_seconds,
+            access_pattern=access_pattern,
+            map_primary_chunksize=map_primary_chunksize,
+            reload=reload,
         ),
         status_code=status_code,
         media_type="text/plain",

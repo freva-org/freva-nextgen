@@ -28,6 +28,7 @@ from fastapi.security import (
     HTTPBearer,
     SecurityScopes,
 )
+from fastapi.security.utils import get_authorization_scheme_param
 from fastapi_third_party_auth import Auth, IDToken
 from pydantic import BaseModel, Field, ValidationError
 
@@ -126,6 +127,21 @@ class SafeAuth:
         async with self._lock:
             if self._auth is None and await self._check_server_available():
                 self._auth = Auth(self.discovery_url)
+
+    async def check_token_from_headers(
+        self,
+        authorization: Optional[str],
+        required: bool = True,
+        scopes: Optional[List[str]] = None,
+    ) -> IDToken:
+        """Check a token."""
+        scheme, credentials = get_authorization_scheme_param(authorization or "")
+        http_auth = HTTPAuthorizationCredentials(
+            scheme=scheme, credentials=credentials
+        )
+        security_scopes = SecurityScopes(scopes=scopes)
+        dep = self.create_auth_dependency(required)
+        return await dep(security_scopes, http_auth)
 
     def create_auth_dependency(self, required: bool = True) -> Callable[
         [SecurityScopes, Optional[HTTPAuthorizationCredentials]],
