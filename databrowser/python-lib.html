@@ -40,7 +40,7 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
     <link rel="stylesheet" type="text/css" href="../_static/code-tabs.css?v=1bc26e2f" />
   
   <!-- So that users can add custom icons -->
@@ -57,7 +57,7 @@
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script src="../_static/togglebutton.js?v=1ae7504c"></script>
     <script src="../_static/code-tabs.js?v=c983d12e"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'databrowser/python-lib';</script>
@@ -151,16 +151,23 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../auth/index.html">
-    Authentication & Authorization
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Search for data
   </a>
 </li>
 
 
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="index.html">
-    Search for data
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../zarr-utils/index.html">
+    Remote data access utilities
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auth/index.html">
+    Authentication & Authorization
   </a>
 </li>
 
@@ -260,16 +267,23 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../auth/index.html">
-    Authentication & Authorization
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Search for data
   </a>
 </li>
 
 
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="index.html">
-    Search for data
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../zarr-utils/index.html">
+    Remote data access utilities
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auth/index.html">
+    Authentication & Authorization
   </a>
 </li>
 
@@ -454,7 +468,7 @@ need to apply data analysis plugins, please visit the
 official documentation: <a class="reference external" href="https://freva-org.github.io/freva-legacy">https://freva-org.github.io/freva-legacy</a></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="freva_client.databrowser">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">freva_client.</span></span><span class="sig-name descname"><span class="pre">databrowser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">facets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uniq_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'uri'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'file'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flavour</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream_zarr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fail_on_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zarr_options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">search_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#freva_client.databrowser" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">freva_client.</span></span><span class="sig-name descname"><span class="pre">databrowser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">facets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uniq_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'uri'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'file'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flavour</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox_select</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'flexible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'strict'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'file'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flexible'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream_zarr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fail_on_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zarr_options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">search_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#freva_client.databrowser" title="Link to this definition">#</a></dt>
 <dd><p>Find data in the system.</p>
 <p>You can either search for files or uri’s. Uri’s give you an information
 on the storage system where the files or objects you are looking for are
@@ -513,10 +527,25 @@ By default no host name is given and the host name will be taken from
 the freva config file.</p></li>
 <li><p><strong>stream_zarr</strong> (<em>bool</em><em>, </em><em>default: False</em>) – Create a zarr stream for all search results. When set to true the
 files are served in zarr format and can be opened from anywhere.</p></li>
-<li><p><strong>zarr_options</strong> (<em>dict</em><em>, </em><em>default: None</em>) – Set additional options for creating the dynamic zarr streams. For
-example if you which to create public instead of a private url that
-expires in one hour you can set the the following options:
-<code class="docutils literal notranslate"><span class="pre">zarr_options={&quot;public&quot;:</span> <span class="pre">True,</span> <span class="pre">&quot;ttl_seconds&quot;:</span> <span class="pre">3600}</span></code></p></li>
+<li><p><strong>zarr_options</strong> (<em>dict</em><em>, </em><em>default: None</em>) – <p>Set additional options for creating the dynamic zarr streams. You can
+set the following options
+(see also <a class="reference internal" href="../zarr-utils/python-lib.html#freva_client.utils.types.ZarrOptions" title="freva_client.utils.types.ZarrOptions"><code class="xref py py-class docutils literal notranslate"><span class="pre">freva_client.utils.types.ZarrOptions</span></code></a>):</p>
+<p><strong>Public urls:</strong> If you wish to create public instead of a
+private url that expires in one hour you can set:</p>
+<p><code class="docutils literal notranslate"><span class="pre">zarr_options={&quot;public&quot;:</span> <span class="pre">True,</span> <span class="pre">&quot;ttl_seconds&quot;:</span> <span class="pre">3600}</span></code>.</p>
+<p><strong>Access Pattern:</strong> To optimise the chunk size according to your
+access pattern you can add the <code class="docutils literal notranslate"><span class="pre">access_pattern</span></code>, <code class="docutils literal notranslate"><span class="pre">chunk_size</span></code> and
+<code class="docutils literal notranslate"><span class="pre">map_primary_chunksize</span></code> parameters. <code class="docutils literal notranslate"><span class="pre">access_pattern</span></code> can either be
+<code class="docutils literal notranslate"><span class="pre">map</span></code> or <code class="docutils literal notranslate"><span class="pre">time_series</span></code>. <cite>chunk_size`</cite> should be target chunk size
+of dataset. If you choose a <code class="docutils literal notranslate"><span class="pre">map</span></code> access pattern you can set the
+chunk size of the primary dimensions, such as time, using the
+<code class="docutils literal notranslate"><span class="pre">map_primary_chunksize</span></code> parameter:</p>
+<p><code class="docutils literal notranslate"><span class="pre">zarr_options={&quot;access_pattern&quot;:</span> <span class="pre">&quot;time_series&quot;,</span> <span class="pre">&quot;chunk_size&quot;:</span> <span class="pre">2.0}</span></code></p>
+<p><strong>Force reloading:</strong> To improve access performance data store requests
+are cached server side. To force a <cite>reload</cite> you can add the
+<code class="docutils literal notranslate"><span class="pre">reaload=True</span></code> option:</p>
+<p><code class="docutils literal notranslate"><span class="pre">zarr_options={&quot;reload&quot;:</span> <span class="pre">True}`</span></code></p>
+</p></li>
 <li><p><strong>multiversion</strong> (<em>bool</em><em>, </em><em>default: False</em>) – Select all versions and not just the latest version (default).</p></li>
 <li><p><strong>fail_on_error</strong> (<em>bool</em><em>, </em><em>default: False</em>) – Make the call fail if the connection to the databrowser could not
 be established.</p></li>
@@ -546,7 +575,7 @@ constraints. This can be useful for reverse searches.</p>
 </dl>
 </dd></dl>
 
-<p class="rubric">Example</p>
+<p class="rubric">Examples</p>
 <p>Search for the cmorph datasets. Suppose we know that the experiment name
 of this dataset is cmorph therefore we can create in instance of the
 databrowser class using the <code class="docutils literal notranslate"><span class="pre">experiment</span></code> search constraint.
@@ -586,6 +615,7 @@ standard:</p>
 <span class="nb">print</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
 </pre></div>
 </div>
+<p><strong>Additional zarr options:*</strong></p>
 <p>Sometimes you don’t exactly know the exact names of the search keys and
 want retrieve all file objects that match a certain category. For example
 for getting all ocean reanalysis datasets you can apply the ‘reana*’
@@ -611,18 +641,43 @@ before you are able to access the data. Refer also to the
 </div>
 <p>After you have created the paths to the zarr files you can open them</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">authenticate</span>
-<span class="n">token_info</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">()</span>
+<span class="n">token_info</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">()[</span><span class="s2">&quot;headers&quot;</span><span class="p">]</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
 <span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span>
    <span class="n">zarr_files</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
    <span class="n">chunks</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
    <span class="n">engine</span><span class="o">=</span><span class="s2">&quot;zarr&quot;</span><span class="p">,</span>
-   <span class="n">storage_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;header&quot;</span><span class="p">:</span>
-        <span class="p">{</span><span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Bearer </span><span class="si">{</span><span class="n">token_info</span><span class="p">[</span><span class="s1">&#39;access_token&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}</span>
-   <span class="p">}</span>
+   <span class="n">storage_options</span><span class="o">=</span><span class="n">token_info</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
+<p>In many cases it is more useful to combine multiple source files into
+<cite>one</cite> aggregated dataset. Aggregation instructions can be set by by using
+the <a class="reference internal" href="#freva_client.databrowser.aggregate" title="freva_client.databrowser.aggregate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">freva_client.databrowser.aggregate()</span></code></a> method.
+If the set  <code class="docutils literal notranslate"><span class="pre">{&quot;aggregate&quot;:</span> <span class="pre">&quot;auto&quot;</span></code> the service will try to infer the best
+aggregation.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">authenticate</span><span class="p">,</span> <span class="n">databrowser</span>
+<span class="n">storage_options</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">()[</span><span class="s2">&quot;headers&quot;</span><span class="p">]</span>
+
+<span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;agg&quot;</span><span class="p">)</span>
+<span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="s2">&quot;auto&quot;</span><span class="p">),</span>
+    <span class="n">storage_options</span><span class="o">=</span><span class="n">storage_options</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>You can also be more specific on the aggregation operation</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
+<span class="n">storage_options</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">()[</span><span class="s2">&quot;headers&quot;</span><span class="p">]</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;agg&quot;</span><span class="p">)</span>
+<span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="s2">&quot;concat&quot;</span><span class="p">,</span> <span class="n">join</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s2">&quot;ensemble&quot;</span><span class="p">),</span>
+    <span class="n">storage_options</span><span class="o">=</span><span class="n">storage_options</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Both of the above examples with result in a unified zarr store that
+combines all datasets that were found with the query.</p>
 <p>Instead of private access you can also create <em>public</em> pre-signed
 zarr url which can be accessed without authentication. Anyone with this
 url can access the zarr data store.</p>
@@ -643,6 +698,210 @@ url can access the zarr data store.</p>
 <span class="nb">print</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>Depending on how you would like to access the data different chunk sizes
+can make the data access more performant. <code class="docutils literal notranslate"><span class="pre">freva_client</span></code> defines two
+major access patterns <code class="docutils literal notranslate"><span class="pre">map</span></code> and <code class="docutils literal notranslate"><span class="pre">time_series</span></code>. Depending on which
+of the two access pattern you choose chunk sizes will changed accordingly.
+For example with <code class="docutils literal notranslate"><span class="pre">access_pattern=time_series</span></code> the chunk size will be
+optimized for time series analysis at given geographical points. <code class="docutils literal notranslate"><span class="pre">map</span></code>
+on the other hand optimize access pattern for map comparisons over time
+dimensions. You can set the <code class="docutils literal notranslate"><span class="pre">access_pattern</span></code> and the optimal chunk size
+in MB by setting the <code class="docutils literal notranslate"><span class="pre">access_pattern</span></code>, <code class="docutils literal notranslate"><span class="pre">chunk_size</span></code> and
+<code class="docutils literal notranslate"><span class="pre">map_primary_chunksize</span></code> entries in the <code class="docutils literal notranslate"><span class="pre">zarr_options</span></code> dictionary.
+<code class="docutils literal notranslate"><span class="pre">map_primary_chunksize</span></code> is the chunk size of the major axis, such as time,
+if the <code class="docutils literal notranslate"><span class="pre">access_pattern=map</span></code> is chosen.</p>
+<p>For example you can request an access pattern optimize for time series
+analysis using the fowlloing <code class="docutils literal notranslate"><span class="pre">zarr_options</span></code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client.zarr_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert</span>
+<span class="n">urls</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span>
+    <span class="s2">&quot;/mnt/data/test1.nc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;/mnt/data/test2.nc&quot;</span><span class="p">,</span>
+    <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;public&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                  <span class="s2">&quot;ttl_seconds&quot;</span><span class="p">:</span> <span class="mi">86400</span><span class="p">,</span>
+                  <span class="s2">&quot;chunk_size&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+                  <span class="s2">&quot;access_pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;time_series&quot;</span>
+                  <span class="p">}</span>
+<span class="p">)</span>
+<span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span><span class="n">urls</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>For a <code class="docutils literal notranslate"><span class="pre">map</span></code> access pattern that optimises the chunk size for map based
+analysis you can set the slice size of the primary dimension - often <code class="docutils literal notranslate"><span class="pre">time</span></code>.</p>
+<p>For example instead of reading one time step after another read 100 time steps
+at once.</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client.zarr_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert</span>
+<span class="n">urls</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span>
+    <span class="s2">&quot;/mnt/data/test1.nc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;/mnt/data/test2.nc&quot;</span><span class="p">,</span>
+    <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;public&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                  <span class="s2">&quot;ttl_seconds&quot;</span><span class="p">:</span> <span class="mi">86400</span><span class="p">,</span>
+                  <span class="s2">&quot;chunk_size&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+                  <span class="s2">&quot;map_primary_chunksize&quot;</span><span class="p">:</span> <span class="mi">100</span>
+                  <span class="p">}</span>
+<span class="p">)</span>
+<span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span><span class="n">urls</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="freva_client.databrowser.aggregate">
+<span class="sig-name descname"><span class="pre">aggregate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">how</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'auto'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'merge'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'concat'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">join</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'outer'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'inner'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'exact'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'left'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'right'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'outer'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'no_conflicts'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'equals'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'override'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'override'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_vars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'minimal'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'different'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'all'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'minimal'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'minimal'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'different'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'all'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'minimal'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_by</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zarr_options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#freva_client.databrowser.aggregate" title="Link to this definition">#</a></dt>
+<dd><p>Define how dataset aggregation should be realised.</p>
+<p>You can define three main modes (<code class="docutils literal notranslate"><span class="pre">auto</span></code>, <code class="docutils literal notranslate"><span class="pre">merge</span></code> or <code class="docutils literal notranslate"><span class="pre">concat</span></code>).
+Once you’ve chosen the main aggregation mode. You can fine tune the
+aggregation using the <code class="docutils literal notranslate"><span class="pre">join</span></code>, <code class="docutils literal notranslate"><span class="pre">compat</span></code>, <code class="docutils literal notranslate"><span class="pre">data_vars</span></code>, <code class="docutils literal notranslate"><span class="pre">coords</span></code>
+<code class="docutils literal notranslate"><span class="pre">dim</span></code> and <code class="docutils literal notranslate"><span class="pre">group_by</span></code> parameters to fine the the aggregation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>how</strong> (<em>str</em><em>, </em><em>choices: auto</em><em>, </em><em>merge</em><em>, </em><em>concat</em>) – String indicating how the aggregation should be done:
+- “auto”: let the system choose how to aggregate data.
+- “merge”: merge datasets as <cite>variables</cite>
+- “concat”: concatenated datasets along a <cite>dimension</cite></p></li>
+<li><p><strong>join</strong> (<em>str</em><em>, </em><em>choices: outer</em><em>, </em><em>inner</em><em>, </em><em>exact</em><em>, </em><em>left</em><em>, </em><em>right</em>) – String indicating how to combine differing indexes
+- “outer”: use the union of object indexes.
+- “inner”: use the intersection of object indexes.
+- “left”: use indexes from the first object with each dimension.
+- “right”: use indexes from the last object with each dimension.
+- “exact”: instead of aligning, errors when indexes are not equal.</p></li>
+<li><p><strong>compat</strong> (<em>str</em><em>, </em><em>choices: no_conflicts</em><em>, </em><em>equals</em><em>, </em><em>override</em>) – <p>String indicating how to compare non-concatenated variables of the
+same name for:</p>
+<ul>
+<li><p>”equals”: all values and dimensions must be the same.</p></li>
+<li><p>”no_conflicts”: only values which are not null in both datasets
+must be equal. The returned dataset then contains the combination
+of all non-null values.</p></li>
+<li><p>”override”: skip comparing and pick variable from first dataset</p></li>
+</ul>
+</p></li>
+<li><p><strong>data_vars</strong> (<em>str</em><em>, </em><em>choices: minimal</em><em>, </em><em>different</em><em>, </em><em>all</em>) – <p>These data variables will be combined together:</p>
+<ul>
+<li><p>”minimal”: Only data variables in which the dimension already
+appears are included.</p></li>
+<li><dl class="simple">
+<dt>”different”:  Data variables which are not equal (ignoring</dt><dd><p>attributes) across all datasets are also concatenated (as well as
+all for which dimension already appears).</p>
+</dd>
+</dl>
+</li>
+<li><p>”all”: All data variables will be concatenated.</p></li>
+</ul>
+</p></li>
+<li><p><strong>coords</strong> (<em>str</em><em>, </em><em>choices: minimal</em><em>, </em><em>different</em><em>, </em><em>all</em>) – <p>These coordinate variables will be combined together:</p>
+<ul>
+<li><dl class="simple">
+<dt>”minimal”: Only coordinates in which the dimension already</dt><dd><p>appears are included.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>”different”:  Coordinates which are not equal (ignoring</dt><dd><p>attributes) across all datasets are also concatenated (as well as
+all for which dimension already appears).</p>
+</dd>
+</dl>
+</li>
+<li><p>”all”: All coordinates will be concatenated.</p></li>
+</ul>
+</p></li>
+<li><p><strong>dim</strong> (<em>str</em>) – Name of the dimension to concatenate along. This can either be a new
+dimension name, in which case it is added along axis=0, or an
+existing dimension name, in which case the location of the
+dimension is unchanged.</p></li>
+<li><p><strong>group_by</strong> (<em>str</em>) – If set, forces grouping by a signature key. Otherwise grouping
+is attempted only when direct combine fails.</p></li>
+<li><p><strong>zarr_options</strong> (<em>dict</em><em>, </em><em>default: None</em>) – <p>Set additional options for creating the dynamic zarr streams. You can
+set the following options
+(see also <a class="reference internal" href="../zarr-utils/python-lib.html#freva_client.utils.types.ZarrOptions" title="freva_client.utils.types.ZarrOptions"><code class="xref py py-class docutils literal notranslate"><span class="pre">freva_client.utils.types.ZarrOptions</span></code></a>):</p>
+<p><strong>Public urls:</strong> If you wish to create public instead of a
+private url that expires in one hour you can set:</p>
+<p><code class="docutils literal notranslate"><span class="pre">zarr_options={&quot;public&quot;:</span> <span class="pre">True,</span> <span class="pre">&quot;ttl_seconds&quot;:</span> <span class="pre">3600}</span></code>.</p>
+<p><strong>Access Pattern:</strong> To optimise the chunk size according to your
+access pattern you can add the <code class="docutils literal notranslate"><span class="pre">access_pattern</span></code>, <code class="docutils literal notranslate"><span class="pre">chunk_size</span></code>
+and <code class="docutils literal notranslate"><span class="pre">map_primary_chunksize</span></code> parameters. <code class="docutils literal notranslate"><span class="pre">access_pattern</span></code>
+can either be <code class="docutils literal notranslate"><span class="pre">map</span></code> or <code class="docutils literal notranslate"><span class="pre">time_series</span></code>. <cite>chunk_size`</cite>
+should be target chunk size of dataset. If you choose a <code class="docutils literal notranslate"><span class="pre">map</span></code>
+access pattern you can set the
+chunk size of the primary dimensions, such as time, using the
+<code class="docutils literal notranslate"><span class="pre">map_primary_chunksize</span></code> parameter:</p>
+<p><code class="docutils literal notranslate"><span class="pre">zarr_options={&quot;access_pattern&quot;:</span> <span class="pre">&quot;time_series&quot;,</span> <span class="pre">&quot;chunk_size&quot;:</span> <span class="pre">2.0}</span></code></p>
+<p><strong>Force reloading:</strong> To improve access performance data store
+requests are cached server side. To force a <cite>reload</cite> you can add the
+<code class="docutils literal notranslate"><span class="pre">reaload=True</span></code> option:</p>
+<p><code class="docutils literal notranslate"><span class="pre">zarr_options={&quot;reload&quot;:</span> <span class="pre">True}`</span></code></p>
+</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">authenticate</span><span class="p">,</span> <span class="n">databrowser</span>
+<span class="n">storage_options</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">()[</span><span class="s2">&quot;headers&quot;</span><span class="p">]</span>
+
+<span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;agg&quot;</span><span class="p">)</span>
+<span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="s2">&quot;auto&quot;</span><span class="p">),</span>
+    <span class="n">storage_options</span><span class="o">=</span><span class="n">storage_options</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>You can also be more specific on the aggregation operation</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
+<span class="n">storage_options</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">()[</span><span class="s2">&quot;headers&quot;</span><span class="p">]</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;agg&quot;</span><span class="p">)</span>
+<span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="s2">&quot;concat&quot;</span><span class="p">,</span> <span class="n">join</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s2">&quot;ensemble&quot;</span><span class="p">),</span>
+    <span class="n">storage_options</span><span class="o">=</span><span class="n">storage_options</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Depending on how you would like to access the data different chunk sizes
+can make the data access more performant. <code class="docutils literal notranslate"><span class="pre">freva_client</span></code> defines two
+major access patterns <code class="docutils literal notranslate"><span class="pre">map</span></code> and <code class="docutils literal notranslate"><span class="pre">time_series</span></code>. Depending on which
+of the two access pattern you choose chunk sizes will changed accordingly.
+For example with <code class="docutils literal notranslate"><span class="pre">access_pattern=time_series</span></code> the chunk size will be
+optimized for time series analysis at given geographical points. <code class="docutils literal notranslate"><span class="pre">map</span></code>
+on the other hand optimize access pattern for map comparisons over time
+dimensions. You can set the <code class="docutils literal notranslate"><span class="pre">access_pattern</span></code> and the optimal chunk size
+in MB by setting the <code class="docutils literal notranslate"><span class="pre">access_pattern</span></code>, <code class="docutils literal notranslate"><span class="pre">chunk_size</span></code> and
+<code class="docutils literal notranslate"><span class="pre">map_primary_chunksize</span></code> entries in the <code class="docutils literal notranslate"><span class="pre">zarr_options</span></code> dictionary.
+<code class="docutils literal notranslate"><span class="pre">map_primary_chunksize</span></code> is the chunk size of the major axis, such as time,
+if the <code class="docutils literal notranslate"><span class="pre">access_pattern=map</span></code> is chosen.</p>
+<p>For example you can request an access pattern optimize for time series
+analysis using the fowlloing <code class="docutils literal notranslate"><span class="pre">zarr_options</span></code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client.zarr_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert</span>
+<span class="n">urls</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span>
+    <span class="s2">&quot;/mnt/data/test1.nc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;/mnt/data/test2.nc&quot;</span><span class="p">,</span>
+    <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;public&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                  <span class="s2">&quot;ttl_seconds&quot;</span><span class="p">:</span> <span class="mi">86400</span><span class="p">,</span>
+                  <span class="s2">&quot;chunk_size&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+                  <span class="s2">&quot;access_pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;time_series&quot;</span>
+                  <span class="p">}</span>
+<span class="p">)</span>
+<span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span><span class="n">urls</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>For a <code class="docutils literal notranslate"><span class="pre">map</span></code> access pattern that optimises the chunk size for map based
+analysis you can set the slice size of the primary dimension - often <code class="docutils literal notranslate"><span class="pre">time</span></code>.</p>
+<p>For example instead of reading one time step after another read 100 time steps
+at once.</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client.zarr_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert</span>
+<span class="n">urls</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span>
+    <span class="s2">&quot;/mnt/data/test1.nc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;/mnt/data/test2.nc&quot;</span><span class="p">,</span>
+    <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;public&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                  <span class="s2">&quot;ttl_seconds&quot;</span><span class="p">:</span> <span class="mi">86400</span><span class="p">,</span>
+                  <span class="s2">&quot;chunk_size&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+                  <span class="s2">&quot;map_primary_chunksize&quot;</span><span class="p">:</span> <span class="mi">100</span>
+                  <span class="p">}</span>
+<span class="p">)</span>
+<span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span><span class="n">urls</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div></blockquote>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="freva_client.databrowser.auth_token">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">auth_token</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Token</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#freva_client.databrowser.auth_token" title="Link to this definition">#</a></dt>
@@ -656,9 +915,10 @@ be returned, None otherwise.</p>
 <dd class="field-even"><p>Token</p>
 </dd>
 </dl>
-<p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<p class="rubric">Examples</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;cmip6-hsm&quot;</span><span class="p">,</span> <span class="n">stream_zarr</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span>
    <span class="n">zarr_files</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
@@ -735,7 +995,7 @@ is given.</p>
 <dd class="field-odd"><p>dict[str, int]</p>
 </dd>
 </dl>
-<p class="rubric">Example</p>
+<p class="rubric">Examples</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">databrowser</span><span class="o">.</span><span class="n">count_values</span><span class="p">(</span><span class="n">experiment</span><span class="o">=</span><span class="s2">&quot;cmorph&quot;</span><span class="p">))</span>
 </pre></div>
@@ -801,7 +1061,7 @@ information. For “add” and “delete” actions, returns None.</p>
     flavour name conflicts with built-in flavours.</p>
 </dd>
 </dl>
-<p class="rubric">Example</p>
+<p class="rubric">Examples</p>
 <p>Adding a custom flavour:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">databrowser</span><span class="o">.</span><span class="n">flavour</span><span class="p">(</span>
@@ -854,7 +1114,7 @@ also choose to stream the files via zarr.</p>
 <dd class="field-odd"><p><strong>ValueError</strong> – If user is not authenticated or catalogue creation failed.:</p>
 </dd>
 </dl>
-<p class="rubric">Example</p>
+<p class="rubric">Examples</p>
 <p>Let’s create an intake-esm catalogue that points points allows for
 streaming the target data as zarr:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
@@ -872,7 +1132,7 @@ streaming the target data as zarr:</p>
 <p>You can retrieve all information that is associated with your current
 databrowser search. This can be useful for reverse searches for example
 for retrieving metadata of object stores or file/directory names.</p>
-<p class="rubric">Example</p>
+<p class="rubric">Examples</p>
 <p>Reverse search: retrieving meta data from a known file</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="n">uri</span><span class="o">=</span><span class="s2">&quot;slk:///arch/*/CPC/*&quot;</span><span class="p">)</span>
@@ -955,7 +1215,7 @@ the whole dataset will be queried.</p></li>
 <dd class="field-odd"><p>dict[str, list[str]]</p>
 </dd>
 </dl>
-<p class="rubric">Example</p>
+<p class="rubric">Examples</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">all_facets</span> <span class="o">=</span> <span class="n">databrowser</span><span class="o">.</span><span class="n">metadata_search</span><span class="p">(</span><span class="n">project</span><span class="o">=</span><span class="s1">&#39;obs*&#39;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">all_facets</span><span class="p">)</span>
@@ -1034,7 +1294,7 @@ name will be taken from the freva config file.</p>
 <dd class="field-odd"><p>A string representation over what is available.</p>
 </dd>
 </dl>
-<p class="rubric">Example</p>
+<p class="rubric">Examples</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">databrowser</span><span class="o">.</span><span class="n">overview</span><span class="p">())</span>
 </pre></div>
@@ -1066,7 +1326,7 @@ to the current working directory.</p></li>
 <dd class="field-odd"><p><strong>ValueError</strong> – If stac-catalogue creation failed.:</p>
 </dd>
 </dl>
-<p class="rubric">Example</p>
+<p class="rubric">Examples</p>
 <p>Let’s create a static STAC catalogue:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tempfile</span><span class="w"> </span><span class="kn">import</span> <span class="n">mktemp</span>
 <span class="n">temp_path</span> <span class="o">=</span> <span class="n">mktemp</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.zip&quot;</span><span class="p">)</span>
@@ -1083,7 +1343,7 @@ to the current working directory.</p></li>
 <dt class="sig sig-object py" id="id1">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">url</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#id1" title="Link to this definition">#</a></dt>
 <dd><p>Get the url of the databrowser API.</p>
-<p class="rubric">Example</p>
+<p class="rubric">Examples</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
@@ -1129,7 +1389,7 @@ be established.</p></li>
 </ul>
 </dd>
 </dl>
-<p class="rubric">Example</p>
+<p class="rubric">Examples</p>
 <p>Adding user data:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
@@ -1217,6 +1477,7 @@ be established.</p></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser"><code class="docutils literal notranslate"><span class="pre">databrowser</span></code></a><ul class="visible nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.url"><code class="docutils literal notranslate"><span class="pre">databrowser.url</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.metadata"><code class="docutils literal notranslate"><span class="pre">databrowser.metadata</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.aggregate"><code class="docutils literal notranslate"><span class="pre">databrowser.aggregate()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.auth_token"><code class="docutils literal notranslate"><span class="pre">databrowser.auth_token</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.count_values"><code class="docutils literal notranslate"><span class="pre">databrowser.count_values()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.databrowser.flavour"><code class="docutils literal notranslate"><span class="pre">databrowser.flavour()</span></code></a></li>

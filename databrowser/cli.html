@@ -40,7 +40,7 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
     <link rel="stylesheet" type="text/css" href="../_static/code-tabs.css?v=1bc26e2f" />
   
   <!-- So that users can add custom icons -->
@@ -57,7 +57,7 @@
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script src="../_static/togglebutton.js?v=1ae7504c"></script>
     <script src="../_static/code-tabs.js?v=c983d12e"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'databrowser/cli';</script>
@@ -65,7 +65,7 @@
     <link rel="icon" href="../_static/logo.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Developer REST API Overview" href="../developers/index.html" />
+    <link rel="next" title="Remote data access utilities" href="../zarr-utils/index.html" />
     <link rel="prev" title="Databrowser python module" href="python-lib.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -151,16 +151,23 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../auth/index.html">
-    Authentication & Authorization
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Search for data
   </a>
 </li>
 
 
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="index.html">
-    Search for data
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../zarr-utils/index.html">
+    Remote data access utilities
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auth/index.html">
+    Authentication & Authorization
   </a>
 </li>
 
@@ -260,16 +267,23 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../auth/index.html">
-    Authentication & Authorization
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Search for data
   </a>
 </li>
 
 
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="index.html">
-    Search for data
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../zarr-utils/index.html">
+    Remote data access utilities
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auth/index.html">
+    Authentication & Authorization
   </a>
 </li>
 
@@ -440,140 +454,187 @@ databrowser application. You can search for data locations by applying the
 [2m│[0m                                      model etc.                              [2m│[0m
 [2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
 [2m╭─[0m[2m Options [0m[2m───────────────────────────────────────────────────────────────────[0m[2m─╮[0m
-[2m│[0m [1;36m-[0m[1;36m-facet[0m                   [1;33mTEXT                    [0m  If you are not sure      [2m│[0m
-[2m│[0m                                                     about the correct search [2m│[0m
-[2m│[0m                                                     key&#39;s you can use the    [2m│[0m
-[2m│[0m                                                     ``[1;36m-[0m[1;36m-facet[0m`` flag to      [2m│[0m
-[2m│[0m                                                     search of any matching   [2m│[0m
-[2m│[0m                                                     entries. For example     [2m│[0m
-[2m│[0m                                                     [1;36m-[0m[1;36m-facet[0m &#39;era5&#39; would     [2m│[0m
-[2m│[0m                                                     allow you to search for  [2m│[0m
-[2m│[0m                                                     any entries containing   [2m│[0m
-[2m│[0m                                                     era5, regardless of      [2m│[0m
-[2m│[0m                                                     project, product etc.    [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-uniq[0m[1;36m-key[0m       [1;32m-u[0m       [1;2;33m[[0m[1;33mfile[0m[1;2;33m|[0m[1;33muri[0m[1;2;33m][0m[1;33m              [0m  The type of search       [2m│[0m
-[2m│[0m                                                     result, which can be     [2m│[0m
-[2m│[0m                                                     either “file” or “uri”.  [2m│[0m
-[2m│[0m                                                     This parameter           [2m│[0m
-[2m│[0m                                                     determines whether the   [2m│[0m
-[2m│[0m                                                     search will be based on  [2m│[0m
-[2m│[0m                                                     file paths or Uniform    [2m│[0m
-[2m│[0m                                                     Resource Identifiers     [2m│[0m
-[2m│[0m                                                     [2m[default: file]         [0m [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-flavour[0m                 [1;33mTEXT                    [0m  The Data Reference       [2m│[0m
-[2m│[0m                                                     Syntax (DRS) standard    [2m│[0m
-[2m│[0m                                                     specifying the type of   [2m│[0m
-[2m│[0m                                                     climate datasets to      [2m│[0m
-[2m│[0m                                                     query.                   [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-time[0m[1;36m-select[0m    [1;32m-ts[0m      [1;2;33m[[0m[1;33mstrict[0m[1;2;33m|[0m[1;33mflexible[0m[1;2;33m|[0m[1;33mfile[0m[1;2;33m][0m[1;33m  [0m  Operator that specifies  [2m│[0m
-[2m│[0m                                                     how the time period is   [2m│[0m
-[2m│[0m                                                     selected. Choose from    [2m│[0m
-[2m│[0m                                                     flexible (default),      [2m│[0m
-[2m│[0m                                                     strict or file.          [2m│[0m
-[2m│[0m                                                     ``strict`` returns only  [2m│[0m
-[2m│[0m                                                     those files that have    [2m│[0m
-[2m│[0m                                                     the *entire* time period [2m│[0m
-[2m│[0m                                                     covered. The time search [2m│[0m
-[2m│[0m                                                     ``2000 to 2012`` will    [2m│[0m
-[2m│[0m                                                     not select files         [2m│[0m
-[2m│[0m                                                     containing data from     [2m│[0m
-[2m│[0m                                                     2010 to 2020 with the    [2m│[0m
-[2m│[0m                                                     ``strict`` method.       [2m│[0m
-[2m│[0m                                                     ``flexible`` will select [2m│[0m
-[2m│[0m                                                     those files as           [2m│[0m
-[2m│[0m                                                     ``flexible`` returns     [2m│[0m
-[2m│[0m                                                     those files that have    [2m│[0m
-[2m│[0m                                                     start or end period      [2m│[0m
-[2m│[0m                                                     covered. ``file`` will   [2m│[0m
-[2m│[0m                                                     only return files where  [2m│[0m
-[2m│[0m                                                     the entire time period   [2m│[0m
-[2m│[0m                                                     is contained within *one [2m│[0m
-[2m│[0m                                                     single* file.            [2m│[0m
-[2m│[0m                                                     [2m[default: flexible]     [0m [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-zarr[0m                    [1;33m                        [0m  Create zarr stream       [2m│[0m
-[2m│[0m                                                     files.                   [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-public[0m                  [1;33m                        [0m  Make any zarr url public [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-ttl[0m[1;36m-seconds[0m             [1;33mINTEGER                 [0m  Set the expiry time of   [2m│[0m
-[2m│[0m                                                     any public zarr urls     [2m│[0m
-[2m│[0m                                                     [2m[default: 86400]        [0m [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-token[0m[1;36m-file[0m     [1;32m-tf[0m      [1;33mPATH                    [0m  Instead of               [2m│[0m
-[2m│[0m                                                     authenticating via code  [2m│[0m
-[2m│[0m                                                     based authentication     [2m│[0m
-[2m│[0m                                                     flow you can set the     [2m│[0m
-[2m│[0m                                                     path to the json file    [2m│[0m
-[2m│[0m                                                     that contains a `refresh [2m│[0m
-[2m│[0m                                                     token` containing a      [2m│[0m
-[2m│[0m                                                     refresh_token key.       [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-time[0m           [1;32m-t[0m       [1;33mTEXT                    [0m  Special search facet to  [2m│[0m
-[2m│[0m                                                     refine/subset search     [2m│[0m
-[2m│[0m                                                     results by time. This    [2m│[0m
-[2m│[0m                                                     can be a string          [2m│[0m
-[2m│[0m                                                     representation of a time [2m│[0m
-[2m│[0m                                                     range or a single time   [2m│[0m
-[2m│[0m                                                     step. The time steps     [2m│[0m
-[2m│[0m                                                     have to follow ISO-8601. [2m│[0m
-[2m│[0m                                                     Valid strings are        [2m│[0m
-[2m│[0m                                                     ``%Y-%m-%dT%H:%M`` to    [2m│[0m
-[2m│[0m                                                     ``%Y-%m-%dT%H:%M`` for   [2m│[0m
-[2m│[0m                                                     time ranges and          [2m│[0m
-[2m│[0m                                                     ``%Y-%m-%dT%H:%M``.      [2m│[0m
-[2m│[0m                                                     **Note**: You don&#39;t have [2m│[0m
-[2m│[0m                                                     to give the full string  [2m│[0m
-[2m│[0m                                                     format to subset time    [2m│[0m
-[2m│[0m                                                     steps ``%Y``, ``%Y-%m``  [2m│[0m
-[2m│[0m                                                     etc are also valid.      [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-bbox[0m           [1;32m-b[0m       [1;2;33m&lt;[0m[1;33mFLOAT FLOAT FLOAT      [0m  Special search facet to  [2m│[0m
-[2m│[0m                           [1;33mFLOAT&gt;...               [0m  refine/subset search     [2m│[0m
-[2m│[0m                                                     results by spatial       [2m│[0m
-[2m│[0m                                                     extent. This can be a    [2m│[0m
-[2m│[0m                                                     string representation of [2m│[0m
-[2m│[0m                                                     a bounding box. The      [2m│[0m
-[2m│[0m                                                     bounding box has to      [2m│[0m
-[2m│[0m                                                     follow the format        [2m│[0m
-[2m│[0m                                                     ``min_lon max_lon        [2m│[0m
-[2m│[0m                                                     min_lat max_lat``. Valid [2m│[0m
-[2m│[0m                                                     strings are ``[1;32m-10[0m 10 [1;32m-10[0m [2m│[0m
-[2m│[0m                                                     10`` to ``0 5 0 5``.     [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-bbox[0m[1;36m-select[0m    [1;32m-bs[0m      [1;2;33m[[0m[1;33mstrict[0m[1;2;33m|[0m[1;33mflexible[0m[1;2;33m|[0m[1;33mfile[0m[1;2;33m][0m[1;33m  [0m  Operator that specifies  [2m│[0m
-[2m│[0m                                                     how the spatial extent   [2m│[0m
-[2m│[0m                                                     is selected. Choose from [2m│[0m
-[2m│[0m                                                     flexible (default),      [2m│[0m
-[2m│[0m                                                     strict or file.          [2m│[0m
-[2m│[0m                                                     ``strict`` returns only  [2m│[0m
-[2m│[0m                                                     those files that have    [2m│[0m
-[2m│[0m                                                     the *entire* spatial     [2m│[0m
-[2m│[0m                                                     extent covered. The bbox [2m│[0m
-[2m│[0m                                                     search ``[1;32m-10[0m 10 [1;32m-10[0m 10`` [2m│[0m
-[2m│[0m                                                     will not select files    [2m│[0m
-[2m│[0m                                                     containing data from 0 5 [2m│[0m
-[2m│[0m                                                     0 5 with the ``strict``  [2m│[0m
-[2m│[0m                                                     method. ``flexible``     [2m│[0m
-[2m│[0m                                                     will select those files  [2m│[0m
-[2m│[0m                                                     as ``flexible`` returns  [2m│[0m
-[2m│[0m                                                     those files that have    [2m│[0m
-[2m│[0m                                                     any part of the extent   [2m│[0m
-[2m│[0m                                                     covered. ``file`` will   [2m│[0m
-[2m│[0m                                                     only return files where  [2m│[0m
-[2m│[0m                                                     the entire spatial       [2m│[0m
-[2m│[0m                                                     extent is contained      [2m│[0m
-[2m│[0m                                                     within *one single*      [2m│[0m
-[2m│[0m                                                     file.                    [2m│[0m
-[2m│[0m                                                     [2m[default: flexible]     [0m [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-json[0m           [1;32m-j[0m       [1;33m                        [0m  Parse output in json     [2m│[0m
-[2m│[0m                                                     format.                  [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-host[0m                    [1;33mTEXT                    [0m  Set the hostname of the  [2m│[0m
-[2m│[0m                                                     databrowser, if not set  [2m│[0m
-[2m│[0m                                                     (default) the hostname   [2m│[0m
-[2m│[0m                                                     is read from a config    [2m│[0m
-[2m│[0m                                                     file                     [2m│[0m
-[2m│[0m                  [1;32m-v[0m       [1;33mINTEGER                 [0m  Increase verbosity       [2m│[0m
-[2m│[0m                                                     [2m[default: 0]      [0m       [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-multi[0m[1;36m-version[0m           [1;33m                        [0m  Select all versions and  [2m│[0m
-[2m│[0m                                                     not just the latest      [2m│[0m
-[2m│[0m                                                     version (default).       [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-version[0m        [1;32m-V[0m       [1;33m                        [0m  Show version an exit     [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-help[0m                    [1;33m                        [0m  Show this message and    [2m│[0m
-[2m│[0m                                                     exit.                    [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-facet[0m                         [1;33mTEXT                [0m  If you are not sure    [2m│[0m
+[2m│[0m                                                       about the correct      [2m│[0m
+[2m│[0m                                                       search key&#39;s you can   [2m│[0m
+[2m│[0m                                                       use the ``[1;36m-[0m[1;36m-facet[0m``    [2m│[0m
+[2m│[0m                                                       flag to search of any  [2m│[0m
+[2m│[0m                                                       matching entries. For  [2m│[0m
+[2m│[0m                                                       example [1;36m-[0m[1;36m-facet[0m &#39;era5&#39; [2m│[0m
+[2m│[0m                                                       would allow you to     [2m│[0m
+[2m│[0m                                                       search for any entries [2m│[0m
+[2m│[0m                                                       containing era5,       [2m│[0m
+[2m│[0m                                                       regardless of project, [2m│[0m
+[2m│[0m                                                       product etc.           [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-uniq[0m[1;36m-key[0m             [1;32m-u[0m       [1;2;33m[[0m[1;33mfile[0m[1;2;33m|[0m[1;33muri[0m[1;2;33m][0m[1;33m          [0m  The type of search     [2m│[0m
+[2m│[0m                                                       result, which can be   [2m│[0m
+[2m│[0m                                                       either “file” or       [2m│[0m
+[2m│[0m                                                       “uri”. This parameter  [2m│[0m
+[2m│[0m                                                       determines whether the [2m│[0m
+[2m│[0m                                                       search will be based   [2m│[0m
+[2m│[0m                                                       on file paths or       [2m│[0m
+[2m│[0m                                                       Uniform Resource       [2m│[0m
+[2m│[0m                                                       Identifiers            [2m│[0m
+[2m│[0m                                                       [2m[default: file]       [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-flavour[0m                       [1;33mTEXT                [0m  The Data Reference     [2m│[0m
+[2m│[0m                                                       Syntax (DRS) standard  [2m│[0m
+[2m│[0m                                                       specifying the type of [2m│[0m
+[2m│[0m                                                       climate datasets to    [2m│[0m
+[2m│[0m                                                       query.                 [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-time[0m[1;36m-select[0m          [1;32m-ts[0m      [1;2;33m[[0m[1;33mstrict[0m[1;2;33m|[0m[1;33mflexible[0m[1;2;33m|[0m[1;33mfil[0m  Operator that          [2m│[0m
+[2m│[0m                                 [1;33me[0m[1;2;33m][0m[1;33m                  [0m  specifies how the time [2m│[0m
+[2m│[0m                                                       period is selected.    [2m│[0m
+[2m│[0m                                                       Choose from flexible   [2m│[0m
+[2m│[0m                                                       (default), strict or   [2m│[0m
+[2m│[0m                                                       file. ``strict``       [2m│[0m
+[2m│[0m                                                       returns only those     [2m│[0m
+[2m│[0m                                                       files that have the    [2m│[0m
+[2m│[0m                                                       *entire* time period   [2m│[0m
+[2m│[0m                                                       covered. The time      [2m│[0m
+[2m│[0m                                                       search ``2000 to       [2m│[0m
+[2m│[0m                                                       2012`` will not select [2m│[0m
+[2m│[0m                                                       files containing data  [2m│[0m
+[2m│[0m                                                       from 2010 to 2020 with [2m│[0m
+[2m│[0m                                                       the ``strict`` method. [2m│[0m
+[2m│[0m                                                       ``flexible`` will      [2m│[0m
+[2m│[0m                                                       select those files as  [2m│[0m
+[2m│[0m                                                       ``flexible`` returns   [2m│[0m
+[2m│[0m                                                       those files that have  [2m│[0m
+[2m│[0m                                                       start or end period    [2m│[0m
+[2m│[0m                                                       covered. ``file`` will [2m│[0m
+[2m│[0m                                                       only return files      [2m│[0m
+[2m│[0m                                                       where the entire time  [2m│[0m
+[2m│[0m                                                       period is contained    [2m│[0m
+[2m│[0m                                                       within *one single*    [2m│[0m
+[2m│[0m                                                       file.                  [2m│[0m
+[2m│[0m                                                       [2m[default: flexible]   [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-zarr[0m                          [1;33m                    [0m  Create zarr stream     [2m│[0m
+[2m│[0m                                                       files.                 [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-public[0m                        [1;33m                    [0m  Make any zarr url      [2m│[0m
+[2m│[0m                                                       public                 [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-ttl[0m[1;36m-seconds[0m                   [1;33mINTEGER             [0m  Set the expiry time of [2m│[0m
+[2m│[0m                                                       any public zarr urls   [2m│[0m
+[2m│[0m                                                       [2m[default: 86400]      [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-aggregate[0m                     [1;2;33m[[0m[1;33mauto[0m[1;2;33m|[0m[1;33mmerge[0m[1;2;33m|[0m[1;33mconcat[0m[1;2;33m][0m[1;33m [0m  How aggregation should [2m│[0m
+[2m│[0m                                                       be realised (if any)   [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-join[0m                          [1;2;33m[[0m[1;33mouter[0m[1;2;33m|[0m[1;33minner[0m[1;2;33m|[0m[1;33mexact[0m[1;2;33m|[0m[1;33ml[0m  How different indexes  [2m│[0m
+[2m│[0m                                 [1;33meft[0m[1;2;33m|[0m[1;33mright[0m[1;2;33m][0m[1;33m          [0m  should be combined for [2m│[0m
+[2m│[0m                                                       aggregation.           [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-compat[0m                        [1;2;33m[[0m[1;33mno_conflicts[0m[1;2;33m|[0m[1;33mequals[0m  How to compare         [2m│[0m
+[2m│[0m                                 [1;2;33m|[0m[1;33moverride[0m[1;2;33m][0m[1;33m          [0m  non-concatenated       [2m│[0m
+[2m│[0m                                                       variables for          [2m│[0m
+[2m│[0m                                                       aggregation.           [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-data[0m[1;36m-vars[0m                     [1;2;33m[[0m[1;33mminimal[0m[1;2;33m|[0m[1;33mdifferent[0m[1;2;33m|[0m[1;33ma[0m  How to combine data    [2m│[0m
+[2m│[0m                                 [1;33mll[0m[1;2;33m][0m[1;33m                 [0m  variables for          [2m│[0m
+[2m│[0m                                                       aggregation.           [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-coords[0m                        [1;2;33m[[0m[1;33mminimal[0m[1;2;33m|[0m[1;33mdifferent[0m[1;2;33m|[0m[1;33ma[0m  How to combine coords  [2m│[0m
+[2m│[0m                                 [1;33mll[0m[1;2;33m][0m[1;33m                 [0m  for aggregation.       [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-dim[0m                           [1;33mTEXT                [0m  Name of the dimension  [2m│[0m
+[2m│[0m                                                       to concatenate along   [2m│[0m
+[2m│[0m                                                       for aggregation.       [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-group[0m[1;36m-by[0m                      [1;33mTEXT                [0m  If set, forces         [2m│[0m
+[2m│[0m                                                       grouping by a          [2m│[0m
+[2m│[0m                                                       signature key for      [2m│[0m
+[2m│[0m                                                       aggregation.           [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-token[0m[1;36m-file[0m           [1;32m-tf[0m      [1;33mPATH                [0m  Instead of             [2m│[0m
+[2m│[0m                                                       authenticating via     [2m│[0m
+[2m│[0m                                                       code based             [2m│[0m
+[2m│[0m                                                       authentication flow    [2m│[0m
+[2m│[0m                                                       you can set the path   [2m│[0m
+[2m│[0m                                                       to the json file that  [2m│[0m
+[2m│[0m                                                       contains a `refresh    [2m│[0m
+[2m│[0m                                                       token` containing a    [2m│[0m
+[2m│[0m                                                       refresh_token key.     [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-access[0m[1;36m-pattern[0m                [1;2;33m[[0m[1;33mmap[0m[1;2;33m|[0m[1;33mtime_series[0m[1;2;33m][0m[1;33m   [0m  Optimise the chunk     [2m│[0m
+[2m│[0m                                                       sizes for those access [2m│[0m
+[2m│[0m                                                       pattern.               [2m│[0m
+[2m│[0m                                                       [2m[default: map]        [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-map[0m[1;36m-primary-chunks…[0m           [1;33mINTEGER             [0m  Chunk sizes of the     [2m│[0m
+[2m│[0m                                                       primary dimension.     [2m│[0m
+[2m│[0m                                                       [2m[default: 1]          [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-chunk[0m[1;36m-size[0m                    [1;33mFLOAT               [0m  Set the target chunk   [2m│[0m
+[2m│[0m                                                       size in megabytes.     [2m│[0m
+[2m│[0m                                                       [2m[default: 16.0]       [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-reload[0m[1;36m-zarr[0m                   [1;33m                    [0m  Trigger a zarr         [2m│[0m
+[2m│[0m                                                       data-store reload.     [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-time[0m                 [1;32m-t[0m       [1;33mTEXT                [0m  Special search facet   [2m│[0m
+[2m│[0m                                                       to refine/subset       [2m│[0m
+[2m│[0m                                                       search results by      [2m│[0m
+[2m│[0m                                                       time. This can be a    [2m│[0m
+[2m│[0m                                                       string representation  [2m│[0m
+[2m│[0m                                                       of a time range or a   [2m│[0m
+[2m│[0m                                                       single time step. The  [2m│[0m
+[2m│[0m                                                       time steps have to     [2m│[0m
+[2m│[0m                                                       follow ISO-8601. Valid [2m│[0m
+[2m│[0m                                                       strings are            [2m│[0m
+[2m│[0m                                                       ``%Y-%m-%dT%H:%M`` to  [2m│[0m
+[2m│[0m                                                       ``%Y-%m-%dT%H:%M`` for [2m│[0m
+[2m│[0m                                                       time ranges and        [2m│[0m
+[2m│[0m                                                       ``%Y-%m-%dT%H:%M``.    [2m│[0m
+[2m│[0m                                                       **Note**: You don&#39;t    [2m│[0m
+[2m│[0m                                                       have to give the full  [2m│[0m
+[2m│[0m                                                       string format to       [2m│[0m
+[2m│[0m                                                       subset time steps      [2m│[0m
+[2m│[0m                                                       ``%Y``, ``%Y-%m`` etc  [2m│[0m
+[2m│[0m                                                       are also valid.        [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-bbox[0m                 [1;32m-b[0m       [1;2;33m&lt;[0m[1;33mFLOAT FLOAT FLOAT  [0m  Special search facet   [2m│[0m
+[2m│[0m                                 [1;33mFLOAT&gt;...           [0m  to refine/subset       [2m│[0m
+[2m│[0m                                                       search results by      [2m│[0m
+[2m│[0m                                                       spatial extent. This   [2m│[0m
+[2m│[0m                                                       can be a string        [2m│[0m
+[2m│[0m                                                       representation of a    [2m│[0m
+[2m│[0m                                                       bounding box. The      [2m│[0m
+[2m│[0m                                                       bounding box has to    [2m│[0m
+[2m│[0m                                                       follow the format      [2m│[0m
+[2m│[0m                                                       ``min_lon max_lon      [2m│[0m
+[2m│[0m                                                       min_lat max_lat``.     [2m│[0m
+[2m│[0m                                                       Valid strings are      [2m│[0m
+[2m│[0m                                                       ``[1;32m-10[0m 10 [1;32m-10[0m 10`` to   [2m│[0m
+[2m│[0m                                                       ``0 5 0 5``.           [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-bbox[0m[1;36m-select[0m          [1;32m-bs[0m      [1;2;33m[[0m[1;33mstrict[0m[1;2;33m|[0m[1;33mflexible[0m[1;2;33m|[0m[1;33mfil[0m  Operator that          [2m│[0m
+[2m│[0m                                 [1;33me[0m[1;2;33m][0m[1;33m                  [0m  specifies how the      [2m│[0m
+[2m│[0m                                                       spatial extent is      [2m│[0m
+[2m│[0m                                                       selected. Choose from  [2m│[0m
+[2m│[0m                                                       flexible (default),    [2m│[0m
+[2m│[0m                                                       strict or file.        [2m│[0m
+[2m│[0m                                                       ``strict`` returns     [2m│[0m
+[2m│[0m                                                       only those files that  [2m│[0m
+[2m│[0m                                                       have the *entire*      [2m│[0m
+[2m│[0m                                                       spatial extent         [2m│[0m
+[2m│[0m                                                       covered. The bbox      [2m│[0m
+[2m│[0m                                                       search ``[1;32m-10[0m 10 [1;32m-10[0m    [2m│[0m
+[2m│[0m                                                       10`` will not select   [2m│[0m
+[2m│[0m                                                       files containing data  [2m│[0m
+[2m│[0m                                                       from 0 5 0 5 with the  [2m│[0m
+[2m│[0m                                                       ``strict`` method.     [2m│[0m
+[2m│[0m                                                       ``flexible`` will      [2m│[0m
+[2m│[0m                                                       select those files as  [2m│[0m
+[2m│[0m                                                       ``flexible`` returns   [2m│[0m
+[2m│[0m                                                       those files that have  [2m│[0m
+[2m│[0m                                                       any part of the extent [2m│[0m
+[2m│[0m                                                       covered. ``file`` will [2m│[0m
+[2m│[0m                                                       only return files      [2m│[0m
+[2m│[0m                                                       where the entire       [2m│[0m
+[2m│[0m                                                       spatial extent is      [2m│[0m
+[2m│[0m                                                       contained within *one  [2m│[0m
+[2m│[0m                                                       single* file.          [2m│[0m
+[2m│[0m                                                       [2m[default: flexible]   [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-json[0m                 [1;32m-j[0m       [1;33m                    [0m  Parse output in json   [2m│[0m
+[2m│[0m                                                       format.                [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-host[0m                          [1;33mTEXT                [0m  Set the hostname of    [2m│[0m
+[2m│[0m                                                       the databrowser, if    [2m│[0m
+[2m│[0m                                                       not set (default) the  [2m│[0m
+[2m│[0m                                                       hostname is read from  [2m│[0m
+[2m│[0m                                                       a config file          [2m│[0m
+[2m│[0m                        [1;32m-v[0m       [1;33mINTEGER             [0m  Increase verbosity     [2m│[0m
+[2m│[0m                                                       [2m[default: 0]      [0m     [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-multi[0m[1;36m-version[0m                 [1;33m                    [0m  Select all versions    [2m│[0m
+[2m│[0m                                                       and not just the       [2m│[0m
+[2m│[0m                                                       latest version         [2m│[0m
+[2m│[0m                                                       (default).             [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-version[0m              [1;32m-V[0m       [1;33m                    [0m  Show version an exit   [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-help[0m                          [1;33m                    [0m  Show this message and  [2m│[0m
+[2m│[0m                                                       exit.                  [2m│[0m
 [2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
 
 
@@ -1287,11 +1348,11 @@ are associated with files on the tape archive.</p>
       </div>
     </a>
     <a class="right-next"
-       href="../developers/index.html"
+       href="../zarr-utils/index.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Developer REST API Overview</p>
+        <p class="prev-next-title">Remote data access utilities</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

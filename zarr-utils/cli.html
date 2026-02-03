@@ -1,0 +1,673 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta property="og:title" content="The zarr utils command line interface" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://freva-org.github.io/zarr-utils/cli.html" />
+<meta property="og:site_name" content="Freva Databrowser" />
+<meta property="og:description" content="This section introduces the usage of the freva-client zarr-utils sub command. Please see the Installation and configuration section on how to install and configure the command line interface. After..." />
+<meta name="description" content="This section introduces the usage of the freva-client zarr-utils sub command. Please see the Installation and configuration section on how to install and configure the command line interface. After..." />
+<meta name="twitter:card" content="summary_large_image">
+<meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
+
+    <title>The zarr utils command line interface &#8212; Freva Databrowser 2601.0.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../_static/code-tabs.css?v=1bc26e2f" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=d36ad1d6"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=1ae7504c"></script>
+    <script src="../_static/code-tabs.js?v=c983d12e"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'zarr-utils/cli';</script>
+    <link rel="canonical" href="http://127.0.0.1:8000/zarr-utils/cli.html" />
+    <link rel="icon" href="../_static/logo.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Authentication &amp; Authorization" href="../auth/index.html" />
+    <link rel="prev" title="Databrowser python module" href="python-lib.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2601.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2601.0.0 documentation - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../databrowser/index.html">
+    Search for data
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Remote data access utilities
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auth/index.html">
+    Authentication & Authorization
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../developers/index.html">
+    Developer REST API Overview
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/freva-org/freva-nextgen/freva-client" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../databrowser/index.html">
+    Search for data
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Remote data access utilities
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auth/index.html">
+    Authentication & Authorization
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../developers/index.html">
+    Developer REST API Overview
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/freva-org/freva-nextgen/freva-client" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="python-lib.html">Databrowser python module</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">The zarr utils command line interface</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Remote data access utilities</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">The zarr utils command line interface</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="the-zarr-utils-command-line-interface">
+<h1>The zarr utils command line interface<a class="headerlink" href="#the-zarr-utils-command-line-interface" title="Link to this heading">#</a></h1>
+<div class="toctree-wrapper compound" id="zarr-utils-cli">
+</div>
+<p>This section introduces the usage of the <code class="docutils literal notranslate"><span class="pre">freva-client</span> <span class="pre">zarr-utils</span></code> sub command.
+Please see the <a class="reference internal" href="../index.html#install-configure"><span class="std std-ref">Installation and configuration</span></a> section on how to install and
+configure the command line interface.</p>
+<p>After successful installation you can use the <code class="docutils literal notranslate"><span class="pre">freva-client</span> <span class="pre">zarr-utils</span></code> sub
+command</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client zarr-utils --help</span>
+</pre></div>
+</div>
+<section id="converting-your-data-files">
+<h2>Converting your data files<a class="headerlink" href="#converting-your-data-files" title="Link to this heading">#</a></h2>
+<p>You can convert any data files on the data center to zarr stores and serve them
+via http(s). To do so use the <code class="docutils literal notranslate"><span class="pre">convert</span></code> sub-command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client zarr-utils convert --help</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[1m                                                                                [0m
+[1m [0m[1;33mUsage: [0m[1mfreva-client zarr-utils convert [OPTIONS] PATHS...[0m[1m                     [0m[1m [0m
+[1m                                                                                [0m
+ Convert different data sets (files) to a http ready zarr store.                
+                                                                                
+[2m╭─[0m[2m Arguments [0m[2m─────────────────────────────────────────────────────────────────[0m[2m─╮[0m
+[2m│[0m [31m*[0m    paths      [1;33mPATHS...[0m  Paths to data files that should be aggregated.     [2m│[0m
+[2m│[0m                           [2;31m[required]                                    [0m     [2m│[0m
+[2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
+[2m╭─[0m[2m Options [0m[2m───────────────────────────────────────────────────────────────────[0m[2m─╮[0m
+[2m│[0m [1;36m-[0m[1;36m-public[0m                        [1;33m                    [0m  Make any zarr url      [2m│[0m
+[2m│[0m                                                       public                 [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-ttl[0m[1;36m-seconds[0m                   [1;33mFLOAT               [0m  Set the expiry time of [2m│[0m
+[2m│[0m                                                       any public zarr urls   [2m│[0m
+[2m│[0m                                                       [2m[default: 86400.0]    [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-aggregate[0m                     [1;2;33m[[0m[1;33mauto[0m[1;2;33m|[0m[1;33mmerge[0m[1;2;33m|[0m[1;33mconcat[0m[1;2;33m][0m[1;33m [0m  How aggregation should [2m│[0m
+[2m│[0m                                                       be realised (if any)   [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-join[0m                          [1;2;33m[[0m[1;33mouter[0m[1;2;33m|[0m[1;33minner[0m[1;2;33m|[0m[1;33mexact[0m[1;2;33m|[0m[1;33ml[0m  How different indexes  [2m│[0m
+[2m│[0m                                 [1;33meft[0m[1;2;33m|[0m[1;33mright[0m[1;2;33m][0m[1;33m          [0m  should be combined for [2m│[0m
+[2m│[0m                                                       aggregation.           [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-compat[0m                        [1;2;33m[[0m[1;33mno_conflicts[0m[1;2;33m|[0m[1;33mequals[0m  How to compare         [2m│[0m
+[2m│[0m                                 [1;2;33m|[0m[1;33moverride[0m[1;2;33m][0m[1;33m          [0m  non-concatenated       [2m│[0m
+[2m│[0m                                                       variables for          [2m│[0m
+[2m│[0m                                                       aggregation.           [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-data[0m[1;36m-vars[0m                     [1;2;33m[[0m[1;33mminimal[0m[1;2;33m|[0m[1;33mdifferent[0m[1;2;33m|[0m[1;33ma[0m  How to combine data    [2m│[0m
+[2m│[0m                                 [1;33mll[0m[1;2;33m][0m[1;33m                 [0m  variables for          [2m│[0m
+[2m│[0m                                                       aggregation.           [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-coords[0m                        [1;2;33m[[0m[1;33mminimal[0m[1;2;33m|[0m[1;33mdifferent[0m[1;2;33m|[0m[1;33ma[0m  How to combine coords  [2m│[0m
+[2m│[0m                                 [1;33mll[0m[1;2;33m][0m[1;33m                 [0m  for aggregation.       [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-dim[0m                           [1;33mTEXT                [0m  Name of the dimension  [2m│[0m
+[2m│[0m                                                       to concatenate along   [2m│[0m
+[2m│[0m                                                       for aggregation.       [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-group[0m[1;36m-by[0m                      [1;33mTEXT                [0m  If set, forces         [2m│[0m
+[2m│[0m                                                       grouping by a          [2m│[0m
+[2m│[0m                                                       signature key for      [2m│[0m
+[2m│[0m                                                       aggregation.           [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-access[0m[1;36m-pattern[0m                [1;2;33m[[0m[1;33mmap[0m[1;2;33m|[0m[1;33mtime_series[0m[1;2;33m][0m[1;33m   [0m  Optimise the chunk     [2m│[0m
+[2m│[0m                                                       sizes for those access [2m│[0m
+[2m│[0m                                                       pattern.               [2m│[0m
+[2m│[0m                                                       [2m[default: map]        [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-map[0m[1;36m-primary-chunks…[0m           [1;33mINTEGER             [0m  Chunk sizes of the     [2m│[0m
+[2m│[0m                                                       primary dimension.     [2m│[0m
+[2m│[0m                                                       [2m[default: 1]          [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-chunk[0m[1;36m-size[0m                    [1;33mFLOAT               [0m  Set the target chunk   [2m│[0m
+[2m│[0m                                                       size in megabytes.     [2m│[0m
+[2m│[0m                                                       [2m[default: 16.0]       [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-reload[0m[1;36m-zarr[0m                   [1;33m                    [0m  Trigger a zarr         [2m│[0m
+[2m│[0m                                                       data-store reload.     [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-token[0m[1;36m-file[0m           [1;32m-tf[0m      [1;33mPATH                [0m  Instead of             [2m│[0m
+[2m│[0m                                                       authenticating via     [2m│[0m
+[2m│[0m                                                       code based             [2m│[0m
+[2m│[0m                                                       authentication flow    [2m│[0m
+[2m│[0m                                                       you can set the path   [2m│[0m
+[2m│[0m                                                       to the json file that  [2m│[0m
+[2m│[0m                                                       contains a `refresh    [2m│[0m
+[2m│[0m                                                       token` containing a    [2m│[0m
+[2m│[0m                                                       refresh_token key.     [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-json[0m                 [1;32m-j[0m       [1;33m                    [0m  Parse output in json   [2m│[0m
+[2m│[0m                                                       format.                [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-host[0m                          [1;33mTEXT                [0m  Set the hostname of    [2m│[0m
+[2m│[0m                                                       the databrowser, if    [2m│[0m
+[2m│[0m                                                       not set (default) the  [2m│[0m
+[2m│[0m                                                       hostname is read from  [2m│[0m
+[2m│[0m                                                       a config file          [2m│[0m
+[2m│[0m                        [1;32m-v[0m       [1;33mINTEGER             [0m  Increase verbosity     [2m│[0m
+[2m│[0m                                                       [2m[default: 0]      [0m     [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-version[0m              [1;32m-V[0m       [1;33m                    [0m  Show version an exit   [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-help[0m                          [1;33m                    [0m  Show this message and  [2m│[0m
+[2m│[0m                                                       exit.                  [2m│[0m
+[2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
+
+
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">--public</span></code> flag lets you create zarr stores that can be anonymously acceesed.
+The <code class="docutils literal notranslate"><span class="pre">aggregation</span></code> flags can be used to aggregate multiple source file into one common zarr store.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Anyone with this link will be able to access the data. For security reasons
+any public zarr store link has an expiration date after which access isn’t
+possible anymore.</p>
+</div>
+<section id="checking-the-conversion-status">
+<h3>Checking the conversion status<a class="headerlink" href="#checking-the-conversion-status" title="Link to this heading">#</a></h3>
+<p>If client tools, like xarray, that access the zarr stores file you can use the
+<code class="docutils literal notranslate"><span class="pre">status</span></code> sub-command to get more information about the loading process and
+potential issues.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">freva-client zarr-utils status --help</span>
+</pre></div>
+</div>
+<p><span class="caption-text">Results</span></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[1m                                                                                [0m
+[1m [0m[1;33mUsage: [0m[1mfreva-client zarr-utils status [OPTIONS] URL[0m[1m                           [0m[1m [0m
+[1m                                                                                [0m
+ Get the status of a pre signed zarr store                                      
+                                                                                
+[2m╭─[0m[2m Arguments [0m[2m─────────────────────────────────────────────────────────────────[0m[2m─╮[0m
+[2m│[0m [31m*[0m    url      [1;33mTEXT[0m  Url of the zarr store to check. [2;31m[required][0m               [2m│[0m
+[2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
+[2m╭─[0m[2m Options [0m[2m───────────────────────────────────────────────────────────────────[0m[2m─╮[0m
+[2m│[0m [1;36m-[0m[1;36m-token[0m[1;36m-file[0m  [1;32m-tf[0m      [1;33mPATH   [0m  Instead of authenticating via code based     [2m│[0m
+[2m│[0m                                 authentication flow you can set the path to  [2m│[0m
+[2m│[0m                                 the json file that contains a `refresh       [2m│[0m
+[2m│[0m                                 token` containing a refresh_token key.       [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-host[0m                 [1;33mTEXT   [0m  Set the hostname of the databrowser, if not  [2m│[0m
+[2m│[0m                                 set (default) the hostname is read from a    [2m│[0m
+[2m│[0m                                 config file                                  [2m│[0m
+[2m│[0m               [1;32m-v[0m       [1;33mINTEGER[0m  Increase verbosity [2m[default: 0][0m              [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-version[0m     [1;32m-V[0m       [1;33m       [0m  Show version an exit                         [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-help[0m                 [1;33m       [0m  Show this message and exit.                  [2m│[0m
+[2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
+
+
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="python-lib.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Databrowser python module</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../auth/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Authentication &amp; Authorization</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#converting-your-data-files">Converting your data files</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#checking-the-conversion-status">Checking the conversion status</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, DKRZ.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

@@ -40,7 +40,7 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
     <link rel="stylesheet" type="text/css" href="../_static/code-tabs.css?v=1bc26e2f" />
   
   <!-- So that users can add custom icons -->
@@ -57,7 +57,7 @@
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script src="../_static/togglebutton.js?v=1ae7504c"></script>
     <script src="../_static/code-tabs.js?v=c983d12e"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'developers/zarr';</script>
@@ -152,15 +152,22 @@
   <ul class="bd-navbar-elements navbar-nav">
     
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../auth/index.html">
-    Authentication & Authorization
+  <a class="nav-link nav-internal" href="../databrowser/index.html">
+    Search for data
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../databrowser/index.html">
-    Search for data
+  <a class="nav-link nav-internal" href="../zarr-utils/index.html">
+    Remote data access utilities
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auth/index.html">
+    Authentication & Authorization
   </a>
 </li>
 
@@ -261,15 +268,22 @@
   <ul class="bd-navbar-elements navbar-nav">
     
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../auth/index.html">
-    Authentication & Authorization
+  <a class="nav-link nav-internal" href="../databrowser/index.html">
+    Search for data
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../databrowser/index.html">
-    Search for data
+  <a class="nav-link nav-internal" href="../zarr-utils/index.html">
+    Remote data access utilities
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auth/index.html">
+    Authentication & Authorization
   </a>
 </li>
 
@@ -452,6 +466,14 @@ temporary zarr url. Be default users need to be authenticated
 in order to access the zarr urls. Default is false</p></li>
 <li><p><strong>ttl_seconds</strong> – Set for how many seconds a the public zarr url should be
 valid for, if any. Default is 86,400 (1 day).</p></li>
+<li><p><strong>access_pattern</strong> – Optimise the chunk sizes for those access pattern,
+default: <cite>map</cite>, choose from <cite>map</cite>, <cite>time_series</cite>.</p></li>
+<li><p><strong>map_primary_chunksize</strong> – If access pattern is <cite>map</cite> set the chunk sizes
+of the primary axis (e.g time).</p></li>
+<li><p><strong>reload</strong> – Force a server-side cache refresh. By default,
+data store requests are cached to improve performance.
+Set to <code class="docutils literal notranslate"><span class="pre">true</span></code> to bypass the cache and fetch fresh data</p></li>
+<li><p><strong>chunk_size</strong> – Target chunk size in megabytes.</p></li>
 <li><p><strong>**search_facets</strong> – With any other query parameters you refine your
 data search. Query parameters could be, depending
 on the DRS standard flavour <code class="docutils literal notranslate"><span class="pre">product</span></code>, <code class="docutils literal notranslate"><span class="pre">project</span></code>
@@ -599,9 +621,9 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 </section>
 <section id="request-asynchronous-zarr-conversion">
 <span id="zarr-convert"></span><h2>Request asynchronous Zarr conversion<a class="headerlink" href="#request-asynchronous-zarr-conversion" title="Link to this heading">#</a></h2>
-<dl class="http get">
-<dt class="sig sig-object http" id="get--api-freva-nextgen-data-portal-zarr-convert">
-<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/data-portal/zarr/convert</span></span><a class="headerlink" href="#get--api-freva-nextgen-data-portal-zarr-convert" title="Link to this definition">#</a></dt>
+<dl class="http post">
+<dt class="sig sig-object http" id="post--api-freva-nextgen-data-portal-zarr-convert">
+<span class="sig-name descname"><span class="pre">POST</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/data-portal/zarr/convert</span></span><a class="headerlink" href="#post--api-freva-nextgen-data-portal-zarr-convert" title="Link to this definition">#</a></dt>
 <dd><p>Submit one or more file or object paths to be converted into Zarr stores.
 This endpoint only publishes a message to the data‑portal worker via a broker;
 it does <strong>not</strong> verify that the paths exist or perform the conversion itself.
@@ -612,10 +634,70 @@ and the corresponding Zarr dataset will be in a failed state with a reason.
 You can query the status endpoint to check whether the conversion succeeded
 or failed.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Query Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Request JSON Object<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>path</strong> – Absolute or object‑store paths to the input files.  Repeat this
-parameter to submit multiple files.</p></li>
+<li><p><strong>path</strong> (<em>string</em>) – Absolute or object‑store paths to the input files. Can be a single
+path or a list of paths.</p></li>
+<li><p><strong>public</strong> (<em>boolean</em>) – Boolean indicating whether or not the zarr store that should
+be created will be anonymously available.</p></li>
+<li><p><strong>ttl_seconds</strong> (<em>integer</em>) – How long should a pulic URL should remain valid, in seconds.</p></li>
+<li><p><strong>access_pattern</strong> (<em>string</em>) – Optimise the chunk sizes for those access pattern,
+default: <cite>map</cite>, choose from <cite>map</cite>, <cite>time_series</cite>.</p></li>
+<li><p><strong>map_primary_chunksize</strong> (<em>integer query</em>) – If access pattern is <cite>map</cite> set the chunk sizes
+of the primary axis (e.g time).</p></li>
+<li><p><strong>reload</strong> (<em>boolean</em>) – Force a server-side cache refresh. By default,
+data store requests are cached to improve performance.
+Set to <code class="docutils literal notranslate"><span class="pre">true</span></code> to bypass the cache and fetch fresh data</p></li>
+<li><p><strong>chunk_size</strong> (<em>float</em>) – Target chunk size in megabytes.</p></li>
+<li><p><strong>aggregate</strong> (<em>string</em>) – The string indicating how the aggregation should be done:
+- null/omit: Do not aggregate data (default)
+- “auto”: let the system choose if the datasets should be concatenated or mereged.
+- “merge”: merge datasets as <cite>variables</cite>
+- “concat”: concatenated datasets along a <cite>dimension</cite></p></li>
+<li><p><strong>join</strong> (<em>string</em>) – <p>String indicating how to combine differing indexes:</p>
+<ul>
+<li><p>”outer”: use the union of object indexes.</p></li>
+<li><p>”inner”: use the intersection of object indexes.</p></li>
+<li><p>”left”: use indexes from the first object with each dimension.</p></li>
+<li><p>”right”: use indexes from the last object with each dimension.</p></li>
+<li><p>”exact”: instead of aligning, errors when indexes to be aligned are not equal.</p></li>
+</ul>
+<p>This option is only taken into account it <code class="docutils literal notranslate"><span class="pre">aggregate</span></code> is set</p>
+</p></li>
+<li><p><strong>compat</strong> (<em>string</em>) – <p>String indicating how to compare non-concatenated variables of the same name for:</p>
+<ul>
+<li><p>”equals”: all values and dimensions must be the same.</p></li>
+<li><p>”no_conflicts”: only values which are not null in both datasets
+must be equal. The returned dataset then contains the combination
+of all non-null values.</p></li>
+<li><p>”override”: skip comparing and pick variable from first dataset</p></li>
+</ul>
+<p>This option is only taken into account it <code class="docutils literal notranslate"><span class="pre">aggregate</span></code> is set.</p>
+</p></li>
+<li><p><strong>data_vars</strong> (<em>string</em>) – <p>These data variables will be combined together:</p>
+<ul>
+<li><p>”minimal”: Only data variables in which the dimension already appears are included.</p></li>
+<li><p>”different”:  Data variables which are not equal (ignoring attributes) across all datasets are also concatenated (as well as all for which dimension already appears).</p></li>
+<li><p>”all”: All data variables will be concatenated.</p></li>
+</ul>
+<p>This option is only taken into account it <code class="docutils literal notranslate"><span class="pre">aggregate</span></code> is set.</p>
+</p></li>
+<li><p><strong>coords</strong> (<em>string</em>) – <p>These coordinate variables will be combined together:</p>
+<ul>
+<li><p>”minimal”: Only coordinates in which the dimension already appears are included.</p></li>
+<li><p>”different”:  Coordinates which are not equal (ignoring attributes) across all datasets are also concatenated (as well as all for which dimension already appears).</p></li>
+<li><p>”all”: All coordinates will be concatenated.</p></li>
+</ul>
+<p>This option is only taken into account it <code class="docutils literal notranslate"><span class="pre">aggregate</span></code> is set.</p>
+</p></li>
+<li><p><strong>dim</strong> (<em>string</em>) – <p>Name of the dimension to concatenate along. This can either be a new
+dimension name, in which case it is added along axis=0, or an
+existing dimension name, in which case the location of the
+dimension is unchanged.</p>
+<p>This option is only taken into account it <code class="docutils literal notranslate"><span class="pre">aggregate</span></code> is set.</p>
+</p></li>
+<li><p><strong>group_by</strong> (<em>string</em>) – If set, forces grouping by a signature key. Otherwise grouping
+is attempted only when direct combine fails.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Request Headers<span class="colon">:</span></dt>
@@ -640,7 +722,7 @@ parameter to submit multiple files.</p></li>
 <section id="id1">
 <h3>Example Request<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
 <blockquote>
-<div><div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/freva-nextgen/data-portal/zarr/convert?path=/work/abc123/myuser/mydata_1.nc&amp;path=/work/abc123/myuser/mydata_2.nc</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<div><div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">POST</span> <span class="nn">/api/freva-nextgen/data-portal/zarr/convert?path=/work/abc123/myuser/mydata_1.nc&amp;path=/work/abc123/myuser/mydata_2.nc</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
 <span class="na">Host</span><span class="o">:</span> <span class="l">www.freva.dkrz.de</span>
 <span class="na">Authorization</span><span class="o">:</span> <span class="l">Bearer YOUR_ACCESS_TOKEN</span>
 </pre></div>
@@ -673,10 +755,8 @@ parameter to submit multiple files.</p></li>
 Shell</li><li class="tabbutton" data-id="1" onclick="sphinx_code_tabs_onclick(this)">
 Python (requests)</li><li class="tabbutton" data-id="2" onclick="sphinx_code_tabs_onclick(this)">
 gnuR (httr)</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(this)">
-Julia (HTTP.jl)</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
-C (libcurl)</li></ul><div class="tab codetab selected" data-id="0">
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use curl with --get (-G) and multiple --data-urlencode parameters</span>
-curl<span class="w"> </span>-G<span class="w"> </span><span class="se">\</span>
+Julia (HTTP.jl)</li></ul><div class="tab codetab selected" data-id="0">
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span><span class="s1">&#39;https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr/convert&#39;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--header<span class="w"> </span><span class="s2">&quot;Authorization: Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--data-urlencode<span class="w"> </span><span class="s1">&#39;path=/work/abc123/myuser/mydata_1.nc&#39;</span><span class="w"> </span><span class="se">\</span>
@@ -686,9 +766,9 @@ curl<span class="w"> </span>-G<span class="w"> </span><span class="se">\</span>
 </div><div class="tab codetab" data-id="1">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 
-<span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
     <span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr/convert&quot;</span><span class="p">,</span>
-    <span class="n">params</span><span class="o">=</span><span class="p">{</span>
+    <span class="n">json</span><span class="o">=</span><span class="p">{</span>
         <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="p">[</span>
             <span class="s2">&quot;/work/abc123/myuser/mydata_1.nc&quot;</span><span class="p">,</span>
             <span class="s2">&quot;/work/abc123/myuser/mydata_2.nc&quot;</span><span class="p">,</span>
@@ -703,7 +783,7 @@ curl<span class="w"> </span>-G<span class="w"> </span><span class="se">\</span>
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
 <span class="nf">library</span><span class="p">(</span><span class="n">jsonlite</span><span class="p">)</span>
 
-<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">GET</span><span class="p">(</span>
+<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">POST</span><span class="p">(</span>
 <span class="w">  </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr/convert&quot;</span><span class="p">,</span>
 <span class="w">  </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span>
 <span class="w">    </span><span class="s">&quot;/work/abc123/myuser/mydata_1.nc&quot;</span><span class="p">,</span>
@@ -723,41 +803,125 @@ curl<span class="w"> </span>-G<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span><span class="s">&quot;/work/abc123/myuser/mydata_1.nc&quot;</span><span class="p">,</span>
 <span class="w">    </span><span class="s">&quot;/work/abc123/myuser/mydata_2.nc&quot;</span><span class="p">,</span>
 <span class="p">])</span>
-<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
 <span class="w">  </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr/convert&quot;</span><span class="p">;</span>
 <span class="w">  </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">,</span>
 <span class="w">  </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">query</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">zarr_locations</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">))[</span><span class="s">&quot;urls&quot;</span><span class="p">]</span>
-</pre></div>
-</div>
-</div><div class="tab codetab" data-id="4">
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;curl/curl.h&gt;</span>
-
-<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">CURL</span><span class="w"> </span><span class="o">*</span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">struct</span><span class="w"> </span><span class="nc">curl_slist</span><span class="w"> </span><span class="o">*</span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
-<span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Authorization: Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">);</span>
-
-<span class="w">        </span><span class="c1">// Note: encode special characters in the paths as needed</span>
-<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span>
-<span class="w">            </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr/convert&quot;</span>
-<span class="w">            </span><span class="s">&quot;?path=/work/abc123/myuser/mydata_1.nc&amp;&quot;</span>
-<span class="w">            </span><span class="s">&quot;path=/work/abc123/myuser/mydata_2.nc&quot;</span><span class="p">);</span>
-<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_HTTPHEADER</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="p">);</span>
-
-<span class="w">        </span><span class="n">CURLcode</span><span class="w"> </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
-<span class="w">        </span><span class="n">curl_slist_free_all</span><span class="p">(</span><span class="n">headers</span><span class="p">);</span>
-<span class="w">        </span><span class="n">curl_easy_cleanup</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
 </pre></div>
 </div>
 </div></div></div></blockquote>
 </section>
+</dd></dl>
+
+</section>
+<section id="generic-zarr-key-retrieval">
+<h2>Generic Zarr key retrieval<a class="headerlink" href="#generic-zarr-key-retrieval" title="Link to this heading">#</a></h2>
+<p>In addition to the specific metadata and chunk routes listed above, the
+data portal also exposes a catch‑all endpoint that serves arbitrary keys
+from a Zarr store.  This interface is compatible with remote storage
+backends used by <code class="xref py py-mod docutils literal notranslate"><span class="pre">xarray</span></code> and <code class="xref py py-mod docutils literal notranslate"><span class="pre">zarr</span></code>, allowing clients to
+access consolidated metadata, per‑variable metadata and individual chunk
+payloads via HTTP.</p>
+<dl class="http get">
+<dt class="sig sig-object http" id="get--api-freva-nextgen-data-portal-zarr-token.zarr-zarr_key">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/data-portal/zarr/{token}.zarr/{zarr_key}</span></span><a class="headerlink" href="#get--api-freva-nextgen-data-portal-zarr-token.zarr-zarr_key" title="Link to this definition">#</a></dt>
+<dd><p>Retrieve metadata or chunk data from the store identified by <code class="docutils literal notranslate"><span class="pre">token</span></code>.
+The <code class="docutils literal notranslate"><span class="pre">zarr_key</span></code> parameter must contain the slash‑separated key within
+the Zarr store.  The following conventions apply:</p>
+<ul class="simple">
+<li><p>Root‑level keys such as <code class="docutils literal notranslate"><span class="pre">.zmetadata</span></code>, <code class="docutils literal notranslate"><span class="pre">.zgroup</span></code> and <code class="docutils literal notranslate"><span class="pre">.zattrs</span></code>
+return the consolidated metadata, group information and attributes
+for the entire store.  These keys have no variable prefix.</p></li>
+<li><p>Keys of the form <code class="docutils literal notranslate"><span class="pre">&lt;variable&gt;/.zarray</span></code> and <code class="docutils literal notranslate"><span class="pre">&lt;variable&gt;/.zattrs</span></code>
+return the array encoding and variable attributes for the specified
+variable.  Replace <code class="docutils literal notranslate"><span class="pre">&lt;variable&gt;</span></code> with the actual variable name.</p></li>
+<li><p>Data chunk keys use the pattern <code class="docutils literal notranslate"><span class="pre">&lt;variable&gt;/&lt;chunk&gt;</span></code> where
+<code class="docutils literal notranslate"><span class="pre">chunk</span></code> encodes the chunk indices separated by dots.  For
+example, <code class="docutils literal notranslate"><span class="pre">tas/0.0.0</span></code> requests the first chunk of the variable
+<code class="docutils literal notranslate"><span class="pre">tas</span></code>.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>token</strong> – Unique identifier returned by the load endpoint when a
+dataset has been registered for streaming.  Each token corresponds
+to one Zarr store.</p></li>
+<li><p><strong>zarr_key</strong> – Slash‑separated key within the Zarr store.  Refer
+to the descriptions above for valid patterns.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.1">200 OK</a></span> – The requested metadata or chunk was found and is
+returned in the response body.</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.1">400 Bad Request</a></span> – The key is malformed or refers to a metadata file that
+requires a variable context (for example <code class="docutils literal notranslate"><span class="pre">foo/.zarray</span></code> at the
+root level).</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.5">404 Not Found</a></span> – The requested key does not exist in the store.</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>Example</strong></p>
+<p>To retrieve the consolidated metadata for a store, use <code class="docutils literal notranslate"><span class="pre">.zmetadata</span></code>
+as the key:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">curl</span> <span class="o">-</span><span class="n">X</span> <span class="n">GET</span> \
+    <span class="s2">&quot;https://api.freva.de/api/freva-nextgen/data-portal/zarr/&lt;token&gt;.zarr/.zmetadata&quot;</span>
+</pre></div>
+</div>
+<p>You can open a remote store directly in <code class="xref py py-mod docutils literal notranslate"><span class="pre">xarray</span></code> using the
+<code class="xref py py-mod docutils literal notranslate"><span class="pre">fsspec</span></code> interface:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">fsspec</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+
+<span class="n">mapper</span> <span class="o">=</span> <span class="n">fsspec</span><span class="o">.</span><span class="n">get_mapper</span><span class="p">(</span>
+    <span class="s2">&quot;https://api.freva.de/api/freva-nextgen/data-portal/zarr/&lt;token&gt;.zarr&quot;</span>
+<span class="p">)</span>
+<span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span><span class="n">mapper</span><span class="p">,</span> <span class="n">consolidated</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">dset</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="http get">
+<dt class="sig sig-object http" id="get--api-freva-nextgen-data-portal-share-sig-token.zarr-zarr_key">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/freva-nextgen/data-portal/share/{sig}/{token}.zarr/{zarr_key}</span></span><a class="headerlink" href="#get--api-freva-nextgen-data-portal-share-sig-token.zarr-zarr_key" title="Link to this definition">#</a></dt>
+<dd><p>This endpoint mirrors the behaviour of the previous one but requires
+a valid <code class="docutils literal notranslate"><span class="pre">sig</span></code> parameter obtained from <a class="reference internal" href="#post--api-freva-nextgen-data-portal-zarr-share-zarr" title="POST /api/freva-nextgen/data-portal/zarr/share-zarr"><code class="xref http http-post docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/api/freva-nextgen/data-portal/zarr/share-zarr</span></code></a>.
+The signature authenticates the request and maps to the underlying token.</p>
+<p><strong>Example</strong></p>
+<p>Retrieve the consolidated metadata for a shared store:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">curl</span> <span class="o">-</span><span class="n">X</span> <span class="n">GET</span> \
+    <span class="s2">&quot;https://api.freva.de/api/freva-nextgen/data-portal/share/&lt;sig&gt;/&lt;token&gt;.zarr/.zmetadata&quot;</span>
+    <span class="n">zarr_locations</span> <span class="o">=</span> <span class="n">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">))[</span><span class="s2">&quot;urls&quot;</span><span class="p">]</span>
+
+<span class="o">..</span> <span class="n">code</span><span class="o">-</span><span class="n">tab</span><span class="p">::</span> <span class="n">c</span>
+    <span class="p">:</span><span class="n">caption</span><span class="p">:</span> <span class="n">C</span> <span class="p">(</span><span class="n">libcurl</span><span class="p">)</span>
+
+    <span class="c1">#include &lt;stdio.h&gt;</span>
+    <span class="c1">#include &lt;curl/curl.h&gt;</span>
+
+    <span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">CURL</span> <span class="o">*</span><span class="n">curl</span> <span class="o">=</span> <span class="n">curl_easy_init</span><span class="p">();</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">curl</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">struct</span> <span class="n">curl_slist</span> <span class="o">*</span><span class="n">headers</span> <span class="o">=</span> <span class="n">NULL</span><span class="p">;</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span> <span class="s2">&quot;Authorization: Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">);</span>
+
+            <span class="o">//</span> <span class="n">Note</span><span class="p">:</span> <span class="n">encode</span> <span class="n">special</span> <span class="n">characters</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">paths</span> <span class="k">as</span> <span class="n">needed</span>
+            <span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span> <span class="n">CURLOPT_URL</span><span class="p">,</span>
+                <span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/data-portal/zarr/convert&quot;</span>
+                <span class="s2">&quot;?path=/work/abc123/myuser/mydata_1.nc&amp;&quot;</span>
+                <span class="s2">&quot;path=/work/abc123/myuser/mydata_2.nc&quot;</span><span class="p">);</span>
+            <span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span> <span class="n">CURLOPT_HTTPHEADER</span><span class="p">,</span> <span class="n">headers</span><span class="p">);</span>
+
+            <span class="n">CURLcode</span> <span class="n">res</span> <span class="o">=</span> <span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+            <span class="n">curl_slist_free_all</span><span class="p">(</span><span class="n">headers</span><span class="p">);</span>
+            <span class="n">curl_easy_cleanup</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <p>—</p>
@@ -775,30 +939,30 @@ parameters. Anyone who knows the URL can perform a <code class="docutils literal
 the target resource until the expiry time is reached, without
 needing an access token.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Body path<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Fully qualified URL of the resource to pre-sign, relative
-to this API. Must contain  <cite>/api/freva-nextgen/data-portal/zarr/</cite>
-and typically points to a single Zarr url.</p>
-</dd>
-<dt class="field-even">Body ttl_seconds<span class="colon">:</span></dt>
-<dd class="field-even"><p>How long the pre-signed URL should remain valid,
-in seconds.</p>
-</dd>
-<dt class="field-odd">Request Headers<span class="colon">:</span></dt>
+<dt class="field-odd">Request JSON Object<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>string</em>) – Fully qualified URL of the resource to pre-sign, relative
+to this API. Must contain  <cite>/api/freva-nextgen/data-portal/zarr/</cite>
+and typically points to a single Zarr url.</p></li>
+<li><p><strong>ttl_seconds</strong> (<em>integer</em>) – How long the pre-signed URL should remain valid,
+in seconds.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Request Headers<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7235#section-4.2">Authorization</a></span> – Bearer token for authentication.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Status Codes<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
+<dt class="field-odd">Status Codes<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
 <li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.1">200 OK</a></span> – JSON object with a <code class="docutils literal notranslate"><span class="pre">url</span></code> containing the Zarr endpoint URLs.</p></li>
 <li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.2">401 Unauthorized</a></span> – The user could not be authenticated.</p></li>
 <li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.4">503 Service Unavailable</a></span> – Service is currently unavailable.</p></li>
 <li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.1">500 Internal Server Error</a></span> – Internal error while publishing the data request.</p></li>
 </ul>
 </dd>
-<dt class="field-odd">Response Headers<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
+<dt class="field-even">Response Headers<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7231#section-3.1.1.5">Content-Type</a></span> – <code class="docutils literal notranslate"><span class="pre">application/json</span></code></p></li>
 </ul>
 </dd>
@@ -853,7 +1017,7 @@ C (libcurl)</li></ul><div class="tab codetab selected" data-id="0">
 
 <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
     <span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/data-portal/share-zarr&quot;</span><span class="p">,</span>
-    <span class="n">params</span><span class="o">=</span><span class="p">{</span>
+    <span class="n">json</span><span class="o">=</span><span class="p">{</span>
         <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="p">(</span>
             <span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/&quot;</span>
             <span class="s2">&quot;data-portal/zarr/432a5670.zarr&quot;</span>
@@ -1275,6 +1439,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#creating-zarr-endpoints-for-streaming-data">Creating zarr endpoints for streaming data</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#request-asynchronous-zarr-conversion">Request asynchronous Zarr conversion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generic-zarr-key-retrieval">Generic Zarr key retrieval</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#create-a-public-pre-signed-zarr-url">Create a public pre-signed zarr url</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#checking-the-status-of-a-dynamically-created-zarr-dataset">Checking the status of a dynamically created Zarr dataset</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#retrieving-an-html-representation-of-a-zarr-dataset">Retrieving an HTML representation of a Zarr dataset</a></li>

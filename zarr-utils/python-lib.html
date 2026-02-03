@@ -1,0 +1,809 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta property="og:title" content="Databrowser python module" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://freva-org.github.io/zarr-utils/python-lib.html" />
+<meta property="og:site_name" content="Freva Databrowser" />
+<meta property="og:description" content="The following section gives an overview over the usage of the available zarr uitility python module. Please see the Installation and configuration section on how to install and configure the freva-..." />
+<meta name="description" content="The following section gives an overview over the usage of the available zarr uitility python module. Please see the Installation and configuration section on how to install and configure the freva-..." />
+<meta name="twitter:card" content="summary_large_image">
+<meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
+
+    <title>Databrowser python module &#8212; Freva Databrowser 2601.0.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../_static/code-tabs.css?v=1bc26e2f" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=d36ad1d6"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=1ae7504c"></script>
+    <script src="../_static/code-tabs.js?v=c983d12e"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'zarr-utils/python-lib';</script>
+    <link rel="canonical" href="http://127.0.0.1:8000/zarr-utils/python-lib.html" />
+    <link rel="icon" href="../_static/logo.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The zarr utils command line interface" href="cli.html" />
+    <link rel="prev" title="Remote data access utilities" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2601.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2601.0.0 documentation - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../databrowser/index.html">
+    Search for data
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Remote data access utilities
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auth/index.html">
+    Authentication & Authorization
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../developers/index.html">
+    Developer REST API Overview
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/freva-org/freva-nextgen/freva-client" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../databrowser/index.html">
+    Search for data
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Remote data access utilities
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../auth/index.html">
+    Authentication & Authorization
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../developers/index.html">
+    Developer REST API Overview
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/freva-org/freva-nextgen/freva-client" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">Databrowser python module</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="cli.html">The zarr utils command line interface</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Remote data access utilities</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Databrowser python module</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="databrowser-python-module">
+<h1>Databrowser python module<a class="headerlink" href="#databrowser-python-module" title="Link to this heading">#</a></h1>
+<div class="toctree-wrapper compound" id="python-zarr-utils">
+</div>
+<p>The following section gives an overview over the usage of the available zarr
+uitility python module. Please see the <a class="reference internal" href="../index.html#install-configure"><span class="std std-ref">Installation and configuration</span></a> section on how
+to install and configure the <code class="docutils literal notranslate"><span class="pre">freva-client</span></code> library.</p>
+<section id="convert-data-to-zarr">
+<h2>Convert data to zarr<a class="headerlink" href="#convert-data-to-zarr" title="Link to this heading">#</a></h2>
+<p>With help of the <a class="reference internal" href="#freva_client.zarr_utils.convert" title="freva_client.zarr_utils.convert"><code class="xref py py-func docutils literal notranslate"><span class="pre">freva_client.zarr_utils.convert()</span></code></a> you can convert
+and optionally aggregate your data to zarr.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="freva_client.zarr_utils.convert">
+<span class="sig-prename descclassname"><span class="pre">freva_client.zarr_utils.</span></span><span class="sig-name descname"><span class="pre">convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">paths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aggregate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'auto'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'merge'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'concat'</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">join</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'outer'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'inner'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'exact'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'left'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'right'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'outer'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'no_conflicts'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'equals'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'override'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'override'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_vars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'minimal'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'different'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'all'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'minimal'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'minimal'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'different'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'all'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'minimal'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_by</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zarr_options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#freva_client.zarr_utils.convert" title="Link to this definition">#</a></dt>
+<dd><p>Convert data files to a zarr store in the cloud.</p>
+<p>This method lets you convert data files in netCDF, hdf5, geotiff etc.
+to zarr-stores that are avialale via http.</p>
+<p>I can either directly map one input file to a zarr store or aggregate the
+files into one single zarr-store. There are three main aggregation modes.
+(<code class="docutils literal notranslate"><span class="pre">auto</span></code>, <code class="docutils literal notranslate"><span class="pre">merge</span></code> or <code class="docutils literal notranslate"><span class="pre">concat</span></code>). Once you’ve chosen the main aggregation mode.
+You can fine tune the
+aggregation using the <code class="docutils literal notranslate"><span class="pre">join</span></code>, <code class="docutils literal notranslate"><span class="pre">compat</span></code>, <code class="docutils literal notranslate"><span class="pre">data_vars</span></code>, <code class="docutils literal notranslate"><span class="pre">coords</span></code>
+<code class="docutils literal notranslate"><span class="pre">dim</span></code> and <code class="docutils literal notranslate"><span class="pre">group_by</span></code> parameters to fine the the aggregation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>paths</strong> (<em>str</em>) – Collection of paths that are converted to zarr.</p></li>
+<li><p><strong>aggregate</strong> (<em>str</em><em>, </em><em>choices: None</em><em>, </em><em>auto</em><em>, </em><em>merge</em><em>, </em><em>concat</em>) – None will not aggregate data. The string indicating how the
+aggregation should be done:
+- “auto”: let the system choose how to aggregate data.
+- “merge”: merge datasets as <cite>variables</cite>
+- “concat”: concatenated datasets along a <cite>dimension</cite></p></li>
+<li><p><strong>host</strong> (<em>str</em><em>, </em><em>default: None</em>) – Override the host name of the databrowser server. This is usually the
+url where the freva web site can be found. Such as www.freva.dkrz.de.
+By default no host name is given and the host name will be taken from
+the freva config file.</p></li>
+<li><p><strong>join</strong> (<em>str</em><em>, </em><em>choices: outer</em><em>, </em><em>inner</em><em>, </em><em>exact</em><em>, </em><em>left</em><em>, </em><em>right</em>) – <p>String indicating how to combine differing indexes
+- “outer”: use the union of object indexes.
+- “inner”: use the intersection of object indexes.
+- “left”: use indexes from the first object with each dimension.
+- “right”: use indexes from the last object with each dimension.
+- “exact”: instead of aligning, errors when indexes are not equal.</p>
+<p>This option is only taken into account it <code class="docutils literal notranslate"><span class="pre">aggregate</span></code> is not None.</p>
+</p></li>
+<li><p><strong>compat</strong> (<em>str</em><em>, </em><em>choices: no_conflicts</em><em>, </em><em>equals</em><em>, </em><em>override</em>) – <p>String indicating how to compare non-concatenated variables of the
+same name for:</p>
+<ul>
+<li><p>”equals”: all values and dimensions must be the same.</p></li>
+<li><p>”no_conflicts”: only values which are not null in both datasets
+must be equal. The returned dataset then contains the combination
+of all non-null values.</p></li>
+<li><p>”override”: skip comparing and pick variable from first dataset</p></li>
+</ul>
+<p>This option is only taken into account it <code class="docutils literal notranslate"><span class="pre">aggregate</span></code> is not None.</p>
+</p></li>
+<li><p><strong>data_vars</strong> (<em>str</em><em>, </em><em>choices: minimal</em><em>, </em><em>different</em><em>, </em><em>all</em>) – <p>These data variables will be combined together:</p>
+<ul>
+<li><p>”minimal”: Only data variables in which the dimension already
+appears are included.</p></li>
+<li><dl class="simple">
+<dt>”different”:  Data variables which are not equal (ignoring</dt><dd><p>attributes) across all datasets are also concatenated (as well as
+all for which dimension already appears).</p>
+</dd>
+</dl>
+</li>
+<li><p>”all”: All data variables will be concatenated.</p></li>
+</ul>
+<p>This option is only taken into account it <code class="docutils literal notranslate"><span class="pre">aggregate</span></code> is not None.</p>
+</p></li>
+<li><p><strong>coords</strong> (<em>str</em><em>, </em><em>choices: minimal</em><em>, </em><em>different</em><em>, </em><em>all</em>) – <p>These coordinate variables will be combined together:</p>
+<ul>
+<li><dl class="simple">
+<dt>”minimal”: Only coordinates in which the dimension already</dt><dd><p>appears are included.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>”different”:  Coordinates which are not equal (ignoring</dt><dd><p>attributes) across all datasets are also concatenated (as well as
+all for which dimension already appears).</p>
+</dd>
+</dl>
+</li>
+<li><p>”all”: All coordinates will be concatenated.</p></li>
+</ul>
+<p>This option is only taken into account it <code class="docutils literal notranslate"><span class="pre">aggregate</span></code> is not None.</p>
+</p></li>
+<li><p><strong>dim</strong> (<em>str</em>) – <p>Name of the dimension to concatenate along. This can either be a new
+dimension name, in which case it is added along axis=0, or an
+existing dimension name, in which case the location of the
+dimension is unchanged.</p>
+<p>This option is only taken into account it <code class="docutils literal notranslate"><span class="pre">aggregate</span></code> is not None.</p>
+</p></li>
+<li><p><strong>group_by</strong> (<em>str</em>) – <p>If set, forces grouping by a signature key. Otherwise grouping
+is attempted only when direct combine fails.</p>
+<p>This option is only taken into account it <code class="docutils literal notranslate"><span class="pre">aggregate</span></code> is not None.</p>
+</p></li>
+<li><p><strong>zarr_options</strong> (<em>dict</em><em>, </em><em>default: None</em>) – <p>Set additional options for creating the dynamic zarr streams.
+You can set the following options
+(see also <a class="reference internal" href="#freva_client.utils.types.ZarrOptions" title="freva_client.utils.types.ZarrOptions"><code class="xref py py-class docutils literal notranslate"><span class="pre">freva_client.utils.types.ZarrOptions</span></code></a>):</p>
+<p><strong>Public urls:*</strong> If you wish to create public instead of a
+private url that expires in one hour you can set:</p>
+<p><code class="docutils literal notranslate"><span class="pre">zarr_options={&quot;public&quot;:</span> <span class="pre">True,</span> <span class="pre">&quot;ttl_seconds&quot;:</span> <span class="pre">3600}</span></code>.</p>
+<p><strong>Access Pattern:</strong> To optimise the chunk size according to your
+access pattern you can add the <code class="docutils literal notranslate"><span class="pre">access_pattern</span></code>, <code class="docutils literal notranslate"><span class="pre">chunk_size</span></code>
+and <code class="docutils literal notranslate"><span class="pre">map_primary_chunksize</span></code> parameters. <code class="docutils literal notranslate"><span class="pre">access_pattern</span></code>
+can either be <code class="docutils literal notranslate"><span class="pre">map</span></code> or <code class="docutils literal notranslate"><span class="pre">time_series</span></code>. <cite>chunk_size`</cite>
+should be target chunk size of dataset. If you choose a <code class="docutils literal notranslate"><span class="pre">map</span></code>
+access pattern you can set the
+chunk size of the primary dimensions, such as time, using the
+<code class="docutils literal notranslate"><span class="pre">map_primary_chunksize</span></code> parameter:</p>
+<p><code class="docutils literal notranslate"><span class="pre">zarr_options={&quot;access_pattern&quot;:</span> <span class="pre">&quot;time_series&quot;,</span> <span class="pre">&quot;chunk_size&quot;:</span> <span class="pre">2.0}</span></code></p>
+<p><strong>Force reloading:</strong> To improve access performance data store
+requests are cached server side. To force a <cite>reload</cite> you can add the
+<code class="docutils literal notranslate"><span class="pre">reaload=True</span></code> option:</p>
+<p><code class="docutils literal notranslate"><span class="pre">zarr_options={&quot;reload&quot;:</span> <span class="pre">True}`</span></code></p>
+</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">authenticate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">freva_client.zarr_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert</span>
+<span class="n">storage_options</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">()[</span><span class="s2">&quot;headers&quot;</span><span class="p">]</span>
+
+<span class="n">urls</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="s2">&quot;/mnt/data/test1.nc&quot;</span><span class="p">,</span> <span class="s2">&quot;/mnt/data/test2.nc&quot;</span><span class="p">)</span>
+<span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span>
+    <span class="n">url</span><span class="p">,</span>
+    <span class="n">storage_options</span><span class="o">=</span><span class="n">storage_options</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Public access:</strong></p>
+<p>You can also create zarr stores that are public. For example creating a
+<cite>temporary</cite> public store that is valid for one day.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client.zarr_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert</span>
+
+<span class="n">urls</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span>
+    <span class="s2">&quot;/mnt/data/test1.nc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;/mnt/data/test2.nc&quot;</span><span class="p">,</span>
+    <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;public&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;ttl_seconds&quot;</span><span class="p">:</span> <span class="mi">86400</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span><span class="n">urls</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<p><strong>Chunk sizes:*</strong></p>
+<p>Depending on how you would like to access the data different chunk sizes
+can make the data access more performant. <code class="docutils literal notranslate"><span class="pre">freva_client</span></code> defines two
+major access patterns <code class="docutils literal notranslate"><span class="pre">map</span></code> and <code class="docutils literal notranslate"><span class="pre">time_series</span></code>. Depending on which
+of the two access pattern you choose chunk sizes will changed accordingly.
+For example with <code class="docutils literal notranslate"><span class="pre">access_pattern=time_series</span></code> the chunk size will be
+optimized for time series analysis at given geographical points. <code class="docutils literal notranslate"><span class="pre">map</span></code>
+on the other hand optimize access pattern for map comparisons over time
+dimensions. You can set the <code class="docutils literal notranslate"><span class="pre">access_pattern</span></code> and the optimal chunk size
+in MB by setting the <code class="docutils literal notranslate"><span class="pre">access_pattern</span></code>, <code class="docutils literal notranslate"><span class="pre">chunk_size</span></code> and
+<code class="docutils literal notranslate"><span class="pre">map_primary_chunksize</span></code> entries in the <code class="docutils literal notranslate"><span class="pre">zarr_options</span></code> dictionary.
+<code class="docutils literal notranslate"><span class="pre">map_primary_chunksize</span></code> is the chunk size of the major axis, such as time,
+if the <code class="docutils literal notranslate"><span class="pre">access_pattern=map</span></code> is chosen.</p>
+<p>For example you can request an access pattern optimize for time series
+analysis using the fowlloing <code class="docutils literal notranslate"><span class="pre">zarr_options</span></code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client.zarr_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert</span>
+<span class="n">urls</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span>
+    <span class="s2">&quot;/mnt/data/test1.nc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;/mnt/data/test2.nc&quot;</span><span class="p">,</span>
+    <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;public&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                  <span class="s2">&quot;ttl_seconds&quot;</span><span class="p">:</span> <span class="mi">86400</span><span class="p">,</span>
+                  <span class="s2">&quot;chunk_size&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+                  <span class="s2">&quot;access_pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;time_series&quot;</span>
+                  <span class="p">}</span>
+<span class="p">)</span>
+<span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span><span class="n">urls</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>For a <code class="docutils literal notranslate"><span class="pre">map</span></code> access pattern that optimises the chunk size for map based
+analysis you can set the slice size of the primary dimension - often <code class="docutils literal notranslate"><span class="pre">time</span></code>.</p>
+<p>For example instead of reading one time step after another read 100 time steps
+at once.</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client.zarr_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert</span>
+<span class="n">urls</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span>
+    <span class="s2">&quot;/mnt/data/test1.nc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;/mnt/data/test2.nc&quot;</span><span class="p">,</span>
+    <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;public&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                  <span class="s2">&quot;ttl_seconds&quot;</span><span class="p">:</span> <span class="mi">86400</span><span class="p">,</span>
+                  <span class="s2">&quot;chunk_size&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+                  <span class="s2">&quot;map_primary_chunksize&quot;</span><span class="p">:</span> <span class="mi">100</span>
+                  <span class="p">}</span>
+<span class="p">)</span>
+<span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span><span class="n">urls</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>Dataset aggregation:</strong></p>
+<p>You can also be more specific on the aggregation operation</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">authenticate</span>
+<span class="n">storage_options</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">()[</span><span class="s2">&quot;headers&quot;</span><span class="p">]</span>
+<span class="n">url</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span>
+    <span class="s2">&quot;/mnt/data/test1.nc&quot;</span><span class="p">,</span> <span class="s2">&quot;/mnt/data/test2.nc&quot;</span><span class="p">,</span>
+    <span class="n">aggregate</span><span class="o">=</span><span class="s2">&quot;concat&quot;</span><span class="p">,</span>
+    <span class="n">join</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span>
+    <span class="n">dim</span><span class="o">=</span><span class="s2">&quot;ensemble&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span>
+    <span class="n">url</span><span class="p">,</span>
+    <span class="n">storage_options</span><span class="o">=</span><span class="n">storage_options</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">zarr_options</span></code> dictionary can be used to request public zarr stores:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">authenticate</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">()</span>
+<span class="n">url</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span>
+    <span class="s2">&quot;/mnt/data/test1.nc&quot;</span><span class="p">,</span> <span class="s2">&quot;/mnt/data/test2.nc&quot;</span><span class="p">,</span>
+    <span class="n">aggregate</span><span class="o">=</span><span class="s2">&quot;concat&quot;</span><span class="p">,</span>
+    <span class="n">join</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span>
+    <span class="n">dim</span><span class="o">=</span><span class="s2">&quot;ensemble&quot;</span><span class="p">,</span>
+    <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;public&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="n">ttl_seconds</span><span class="p">:</span> <span class="mi">86400</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="check-the-status-of-a-zarr-store">
+<h2>Check the status of a zarr store<a class="headerlink" href="#check-the-status-of-a-zarr-store" title="Link to this heading">#</a></h2>
+<p>You can use the <a class="reference internal" href="#freva_client.zarr_utils.status" title="freva_client.zarr_utils.status"><code class="xref py py-func docutils literal notranslate"><span class="pre">freva_client.zarr_utils.status()</span></code></a>: to check the
+status of a conversion job. This method can be useful is client tools like
+xarray fail to open the remote zarr stores but don’t give any describtive
+error message. You can then simply occurrences of search results with this
+method.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="freva_client.zarr_utils.status">
+<span class="sig-prename descclassname"><span class="pre">freva_client.zarr_utils.</span></span><span class="sig-name descname"><span class="pre">status</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Status</span></span></span><a class="headerlink" href="#freva_client.zarr_utils.status" title="Link to this definition">#</a></dt>
+<dd><p>Query the status of a pre signed zarr store.</p>
+<p>This method can be useful to check the state of a zarr store if clients
+like <code class="docutils literal notranslate"><span class="pre">xarray</span></code> file to load the data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url</strong> (<em>str</em>) – The url of the zarr store that is should be checked.</p></li>
+<li><p><strong>headers</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – Non-Public zarr stores will need a valid OAuth2 token to query the
+status.</p></li>
+<li><p><strong>host</strong> (<em>str</em><em>, </em><em>default: None</em>) – Override the host name of the databrowser server. This is usually the
+url where the freva web site can be found. Such as www.freva.dkrz.de.
+By default no host name is given and the host name will be taken from
+the freva config file.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>Status</strong> (<em>Dict(status=0, reason=””)</em>)</p></li>
+<li><p>The status <cite>status</cite> is a int between 0 <cite>reason</cite> represents a human readale</p></li>
+<li><p><em>reason of the status.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="freva_client.utils.types.ZarrOptions">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">freva_client.utils.types.</span></span><span class="sig-name descname"><span class="pre">ZarrOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">public</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ttl_seconds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">86400.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'map'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'time_series'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'map'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">16.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_primary_chunksize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#freva_client.utils.types.ZarrOptions" title="Link to this definition">#</a></dt>
+<dd><p>Configuration options for Zarr URL requests.</p>
+<p>Controls URL generation, caching behavior, and chunk size optimization
+for different data access patterns.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Remote data access utilities</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="cli.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">The zarr utils command line interface</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#convert-data-to-zarr">Convert data to zarr</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.zarr_utils.convert"><code class="docutils literal notranslate"><span class="pre">convert()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#check-the-status-of-a-zarr-store">Check the status of a zarr store</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.zarr_utils.status"><code class="docutils literal notranslate"><span class="pre">status()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#freva_client.utils.types.ZarrOptions"><code class="docutils literal notranslate"><span class="pre">ZarrOptions</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, DKRZ.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
