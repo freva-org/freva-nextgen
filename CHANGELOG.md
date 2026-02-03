@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Better pre-sigend public zarr-store urls.
 - Lazy import of 'slow' dependencies.
 - Fix issues #65 - recycling redis connections.
+- Enabled PKCE for login flow.
 
 ## [v2511.0.0]
 ### Added
