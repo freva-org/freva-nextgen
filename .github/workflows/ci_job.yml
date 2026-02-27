@@ -87,6 +87,7 @@ jobs:
             pip
             cfgrib
             xarray
+            xarray-prism
             cffi
           condarc: |
             channels:

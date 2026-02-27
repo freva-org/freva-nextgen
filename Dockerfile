@@ -53,6 +53,7 @@ session required pam_sss.so\n\
         redis-py \
         requests \
         watchfiles \
+        xarray-prism \
         zarr; \
     elif [ "${CMD}" = "freva-rest-server" ];then\
         PKGNAME=freva-rest && \
@@ -83,6 +84,7 @@ session required pam_sss.so\n\
         uvicorn \
         tomli \
         xarray \
+        xarray-prism \
         zarr; \
     else \
         echo "Invalid CMD argument: $CMD" && exit 1; \
