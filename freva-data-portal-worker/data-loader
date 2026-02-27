@@ -26,7 +26,8 @@ jq \
 mamba \
 netcdf4 \
 rasterio \
-zarr"
+zarr \
+xarray-prism"
 
 
 # Generate a checksum of the package list

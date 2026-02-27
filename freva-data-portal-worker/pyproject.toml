@@ -28,6 +28,7 @@ dependencies = [
 "bokeh",
 "cloudpickle",
 "dask[distributed,diagnostics]",
+"xarray-prism",
 "h5netcdf",
 "jupyter-server-proxy",
 "packaging",
