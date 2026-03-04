@@ -3,13 +3,13 @@
 from typing import Annotated, Dict, List, Optional, Union
 
 import cloudpickle
-from fastapi import Path, Query, Request, Security
+from fastapi import Path, Query, Request
 from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse, Response
-from fastapi_third_party_auth import IDToken as TokenPayload
+from py_oidc_auth import IDToken as TokenPayload
 from pydantic import BaseModel, Field
 
-from freva_rest.auth import auth
+from freva_rest.auth import auth, check_token
 from freva_rest.auth.presign import get_cache_token, verify_token
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
@@ -93,9 +93,7 @@ class ZarrStatus(BaseModel):
 )
 async def load_files(
     convert: ZarrConversion,
-    current_user: TokenPayload = Security(
-        auth.create_auth_dependency(), scopes=["oidc.claims"]
-    ),
+    current_user: TokenPayload = auth.required(claims=server_config.oidc_token_claims),
 ) -> LoadResponse:
     """Publish a conversion request to the data‑portal worker.
 
@@ -196,9 +194,7 @@ async def get_status(
     _, split, keys = url.removesuffix(".zarr").partition("/data-portal/share/")
     if not _is_public_zarr_url(url):
         auth_header = request.headers.get("authorization")
-        await auth.check_token_from_headers(
-            auth_header, required=True, scopes=["oidc.claims"]
-        )
+        await check_token(auth_header)
 
     try:
         if split and keys:
@@ -250,9 +246,7 @@ async def zarr_html_view(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Security(
-        auth.create_auth_dependency(), scopes=["oidc.claims"]
-    ),
+    current_user: TokenPayload = auth.required(claims=server_config.oidc_token_claims),
 ) -> HTMLResponse:
     """Get HTML representation of the Zarr dataset.
 
@@ -304,9 +298,7 @@ async def zarr_key_data(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Security(
-        auth.create_auth_dependency(), scopes=["oidc.claims"]
-    ),
+    current_user: TokenPayload = auth.required(claims=server_config.oidc_token_claims),
 ) -> Response:
     """
     Serve arbitrary Zarr metadata or chunk keys.

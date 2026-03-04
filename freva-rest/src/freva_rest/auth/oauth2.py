@@ -1,67 +1,24 @@
 """Definition of routes for authentication."""
 
-import asyncio
-import base64
-import datetime
-import hashlib
-import secrets
-from enum import Enum
-from typing import (
-    Annotated,
-    Any,
-    Awaitable,
-    Callable,
-    Dict,
-    List,
-    Literal,
-    Optional,
-    Union,
-    cast,
-)
-from urllib.parse import urlencode, urljoin
+from typing import Annotated, Any, List, Optional, cast
+from urllib.parse import urlparse
 
-import aiohttp
-from fastapi import Depends, Form, HTTPException, Query, Request, Security
+import httpx
+from fastapi import Form, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, RedirectResponse
-from fastapi.security import (
-    HTTPAuthorizationCredentials,
-    HTTPBearer,
-    SecurityScopes,
-)
-from fastapi.security.utils import get_authorization_scheme_param
-from fastapi_third_party_auth import Auth, IDToken
-from pydantic import BaseModel, Field, ValidationError
+from py_oidc_auth import FastApiOIDCAuth, IDToken
+from py_oidc_auth.exceptions import InvalidRequest
+from py_oidc_auth.schema import PromptField
+from py_oidc_auth.utils import get_username as _get_username  # noqa: F401
+from pydantic import BaseModel, Field
 
-from ..logger import logger
 from ..rest import app, server_config
-from ..utils.base_utils import get_userinfo, token_field_matches
 
 Required: Any = Ellipsis
 
-TIMEOUT: aiohttp.ClientTimeout = aiohttp.ClientTimeout(total=5)
-"""5 seconds for timeout for key cloak interaction."""
-
-
-class DeviceStartResponse(BaseModel):
-    """Response class for the device auth flow."""
-
-    device_code: str
-    user_code: str
-    verification_uri: str
-    verification_uri_complete: Optional[str] = None
-    expires_in: int
-    interval: int = 5
-
-
-class Prompt(str, Enum):
-    none = "none"
-    login = "login"
-    consent = "consent"
-    select_account = "select_account"
-
 
 class AuthPorts(BaseModel):
-    """Response for valid authports."""
+    """Response for valid auth ports."""
 
     valid_ports: Annotated[
         List[int],
@@ -73,163 +30,6 @@ class AuthPorts(BaseModel):
             ),
         ),
     ]
-
-
-class SafeAuth:
-    """
-    A wrapper around fastapi_third_party_auth.Auth that safely delays
-    initialization until the OIDC discovery URL is reachable.
-
-    This allows FastAPI routes to use the Auth.required() dependency without
-    failing at application startup if the OIDC server is temporarily
-    unavailable.
-    """
-
-    _lock: asyncio.Lock = asyncio.Lock()
-
-    def __init__(self, discovery_url: Optional[str] = None) -> None:
-        """
-        Initialize the SafeAuth wrapper.
-
-        Parameters:
-            discovery_url (str): The full URL to the OIDC discovery document,
-                                 e.g., "https://issuer/.well-known/openid-configuration"
-        """
-        self.discovery_url: str = (discovery_url or "").strip()
-        self._auth: Optional[Auth] = None
-        self.timeout = TIMEOUT
-
-    async def _check_server_available(self) -> bool:
-        """
-        Check whether the OIDC server is reachable by requesting the
-            discovery document.
-
-        Returns
-        -------
-            bool: True if the server is up and the document is reachable,
-                  False otherwise.
-        """
-        if not self.discovery_url:
-            return False
-        try:
-            async with aiohttp.ClientSession(timeout=self.timeout) as session:
-                async with session.get(self.discovery_url) as response:
-                    return response.status == 200
-        except Exception as error:
-            logger.debug("Could not connect to %s: %s", self.discovery_url, error)
-            return False
-
-    async def _ensure_auth_initialized(self) -> None:
-        """
-        Initialize the internal Auth instance if the server is available
-        and not yet initialized.
-        """
-        async with self._lock:
-            if self._auth is None and await self._check_server_available():
-                self._auth = Auth(self.discovery_url)
-
-    async def check_token_from_headers(
-        self,
-        authorization: Optional[str],
-        required: bool = True,
-        scopes: Optional[List[str]] = None,
-    ) -> IDToken:
-        """Check a token."""
-        scheme, credentials = get_authorization_scheme_param(authorization or "")
-        http_auth = HTTPAuthorizationCredentials(
-            scheme=scheme, credentials=credentials
-        )
-        security_scopes = SecurityScopes(scopes=scopes)
-        dep = self.create_auth_dependency(required)
-        return await dep(security_scopes, http_auth)
-
-    def create_auth_dependency(self, required: bool = True) -> Callable[
-        [SecurityScopes, Optional[HTTPAuthorizationCredentials]],
-        Awaitable[IDToken],
-    ]:
-        """
-        Return a FastAPI dependency function to validate a token.
-
-        Returns
-        -------
-            Callable: A dependency function to use with `Security(...)` in
-                      FastAPI routes.
-
-        Raises
-        ------
-        HTTPException: 503 if the auth server is not available
-        """
-
-        async def dependency(
-            security_scopes: SecurityScopes,
-            authorization_credentials: Optional[
-                HTTPAuthorizationCredentials
-            ] = Depends(HTTPBearer(auto_error=required)),
-        ) -> IDToken:
-            await self._ensure_auth_initialized()
-
-            if self._auth is None:
-                if required:
-                    raise HTTPException(
-                        status_code=503,
-                        detail="OIDC server unavailable, cannot validate token.",
-                    )
-                else:
-                    logger.info(
-                        "[Optional Auth]: OIDC server unavailable"
-                        ", cannot validate token"
-                    )
-                    return None
-
-            try:
-                claim_check = "oidc.claims" in (security_scopes.scopes or [])
-                scopes = [
-                    c for c in security_scopes.scopes or [] if c != "oidc.claims"
-                ]
-                token = self._auth.required(
-                    SecurityScopes(scopes or None), authorization_credentials
-                )
-                if authorization_credentials is not None and claim_check:
-                    if not token_field_matches(
-                        authorization_credentials.credentials
-                    ):
-                        raise HTTPException(
-                            status_code=401,
-                            detail="Insufficient permissions based on token claims.",
-                        )
-                return token
-            except HTTPException:
-                if not required:
-                    # skip the exception if not required
-                    logger.info(
-                        "[Optional Auth]: OIDC validation failed,"
-                        "but not required for this endpoint"
-                    )
-                    return None
-                raise
-
-        return dependency
-
-
-def set_request_header(
-    client_id: str,
-    client_secret: Optional[str],
-    data: Dict[str, str],
-    header: Dict[str, str],
-) -> None:
-    """Construct the oidc request header."""
-    header["Content-Type"] = "application/x-www-form-urlencoded"
-    if client_secret:
-        _auth = base64.b64encode(
-            f"{server_config.oidc_client_id}:"
-            f"{server_config.oidc_client_secret}".encode()
-        ).decode()
-        header["Authorization"] = f"Basic {_auth}"
-    else:
-        data["client_id"] = client_id
-
-
-auth = SafeAuth(server_config.oidc_discovery_url)
 
 
 class TokenisedUser(BaseModel):
@@ -259,7 +59,7 @@ class UserInfo(BaseModel):
         str,
         Field(
             title="Last name",
-            description="Surename of the user the token belongs to.",
+            description="Surname of the user the token belongs to."
         ),
     ]
     first_name: Annotated[
@@ -298,6 +98,28 @@ class Token(BaseModel):
     scope: str
 
 
+def _http_exc(exc: InvalidRequest) -> HTTPException:
+    return HTTPException(status_code=exc.status_code, detail=exc.detail)
+
+
+auth = FastApiOIDCAuth(
+    client_id=server_config.oidc_client_id,
+    client_secret=server_config.oidc_client_secret or None,
+    discovery_url=server_config.oidc_discovery_url,
+    scopes=server_config.oidc_scopes,
+    proxy=server_config.proxy,
+    claims=server_config.oidc_token_claims or None,
+)
+
+
+async def get_username(
+    current_user: Optional[IDToken],
+    request: Request,
+) -> Any:
+    """Extract username from token, falling back to the userinfo endpoint."""
+    return await _get_username(current_user, dict(request.headers), auth.config)
+
+
 @app.get(
     "/api/freva-nextgen/auth/v2/auth-ports",
     tags=["Authentication"],
@@ -311,7 +133,7 @@ async def valid_ports() -> AuthPorts:
 
 @app.get("/api/freva-nextgen/auth/v2/status", tags=["Authentication"])
 async def get_token_status(
-    id_token: IDToken = Security(auth.create_auth_dependency()),
+    id_token: IDToken = auth.required(),
 ) -> TokenPayload:
     """Check the status of an access token."""
     return cast(TokenPayload, id_token)
@@ -337,161 +159,19 @@ async def get_token_status(
         503: {"description": "Could not connect of OIDC server."},
     },
 )
-async def well_kown_url() -> JSONResponse:
+async def well_known_url() -> JSONResponse:
     """Get configuration information about the identity provider in use."""
-
     try:
-        async with aiohttp.ClientSession(
-            timeout=TIMEOUT, raise_for_status=True
-        ) as session:
-            async with session.get(auth.discovery_url) as res:
-                return JSONResponse(
-                    content=await res.json(), status_code=res.status
-                )
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(5), follow_redirects=True
+        ) as client:
+            resp = await client.get(auth.config.discovery_url)
+            resp.raise_for_status()
+            return JSONResponse(content=resp.json(), status_code=resp.status_code)
     except Exception as error:
         raise HTTPException(
-            status_code=503, detail="Could not connect of OIDC server."
+            status_code=503, detail="Could not connect to OIDC server."
         ) from error
-
-
-async def oidc_request(
-    method: Literal["GET", "POST"],
-    endpoint: str,
-    headers: Optional[Dict[str, str]] = None,
-    json: Optional[Dict[str, str]] = None,
-    data: Optional[Dict[str, str]] = None,
-) -> Dict[str, Any]:
-    """Make a request to the openID connect server."""
-    async with aiohttp.ClientSession(
-        timeout=TIMEOUT, raise_for_status=True
-    ) as client:
-        try:
-            url = server_config.oidc_overview[endpoint]
-            logger.info(
-                "Making request with data: %s, json: %s, headers: %s to url: %s",
-                data,
-                json,
-                headers,
-                url,
-            )
-
-            res = await client.request(
-                method, url, headers=headers, json=json, data=data
-            )
-            return cast(Dict[str, Any], await res.json())
-        except aiohttp.client_exceptions.ClientResponseError as error:
-            logger.warning(error)
-            raise HTTPException(status_code=401) from error
-        except Exception as error:
-            logger.warning("Could not connect to OIDC server")
-            logger.exception(error)
-            raise HTTPException(status_code=503) from error
-
-
-async def query_user(token_data: Dict[str, str], authorization: str) -> UserInfo:
-    """Get the information of the User info."""
-    try:
-        return UserInfo(**get_userinfo(token_data))
-    except ValidationError:
-        token_data = await oidc_request(
-            "GET",
-            "userinfo_endpoint",
-            headers={"Authorization": authorization},
-        )
-        try:
-            return UserInfo(
-                **get_userinfo(
-                    {k.lower(): str(v) for (k, v) in token_data.items()}
-                )
-            )
-        except ValidationError:
-            raise HTTPException(status_code=404)
-
-
-async def get_username(
-    current_user: Optional[IDToken],
-    request: Request
-) -> Optional[str]:
-    """Extract username from token and if it was not
-    available try to fetch it from userinfo endpoint
-    as a fallback.
-
-    Returns None if username cannot be determined.
-    """
-    if not current_user:
-        return None
-
-    # Helper to check multiple username scenarios
-    def _extract_username(obj: Any,
-                          fields: List[str] = [
-                              "preferred_username",
-                              "username",
-                              "user_name"
-                          ]) -> Optional[str]:
-        for field in fields:
-            value = getattr(obj, field, None)
-            if value:
-                return cast(Optional[str], value)
-        return None
-
-    # 1. Try common username fields from token first - valid for the
-    # majority of OIDC providers
-    username = _extract_username(current_user)
-    if username:
-        return username
-
-    # 2. Fallback: fetch from userinfo API
-    # this fallback defined specifically for OIDC providers that do not
-    # include username in the token (e.g. Helmholtz AAI)
-    authorization = dict(request.headers).get("authorization")
-    if authorization:
-        token_data = {k.lower(): str(v) for (k, v) in dict(current_user).items()}
-        try:
-            user_data = await query_user(token_data, authorization)
-            username = _extract_username(user_data)
-            if username:
-                return username
-        except HTTPException:
-            pass
-
-    # 3. Last resort: return 'sub' claim as username, otherwise None
-    return getattr(current_user, 'sub', None)
-
-
-@app.get("/api/freva-nextgen/auth/v2/userinfo", tags=["Authentication"])
-async def userinfo(
-    id_token: IDToken = Security(auth.create_auth_dependency()),
-    request: Request = Required,
-) -> UserInfo:
-    """Get userinfo for the current token."""
-    token_data = {k.lower(): str(v) for (k, v) in dict(id_token).items()}
-    authorization = dict(request.headers)["authorization"]
-    return await query_user(token_data, authorization)
-
-
-@app.get(
-    "/api/freva-nextgen/auth/v2/systemuser",
-    include_in_schema=False,
-    response_model=TokenisedUser,
-)
-@app.get(
-    "/api/freva-nextgen/auth/v2/checkuser",
-    tags=["Authentication"],
-    response_model=TokenisedUser,
-    response_description="Check if user claim is authorised.",
-)
-async def system_user(
-    id_token: IDToken = Security(
-        auth.create_auth_dependency(), scopes=["oidc.claims"]
-    ),
-    request: Request = Required,
-) -> TokenisedUser:
-    """Check user authorisation and get a  url-safe version of the username."""
-    token_data = {k.lower(): str(v) for (k, v) in dict(id_token).items()}
-    user_data = await query_user(
-        token_data, dict(request.headers)["authorization"]
-    )
-    return TokenisedUser(pw_name=user_data.username)
 
 
 @app.get(
@@ -523,13 +203,13 @@ async def login(
         ),
     ] = None,
     prompt: Annotated[
-        Prompt,
+        PromptField,
         Query(
             title="Prompt",
             description="Prompt parameter for OIDC login (none or login)",
             examples=["login"],
         ),
-    ] = Prompt.none,
+    ] = "none",
     offline_access: Annotated[
         bool,
         Query(
@@ -567,37 +247,24 @@ async def login(
         authentication flows.
     """
 
-    if not redirect_uri:
-        raise HTTPException(status_code=400, detail="Missing redirect_uri")
-
-    # Important: PKCE is now mandatory in latest OAuth 2.1
-    code_verifier = secrets.token_urlsafe(32)
-    code_challenge = base64.urlsafe_b64encode(
-        hashlib.sha256(code_verifier.encode()).digest()
-    ).decode().rstrip('=')
-
-    state = f"{secrets.token_urlsafe(16)}|{redirect_uri}|{code_verifier}"
-    nonce = secrets.token_urlsafe(16)
-    offline_scope = ["offline_access"] if offline_access else []
-    scopes_list = set(
-        (scope or server_config.oidc_scopes).split() + offline_scope
-    )
-    query = {
-        "response_type": "code",
-        "client_id": server_config.oidc_client_id,
-        "redirect_uri": redirect_uri,
-        "scope": " ".join(scopes_list),
-        "state": state,
-        "nonce": nonce,
-        "prompt": prompt.value.replace("none", ""),
-        "code_challenge": code_challenge,
-        "code_challenge_method": "S256",
-    }
-    query = {k: v for (k, v) in query.items() if v}
-    auth_url = (
-        f"{server_config.oidc_overview['authorization_endpoint']}"
-        f"?{urlencode(query)}"
-    )
+    if redirect_uri:
+        parsed = urlparse(redirect_uri)
+        if parsed.hostname == "localhost":
+            port = parsed.port or 80
+            if port not in server_config.oidc_auth_ports:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Port {port} is not in the list of valid auth ports.",
+                )
+    try:
+        auth_url = await auth.login(
+            redirect_uri=redirect_uri,
+            prompt=prompt,
+            offline_access=offline_access,
+            scope=scope,
+        )
+    except InvalidRequest as exc:
+        raise _http_exc(exc)
     return RedirectResponse(auth_url)
 
 
@@ -655,74 +322,25 @@ async def callback(
             ),
         ),
     ] = None,
-) -> Dict[str, Union[str, int]]:
-    if not code or not state:
-        raise HTTPException(status_code=400, detail="Missing code or state")
-
+) -> Any:
+    """Handle the authorization code callback."""
     try:
-        state_token, redirect_uri, code_verifier = state.split("|", 2)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid state format")
-
-    data: Dict[str, str] = {
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": redirect_uri,
-        "code_verifier": code_verifier,
-    }
-    headers: Dict[str, str] = {}
-    set_request_header(
-        server_config.oidc_client_id,
-        server_config.oidc_client_secret,
-        data,
-        headers,
-    )
-    token_data: Dict[str, Union[str, int]] = await oidc_request(
-        "POST",
-        "token_endpoint",
-        data={k: v for (k, v) in data.items() if v},
-        headers=headers,
-    )
-    return token_data
+        return await auth.callback(code=code, state=state)
+    except InvalidRequest as exc:
+        raise _http_exc(exc)
 
 
 @app.post(
     "/api/freva-nextgen/auth/v2/device",
     tags=["Authentication"],
-    response_model=DeviceStartResponse,
 )
-async def device_flow() -> DeviceStartResponse:
-    """Start device flow by proxying to the oicd server's `/auth/v2/device`.
-
-    Returns verification URIs and codes as JSON (no redirects).
-    """
-    data = {"scope": "openid offline_access"}
-    headers: Dict[str, str] = {}
-    set_request_header(
-        server_config.oidc_client_id,
-        server_config.oidc_client_secret,
-        data,
-        headers,
-    )
-    js = await oidc_request(
-        "POST",
-        "device_authorization_endpoint",
-        data=data,
-        headers=headers,
-    )
-    for k in ("device_code", "user_code", "verification_uri", "expires_in"):
-        if k not in js:
-            raise HTTPException(
-                502, detail=f"upstream_malformed_response, missing: {k}"
-            )
-    return DeviceStartResponse(
-        device_code=js["device_code"],
-        user_code=js["user_code"],
-        verification_uri=js["verification_uri"],
-        verification_uri_complete=js.get("verification_uri_complete"),
-        expires_in=int(js["expires_in"]),
-        interval=int(js.get("interval", 5)),
-    )
+async def device_flow() -> Any:
+    """Start device flow by proxying to the OIDC server's device endpoint."""
+    try:
+        result = await auth.device_flow()
+    except InvalidRequest as exc:
+        raise _http_exc(exc)
+    return result.model_dump()
 
 
 @app.post("/api/freva-nextgen/auth/v2/token", tags=["Authentication"])
@@ -753,8 +371,8 @@ async def fetch_or_refresh_token(
     refresh_token: Annotated[
         Optional[str],
         Form(
-            title="Refresh token",
             alias="refresh-token",
+            title="Refresh token",
             help="The refresh token used to renew the OAuth2 token",
         ),
     ] = None,
@@ -770,67 +388,21 @@ async def fetch_or_refresh_token(
             examples=["abc123xyz"],
         ),
     ] = None,
-    code_verifier: Optional[str] = Form(None),
+    code_verifier: Annotated[Optional[str], Form()] = None,
 ) -> Token:
     """Interact with the openID connect endpoint for client authentication."""
-    data: Dict[str, str] = {}
-    headers: Dict[str, str] = {}
-    if code:
-        data["redirect_uri"] = redirect_uri or urljoin(
-            server_config.proxy, "/api/freva-nextgen/auth/v2/callback"
-        )
-        data["grant_type"] = "authorization_code"
-        data["code"] = code
-        if code_verifier:
-            data["code_verifier"] = code_verifier
-    elif refresh_token:
-        data["grant_type"] = "refresh_token"
-        data["refresh_token"] = refresh_token
-    elif device_code:
-        data["grant_type"] = "urn:ietf:params:oauth:grant-type:device_code"
-        data["device_code"] = device_code
-    else:
-        raise HTTPException(
-            status_code=400, detail="Missing (device) code or refresh_token"
-        )
-    set_request_header(
-        server_config.oidc_client_id,
-        server_config.oidc_client_secret,
-        data,
-        headers,
-    )
-    token_data = await oidc_request(
-        "POST",
-        "token_endpoint",
-        data={k: v for (k, v) in data.items() if v},
-        headers=headers,
-    )
-    expires_at = (
-        token_data.get("exp")
-        or token_data.get("expires")
-        or token_data.get("expires_at")
-    )
-    now = datetime.datetime.now(datetime.timezone.utc).timestamp()
-    refresh_expires_at = (
-        token_data.get("refresh_exp")
-        or token_data.get("refresh_expires")
-        or token_data.get("refresh_expires_at")
-    )
-    expires_at = expires_at or now + token_data.get("expires_in", 180)
-    refresh_expires_at = refresh_expires_at or now + token_data.get(
-        "refresh_expires_in", 180
-    )
     try:
-        return Token(
-            access_token=token_data["access_token"],
-            token_type=token_data["token_type"],
-            expires=int(expires_at),
-            refresh_token=token_data["refresh_token"],
-            refresh_expires=int(refresh_expires_at),
-            scope=token_data["scope"],
+        result = await auth.token(
+            "/api/freva-nextgen/auth/v2/callback",
+            code=code,
+            redirect_uri=redirect_uri,
+            refresh_token=refresh_token,
+            device_code=device_code,
+            code_verifier=code_verifier,
         )
-    except KeyError:
-        raise HTTPException(status_code=400, detail="Token creation failed.")
+    except InvalidRequest as exc:
+        raise _http_exc(exc)
+    return cast(Token, result)
 
 
 @app.get(
@@ -850,22 +422,61 @@ async def logout(
         ),
     ] = None,
 ) -> RedirectResponse:
+    """Logout endpoint — redirects to IDP logout if supported, otherwise local redirect.
     """
-    Logout endpoint - redirects to IDP logout if supported, otherwise local redirect.
+    target = await auth.logout(post_logout_redirect_uri)
+    return RedirectResponse(target)
+
+
+@app.get("/api/freva-nextgen/auth/v2/userinfo", tags=["Authentication"])
+async def userinfo(
+    id_token: IDToken = auth.required(),
+    request: Request = Required,
+) -> UserInfo:
+    """Get userinfo for the current token."""
+    try:
+        lib_user = await auth.userinfo(id_token, dict(request.headers))
+    except InvalidRequest as exc:
+        raise _http_exc(exc)
+    return UserInfo(
+        username=lib_user.username,
+        last_name=lib_user.last_name,
+        first_name=lib_user.first_name,
+        email=lib_user.email,
+    )
+
+
+@app.get(
+    "/api/freva-nextgen/auth/v2/systemuser",
+    include_in_schema=False,
+    response_model=TokenisedUser,
+)
+@app.get(
+    "/api/freva-nextgen/auth/v2/checkuser",
+    tags=["Authentication"],
+    response_model=TokenisedUser,
+    response_description="Check if user claim is authorised.",
+)
+async def system_user(
+    id_token: IDToken = auth.required(claims=server_config.oidc_token_claims),
+    request: Request = Required,
+) -> TokenisedUser:
+    """Check user authorisation and get a url-safe version of the username."""
+    try:
+        lib_user = await auth.userinfo(id_token, dict(request.headers))
+    except InvalidRequest as exc:
+        raise _http_exc(exc)
+    return TokenisedUser(pw_name=lib_user.username)
+
+
+async def check_token(authorization: Optional[str]) -> IDToken:
+    """Validate a Bearer token from a raw Authorization header value.
     """
-    redirect_target = post_logout_redirect_uri or "/"
-    end_session_endpoint = server_config.oidc_overview.get("end_session_endpoint")
-
-    if end_session_endpoint:
-        params = {"client_id": server_config.oidc_client_id}
-        if post_logout_redirect_uri:
-            params["post_logout_redirect_uri"] = post_logout_redirect_uri
-
-        redirect_target = f"{end_session_endpoint}?{urlencode(params)}"
-    else:
-        logger.warning(
-            "OIDC provider does not support end_session_endpoint. "
-            "Performing local logout only."
+    bearer = (authorization or "").removeprefix("Bearer ").strip() or None
+    try:
+        return await auth._get_token(
+            bearer,
+            effective_claims=server_config.oidc_token_claims or None,
         )
-
-    return RedirectResponse(redirect_target)
+    except InvalidRequest as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail)

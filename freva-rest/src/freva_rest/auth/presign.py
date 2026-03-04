@@ -31,10 +31,9 @@ from typing import Annotated, Any, Dict, Final, cast
 from fastapi import (
     HTTPException,
     Request,
-    Security,
     status,
 )
-from fastapi_third_party_auth import IDToken as TokenPayload
+from py_oidc_auth import IDToken as TokenPayload
 from pydantic import AnyHttpUrl, BaseModel, Field
 
 from ..rest import app, server_config
@@ -265,10 +264,7 @@ class PresignUrlResponse(BaseModel):
 async def create_presigned_url(
     request: Request,
     body: PresignUrlRequest,
-    token: TokenPayload = Security(
-        auth.create_auth_dependency(),
-        scopes=["oidc.claims"],
-    ),
+    token: TokenPayload = auth.required(claims=server_config.oidc_token_claims),
 ) -> PresignUrlResponse:
     """Create a new pre-signed URL.
 

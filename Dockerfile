@@ -83,6 +83,7 @@ session required pam_sss.so\n\
         uvicorn \
         tomli \
         xarray \
+        py-oidc-auth \
         zarr; \
     else \
         echo "Invalid CMD argument: $CMD" && exit 1; \

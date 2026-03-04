@@ -7,7 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Optional
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
+import httpx
 
 import jwt
 import pytest
@@ -26,6 +27,17 @@ from freva_client.utils.auth_utils import (
 from tests.conftest import mock_token_data
 
 
+
+
+def _httpx_ok_response(payload: dict) -> MagicMock:
+    """Return a mock httpx.Response that yields payload as JSON."""
+    resp = MagicMock(spec=httpx.Response)
+    resp.status_code = 200
+    resp.json.return_value = payload
+    resp.raise_for_status.return_value = None
+    resp.text = str(payload)
+    return resp
+
 def raise_for_status() -> None:
     """Mock function used for requests result rais_for_status method."""
     raise requests.HTTPError("Invalid")
@@ -38,14 +50,6 @@ async def mock_request(*args: Any, **kwargs: Any) -> AsyncMock:
     return mock_resp
 
 
-async def mock_request_failed(*args: Any, **kwargs: Any) -> AsyncMock:
-
-    mock_resp = AsyncMock()
-    mock_resp.status = 401
-    mock_resp.json.return_value = {"reason": "Forbidden"}
-    return mock_resp
-
-
 def test_authenticate_with_refresh_token(
     test_server: str, mocker: MockerFixture, auth_instance: Auth
 ) -> None:
@@ -53,7 +57,7 @@ def test_authenticate_with_refresh_token(
     token = deepcopy(auth_instance._auth_token)
     try:
         auth_instance._auth_token = {"refresh_token": "foo"}
-        with patch("aiohttp.ClientSession.request", new=mock_request):
+        with patch("httpx.AsyncClient.request", new=AsyncMock(return_value=_httpx_ok_response(mock_token_data()))):
             with patch(
                 "freva_client.auth.choose_token_strategy",
                 return_value="refresh_token",
@@ -100,7 +104,7 @@ def test_authenticate_with_refresh_token_failed(
     try:
         auth_instance._auth_token = {"refresh_token": "foo"}
         mocker.patch.object(auth_instance, "_login", side_effect=mock_login)
-        with patch("aiohttp.ClientSession.request", new=mock_request_failed):
+        with patch("httpx.AsyncClient.request", new=AsyncMock(side_effect=httpx.HTTPStatusError("401", request=MagicMock(), response=MagicMock(status_code=401, text="Forbidden")))):
             with patch(
                 "freva_client.auth.choose_token_strategy",
                 return_value="refresh_token",
@@ -135,7 +139,7 @@ def test_authenticate(
         "scope": "profile email address",
     }
     try:
-        with patch("aiohttp.ClientSession.request", new=mock_request):
+        with patch("httpx.AsyncClient.request", new=AsyncMock(return_value=_httpx_ok_response(mock_token_data()))):
             auth_instance._auth_token = new_token
             auth_instance.authenticate(host=test_server)
             assert isinstance(auth_instance._auth_token, dict)

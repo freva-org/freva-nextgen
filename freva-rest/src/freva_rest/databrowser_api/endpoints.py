@@ -10,7 +10,6 @@ from fastapi import (
     Query,
     Request,
     Response,
-    Security,
     status,
 )
 from fastapi.responses import (
@@ -18,7 +17,7 @@ from fastapi.responses import (
     PlainTextResponse,
     StreamingResponse,
 )
-from fastapi_third_party_auth import IDToken as TokenPayload
+from py_oidc_auth import IDToken as TokenPayload
 
 from freva_rest.auth import auth, get_username
 from freva_rest.auth.presign import MAX_TTL_SECONDS, MIN_TTL_SECONDS
@@ -48,9 +47,7 @@ from .stac import STAC
     response_model=SearchFlavours,
 )
 async def overview(
-    current_user: Optional[TokenPayload] = Security(
-        auth.create_auth_dependency(required=False)
-    ),
+    current_user: Optional[TokenPayload] = auth.optional(),
     request: Request = Required,
 ) -> SearchFlavours:
     """Get all available search flavours and their attributes.
@@ -89,9 +86,7 @@ async def metadata_search(
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
     request: Request = Required,
-    current_user: Optional[TokenPayload] = Security(
-        auth.create_auth_dependency(required=False)
-    ),
+    current_user: Optional[TokenPayload] = auth.optional(),
 ) -> JSONResponse:
     """Query the available metadata.
 
@@ -142,9 +137,7 @@ async def data_search(
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     request: Request = Required,
-    current_user: Optional[TokenPayload] = Security(
-        auth.create_auth_dependency(required=False)
-    ),
+    current_user: Optional[TokenPayload] = auth.optional(),
 ) -> StreamingResponse:
     """Search for datasets.
 
@@ -195,9 +188,7 @@ async def intake_catalogue(
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     max_results: Annotated[int, SolrSchema.params["max_results"]] = -1,
     request: Request = Required,
-    current_user: Optional[TokenPayload] = Security(
-        auth.create_auth_dependency(required=False)
-    ),
+    current_user: Optional[TokenPayload] = auth.optional(),
 ) -> StreamingResponse:
     """Create an intake catalogue from a freva search.
 
@@ -256,9 +247,7 @@ async def stac_catalogue(
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     max_results: Annotated[int, SolrSchema.params["max_results"]] = -1,
     request: Request = Required,
-    current_user: Optional[TokenPayload] = Security(
-        auth.create_auth_dependency(required=False)
-    ),
+    current_user: Optional[TokenPayload] = auth.optional(),
 ) -> Response:
     """Create a STAC catalogue from a freva search.
 
@@ -317,8 +306,8 @@ async def extended_search(
     ] = False,
     facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
     request: Request = Required,
-    current_user: Optional[TokenPayload] = Security(
-        auth.create_auth_dependency(required=False), scopes=["oidc.claims"]
+    current_user: Optional[TokenPayload] = auth.optional(
+        claims=server_config.oidc_token_claims
     ),
 ) -> JSONResponse:
     """This endpoint is used by the databrowser web ui client."""
@@ -431,9 +420,7 @@ async def load_data(
         ),
     ] = 16.0,
     request: Request = Required,
-    current_user: TokenPayload = Security(
-        auth.create_auth_dependency(), scopes=["oidc.claims"]
-    ),
+    current_user: TokenPayload = auth.required(claims=server_config.oidc_token_claims),
 ) -> StreamingResponse:
     """Search for datasets and stream the results as zarr.
 
@@ -500,9 +487,7 @@ async def load_data(
 )
 async def post_user_data(
     payload: Annotated[AddUserDataRequestBody, Body(...)],
-    current_user: TokenPayload = Security(
-        auth.create_auth_dependency(), scopes=["oidc.claims"]
-    ),
+    current_user: TokenPayload = auth.required(claims=server_config.oidc_token_claims),
 ) -> Dict[str, str]:
     """Index your own metadata and make it searchable.
 
@@ -560,9 +545,7 @@ async def delete_user_data(
             }
         ],
     ),
-    current_user: TokenPayload = Security(
-        auth.create_auth_dependency(), scopes=["oidc.claims"]
-    ),
+    current_user: TokenPayload = auth.required(claims=server_config.oidc_token_claims),
 ) -> Dict[str, str]:
     """This endpoint lets you delete metadata that has been indexed."""
     solr_instance = Solr(server_config)
@@ -600,9 +583,7 @@ async def delete_user_data(
 async def add_custom_flavour(
     flavour_def: FlavourDefinition,
     request: Request = Required,
-    current_user: TokenPayload = Security(
-        auth.create_auth_dependency(), scopes=["oidc.claims"]
-    ),
+    current_user: TokenPayload = auth.required(claims=server_config.oidc_token_claims),
 ) -> Dict[str, str]:
     """Add a new custom flavour definition.
 
@@ -653,9 +634,7 @@ async def update_custom_flavour(
     ),
     flavour_def: FlavourUpdateDefinition = Body(...),
     request: Request = Required,
-    current_user: TokenPayload = Security(
-        auth.create_auth_dependency(), scopes=["oidc.claims"]
-    ),
+    current_user: TokenPayload = auth.required(claims=server_config.oidc_token_claims),
 ) -> Dict[str, str]:
     """Update specific search keys in an existing custom flavour definition.
 
@@ -704,9 +683,7 @@ async def list_flavours(
         examples=["global"],
     ),
     request: Request = Required,
-    current_user: Optional[TokenPayload] = Security(
-        auth.create_auth_dependency(required=False)
-    ),
+    current_user: Optional[TokenPayload] = auth.optional(),
 ) -> FlavourListResponse:
     """Get available flavours for the current user.
 
@@ -749,9 +726,7 @@ async def delete_custom_flavour(
         bool, Query(description="Whether the flavour is global (admin only)")
     ] = False,
     request: Request = Required,
-    current_user: TokenPayload = Security(
-        auth.create_auth_dependency(), scopes=["oidc.claims"]
-    ),
+    current_user: TokenPayload = auth.required(claims=server_config.oidc_token_claims),
 ) -> FlavourDeleteResponse:
     """Delete a custom flavour definition.
 

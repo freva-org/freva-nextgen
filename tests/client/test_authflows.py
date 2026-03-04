@@ -7,7 +7,8 @@ import time
 from copy import deepcopy
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, patch
+import httpx
 
 import jwt
 import pytest
@@ -60,6 +61,21 @@ class _RespSync:
         if self.status_code >= 400:
             raise requests.HTTPError(f"{self.status_code}: {self.text}")
 
+
+
+
+def _httpx_resp(status: int, payload: dict) -> MagicMock:
+    resp = MagicMock(spec=httpx.Response)
+    resp.status_code = status
+    resp.json.return_value = payload
+    resp.text = str(payload)
+    if status >= 400:
+        resp.raise_for_status.side_effect = httpx.HTTPStatusError(
+            str(status), request=MagicMock(), response=resp
+        )
+    else:
+        resp.raise_for_status.return_value = None
+    return resp
 
 def _device_start_payload(**overrides: Any) -> Dict[str, Any]:
     base = {
@@ -122,11 +138,7 @@ def test_rest_device_start_success(
 ) -> None:
     """Proxy start endpoint returns device start JSON."""
 
-    # Mock upstream (Keycloak) POST
-    async def _ok_post(*args: Any, **kwargs: Any):
-        return _Resp(200, _device_start_payload())
-
-    mocker.patch("aiohttp.ClientSession.request", side_effect=_ok_post)
+    mocker.patch("httpx.AsyncClient.request", new=AsyncMock(return_value=_httpx_resp(200, _device_start_payload())))
 
     res = requests.post(f"{test_server}/auth/v2/device")
     assert res.status_code == 200
@@ -140,11 +152,7 @@ def test_rest_device_token_success(
 ) -> None:
     """Proxy token endpoint returns access/refresh tokens."""
 
-    async def _ok_post(*args: Any, **kwargs: Any):
-        # When the API proxies to KC /token it should respond with success
-        return _Resp(200, _token_success_payload())
-
-    mocker.patch("aiohttp.ClientSession.request", side_effect=_ok_post)
+    mocker.patch("httpx.AsyncClient.request", new=AsyncMock(return_value=_httpx_resp(200, _token_success_payload())))
 
     res = requests.post(
         f"{test_server}/auth/v2/token", data={"device-code": "DEV-123"}
@@ -159,10 +167,7 @@ def test_rest_device_token_error_pending(
 ) -> None:
     """Proxy token endpoint forwards OAuth errors (authorization_pending)."""
 
-    async def _pending(*args: Any, **kwargs: Any):
-        return _Resp(400, _oauth_error_payload("authorization_pending"))
-
-    mocker.patch("aiohttp.ClientSession.request", side_effect=_pending)
+    mocker.patch("httpx.AsyncClient.request", new=AsyncMock(return_value=_httpx_resp(400, {"error": "authorization_pending"})))
 
     res = requests.post(
         f"{test_server}/auth/v2/token", data={"device-code": "DEV-123"}
@@ -175,10 +180,7 @@ def test_rest_device_upstream_malformed(
 ) -> None:
     """Proxy token endpoint forwards OAuth errors (authorization_pending)."""
 
-    async def _pending(*args: Any, **kwargs: Any):
-        return _Resp(200, {})
-
-    mocker.patch("aiohttp.ClientSession.request", side_effect=_pending)
+    mocker.patch("httpx.AsyncClient.request", new=AsyncMock(return_value=_httpx_resp(200, {})))
 
     res = requests.post(f"{test_server}/auth/v2/device")
     assert res.status_code == 502
@@ -464,17 +466,3 @@ def test_auth_utils(free_port: int) -> None:
     assert is_job_env() is True
     with pytest.raises(TimeoutError):
         CodeAuthClient._wait_for_port("localhost", free_port)
-
-
-def test_request_headers() -> None:
-    from freva_rest.auth.oauth2 import set_request_header
-
-    header, data = {"Content-Type": "foo"}, {}
-    set_request_header("foo", "bar", data, header)
-    assert header["Content-Type"] != "foo"
-    assert "Authorization" in header
-    assert header["Authorization"].startswith("Basic")
-    header, data = {"Content-Type": "foo"}, {}
-    set_request_header("foo", None, data, header)
-    assert "Authorization" not in header
-    assert "client_id" in data
