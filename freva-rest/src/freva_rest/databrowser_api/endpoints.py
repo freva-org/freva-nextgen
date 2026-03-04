@@ -1,7 +1,7 @@
 """Main script that runs the rest API."""
 
 import uuid
-from typing import Annotated, Dict, List, Literal, Optional, Union
+from typing import Annotated, Dict, List, Literal, Optional, Union, cast
 
 from fastapi import (
     Body,
@@ -509,7 +509,7 @@ async def post_user_data(
                 detail=f"Invalid payload data: {error}",
             )
         status_msg = await solr_instance.add_user_metadata(
-            current_user.preferred_username,
+            cast(str, current_user.preferred_username),
             validated_user_metadata,
             facets=payload.facets,
         )
@@ -551,7 +551,7 @@ async def delete_user_data(
     solr_instance = Solr(server_config)
     try:
         await solr_instance.delete_user_metadata(
-            current_user.preferred_username, payload
+            cast(str, current_user.preferred_username), payload
         )
     except Exception as error:
         logger.exception("Failed to delete user data: %s", error)
