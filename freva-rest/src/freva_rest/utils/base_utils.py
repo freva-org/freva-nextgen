@@ -3,12 +3,10 @@
 import base64
 import hmac
 import json
-import re
 import ssl
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from typing import (
-    Any,
     Awaitable,
     Dict,
     List,
@@ -19,7 +17,6 @@ from typing import (
     cast,
 )
 
-import jwt
 import redis.asyncio as redis
 from fastapi import HTTPException, status
 from redis.asyncio.retry import Retry
