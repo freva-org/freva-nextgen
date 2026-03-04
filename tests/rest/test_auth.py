@@ -246,3 +246,12 @@ async def test_get_username_fallback_sub(mocker: MockerFixture) -> None:
 
     result = await get_username(mock_user, mock_request)
     assert result == "randomnumber"
+
+def test_oidc_overview_cached(test_server: str) -> None:
+    """Test oidc_overview returns cached result."""
+    from freva_rest.config import ServerConfig
+    config = ServerConfig()
+    config._oidc_overview = {"issuer": "https://example.com"}
+
+    result = config.oidc_overview
+    assert result == {"issuer": "https://example.com"}

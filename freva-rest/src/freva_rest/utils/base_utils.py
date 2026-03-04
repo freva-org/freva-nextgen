@@ -136,35 +136,6 @@ class CacheTokenPayload(TypedDict):
     assembly: Optional[Dict[str, Optional[str]]]
 
 
-def token_field_matches(token: str) -> bool:
-    """
-    Flattens the token[key] value to a string and checks if the regex pattern matches.
-
-    Parameters:
-        token (dict): The encoded JWT token.
-
-    Returns:
-        bool: True if a match is found, False otherwise.
-    """
-
-    def _walk_dict(inp: Any, keys: List[str]) -> Any:
-        if not keys or not isinstance(inp, dict) or not inp:
-            return inp or ""
-        return _walk_dict(inp.get(keys[0]), keys[1:])
-
-    matches: List[bool] = []
-    token_data: Dict[str, Any] = {}
-    for claim, pattern in (CONFIG.oidc_token_claims or {}).items():
-        if not token_data:
-            token_data = jwt.decode(token, options={"verify_signature": False})
-        value_str = str(_walk_dict(token_data, claim.split(".")))
-        for p in pattern:
-            matches.append(
-                bool(re.search(rf"\b{re.escape(str(p))}\b", value_str))
-            )
-    return all(matches)
-
-
 def get_userinfo(
     user_info: Dict[str, str],
 ) -> SystemUserInfo:

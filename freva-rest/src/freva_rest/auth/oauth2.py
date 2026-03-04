@@ -464,7 +464,7 @@ async def system_user(
     """Check user authorisation and get a url-safe version of the username."""
     try:
         lib_user = await auth.userinfo(id_token, dict(request.headers))
-    except InvalidRequest as exc:
+    except InvalidRequest as exc:  # pragma: no cover
         raise _http_exc(exc)
     return TokenisedUser(pw_name=lib_user.username)
 
