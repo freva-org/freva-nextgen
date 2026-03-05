@@ -121,6 +121,7 @@ class OAuthCallbackHandler(BaseHTTPRequestHandler):
         params = urllib.parse.parse_qs(query)
         if "code" in params:
             setattr(self.server, "auth_code", params["code"][0])
+            setattr(self.server, "auth_state", params.get("state", [""])[0])
             self.send_response(200)
             self.end_headers()
             self.wfile.write(b"Login successful! You can close this tab.")
@@ -240,6 +241,12 @@ class CodeAuthClient:
                     "Possibly headless environment."
                 )
             code = getattr(server, "auth_code", None)
+            state = getattr(server, "auth_state", "")
+            code_verifier = ""
+            if state and "|" in state:
+                parts = state.split("|")
+                if len(parts) >= 3:
+                    code_verifier = parts[2]
         except Exception as error:
             logger.warning(
                 "Could not open browser automatically. %s"
@@ -262,6 +269,8 @@ class CodeAuthClient:
             "redirect_uri": redirect_uri,
             "grant_type": "authorization_code",
         }
+        if code_verifier:
+            data["code_verifier"] = code_verifier
 
         response = requests.post(self.token_endpoint, data=data)
         response.raise_for_status()

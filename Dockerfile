@@ -63,7 +63,6 @@ session required pam_sss.so\n\
         cloudpickle \
        "cryptography=45.*" \
         fastapi \
-        fastapi-third-party-auth \
         email-validator \
         httpx \
         jq \
@@ -83,7 +82,7 @@ session required pam_sss.so\n\
         uvicorn \
         tomli \
         xarray \
-        py-oidc-auth \
+        py-oidc-auth-fastapi \
         zarr; \
     else \
         echo "Invalid CMD argument: $CMD" && exit 1; \
