@@ -1,36 +1,87 @@
-"""Tests for the databrowser class."""
+"""Tests for the databrowser class.
 
-from copy import deepcopy
+These tests exercise the Python API of the databrowser, including file
+search, metadata search, count, intake/STAC catalogue creation, zarr
+streaming, user data management, and custom flavour operations.
+
+Authentication is handled via the ``mock_authenticate`` /
+``mock_authenticate_fail`` fixtures which patch
+``py_oidc_auth_client.authenticate`` instead of the old Auth singleton.
+"""
+
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import namegenerator
 import pandas as pd
 import pytest
+from py_oidc_auth_client import Token
+from pytest_mock import MockerFixture
 
 from freva_client import databrowser
-from freva_client.auth import Auth, AuthError, Token
 from freva_client.utils.logger import DatabrowserWarning
 
 
-def test_search_files(test_server: str) -> None:
-    """Test searching for files."""
-    db = databrowser(host=test_server)
-    assert len(list(db)) > 0
-    assert len(list(db)) == len(db)
-    db = databrowser(host=test_server, foo="bar", fail_on_error=True)
-    with pytest.raises(ValueError):
-        len(db)
-    db = databrowser(host=test_server, foo="bar", time="2000 to 2050")
-    assert len(db) == 0
-    db = databrowser(host=test_server, foo="bar", bbox=(10, 20, 30, 40))
-    assert len(db) == 0
-    db = databrowser(host=test_server, model="bar")
-    assert len(db) == len(list(db)) == 0
-    db = databrowser(host="foo")
-    with pytest.raises(ValueError):
-        len(db)
-    assert (
-        len(
+class TestSearchFiles:
+    """Tests for basic file search functionality."""
+
+    def test_auth_token_valid(
+        self, test_server: str, mock_authenticate: Token, mocker: MockerFixture
+    ) -> None:
+        """Test if the can create a auth token."""
+        db = databrowser(host=test_server)
+        mocker.patch("freva_client.utils.choose_token_strategy").return_value = (
+            "use_token"
+        )
+        assert isinstance(db.auth_token, dict)
+
+    def test_auth_token_invalid(
+        self, test_server: str, mock_authenticate: Token, mocker: MockerFixture
+    ) -> None:
+        db = databrowser(host=test_server)
+        mocker.patch("freva_client.utils.choose_token_strategy").return_value = (
+            "fail"
+        )
+        assert db.auth_token is None
+
+    def test_search_returns_results(self, test_server: str) -> None:
+        """Searching with no constraints should return files."""
+        db = databrowser(host=test_server)
+        assert len(list(db)) > 0
+        assert len(list(db)) == len(db)
+
+    def test_search_with_invalid_keys_raises(self, test_server: str) -> None:
+        """Searching with invalid keys and fail_on_error should raise."""
+        db = databrowser(host=test_server, foo="bar", fail_on_error=True)
+        with pytest.raises(ValueError):
+            len(db)
+
+    def test_search_with_invalid_keys_returns_empty(
+        self, test_server: str
+    ) -> None:
+        """Searching with invalid keys and time filter returns 0."""
+        db = databrowser(host=test_server, foo="bar", time="2000 to 2050")
+        assert len(db) == 0
+
+    def test_search_with_bbox(self, test_server: str) -> None:
+        """Searching with invalid keys plus bbox returns 0."""
+        db = databrowser(host=test_server, foo="bar", bbox=(10, 20, 30, 40))
+        assert len(db) == 0
+
+    def test_search_no_match(self, test_server: str) -> None:
+        """Searching with a non-existing model returns nothing."""
+        db = databrowser(host=test_server, model="bar")
+        assert len(db) == len(list(db)) == 0
+
+    def test_search_bad_host_raises(self) -> None:
+        """A non-reachable host should raise on len()."""
+        db = databrowser(host="foo")
+        with pytest.raises(ValueError):
+            len(db)
+
+    def test_search_with_positional_facets(self, test_server: str) -> None:
+        """Searching with positional facets that don't match returns 0."""
+        result = len(
             databrowser(
                 "land",
                 realm="ocean",
@@ -38,151 +89,194 @@ def test_search_files(test_server: str) -> None:
                 host=test_server,
             )
         )
-        == 0
-        == 0
-    )
+        assert result == 0
 
 
-def test_count_values(test_server: str) -> None:
-    """Test counting the facets."""
-    db = databrowser(host=test_server)
-    assert isinstance(len(db), int)
-    counts1 = databrowser.count_values("*", host=test_server)
-    assert isinstance(counts1, dict)
-    assert "dataset" not in counts1
-    counts2 = databrowser.count_values(
-        "ocean",
-        realm="ocean",
-        product="reanalysis",
-        host=test_server,
-        extended_search=True,
-    )
-    assert isinstance(counts2, dict)
-    assert "dataset" in counts2
-    assert isinstance(counts2["dataset"], dict)
-    entry = list(counts2["dataset"].keys())[0]
-    assert isinstance(counts2["dataset"][entry], int)
+class TestCountValues:
+    """Tests for the count and count_values functionality."""
 
+    def test_len_returns_int(self, test_server: str) -> None:
+        """len(db) should return an integer."""
+        db = databrowser(host=test_server)
+        assert isinstance(len(db), int)
 
-def test_metadata_search(test_server: str) -> None:
-    """Test the metadata search."""
-    db = databrowser(host=test_server)
-    assert isinstance(db.metadata, pd.Series)
-    metadata = databrowser.metadata_search(host=test_server)
-    assert isinstance(metadata, pd.Series)
-    assert len(db.metadata) > len(metadata)
-    metadata = databrowser.metadata_search(host=test_server, extended_search=True)
-    assert len(db.metadata) == len(metadata)
-    db_filtered = databrowser(host=test_server)
-    assert set(db_filtered.metadata[["project", "model"]].keys()) <= {
-        "project",
-        "model",
-    }
-    assert len(db_filtered.metadata[["project", "model"]]) <= 2
+    def test_count_values_wildcard(self, test_server: str) -> None:
+        """count_values('*') should return a dict without 'dataset'."""
+        counts = databrowser.count_values("*", host=test_server)
+        assert isinstance(counts, dict)
+        assert "dataset" not in counts
 
-
-def test_bad_hostnames() -> None:
-    """Test the behaviour of non existing host queries."""
-    db = databrowser(host="foo")
-    with pytest.raises(ValueError):
-        len(db)
-    with pytest.raises(ValueError):
-        databrowser.metadata_search(host="foo")
-    with pytest.raises(ValueError):
-        databrowser.count_values(host="foo")
-
-
-def test_bad_queries(test_server: str) -> None:
-    """Test the behaviour of bad queries."""
-    db = databrowser(host=test_server, foo="bar")
-    with pytest.warns(DatabrowserWarning):
-        len(db)
-    with pytest.warns(DatabrowserWarning):
-        databrowser.count_values(host=test_server, foo="bar")
-    with pytest.warns(DatabrowserWarning):
-        databrowser.metadata_search(host=test_server, foo="bar")
-    db = databrowser(host=test_server, foo="bar", fail_on_error=True)
-    with pytest.raises(ValueError):
-        len(db)
-    with pytest.raises(ValueError):
-        databrowser.count_values(host=test_server, foo="bar", fail_on_error=True)
-    with pytest.raises(ValueError):
-        databrowser.metadata_search(
-            host=test_server, foo="bar", fail_on_error=True
+    def test_count_values_extended(self, test_server: str) -> None:
+        """Extended search should include 'dataset' in counts."""
+        counts = databrowser.count_values(
+            "ocean",
+            realm="ocean",
+            product="reanalysis",
+            host=test_server,
+            extended_search=True,
         )
+        assert isinstance(counts, dict)
+        assert "dataset" in counts
+        assert isinstance(counts["dataset"], dict)
+        entry = list(counts["dataset"].keys())[0]
+        assert isinstance(counts["dataset"][entry], int)
 
 
-def test_repr(test_server: str) -> None:
-    """Test the str rep."""
-    db = databrowser(host=test_server)
-    assert test_server in repr(db)
-    assert str(len(db)) in db._repr_html_()
-    overview = db.overview(host=test_server)
-    assert isinstance(overview, str)
-    assert "flavour" in overview
-    assert "cmip6" in overview
-    assert "freva" in overview
+class TestMetadataSearch:
+    """Tests for the metadata_search functionality."""
 
-    # test overview with a non-existing host
-    with pytest.raises(ValueError):
-        databrowser.overview(host="foo.bar.de:7777")
+    def test_metadata_returns_series(self, test_server: str) -> None:
+        """db.metadata should return a pandas Series."""
+        db = databrowser(host=test_server)
+        assert isinstance(db.metadata, pd.Series)
+
+    def test_metadata_search_classmethod(self, test_server: str) -> None:
+        """The classmethod metadata_search should return a Series."""
+        metadata = databrowser.metadata_search(host=test_server)
+        assert isinstance(metadata, pd.Series)
+
+    def test_metadata_extended_vs_normal(self, test_server: str) -> None:
+        """Extended search should return more metadata than normal."""
+        db = databrowser(host=test_server)
+        normal = databrowser.metadata_search(host=test_server)
+        extended = databrowser.metadata_search(
+            host=test_server, extended_search=True
+        )
+        assert len(db.metadata) > len(normal)
+        assert len(db.metadata) == len(extended)
+
+    def test_metadata_filter_facets(self, test_server: str) -> None:
+        """Filtering metadata by specific facets should work."""
+        db = databrowser(host=test_server)
+        filtered = db.metadata[["project", "model"]]
+        assert set(filtered.keys()) <= {"project", "model"}
+        assert len(filtered) <= 2
 
 
-def test_intake_without_zarr(test_server: str) -> None:
-    """Test the intake catalogue creation."""
-    db = databrowser(host=test_server, dataset="cmip6-fs")
-    cat = db.intake_catalogue()
-    assert hasattr(cat, "df")
-    with TemporaryDirectory() as temp_dir:
+class TestBadHostnames:
+    """Tests for error handling with invalid hostnames."""
+
+    def test_bad_host_len_raises(self) -> None:
+        """A non-existing host should raise ValueError on len()."""
+        db = databrowser(host="foo")
         with pytest.raises(ValueError):
-            db._create_intake_catalogue_file(temp_dir)
-    db = databrowser(host=test_server, dataset="foooo")
-    with pytest.raises(ValueError):
-        db.intake_catalogue()
+            len(db)
+
+    def test_bad_host_metadata_raises(self) -> None:
+        """metadata_search with a bad host should raise ValueError."""
+        with pytest.raises(ValueError):
+            databrowser.metadata_search(host="foo")
+
+    def test_bad_host_count_raises(self) -> None:
+        """count_values with a bad host should raise ValueError."""
+        with pytest.raises(ValueError):
+            databrowser.count_values(host="foo")
 
 
-def test_stac_catalogue(test_server: str, temp_dir: Path) -> None:
-    """Test the STAC Catalogue functionality."""
-    # static STAC catalogue
-    db = databrowser(host=test_server, dataset="cmip6-fs")
-    res = db.stac_catalogue(filename=temp_dir / "something.zip")
-    assert f"STAC catalog saved to: {temp_dir / 'something.zip'}" in res
+class TestBadQueries:
+    """Tests for warning/error behaviour with unknown search keys."""
 
-    # static STAC catalogue with non-existing directory
-    db = databrowser(host=test_server, dataset="cmip6-fs")
-    res = db.stac_catalogue(filename=temp_dir / "anywhere/s")
-    assert f"STAC catalog saved to: {temp_dir / 'anywhere/s'}" in res
+    def test_unknown_key_warns(self, test_server: str) -> None:
+        """An unknown search key should emit a DatabrowserWarning."""
+        db = databrowser(host=test_server, foo="bar")
+        with pytest.warns(DatabrowserWarning):
+            len(db)
 
-    # static STAC catalogue with existing directory
-    db = databrowser(host=test_server, dataset="cmip6-fs")
-    res = db.stac_catalogue(filename=temp_dir)
-    assert f"STAC catalog saved to: {temp_dir}" in res
+    def test_unknown_key_count_warns(self, test_server: str) -> None:
+        """count_values with unknown key should warn."""
+        with pytest.warns(DatabrowserWarning):
+            databrowser.count_values(host=test_server, foo="bar")
+
+    def test_unknown_key_metadata_warns(self, test_server: str) -> None:
+        """metadata_search with unknown key should warn."""
+        with pytest.warns(DatabrowserWarning):
+            databrowser.metadata_search(host=test_server, foo="bar")
+
+    def test_unknown_key_fail_on_error_raises(self, test_server: str) -> None:
+        """With fail_on_error=True, unknown keys should raise."""
+        db = databrowser(host=test_server, foo="bar", fail_on_error=True)
+        with pytest.raises(ValueError):
+            len(db)
+        with pytest.raises(ValueError):
+            databrowser.count_values(
+                host=test_server, foo="bar", fail_on_error=True
+            )
+        with pytest.raises(ValueError):
+            databrowser.metadata_search(
+                host=test_server, foo="bar", fail_on_error=True
+            )
 
 
-def test_intake_with_zarr(
-    test_server: str, auth_instance: Auth, auth: Token
-) -> None:
-    """Test the intake zarr catalogue creation."""
-    token = deepcopy(auth_instance._auth_token)
-    try:
-        auth_instance._auth_token = None
-        db = databrowser(host=test_server, dataset="cmip6-fs", stream_zarr=True)
-        with pytest.raises(AuthError):
-            cat = db.intake_catalogue()
-        auth_instance._auth_token = auth
+class TestRepr:
+    """Tests for the string representations of databrowser."""
+
+    def test_repr_contains_host(self, test_server: str) -> None:
+        """repr(db) should contain the host."""
+        db = databrowser(host=test_server)
+        assert test_server in repr(db)
+
+    def test_html_repr_contains_count(self, test_server: str) -> None:
+        """_repr_html_ should contain the object count."""
+        db = databrowser(host=test_server)
+        assert str(len(db)) in db._repr_html_()
+
+    def test_overview(self, test_server: str) -> None:
+        """overview() should contain flavour information."""
+        db = databrowser(host=test_server)
+        overview = db.overview(host=test_server)
+        assert isinstance(overview, str)
+        assert "flavour" in overview
+        assert "cmip6" in overview
+        assert "freva" in overview
+
+    def test_overview_bad_host_raises(self) -> None:
+        """overview() with a bad host should raise ValueError."""
+        with pytest.raises(ValueError):
+            databrowser.overview(host="foo.bar.de:7777")
+
+
+class TestIntakeCatalogue:
+    """Tests for intake catalogue creation."""
+
+    def test_intake_without_zarr(self, test_server: str) -> None:
+        """Creating an intake catalogue without zarr should work."""
+        db = databrowser(host=test_server, dataset="cmip6-fs")
         cat = db.intake_catalogue()
-    finally:
-        auth_instance._auth_token = token
-    assert hasattr(cat, "df")
+        assert hasattr(cat, "df")
 
+    def test_intake_file_creation_bad_path(self, test_server: str) -> None:
+        """Writing to a directory should raise ValueError."""
+        db = databrowser(host=test_server, dataset="cmip6-fs")
+        with TemporaryDirectory() as temp_dir:
+            with pytest.raises(ValueError):
+                db._create_intake_catalogue_file(temp_dir)
 
-def test_intake_with_public_zarr(
-    test_server: str, auth_instance: Auth, auth: Token
-) -> None:
-    """Test public zarr stores with intake."""
-    token = deepcopy(auth_instance._auth_token)
-    try:
-        auth_instance._auth_token = auth
+    def test_intake_empty_result(self, test_server: str) -> None:
+        """An intake catalogue with no results should raise ValueError."""
+        db = databrowser(host=test_server, dataset="foooo")
+        with pytest.raises(ValueError):
+            db.intake_catalogue()
+
+    def test_intake_with_zarr(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """Intake catalogue with zarr requires authentication."""
+        db = databrowser(host=test_server, dataset="cmip6-fs", stream_zarr=True)
+        cat = db.intake_catalogue()
+        assert hasattr(cat, "df")
+
+    def test_intake_with_zarr_unauthenticated(
+        self, test_server: str, mock_authenticate_fail
+    ) -> None:
+        """Intake catalogue with zarr should fail without auth."""
+        db = databrowser(host=test_server, dataset="cmip6-fs", stream_zarr=True)
+        with pytest.raises(Exception):
+            db.intake_catalogue()
+
+    def test_intake_with_public_zarr(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """Public zarr stores should include 'share' in their URI."""
         db = databrowser(
             host=test_server,
             dataset="cmip6-fs",
@@ -192,35 +286,61 @@ def test_intake_with_public_zarr(
         cat = db.intake_catalogue()
         assert hasattr(cat, "df")
         assert "share" in cat.df.iloc[0]["uri"]
-    finally:
-        auth_instance._auth_token = token
 
 
-def test_zarr_stream(test_server: str, auth_instance: Auth, auth: Token) -> None:
-    """Test creating zarr endpoints for loading."""
+class TestStacCatalogue:
+    """Tests for STAC catalogue creation."""
 
-    token = deepcopy(auth_instance._auth_token)
-    try:
-        auth_instance._auth_token = None
+    def test_stac_catalogue_to_file(
+        self, test_server: str, temp_dir: Path
+    ) -> None:
+        """Creating a STAC catalogue to a zip file should work."""
+        db = databrowser(host=test_server, dataset="cmip6-fs")
+        res = db.stac_catalogue(filename=temp_dir / "something.zip")
+        assert f"STAC catalog saved to: {temp_dir / 'something.zip'}" in res
+
+    def test_stac_catalogue_nonexisting_dir(
+        self, test_server: str, temp_dir: Path
+    ) -> None:
+        """STAC catalogue should create parent directories."""
+        db = databrowser(host=test_server, dataset="cmip6-fs")
+        res = db.stac_catalogue(filename=temp_dir / "anywhere/s")
+        assert f"STAC catalog saved to: {temp_dir / 'anywhere/s'}" in res
+
+    def test_stac_catalogue_existing_dir(
+        self, test_server: str, temp_dir: Path
+    ) -> None:
+        """STAC catalogue with an existing directory target."""
+        db = databrowser(host=test_server, dataset="cmip6-fs")
+        res = db.stac_catalogue(filename=temp_dir)
+        assert f"STAC catalog saved to: {temp_dir}" in res
+
+
+class TestZarrStream:
+    """Tests for zarr streaming functionality."""
+
+    def test_zarr_stream_authenticated(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """Authenticated zarr streaming should return files."""
         db = databrowser(host=test_server, dataset="cmip6-fs", stream_zarr=True)
-        with pytest.raises(AuthError):
-            _ = list(db)
-        auth_instance._auth_token = auth
         files = list(db)
         assert len(files) == 2
-    finally:
-        auth_instance._auth_token = token
 
+    def test_zarr_stream_unauthenticated(
+        self, test_server: str, mock_authenticate_fail
+    ) -> None:
+        """Unauthenticated zarr streaming should raise."""
+        db = databrowser(host=test_server, dataset="cmip6-fs", stream_zarr=True)
+        with pytest.raises(Exception):
+            _ = list(db)
 
-def test_public_zarr_stream(
-    test_server: str, auth_instance: Auth, auth: Token
-) -> str:
-    """Test if we can generate public zarr urls."""
-    import xarray as xr
+    def test_public_zarr_stream(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """Public zarr URLs should be openable with xarray."""
+        import xarray as xr
 
-    token = deepcopy(auth_instance._auth_token)
-    try:
-        auth_instance._auth_token = auth
         db = databrowser(
             host=test_server,
             dataset="cmip6-fs",
@@ -229,21 +349,16 @@ def test_public_zarr_stream(
         )
         files = list(db)
         xr.open_dataset(files[0], engine="zarr")
-    finally:
-        auth_instance._auth_token = token
 
 
-def test_userdata_add_path_xarray_py(
-    test_server: str,
-    auth_instance: Auth,
-    auth: Token,
-) -> None:
-    """Test adding path and xarray user data."""
-    import xarray as xr
+class TestUserdataPythonApi:
+    """Tests for user data add/delete via the Python API."""
 
-    token = deepcopy(auth_instance._auth_token)
-    try:
-        auth_instance._auth_token = auth
+    def test_add_path_and_xarray(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """Adding path and xarray user data should work."""
+        import xarray as xr
 
         databrowser.userdata("delete", metadata={}, host=test_server)
         filename = (
@@ -262,17 +377,10 @@ def test_userdata_add_path_xarray_py(
         )
         assert len(databrowser(flavour="user", host=test_server)) == 1
 
-    finally:
-        auth_instance._auth_token = token
-
-
-def test_userdata_failed(
-    test_server: str, auth_instance: Auth, auth: Token
-) -> None:
-    """Test user data wrong paths."""
-    token = deepcopy(auth_instance._auth_token)
-    try:
-        auth_instance._auth_token = auth
+    def test_userdata_wrong_paths(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """Adding non-existing paths should raise FileNotFoundError."""
         db = databrowser(host=test_server)
         length = len(db)
         with pytest.raises(FileNotFoundError) as exc_info:
@@ -285,20 +393,12 @@ def test_userdata_failed(
         assert "No valid file paths or xarray datasets found." in str(
             exc_info.value
         )
-    finally:
-        auth_instance._auth_token = token
-    assert len(db) == length
+        assert len(db) == length
 
-
-def test_userdata_post_delete_failure(
-    test_server: str, auth_instance: Auth, auth: Token
-) -> None:
-    """Test failure of adding user data."""
-
-    token = deepcopy(auth_instance._auth_token)
-    try:
-        auth_instance._auth_token = deepcopy(auth)
-        auth_instance._auth_token["access_token"] = "foo"
+    def test_userdata_post_delete_bad_host(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """Add/delete to a non-existing host should raise ValueError."""
         with pytest.raises(ValueError):
             databrowser.userdata(
                 "add",
@@ -316,18 +416,11 @@ def test_userdata_post_delete_failure(
                 host="foo.bar.de:7777",
                 fail_on_error=True,
             )
-    finally:
-        auth_instance._auth_token = token
 
-
-def test_userdata_post_delete_without_failure(
-    test_server: str, auth_instance: Auth, auth: Token
-) -> None:
-    """Test successful deleting user data."""
-
-    token = deepcopy(auth_instance._auth_token)
-    try:
-        auth_instance._auth_token = auth
+    def test_userdata_post_delete_without_failure(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """Add/delete to a non-existing host raises ValueError."""
         with pytest.raises(ValueError):
             databrowser.userdata(
                 "add",
@@ -343,19 +436,11 @@ def test_userdata_post_delete_without_failure(
                 metadata={"username": "janedoe"},
                 host="foo.bar.de:7777",
             )
-    finally:
-        auth_instance._auth_token = token
 
-
-def test_userdata_correct_args_wrong_place(
-    test_server: str,
-    auth_instance: Auth,
-    auth: Token,
-) -> None:
-    """Test adding user data with wrong arguments."""
-    token = deepcopy(auth_instance._auth_token)
-    try:
-        auth_instance._auth_token = auth
+    def test_userdata_correct_args_wrong_place(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """Correct metadata keys but wrong file paths."""
         with pytest.raises(FileNotFoundError):
             databrowser.userdata(
                 "add", metadata={"username": "johndoe"}, host=test_server
@@ -368,17 +453,11 @@ def test_userdata_correct_args_wrong_place(
             metadata={"username": "johndoe"},
             host=test_server,
         )
-    finally:
-        auth_instance._auth_token = token
 
-
-def test_userdata_empty_metadata_value_error(
-    test_server: str, auth_instance: Auth, auth: Token
-) -> None:
-    """Test adding user data with wrong arguments."""
-    token = deepcopy(auth_instance._auth_token)
-    try:
-        auth_instance._auth_token = auth
+    def test_userdata_empty_metadata_value_error(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """Adding user data with missing metadata value raises ValueError."""
         with pytest.raises(ValueError):
             databrowser.userdata(
                 "add",
@@ -393,17 +472,11 @@ def test_userdata_empty_metadata_value_error(
                 metadata={"username": "johndoe"},
                 host=test_server,
             )
-    finally:
-        auth_instance._auth_token = token
 
-
-def test_userdata_non_path_xarray(
-    test_server: str, auth_instance: Auth, auth: Token
-) -> None:
-    """Test adding user data with wrong arguments."""
-    token = deepcopy(auth_instance._auth_token)
-    try:
-        auth_instance._auth_token = auth
+    def test_userdata_non_path_xarray(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """Adding non-path, non-xarray items raises FileNotFoundError."""
         with pytest.raises(FileNotFoundError):
             databrowser.userdata(
                 "add",
@@ -411,17 +484,11 @@ def test_userdata_non_path_xarray(
                 metadata={"username": "johndoe"},
                 host=test_server,
             )
-    finally:
-        auth_instance._auth_token = token
 
-
-def test_add_userdata_wild_card(
-    test_server: str, auth_instance: Auth, auth: Token
-) -> None:
-    """Test adding user data with wild card."""
-    token = deepcopy(auth_instance._auth_token)
-    try:
-        auth_instance._auth_token = auth
+    def test_add_userdata_wildcard(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """Adding user data with wildcard paths."""
         databrowser.userdata("delete", host=test_server)
         databrowser.userdata(
             "add",
@@ -440,21 +507,23 @@ def test_add_userdata_wild_card(
             metadata={"username": "johndoe"},
             host=test_server,
         )
-    finally:
-        auth_instance._auth_token = token
 
 
-def test_flavour_operations(
-    test_server: str, auth_instance: Auth, auth: Token
-) -> None:
-    """Test query flavour add, list, and delete operations."""
-    from copy import deepcopy
+class TestFlavourOperations:
+    """Tests for custom flavour add, list, update, delete operations."""
 
-    token = deepcopy(auth_instance._auth_token)
-    try:
-        auth_instance._auth_token = auth
-
-        # listing flavours
+    def test_flavour_lifecycle(
+        self,
+        test_server: str,
+        mock_authenticate: Token,
+        mocker: MockerFixture,
+    ) -> None:
+        """Test the full lifecycle: list, add, update, rename, delete."""
+        # list existing flavours
+        flavour_name = namegenerator.gen()
+        mocker.patch("freva_client.utils.choose_token_strategy").return_value = (
+            "use_token"
+        )
         result = databrowser.flavour(action="list", host=test_server)
         assert isinstance(result["flavours"], list)
         assert len(result["flavours"]) >= 5
@@ -462,7 +531,7 @@ def test_flavour_operations(
         assert "freva" in flavour_names
         assert "cmip6" in flavour_names
 
-        # adding a custom flavour
+        # add a custom flavour
         custom_mapping = {
             "project": "projekt",
             "variable": "variable_name",
@@ -470,53 +539,41 @@ def test_flavour_operations(
         }
         databrowser.flavour(
             action="add",
-            name="test_flavour_client",
+            name=flavour_name,
             mapping=custom_mapping,
             is_global=False,
             host=test_server,
         )
 
-        # custom flavour appears in list
+        # verify it appears
         result_after = databrowser.flavour(action="list", host=test_server)
         assert len(result_after["flavours"]) > len(result["flavours"])
-        new_flavour_names = [f["flavour_name"] for f in result_after["flavours"]]
-        assert f"test_flavour_client" in new_flavour_names
-        valid_token = deepcopy(auth_instance._auth_token)
-        auth_instance._auth_token["access_token"] = "foo"
-        # deleting a flavour with invalid token raises an error
-        with pytest.raises(ValueError):
-            databrowser.flavour(
-                action="list",
-                host="http://non-existent-host:9999",
-                fail_on_error=True,
-            )
+        new_names = [f["flavour_name"] for f in result_after["flavours"]]
+        assert flavour_name in new_names
 
-        auth_instance._auth_token = valid_token
-        # custom flavour can be used in searches
-
-        db = databrowser(flavour="test_flavour_client", host=test_server)
-        # not fail even if no results since flavour is custom
+        # use the custom flavour in a search
+        db = databrowser(flavour=flavour_name, host=test_server)
         assert len(db) >= 0
 
-        # checking count values with custom flavour
+        # count values with custom flavour
         db_count = databrowser.count_values(
-            "projekt", flavour="test_flavour_client", host=test_server
+            "projekt", flavour=flavour_name, host=test_server
         )
         assert isinstance(db_count, dict)
 
-        # updating the custom flavour
+        # update the custom flavour
         databrowser.flavour(
             action="update",
-            name="test_flavour_client",
+            name=flavour_name,
             mapping={"experiment": "exp_updated"},
             is_global=False,
             host=test_server,
         )
 
-        # update with rename
+        # rename
         databrowser.flavour(
             action="update",
-            name="test_flavour_client",
+            name=flavour_name,
             new_name="test_flavour_client_renamed",
             is_global=False,
             host=test_server,
@@ -527,66 +584,78 @@ def test_flavour_operations(
         renamed_names = [f["flavour_name"] for f in result_renamed["flavours"]]
         assert "test_flavour_client_renamed" in renamed_names
 
-        # deleting the custom flavour
+        # delete the custom flavour
         databrowser.flavour(
-            action="delete", name="test_flavour_client_renamed", host=test_server
-        )
-
-        # custom flavour is gone
-        flavours_final = databrowser.flavour(action="list", host=test_server)
-        final_flavour_names = [
-            f["flavour_name"] for f in flavours_final["flavours"]
-        ]
-        assert "test_flavour_client_renamed" not in final_flavour_names
-        assert len(flavours_final["flavours"]) == len(result["flavours"])
-    finally:
-        auth_instance._auth_token = token
-
-
-def test_flavour_error_cases(
-    test_server: str, auth_instance: Auth, auth: Token
-) -> None:
-    """Test flavour error handling."""
-    from copy import deepcopy
-
-    token = deepcopy(auth_instance._auth_token)
-    try:
-        auth_instance._auth_token = auth
-        # wrong facet key
-        custom_mapping = {
-            "projecta": "projekt",
-        }
-        Added = databrowser.flavour(
-            action="add",
-            name="test_flavour_no_auth",
-            mapping=custom_mapping,
+            action="delete",
+            name="test_flavour_client_renamed",
             host=test_server,
         )
-        assert Added is None
 
-        # test the missing name and mapping parameters
+        # verify it's gone
+        flavours_final = databrowser.flavour(action="list", host=test_server)
+        final_names = [f["flavour_name"] for f in flavours_final["flavours"]]
+        assert "test_flavour_client_renamed" not in final_names
+        assert len(flavours_final["flavours"]) == len(result["flavours"])
+
+    def test_flavour_list_non_existent_host_raises(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """Listing flavours on an unreachable host raises ValueError."""
+        with pytest.raises(ValueError):
+            databrowser.flavour(
+                action="list",
+                host="http://non-existent-host:9999",
+                fail_on_error=True,
+            )
+
+
+class TestFlavourErrorCases:
+    """Tests for flavour error handling."""
+
+    def test_wrong_facet_key(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """Adding a flavour with an invalid facet key returns None."""
+        result = databrowser.flavour(
+            action="add",
+            name="test_flavour_no_auth",
+            mapping={"projecta": "projekt"},
+            host=test_server,
+        )
+        assert result is None
+
+    def test_add_missing_name_and_mapping(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """Adding without name/mapping should raise ValueError."""
         with pytest.raises(
             ValueError, match="Both 'name' and 'mapping' are required"
         ):
             databrowser.flavour(action="add", host=test_server)
 
-        # updating flavour without name
+    def test_update_missing_name(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """Updating without name should raise ValueError."""
         with pytest.raises(
             ValueError, match="'name' is required for update action"
         ):
             databrowser.flavour(action="update", host=test_server)
 
-        # deleting flavour without name
+    def test_delete_missing_name(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """Deleting without name should raise ValueError."""
         with pytest.raises(
             ValueError, match="'name' is required for delete action"
         ):
             databrowser.flavour(action="delete", host=test_server)
 
-    finally:
-        auth_instance._auth_token = token
 
+class TestFlavourWithoutAuth:
+    """Tests for flavour operations that don't require authentication."""
 
-def test_flavour_without_auth(test_server: str) -> None:
-    """Test listing flavours without authentication"""
-    flavours = databrowser.flavour(action="list", host=test_server)
-    assert isinstance(flavours, dict)
+    def test_list_without_auth(self, test_server: str) -> None:
+        """Listing flavours without authentication should still work."""
+        flavours = databrowser.flavour(action="list", host=test_server)
+        assert isinstance(flavours, dict)

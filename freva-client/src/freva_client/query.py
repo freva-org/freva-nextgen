@@ -22,16 +22,10 @@ from typing import (
 
 import requests
 import yaml
+from py_oidc_auth_client import Token, authenticate
 from rich import print as pprint
 
-from .auth import Auth
-from .utils import do_request, logger
-from .utils.auth_utils import (
-    Token,
-    choose_token_strategy,
-    load_token,
-    requires_authentication,
-)
+from .utils import AuthConfig, do_request, logger, requires_authentication
 from .utils.databrowser_utils import Config, UserDataHandler
 from .utils.lazy import intake, intake_esm, pd, xr
 from .utils.types import ZarrOptions, ZarrOptionsDict
@@ -374,7 +368,6 @@ class databrowser:
         zarr_options: Optional[ZarrOptionsDict] = None,
         **search_keys: Union[str, List[str]],
     ) -> None:
-        self._auth = Auth()
         zarr_options = zarr_options or {}
         self._zarr_options = ZarrOptions.from_dict(zarr_options)
         self._fail_on_error = fail_on_error
@@ -747,13 +740,19 @@ class databrowser:
                }
             )
         """
-        token = self._auth._auth_token or load_token(self._auth.token_file)
-        strategy = choose_token_strategy(token)
-        if strategy in ("browser_auth", "fail"):
-            return None
-        if strategy == "refresh_token":
-            token = self._auth.authenticate(config=self._cfg)
+
+        token: Optional[Token] = None
+        if self._cfg._auth_cfg.token_strategy in ("refresh_token", "use_token"):
+            token = self._authenticate()
         return token
+
+    def _authenticate(self) -> Token:
+        return authenticate(
+            self._cfg._auth_cfg.config.host,
+            redirect_ports=self._cfg._auth_cfg.config.redirect_ports,
+            store=self._cfg._auth_cfg.token_db,
+            app_name=self._cfg._auth_cfg.app_name,
+        )
 
     def intake_catalogue(self) -> "intake_esm.core.esm_datastore":
         """Create an intake esm catalogue object from the search.
@@ -1401,7 +1400,7 @@ class databrowser:
         userdata_items = userdata_items or []
         metadata = metadata or {}
         url = f"{this._cfg.userdata_url}"
-        token = this._auth.authenticate(config=this._cfg)
+        token = this._authenticate()
         headers = {"Authorization": f"Bearer {token['access_token']}"}
         payload_metadata: dict[str, Collection[Collection[str]]] = {}
 
@@ -1534,7 +1533,7 @@ class databrowser:
         )
         cfg = Config(host)
         if action == "add":
-            token = this._auth.authenticate(config=this._cfg)
+            token = this._authenticate()
             headers = {"Authorization": f"Bearer {token['access_token']}"}
             if not name or not mapping:
                 raise ValueError(
@@ -1556,7 +1555,7 @@ class databrowser:
                 pprint(f"[b][green] {msg} [/green][/b]")
 
         elif action == "update":
-            token = this._auth.authenticate(config=this._cfg)
+            token = this._authenticate()
             headers = {"Authorization": f"Bearer {token['access_token']}"}
             if not name:
                 raise ValueError("'name' is required for update action")
@@ -1579,7 +1578,7 @@ class databrowser:
                 pprint(f"[b][green] {msg} [/green][/b]")
 
         elif action == "delete":
-            token = this._auth.authenticate(config=this._cfg)
+            token = this._authenticate()
             headers = {"Authorization": f"Bearer {token['access_token']}"}
             if not name:
                 raise ValueError("'name' is required for delete action")
@@ -1595,7 +1594,7 @@ class databrowser:
                 msg = result.json().get("status", "Flavour deleted successfully")
                 pprint(f"[b][green] {msg} [/green][/b]")
         elif action == "list":
-            headers = cast(Dict[str, str], this._cfg._get_headers)
+            headers = cast(Dict[str, str], this._cfg.auth_headers)
             flavours: List[Dict[str, Any]] = []
             result = this._request(
                 "GET", f"{cfg.databrowser_url}/flavours", headers=headers
@@ -1631,7 +1630,7 @@ class databrowser:
             )
             and "Authorization" not in kwargs["headers"]
         ):
-            token = self._auth.authenticate(config=self._cfg)
+            token = self._authenticate()
             kwargs["headers"]["Authorization"] = f"Bearer {token['access_token']}"
 
         return do_request(

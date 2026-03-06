@@ -3,9 +3,8 @@
 from dataclasses import asdict
 from typing import Dict, List, Literal, Optional, TypedDict, Union
 
-from .auth import Auth
+from .auth import authenticate
 from .utils import do_request
-from .utils.auth_utils import choose_token_strategy, load_token
 from .utils.databrowser_utils import Config
 from .utils.types import ZarrOptions, ZarrOptionsDict
 
@@ -275,7 +274,7 @@ def convert(
     _zarr_options = ZarrOptions.from_dict(zarr_options)
     data.update(asdict(_zarr_options))
     _cfg = Config(host)
-    token = Auth().authenticate(config=_cfg)
+    token = authenticate(host=_cfg.api_url)
     headers = {"Authorization": f"{token['token_type']} {token['access_token']}"}
     res = do_request(
         "POST",
@@ -326,18 +325,11 @@ def status(
 
     """
     _cfg = Config(host)
-    auth = Auth()
-    token = load_token(auth.token_file)
-    if not headers and choose_token_strategy(token) in (
-        "use_token",
-        "refresh_token",
-    ):
-        headers = auth.authenticate(host, _cfg)["headers"]
     res = do_request(
         "GET",
         f"{_cfg.data_portal_url}/zarr-utils/status",
         params={"url": url},
-        headers=headers,
+        headers=headers or _cfg.auth_headers,
         fail_on_error=True,
     )
     stat = Status(status=5, reason="Unknown")
