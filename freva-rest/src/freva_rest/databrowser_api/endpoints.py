@@ -21,9 +21,9 @@ from py_oidc_auth import IDToken as TokenPayload
 from py_oidc_auth.utils import get_username
 
 from freva_rest.logger import logger
-from freva_rest.presign import MAX_TTL_SECONDS, MIN_TTL_SECONDS
 from freva_rest.rest import app, auth, server_config
 
+from ..utils.presign_utils import MAX_TTL_SECONDS, MIN_TTL_SECONDS
 from .core import Solr
 from .schema import (
     AddUserDataRequestBody,
