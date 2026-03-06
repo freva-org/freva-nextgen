@@ -9,10 +9,9 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response
 from py_oidc_auth import IDToken as TokenPayload
 from pydantic import BaseModel, Field
 
-from freva_rest.auth import auth, check_token
-from freva_rest.auth.presign import get_cache_token, verify_token
 from freva_rest.logger import logger
-from freva_rest.rest import app, server_config
+from freva_rest.presign import get_cache_token, verify_token
+from freva_rest.rest import app, auth, check_token, server_config
 from freva_rest.utils.base_utils import Cache
 
 from .schema import ZarrConversion
@@ -93,7 +92,7 @@ class ZarrStatus(BaseModel):
 )
 async def load_files(
     convert: ZarrConversion,
-    current_user: TokenPayload = auth.required(claims=server_config.oidc_token_claims),
+    current_user: TokenPayload = auth.required(),
 ) -> LoadResponse:
     """Publish a conversion request to the data‑portal worker.
 
@@ -246,7 +245,7 @@ async def zarr_html_view(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = auth.required(claims=server_config.oidc_token_claims),
+    current_user: TokenPayload = auth.required(),
 ) -> HTMLResponse:
     """Get HTML representation of the Zarr dataset.
 
@@ -298,7 +297,7 @@ async def zarr_key_data(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = auth.required(claims=server_config.oidc_token_claims),
+    current_user: TokenPayload = auth.required(),
 ) -> Response:
     """
     Serve arbitrary Zarr metadata or chunk keys.

@@ -421,7 +421,7 @@ def test_authenticate_manual_failure_code_flow(
     mocker.patch(
         "freva_client.auth.CodeAuthClient._wait_for_port", return_value=True
     )
-    with patch("freva_rest.auth.oauth2.server_config.oidc_auth_ports", [8080]):
+    with patch("freva_rest.rest.server_config.oidc_auth_ports", [8080]):
         with pytest.raises(OSError, match="No free ports"):
             authenticate(host=test_server, force=True)
 
@@ -438,22 +438,6 @@ def test_authenticate_manual_failure_code_flow(
     ):
         with pytest.raises(AuthError, match="Timeout"):
             authenticate(host=test_server, force=True)
-
-
-def test_token_status(test_server: str, auth: Dict[str, str]) -> None:
-    """Check the token status methods."""
-    res1 = requests.get(
-        f"{test_server}/auth/v2/status",
-        headers={"Authorization": f"Bearer {auth['access_token']}"},
-    )
-    assert res1.status_code == 200
-    assert "exp" in res1.json()
-    res2 = requests.get(
-        f"{test_server}/auth/v2/status",
-        headers={"Authorization": "Bearer foo"},
-    )
-    assert res2.status_code != 200
-
 
 # ---------------------------
 # Other utilities.

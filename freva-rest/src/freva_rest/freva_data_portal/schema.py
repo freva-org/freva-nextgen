@@ -4,7 +4,7 @@ from typing import Annotated, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
-from freva_rest.auth.presign import MAX_TTL_SECONDS, MIN_TTL_SECONDS
+from freva_rest.presign import MAX_TTL_SECONDS, MIN_TTL_SECONDS
 
 
 class ZarrConversion(BaseModel):

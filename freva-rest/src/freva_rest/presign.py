@@ -36,8 +36,8 @@ from fastapi import (
 from py_oidc_auth import IDToken as TokenPayload
 from pydantic import AnyHttpUrl, BaseModel, Field
 
-from ..rest import app, server_config
-from ..utils.base_utils import (
+from .rest import app, auth, server_config
+from .utils.base_utils import (
     CacheTokenPayload,
     add_ttl_key_to_db_and_cache,
     b64url_decode,
@@ -45,8 +45,7 @@ from ..utils.base_utils import (
     encode_cache_token,
     get_token_from_cache,
 )
-from ..utils.exceptions import EmptyError
-from .oauth2 import auth
+from .utils.exceptions import EmptyError
 
 # ---------------------------------------------------------------------------
 # Settings & helpers
@@ -264,7 +263,7 @@ class PresignUrlResponse(BaseModel):
 async def create_presigned_url(
     request: Request,
     body: PresignUrlRequest,
-    token: TokenPayload = auth.required(claims=server_config.oidc_token_claims),
+    token: TokenPayload = auth.required(),
 ) -> PresignUrlResponse:
     """Create a new pre-signed URL.
 
