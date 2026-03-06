@@ -118,24 +118,6 @@ jobs:
           python dev-env/config/dev-utils.py oidc
           http://localhost:8080/realms/freva/.well-known/openid-configuration
 
-      - name: Waiting for Solr
-        shell: bash -l {0}
-        run: |
-          echo "Waiting for Solr..."
-          for i in $(seq 1 30); do
-            curl -sf "http://localhost:8983/solr/admin/info/system?wt=json" && echo "Solr is up!" && break
-            echo "Attempt $i/30 - Solr not ready, waiting 5s..."
-            sleep 5
-          done
-
-      - name: Waiting for Solr collection
-        shell: bash -l {0}
-        run: |
-          for i in $(seq 1 30); do
-            curl -sf "http://localhost:8983/solr/files/admin/ping" && break
-            sleep 5
-          done
-
       - name: Run tests
         shell: bash -l {0}
         run: VIRTUALENV_SYSTEM_SITE_PACKAGES=1 tox -e test
