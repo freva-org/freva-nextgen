@@ -8,7 +8,7 @@ provides helper factories for authentication tokens, and constructs sample
 payloads for user data tests.
 
 The fixtures are organised with different scopes (function, module, session)
-depending on how long their resources should persist. See each fixture’s
+depending on how long their resources should persist. See each fixture's
 docstring for details.
 """
 
@@ -31,13 +31,12 @@ import pymongo
 import pytest
 import requests
 import uvicorn
+from py_oidc_auth_client import Token
 from typer.testing import CliRunner
 
 from data_portal_worker.cli import _main as run_data_loader
 from data_portal_worker.load_data import RedisCacheFactory as Cache
-from freva_client.auth import Auth
 from freva_client.utils import logger
-from freva_client.utils.auth_utils import TOKEN_ENV_VAR, Token
 from freva_rest.api import app
 from freva_rest.config import ServerConfig
 from freva_rest.databrowser_api.mock import read_data
@@ -200,7 +199,7 @@ def user_cache_dir() -> Iterator[str]:
     """
     with NamedTemporaryFile(suffix=".json") as temp_f:
         with mock.patch.dict(
-            os.environ, {TOKEN_ENV_VAR: temp_f.name}, clear=False
+            os.environ, {"OIDC_TOKEN_FILE": temp_f.name}, clear=False
         ):
             yield temp_f.name
 
@@ -219,17 +218,6 @@ def temp_dir() -> Iterator[Path]:
 def loader_config() -> Iterator[bytes]:
     """Provide the base64 encoded Redis loader configuration to tests."""
     yield get_data_loader_config()
-
-
-@pytest.fixture(scope="function")
-def auth_instance() -> Iterator[Auth]:
-    """Provide a fresh Auth instance for each test."""
-    auth = Auth()
-    auth._auth_token = mock_token_data()
-    try:
-        yield auth
-    finally:
-        auth._auth_token = None
 
 
 @pytest.fixture(scope="function")
@@ -347,10 +335,6 @@ def test_server() -> Iterator[str]:
         env[key] = os.getenv(f"API_{key}", "")
     env["REDIS_PASS"] = os.getenv("API_REDIS_PASSWORD", "")
     with mock.patch.dict(os.environ, env, clear=True):
-        # with mock.patch(
-        #    "data_portal_worker.backends.posix_and_cloud.dask.config.set",
-        #    return_value=None,
-        # ):
         yield from setup_server()
         shutdown_data_loader()
 
@@ -439,6 +423,36 @@ def token_file(auth: Token) -> Path:
         out_f = Path(temp_f.name)
         out_f.write_text(json.dumps(auth))
         yield out_f
+
+
+@pytest.fixture(scope="function")
+def mock_authenticate(auth):
+    """Mock py_oidc_auth_client.authenticate to return the real test token.
+
+    This fixture replaces the old ``auth_instance`` fixture. Instead of
+    manipulating a singleton Auth object, it patches the authenticate
+    function at every import location so that the databrowser and other
+    modules receive a valid token without performing a real OIDC flow.
+
+    Yields the auth token dict so tests can access token fields directly.
+    """
+    with mock.patch("freva_client.query.authenticate", return_value=auth):
+        with mock.patch("py_oidc_auth_client.authenticate", return_value=auth):
+            yield auth
+
+
+@pytest.fixture(scope="function")
+def mock_authenticate_fail():
+    """Mock py_oidc_auth_client.authenticate to raise an error.
+
+    Simulates the unauthenticated state by making any call to
+    authenticate raise a RuntimeError. Useful for testing that
+    operations correctly fail when no valid token is available.
+    """
+    error = RuntimeError("Authentication required")
+    with mock.patch("freva_client.query.authenticate", side_effect=error):
+        with mock.patch("py_oidc_auth_client.authenticate", side_effect=error):
+            yield
 
 
 @pytest.fixture(scope="function")

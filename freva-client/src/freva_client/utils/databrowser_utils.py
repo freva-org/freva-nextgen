@@ -26,6 +26,8 @@ import requests
 import tomli
 import xarray as xr
 
+from ..auth import authenticate
+from ..utils import AuthConfig
 from . import logger
 
 
@@ -47,6 +49,7 @@ class Config:
         )
 
         self.api_url = self.get_api_url(config_host)
+        self._auth_cfg = AuthConfig(self.api_url)
         self.databrowser_url = f"{self.api_url}/databrowser"
         self.data_portal_url = f"{self.api_url}/data-portal"
         self.auth_url = f"{self.api_url}/auth/v2"
@@ -168,30 +171,30 @@ class Config:
             pass
         return {}
 
-    @cached_property
-    def _get_headers(self) -> Optional[Dict[str, str]]:
+    @property
+    def auth_headers(self) -> Optional[Dict[str, str]]:
         """Get the headers for requests."""
-        from freva_client.auth import Auth
+        headers: Optional[Dict[str, str]] = None
+        if self._auth_cfg.token_strategy in (
+            "use_token",
+            "refresh_token",
+        ):
+            headers = authenticate(host=self.api_url)["headers"]
 
-        from .auth_utils import load_token
-
-        auth = Auth()
-        token = auth._auth_token or load_token(auth.token_file)
-        if token and "access_token" in token:
-            return {"Authorization": f"Bearer {token['access_token']}"}
-        return None
+        return headers
 
     @cached_property
     def overview(self) -> Dict[str, Any]:
         """Get an overview of all databrowser flavours
         and search keys including custom flavours."""
-        headers = self._get_headers
         try:
             res = requests.get(
-                f"{self.databrowser_url}/overview", headers=headers, timeout=3
+                f"{self.databrowser_url}/overview",
+                headers=self.auth_headers,
+                timeout=3,
             )
             data = cast(Dict[str, Any], res.json())
-            if not headers:
+            if not self.auth_headers:
                 data["Note"] = (
                     "Displaying only global flavours. "
                     "Authenticate to see custom user flavours as well."
