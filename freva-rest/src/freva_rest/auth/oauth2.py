@@ -47,10 +47,7 @@ auth = FastApiOIDCAuth(
     claims=server_config.oidc_token_claims or None,
 )
 
-app.include_router(
-    auth.create_auth_router(prefix="/api/freva-nextgen"),
-    tags=["Authentication"],
-)
+auth_router = auth.create_auth_router(prefix="/api/freva-nextgen")
 
 
 async def get_username(

@@ -1,6 +1,6 @@
 """Definition of the whole rest api."""
 
-from freva_rest.auth.oauth2 import *  # noqa: F401
+from freva_rest.auth.oauth2 import auth, auth_router  # noqa: F401
 from freva_rest.config import ServerConfig
 from freva_rest.databrowser_api.endpoints import *  # noqa: F401
 from freva_rest.freva_data_portal.endpoints import *  # noqa: F401
@@ -9,6 +9,8 @@ from freva_rest.rest import app
 from .logger import logger
 
 server_config = ServerConfig()
+app.include_router(auth_router)
+
 if "stacapi" in server_config.services:
     from freva_rest.stac_api.endpoints import *  # noqa: F401
 
