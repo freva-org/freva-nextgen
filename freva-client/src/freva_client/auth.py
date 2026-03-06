@@ -52,10 +52,13 @@ def authenticate(
     """
     from py_oidc_auth_client import authenticate as _authenticate
 
+    from .utils.databrowser_utils import Config
+
+    cfg = Config(host)
     if token_file:
-        auth = AuthConfig.from_token_file(host, token_file)
+        auth = AuthConfig.from_token_file(cfg.api_url, token_file)
     else:
-        auth = AuthConfig(host)
+        auth = AuthConfig(cfg.api_url)
     return _authenticate(
         auth.config.host,
         force=force,

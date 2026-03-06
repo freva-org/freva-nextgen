@@ -23,7 +23,11 @@ import xarray as xr
 from rich import print as pprint
 
 from freva_client import authenticate, databrowser
-from freva_client.utils import exception_handler, logger, requires_authentication
+from freva_client.utils import (
+    exception_handler,
+    logger,
+    requires_authentication,
+)
 from freva_client.utils.types import ZarrOptionsDict
 
 from .cli_utils import parse_cli_args, print_df, version_callback

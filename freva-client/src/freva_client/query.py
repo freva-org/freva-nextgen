@@ -25,7 +25,7 @@ import yaml
 from py_oidc_auth_client import Token, authenticate
 from rich import print as pprint
 
-from .utils import AuthConfig, do_request, logger, requires_authentication
+from .utils import do_request, logger, requires_authentication
 from .utils.databrowser_utils import Config, UserDataHandler
 from .utils.lazy import intake, intake_esm, pd, xr
 from .utils.types import ZarrOptions, ZarrOptionsDict

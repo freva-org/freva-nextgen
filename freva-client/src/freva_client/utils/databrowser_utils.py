@@ -26,7 +26,8 @@ import requests
 import tomli
 import xarray as xr
 
-from ..auth import AuthConfig, authenticate
+from ..auth import authenticate
+from ..utils import AuthConfig
 from . import logger
 
 
