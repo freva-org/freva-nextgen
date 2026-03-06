@@ -22,10 +22,12 @@ import typer.models
 import xarray as xr
 from rich import print as pprint
 
-from freva_client import databrowser
-from freva_client.auth import Auth
-from freva_client.utils import exception_handler, logger
-from freva_client.utils.auth_utils import requires_authentication
+from freva_client import authenticate, databrowser
+from freva_client.utils import (
+    exception_handler,
+    logger,
+    requires_authentication,
+)
 from freva_client.utils.types import ZarrOptionsDict
 
 from .cli_utils import parse_cli_args, print_df, version_callback
@@ -255,7 +257,7 @@ def metadata_search(
     logger.set_verbosity(verbose)
     logger.debug("Search the databrowser")
     if requires_authentication(flavour=flavour, databrowser_url=host):
-        Auth(token_file).authenticate(host=host, _cli=True)
+        authenticate(host=host, token_file=token_file)
     result = databrowser.metadata_search(
         *(facets or []),
         time=time or "",
@@ -492,7 +494,7 @@ def data_search(
     if aggregate is not None or requires_authentication(
         flavour=flavour, zarr=zarr, databrowser_url=host
     ):
-        Auth(token_file).authenticate(host=host, _cli=True)
+        authenticate(host=host, token_file=token_file)
     if aggregate is not None:
         res = result.aggregate(
             aggregate.value,
@@ -655,7 +657,7 @@ def intake_catalogue(
         **(parse_cli_args(search_keys or [])),
     )
     if requires_authentication(flavour=flavour, zarr=zarr, databrowser_url=host):
-        Auth(token_file).authenticate(host=host, _cli=True)
+        authenticate(host=host, token_file=token_file)
     with NamedTemporaryFile(suffix=".json") as temp_f:
         result._create_intake_catalogue_file(str(filename or temp_f.name))
         if not filename:
@@ -802,7 +804,7 @@ def stac_catalogue(
         **(parse_cli_args(search_keys or [])),
     )
     if requires_authentication(flavour=flavour, databrowser_url=host):
-        Auth(token_file).authenticate(host=host, _cli=True)
+        authenticate(host=host, token_file=token_file)
     print(result.stac_catalogue(filename=filename))
 
 
@@ -939,7 +941,7 @@ def count_values(
     )
     facets = facets or []
     if requires_authentication(flavour=flavour, databrowser_url=host):
-        Auth(token_file).authenticate(host=host, _cli=True)
+        authenticate(host=host, token_file=token_file)
     if detail:
         result = databrowser.count_values(
             *facets,
@@ -1027,7 +1029,7 @@ def user_data_add(
     """Add user data into the databrowser."""
     logger.set_verbosity(verbose)
     logger.debug("Checking if the user has the right to add data")
-    Auth(token_file).authenticate(host=host, _cli=True)
+    authenticate(host=host, token_file=token_file)
 
     facet_dict = {}
     if facets:
@@ -1084,7 +1086,7 @@ def user_data_delete(
     """Delete user data from the databrowser."""
     logger.set_verbosity(verbose)
     logger.debug("Checking if the user has the right to delete data")
-    Auth(token_file).authenticate(host=host, _cli=True)
+    authenticate(host=host, token_file=token_file)
 
     search_key_dict = {}
     if search_keys:
@@ -1147,7 +1149,7 @@ def flavour_add(
     logger.debug(
         f"Adding flavour '{name}' with mapping {mapping} and global={global_}"
     )
-    Auth(token_file).authenticate(host=host, _cli=True)
+    authenticate(host=host, token_file=token_file)
     mapping_dict = {}
     for map_item in mapping:
         if "=" not in map_item:
@@ -1216,7 +1218,7 @@ def flavour_update(
     provided will be updated; other keys remain unchanged."""
     logger.set_verbosity(verbose)
     logger.debug(f"Updating flavour '{name}' with mapping {mapping}")
-    Auth(token_file).authenticate(host=host, _cli=True)
+    authenticate(host=host, token_file=token_file)
 
     mapping_dict = {}
     for map_item in mapping:
@@ -1273,7 +1275,7 @@ def flavour_delete(
     user who can delete global flavours."""
     logger.set_verbosity(verbose)
     logger.debug(f"Deleting flavour '{name}'")
-    Auth(token_file).authenticate(host=host, _cli=True)
+    authenticate(host=host, token_file=token_file)
 
     databrowser.flavour(
         action="delete",
@@ -1296,16 +1298,6 @@ def flavour_list(
     ),
     parse_json: bool = typer.Option(
         False, "-j", "--json", help="Parse output in json format."
-    ),
-    token_file: Optional[Path] = typer.Option(
-        None,
-        "--token-file",
-        "-tf",
-        help=(
-            "Instead of authenticating via code based authentication flow "
-            "you can set the path to the json file that contains a "
-            "`refresh token` containing a refresh_token key."
-        ),
     ),
     verbose: int = typer.Option(0, "-v", help="Increase verbosity", count=True),
 ) -> None:

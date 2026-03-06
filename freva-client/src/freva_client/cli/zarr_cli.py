@@ -9,7 +9,7 @@ from typing import Dict, List, Literal, Optional, TypedDict, cast
 import typer
 
 import freva_client.zarr_utils as z_utils
-from freva_client.auth import Auth
+from freva_client.auth import authenticate
 from freva_client.utils import exception_handler, logger
 from freva_client.utils.types import ZarrOptionsDict
 
@@ -201,7 +201,7 @@ def zarr_convert(
         group_by=group_by,
     )
 
-    Auth(token_file).authenticate(host=host, _cli=True)
+    authenticate(host=host, token_file=token_file)
     zarr_options: ZarrOptionsDict = {
         "public": public,
         "ttl_seconds": ttl_seconds,
@@ -266,9 +266,7 @@ def zarr_status(
     logger.debug("Checking status of: %s", url)
     headers: Optional[Dict[str, str]] = None
     if token_file:
-        headers = (
-            Auth(token_file).authenticate(host=host, _cli=True).get("headers")
-        )
+        headers = authenticate(host=host, token_file=token_file).get("headers")
     results = z_utils.status(
         url,
         host=host,

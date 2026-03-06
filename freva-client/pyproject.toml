@@ -22,10 +22,11 @@ classifiers = [
                "Programming Language :: Python :: 3.13",
                "Programming Language :: Python :: 3.14",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
 "appdirs",
 "pyyaml",
+"py-oidc-auth-client",
 "requests",
 "intake_esm",
 "rich",
@@ -44,6 +45,7 @@ Source = "https://github.com/freva-org/freva-nextgen/"
 
 [project.optional-dependencies]
 dev = ["tox"]
+tests = ["namegenerator"]
 
 [tool.flit.sdist]
 include = ["assets/*"]

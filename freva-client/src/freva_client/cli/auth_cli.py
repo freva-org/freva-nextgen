@@ -6,9 +6,8 @@ from typing import Optional
 
 import typer
 
-from freva_client.auth import Auth
+from freva_client import authenticate
 from freva_client.utils import exception_handler, logger
-from freva_client.utils.auth_utils import TOKEN_ENV_VAR, get_default_token_file
 
 from .cli_utils import version_callback
 
@@ -30,7 +29,7 @@ def authenticate_cli(
         ),
     ),
     token_file: str = typer.Option(
-        os.getenv(TOKEN_ENV_VAR, "").strip(),
+        os.getenv("OIDC_TOKEN_FILE", "").strip(),
         "--token-file",
         help=(
             "Instead of authenticating via code based authentication flow "
@@ -60,10 +59,9 @@ def authenticate_cli(
 ) -> None:
     """Create OAuth2 access and refresh token."""
     logger.set_verbosity(verbose)
-    token = Auth(token_file=token_file or get_default_token_file()).authenticate(
+    token = authenticate(
         host=host,
         force=force,
-        _cli=True,
         timeout=timeout,
     )
     print(json.dumps(token, indent=3))

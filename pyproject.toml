@@ -72,7 +72,7 @@ setenv =
     VIRTUALENV_SYSTEM_SITE_PACKAGES=true
     FREVA_NO_RICH_PANELS = 1
 deps = -e ./freva-rest[tests]
-       -e ./freva-client
+       -e ./freva-client[tests]
        -e ./freva-data-portal-worker[full]
        setuptools
        IPython
