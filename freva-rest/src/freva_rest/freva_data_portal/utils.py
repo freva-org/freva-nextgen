@@ -166,8 +166,10 @@ async def read_redis_data(
         timeout += 1
     npolls = 0.0
     dt = 0.5
-    data = cloudpickle.loads((await Cache.get(key)) or b"\x80\x05}\x94.")
-    task_status = LoadStatus(data.get("status", 5))
+    raw = await Cache.get(key)
+    data = cloudpickle.loads(raw or b"\x80\x05}\x94.")
+    # If key doesn't exist yet, job is waiting (3), not gone (5)
+    task_status = LoadStatus(data.get("status", 3 if not raw else 5))
     while task_status.value > 2:
         npolls += dt
         await asyncio.sleep(dt)
