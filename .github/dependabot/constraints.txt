@@ -3,7 +3,7 @@ fastapi==0.135.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.2
 requests==2.32.5
-types-requests==2.32.4.20260107
+types-requests==2.32.4.20260324
 rich==14.3.3
 typer==0.24.1
 uvicorn==0.42.0
