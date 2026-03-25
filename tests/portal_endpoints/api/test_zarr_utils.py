@@ -31,7 +31,7 @@ def test_status_forbidden(
 
     # Force token_field_matches to return False for all calls
     with mocker.patch(
-        "freva_rest.auth.oauth2.token_field_matches", return_value=False
+        "py_oidc_auth.auth_base.token_field_matches", return_value=False
     ):
         res = requests.get(
             f"{test_server}/data-portal/zarr-utils/status",

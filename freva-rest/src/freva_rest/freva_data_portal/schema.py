@@ -1,10 +1,11 @@
 """Schema definitions for the data loader."""
 
+import time
 from typing import Annotated, List, Literal, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import AnyHttpUrl, BaseModel, Field
 
-from freva_rest.auth.presign import MAX_TTL_SECONDS, MIN_TTL_SECONDS
+from ..utils.presign_utils import MAX_TTL_SECONDS, MIN_TTL_SECONDS
 
 
 class ZarrConversion(BaseModel):
@@ -178,3 +179,91 @@ class ZarrConversion(BaseModel):
             examples=[100.5],
         ),
     ] = 16.0
+
+
+class PresignUrlRequest(BaseModel):
+    """Request body for creating a new pre-signed URL."""
+
+    path: str = Field(
+        ...,
+        title="Resource path",
+        description=(
+            "Absolute path of the resource to pre-sign, relative to this API. "
+            "Must start with `/api/freva-nextgen/data-portal/zarr/` "
+            "and typically points to a single Zarr chunk.\n\n"
+            "Example:\n"
+            "`/api/freva-nextgen/data-portal/zarr/123e4567.zarr`"
+        ),
+        examples=["/api/freva-nextgen/data-portal/zarr/123e4567.zarr"],
+    )
+    ttl_seconds: int = Field(
+        600,
+        title="Time-to-live (seconds)",
+        description=(
+            "How long the pre-signed URL should remain valid, in seconds. "
+            "Must be between 60 seconds and the configured maximum "
+            f"({MAX_TTL_SECONDS} seconds)."
+        ),
+        ge=MIN_TTL_SECONDS,
+        le=MAX_TTL_SECONDS,
+        examples=[600, 3600],
+    )
+    method: str = Field(
+        "GET",
+        title="HTTP method",
+        description=(
+            "HTTP method that the URL will be valid for. "
+            "Currently only `GET` is supported."
+        ),
+        pattern="^(?i:get)$",
+        examples=["GET"],
+    )
+
+
+class PresignUrlResponse(BaseModel):
+    """Response body containing a pre-signed URL."""
+
+    url: Annotated[
+        AnyHttpUrl,
+        Field(
+            title="Pre-signed URL",
+            description=(
+                "Full URL including `expires` and `sig` query parameters. "
+                "Anyone with this URL can access the resource until it expires, "
+                "without needing an OAuth2 token."
+            ),
+        ),
+    ]
+    token: Annotated[
+        str,
+        Field(
+            title="Token",
+            description="URL safe encoded path to the data.",
+        ),
+    ]
+    sig: Annotated[
+        str,
+        Field(
+            title="Signature",
+            description="Signature that validates the requested data.",
+        ),
+    ]
+    expires_at: Annotated[
+        float,
+        Field(
+            title="Expiry timestamp",
+            description=(
+                "Unix timestamp (seconds since epoch) when the URL "
+                "becomes invalid."
+            ),
+            examples=[time.time() + 600],
+        ),
+    ]
+    method: Annotated[
+        str,
+        Field(
+            title="HTTP method",
+            description="HTTP method for which the URL is valid (usually `GET`).",
+            examples=["GET"],
+        ),
+    ]

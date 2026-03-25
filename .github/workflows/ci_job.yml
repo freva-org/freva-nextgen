@@ -89,6 +89,7 @@ jobs:
             xarray
             xarray-prism
             cffi
+            py-oidc-auth-fastapi
           condarc: |
             channels:
               - conda-forge

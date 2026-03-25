@@ -1,21 +1,28 @@
 """Definition of endpoints for loading/streaming and manipulating data."""
 
-from typing import Annotated, Dict, List, Optional, Union
+import time
+from typing import Annotated, Dict, List, Optional, Union, cast
 
 import cloudpickle
-from fastapi import Path, Query, Request, Security
-from fastapi.exceptions import HTTPException
+from fastapi import HTTPException, Path, Query, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse, Response
-from fastapi_third_party_auth import IDToken as TokenPayload
-from pydantic import BaseModel, Field
+from py_oidc_auth import IDToken as TokenPayload
+from pydantic import AnyHttpUrl, BaseModel, Field
 
-from freva_rest.auth import auth
-from freva_rest.auth.presign import get_cache_token, verify_token
+from freva_rest.auth import auth, check_token
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
-from freva_rest.utils.base_utils import Cache
+from freva_rest.utils.base_utils import Cache, add_ttl_key_to_db_and_cache
+from freva_rest.utils.presign_utils import (
+    MAX_TTL_SECONDS,
+    MIN_TTL_SECONDS,
+    get_cache_token,
+    normalise_path,
+    payload_from_url,
+    verify_token,
+)
 
-from .schema import ZarrConversion
+from .schema import PresignUrlRequest, PresignUrlResponse, ZarrConversion
 from .utils import (
     STATUS_LOOKUP,
     process_zarr_data,
@@ -93,9 +100,7 @@ class ZarrStatus(BaseModel):
 )
 async def load_files(
     convert: ZarrConversion,
-    current_user: TokenPayload = Security(
-        auth.create_auth_dependency(), scopes=["oidc.claims"]
-    ),
+    current_user: TokenPayload = auth.required(),
 ) -> LoadResponse:
     """Publish a conversion request to the data‑portal worker.
 
@@ -196,9 +201,7 @@ async def get_status(
     _, split, keys = url.removesuffix(".zarr").partition("/data-portal/share/")
     if not _is_public_zarr_url(url):
         auth_header = request.headers.get("authorization")
-        await auth.check_token_from_headers(
-            auth_header, required=True, scopes=["oidc.claims"]
-        )
+        await check_token(auth_header)
 
     try:
         if split and keys:
@@ -250,9 +253,7 @@ async def zarr_html_view(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Security(
-        auth.create_auth_dependency(), scopes=["oidc.claims"]
-    ),
+    current_user: TokenPayload = auth.required(),
 ) -> HTMLResponse:
     """Get HTML representation of the Zarr dataset.
 
@@ -304,9 +305,7 @@ async def zarr_key_data(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = Security(
-        auth.create_auth_dependency(), scopes=["oidc.claims"]
-    ),
+    current_user: TokenPayload = auth.required(),
 ) -> Response:
     """
     Serve arbitrary Zarr metadata or chunk keys.
@@ -382,3 +381,72 @@ async def zarr_key_data_shared(
     """
     payload = await verify_token(token, sig)
     return await process_zarr_data(payload["_id"], zarr_key, timeout=timeout)
+
+
+@app.post(
+    "/api/freva-nextgen/data-portal/share-zarr",
+    tags=["Load data"],
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a pre-signed URL for a Zarr chunk",
+    description=(
+        "Create a short-lived, shareable pre-signed URL for a specific Zarr "
+        "chunk. The caller must authenticate with a normal OAuth2 access "
+        "token.\n\n The returned URL includes `expires` and `sig` query "
+        "parameters. Anyone who knows the URL can perform a `GET` request on "
+        "the target resource until the expiry time is reached, without "
+        "needing an access token."
+    ),
+    responses={
+        201: {
+            "description": "Pre-signed URL created successfully.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "url": (
+                            "https://api.example.org"
+                            "/api/freva-nextgen/data-portal/share/"
+                            "MTc2NjEzNzY5Ng/sunny-chestnut-snail.zarr"
+                            "?expires=1731600000&sig=AbCdEf..."
+                        ),
+                        "expires_at": int(time.time()) + 600,
+                        "method": "GET",
+                    }
+                }
+            },
+        },
+        400: {"description": "Invalid path or parameters."},
+        401: {"description": "Missing or invalid OAuth2 access token."},
+        403: {
+            "description": "Authenticated user is not allowed to pre-sign this "
+            "resource."
+        },
+    },
+)
+async def create_presigned_url(
+    request: Request,
+    body: PresignUrlRequest,
+    token: TokenPayload = auth.required(),
+) -> PresignUrlResponse:
+    """Create a new pre-signed URL.
+
+    This endpoint is intended for authenticated users who want to share
+    short-lived links to individual Zarr chunks. Authorisation rules for
+    *who may pre-sign which chunk* can be implemented based on `token`.
+    """
+    payload = payload_from_url(normalise_path(str(body.path)))
+    # TODO: we should check if the user is allowed to read the dataset.
+    ttl = max(MIN_TTL_SECONDS, min(body.ttl_seconds, MAX_TTL_SECONDS))
+    res = await add_ttl_key_to_db_and_cache(
+        payload["path"], ttl, payload["assembly"]
+    )
+    url = (
+        f"{server_config.proxy}/api/freva-nextgen/data-portal/share/"
+        f"{res['key']}.zarr"
+    )
+    return PresignUrlResponse(
+        url=cast(AnyHttpUrl, url),
+        token=res["token"],
+        sig=res["signature"],
+        expires_at=res["expires_at"].timestamp(),
+        method=body.method.upper(),
+    )

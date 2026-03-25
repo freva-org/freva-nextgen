@@ -85,6 +85,7 @@ session required pam_sss.so\n\
         tomli \
         xarray \
         xarray-prism \
+        py-oidc-auth-fastapi \
         zarr; \
     else \
         echo "Invalid CMD argument: $CMD" && exit 1; \
