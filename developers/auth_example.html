@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>Integrating Authentication into your Web Applications &#8212; Freva Databrowser 2601.0.0 documentation</title>
+    <title>Integrating Authentication into your Web Applications &#8212; Freva Databrowser 2603.1.0 documentation</title>
   
   
   
@@ -49,7 +49,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=d36ad1d6"></script>
+    <script src="../_static/documentation_options.js?v=832ee342"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -135,8 +135,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2601.0.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2601.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2603.1.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2603.1.0 documentation - Home"/>
   
   
 </a></div>
@@ -466,17 +466,6 @@ with the following query parameters:</p>
 <h3>3. Retrieve User Info (optional):<a class="headerlink" href="#retrieve-user-info-optional" title="Link to this heading">#</a></h3>
 <p>Use the generated access token to fetch the user’s identity:</p>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/freva-nextgen/auth/v2/userinfo</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
-<span class="na">host</span><span class="o">:</span> <span class="l">www.freva.dkrz.de</span>
-<span class="na">Authorization</span><span class="o">:</span> <span class="l">Bearer access_token</span>
-</pre></div>
-</div>
-<p>Alternatively, you can use the <code class="docutils literal notranslate"><span class="pre">/systemuser</span></code> endpoint to retrieve more detailed i
-information about the authenticated user. This endpoint is only accessible
-to primary (non-guest) users, making it useful for enforcing access
-restrictions or <cite>authorization</cite> in your application.
-By calling <code class="docutils literal notranslate"><span class="pre">/systemuser</span></code> with a valid access token, you can reliably verify
-whether the current user is a full (primary) account holder.</p>
-<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/freva-nextgen/auth/v2/systemuser</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
 <span class="na">host</span><span class="o">:</span> <span class="l">www.freva.dkrz.de</span>
 <span class="na">Authorization</span><span class="o">:</span> <span class="l">Bearer access_token</span>
 </pre></div>
