@@ -30,6 +30,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 
 from freva_rest import __version__
 
+from .auth import auth_router
 from .config import ServerConfig
 from .logger import logger, reset_loggers
 
@@ -125,6 +126,16 @@ app = FastAPI(
         },
     },
 )
+
+# ---------------------------------------------------------------------------
+# Authentication
+# ---------------------------------------------------------------------------
+
+app.include_router(auth_router)
+
+# ---------------------------------------------------------------------------
+# System
+# ---------------------------------------------------------------------------
 
 
 @app.get("/api/freva-nextgen/help", include_in_schema=False)

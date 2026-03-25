@@ -63,19 +63,6 @@ Use the generated access token to fetch the user's identity:
    host: www.freva.dkrz.de
    Authorization: Bearer access_token
 
-Alternatively, you can use the ``/systemuser`` endpoint to retrieve more detailed i
-information about the authenticated user. This endpoint is only accessible
-to primary (non-guest) users, making it useful for enforcing access
-restrictions or `authorization` in your application.
-By calling ``/systemuser`` with a valid access token, you can reliably verify
-whether the current user is a full (primary) account holder.
-
-.. sourcecode:: http
-
-   GET /api/freva-nextgen/auth/v2/systemuser HTTP/1.1
-   host: www.freva.dkrz.de
-   Authorization: Bearer access_token
-
 
 Dash Example
 ++++++++++++

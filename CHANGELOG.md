@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v2603.1.0]
+### Chnaged
+- Migrate restAPI auth library from fastapi-third-party-auth to py-oidc-auth[fastapi]
+## [v2603.0.0]
+### Chnaged
+- Migrate freva-client auth library to py-oidc-auth-client
 ## [v2601.0.0]
 ### Added
 - Faster redis connections.
