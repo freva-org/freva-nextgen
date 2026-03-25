@@ -61,7 +61,6 @@ async def check_token(authorization: Optional[str]) -> IDToken:
 # Freva-specific endpoints (not provided by py-oidc-auth)
 @auth_router.get(
     "/auth/v2/.well-known/openid-configuration",
-    tags=["Authentication"],
     response_class=JSONResponse,
     responses={
         200: {
@@ -96,7 +95,6 @@ async def well_known_url() -> JSONResponse:
 
 @auth_router.get(
     "/auth/v2/auth-ports",
-    tags=["Authentication"],
     response_model=AuthPorts,
     response_description="Pre-defined ports available for the localhost auth flow.",
 )
