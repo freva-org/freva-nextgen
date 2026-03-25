@@ -27,10 +27,10 @@ from fastapi import FastAPI
 from fastapi.openapi.docs import get_redoc_html
 from fastapi.requests import Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
-from py_oidc_auth import FastApiOIDCAuth
 
 from freva_rest import __version__
 
+from .auth import auth_router
 from .config import ServerConfig
 from .logger import logger, reset_loggers
 
@@ -131,16 +131,7 @@ app = FastAPI(
 # Authentication
 # ---------------------------------------------------------------------------
 
-auth = FastApiOIDCAuth(
-    client_id=server_config.oidc_client_id,
-    client_secret=server_config.oidc_client_secret or None,
-    discovery_url=server_config.oidc_discovery_url,
-    scopes=server_config.oidc_scopes,
-    proxy=server_config.proxy,
-    claims=server_config.oidc_token_claims or None,
-)
-
-app.include_router(auth.create_auth_router(prefix="/api/freva-nextgen"))
+app.include_router(auth_router)
 
 # ---------------------------------------------------------------------------
 # System

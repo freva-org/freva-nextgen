@@ -12,7 +12,7 @@ from py_oidc_auth.exceptions import InvalidRequest
 
 def test_missing_oidc_server(test_server: str, mocker: MockerFixture) -> None:
     """Test the behaviour of a missing oidc server."""
-    from freva_rest.rest import auth as oidc_auth
+    from freva_rest.auth import auth as oidc_auth
 
     async def _noop() -> None:
         pass
@@ -28,13 +28,13 @@ def test_missing_oidc_server(test_server: str, mocker: MockerFixture) -> None:
             headers={"Authorization": "Bearer foo"},
         )
         assert res2.status_code == 200
-        res3 = requests.get(f"{test_server}/.well-known/openid-configuration")
+        res3 = requests.get(f"{test_server}/auth/v2/.well-known/openid-configuration")
         assert res3.status_code == 503
 
 
 def test_well_known_endpoint(test_server: str) -> None:
     """Test the .well-known oidc endpoint when it is available."""
-    res = requests.get(f"{test_server}/.well-known/openid-configuration")
+    res = requests.get(f"{test_server}/auth/v2/.well-known/openid-configuration")
     assert res.status_code == 200
 
 def test_oidc_overview_cached(test_server: str) -> None:

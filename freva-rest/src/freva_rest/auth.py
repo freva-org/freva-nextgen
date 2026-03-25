@@ -4,14 +4,23 @@ from typing import Annotated, List, Optional
 import httpx
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
-from py_oidc_auth import IDToken
+from py_oidc_auth import FastApiOIDCAuth, IDToken
 from py_oidc_auth.exceptions import InvalidRequest
 from pydantic import BaseModel, Field
 
 from .config import ServerConfig
-from .rest import app, auth
 
 server_config = ServerConfig()
+
+auth = FastApiOIDCAuth(
+    client_id=server_config.oidc_client_id,
+    client_secret=server_config.oidc_client_secret or None,
+    discovery_url=server_config.oidc_discovery_url,
+    scopes=server_config.oidc_scopes,
+    proxy=server_config.proxy,
+    claims=server_config.oidc_token_claims or None,
+)
+auth_router = auth.create_auth_router(prefix="/api/freva-nextgen")
 
 
 class AuthPorts(BaseModel):
@@ -50,8 +59,8 @@ async def check_token(authorization: Optional[str]) -> IDToken:
 
 
 # Freva-specific endpoints (not provided by py-oidc-auth)
-@app.get(
-    "/api/freva-nextgen/.well-known/openid-configuration",
+@auth_router.get(
+    "/auth/v2/.well-known/openid-configuration",
     tags=["Authentication"],
     response_class=JSONResponse,
     responses={
@@ -85,8 +94,8 @@ async def well_known_url() -> JSONResponse:
         ) from error
 
 
-@app.get(
-    "/api/freva-nextgen/auth/v2/auth-ports",
+@auth_router.get(
+    "/auth/v2/auth-ports",
     tags=["Authentication"],
     response_model=AuthPorts,
     response_description="Pre-defined ports available for the localhost auth flow.",

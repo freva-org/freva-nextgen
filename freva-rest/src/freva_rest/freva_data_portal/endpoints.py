@@ -9,9 +9,9 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response
 from py_oidc_auth import IDToken as TokenPayload
 from pydantic import AnyHttpUrl, BaseModel, Field
 
-from freva_rest.auth import check_token
+from freva_rest.auth import auth, check_token
 from freva_rest.logger import logger
-from freva_rest.rest import app, auth, server_config
+from freva_rest.rest import app, server_config
 from freva_rest.utils.base_utils import Cache, add_ttl_key_to_db_and_cache
 from freva_rest.utils.presign_utils import (
     MAX_TTL_SECONDS,
