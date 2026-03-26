@@ -1,7 +1,9 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
-
+## [v2603.1.1]
+### Fix
+- ditch fastapi-third-party-auth dependency entirly from Freva-rest
 ## [v2603.1.0]
 ### Chnaged
 - Migrate restAPI auth library from fastapi-third-party-auth to py-oidc-auth[fastapi]
