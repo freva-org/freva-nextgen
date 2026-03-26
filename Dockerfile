@@ -63,7 +63,6 @@ session required pam_sss.so\n\
         cloudpickle \
        "cryptography=45.*" \
         fastapi \
-        fastapi-third-party-auth \
         email-validator \
         httpx \
         jq \
