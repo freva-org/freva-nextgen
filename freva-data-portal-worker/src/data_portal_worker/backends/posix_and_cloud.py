@@ -1,70 +1,24 @@
 """Load data."""
 
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Union
 from urllib.parse import urlparse
 
-import h5netcdf
-import netCDF4
-import rasterio
 import xarray as xr
-import zarr
-
-from data_portal_worker.utils import data_logger
-
-try:
-    import cfgrib
-except (ImportError, RuntimeError):  # pragma: no cover
-    data_logger.warning("Could not import cfgrib, loading GRB files is disabled")
-
-
-def get_xr_engine(file_path: str) -> Optional[str]:
-    """Get the engine, to open the xarray dataset."""
-    try:
-        with netCDF4.Dataset(file_path, mode="r"):
-            return "netcdf4"
-    except Exception:
-        pass
-
-    try:
-        with cfgrib.open_file(file_path):
-            return "cfgrib"  # pragma: no cover
-    except Exception:
-        pass
-    try:
-        _ = zarr.open(file_path, mode="r")
-        return "zarr"
-    except Exception:
-        pass
-
-    try:
-        with rasterio.open(file_path, mode="r"):
-            return "rasterio"
-    except Exception:
-        pass
-
-    try:
-        with h5netcdf.File(file_path, mode="r"):
-            return "h5netcdf"
-    except Exception:
-        pass
-
-    return None
 
 
 def posix_and_cloud(
     inp_file: Union[str, Path], chunk_size: float = 16.0, **kwargs: Any
 ) -> xr.Dataset:
     """Open a dataset with xarray."""
+    engine = "prism"
     inp_str = str(inp_file)
     parsed = urlparse(inp_str)
     target: Union[str, Path]
     target = Path(inp_str) if parsed.scheme in ("", "file") else inp_str
-    engine = get_xr_engine(str(target))
     _ = kwargs.pop("chunks", None)
     for key in ("decode_cf", "use_cftime", "cache", "decode_coords"):
         kwargs[key] = False
+    kwargs["chunks"] = "auto"
     kwargs["engine"] = engine
-    if engine != "h5netcdf":
-        kwargs["chunks"] = "auto"
     return xr.open_dataset(target, **kwargs).unify_chunks()
