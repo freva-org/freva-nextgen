@@ -29,6 +29,7 @@ from redis.exceptions import RedisError
 from redis.retry import Retry
 from xarray.backends.zarr import encode_zarr_variable
 
+from ._cache_manager import CacheScheduler
 from .aggregator import DatasetAggregator, write_grouped_zarr
 from .backends import load_data
 from .rechunker import ChunkOptimizer
@@ -391,12 +392,14 @@ class ProcessQueue(DataLoadFactory):
         """Start the listener daemon."""
         data_logger.info("Starting data-loading daemon")
         pubsub: Optional[PubSub] = None
+        cache_scheduler = CacheScheduler()
         data_logger.info("Broker will listen for messages now")
         while True:
             try:
                 if pubsub is None:
                     pubsub = self.cache.pubsub()
                     pubsub.subscribe(channel)
+                cache_scheduler.tick()
                 message = pubsub.get_message()
                 if message and message["type"] == "message":
                     self.redis_callback(message["data"])

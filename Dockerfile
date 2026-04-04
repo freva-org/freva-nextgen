@@ -53,6 +53,7 @@ session required pam_sss.so\n\
         redis-py \
         requests \
         watchfiles \
+        xarray-prism \
         zarr; \
     elif [ "${CMD}" = "freva-rest-server" ];then\
         PKGNAME=freva-rest && \
@@ -82,6 +83,7 @@ session required pam_sss.so\n\
         uvicorn \
         tomli \
         xarray \
+        xarray-prism \
         py-oidc-auth-fastapi \
         zarr; \
     else \
