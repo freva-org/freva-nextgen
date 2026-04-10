@@ -14,11 +14,13 @@ from typing import (
 )
 from urllib.parse import urlencode
 
+import httpx
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 
 from freva_rest.config import ServerConfig
 from freva_rest.databrowser_api import Solr
+from freva_rest.databrowser_api.services import Flavour
 from freva_rest.logger import logger
 from freva_rest.utils.stac_utils import (
     Asset,
@@ -33,6 +35,7 @@ from freva_rest.utils.stats_utils import store_api_statistics
 from .schema import (
     CONFORMANCE_URLS,
     STAC_VERSION,
+    STACAsset,
     STACCollection,
     STACExtent,
     STACLinks,
@@ -54,14 +57,24 @@ class STACAPI:
         self,
         config: ServerConfig,
         *,
+        flavour: str = "freva",
         limit: int = 12,
         token: Optional[str] = None,
         datetime: Optional[str] = None,
         bbox: Optional[str] = None,
         uniuq_key: Literal["file", "uri"] = "file",
+        _translator: Any = None,
         **query: list[str],
     ) -> None:
         self.config = config
+        self.flavour = flavour
+        self.base_url = f"{config.proxy}/api/freva-nextgen/stacapi/{flavour}"
+        self.translator = _translator
+        self.reverse_lookup: Dict[str, str] = (
+            {v: k for k, v in _translator.forward_lookup.items()}
+            if _translator is not None
+            else {}
+        )
         self.uniq_key = uniuq_key
         self.solr_object = Solr(config, multi_version=False)
         self.stacapi_query = query
@@ -76,6 +89,7 @@ class STACAPI:
         cls,
         config: ServerConfig,
         *,
+        flavour: str = "freva",
         limit: int = 12,
         token: Optional[str] = None,
         datetime: Optional[str] = None,
@@ -89,6 +103,8 @@ class STACAPI:
         ----------
         config : ServerConfig
             Server configuration object.
+        flavour : str, optional
+            The DRS flavour to use for facet name translation.
         limit : int, optional
             Limit for the number of items to return.
         token : str, optional
@@ -117,13 +133,19 @@ class STACAPI:
                     status_code=422, detail="Could not validate input."
                 )
 
+        translator = await Flavour.validate_and_get_flavour(
+            config, flavour, user_name=None
+        )
+
         return cls(
             config=config,
+            flavour=flavour,
             limit=limit,
             token=token,
             datetime=datetime,
             bbox=bbox,
             uniuq_key=uniuq_key,
+            _translator=translator,
             **query,
         )
 
@@ -205,15 +227,14 @@ class STACAPI:
             "links": [
                 {
                     "rel": "self",
-                    "href": self.config.proxy + "/api/freva-nextgen/stacapi",
+                    "href": self.base_url,
                     "type": "application/json",
                     "title": "Landing Page",
                 },
                 {
                     "rel": "conformance",
                     "href": (
-                        self.config.proxy
-                        + "/api/freva-nextgen/stacapi/conformance"
+                        self.base_url + "/conformance"
                     ),
                     "type": "application/json",
                     "title": "Conformance Classes",
@@ -221,24 +242,21 @@ class STACAPI:
                 {
                     "rel": "data",
                     "href": (
-                        self.config.proxy
-                        + "/api/freva-nextgen/stacapi/collections"
+                        self.base_url + "/collections"
                     ),
                     "type": "application/json",
                     "title": "Data Collections",
                 },
                 {
                     "rel": "search",
-                    "href": self.config.proxy
-                    + "/api/freva-nextgen/stacapi/search",
+                    "href": self.base_url + "/search",
                     "type": "application/geo+json",
                     "title": "STAC search",
                     "method": "POST",
                 },
                 {
                     "rel": "search",
-                    "href": self.config.proxy
-                    + "/api/freva-nextgen/stacapi/search",
+                    "href": self.base_url + "/search",
                     "type": "application/geo+json",
                     "title": "STAC search",
                     "method": "GET",
@@ -247,8 +265,7 @@ class STACAPI:
                     "rel": "http://www.opengis.net/def/rel/ogc/1.0/queryables",
                     "type": "application/schema+json",
                     "title": "Queryables",
-                    "href": self.config.proxy
-                    + "/api/freva-nextgen/stacapi/queryables",
+                    "href": self.base_url + "/queryables",
                     "method": "GET",
                 },
                 {
@@ -274,116 +291,196 @@ class STACAPI:
                     {
                         "rel": "child",
                         "href": (
-                            self.config.proxy
-                            + "/api/freva-nextgen/stacapi/collections/"
-                            + collection_id
+                            self.base_url + "/collections/" + collection_id
                         ),
                         "type": "application/json",
                     }
                 )
         return response
 
+    # TODO: For time being this function stays here, but in the
+    # future we should consider to move it to search class
+    async def _fetch_collection_static_metadata(
+        self, collection_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Query the static Solr core for static collection metadata.
+
+        It returns None on any error or if the core / document doesn't exist,
+        which causes get_collection() to fall back to the current defaults
+        to ensure backwards compatibility.
+        """
+        url = (
+            self.config.get_core_url("static") + "/select"
+        )
+        params = {
+            "q": f'id:"{collection_id}"',
+            "rows": "1",
+            "wt": "json",
+        }
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(5)) as client:
+                response = await client.get(url, params=params)
+                response.raise_for_status()
+                docs = response.json().get("response", {}).get("docs", [])
+                return docs[0] if docs else None
+        except Exception as exc:  # pragma: no cover
+            logger.debug(
+                "static core not available or no doc for %s: %s",
+                collection_id,
+                exc,
+            )
+            return None
+
     async def get_collection(self, collection_id: str) -> STACCollection:
         """Get a specific collection."""
-        # TODO: We need to define a new core in Solr which contains the
-        # description of each collection and all other metadata we need
-        # for constructing this. For time being we define them all as
-        # constants, since we don't have any usecase for this yet.
-        # TODO: We need to add assets to the collections
         collection_id = collection_id.lower()
         collection_ids = await self.get_all_project_facets()
         if collection_id not in collection_ids:
             raise HTTPException(
                 status_code=404, detail=f"Collection {collection_id} not found"
             )
+
+        static = await self._fetch_collection_static_metadata(collection_id)
+
+        title = (static or {}).get("title") or collection_id.upper()
+        description = (
+            (static or {}).get("description")
+            or f"Collection {collection_id.upper()}"
+        )
+        license_id = (static or {}).get("license") or "proprietary"
+        license_url = (
+            (static or {}).get("license_url")
+            or "https://opensource.org/license/bsd-3-clause"
+        )
+        keywords = (
+            (static or {}).get("keywords")
+            or [collection_id, "climate", "analysis", "freva"]
+        )
+
+        raw_bbox = (static or {}).get("spatial_bbox")
+        if raw_bbox and len(raw_bbox) == 4:
+            spatial_bbox = [list(raw_bbox)]
+        else:
+            spatial_bbox = [[-180, -90, 180, 90]]
+
+        temporal_start = (static or {}).get("temporal_start") or None
+        temporal_end = (static or {}).get("temporal_end") or None
+
+        assets: Optional[Dict[str, STACAsset]] = None
+        thumbnail_url = (static or {}).get("thumbnail_url")
+        documentation_url = (static or {}).get("documentation_url")
+        collection_self_url = self.base_url + "/collections/" + collection_id
+        assets = {
+            "metadata": STACAsset(
+                href=collection_self_url,
+                title="Collection Metadata",
+                description="Machine-readable STAC collection metadata.",
+                type="application/json",
+                roles=["metadata"],
+            )
+        }
+        if thumbnail_url:
+            thumbnail_type = (static or {}).get("thumbnail_type") or "image/png"
+            assets["thumbnail"] = STACAsset(
+                href=thumbnail_url,
+                title=f"{title} thumbnail",
+                description=f"Preview thumbnail for collection {title}.",
+                type=thumbnail_type,
+                roles=["thumbnail"],
+            )
+        if documentation_url:
+            assets["documentation"] = STACAsset(
+                href=documentation_url,
+                title=f"{title} documentation",
+                description=f"Documentation or DOI landing page for {title}.",
+                type="text/html",
+                roles=["overview"],
+            )
+
+        links = [
+            STACLinks(
+                rel="self",
+                href=collection_self_url,
+                type="application/json",
+                title="Collection",
+                method="GET",
+                merge=True,
+                body=None,
+            ),
+            STACLinks(
+                rel="parent",
+                href=self.base_url + "/",
+                type="application/json",
+                title="Landing Page",
+                method="GET",
+                merge=True,
+                body=None,
+            ),
+            STACLinks(
+                rel="root",
+                href=self.base_url + "/",
+                type="application/json",
+                title="Root",
+                method="GET",
+                merge=True,
+                body=None,
+            ),
+            STACLinks(
+                rel="items",
+                href=collection_self_url + "/items",
+                type="application/geo+json",
+                title="Items",
+                method="GET",
+                merge=True,
+                body=None,
+            ),
+            STACLinks(
+                rel="queryables",
+                href=collection_self_url + "/queryables",
+                type="application/schema+json",
+                title="Queryables",
+                method="GET",
+                merge=True,
+                body=None,
+            ),
+            STACLinks(
+                rel="license",
+                href=license_url,
+                title="License",
+                type="text/html",
+                method="GET",
+                merge=True,
+                body=None,
+            ),
+        ]
+
+        if thumbnail_url:
+            links.append(
+                STACLinks(
+                    rel="preview",
+                    href=thumbnail_url,
+                    type=(static or {}).get("thumbnail_type") or "image/png",
+                    title=f"{title} preview",
+                    method="GET",
+                    merge=False,
+                    body=None,
+                )
+            )
+
         return STACCollection(
             id=collection_id,
             type="Collection",
             stac_version="1.1.0",
-            title=collection_id.upper(),
-            description=f"Collection {collection_id.upper()}",
-            license="proprietary",
+            title=title,
+            description=description,
+            license=license_id,
             summaries=None,
-            # TODO: we need to take care of extend somehow
-            # it seems with None it's still valid
             extent=STACExtent(
-                spatial={"bbox": [[-180, -90, 180, 90]]},
-                temporal={"interval": [[None, None]]},
+                spatial={"bbox": spatial_bbox},
+                temporal={"interval": [[temporal_start, temporal_end]]},
             ),
-            links=[
-                STACLinks(
-                    rel="self",
-                    href=(
-                        self.config.proxy
-                        + "/api/freva-nextgen/stacapi"
-                        + "/collections/"
-                        + collection_id
-                    ),
-                    type="application/json",
-                    title="Collection",
-                    method="GET",
-                    merge=True,
-                    body=None,
-                ),
-                STACLinks(
-                    rel="parent",
-                    href=self.config.proxy + "/api/freva-nextgen/stacapi/",
-                    type="application/json",
-                    title="Landing Page",
-                    method="GET",
-                    merge=True,
-                    body=None,
-                ),
-                STACLinks(
-                    rel="root",
-                    href=self.config.proxy + "/api/freva-nextgen/stacapi/",
-                    type="application/json",
-                    title="Root",
-                    method="GET",
-                    merge=True,
-                    body=None,
-                ),
-                STACLinks(
-                    rel="items",
-                    href=(
-                        self.config.proxy
-                        + "/api/freva-nextgen/stacapi"
-                        + "/collections/"
-                        + collection_id
-                        + "/items"
-                    ),
-                    type="application/geo+json",
-                    title="Items",
-                    method="GET",
-                    merge=True,
-                    body=None,
-                ),
-                STACLinks(
-                    rel="queryables",
-                    href=(
-                        self.config.proxy
-                        + "/api/freva-nextgen/stacapi"
-                        + "/collections/"
-                        + collection_id
-                        + "/queryables"
-                    ),
-                    type="application/schema+json",
-                    title="Queryables",
-                    method="GET",
-                    merge=True,
-                    body=None,
-                ),
-                STACLinks(
-                    rel="license",
-                    href="https://opensource.org/license/bsd-3-clause",
-                    title="BSD 3-Clause 'New' or 'Revised' License",
-                    type="text/html",
-                    method="GET",
-                    merge=True,
-                    body=None,
-                ),
-            ],
-            keywords=[collection_id, "climate", "analysis", "freva"],
+            links=links,
+            keywords=keywords,
             providers=[
                 STACProvider(
                     name="Freva",
@@ -392,10 +489,10 @@ class STACAPI:
                         "evaluation, providing access to various datasets and tools."
                     ),
                     roles=["producer", "processor", "host"],
-                    url=self.config.proxy + "/api/freva-nextgen/stacapi",
+                    url=self.base_url,
                 )
             ],
-            assets=None,
+            assets=assets,
         )
 
     async def get_collections(self) -> AsyncGenerator[str, None]:
@@ -414,7 +511,7 @@ class STACAPI:
         links = [
             STACLinks(
                 rel="self",
-                href=f"{self.config.proxy}/api/freva-nextgen/stacapi/collections",
+                href=f"{self.base_url}/collections",
                 type="application/json",
                 title="Collections",
                 method="GET",
@@ -423,7 +520,7 @@ class STACAPI:
             ),
             STACLinks(
                 rel="parent",
-                href=f"{self.config.proxy}/api/freva-nextgen/stacapi",
+                href=self.base_url,
                 type="application/json",
                 title="Landing Page",
                 method="GET",
@@ -432,7 +529,7 @@ class STACAPI:
             ),
             STACLinks(
                 rel="root",
-                href=f"{self.config.proxy}/api/freva-nextgen/stacapi",
+                href=self.base_url,
                 type="application/json",
                 title="Root",
                 method="GET",
@@ -526,7 +623,11 @@ class STACAPI:
 
         properties = {
             **{
-                k: result.get(k)
+                (
+                    self.translator.forward_lookup.get(k, k)
+                    if self.translator is not None
+                    else k
+                ): result.get(k)
                 for k in self.config.solr_fields
                 if k in result and result.get(k) is not None
             },
@@ -543,7 +644,7 @@ class STACAPI:
             item.properties["start_datetime"] = start_time.isoformat() + "Z"
             item.properties["end_datetime"] = end_time.isoformat() + "Z"
             item.properties["datetime"] = start_time.isoformat() + "Z"
-        base_url = f"{self.config.proxy}/api/freva-nextgen/stacapi"
+        base_url = self.base_url
         links_to_add = [
             {
                 "rel": "self",
@@ -818,8 +919,7 @@ class STACAPI:
         if bbox:
             base_params["bbox"] = bbox
         base_url = (
-            f"{self.config.proxy}/api/freva-nextgen/"
-            f"stacapi/collections/{collection_id}/items"
+            f"{self.base_url}/collections/{collection_id}/items"
         )
 
         filters = [f"project:{collection_id}"]
@@ -926,7 +1026,7 @@ class STACAPI:
                 prop = args[0]
                 value = args[1]
                 if isinstance(prop, dict) and prop.get("property"):
-                    field = prop["property"]
+                    field = self.reverse_lookup.get(prop["property"], prop["property"])
                     # special mappings - collection and id are non-changeable
                     if field == "collection":
                         field = "project"
@@ -950,7 +1050,7 @@ class STACAPI:
                 prop = args[0]
                 value = args[1]
                 if isinstance(prop, dict) and prop.get("property"):
-                    field = prop["property"]
+                    field = self.reverse_lookup.get(prop["property"], prop["property"])
                     if field == "collection":
                         field = "project"
                     elif field == "id":
@@ -972,7 +1072,7 @@ class STACAPI:
                 prop = args[0]
                 value = args[1]
                 if isinstance(prop, dict) and prop.get("property"):
-                    field = prop["property"]
+                    field = self.reverse_lookup.get(prop["property"], prop["property"])
                     if field == "collection":
                         field = "project"
                     return [f"{field}:{{* TO {value}}}"]
@@ -983,7 +1083,7 @@ class STACAPI:
                 prop = args[0]
                 value = args[1]
                 if isinstance(prop, dict) and prop.get("property"):
-                    field = prop["property"]
+                    field = self.reverse_lookup.get(prop["property"], prop["property"])
                     if field == "collection":
                         field = "project"
                     return [f"{field}:[* TO {value}]"]
@@ -994,7 +1094,7 @@ class STACAPI:
                 prop = args[0]
                 value = args[1]
                 if isinstance(prop, dict) and prop.get("property"):
-                    field = prop["property"]
+                    field = self.reverse_lookup.get(prop["property"], prop["property"])
                     if field == "collection":
                         field = "project"
                     return [f"{field}:{{{value} TO *}}"]
@@ -1005,7 +1105,7 @@ class STACAPI:
                 prop = args[0]
                 value = args[1]
                 if isinstance(prop, dict) and prop.get("property"):
-                    field = prop["property"]
+                    field = self.reverse_lookup.get(prop["property"], prop["property"])
                     if field == "collection":
                         field = "project"
                     return [f"{field}:[{value} TO *]"]
@@ -1015,7 +1115,7 @@ class STACAPI:
             if len(args) == 1:
                 prop = args[0]
                 if isinstance(prop, dict) and prop.get("property"):
-                    field = prop["property"]
+                    field = self.reverse_lookup.get(prop["property"], prop["property"])
                     if field == "collection":
                         field = "project"  # pragma: no cover
                     return [f"-{field}:[* TO *]"]
@@ -1105,7 +1205,7 @@ class STACAPI:
         if q:
             q_terms = [term.strip() for term in q.split(",") if term.strip()]
 
-        base_url = f"{self.config.proxy}/api/freva-nextgen/stacapi/search"
+        base_url = f"{self.base_url}/search"
         base_params: Dict[str, Any] = {"limit": limit}
         if collections:
             base_params["collections"] = collections
@@ -1297,16 +1397,21 @@ class STACAPI:
         # Fetch dynamic facets and add them as properties
         facets = await self._fetch_facets()
         for facet_name, facet_values in facets.items():
-            if facet_name not in properties:
-                properties[facet_name] = {
-                    "description": f"Search facet: {facet_name}",
+            translated = (
+                self.translator.forward_lookup.get(facet_name, facet_name)
+                if self.translator is not None
+                else facet_name
+            )
+            if translated not in properties:
+                properties[translated] = {
+                    "description": f"Search facet: {translated}",
                     "type": "string",
                     "enum": facet_values,
                 }
 
         queryables_schema = {
             "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "$id": f"{self.config.proxy}/api/freva-nextgen/stacapi/queryables",
+            "$id": f"{self.base_url}/queryables",
             "type": "object",
             "title": "Queryables for Freva STAC-API",
             "description": (
@@ -1336,8 +1441,7 @@ class STACAPI:
         collection_queryables.update(
             {
                 "$id": (
-                    f"{self.config.proxy}/api/freva-nextgen/"
-                    f"stacapi/collections/{collection_id}/queryables"
+                    f"{self.base_url}/collections/{collection_id}/queryables"
                 ),
                 "title": f"Queryables for Collection {collection_id}",
                 "description": (

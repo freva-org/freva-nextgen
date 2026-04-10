@@ -124,6 +124,16 @@ class ConformanceResponse(BaseModel):
     )
 
 
+class STACAsset(BaseModel):
+    """STAC Asset model for collection-level assets."""
+
+    href: str = Field(..., description="Asset URL")
+    title: Optional[str] = Field(None, description="Asset title")
+    description: Optional[str] = Field(None, description="Asset description")
+    type: Optional[str] = Field(None, description="Media type")
+    roles: Optional[List[str]] = Field(None, description="Asset roles")
+
+
 class STACCollection(BaseModel):
     """STAC Collection response model."""
 
@@ -144,7 +154,7 @@ class STACCollection(BaseModel):
     summaries: Optional[Dict[str, Any]] = Field(
         None, description="Collection summaries"
     )
-    assets: Optional[Dict[str, Any]] = Field(
+    assets: Optional[Dict[str, "STACAsset"]] = Field(
         None, description="Collection assets"
     )
     model_config = ConfigDict(

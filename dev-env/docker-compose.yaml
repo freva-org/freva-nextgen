@@ -11,6 +11,7 @@ services:
     volumes:
       - ./config/solr/managed-schema.xml:/opt/solr/managed-schema.xml:ro
       - ./config/solr/synonyms.txt:/opt/solr/synonyms.txt:ro
+      - ./static-managed-schema.xml:/opt/solr/static-managed-schema.xml:ro
       - ./create_cores.sh:/docker-entrypoint-initdb.d/create_cores.sh:ro
     hostname: solr
     command: ["solr-foreground", "--user-managed"]

@@ -1,0 +1,58 @@
+[
+  {
+    "id": "cmip6",
+    "title": "CMIP6: Coupled Model Intercomparison Project Phase 6",
+    "description": "Multi-model ensemble of global climate simulations produced under the Coupled Model Intercomparison Project Phase 6 (CMIP6). Covers historical and future scenario experiments across a wide range of models and institutions.",
+    "license": "CC-BY-4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "keywords": ["cmip6", "climate", "scenarios", "global", "atmosphere", "ocean"],
+    "thumbnail_url": "https://s3.eu-dkrz-1.dkrz.cloud/freva/static_thumbnails/cmip.png",
+    "thumbnail_type": "image/png",
+    "documentation_url": "https://pcmdi.llnl.gov/CMIP6/",
+    "spatial_bbox": [-180.0, -90.0, 180.0, 90.0],
+    "temporal_start": "1850-01-01T00:00:00Z",
+    "temporal_end": "2100-12-31T23:59:59Z"
+  },
+  {
+    "id": "nextgems",
+    "title": "nextGEMS: Next Generation Earth Modelling Systems",
+    "description": "High-resolution global coupled climate simulations produced under the nextGEMS project. Features kilometre-scale atmosphere and ocean models enabling detailed representation of storms, ocean eddies, and other fine-scale processes.",
+    "license": "CC-BY-4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "keywords": ["nextgems", "high-resolution", "climate", "global", "atmosphere", "ocean"],
+    "thumbnail_url": "https://s3.eu-dkrz-1.dkrz.cloud/freva/static_thumbnails/nextgems.png",
+    "thumbnail_type": "image/png",
+    "documentation_url": "https://nextgems-h2020.eu/",
+    "spatial_bbox": [-180.0, -90.0, 180.0, 90.0],
+    "temporal_start": "1850-01-01T00:00:00Z",
+    "temporal_end": "2100-12-31T23:59:59Z"
+  },
+  {
+    "id": "cordex",
+    "title": "CORDEX: Coordinated Regional Climate Downscaling Experiment",
+    "description": "High-resolution regional climate model simulations produced under the Coordinated Regional Climate Downscaling Experiment (CORDEX). Provides dynamically downscaled projections for multiple domains worldwide.",
+    "license": "CC-BY-4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "keywords": ["cordex", "regional", "downscaling", "climate", "rcm"],
+    "thumbnail_url": "https://s3.eu-dkrz-1.dkrz.cloud/freva/static_thumbnails/cordex.jpg",
+    "thumbnail_type": "image/jpeg",
+    "documentation_url": "https://cordex.org/",
+    "spatial_bbox": [-180.0, -90.0, 180.0, 90.0],
+    "temporal_start": "1950-01-01T00:00:00Z",
+    "temporal_end": "2100-12-31T23:59:59Z"
+  },
+  {
+    "id": "observations",
+    "title": "Observations: Gridded Observational Datasets",
+    "description": "Collection of gridded observational and reanalysis datasets used as reference data for model evaluation and bias correction.",
+    "license": "proprietary",
+    "license_url": "",
+    "keywords": ["observations", "reanalysis", "reference", "evaluation"],
+    "thumbnail_url": "https://s3.eu-dkrz-1.dkrz.cloud/freva/static_thumbnails/observations.png",
+    "thumbnail_type": "image/png",
+    "documentation_url": "",
+    "spatial_bbox": [-180.0, -90.0, 180.0, 90.0],
+    "temporal_start": "1900-01-01T00:00:00Z",
+    "temporal_end": null
+  }
+]

@@ -28,14 +28,14 @@ from .schema import (
 
 
 @app.get(
-    "/api/freva-nextgen/stacapi/",
+    "/api/freva-nextgen/stacapi/{flavour}/",
     tags=["STAC API"],
     status_code=200,
     response_model=LandingPageResponse,
     responses={503: {"description": "Search backend error"}},
     response_class=JSONResponse,
 )
-async def landing_page() -> JSONResponse:
+async def landing_page(flavour: str = "freva") -> JSONResponse:
     """STAC API landing page declaration.
 
     This endpoint provides the landing page of the STAC API,
@@ -43,22 +43,29 @@ async def landing_page() -> JSONResponse:
     description, and links to collections and other resources.
     The landing page serves as an entry point for users to
     explore the available collections and items in the STAC API.
+
+    The ``flavour`` path parameter selects the DRS standard used to name
+    facets inside STAC items (e.g. ``freva``, ``cmip6``, ``cmip5``,
+    ``cordex``).  Custom flavours added by an administrator are also
+    accepted.
     """
-    stac_instance = STACAPI(server_config)
+    stac_instance = await STACAPI.validate_parameters(
+        server_config, flavour=flavour
+    )
     await stac_instance.store_results(0, 200, "landing_page", {})
     response = await stac_instance.get_landing_page()
     return JSONResponse(response)
 
 
 @app.get(
-    "/api/freva-nextgen/stacapi/conformance",
+    "/api/freva-nextgen/stacapi/{flavour}/conformance",
     tags=["STAC API"],
     status_code=200,
     response_model=ConformanceResponse,
     responses={503: {"description": "Search backend error"}},
     response_class=JSONResponse,
 )
-async def conformance() -> JSONResponse:
+async def conformance(flavour: str = "freva") -> JSONResponse:
     """STAC API conformance declaration.
 
     This endpoint returns the conformance classes that the STAC API
@@ -70,22 +77,24 @@ async def conformance() -> JSONResponse:
 
 
 @app.get(
-    "/api/freva-nextgen/stacapi/collections",
+    "/api/freva-nextgen/stacapi/{flavour}/collections",
     tags=["STAC API"],
     status_code=200,
     response_model=CollectionsResponse,
     responses={503: {"description": "Search backend error"}},
     response_class=PlainTextResponse,
 )
-async def collections() -> StreamingResponse:
+async def collections(flavour: str = "freva") -> StreamingResponse:
     """List all collections in the STAC API.
 
-    This endpoint retrieves a list of all collections available in the STAC API.
     Each collection represents a group of related items and provides metadata
     about the collection, including its ID, title, description, and spatial
-    and temporal extents.
+    and temporal extents.  Item properties inside each collection are named
+    according to the chosen ``flavour``.
     """
-    stacapi_instance = STACAPI(server_config)
+    stacapi_instance = await STACAPI.validate_parameters(
+        server_config, flavour=flavour
+    )
     await stacapi_instance.store_results(0, 200, "collections", {})
     return StreamingResponse(
         stacapi_instance.get_collections(),
@@ -94,7 +103,7 @@ async def collections() -> StreamingResponse:
 
 
 @app.get(
-    "/api/freva-nextgen/stacapi/collections/{collection_id}",
+    "/api/freva-nextgen/stacapi/{flavour}/collections/{collection_id}",
     tags=["STAC API"],
     status_code=200,
     response_model=STACCollection,
@@ -104,24 +113,30 @@ async def collections() -> StreamingResponse:
     },
     response_class=JSONResponse,
 )
-async def collection(collection_id: str) -> JSONResponse:
+async def collection(
+    collection_id: str,
+    flavour: str = "freva",
+) -> JSONResponse:
     """Get a specific collection.
 
-    This endpoint retrieves a specific collection from the STAC API.
-    The collection is identified by its ID.
+    The collection is identified by its ID.  Item property names within the
+    collection are presented in the chosen ``flavour``'s DRS vocabulary.
     """
-    stacapi_instance = STACAPI(server_config)
+    stacapi_instance = await STACAPI.validate_parameters(
+        server_config, flavour=flavour
+    )
     await stacapi_instance.store_results(
         0, 200, "collection", {"collection_id": collection_id}
     )
-    collection = await stacapi_instance.get_collection(collection_id)
+    collection_obj = await stacapi_instance.get_collection(collection_id)
     return JSONResponse(
-        collection.model_dump(exclude_none=True), media_type="application/json"
+        collection_obj.model_dump(exclude_none=True),
+        media_type="application/json",
     )
 
 
 @app.get(
-    "/api/freva-nextgen/stacapi/collections/{collection_id}/items",
+    "/api/freva-nextgen/stacapi/{flavour}/collections/{collection_id}/items",
     tags=["STAC API"],
     status_code=200,
     response_model=ItemCollectionResponse,
@@ -134,6 +149,7 @@ async def collection(collection_id: str) -> JSONResponse:
 async def collection_items(
     request: Request,
     collection_id: str,
+    flavour: str = "freva",
     limit: int = Query(10, ge=1, le=1000),
     token: Optional[str] = Query(
         None,
@@ -173,12 +189,13 @@ async def collection_items(
 ) -> StreamingResponse:
     """Get items from a specific collection.
 
-    This endpoint retrieves items from a specific collection in the STAC API.
-    The collection is identified by its ID, and the items can be filtered
-    using various query parameters such as limit, token, datetime, and bbox.
+    Items can be filtered using various query parameters such as ``limit``,
+    ``token``, ``datetime``, and ``bbox``.  Each item's properties are named
+    according to the chosen ``flavour``'s DRS vocabulary.
     """
     stac_instance = await STACAPI.validate_parameters(
         config=server_config,
+        flavour=flavour,
         limit=limit,
         token=token,
         datetime=datetime,
@@ -188,6 +205,7 @@ async def collection_items(
     )
     query_params = {
         "collection_id": collection_id,
+        "flavour": flavour,
         "limit": limit,
         "token": token,
         "datetime": datetime,
@@ -203,7 +221,7 @@ async def collection_items(
 
 
 @app.get(
-    "/api/freva-nextgen/stacapi/collections/{collection_id}/items/{item_id}",
+    "/api/freva-nextgen/stacapi/{flavour}/collections/{collection_id}/items/{item_id}",
     tags=["STAC API"],
     status_code=200,
     response_model=STACItem,
@@ -216,18 +234,21 @@ async def collection_items(
 async def collection_item(
     collection_id: str,
     item_id: str,
+    flavour: str = "freva",
 ) -> JSONResponse:
     """Get a specific item from a collection.
 
-    This endpoint retrieves a specific item from a collection in the STAC API.
-    The collection is identified by its ID, and the item is identified by its ID.
+    The item's properties are presented in the chosen ``flavour``'s DRS
+    vocabulary (e.g. ``activity_id`` instead of ``project`` for cmip6).
     """
-    stac_instance = STACAPI(server_config)
+    stac_instance = await STACAPI.validate_parameters(
+        server_config, flavour=flavour
+    )
     await stac_instance.store_results(
         0,
         200,
         "collection_item",
-        {"collection_id": collection_id, "item_id": item_id},
+        {"collection_id": collection_id, "item_id": item_id, "flavour": flavour},
     )
     item = await stac_instance.get_collection_item(collection_id, item_id)
     return JSONResponse(
@@ -237,7 +258,7 @@ async def collection_item(
 
 
 @app.get(
-    "/api/freva-nextgen/stacapi/search",
+    "/api/freva-nextgen/stacapi/{flavour}/search",
     tags=["STAC API"],
     status_code=200,
     response_model=ItemCollectionResponse,
@@ -249,6 +270,7 @@ async def collection_item(
 )
 async def search_get(
     request: Request,
+    flavour: str = "freva",
     collections: Optional[str] = Query(
         None,
         title="Collections",
@@ -326,11 +348,14 @@ async def search_get(
 ) -> StreamingResponse:
     """STAC API search endpoint (GET).
 
-    This endpoint allows searching across all collections using query parameters.
-    It supports spatial, temporal, and property-based filtering of STAC items.
+    This endpoint allows searching across all collections using query
+    parameters.  It supports spatial, temporal, and property-based filtering
+    of STAC items.  Item properties are returned using the chosen
+    ``flavour``'s DRS vocabulary.
     """
     stac_instance = await STACAPI.validate_parameters(
         config=server_config,
+        flavour=flavour,
         limit=limit,
         token=token,
         datetime=datetime,
@@ -339,6 +364,7 @@ async def search_get(
         **STACAPISchema.process_parameters(request),
     )
     query_params = {
+        "flavour": flavour,
         "collections": collections,
         "ids": ids,
         "bbox": bbox,
@@ -366,7 +392,7 @@ async def search_get(
 
 
 @app.post(
-    "/api/freva-nextgen/stacapi/search",
+    "/api/freva-nextgen/stacapi/{flavour}/search",
     tags=["STAC API"],
     status_code=200,
     response_model=ItemCollectionResponse,
@@ -378,12 +404,17 @@ async def search_get(
 )
 async def search_post(
     request: Request,
+    flavour: str = "freva",
     body: SearchPostRequest = Body(...),
 ) -> StreamingResponse:
-    """STAC API search endpoint (POST)"""
+    """STAC API search endpoint (POST).
 
+    Item properties in the response are returned under the chosen
+    ``flavour``'s DRS vocabulary.
+    """
     stac_instance = await STACAPI.validate_parameters(
         config=server_config,
+        flavour=flavour,
         limit=body.limit or 10,
         token=body.token,
         datetime=body.datetime,
@@ -393,6 +424,7 @@ async def search_post(
     )
 
     query_params = {
+        "flavour": flavour,
         "collections": body.collections,
         "ids": body.ids,
         "bbox": body.bbox,
@@ -407,7 +439,6 @@ async def search_post(
             collections=body.collections,
             ids=body.ids,
             bbox=body.bbox,
-            # intersects=body.intersects,
             datetime=body.datetime,
             limit=body.limit or 10,
             token=body.token,
@@ -422,27 +453,29 @@ async def search_post(
 
 
 @app.get(
-    "/api/freva-nextgen/stacapi/queryables",
+    "/api/freva-nextgen/stacapi/{flavour}/queryables",
     tags=["STAC API"],
     status_code=200,
     response_model=QueryablesResponse,
     responses={503: {"description": "Search backend error"}},
     response_class=JSONResponse,
 )
-async def queryables() -> JSONResponse:
+async def queryables(flavour: str = "freva") -> JSONResponse:
     """Global queryables endpoint.
 
-    This endpoint returns the queryables that can be used in filter expressions
-    across all collections. It returns a JSON Schema document describing the
-    available properties that can be used for filtering.
+    Returns the queryable properties that can be used in filter expressions
+    across all collections.  Property names are given in the chosen
+    ``flavour``'s DRS vocabulary.
     """
-    stac_instance = STACAPI(server_config)
+    stac_instance = await STACAPI.validate_parameters(
+        server_config, flavour=flavour
+    )
     response = await stac_instance.get_queryables()
     return JSONResponse(response, media_type="application/schema+json")
 
 
 @app.get(
-    "/api/freva-nextgen/stacapi/collections/{collection_id}/queryables",
+    "/api/freva-nextgen/stacapi/{flavour}/collections/{collection_id}/queryables",
     tags=["STAC API"],
     status_code=200,
     response_model=QueryablesResponse,
@@ -452,27 +485,31 @@ async def queryables() -> JSONResponse:
     },
     response_class=JSONResponse,
 )
-async def collection_queryables(collection_id: str) -> JSONResponse:
+async def collection_queryables(
+    collection_id: str,
+    flavour: str = "freva",
+) -> JSONResponse:
     """Collection-specific queryables endpoint.
 
-    This endpoint returns the queryables that can be used in filter expressions
-    for a specific collection. It returns a JSON Schema document describing the
-    available properties that can be used for filtering within that collection.
+    Returns the queryable properties for a specific collection.  Property
+    names are given in the chosen ``flavour``'s DRS vocabulary.
     """
-    stac_instance = STACAPI(server_config)
+    stac_instance = await STACAPI.validate_parameters(
+        server_config, flavour=flavour
+    )
     response = await stac_instance.get_collection_queryables(collection_id)
     return JSONResponse(response, media_type="application/schema+json")
 
 
 @app.get(
-    "/api/freva-nextgen/stacapi/_mgmt/ping",
+    "/api/freva-nextgen/stacapi/{flavour}/_mgmt/ping",
     tags=["STAC API"],
     status_code=200,
     response_model=PingResponse,
     responses={200: {"description": "Successful Response"}},
     response_class=JSONResponse,
 )
-async def ping() -> JSONResponse:
+async def ping(flavour: str = "freva") -> JSONResponse:
     """
     Liveliness/readiness probe.
     """

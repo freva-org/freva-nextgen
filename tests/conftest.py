@@ -39,7 +39,7 @@ from data_portal_worker.load_data import RedisCacheFactory as Cache
 from freva_client.utils import logger
 from freva_rest.api import app
 from freva_rest.config import ServerConfig
-from freva_rest.databrowser_api.mock import read_data
+from freva_rest.databrowser_api.mock import read_data, read_static
 from freva_rest.logger import reset_loggers
 
 
@@ -48,6 +48,7 @@ def load_data() -> None:
     conf = ServerConfig(debug=True)
     for core in conf.solr_cores:
         asyncio.run(read_data(core, conf.solr_url))
+    asyncio.run(read_static(conf.solr_url))
 
 
 def run_test_server(port: int) -> None:

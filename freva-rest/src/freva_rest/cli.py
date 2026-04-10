@@ -291,10 +291,11 @@ def cli(argv: Optional[List[str]] = None) -> None:
                 defaults.setdefault(f"API_{name}", str(value or ""))
     defaults = {k: v for k, v in defaults.items() if v}
     if args.dev:
-        from freva_rest.databrowser_api.mock import read_data
+        from freva_rest.databrowser_api.mock import read_data, read_static
 
         for core in cfg.solr_cores:
             asyncio.run(read_data(core, cfg.solr_url))
+        asyncio.run(read_static(cfg.solr_url))
     workers = {False: args.n_workers, True: None}
     logging_config = deepcopy(LOGGING_CONFIG)
     level = {

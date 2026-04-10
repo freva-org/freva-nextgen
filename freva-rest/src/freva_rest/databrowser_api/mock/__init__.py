@@ -21,3 +21,12 @@ async def read_data(core: str, uri: str) -> None:
                 await asyncio.sleep(1)
             else:
                 raise
+
+
+async def read_static(uri: str) -> None:
+    """Seed the static core"""
+    try:
+        await read_data("static", uri)
+    except httpx.HTTPStatusError as e:  # pragma: no cover
+        if e.response.status_code not in (404, 405):
+            raise
