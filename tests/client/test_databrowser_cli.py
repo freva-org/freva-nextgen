@@ -15,7 +15,6 @@ import zipfile
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-import namegenerator
 from py_oidc_auth_client import Token
 from pytest import LogCaptureFixture
 from pytest_mock import MockerFixture
@@ -665,7 +664,8 @@ class TestFlavourCommands:
             "use_token"
         )
 
-        flavour_name = namegenerator.gen()
+        from freva_rest.utils.namegenerator import generate_names
+        flavour_name = generate_names()
         res = cli_runner.invoke(
             app,
             [

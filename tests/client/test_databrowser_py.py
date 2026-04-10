@@ -12,7 +12,6 @@ Authentication is handled via the ``mock_authenticate`` /
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import namegenerator
 import pandas as pd
 import pytest
 from py_oidc_auth_client import Token
@@ -520,7 +519,8 @@ class TestFlavourOperations:
     ) -> None:
         """Test the full lifecycle: list, add, update, rename, delete."""
         # list existing flavours
-        flavour_name = namegenerator.gen()
+        from freva_rest.utils.namegenerator import generate_names
+        flavour_name = generate_names()
         mocker.patch("freva_client.utils.choose_token_strategy").return_value = (
             "use_token"
         )
