@@ -70,7 +70,7 @@ def test_scheduler_fires_again_after_interval(
     scheduler.tick()          
     # rewind _last_run to simulate elapsed interval without sleep
     # and without touching the global _CLEANUP_INTERVAL
-    scheduler._last_run = 0.0
+    scheduler._last_run = float("-inf")
     # fires again
     scheduler.tick()          
     assert len(calls) == 2
