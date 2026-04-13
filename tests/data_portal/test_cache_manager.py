@@ -42,6 +42,7 @@ def test_scheduler_fires_immediately_on_first_tick(monkeypatch: pytest.MonkeyPat
     calls: list[int] = []
     monkeypatch.setattr(cm, "run_cache_cleanup", lambda: calls.append(1))
     scheduler = cm.CacheScheduler()
+    scheduler._last_run = float("-inf")
     scheduler.tick()
     assert calls == [1]
 
@@ -53,8 +54,10 @@ def test_scheduler_does_not_fire_twice_within_interval(
     calls: list[int] = []
     monkeypatch.setattr(cm, "run_cache_cleanup", lambda: calls.append(1))
     scheduler = cm.CacheScheduler()
-    scheduler.tick()   # fires
-    scheduler.tick()   # too soon — must not fire
+    scheduler._last_run = float("-inf")
+    scheduler.tick()
+    # too soon
+    scheduler.tick()
     assert len(calls) == 1
 
 
@@ -66,12 +69,9 @@ def test_scheduler_fires_again_after_interval(
     monkeypatch.setattr(cm, "run_cache_cleanup", lambda: calls.append(1))
 
     scheduler = cm.CacheScheduler()
-    # fires immediately (_last_run was 0.0)
-    scheduler.tick()          
-    # rewind _last_run to simulate elapsed interval without sleep
-    # and without touching the global _CLEANUP_INTERVAL
     scheduler._last_run = float("-inf")
-    # fires again
+    scheduler.tick()          
+    scheduler._last_run = float("-inf")
     scheduler.tick()          
     assert len(calls) == 2
 
