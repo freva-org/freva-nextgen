@@ -19,7 +19,6 @@ def posix_and_cloud(
     _ = kwargs.pop("chunks", None)
     for key in ("decode_cf", "cache", "decode_coords"):
         kwargs[key] = False
-    kwargs["decode_times"] = xr.coders.CFDatetimeCoder(use_cftime=False)
     kwargs["chunks"] = "auto"
     kwargs["engine"] = engine
     return xr.open_dataset(target, **kwargs).unify_chunks()
