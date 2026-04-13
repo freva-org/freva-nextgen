@@ -23,7 +23,6 @@ dependencies = [
 "cloudpickle",
 "email-validator",
 "fastapi",
-"fastapi-third-party-auth",
 "pymongo",
 "pyjwt",
 "python-dotenv",
