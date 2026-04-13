@@ -45,7 +45,7 @@ Source = "https://github.com/freva-org/freva-nextgen/"
 
 [project.optional-dependencies]
 dev = ["tox"]
-tests = ["namegenerator"]
+tests = []
 
 [tool.flit.sdist]
 include = ["assets/*"]
