@@ -1,6 +1,9 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [v2604.0.0]
+### Change
+- Data loader now depends on xarray-prism for handling the data
 ## [v2603.1.1]
 ### Fix
 - ditch fastapi-third-party-auth dependency entirly from Freva-rest
