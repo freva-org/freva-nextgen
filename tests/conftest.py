@@ -127,12 +127,8 @@ def get_data_loader_config() -> bytes:
                 "user": os.getenv("API_REDIS_USER", ""),
                 "passwd": os.getenv("API_REDIS_PASSWORD", ""),
                 "host": os.getenv("API_REDIS_HOST", ""),
-                "ssl_cert": Path(
-                    os.getenv("API_REDIS_SSL_CERTFILE", "")
-                ).read_text(),
-                "ssl_key": Path(
-                    os.getenv("API_REDIS_SSL_KEYFILE", "")
-                ).read_text(),
+                "ssl_cert": Path(os.getenv("API_REDIS_SSL_CERTFILE", "")).read_text(),
+                "ssl_key": Path(os.getenv("API_REDIS_SSL_KEYFILE", "")).read_text(),
             }
         ).encode("utf-8")
     )
@@ -149,9 +145,7 @@ def shutdown_data_loader() -> None:
     """Publish a shutdown message to the cache and flush it."""
     cache = Cache()
     for _ in range(5):
-        cache.publish(
-            "data-portal", json.dumps({"shutdown": True}).encode("utf-8")
-        )
+        cache.publish("data-portal", json.dumps({"shutdown": True}).encode("utf-8"))
         time.sleep(1)
     cache.flushdb()
 
@@ -181,9 +175,7 @@ def setup_server() -> Iterator[str]:
     thread1.daemon = True
     thread1.start()
     time.sleep(1)
-    thread2 = threading.Thread(
-        target=run_loader_process, args=(find_free_port(),)
-    )
+    thread2 = threading.Thread(target=run_loader_process, args=(find_free_port(),))
     thread2.daemon = True
     thread2.start()
     time.sleep(5)
@@ -198,9 +190,7 @@ def user_cache_dir() -> Iterator[str]:
     patched to point to it. The test can then write tokens into this file.
     """
     with NamedTemporaryFile(suffix=".json") as temp_f:
-        with mock.patch.dict(
-            os.environ, {"OIDC_TOKEN_FILE": temp_f.name}, clear=False
-        ):
+        with mock.patch.dict(os.environ, {"OIDC_TOKEN_FILE": temp_f.name}, clear=False):
             yield temp_f.name
 
 
@@ -289,9 +279,7 @@ def valid_eval_conf_file() -> Iterator[Path]:
             _prep_env(EVALUATION_SYSTEM_CONFIG_FILE=str(eval_file)),
             clear=True,
         ):
-            with mock.patch(
-                "sysconfig.get_path", lambda x, y="foo": str(temp_dir)
-            ):
+            with mock.patch("sysconfig.get_path", lambda x, y="foo": str(temp_dir)):
                 yield eval_file
 
 
@@ -301,16 +289,14 @@ def invalid_eval_conf_file() -> Iterator[Path]:
     with TemporaryDirectory() as temp_dir:
         eval_file = Path(temp_dir) / "eval.conf"
         eval_file.write_text(
-            "[foo]\n" "solr.host = http://localhost\n" "databrowser.port = 8080"
+            "[foo]\nsolr.host = http://localhost\ndatabrowser.port = 8080"
         )
         with mock.patch.dict(
             os.environ,
             _prep_env(EVALUATION_SYSTEM_CONFIG_FILE=str(eval_file)),
             clear=True,
         ):
-            with mock.patch(
-                "sysconfig.get_path", lambda x, y="foo": str(temp_dir)
-            ):
+            with mock.patch("sysconfig.get_path", lambda x, y="foo": str(temp_dir)):
                 yield eval_file
 
 
@@ -359,61 +345,57 @@ def flavour_server(test_server: str) -> Iterator[str]:
 @pytest.fixture(scope="function")
 def auth(test_server: str):
     """Factory to create auth tokens for different user types."""
+    from getpass import getuser
+    from freva_rest.auth import token_issuer
 
     def _create_auth(user_type: str = "user") -> Token:
-        from getpass import getuser
-
         server_config = ServerConfig()
         user_configs = {
             "user": {"username": "janedoe", "password": "janedoe123"},
             "admin": {"username": getuser(), "password": "secret"},
         }
         config = user_configs.get(user_type, user_configs["user"])
-        data = {
+
+        # Get IDP token to extract real claims (sub, roles etc.)
+        idp_data = {
             "client_id": server_config.oidc_client_id or "",
             "client_secret": server_config.oidc_client_secret or "",
             "grant_type": "password",
             **config,
         }
-        res = requests.post(
+        idp_res = requests.post(
             server_config.oidc_overview["token_endpoint"],
-            data={k: v for (k, v) in data.items() if v.strip()},
+            data={k: v for k, v in idp_data.items() if v.strip()},
+        ).json()
+
+        # Mint a real freva JWT directly — no HTTP round-trip needed in tests
+        import jwt as pyjwt
+
+        idp_claims = pyjwt.decode(
+            idp_res["access_token"],
+            options={"verify_signature": False, "verify_exp": False},
         )
-        return _build_token(res.json())
+        freva_jwt, _ = token_issuer.mint(
+            sub=idp_claims["sub"],
+            email=idp_claims.get("email"),
+            roles=idp_claims.get("realm_access", {}).get("roles", []),
+        )
+        import datetime
+
+        now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+        return Token(
+            access_token=freva_jwt,
+            token_type="Bearer",
+            expires=now + 3600,
+            refresh_token=freva_jwt,
+            refresh_expires=now + 7200,
+            scope=idp_res.get("scope", ""),
+            headers={"Authorization": f"Bearer {freva_jwt}"},
+        )
 
     user_token = _create_auth("user")
     admin_token = _create_auth("admin")
-
     return {**user_token, "admin": admin_token}
-
-
-def _build_token(token_data: dict) -> Token:
-    """Helper to build a Token object from a JSON response."""
-    now = datetime.datetime.now(datetime.timezone.utc).timestamp()
-    expires_at = (
-        token_data.get("exp")
-        or token_data.get("expires")
-        or token_data.get("expires_at")
-        or now + token_data.get("expires_in", 180)
-    )
-    refresh_expires_at = (
-        token_data.get("refresh_exp")
-        or token_data.get("refresh_expires")
-        or token_data.get("refresh_expires_at")
-        or now + token_data.get("refresh_expires_in", 180)
-    )
-
-    return Token(
-        access_token=token_data["access_token"],
-        token_type=token_data["token_type"],
-        expires=int(expires_at),
-        refresh_token=token_data["refresh_token"],
-        refresh_expires=int(refresh_expires_at),
-        scope=token_data["scope"],
-        headers={
-            "Authorization": f"{token_data['token_type']} {token_data['access_token']}"
-        },
-    )
 
 
 @pytest.fixture(scope="function")

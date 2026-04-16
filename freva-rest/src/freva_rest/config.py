@@ -109,7 +109,7 @@ class ServerConfig(BaseModel):
         Union[str, Path],
         Field(
             title="API Config",
-            description=("Path to a .toml file holding the API" "configuration"),
+            description=("Path to a .toml file holding the APIconfiguration"),
         ),
     ] = os.getenv("API_CONFIG", Path(__file__).parent / "api_config.toml")
     proxy: Annotated[
@@ -172,9 +172,7 @@ class ServerConfig(BaseModel):
         Optional[int],
         Field(
             title="Cache expiration.",
-            description=(
-                "The expiration time in sec" "of the data loading cache."
-            ),
+            description=("The expiration time in secof the data loading cache."),
         ),
     ] = env_to_int("API_CACHE_EXP", 3600)
     services: Annotated[
@@ -197,24 +195,14 @@ class ServerConfig(BaseModel):
         str,
         Field(
             title="Redis cert file.",
-            description=(
-                "Path to the public"
-                "certfile to make"
-                "connections to the"
-                "cache"
-            ),
+            description=("Path to the publiccertfile to makeconnections to thecache"),
         ),
     ] = os.getenv("API_REDIS_SSL_CERTFILE", "")
     redis_ssl_keyfile: Annotated[
         str,
         Field(
             title="Redis key file.",
-            description=(
-                "Path to the privat"
-                "key file to make"
-                "connections to the"
-                "cache"
-            ),
+            description=("Path to the privatkey file to makeconnections to thecache"),
         ),
     ] = os.getenv("API_REDIS_SSL_KEYFILE", "")
     redis_password: Annotated[
@@ -266,9 +254,7 @@ class ServerConfig(BaseModel):
                 "Nested claims are defined by '.' separation."
             ),
         ),
-    ] = (
-        env_to_dict("API_OIDC_TOKEN_CLAIMS") or None
-    )
+    ] = env_to_dict("API_OIDC_TOKEN_CLAIMS") or None
     oidc_scopes: Annotated[
         str,
         Field(
@@ -301,16 +287,12 @@ class ServerConfig(BaseModel):
                 "dot-separated keys."
             ),
         ),
-    ] = (
-        env_to_dict("API_ADMINS_TOKEN_CLAIMS") or None
-    )
+    ] = env_to_dict("API_ADMINS_TOKEN_CLAIMS") or None
     session_cookie_name: Annotated[
         str,
         Field(
             title="Cookie name",
-            description=(
-                "Name of the cookie used for storing session " "information."
-            ),
+            description=("Name of the cookie used for storing session information."),
         ),
     ] = os.getenv("API_SESSION_COOKIE_NAME", "")
 
@@ -334,9 +316,7 @@ class ServerConfig(BaseModel):
         self._mongo_client: Optional[AsyncMongoClient[Any]] = None
         self._solr_fields = self._get_solr_fields()
         self._oidc_overview: Optional[Dict[str, Any]] = None
-        self.services = (
-            self.services or self._read_config("restAPI", "services") or []
-        )
+        self.services = self.services or self._read_config("restAPI", "services") or []
         self.session_cookie_name = self.session_cookie_name or self._read_config(
             "oidc",
             "session_cookie_name",
@@ -345,9 +325,7 @@ class ServerConfig(BaseModel):
             "oidc", "auth_ports"
         )
         self.oidc_token_claims = (
-            self.oidc_token_claims
-            or self._read_config("oidc", "token_claims")
-            or {}
+            self.oidc_token_claims or self._read_config("oidc", "token_claims") or {}
         )
         self.proxy = (
             self.proxy
@@ -364,9 +342,7 @@ class ServerConfig(BaseModel):
             "oidc", "client_id"
         )
         self.oidc_scopes = self.oidc_scopes or self._read_config("oidc", "scopes")
-        self.mongo_host = self.mongo_host or self._read_config(
-            "mongo_db", "hostname"
-        )
+        self.mongo_host = self.mongo_host or self._read_config("mongo_db", "hostname")
         self.mongo_user = self.mongo_user or self._read_config("mongo_db", "user")
         self.mongo_password = self.mongo_password or self._read_config(
             "mongo_db", "password"
@@ -385,12 +361,9 @@ class ServerConfig(BaseModel):
         self.redis_ssl_certfile = self.redis_ssl_certfile or self._read_config(
             "cache", "cert_file"
         )
-        self.redis_host = self.redis_host or self._read_config(
-            "cache", "hostname"
-        )
+        self.redis_host = self.redis_host or self._read_config("cache", "hostname")
         self.admins_token_claims = (
-            self.admins_token_claims
-            or self._read_config("oidc", "admins_token_claims")
+            self.admins_token_claims or self._read_config("oidc", "admins_token_claims")
         ) or {}
 
     @staticmethod
@@ -495,6 +468,16 @@ class ServerConfig(BaseModel):
         return f"mongodb://{user_prefix}{url}"
 
     @property
+    def mongo_collection_sessions(self) -> AsyncCollection[Any]:
+        """MongoDB collection for freva auth sessions (IDP refresh tokens)."""
+        return self.mongo_client[self.mongo_db]["freva_sessions"]
+
+    @property
+    def mongo_collection_keys(self) -> AsyncCollection[Any]:
+        """MongoDB collection for the freva signing key."""
+        return self.mongo_client[self.mongo_db]["freva_keys"]
+
+    @property
     def log_level(self) -> int:
         """Get the name of the current logger level."""
         return logger.getEffectiveLevel()
@@ -545,7 +528,5 @@ class ServerConfig(BaseModel):
             requests.exceptions.ConnectionError,
             requests.exceptions.JSONDecodeError,
         ) as error:  # pragma: no cover
-            logger.error(
-                "Connection to %s failed: %s", url, error
-            )  # pragma: no cover
+            logger.error("Connection to %s failed: %s", url, error)  # pragma: no cover
             yield ""  # pragma: no cover

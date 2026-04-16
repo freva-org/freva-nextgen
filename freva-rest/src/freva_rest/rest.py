@@ -30,7 +30,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 
 from freva_rest import __version__
 
-from .auth import auth_router
+from .auth import auth_router, session_store, token_issuer
 from .config import ServerConfig
 from .logger import logger, reset_loggers
 
@@ -94,6 +94,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     Things before yield are executed on startup. Things after on teardown.
     """
     try:
+        await token_issuer.setup(server_config.mongo_collection_keys)
+        await session_store.setup(server_config.mongo_collection_sessions)
         _ = await server_config.mongo_collection_share_key.create_index(
             [("expires_at", 1)],
             expireAfterSeconds=0,
@@ -121,9 +123,7 @@ app = FastAPI(
     license_info={
         "name": "BSD 2-Clause License",
         "url": "https://opensource.org/license/bsd-2-clause",
-        "x-logo": {
-            "url": "https://freva-org.github.io/freva-nextgen/_static/logo.png"
-        },
+        "x-logo": {"url": "https://freva-org.github.io/freva-nextgen/_static/logo.png"},
     },
 )
 
@@ -147,9 +147,7 @@ async def custom_redoc_ui_html(request: Request) -> HTMLResponse:
     )
 
 
-@app.get(
-    "/api/freva-nextgen/ping", tags=["System"], summary="Health check endpoint"
-)
+@app.get("/api/freva-nextgen/ping", tags=["System"], summary="Health check endpoint")
 async def ping(request: Request) -> JSONResponse:
     """Health check endpoint that returns
     `pong` when the API is operational."""

@@ -17,10 +17,9 @@ from fastapi.responses import (
     PlainTextResponse,
     StreamingResponse,
 )
-from py_oidc_auth import IDToken as TokenPayload
 from py_oidc_auth.utils import get_username
 
-from freva_rest.auth import auth
+from freva_rest.auth import OptionalUser, RequiredUser, auth
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 
@@ -48,7 +47,7 @@ from .stac import STAC
     response_model=SearchFlavours,
 )
 async def overview(
-    current_user: Optional[TokenPayload] = auth.optional(),
+    current_user: OptionalUser = None,
     request: Request = Required,
 ) -> SearchFlavours:
     """Get all available search flavours and their attributes.
@@ -61,9 +60,9 @@ async def overview(
 
     **Note:** Authentication required to access personal flavours.
     """
-    user_name = await get_username(
-        current_user, dict(request.headers), auth.config
-    ) or "global"
+    user_name = (
+        await get_username(current_user, dict(request.headers), auth.config) or "global"
+    )
     flavour_instance = Flavour(server_config)
     all_flavour_responses = await flavour_instance.get_all_flavours(user_name)
     solr_instance = Solr(
@@ -89,7 +88,7 @@ async def metadata_search(
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
     request: Request = Required,
-    current_user: Optional[TokenPayload] = auth.optional(),
+    current_user: OptionalUser = None,
 ) -> JSONResponse:
     """Query the available metadata.
 
@@ -103,9 +102,9 @@ async def metadata_search(
 
     **Note:** Authentication required to access personal flavours.
     """
-    user_name = await get_username(
-        current_user, dict(request.headers), auth.config
-    ) or "global"
+    user_name = (
+        await get_username(current_user, dict(request.headers), auth.config) or "global"
+    )
     solr_search = await Solr.validate_parameters(
         server_config,
         flavour=flavour,
@@ -116,9 +115,7 @@ async def metadata_search(
         user_name=user_name,
         **SolrSchema.process_parameters(request),
     )
-    status_code, result = await solr_search.extended_search(
-        facets or [], max_results=0
-    )
+    status_code, result = await solr_search.extended_search(facets or [], max_results=0)
     await solr_search.store_results(result.total_count, status_code)
     output = result.model_dump()
     _ = output.pop("search_results", "")
@@ -142,7 +139,7 @@ async def data_search(
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     request: Request = Required,
-    current_user: Optional[TokenPayload] = auth.optional(),
+    current_user: OptionalUser = None,
 ) -> StreamingResponse:
     """Search for datasets.
 
@@ -155,9 +152,9 @@ async def data_search(
 
     **Note:** Authentication required to access personal flavours.
     """
-    user_name = await get_username(
-        current_user, dict(request.headers), auth.config
-    ) or "global"
+    user_name = (
+        await get_username(current_user, dict(request.headers), auth.config) or "global"
+    )
     solr_search = await Solr.validate_parameters(
         server_config,
         flavour=flavour,
@@ -195,7 +192,7 @@ async def intake_catalogue(
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     max_results: Annotated[int, SolrSchema.params["max_results"]] = -1,
     request: Request = Required,
-    current_user: Optional[TokenPayload] = auth.optional(),
+    current_user: OptionalUser = None,
 ) -> StreamingResponse:
     """Create an intake catalogue from a freva search.
 
@@ -208,9 +205,9 @@ async def intake_catalogue(
 
     **Note:** Authentication required to access personal flavours.
     """
-    user_name = await get_username(
-        current_user, dict(request.headers), auth.config
-    ) or "global"
+    user_name = (
+        await get_username(current_user, dict(request.headers), auth.config) or "global"
+    )
     solr_search = await Solr.validate_parameters(
         server_config,
         flavour=flavour,
@@ -256,7 +253,7 @@ async def stac_catalogue(
     translate: Annotated[bool, SolrSchema.params["translate"]] = True,
     max_results: Annotated[int, SolrSchema.params["max_results"]] = -1,
     request: Request = Required,
-    current_user: Optional[TokenPayload] = auth.optional(),
+    current_user: OptionalUser = None,
 ) -> Response:
     """Create a STAC catalogue from a freva search.
 
@@ -268,9 +265,9 @@ async def stac_catalogue(
 
     **Note:** Authentication required to access personal flavours.
     """
-    user_name = await get_username(
-        current_user, dict(request.headers), auth.config
-    ) or "global"
+    user_name = (
+        await get_username(current_user, dict(request.headers), auth.config) or "global"
+    )
     stac_instance = await STAC.validate_parameters(
         server_config,
         flavour=flavour,
@@ -311,18 +308,16 @@ async def extended_search(
     max_results: Annotated[int, SolrSchema.params["batch_size"]] = 150,
     zarr_stream: Annotated[
         bool,
-        Query(
-            description="Enable zarr streaming functionality", alias="zarr_stream"
-        ),
+        Query(description="Enable zarr streaming functionality", alias="zarr_stream"),
     ] = False,
     facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
     request: Request = Required,
-    current_user: Optional[TokenPayload] = auth.optional(),
+    current_user: OptionalUser = None,
 ) -> JSONResponse:
     """This endpoint is used by the databrowser web ui client."""
-    user_name = await get_username(
-        current_user, dict(request.headers), auth.config
-    ) or "global"
+    user_name = (
+        await get_username(current_user, dict(request.headers), auth.config) or "global"
+    )
     solr_search = await Solr.validate_parameters(
         server_config,
         flavour=flavour,
@@ -361,6 +356,7 @@ async def extended_search(
     response_class=PlainTextResponse,
 )
 async def load_data(
+    current_user: RequiredUser,
     flavour: str = SolrSchema.path_params["flavour"],
     start: Annotated[int, SolrSchema.params["start"]] = 0,
     multi_version: Annotated[bool, SolrSchema.params["multi_version"]] = False,
@@ -370,9 +366,7 @@ async def load_data(
         Query(
             title="Catalogue type",
             alias="catalogue-type",
-            description=(
-                "Set the type of catalogue you want to create from this" "query"
-            ),
+            description=("Set the type of catalogue you want to create from thisquery"),
         ),
     ] = None,
     public: Annotated[
@@ -431,7 +425,6 @@ async def load_data(
         ),
     ] = 16.0,
     request: Request = Required,
-    current_user: TokenPayload = auth.required(),
 ) -> StreamingResponse:
     """Search for datasets and stream the results as zarr.
 
@@ -446,9 +439,9 @@ async def load_data(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Service not enabled.",
         )
-    user_name = await get_username(
-        current_user, dict(request.headers), auth.config
-    ) or "global"
+    user_name = (
+        await get_username(current_user, dict(request.headers), auth.config) or "global"
+    )
     solr_search = await Solr.validate_parameters(
         server_config,
         flavour=flavour,
@@ -499,8 +492,8 @@ async def load_data(
     },
 )
 async def post_user_data(
+    current_user: RequiredUser,
     payload: Annotated[AddUserDataRequestBody, Body(...)],
-    current_user: TokenPayload = auth.required(),
 ) -> Dict[str, str]:
     """Index your own metadata and make it searchable.
 
@@ -548,6 +541,7 @@ async def post_user_data(
     response_class=JSONResponse,
 )
 async def delete_user_data(
+    current_user: RequiredUser,
     payload: Dict[str, Union[str, int]] = Body(
         ...,
         examples=[
@@ -558,7 +552,6 @@ async def delete_user_data(
             }
         ],
     ),
-    current_user: TokenPayload = auth.required(),
 ) -> Dict[str, str]:
     """This endpoint lets you delete metadata that has been indexed."""
     solr_instance = Solr(server_config)
@@ -573,9 +566,7 @@ async def delete_user_data(
             detail=f"Failed to delete user data: {error}",
         )
 
-    return {
-        "status": "User data has been deleted successfully from the databrowser."
-    }
+    return {"status": "User data has been deleted successfully from the databrowser."}
 
 
 @app.post(
@@ -594,9 +585,9 @@ async def delete_user_data(
     },
 )
 async def add_custom_flavour(
+    current_user: RequiredUser,
     flavour_def: FlavourDefinition,
     request: Request = Required,
-    current_user: TokenPayload = auth.required(),
 ) -> Dict[str, str]:
     """Add a new custom flavour definition.
 
@@ -609,9 +600,9 @@ async def add_custom_flavour(
     specifying the flavour name, enabling customized facet naming for search
     results and metadata.
     """
-    user_name = await get_username(
-        current_user, dict(request.headers), auth.config
-    ) or "global"
+    user_name = (
+        await get_username(current_user, dict(request.headers), auth.config) or "global"
+    )
     if flavour_def.is_global and not server_config.is_admin_user(current_user):
         logger.error(
             "Unauthorized attempt to create global flavour by user: %s",
@@ -621,9 +612,7 @@ async def add_custom_flavour(
             status_code=403, detail="Only admin users can create global flavours"
         )
     flavour_instance = Flavour(config=server_config)
-    return await flavour_instance.add_flavour(
-        user_name, flavour_def
-    )
+    return await flavour_instance.add_flavour(user_name, flavour_def)
 
 
 @app.put(
@@ -642,6 +631,7 @@ async def add_custom_flavour(
     },
 )
 async def update_custom_flavour(
+    current_user: RequiredUser,
     flavour_name: str = Path(
         ...,
         description="Name of the flavour to update",
@@ -649,7 +639,6 @@ async def update_custom_flavour(
     ),
     flavour_def: FlavourUpdateDefinition = Body(...),
     request: Request = Required,
-    current_user: TokenPayload = auth.required(),
 ) -> Dict[str, str]:
     """Update specific search keys in an existing custom flavour definition.
 
@@ -660,9 +649,9 @@ async def update_custom_flavour(
     while administrators can update both their own personal and all global
     flavours.
     """
-    user_name = await get_username(
-        current_user, dict(request.headers), auth.config
-    ) or "global"
+    user_name = (
+        await get_username(current_user, dict(request.headers), auth.config) or "global"
+    )
     if flavour_def.is_global and not server_config.is_admin_user(current_user):
         logger.error(
             "Unauthorized attempt to update global flavour by user: %s",
@@ -672,9 +661,7 @@ async def update_custom_flavour(
             status_code=403, detail="Only admin users can update global flavours"
         )
     flavour_instance = Flavour(config=server_config)
-    return await flavour_instance.update_flavour(
-        user_name, flavour_name, flavour_def
-    )
+    return await flavour_instance.update_flavour(user_name, flavour_name, flavour_def)
 
 
 @app.get(
@@ -685,9 +672,7 @@ async def update_custom_flavour(
     responses={
         401: {"description": "Unauthorised / not a valid token."},
         422: {"description": "Invalid flavour parameters."},
-        500: {
-            "description": "Internal server error - failed to retrieve flavours."
-        },
+        500: {"description": "Internal server error - failed to retrieve flavours."},
     },
 )
 async def list_flavours(
@@ -700,7 +685,7 @@ async def list_flavours(
         examples=["global"],
     ),
     request: Request = Required,
-    current_user: Optional[TokenPayload] = auth.optional(),
+    current_user: OptionalUser = None,
 ) -> FlavourListResponse:
     """Get available flavours for the current user.
 
@@ -713,9 +698,9 @@ async def list_flavours(
     For unauthenticated users, only global flavours are returned.
     """
 
-    user_name = await get_username(
-        current_user, dict(request.headers), auth.config
-    ) or "global"
+    user_name = (
+        await get_username(current_user, dict(request.headers), auth.config) or "global"
+    )
     flavour = Flavour.validate_flavour_parameters(server_config, request)
 
     all_flavours = await flavour.get_all_flavours(user_name, flavour_name, owner)
@@ -736,6 +721,7 @@ async def list_flavours(
     },
 )
 async def delete_custom_flavour(
+    current_user: RequiredUser,
     flavour_name: str = Path(
         ...,
         description="Name of the flavour to delete",
@@ -745,7 +731,6 @@ async def delete_custom_flavour(
         bool, Query(description="Whether the flavour is global (admin only)")
     ] = False,
     request: Request = Required,
-    current_user: TokenPayload = auth.required(),
 ) -> FlavourDeleteResponse:
     """Delete a custom flavour definition.
 
@@ -759,9 +744,9 @@ async def delete_custom_flavour(
     deleted, it will no longer be available for use in databrowser searches
     and will be removed from the flavour listings.
     """
-    user_name = await get_username(
-        current_user, dict(request.headers), auth.config
-    ) or "global"
+    user_name = (
+        await get_username(current_user, dict(request.headers), auth.config) or "global"
+    )
     if is_global and not server_config.is_admin_user(current_user):
         logger.error(
             "Unauthorized attempt to create global flavour by user: %s",
@@ -772,6 +757,4 @@ async def delete_custom_flavour(
         )
 
     flavour_instance = Flavour(config=server_config)
-    return await flavour_instance.delete_flavour(
-        user_name, flavour_name, is_global
-    )
+    return await flavour_instance.delete_flavour(user_name, flavour_name, is_global)
