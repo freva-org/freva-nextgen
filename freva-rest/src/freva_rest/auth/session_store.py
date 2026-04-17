@@ -46,7 +46,7 @@ class SessionStore:
         self,
         collection: AsyncCollection,  # type: ignore[type-arg]
         jti: str,
-        sub: str,
+        sub: Optional[str],
         refresh_token: str,
         expires_at: int,  # Unix timestamp
     ) -> None:
@@ -55,7 +55,7 @@ class SessionStore:
             {"_id": jti},
             {
                 "_id": jti,
-                "sub": sub,
+                "sub": sub or "",
                 "refresh_token": refresh_token,
                 # TTL index requires a datetime, not a raw int
                 "expires_at": datetime.fromtimestamp(expires_at, tz=timezone.utc),

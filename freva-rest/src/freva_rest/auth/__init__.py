@@ -25,16 +25,16 @@ detail of this API.
 """
 
 from datetime import datetime, timedelta, timezone
-from typing import Annotated, List, Optional, Tuple, Callable
+from typing import Annotated, Awaitable, Callable, List, Optional, Tuple
 
 import jwt as pyjwt
 from fastapi import Form, Header, HTTPException, Security
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from py_oidc_auth import FastApiOIDCAuth, IDToken
-from py_oidc_auth.utils import get_username
 from py_oidc_auth.exceptions import InvalidRequest
 from py_oidc_auth.schema import Token
+from py_oidc_auth.utils import get_username, token_field_matches
 from pydantic import BaseModel, Field
 
 from ..config import ServerConfig
@@ -100,6 +100,7 @@ async def check_token(
     required_roles: Tuple[str, ...] = (),
 ) -> IDToken:
     """Validate the access token and apply authorization."""
+
     bearer = (authorization or "").removeprefix("Bearer ").strip() or None
     if not bearer:
         raise HTTPException(status_code=401, detail="Missing Bearer token.")
@@ -110,12 +111,12 @@ async def check_token(
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    if required_roles and not any(r in claims.roles for r in required_roles):
+    if not token_field_matches(bearer, list(required_roles)):
         raise HTTPException(status_code=403, detail="Insufficient roles.")
     return claims
 
 
-def token_wrapper(*required_roles: str) -> Callable:
+def token_wrapper(*required_roles: str) -> Callable[..., Awaitable[IDToken]]:
     async def _dep(
         authorization: Annotated[Optional[str], Header()] = None,
     ) -> IDToken:
@@ -124,7 +125,9 @@ def token_wrapper(*required_roles: str) -> Callable:
     return _dep
 
 
-def token_optional_wrapper(*required_roles: str) -> Callable:
+def token_optional_wrapper(
+    *required_roles: str,
+) -> Callable[..., Awaitable[Optional[IDToken]]]:
     async def _dep(
         authorization: Annotated[Optional[str], Header()] = None,
     ) -> Optional[IDToken]:
@@ -274,7 +277,8 @@ async def _idp_refresh(freva_jwt: str) -> Token:
     """Resolve the stored IDP refresh token from a freva JWT and refresh."""
     # Accept expired tokens — we only need the jti to find the session
     try:
-        jti = token_issuer.verify(freva_jwt).jti
+        id_token = token_issuer.verify(freva_jwt)
+        jti = getattr(id_token, "jti", (id_token.model_extra or {}).get("jti"))
     except pyjwt.ExpiredSignatureError:
         unverified = pyjwt.decode(
             freva_jwt,
@@ -319,7 +323,7 @@ async def _mint_and_store(idp_token_obj: Token) -> Token:
     freva_jwt, jti = token_issuer.mint(
         sub=username or idp_claims.sub or "",
         email=getattr(idp_claims, "email", None),
-        roles=_extract_roles(idp_claims),
+        roles=idp_claims.flattened_roles,
         preferred_username=username,
     )
 
@@ -347,24 +351,6 @@ async def _mint_and_store(idp_token_obj: Token) -> Token:
         refresh_expires=idp_token_obj.refresh_expires,
         scope=idp_token_obj.scope,
     )
-
-
-def _extract_roles(idp_token: IDToken) -> List[str]:
-    """Extract roles from an IDToken regardless of IDP encoding."""
-    raw = idp_token.model_dump()
-    roles: List[str] = []
-
-    # Keycloak: realm_access.roles
-    roles += raw.get("realm_access", {}).get("roles") or []
-    # Keycloak: resource_access.*.roles (any client)
-    for client in (raw.get("resource_access") or {}).values():
-        roles += client.get("roles") or []
-    # Entra ID / generic: flat roles claim
-    roles += raw.get("roles") or []
-    # Generic: groups claim
-    roles += raw.get("groups") or []
-
-    return list(set(roles))
 
 
 __all__ = ["OptionalUser", "RequiredUser", "auth", "check_token"]

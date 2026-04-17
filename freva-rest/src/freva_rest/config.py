@@ -5,9 +5,9 @@ be overridden with a specific toml file holding configurations or environment
 variables.
 """
 
-import re
 import logging
 import os
+import re
 from functools import cached_property, reduce
 from pathlib import Path
 from socket import gethostname
