@@ -37,17 +37,13 @@ class TestOverview:
 class TestDataSearch:
     """Tests for the data-search CLI sub-command."""
 
-    def test_search_files_normal(
-        self, cli_runner: CliRunner, test_server: str
-    ) -> None:
+    def test_search_files_normal(self, cli_runner: CliRunner, test_server: str) -> None:
         """Searching for files without zarr should succeed."""
         res = cli_runner.invoke(app, ["data-search", "--host", test_server])
         assert res.exit_code == 0
         assert res.stdout
 
-    def test_search_no_results(
-        self, cli_runner: CliRunner, test_server: str
-    ) -> None:
+    def test_search_no_results(self, cli_runner: CliRunner, test_server: str) -> None:
         """Searching with non-matching constraints gives no output."""
         res = cli_runner.invoke(
             app,
@@ -63,13 +59,9 @@ class TestDataSearch:
         assert res.exit_code == 0
         assert not res.stdout
 
-    def test_search_json_output(
-        self, cli_runner: CliRunner, test_server: str
-    ) -> None:
+    def test_search_json_output(self, cli_runner: CliRunner, test_server: str) -> None:
         """JSON output should be a valid list."""
-        res = cli_runner.invoke(
-            app, ["data-search", "--host", test_server, "--json"]
-        )
+        res = cli_runner.invoke(app, ["data-search", "--host", test_server, "--json"])
         assert res.exit_code == 0
         assert isinstance(json.loads(res.stdout), list)
 
@@ -80,9 +72,7 @@ class TestDataSearch:
         mock_authenticate_fail: None,
     ) -> None:
         """Zarr search without authentication should fail."""
-        res = cli_runner.invoke(
-            app, ["data-search", "--host", test_server, "--zar"]
-        )
+        res = cli_runner.invoke(app, ["data-search", "--host", test_server, "--zar"])
         assert res.exit_code > 0
 
     def test_search_zarr_with_token_file(
@@ -134,18 +124,14 @@ class TestDataSearch:
 class TestIntakeCatalogue:
     """Tests for the intake-catalogue CLI sub-command."""
 
-    def test_intake_no_zarr(
-        self, cli_runner: CliRunner, test_server: str
-    ) -> None:
+    def test_intake_no_zarr(self, cli_runner: CliRunner, test_server: str) -> None:
         """intake-catalogue without zarr should produce valid JSON."""
         res = cli_runner.invoke(app, ["intake-catalogue", "--host", test_server])
         assert res.exit_code == 0
         assert res.stdout
         assert isinstance(json.loads(res.stdout), dict)
 
-    def test_intake_to_file(
-        self, cli_runner: CliRunner, test_server: str
-    ) -> None:
+    def test_intake_to_file(self, cli_runner: CliRunner, test_server: str) -> None:
         """intake-catalogue with -f flag should write a JSON file."""
         with NamedTemporaryFile(suffix=".json") as temp_f:
             res = cli_runner.invoke(
@@ -245,13 +231,13 @@ class TestStacCatalogue:
                 "--host",
                 test_server,
                 "--filename",
-                "/foo/bar" "foo=b",
+                "/foo/barfoo=b",
             ],
         )
         assert res.exit_code == 1
 
     def test_stac_no_filename(
-        self, cli_runner: CliRunner, test_server: str
+        self, cli_runner: CliRunner, test_server: str, temp_dir: Path
     ) -> None:
         """STAC catalogue without explicit filename should succeed."""
         res = cli_runner.invoke(app, ["stac-catalogue", "--host", test_server])
@@ -440,23 +426,17 @@ class TestCountValues:
 
     def test_count_json(self, cli_runner: CliRunner, test_server: str) -> None:
         """data-count --json should return an integer."""
-        res = cli_runner.invoke(
-            app, ["data-count", "--host", test_server, "--json"]
-        )
+        res = cli_runner.invoke(app, ["data-count", "--host", test_server, "--json"])
         assert res.exit_code == 0
         assert isinstance(json.loads(res.stdout), int)
 
-    def test_count_wildcard(
-        self, cli_runner: CliRunner, test_server: str
-    ) -> None:
+    def test_count_wildcard(self, cli_runner: CliRunner, test_server: str) -> None:
         """data-count '*' should produce output."""
         res = cli_runner.invoke(app, ["data-count", "*", "--host", test_server])
         assert res.exit_code == 0
         assert res.stdout
 
-    def test_count_facet_json(
-        self, cli_runner: CliRunner, test_server: str
-    ) -> None:
+    def test_count_facet_json(self, cli_runner: CliRunner, test_server: str) -> None:
         """data-count with --facet and --json should return a dict."""
         res = cli_runner.invoke(
             app,
@@ -473,9 +453,7 @@ class TestCountValues:
         assert res.exit_code == 0
         assert isinstance(json.loads(res.stdout), dict)
 
-    def test_count_facet_display(
-        self, cli_runner: CliRunner, test_server: str
-    ) -> None:
+    def test_count_facet_display(self, cli_runner: CliRunner, test_server: str) -> None:
         """data-count with --facet should produce output."""
         res = cli_runner.invoke(
             app,
@@ -584,9 +562,7 @@ class TestFailedCommands:
     ) -> None:
         """Using an invalid flavour flag value should fail."""
         for cmd in ("data-count", "data-search", "metadata-search"):
-            res = cli_runner.invoke(
-                app, [cmd, "--host", test_server, "-f", "foo"]
-            )
+            res = cli_runner.invoke(app, [cmd, "--host", test_server, "-f", "foo"])
             assert res.exit_code != 0
 
     def test_bad_host_errors(
@@ -660,10 +636,11 @@ class TestFlavourCommands:
         """Test the full flavour lifecycle through the CLI."""
         # list with auth
 
-        mocker.patch("freva_client.utils.choose_token_strategy").return_value = (
-            "use_token"
-        )
+        mocker.patch(
+            "freva_client.utils.choose_token_strategy"
+        ).return_value = "use_token"
         from freva_rest.utils.namegenerator import generate_names
+
         flavour_name = generate_names()
         res = cli_runner.invoke(
             app,
@@ -917,9 +894,7 @@ class TestFlavourErrorCasesCli:
         )
         assert res.exit_code == 1
 
-    def test_list_without_auth(
-        self, cli_runner: CliRunner, test_server: str
-    ) -> None:
+    def test_list_without_auth(self, cli_runner: CliRunner, test_server: str) -> None:
         """Listing without authentication should succeed."""
         res = cli_runner.invoke(app, ["flavour", "list", "--host", test_server])
         assert res.exit_code == 0

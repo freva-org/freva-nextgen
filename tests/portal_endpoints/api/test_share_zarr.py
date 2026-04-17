@@ -17,8 +17,12 @@ from fastapi import HTTPException
 from pytest_mock import MockerFixture
 
 from data_portal_worker.load_data import RedisCacheFactory as SyncCache
+from freva_rest.utils.base_utils import (
+    Cache,
+    encode_cache_token,
+    sign_token_path,
+)
 from freva_rest.utils.presign_utils import verify_token
-from freva_rest.utils.base_utils import Cache, encode_cache_token, sign_token_path
 
 
 def test_zarr_conversion(test_server: str, auth: Dict[str, str]) -> None:

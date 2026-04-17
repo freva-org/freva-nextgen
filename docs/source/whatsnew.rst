@@ -3,6 +3,13 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
+v2604.0.0
+^^^^^^^^^
+
+Changed
+"""""""
+- Add token mint functionality to issue auth-tokens and be compliant with OAuth2
+
 v2603.1.1
 ^^^^^^^^^
 
@@ -16,6 +23,7 @@ v2603.1.0
 Changed
 """""""
 - Migrate restAPI auth library from fastapi-third-party-auth to py-oidc-auth[fastapi].
+- Remove `systemuser` endpoint from the rest-api
 
 v2603.0.0
 ^^^^^^^^^

@@ -85,7 +85,6 @@ def test_multiversion(test_server: str) -> None:
     )
     assert res4.status_code == 200
     assert len(list(res4.text.split())) < len(list(res3.text.split()))
-    return
 
     res5 = requests.get(
         f"{test_server}/databrowser/data-search/freva/file",

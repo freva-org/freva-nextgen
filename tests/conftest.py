@@ -367,6 +367,7 @@ def flavour_server(test_server: str) -> Iterator[str]:
 def auth(test_server: str) -> Dict[str, Token | object]:
     """Create freva JWTs directly for testing — no Keycloak needed."""
     from getpass import getuser
+
     from freva_rest.auth import token_issuer
 
     def _create_auth(user_type: str = "user") -> Token:

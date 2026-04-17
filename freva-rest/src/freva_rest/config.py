@@ -431,12 +431,9 @@ class ServerConfig(BaseModel):
 
         for path, patterns in (self.admins_token_claims or {}).items():
             # Try dotted path first
-            values = _get_in(claims, path.split("."))
+            values = _get_in(claims, path.split(".")) or flat_roles
+            values = [values] if not isinstance(values, list) else values
             # Fall back to flat roles list
-            if not values:
-                values = flat_roles
-            if not isinstance(values, list):
-                values = [values]
             if any(
                 re.search(pat, val)
                 for val in values
@@ -453,11 +450,10 @@ class ServerConfig(BaseModel):
     @property
     def oidc_overview(self) -> Dict[str, Any]:
         """Query the url overview from OIDC Service."""
-        if self._oidc_overview is not None:
-            return self._oidc_overview
-        res = requests.get(self.oidc_discovery_url, verify=False, timeout=3)
-        res.raise_for_status()
-        self._oidc_overview = res.json()
+        if self._oidc_overview is None:  # pragma: no cover
+            res = requests.get(self.oidc_discovery_url, verify=False, timeout=3)
+            res.raise_for_status()
+            self._oidc_overview = res.json()
         return self._oidc_overview
 
     @property

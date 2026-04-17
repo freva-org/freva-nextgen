@@ -25,8 +25,8 @@ def test_status_forbidden_invalid_token(
     auth: Dict[str, str],
 ) -> None:
     """A token signed with a wrong key should be rejected with 401."""
-    from cryptography.hazmat.primitives.asymmetric import rsa
     import jwt
+    from cryptography.hazmat.primitives.asymmetric import rsa
 
     wrong_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     fake_token = jwt.encode(
