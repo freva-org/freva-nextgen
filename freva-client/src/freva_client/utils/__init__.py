@@ -60,7 +60,7 @@ class AuthConfig:
 
     def __init__(self, host: str, _redirect_ports: List[int] = []):
 
-        self.token_db = TokenStore(self.app_name)
+        self.token_db = TokenStore(app_name=self.app_name)
         host = self.get_rest_host(host)
         kwargs: Dict[str, Union[str, List[int]]] = {"app_name": self.app_name}
         if not _redirect_ports:
