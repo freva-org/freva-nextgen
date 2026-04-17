@@ -3,10 +3,10 @@
 import time
 from typing import Dict, List
 
+import jwt
 import pytest
 import requests
-from fastapi import HTTPException
-from pytest_mock import MockerFixture
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 pytestmark = [pytest.mark.portal_endpoints, pytest.mark.rest]
 
@@ -22,20 +22,21 @@ def test_status_forbidden_no_token(test_server: str) -> None:
 
 def test_status_forbidden_invalid_token(
     test_server: str,
-    mocker: MockerFixture,
     auth: Dict[str, str],
 ) -> None:
-    """A token that fails verification should return 401."""
-    with mocker.patch(
-        "freva_rest.auth.verify_token",
-        side_effect=HTTPException(status_code=401, detail="Invalid token."),
-    ):
-        res = requests.get(
-            f"{test_server}/data-portal/zarr-utils/status",
-            params={"url": ["foo.zar"]},
-            headers={"Authorization": f"Bearer {auth['access_token']}"},
-        )
-        assert res.status_code == 401
+    """A token signed with a wrong key should be rejected with 401."""
+    wrong_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    fake_token = jwt.encode(
+        {"sub": "janedoe", "roles": [], "aud": "freva-api", "exp": 9999999999},
+        wrong_key,
+        algorithm="RS256",
+    )
+    res = requests.get(
+        f"{test_server}/data-portal/zarr-utils/status",
+        params={"url": ["foo.zar"]},
+        headers={"Authorization": f"Bearer {fake_token}"},
+    )
+    assert res.status_code == 401
 
 
 def test_aggregate_success(test_server: str, auth: Dict[str, str]) -> None:

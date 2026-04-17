@@ -135,6 +135,7 @@ Table of Content
    zarr-utils/index
    auth/index
    developers/index
+   whatsnew
 
 .. warning::
 
