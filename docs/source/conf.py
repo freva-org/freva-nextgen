@@ -68,7 +68,6 @@ extensions = [
     "sphinxcontrib.httpdomain",
     "sphinx_execute_code",
     "sphinxext.opengraph",
-    "myst_parser",
 ]
 
 napoleon_google_docstring = True
@@ -91,6 +90,7 @@ html_theme_options = {
             "icon": "fa-brands fa-github",
         }
     ],
+    "header_links_before_dropdown": 3,
     "navigation_with_keys": False,
     "show_toc_level": 4,
     "collapse_navigation": False,
@@ -102,7 +102,6 @@ html_theme_options = {
         "version_match": release,
     },
     "navbar_end": ["version-switcher", "navbar-icon-links"],
-    "navigation_depth": 4,
     "navbar_center": ["navbar-nav"],
     "secondary_sidebar_items": ["page-toc"],
 }

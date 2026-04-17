@@ -136,6 +136,7 @@ Table of Content
    auth/index
    developers/index
    whatsnew
+   code-of-conduct
 
 .. warning::
 
