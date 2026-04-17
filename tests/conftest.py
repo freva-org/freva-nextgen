@@ -204,16 +204,27 @@ def setup_server() -> Iterator[str]:
 
 
 @pytest.fixture(scope="function", autouse=True)
-def user_cache_dir() -> Iterator[str]:
+def user_cache_dir(tmp_path) -> Iterator[str]:
     """Mock the default user token file for each test.
 
     A temporary file is created and the TOKEN_ENV_VAR environment variable is
     patched to point to it. The test can then write tokens into this file.
     """
     with NamedTemporaryFile(suffix=".json") as temp_f:
+<<<<<<< HEAD
         with mock.patch.dict(os.environ, {"OIDC_TOKEN_FILE": temp_f.name}, clear=False):
             yield temp_f.name
 
+=======
+        with mock.patch.dict(
+            os.environ, {"OIDC_TOKEN_FILE": temp_f.name}, clear=False
+        ):
+            with mock.patch(
+                "py_oidc_auth_client.token_store.user_cache_path",
+                return_value=tmp_path,
+            ):
+                yield temp_f.name
+>>>>>>> 34575f2d80e1c3ae5602ba9ea524b1b1aa14ccea
 
 @pytest.fixture(scope="function")
 def temp_dir() -> Iterator[Path]:
