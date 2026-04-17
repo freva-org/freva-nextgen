@@ -1,24 +1,56 @@
 """Test for the authorisation utilities."""
 
-from typing import Dict
-
 import requests
-import pytest
-from pytest_mock import MockerFixture
+
+
+def test_status_forbidden_invalid_token(
+    test_server: str,
+) -> None:
+    """A token signed with a wrong key should be rejected with 401."""
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    import jwt
+
+    # Generate a random key — not the server's key
+    wrong_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    fake_token = jwt.encode(
+        {"sub": "janedoe", "roles": [], "aud": "freva-api", "exp": 9999999999},
+        wrong_key,
+        algorithm="RS256",
+    )
+    res = requests.get(
+        f"{test_server}/data-portal/zarr-utils/status",
+        params={"url": ["foo.zar"]},
+        headers={"Authorization": f"Bearer {fake_token}"},
+    )
+    assert res.status_code == 401
 
 
 def test_wrong_token_claims(
-    test_server: str, mocker: MockerFixture, auth: Dict[str, str]
+    test_server: str,
 ) -> None:
-    """Test rejection for wrong token claims."""
-    mocker.patch("py_oidc_auth.auth_base.token_field_matches", return_value=False)
+    """A token with a wrong audience should be rejected with 401."""
+    from freva_rest.auth import token_issuer
+    import jwt
+
+    # Mint a token signed with the real key but wrong audience
+    wrong_aud_token = jwt.encode(
+        {
+            "sub": "janedoe",
+            "preferred_username": "janedoe",
+            "roles": ["hpcuser"],
+            "aud": "wrong-audience",  # real aud is "freva-api"
+            "exp": 9999999999,
+        },
+        token_issuer.private_key,
+        algorithm="RS256",
+    )
     res = requests.get(
         f"{test_server}/data-portal/zarr-utils/status",
         params={"url": "foo.zar"},
-        headers={"Authorization": f"Bearer {auth['access_token']}"},
+        headers={"Authorization": f"Bearer {wrong_aud_token}"},
     )
     assert res.status_code == 401
-    assert "token claims" in res.json()["detail"]
+    assert "Invalid token" in res.json()["detail"]
 
 
 def test_request_headers() -> None:

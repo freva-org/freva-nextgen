@@ -116,12 +116,14 @@ class TokenIssuer:
         email: Optional[str],
         roles: List[str],
         expiry_seconds: int = _TOKEN_EXPIRY_SECONDS,
+        preferred_username: Optional[str] = None,
     ) -> tuple[str, str]:
         """Mint a freva JWT. Returns ``(token, jti)``."""
         jti = str(uuid.uuid4())
         now = datetime.now(tz=timezone.utc)
         payload = {
             "sub": sub,
+            "preferred_username": preferred_username or sub,
             "email": email,
             "roles": roles,
             "jti": jti,

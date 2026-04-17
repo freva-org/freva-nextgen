@@ -5,9 +5,9 @@ be overridden with a specific toml file holding configurations or environment
 variables.
 """
 
+import re
 import logging
 import os
-import re
 from functools import cached_property, reduce
 from pathlib import Path
 from socket import gethostname
@@ -423,13 +423,20 @@ class ServerConfig(BaseModel):
         Return True if any (claim-path -> regex) in `admins_token_claims`
         matches any value in the current_user's decoded JWT claims.
         """
+
         claims = current_user.model_dump()
+        flat_roles = (
+            (claims.get("model_extra") or {}).get("roles") or claims.get("roles") or []
+        )
 
         for path, patterns in (self.admins_token_claims or {}).items():
+            # Try dotted path first
             values = _get_in(claims, path.split("."))
-            if not isinstance(values, list):  # pragma: no cover
+            # Fall back to flat roles list
+            if not values:
+                values = flat_roles
+            if not isinstance(values, list):
                 values = [values]
-
             if any(
                 re.search(pat, val)
                 for val in values
@@ -437,7 +444,6 @@ class ServerConfig(BaseModel):
                 for pat in patterns
             ):
                 return True
-
         return False
 
     def reload(self) -> None:

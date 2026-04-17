@@ -94,12 +94,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     Things before yield are executed on startup. Things after on teardown.
     """
     try:
-        await token_issuer.setup(server_config.mongo_collection_keys)
-        await session_store.setup(server_config.mongo_collection_sessions)
         _ = await server_config.mongo_collection_share_key.create_index(
             [("expires_at", 1)],
             expireAfterSeconds=0,
         )
+        _ = await server_config.mongo_collection_sessions.create_index(
+            [("expires_at", 1)],
+            expireAfterSeconds=0,
+            name="sessions_ttl",  # match the existing index name
+        )
+        await token_issuer.setup(server_config.mongo_collection_keys)
+        await session_store.setup(server_config.mongo_collection_sessions)
         yield
     finally:
         try:  # pragma: no cover

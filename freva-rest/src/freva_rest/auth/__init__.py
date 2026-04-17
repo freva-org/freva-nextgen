@@ -24,9 +24,8 @@ Clients never see or store IDP tokens. The IDP is a pure implementation
 detail of this API.
 """
 
-from functools import partial
 from datetime import datetime, timedelta, timezone
-from typing import Annotated, List, Optional, Tuple
+from typing import Annotated, List, Optional, Tuple, Callable
 
 import jwt as pyjwt
 from fastapi import Form, Header, HTTPException, Security
@@ -97,15 +96,10 @@ class AuthPorts(BaseModel):
 
 
 async def check_token(
-    authorization: Annotated[Optional[str], Header()] = None,
-    *,
-    roles: Tuple[str, ...] = (),
+    authorization: Optional[str],
+    required_roles: Tuple[str, ...] = (),
 ) -> IDToken:
-    """Validate a freva JWT from the Authorization header.
-
-    Validates tokens *we* issued, not raw IDP tokens. The ``aud`` claim is
-    always ``freva-api`` - no Keycloak audience mapper required.
-    """
+    """Validate the access token and apply authorization."""
     bearer = (authorization or "").removeprefix("Bearer ").strip() or None
     if not bearer:
         raise HTTPException(status_code=401, detail="Missing Bearer token.")
@@ -113,31 +107,38 @@ async def check_token(
         claims = token_issuer.verify(bearer)
     except pyjwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired.")
-    except pyjwt.PyJWTError as exc:
-        raise HTTPException(status_code=401, detail=f"Invalid token: {exc}")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
-    if roles and not any(r in claims.roles for r in roles):
-        raise HTTPException(
-            status_code=403,
-            detail="In sufficient roles.",
-        )
+    if required_roles and not any(r in claims.roles for r in required_roles):
+        raise HTTPException(status_code=403, detail="Insufficient roles.")
     return claims
 
 
-async def check_token_optional(
-    authorization: Annotated[Optional[str], Header()] = None,
-    *,
-    roles: Tuple[str, ...] = (),
-) -> Optional[IDToken]:
-    """Optional — returns None if no token is present, 401 if token is invalid."""
-    bearer = (authorization or "").removeprefix("Bearer ").strip() or None
-    if not bearer:
-        return None  # unauthenticated is fine
-    return await check_token(authorization, roles=roles)
+def token_wrapper(*required_roles: str) -> Callable:
+    async def _dep(
+        authorization: Annotated[Optional[str], Header()] = None,
+    ) -> IDToken:
+        return await check_token(authorization, required_roles)
+
+    return _dep
 
 
-RequiredUser = Annotated[IDToken, Security(check_token)]
-OptionalUser = Annotated[Optional[IDToken], Security(check_token_optional)]
+def token_optional_wrapper(*required_roles: str) -> Callable:
+    async def _dep(
+        authorization: Annotated[Optional[str], Header()] = None,
+    ) -> Optional[IDToken]:
+        bearer = (authorization or "").strip() or None
+        if not bearer:
+            return None
+        return await check_token(authorization, required_roles)
+
+    return _dep
+
+
+RequiredUser = Annotated[IDToken, Security(token_wrapper())]
+OptionalUser = Annotated[Optional[IDToken], Security(token_optional_wrapper())]
+
 
 # ---------------------------------------------------------------------------
 # Unified token endpoint
@@ -243,7 +244,11 @@ class TokenPayload(BaseModel):
 async def well_known_url() -> JSONResponse:
     """Proxy the identity provider's discovery document."""
     try:
-        return JSONResponse(content=auth.config.oidc_overview, status_code=200)
+        doc = auth.config.oidc_overview
+        doc["jwks_uri"] = (
+            f"{server_config.proxy}/api/freva-nextgen/auth/v2/.well-known/jwks.json"
+        )
+        return JSONResponse(content=doc, status_code=200)
     except Exception as error:
         raise HTTPException(
             status_code=503, detail="Could not connect to OIDC server."
@@ -315,6 +320,7 @@ async def _mint_and_store(idp_token_obj: Token) -> Token:
         sub=username or idp_claims.sub or "",
         email=getattr(idp_claims, "email", None),
         roles=_extract_roles(idp_claims),
+        preferred_username=username,
     )
 
     await session_store.save(
@@ -345,12 +351,20 @@ async def _mint_and_store(idp_token_obj: Token) -> Token:
 
 def _extract_roles(idp_token: IDToken) -> List[str]:
     """Extract roles from an IDToken regardless of IDP encoding."""
-    raw = idp_token.model_dump() if hasattr(idp_token, "model_dump") else {}
+    raw = idp_token.model_dump()
+    roles: List[str] = []
+
     # Keycloak: realm_access.roles
-    realm_roles: List[str] = raw.get("realm_access", {}).get("roles", [])
+    roles += raw.get("realm_access", {}).get("roles") or []
+    # Keycloak: resource_access.*.roles (any client)
+    for client in (raw.get("resource_access") or {}).values():
+        roles += client.get("roles") or []
     # Entra ID / generic: flat roles claim
-    direct_roles: List[str] = raw.get("roles", [])
-    return list(set(realm_roles + direct_roles))
+    roles += raw.get("roles") or []
+    # Generic: groups claim
+    roles += raw.get("groups") or []
+
+    return list(set(roles))
 
 
-__all__ = ["FrevaTokenClaims", "OptionalUser", "RequiredUser", "auth"]
+__all__ = ["OptionalUser", "RequiredUser", "auth", "check_token"]

@@ -162,24 +162,45 @@ def _prep_env(**config: str) -> Dict[str, str]:
 
 
 def setup_server() -> Iterator[str]:
-    """Start the test server and the data loader process.
-
-    Two threads are started: one for the REST API server and one for the
-    data loader worker. After both are running, the fixture yields the
-    server base URL. Upon teardown, both threads are allowed to exit.
-    """
+    """Start the test server and the data loader process."""
     port = find_free_port()
     cache = Cache()
     cache.flushdb()
     thread1 = threading.Thread(target=run_test_server, args=(port,))
     thread1.daemon = True
     thread1.start()
-    time.sleep(1)
+
+    # Poll /ping — this can only respond after the lifespan has completed,
+    # meaning token_issuer.setup() has run and _private_key is set.
+    base = f"http://localhost:{port}/api/freva-nextgen"
+    for _ in range(60):
+        try:
+            if requests.get(f"{base}/ping", timeout=1).status_code == 200:
+                break
+        except Exception:
+            pass
+        time.sleep(0.5)
+
+    # Also poll the JWKS endpoint to be sure token_issuer is ready.
+    for _ in range(30):
+        try:
+            if (
+                requests.get(
+                    f"{base}/auth/v2/.well-known/jwks.json", timeout=1
+                ).status_code
+                == 200
+            ):
+                break
+        except Exception:
+            pass
+        time.sleep(0.5)
+
     thread2 = threading.Thread(target=run_loader_process, args=(find_free_port(),))
     thread2.daemon = True
     thread2.start()
     time.sleep(5)
-    yield f"http://localhost:{port}/api/freva-nextgen"
+
+    yield base
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -343,45 +364,24 @@ def flavour_server(test_server: str) -> Iterator[str]:
 
 
 @pytest.fixture(scope="function")
-def auth(test_server: str):
-    """Factory to create auth tokens for different user types."""
+def auth(test_server: str) -> Dict[str, Token | object]:
+    """Create freva JWTs directly for testing — no Keycloak needed."""
     from getpass import getuser
     from freva_rest.auth import token_issuer
 
     def _create_auth(user_type: str = "user") -> Token:
-        server_config = ServerConfig()
-        user_configs = {
-            "user": {"username": "janedoe", "password": "janedoe123"},
-            "admin": {"username": getuser(), "password": "secret"},
+        usernames = {"user": "janedoe", "admin": getuser()}
+        roles = {
+            "user": ["hpcuser"],
+            "admin": ["hpcuser", "admin"],
         }
-        config = user_configs.get(user_type, user_configs["user"])
-
-        # Get IDP token to extract real claims (sub, roles etc.)
-        idp_data = {
-            "client_id": server_config.oidc_client_id or "",
-            "client_secret": server_config.oidc_client_secret or "",
-            "grant_type": "password",
-            **config,
-        }
-        idp_res = requests.post(
-            server_config.oidc_overview["token_endpoint"],
-            data={k: v for k, v in idp_data.items() if v.strip()},
-        ).json()
-
-        # Mint a real freva JWT directly — no HTTP round-trip needed in tests
-        import jwt as pyjwt
-
-        idp_claims = pyjwt.decode(
-            idp_res["access_token"],
-            options={"verify_signature": False, "verify_exp": False},
-        )
+        username = usernames.get(user_type, "janedoe")
         freva_jwt, _ = token_issuer.mint(
-            sub=idp_claims["sub"],
-            email=idp_claims.get("email"),
-            roles=idp_claims.get("realm_access", {}).get("roles", []),
+            sub=username,
+            email=f"{username}@example.com",
+            roles=roles.get(user_type, ["hpcuser"]),
+            preferred_username=username,
         )
-        import datetime
-
         now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
         return Token(
             access_token=freva_jwt,
@@ -389,7 +389,7 @@ def auth(test_server: str):
             expires=now + 3600,
             refresh_token=freva_jwt,
             refresh_expires=now + 7200,
-            scope=idp_res.get("scope", ""),
+            scope="openid profile email",
             headers={"Authorization": f"Bearer {freva_jwt}"},
         )
 
@@ -399,7 +399,7 @@ def auth(test_server: str):
 
 
 @pytest.fixture(scope="function")
-def token_file(auth: Token) -> Path:
+def token_file(auth: Token) -> Iterator[Path]:
     """Dump the auth token into a temporary JSON file and return its path."""
     with NamedTemporaryFile(suffix=".json") as temp_f:
         out_f = Path(temp_f.name)
