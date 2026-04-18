@@ -46,7 +46,7 @@ def env_to_int(env_var: str, fallback: int) -> int:
     return int(var)
 
 
-def env_to_dict(env_var: str) -> Dict[str, List[str]]:
+def env_to_dict(env_var: str, default_key: str = "") -> Dict[str, List[str]]:
     """Convert env variables to a dict.
 
     key1:value1,key2:value2,key1:value2 -> {"key1": ["value1", "value2"],
@@ -55,6 +55,7 @@ def env_to_dict(env_var: str) -> Dict[str, List[str]]:
     result: Dict[str, List[str]] = {}
     for kv in os.getenv(env_var, "").split(","):
         key, _, value = kv.partition(":")
+        key = key or default_key
         if key and value:
             result.setdefault(key, [])
             if value not in result[key]:
@@ -273,7 +274,7 @@ class ServerConfig(BaseModel):
         ),
     ] = env_to_list("API_OIDC_AUTH_PORTS", int)
     admins_token_claims: Annotated[
-        Optional[Dict[str, List[str]]],
+        Optional[Union[Dict[str, List[str]], List[str]]],
         Field(
             title="Admin token claim filter.",
             description=(
@@ -287,7 +288,16 @@ class ServerConfig(BaseModel):
                 "dot-separated keys."
             ),
         ),
-    ] = env_to_dict("API_ADMINS_TOKEN_CLAIMS") or None
+    ] = env_to_dict("API_ADMINS_TOKEN_CLAIMS", default_key="roles") or None
+    oidc_trusted_issuers: Annotated[
+        Optional[List[str]],
+        Field(
+            title="Trusted isssuers",
+            description=(
+                "Proxy URLs of trusted freva instances whose JWTs are accepted."
+            ),
+        ),
+    ] = env_to_list("API_OIDC_TRUSTED_ISSUERS", str) or None
     session_cookie_name: Annotated[
         str,
         Field(
@@ -365,6 +375,16 @@ class ServerConfig(BaseModel):
         self.admins_token_claims = (
             self.admins_token_claims or self._read_config("oidc", "admins_token_claims")
         ) or {}
+        _trusted_issuers = []
+        for iss in (
+            self.oidc_trusted_issuers
+            or self._read_config("oidc", "trusted_issuers")
+            or []
+        ):
+            scheme, _, uri = iss.partition("://")
+            scheme = scheme or "https"
+            _trusted_issuers.append(f"{scheme}://{uri}")
+        self.oidc_trusted_issuers = _trusted_issuers
 
     @staticmethod
     def get_url(url: str, default_port: Union[str, int]) -> str:
@@ -428,8 +448,11 @@ class ServerConfig(BaseModel):
         flat_roles = (
             (claims.get("model_extra") or {}).get("roles") or claims.get("roles") or []
         )
-
-        for path, patterns in (self.admins_token_claims or {}).items():
+        claim_ck = self.admins_token_claims or {}
+        adm_claims: Dict[str, List[str]] = (
+            claim_ck if isinstance(claim_ck, dict) else {"roles": claim_ck}
+        )
+        for path, patterns in adm_claims.items():
             # Try dotted path first
             values = _get_in(claims, path.split(".")) or flat_roles
             values = [values] if not isinstance(values, list) else values
