@@ -5,40 +5,41 @@ from typing import Dict, List
 
 import pytest
 import requests
+from fastapi import HTTPException
 from pytest_mock import MockerFixture
 
 pytestmark = [pytest.mark.portal_endpoints, pytest.mark.rest]
 
 
-@pytest.mark.parametrize(
-    "headers",
-    [
-        {},  # no Authorization header
-        lambda auth: {"Authorization": f"Bearer {auth['access_token']}"},
-    ],
-)
-def test_status_forbidden(
-    test_server: str,
-    mocker: MockerFixture,
-    auth: Dict[str, str],
-    headers,
-) -> None:
-    """
-    Verify that invalid or missing token claims result in a 401 response.
-    """
-    # Resolve headers if it's a callable (so auth can be used)
-    resolved_headers = headers(auth) if callable(headers) else headers
+def test_status_forbidden_no_token(test_server: str) -> None:
+    """No Authorization header on a non-public URL should return 401."""
+    res = requests.get(
+        f"{test_server}/data-portal/zarr-utils/status",
+        params={"url": ["foo.zar"]},
+    )
+    assert res.status_code == 401
 
-    # Force token_field_matches to return False for all calls
-    with mocker.patch(
-        "py_oidc_auth.auth_base.token_field_matches", return_value=False
-    ):
-        res = requests.get(
-            f"{test_server}/data-portal/zarr-utils/status",
-            params={"url": ["foo.zar"]},
-            headers=resolved_headers,
-        )
-        assert res.status_code == 401
+
+def test_status_forbidden_invalid_token(
+    test_server: str,
+    auth: Dict[str, str],
+) -> None:
+    """A token signed with a wrong key should be rejected with 401."""
+    import jwt
+    from cryptography.hazmat.primitives.asymmetric import rsa
+
+    wrong_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    fake_token = jwt.encode(
+        {"sub": "janedoe", "roles": [], "aud": "freva-api", "exp": 9999999999},
+        wrong_key,
+        algorithm="RS256",
+    )
+    res = requests.get(
+        f"{test_server}/data-portal/zarr-utils/status",
+        params={"url": ["foo.zar"]},
+        headers={"Authorization": f"Bearer {fake_token}"},
+    )
+    assert res.status_code == 401
 
 
 def test_aggregate_success(test_server: str, auth: Dict[str, str]) -> None:
@@ -86,7 +87,6 @@ def test_aggregate_failed(
     test_server: str, auth: Dict[str, str], aggregation_files: List[str]
 ) -> None:
     """Test if we can aggregate data via the rest api."""
-
     res = requests.post(
         f"{test_server}/data-portal/zarr/convert",
         json={

@@ -1,6 +1,5 @@
 """Unit tests for data queries via the rest-api."""
 
-import asyncio
 import json
 import time
 from typing import Dict
@@ -180,12 +179,8 @@ def test_bbox_selection(test_server: str) -> None:
 
 def test_primary_facets(test_server: str) -> None:
     """Test the functionality of primary facet definitions."""
-    res1 = requests.get(
-        f"{test_server}/databrowser/metadata-search/freva/file"
-    ).json()
-    res2 = requests.get(
-        f"{test_server}/databrowser/metadata-search/cmip6/file"
-    ).json()
+    res1 = requests.get(f"{test_server}/databrowser/metadata-search/freva/file").json()
+    res2 = requests.get(f"{test_server}/databrowser/metadata-search/cmip6/file").json()
     res3 = requests.get(
         f"{test_server}/databrowser/metadata-search/cmip6/file",
         params={"translate": "f"},
@@ -427,9 +422,7 @@ def test_parameter_validation(test_server: str) -> None:
     assert res1 == res2 == res3 == 422
 
 
-def test_no_mongo_parameter_insert(
-    test_server: str, mocker: MockerFixture
-) -> None:
+def test_no_mongo_parameter_insert(test_server: str, mocker: MockerFixture) -> None:
     """Test the insertion of data into the mongodb."""
     from freva_rest.rest import server_config
 
@@ -485,7 +478,4 @@ def test_mongo_parameter_insert(test_server: str, cfg: ServerConfig) -> None:
     assert isinstance(stats[0]["query"], dict)
     assert isinstance(stats[0]["metadata"], dict)
     # The search keys should have been converted to strings.
-    assert (
-        len([k for k in stats[0]["query"].values() if not isinstance(k, str)])
-        == 0
-    )
+    assert len([k for k in stats[0]["query"].values() if not isinstance(k, str)]) == 0

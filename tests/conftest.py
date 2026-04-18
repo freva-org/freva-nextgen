@@ -127,12 +127,8 @@ def get_data_loader_config() -> bytes:
                 "user": os.getenv("API_REDIS_USER", ""),
                 "passwd": os.getenv("API_REDIS_PASSWORD", ""),
                 "host": os.getenv("API_REDIS_HOST", ""),
-                "ssl_cert": Path(
-                    os.getenv("API_REDIS_SSL_CERTFILE", "")
-                ).read_text(),
-                "ssl_key": Path(
-                    os.getenv("API_REDIS_SSL_KEYFILE", "")
-                ).read_text(),
+                "ssl_cert": Path(os.getenv("API_REDIS_SSL_CERTFILE", "")).read_text(),
+                "ssl_key": Path(os.getenv("API_REDIS_SSL_KEYFILE", "")).read_text(),
             }
         ).encode("utf-8")
     )
@@ -149,9 +145,7 @@ def shutdown_data_loader() -> None:
     """Publish a shutdown message to the cache and flush it."""
     cache = Cache()
     for _ in range(5):
-        cache.publish(
-            "data-portal", json.dumps({"shutdown": True}).encode("utf-8")
-        )
+        cache.publish("data-portal", json.dumps({"shutdown": True}).encode("utf-8"))
         time.sleep(1)
     cache.flushdb()
 
@@ -168,26 +162,45 @@ def _prep_env(**config: str) -> Dict[str, str]:
 
 
 def setup_server() -> Iterator[str]:
-    """Start the test server and the data loader process.
-
-    Two threads are started: one for the REST API server and one for the
-    data loader worker. After both are running, the fixture yields the
-    server base URL. Upon teardown, both threads are allowed to exit.
-    """
+    """Start the test server and the data loader process."""
     port = find_free_port()
     cache = Cache()
     cache.flushdb()
     thread1 = threading.Thread(target=run_test_server, args=(port,))
     thread1.daemon = True
     thread1.start()
-    time.sleep(1)
-    thread2 = threading.Thread(
-        target=run_loader_process, args=(find_free_port(),)
-    )
+
+    # Poll /ping — this can only respond after the lifespan has completed,
+    # meaning token_issuer.setup() has run and _private_key is set.
+    base = f"http://localhost:{port}/api/freva-nextgen"
+    for _ in range(60):
+        try:
+            if requests.get(f"{base}/ping", timeout=1).status_code == 200:
+                break
+        except Exception:
+            pass
+        time.sleep(0.5)
+
+    # Also poll the JWKS endpoint to be sure token_issuer is ready.
+    for _ in range(30):
+        try:
+            if (
+                requests.get(
+                    f"{base}/auth/v2/.well-known/jwks.json", timeout=1
+                ).status_code
+                == 200
+            ):
+                break
+        except Exception:
+            pass
+        time.sleep(0.5)
+
+    thread2 = threading.Thread(target=run_loader_process, args=(find_free_port(),))
     thread2.daemon = True
     thread2.start()
     time.sleep(5)
-    yield f"http://localhost:{port}/api/freva-nextgen"
+
+    yield base
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -198,14 +211,13 @@ def user_cache_dir(tmp_path) -> Iterator[str]:
     patched to point to it. The test can then write tokens into this file.
     """
     with NamedTemporaryFile(suffix=".json") as temp_f:
-        with mock.patch.dict(
-            os.environ, {"OIDC_TOKEN_FILE": temp_f.name}, clear=False
-        ):
+        with mock.patch.dict(os.environ, {"OIDC_TOKEN_FILE": temp_f.name}, clear=False):
             with mock.patch(
                 "py_oidc_auth_client.token_store.user_cache_path",
                 return_value=tmp_path,
             ):
                 yield temp_f.name
+
 
 @pytest.fixture(scope="function")
 def temp_dir() -> Iterator[Path]:
@@ -292,9 +304,7 @@ def valid_eval_conf_file() -> Iterator[Path]:
             _prep_env(EVALUATION_SYSTEM_CONFIG_FILE=str(eval_file)),
             clear=True,
         ):
-            with mock.patch(
-                "sysconfig.get_path", lambda x, y="foo": str(temp_dir)
-            ):
+            with mock.patch("sysconfig.get_path", lambda x, y="foo": str(temp_dir)):
                 yield eval_file
 
 
@@ -304,16 +314,14 @@ def invalid_eval_conf_file() -> Iterator[Path]:
     with TemporaryDirectory() as temp_dir:
         eval_file = Path(temp_dir) / "eval.conf"
         eval_file.write_text(
-            "[foo]\n" "solr.host = http://localhost\n" "databrowser.port = 8080"
+            "[foo]\nsolr.host = http://localhost\ndatabrowser.port = 8080"
         )
         with mock.patch.dict(
             os.environ,
             _prep_env(EVALUATION_SYSTEM_CONFIG_FILE=str(eval_file)),
             clear=True,
         ):
-            with mock.patch(
-                "sysconfig.get_path", lambda x, y="foo": str(temp_dir)
-            ):
+            with mock.patch("sysconfig.get_path", lambda x, y="foo": str(temp_dir)):
                 yield eval_file
 
 
@@ -360,67 +368,43 @@ def flavour_server(test_server: str) -> Iterator[str]:
 
 
 @pytest.fixture(scope="function")
-def auth(test_server: str):
-    """Factory to create auth tokens for different user types."""
+def auth(test_server: str) -> Dict[str, Token | object]:
+    """Create freva JWTs directly for testing — no Keycloak needed."""
+    from getpass import getuser
+
+    from freva_rest.auth import token_issuer
 
     def _create_auth(user_type: str = "user") -> Token:
-        from getpass import getuser
-
-        server_config = ServerConfig()
-        user_configs = {
-            "user": {"username": "janedoe", "password": "janedoe123"},
-            "admin": {"username": getuser(), "password": "secret"},
+        usernames = {"user": "janedoe", "admin": getuser()}
+        roles = {
+            "user": ["hpcuser"],
+            "admin": ["hpcuser", "admin"],
         }
-        config = user_configs.get(user_type, user_configs["user"])
-        data = {
-            "client_id": server_config.oidc_client_id or "",
-            "client_secret": server_config.oidc_client_secret or "",
-            "grant_type": "password",
-            **config,
-        }
-        res = requests.post(
-            server_config.oidc_overview["token_endpoint"],
-            data={k: v for (k, v) in data.items() if v.strip()},
+        username = usernames.get(user_type, "janedoe")
+        freva_jwt, _ = token_issuer.mint(
+            sub=username,
+            email=f"{username}@example.com",
+            roles=roles.get(user_type, ["hpcuser"]),
+            preferred_username=username,
         )
-        return _build_token(res.json())
+        now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+        return Token(
+            access_token=freva_jwt,
+            token_type="Bearer",
+            expires=now + 3600,
+            refresh_token=freva_jwt,
+            refresh_expires=now + 7200,
+            scope="openid profile email",
+            headers={"Authorization": f"Bearer {freva_jwt}"},
+        )
 
     user_token = _create_auth("user")
     admin_token = _create_auth("admin")
-
     return {**user_token, "admin": admin_token}
 
 
-def _build_token(token_data: dict) -> Token:
-    """Helper to build a Token object from a JSON response."""
-    now = datetime.datetime.now(datetime.timezone.utc).timestamp()
-    expires_at = (
-        token_data.get("exp")
-        or token_data.get("expires")
-        or token_data.get("expires_at")
-        or now + token_data.get("expires_in", 180)
-    )
-    refresh_expires_at = (
-        token_data.get("refresh_exp")
-        or token_data.get("refresh_expires")
-        or token_data.get("refresh_expires_at")
-        or now + token_data.get("refresh_expires_in", 180)
-    )
-
-    return Token(
-        access_token=token_data["access_token"],
-        token_type=token_data["token_type"],
-        expires=int(expires_at),
-        refresh_token=token_data["refresh_token"],
-        refresh_expires=int(refresh_expires_at),
-        scope=token_data["scope"],
-        headers={
-            "Authorization": f"{token_data['token_type']} {token_data['access_token']}"
-        },
-    )
-
-
 @pytest.fixture(scope="function")
-def token_file(auth: Token) -> Path:
+def token_file(auth: Token) -> Iterator[Path]:
     """Dump the auth token into a temporary JSON file and return its path."""
     with NamedTemporaryFile(suffix=".json") as temp_f:
         out_f = Path(temp_f.name)

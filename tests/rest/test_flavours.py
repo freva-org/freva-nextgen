@@ -14,7 +14,6 @@ import mock
 import pytest
 import requests
 
-
 # -------------------------
 # Helper request wrappers
 # -------------------------

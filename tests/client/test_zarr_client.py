@@ -7,6 +7,7 @@ Authentication is handled via ``mock_authenticate`` for Python API tests
 and ``--token-file`` for CLI tests.
 """
 
+import time
 from pathlib import Path
 
 import pytest
@@ -32,9 +33,7 @@ class _MockResp:
 class TestAggregation:
     """Tests for databrowser aggregation functionality."""
 
-    def test_aggregation(
-        self, test_server: str, mock_authenticate: Token
-    ) -> None:
+    def test_aggregation(self, test_server: str, mock_authenticate: Token) -> None:
         """Aggregation should return a valid zarr URL."""
         db = databrowser(host=test_server, dataset="agg")
         url = db.aggregate("auto")
@@ -59,14 +58,15 @@ class TestConvert:
         files = list(db)
         headers = {"Authorization": f"Bearer {mock_authenticate['access_token']}"}
         urls = convert(*files, host=test_server)
+        time.sleep(2)
+        res = requests.get(f"{urls[0]}/.zmetadata", headers=headers)
+        assert res.status_code == 200
         assert isinstance(
-            xr.open_zarr(urls[0], storage_options={"headers": headers}),
+            xr.open_zarr(urls[0], storage_options={"headers": headers}).load(),
             xr.Dataset,
         )
 
-    def test_convert_public(
-        self, test_server: str, mock_authenticate: Token
-    ) -> None:
+    def test_convert_public(self, test_server: str, mock_authenticate: Token) -> None:
         """Public zarr conversion should produce publicly openable datasets."""
         db = databrowser(host=test_server, dataset="cmip6-fs")
         files = list(db)
@@ -82,9 +82,7 @@ class TestConvert:
         """Conversion with a mocked bad response should raise ValueError."""
         db = databrowser(host=test_server, dataset="cmip6-fs")
         files = list(db)
-        mocker.patch(
-            "freva_client.zarr_utils.do_request", return_value=_MockResp()
-        )
+        mocker.patch("freva_client.zarr_utils.do_request", return_value=_MockResp())
         with pytest.raises(ValueError):
             _ = convert(*files, host=test_server)
 
@@ -191,9 +189,9 @@ class TestStatus:
         mocker: MockerFixture,
     ) -> None:
         """Status query with use_token strategy should work."""
-        mocker.patch("freva_client.utils.choose_token_strategy").return_value = (
-            "use_token"
-        )
+        mocker.patch(
+            "freva_client.utils.choose_token_strategy"
+        ).return_value = "use_token"
         stat = status(
             f"   {test_server}/data-portal/share/foo/bar.zarr",
             host=test_server,

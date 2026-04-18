@@ -46,7 +46,7 @@ def env_to_int(env_var: str, fallback: int) -> int:
     return int(var)
 
 
-def env_to_dict(env_var: str) -> Dict[str, List[str]]:
+def env_to_dict(env_var: str, default_key: str = "") -> Dict[str, List[str]]:
     """Convert env variables to a dict.
 
     key1:value1,key2:value2,key1:value2 -> {"key1": ["value1", "value2"],
@@ -55,6 +55,7 @@ def env_to_dict(env_var: str) -> Dict[str, List[str]]:
     result: Dict[str, List[str]] = {}
     for kv in os.getenv(env_var, "").split(","):
         key, _, value = kv.partition(":")
+        key = key or default_key
         if key and value:
             result.setdefault(key, [])
             if value not in result[key]:
@@ -109,7 +110,7 @@ class ServerConfig(BaseModel):
         Union[str, Path],
         Field(
             title="API Config",
-            description=("Path to a .toml file holding the API" "configuration"),
+            description=("Path to a .toml file holding the APIconfiguration"),
         ),
     ] = os.getenv("API_CONFIG", Path(__file__).parent / "api_config.toml")
     proxy: Annotated[
@@ -172,9 +173,7 @@ class ServerConfig(BaseModel):
         Optional[int],
         Field(
             title="Cache expiration.",
-            description=(
-                "The expiration time in sec" "of the data loading cache."
-            ),
+            description=("The expiration time in secof the data loading cache."),
         ),
     ] = env_to_int("API_CACHE_EXP", 3600)
     services: Annotated[
@@ -197,24 +196,14 @@ class ServerConfig(BaseModel):
         str,
         Field(
             title="Redis cert file.",
-            description=(
-                "Path to the public"
-                "certfile to make"
-                "connections to the"
-                "cache"
-            ),
+            description=("Path to the publiccertfile to makeconnections to thecache"),
         ),
     ] = os.getenv("API_REDIS_SSL_CERTFILE", "")
     redis_ssl_keyfile: Annotated[
         str,
         Field(
             title="Redis key file.",
-            description=(
-                "Path to the privat"
-                "key file to make"
-                "connections to the"
-                "cache"
-            ),
+            description=("Path to the privatkey file to makeconnections to thecache"),
         ),
     ] = os.getenv("API_REDIS_SSL_KEYFILE", "")
     redis_password: Annotated[
@@ -266,9 +255,7 @@ class ServerConfig(BaseModel):
                 "Nested claims are defined by '.' separation."
             ),
         ),
-    ] = (
-        env_to_dict("API_OIDC_TOKEN_CLAIMS") or None
-    )
+    ] = env_to_dict("API_OIDC_TOKEN_CLAIMS") or None
     oidc_scopes: Annotated[
         str,
         Field(
@@ -287,7 +274,7 @@ class ServerConfig(BaseModel):
         ),
     ] = env_to_list("API_OIDC_AUTH_PORTS", int)
     admins_token_claims: Annotated[
-        Optional[Dict[str, List[str]]],
+        Optional[Union[Dict[str, List[str]], List[str]]],
         Field(
             title="Admin token claim filter.",
             description=(
@@ -301,16 +288,21 @@ class ServerConfig(BaseModel):
                 "dot-separated keys."
             ),
         ),
-    ] = (
-        env_to_dict("API_ADMINS_TOKEN_CLAIMS") or None
-    )
+    ] = env_to_dict("API_ADMINS_TOKEN_CLAIMS", default_key="roles") or None
+    oidc_trusted_issuers: Annotated[
+        Optional[List[str]],
+        Field(
+            title="Trusted isssuers",
+            description=(
+                "Proxy URLs of trusted freva instances whose JWTs are accepted."
+            ),
+        ),
+    ] = env_to_list("API_OIDC_TRUSTED_ISSUERS", str) or None
     session_cookie_name: Annotated[
         str,
         Field(
             title="Cookie name",
-            description=(
-                "Name of the cookie used for storing session " "information."
-            ),
+            description=("Name of the cookie used for storing session information."),
         ),
     ] = os.getenv("API_SESSION_COOKIE_NAME", "")
 
@@ -334,9 +326,7 @@ class ServerConfig(BaseModel):
         self._mongo_client: Optional[AsyncMongoClient[Any]] = None
         self._solr_fields = self._get_solr_fields()
         self._oidc_overview: Optional[Dict[str, Any]] = None
-        self.services = (
-            self.services or self._read_config("restAPI", "services") or []
-        )
+        self.services = self.services or self._read_config("restAPI", "services") or []
         self.session_cookie_name = self.session_cookie_name or self._read_config(
             "oidc",
             "session_cookie_name",
@@ -345,9 +335,7 @@ class ServerConfig(BaseModel):
             "oidc", "auth_ports"
         )
         self.oidc_token_claims = (
-            self.oidc_token_claims
-            or self._read_config("oidc", "token_claims")
-            or {}
+            self.oidc_token_claims or self._read_config("oidc", "token_claims") or {}
         )
         self.proxy = (
             self.proxy
@@ -364,9 +352,7 @@ class ServerConfig(BaseModel):
             "oidc", "client_id"
         )
         self.oidc_scopes = self.oidc_scopes or self._read_config("oidc", "scopes")
-        self.mongo_host = self.mongo_host or self._read_config(
-            "mongo_db", "hostname"
-        )
+        self.mongo_host = self.mongo_host or self._read_config("mongo_db", "hostname")
         self.mongo_user = self.mongo_user or self._read_config("mongo_db", "user")
         self.mongo_password = self.mongo_password or self._read_config(
             "mongo_db", "password"
@@ -385,13 +371,20 @@ class ServerConfig(BaseModel):
         self.redis_ssl_certfile = self.redis_ssl_certfile or self._read_config(
             "cache", "cert_file"
         )
-        self.redis_host = self.redis_host or self._read_config(
-            "cache", "hostname"
-        )
+        self.redis_host = self.redis_host or self._read_config("cache", "hostname")
         self.admins_token_claims = (
-            self.admins_token_claims
-            or self._read_config("oidc", "admins_token_claims")
+            self.admins_token_claims or self._read_config("oidc", "admins_token_claims")
         ) or {}
+        _trusted_issuers = []
+        for iss in (
+            self.oidc_trusted_issuers
+            or self._read_config("oidc", "trusted_issuers")
+            or []
+        ):
+            scheme, _, uri = iss.partition("://")
+            scheme = scheme or "https"
+            _trusted_issuers.append(f"{scheme}://{uri}")
+        self.oidc_trusted_issuers = _trusted_issuers
 
     @staticmethod
     def get_url(url: str, default_port: Union[str, int]) -> str:
@@ -450,13 +443,20 @@ class ServerConfig(BaseModel):
         Return True if any (claim-path -> regex) in `admins_token_claims`
         matches any value in the current_user's decoded JWT claims.
         """
+
         claims = current_user.model_dump()
-
-        for path, patterns in (self.admins_token_claims or {}).items():
-            values = _get_in(claims, path.split("."))
-            if not isinstance(values, list):  # pragma: no cover
-                values = [values]
-
+        flat_roles = (
+            (claims.get("model_extra") or {}).get("roles") or claims.get("roles") or []
+        )
+        claim_ck = self.admins_token_claims or {}
+        adm_claims: Dict[str, List[str]] = (
+            claim_ck if isinstance(claim_ck, dict) else {"roles": claim_ck}
+        )
+        for path, patterns in adm_claims.items():
+            # Try dotted path first
+            values = _get_in(claims, path.split(".")) or flat_roles
+            values = [values] if not isinstance(values, list) else values
+            # Fall back to flat roles list
             if any(
                 re.search(pat, val)
                 for val in values
@@ -464,7 +464,6 @@ class ServerConfig(BaseModel):
                 for pat in patterns
             ):
                 return True
-
         return False
 
     def reload(self) -> None:
@@ -474,11 +473,10 @@ class ServerConfig(BaseModel):
     @property
     def oidc_overview(self) -> Dict[str, Any]:
         """Query the url overview from OIDC Service."""
-        if self._oidc_overview is not None:
-            return self._oidc_overview
-        res = requests.get(self.oidc_discovery_url, verify=False, timeout=3)
-        res.raise_for_status()
-        self._oidc_overview = res.json()
+        if self._oidc_overview is None:  # pragma: no cover
+            res = requests.get(self.oidc_discovery_url, verify=False, timeout=3)
+            res.raise_for_status()
+            self._oidc_overview = res.json()
         return self._oidc_overview
 
     @property
@@ -493,6 +491,16 @@ class ServerConfig(BaseModel):
             if self.mongo_password:
                 user_prefix = f"{self.mongo_user}:{self.mongo_password}@"
         return f"mongodb://{user_prefix}{url}"
+
+    @property
+    def mongo_collection_sessions(self) -> AsyncCollection[Any]:
+        """MongoDB collection for freva auth sessions (IDP refresh tokens)."""
+        return self.mongo_client[self.mongo_db]["freva_sessions"]
+
+    @property
+    def mongo_collection_keys(self) -> AsyncCollection[Any]:
+        """MongoDB collection for the freva signing key."""
+        return self.mongo_client[self.mongo_db]["freva_keys"]
 
     @property
     def log_level(self) -> int:
@@ -545,7 +553,5 @@ class ServerConfig(BaseModel):
             requests.exceptions.ConnectionError,
             requests.exceptions.JSONDecodeError,
         ) as error:  # pragma: no cover
-            logger.error(
-                "Connection to %s failed: %s", url, error
-            )  # pragma: no cover
+            logger.error("Connection to %s failed: %s", url, error)  # pragma: no cover
             yield ""  # pragma: no cover

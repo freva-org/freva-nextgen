@@ -6,10 +6,9 @@ from typing import Annotated, Dict, List, Optional, Union, cast
 import cloudpickle
 from fastapi import HTTPException, Path, Query, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse, Response
-from py_oidc_auth import IDToken as TokenPayload
 from pydantic import AnyHttpUrl, BaseModel, Field
 
-from freva_rest.auth import auth, check_token
+from freva_rest.auth import RequiredUser, check_token
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 from freva_rest.utils.base_utils import Cache, add_ttl_key_to_db_and_cache
@@ -42,9 +41,7 @@ class LoadResponse(BaseModel):
         ),
         title="Zarr URLs",
         examples=[
-            [
-                f"{server_config.proxy}/api/freva-nextgen/data-portal/zarr/abc123.zarr"
-            ]
+            [f"{server_config.proxy}/api/freva-nextgen/data-portal/zarr/abc123.zarr"]
         ],
     )
 
@@ -100,7 +97,7 @@ class ZarrStatus(BaseModel):
 )
 async def load_files(
     convert: ZarrConversion,
-    current_user: TokenPayload = auth.required(),
+    current_user: RequiredUser,
 ) -> LoadResponse:
     """Publish a conversion request to the data‑portal worker.
 
@@ -235,6 +232,7 @@ async def get_status(
     response_class=HTMLResponse,
 )
 async def zarr_html_view(
+    current_user: RequiredUser,
     url: Annotated[
         str,
         Query(
@@ -253,7 +251,6 @@ async def zarr_html_view(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = auth.required(),
 ) -> HTMLResponse:
     """Get HTML representation of the Zarr dataset.
 
@@ -271,15 +268,13 @@ async def zarr_html_view(
     tags=["Load data"],
 )
 async def zarr_key_data(
+    current_user: RequiredUser,
     token: Annotated[
         str,
         Path(
             title="token",
             description=(
-                (
-                    "The token that was generated, when task to stream data "
-                    "was created."
-                )
+                "The token that was generated, when task to stream data was created."
             ),
         ),
     ],
@@ -305,7 +300,6 @@ async def zarr_key_data(
             le=1500,
         ),
     ] = 1,
-    current_user: TokenPayload = auth.required(),
 ) -> Response:
     """
     Serve arbitrary Zarr metadata or chunk keys.
@@ -342,10 +336,7 @@ async def zarr_key_data_shared(
         Path(
             title="token",
             description=(
-                (
-                    "The token that was generated, when task to stream data "
-                    "was created."
-                )
+                "The token that was generated, when task to stream data was created."
             ),
         ),
     ],
@@ -425,7 +416,7 @@ async def zarr_key_data_shared(
 async def create_presigned_url(
     request: Request,
     body: PresignUrlRequest,
-    token: TokenPayload = auth.required(),
+    token: RequiredUser,
 ) -> PresignUrlResponse:
     """Create a new pre-signed URL.
 
@@ -436,13 +427,8 @@ async def create_presigned_url(
     payload = payload_from_url(normalise_path(str(body.path)))
     # TODO: we should check if the user is allowed to read the dataset.
     ttl = max(MIN_TTL_SECONDS, min(body.ttl_seconds, MAX_TTL_SECONDS))
-    res = await add_ttl_key_to_db_and_cache(
-        payload["path"], ttl, payload["assembly"]
-    )
-    url = (
-        f"{server_config.proxy}/api/freva-nextgen/data-portal/share/"
-        f"{res['key']}.zarr"
-    )
+    res = await add_ttl_key_to_db_and_cache(payload["path"], ttl, payload["assembly"])
+    url = f"{server_config.proxy}/api/freva-nextgen/data-portal/share/{res['key']}.zarr"
     return PresignUrlResponse(
         url=cast(AnyHttpUrl, url),
         token=res["token"],

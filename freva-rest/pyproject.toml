@@ -38,7 +38,7 @@ dependencies = [
 "httpx",
 "xarray",
 "zarr",
-"py-oidc-auth[fastapi]",
+"py-oidc-auth[fastapi]>=2604.1.0",
 ]
 [project.scripts]
 freva-rest-server = "freva_rest.cli:cli"
@@ -67,7 +67,7 @@ docs = ["sphinx-execute-code-python3",
         "sphinx-togglebutton",
         "sphinxcontrib-httpdomain",
         "sphinxext-opengraph",
-        "pydata-sphinx-theme"
+        "pydata-sphinx-theme",
         ]
 [package-data]
 freva_rest = ["py.typed", "*.toml", "*.ico", "mock/*.json"]
