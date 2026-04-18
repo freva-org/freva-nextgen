@@ -39,12 +39,15 @@ from pydantic import BaseModel, Field
 
 from ..config import ServerConfig
 from .session_store import SessionStore
-from .token_issuer import TokenIssuer
+from .token_issuer import (
+    DEVICE_TOKEN_EXPIRY_SECONDS,
+    TOKEN_ENDPOINT,
+    TOKEN_EXPIRY_SECONDS,
+    TokenIssuer,
+)
 
 server_config = ServerConfig()
 
-_TOKEN_ENDPOINT = "/api/freva-nextgen/auth/v2/token"
-_TOKEN_EXPIRY_SECONDS = 3600
 
 # ---------------------------------------------------------------------------
 # py-oidc-auth — IDP broker, used internally only
@@ -182,12 +185,13 @@ async def freva_token(
     In both cases the response ``refresh_token`` field contains the freva
     JWT itself — pass it back here when you need to renew.
     """
+    expiry = DEVICE_TOKEN_EXPIRY_SECONDS if device_code else TOKEN_EXPIRY_SECONDS
     try:
         if refresh_token and not code and not device_code:
             idp_token_obj = await _idp_refresh(refresh_token)
         else:
             idp_token_obj = await auth.token(
-                _TOKEN_ENDPOINT,
+                TOKEN_ENDPOINT,
                 code=code,
                 redirect_uri=redirect_uri,
                 device_code=device_code,
@@ -196,7 +200,7 @@ async def freva_token(
     except InvalidRequest as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.detail)
 
-    return await _mint_and_store(idp_token_obj)
+    return await _mint_and_store(idp_token_obj, expiry_seconds=expiry)
 
 
 # ---------------------------------------------------------------------------
@@ -301,10 +305,12 @@ async def _idp_refresh(freva_jwt: str) -> Token:
     # Rotate: delete old session before issuing new one
     await session_store.delete(server_config.mongo_collection_sessions, jti)
 
-    return await auth.token(_TOKEN_ENDPOINT, refresh_token=idp_refresh_token)
+    return await auth.token(TOKEN_ENDPOINT, refresh_token=idp_refresh_token)
 
 
-async def _mint_and_store(idp_token_obj: Token) -> Token:
+async def _mint_and_store(
+    idp_token_obj: Token, expiry_seconds: int = TOKEN_EXPIRY_SECONDS
+) -> Token:
     """Validate an IDP Token, mint a freva JWT, persist the session."""
     try:
         idp_claims: IDToken = await auth._get_token(
@@ -325,6 +331,7 @@ async def _mint_and_store(idp_token_obj: Token) -> Token:
         email=getattr(idp_claims, "email", None),
         roles=idp_claims.flattened_roles,
         preferred_username=username,
+        expiry_seconds=expiry_seconds,
     )
 
     await session_store.save(
@@ -336,9 +343,7 @@ async def _mint_and_store(idp_token_obj: Token) -> Token:
     )
 
     freva_expires = int(
-        (
-            datetime.now(tz=timezone.utc) + timedelta(seconds=_TOKEN_EXPIRY_SECONDS)
-        ).timestamp()
+        (datetime.now(tz=timezone.utc) + timedelta(seconds=expiry_seconds)).timestamp()
     )
 
     # Return freva JWT as both access_token and refresh_token.
