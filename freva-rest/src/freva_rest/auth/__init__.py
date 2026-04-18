@@ -154,7 +154,6 @@ OptionalUser = Annotated[Optional[IDToken], Security(token_optional_wrapper())]
 @auth_router.post(
     "/auth/v2/token",
     response_model=Token,
-    tags=["Authentication"],
     summary="Obtain or refresh a freva API token",
     responses={
         200: {"description": "Freva JWT issued."},
@@ -211,7 +210,6 @@ async def freva_token(
 @auth_router.get(
     "/auth/v2/.well-known/jwks.json",
     response_class=JSONResponse,
-    tags=["Authentication"],
     summary="Freva public key (JWKS)",
 )
 async def jwks() -> JSONResponse:
@@ -231,7 +229,6 @@ class TokenPayload(BaseModel):
 @auth_router.get(
     "/auth/v2/.well-known/openid-configuration",
     response_class=JSONResponse,
-    tags=["Authentication"],
     responses={
         200: {
             "description": "Upstream IDP discovery document.",
