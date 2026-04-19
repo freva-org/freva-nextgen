@@ -37,8 +37,8 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from jwt.algorithms import RSAAlgorithm
 from py_oidc_auth import IDToken
 from pymongo.asynchronous.collection import AsyncCollection
-from ..config import ServerConfig
 
+from ..config import ServerConfig
 from ..logger import logger
 
 if TYPE_CHECKING:
