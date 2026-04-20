@@ -96,11 +96,19 @@ class TokenIssuer:
         self.audience = audience
         self._mongo_url: str = cfg.mongo_url
         self._mongo_db: str = cfg.mongo_db
+        self._mongo_client: Optional[pymongo.MongoClient[Any]] = None
         self._private_key: Optional["RSAPrivateKey"] = None  # loaded in setup()
         # kid -> public key for trusted peer instances
         self._peer_keys: Dict[str, RSAPublicKey] = {}
         # issuer URL -> last refresh attempt timestamp (for cooldown)
         self._peer_last_refresh: Dict[str, float] = {}
+
+    @property
+    def mongo_client(self) -> pymongo.MongoClient[Any]:
+        """Make a connection to the MongoDB."""
+        if self._mongo_client is None:
+            self._mongo_client = pymongo.MongoClient(self._mongo_url)
+        return self._mongo_client
 
     @property
     def private_key(self) -> "RSAPrivateKey":
@@ -242,22 +250,16 @@ class TokenIssuer:
                 logger.info("Refreshed peer JWKS from %s", issuer_url)
 
                 # Persist via sync pymongo — _mongo_url/_mongo_db set at init
-                sync_client: pymongo.MongoClient[Any] = pymongo.MongoClient(
-                    self._mongo_url
+                self.mongo_client[self._mongo_db]["freva_keys"].replace_one(
+                    {"_id": f"{_PEER_KEY_DOC_PREFIX}{issuer_url}"},
+                    {
+                        "_id": f"{_PEER_KEY_DOC_PREFIX}{issuer_url}",
+                        "issuer_url": issuer_url,
+                        "jwks": jwks,
+                        "fetched_at": datetime.now(tz=timezone.utc),
+                    },
+                    upsert=True,
                 )
-                try:
-                    sync_client[self._mongo_db]["freva_keys"].replace_one(
-                        {"_id": f"{_PEER_KEY_DOC_PREFIX}{issuer_url}"},
-                        {
-                            "_id": f"{_PEER_KEY_DOC_PREFIX}{issuer_url}",
-                            "issuer_url": issuer_url,
-                            "jwks": jwks,
-                            "fetched_at": datetime.now(tz=timezone.utc),
-                        },
-                        upsert=True,
-                    )
-                finally:
-                    sync_client.close()
 
                 if kid in self._peer_keys:
                     return  # found it, no need to check remaining peers
