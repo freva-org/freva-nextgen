@@ -449,7 +449,7 @@ async def test_load_peer_keys_success() -> None:
         mock_col.find = MagicMock(return_value=_async_iter([]))
 
         with patch(
-            "freva_rest.auth.token_issuer.httpx.AsyncClient",
+            "httpx.AsyncClient",
             return_value=mock_client,
         ):
             await token_issuer.load_peer_keys(mock_col)
@@ -490,7 +490,7 @@ async def test_load_peer_keys_falls_back_to_db() -> None:
         mock_col.find = MagicMock(return_value=_async_iter([stored_doc]))
 
         with patch(
-            "freva_rest.auth.token_issuer.httpx.AsyncClient",
+            "httpx.AsyncClient",
             return_value=mock_client,
         ):
             await token_issuer.load_peer_keys(mock_col)
@@ -510,7 +510,7 @@ async def test_load_peer_keys_empty_is_noop() -> None:
     token_issuer.trusted_issuers = []
     try:
         mock_col = AsyncMock()
-        with patch("freva_rest.auth.token_issuer.httpx.AsyncClient") as mock_cls:
+        with patch("httpx.AsyncClient") as mock_cls:
             await token_issuer.load_peer_keys(mock_col)
             mock_cls.assert_not_called()
     finally:
@@ -550,7 +550,7 @@ def test_verify_rejects_untrusted_issuer_without_http_call() -> None:
     token_issuer.trusted_issuers = []
 
     try:
-        with patch("freva_rest.auth.token_issuer.httpx.get") as mock_get:
+        with patch("httpx.get") as mock_get:
             with pytest.raises(pyjwt.exceptions.InvalidIssuerError):
                 token_issuer.verify(_peer_token(peer))
             mock_get.assert_not_called()
@@ -564,7 +564,6 @@ def test_verify_rejects_unknown_peer_after_failed_refresh() -> None:
 
     peer_url = "https://freva-peer.dkrz.de"
     peer = _make_peer_issuer(peer_url)
-    peer_kid = peer._key_id()
 
     original_trusted = token_issuer.trusted_issuers
     token_issuer.trusted_issuers = [peer_url]
@@ -573,10 +572,10 @@ def test_verify_rejects_unknown_peer_after_failed_refresh() -> None:
 
     try:
         with patch(
-            "freva_rest.auth.token_issuer.httpx.get",
+            "httpx.get",
             side_effect=Exception("unreachable"),
         ):
-            with patch("freva_rest.auth.token_issuer.pymongo.MongoClient"):
+            with patch("pymongo.MongoClient"):
                 with pytest.raises(pyjwt.PyJWTError):
                     token_issuer.verify(_peer_token(peer))
     finally:
@@ -613,11 +612,11 @@ def test_lazy_refresh_fetches_and_persists() -> None:
 
     try:
         with patch(
-            "freva_rest.auth.token_issuer.httpx.get",
+            "httpx.get",
             return_value=mock_response,
         ) as mock_get:
             with patch(
-                "freva_rest.auth.token_issuer.pymongo.MongoClient",
+                "pymongo.MongoClient",
                 return_value=mock_mongo_client,
             ):
                 token_issuer._maybe_refresh_peer_keys_for(peer_kid)
@@ -641,7 +640,7 @@ def test_lazy_refresh_respects_cooldown() -> None:
     token_issuer._peer_last_refresh[peer_url] = time.monotonic()
 
     try:
-        with patch("freva_rest.auth.token_issuer.httpx.get") as mock_get:
+        with patch("httpx.get") as mock_get:
             token_issuer._maybe_refresh_peer_keys_for("unknown-kid")
             mock_get.assert_not_called()
     finally:
@@ -659,7 +658,7 @@ def test_lazy_refresh_sets_cooldown_on_failure() -> None:
 
     try:
         with patch(
-            "freva_rest.auth.token_issuer.httpx.get",
+            "httpx.get",
             side_effect=Exception("timeout"),
         ):
             token_issuer._maybe_refresh_peer_keys_for("unknown-kid")
@@ -692,11 +691,11 @@ def test_verify_resolves_peer_token_via_lazy_refresh() -> None:
 
     try:
         with patch(
-            "freva_rest.auth.token_issuer.httpx.get",
+            "httpx.get",
             return_value=mock_response,
         ):
             with patch(
-                "freva_rest.auth.token_issuer.pymongo.MongoClient",
+                "pymongo.MongoClient",
                 return_value=mock_mongo_client,
             ):
                 claims = token_issuer.verify(_peer_token(peer))
