@@ -14,6 +14,7 @@ from socket import gethostname
 from typing import (
     Annotated,
     Any,
+    ClassVar,
     Dict,
     Iterator,
     List,
@@ -105,6 +106,9 @@ class ServerConfig(BaseModel):
     The configuration can either be set via environment variables or a server
     config file.
     """
+
+    _instance: ClassVar[Optional["ServerConfig"]] = None
+    _initialised: ClassVar[bool] = False
 
     config: Annotated[
         Union[str, Path],
@@ -305,6 +309,16 @@ class ServerConfig(BaseModel):
             description=("Name of the cookie used for storing session information."),
         ),
     ] = os.getenv("API_SESSION_COOKIE_NAME", "")
+
+    def __new__(cls, **kwargs: Any) -> "ServerConfig":
+        if cls._instance is None or os.getenv("API_TESTS", "0") == "1":
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self, **kwargs: Any) -> None:
+        if self.__class__._initialised is False or os.getenv("API_TESTS", "0") == "1":
+            super().__init__(**kwargs)
+            self.__class__._initialised = True
 
     def _read_config(self, section: str, key: str) -> Any:
         fallback = self._fallback_config.get(section, {}).get(key, None)
