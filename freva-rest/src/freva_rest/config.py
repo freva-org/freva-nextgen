@@ -513,11 +513,10 @@ class ServerConfig(BaseModel):
     @property
     def oidc_overview(self) -> Dict[str, Any]:
         """Query the url overview from OIDC Service."""
-        if self._oidc_overview is not None:
-            return self._oidc_overview
-        res = requests.get(self.oidc_discovery_url, verify=False, timeout=3)
-        res.raise_for_status()
-        self._oidc_overview = res.json()
+        if self._oidc_overview is None:  # pragma: no cover
+            res = requests.get(self.oidc_discovery_url, verify=False, timeout=3)
+            res.raise_for_status()
+            self._oidc_overview = res.json()
         return self._oidc_overview
 
     @property
