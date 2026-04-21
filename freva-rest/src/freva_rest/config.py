@@ -47,7 +47,7 @@ def env_to_int(env_var: str, fallback: int) -> int:
     return int(var)
 
 
-def env_to_dict(env_var: str) -> Dict[str, List[str]]:
+def env_to_dict(env_var: str, default_key: str = "") -> Dict[str, List[str]]:
     """Convert env variables to a dict.
 
     key1:value1,key2:value2,key1:value2 -> {"key1": ["value1", "value2"],
@@ -56,6 +56,7 @@ def env_to_dict(env_var: str) -> Dict[str, List[str]]:
     result: Dict[str, List[str]] = {}
     for kv in os.getenv(env_var, "").split(","):
         key, _, value = kv.partition(":")
+        key = key or default_key
         if key and value:
             result.setdefault(key, [])
             if value not in result[key]:
@@ -290,8 +291,8 @@ class ServerConfig(BaseModel):
             ),
         ),
     ] = env_to_list("API_OIDC_AUTH_PORTS", int)
-    admins_token_claims: Annotated[
-        Optional[Dict[str, List[str]]],
+    admin_token_claims: Annotated[
+        Optional[Union[Dict[str, List[str]], List[str]]],
         Field(
             title="Admin token claim filter.",
             description=(
@@ -480,16 +481,22 @@ class ServerConfig(BaseModel):
 
     def is_admin_user(self, current_user: BaseModel) -> bool:
         """
-        Return True if any (claim-path -> regex) in `admins_token_claims`
+        Return True if any (claim-path -> regex) in `admin_token_claims`
         matches any value in the current_user's decoded JWT claims.
         """
         claims = current_user.model_dump()
-
-        for path, patterns in (self.admins_token_claims or {}).items():
-            values = _get_in(claims, path.split("."))
-            if not isinstance(values, list):  # pragma: no cover
-                values = [values]
-
+        flat_roles = (
+            (claims.get("model_extra") or {}).get("roles") or claims.get("roles") or []
+        )
+        claim_ck = self.admin_token_claims or {}
+        adm_claims: Dict[str, List[str]] = (
+            claim_ck if isinstance(claim_ck, dict) else {"roles": claim_ck}
+        )
+        for path, patterns in adm_claims.items():
+            # Try dotted path first
+            values = _get_in(claims, path.split(".")) or flat_roles
+            values = [values] if not isinstance(values, list) else values
+            # Fall back to flat roles list
             if any(
                 re.search(pat, val)
                 for val in values
@@ -497,7 +504,6 @@ class ServerConfig(BaseModel):
                 for pat in patterns
             ):
                 return True
-
         return False
 
     def reload(self) -> None:
