@@ -251,7 +251,7 @@ class TestStacCatalogue:
         assert res.exit_code == 1
 
     def test_stac_no_filename(
-        self, cli_runner: CliRunner, test_server: str
+            self, cli_runner: CliRunner, test_server: str, temp_dir: Path
     ) -> None:
         """STAC catalogue without explicit filename should succeed."""
         res = cli_runner.invoke(app, ["stac-catalogue", "--host", test_server])
