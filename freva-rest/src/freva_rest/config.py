@@ -14,6 +14,7 @@ from socket import gethostname
 from typing import (
     Annotated,
     Any,
+    ClassVar,
     Dict,
     Iterator,
     List,
@@ -105,11 +106,14 @@ class ServerConfig(BaseModel):
     config file.
     """
 
+    _instance: ClassVar[Optional["ServerConfig"]] = None
+    _initialised: ClassVar[bool] = False
+
     config: Annotated[
         Union[str, Path],
         Field(
             title="API Config",
-            description=("Path to a .toml file holding the API" "configuration"),
+            description=("Path to a .toml file holding the API configuration"),
         ),
     ] = os.getenv("API_CONFIG", Path(__file__).parent / "api_config.toml")
     proxy: Annotated[
@@ -173,7 +177,7 @@ class ServerConfig(BaseModel):
         Field(
             title="Cache expiration.",
             description=(
-                "The expiration time in sec" "of the data loading cache."
+                "The expiration time in sec of the data loading cache."
             ),
         ),
     ] = env_to_int("API_CACHE_EXP", 3600)
@@ -302,17 +306,36 @@ class ServerConfig(BaseModel):
             ),
         ),
     ] = (
-        env_to_dict("API_ADMINS_TOKEN_CLAIMS") or None
+        env_to_dict("API_ADMIN_TOKEN_CLAIMS", default_key="roles") or None
     )
+    oidc_trusted_issuers: Annotated[
+        Optional[List[str]],
+        Field(
+            title="Trusted isssuers",
+            description=(
+                "Proxy URLs of trusted freva instances whose JWTs are accepted."
+            ),
+        ),
+    ] = env_to_list("API_OIDC_TRUSTED_ISSUERS", str) or None
     session_cookie_name: Annotated[
         str,
         Field(
             title="Cookie name",
             description=(
-                "Name of the cookie used for storing session " "information."
+                "Name of the cookie used for storing session information."
             ),
         ),
     ] = os.getenv("API_SESSION_COOKIE_NAME", "")
+
+    def __new__(cls, **kwargs: Any) -> "ServerConfig":
+        if cls._instance is None or os.getenv("API_TESTS", "0") == "1":
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self, **kwargs: Any) -> None:
+        if self.__class__._initialised is False or os.getenv("API_TESTS", "0") == "1":
+            super().__init__(**kwargs)
+            self.__class__._initialised = True
 
     def _read_config(self, section: str, key: str) -> Any:
         fallback = self._fallback_config.get(section, {}).get(key, None)
