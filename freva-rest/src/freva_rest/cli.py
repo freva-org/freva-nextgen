@@ -44,8 +44,10 @@ environment variables are evaluated:
 - ``API_OIDC_CLIENT_SECRET``: You can set a client secret, if you have
 - ``API_OIDC_TOKEN_CLAIMS``:  Valid token claims, to check against
 - ``API_SERVICES``:  The services the api should serve.
-- ``API_ADMINS_TOKEN_CLAIMS``:  Valid admin token claims, to check if a user
+- ``API_ADMIN_TOKEN_CLAIMS``:  Valid admin token claims, to check if a user
                                 is admin to enable admin endpoints for.
+- ``API_OIDC_TRUSTED_ISSUER``: Define url's to trusted partner api's to establish
+                               a network of token trust for token federation.
 
 📝  You can override the path to the default config file using the
     ``API_CONFIG`` environment variable. The default location of this config
@@ -159,7 +161,7 @@ def create_arg_parser(fields: Dict[str, FieldInfo]) -> argparse.ArgumentParser:
         type=int,
     )
     for key, field in fields.items():
-        args = [f'--{key.replace("_", "-")}']
+        args = [f"--{key.replace('_', '-')}"]
         if field.alias:
             args.append(f"-{field.alias}")
         if field.annotation in (
@@ -239,9 +241,7 @@ def cli(argv: Optional[List[str]] = None) -> None:
     """Start the freva rest API."""
     cfg = ServerConfig()
     parser = create_arg_parser(ServerConfig.model_fields)
-    parser.add_argument(
-        "--dev", action="store_true", help="Enable development mode"
-    )
+    parser.add_argument("--dev", action="store_true", help="Enable development mode")
     parser.add_argument(
         "--n-workers",
         "-w",
@@ -258,9 +258,7 @@ def cli(argv: Optional[List[str]] = None) -> None:
         type=Path,
         default=None,
     )
-    parser.add_argument(
-        "--reload", help="Enable hot reloading.", action="store_true"
-    )
+    parser.add_argument("--reload", help="Enable hot reloading.", action="store_true")
 
     args = parser.parse_args(argv)
     if args.debug:
@@ -307,13 +305,7 @@ def cli(argv: Optional[List[str]] = None) -> None:
     defaults["API_LOGLEVEL"] = level
     with NamedTemporaryFile(suffix=".conf", prefix="env") as temp_f:
         env = "\n".join(
-            set(
-                [
-                    f"{k}={v.strip()}"
-                    for (k, v) in set(defaults.items())
-                    if v.strip()
-                ]
-            )
+            set([f"{k}={v.strip()}" for (k, v) in set(defaults.items()) if v.strip()])
         )
         logging_config["loggers"]["uvicorn"]["level"] = level
         logging_config["loggers"]["uvicorn.error"]["level"] = level
