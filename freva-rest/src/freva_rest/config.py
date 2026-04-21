@@ -388,10 +388,20 @@ class ServerConfig(BaseModel):
         self.redis_host = self.redis_host or self._read_config(
             "cache", "hostname"
         )
-        self.admins_token_claims = (
-            self.admins_token_claims
-            or self._read_config("oidc", "admins_token_claims")
+        self.admin_token_claims = (
+            self.admin_token_claims
+            or self._read_config("oidc", "admin_token_claims")
         ) or {}
+        _trusted_issuers = []
+        for iss in (
+            self.oidc_trusted_issuers
+            or self._read_config("oidc", "trusted_issuers")
+            or []
+        ):
+            scheme, _, uri = iss.partition("://")
+            scheme = scheme or "https"
+            _trusted_issuers.append(f"{scheme}://{uri}")
+        self.oidc_trusted_issuers = _trusted_issuers
 
     @staticmethod
     def get_url(url: str, default_port: Union[str, int]) -> str:
