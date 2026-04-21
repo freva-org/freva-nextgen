@@ -1,11 +1,11 @@
 """Authentication-related endpoints and utilities for the Freva REST API."""
+
 from typing import Annotated, List, Optional
 
 import httpx
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
-from py_oidc_auth import FastApiOIDCAuth, IDToken
-from py_oidc_auth.exceptions import InvalidRequest
+from py_oidc_auth import FastApiOIDCAuth, MongoDBBrokerStore
 from pydantic import BaseModel, Field
 
 from .config import ServerConfig
@@ -19,6 +19,12 @@ auth = FastApiOIDCAuth(
     scopes=server_config.oidc_scopes,
     proxy=server_config.proxy,
     claims=server_config.oidc_token_claims or None,
+    broker_mode=True,
+    broker_audience="freva-nextgen",
+    broker_store_obj=MongoDBBrokerStore(
+        db=server_config.mongo_client[server_config.mongo_db]
+    ),
+    trusted_issuers=server_config.oidc_trusted_issuers or [],
 )
 auth_router = auth.create_auth_router(prefix="/api/freva-nextgen")
 
@@ -44,18 +50,6 @@ class TokenPayload(BaseModel):
     sub: str
     exp: int
     email: Optional[str] = None
-
-
-async def check_token(authorization: Optional[str]) -> IDToken:
-    """Validate a Bearer token from a raw Authorization header value."""
-    bearer = (authorization or "").removeprefix("Bearer ").strip() or None
-    try:
-        return await auth._get_token(
-            bearer,
-            effective_claims=server_config.oidc_token_claims or None,
-        )
-    except InvalidRequest as exc:
-        raise HTTPException(status_code=exc.status_code, detail=exc.detail)
 
 
 # Freva-specific endpoints (not provided by py-oidc-auth)
@@ -86,7 +80,14 @@ async def well_known_url() -> JSONResponse:
         ) as client:
             resp = await client.get(auth.config.discovery_url)
             resp.raise_for_status()
-            return JSONResponse(content=resp.json(), status_code=resp.status_code)
+            doc = resp.json()
+            doc["jwks_uri"] = (
+                f"{server_config.proxy}/api/freva-nextgen{auth.broker_jwks_path}"
+            )
+            doc["token_endpoint"] = (
+                f"{server_config.proxy}/api/freva-nextgen/auth/v2/token"
+            )
+            return JSONResponse(content=doc, status_code=resp.status_code)
     except Exception as error:
         raise HTTPException(
             status_code=503, detail="Could not connect to OIDC server."
