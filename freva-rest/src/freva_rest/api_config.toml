@@ -129,3 +129,9 @@ auth_ports = [53100, 53101, 53102, 53103, 53104, 53105]
 
 ### Set the name of the cookie session
 session_cookie_name = "freva-rest-cookie"
+
+### Admin token claims
+admin_token_claims = {}
+
+### The trusted issuers for token federation.
+trusted_issuers = []
