@@ -4,6 +4,7 @@ log_cli_level = "ERROR"
 env = [
     "API_LOGLEVEL=ERROR",
     "API_TESTS=1",
+    "API_OIDC_TRUSTED_ISSUERS=https://foo.dkrz.de",
     "API_MONGO_HOST=localhost:27017",
     "API_MONGO_DB=search_stats",
     "API_MONGO_USER=mongo",
