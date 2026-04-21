@@ -29,7 +29,6 @@ import jwt
 import mock
 import pymongo
 import pytest
-import requests
 import uvicorn
 from py_oidc_auth_client import Token
 from typer.testing import CliRunner
@@ -127,12 +126,8 @@ def get_data_loader_config() -> bytes:
                 "user": os.getenv("API_REDIS_USER", ""),
                 "passwd": os.getenv("API_REDIS_PASSWORD", ""),
                 "host": os.getenv("API_REDIS_HOST", ""),
-                "ssl_cert": Path(
-                    os.getenv("API_REDIS_SSL_CERTFILE", "")
-                ).read_text(),
-                "ssl_key": Path(
-                    os.getenv("API_REDIS_SSL_KEYFILE", "")
-                ).read_text(),
+                "ssl_cert": Path(os.getenv("API_REDIS_SSL_CERTFILE", "")).read_text(),
+                "ssl_key": Path(os.getenv("API_REDIS_SSL_KEYFILE", "")).read_text(),
             }
         ).encode("utf-8")
     )
@@ -149,9 +144,7 @@ def shutdown_data_loader() -> None:
     """Publish a shutdown message to the cache and flush it."""
     cache = Cache()
     for _ in range(5):
-        cache.publish(
-            "data-portal", json.dumps({"shutdown": True}).encode("utf-8")
-        )
+        cache.publish("data-portal", json.dumps({"shutdown": True}).encode("utf-8"))
         time.sleep(1)
     cache.flushdb()
 
@@ -181,9 +174,7 @@ def setup_server() -> Iterator[str]:
     thread1.daemon = True
     thread1.start()
     time.sleep(1)
-    thread2 = threading.Thread(
-        target=run_loader_process, args=(find_free_port(),)
-    )
+    thread2 = threading.Thread(target=run_loader_process, args=(find_free_port(),))
     thread2.daemon = True
     thread2.start()
     time.sleep(5)
@@ -198,14 +189,13 @@ def user_cache_dir(tmp_path) -> Iterator[str]:
     patched to point to it. The test can then write tokens into this file.
     """
     with NamedTemporaryFile(suffix=".json") as temp_f:
-        with mock.patch.dict(
-            os.environ, {"OIDC_TOKEN_FILE": temp_f.name}, clear=False
-        ):
+        with mock.patch.dict(os.environ, {"OIDC_TOKEN_FILE": temp_f.name}, clear=False):
             with mock.patch(
                 "py_oidc_auth_client.token_store.user_cache_path",
                 return_value=tmp_path,
             ):
                 yield temp_f.name
+
 
 @pytest.fixture(scope="function")
 def temp_dir() -> Iterator[Path]:
@@ -292,9 +282,7 @@ def valid_eval_conf_file() -> Iterator[Path]:
             _prep_env(EVALUATION_SYSTEM_CONFIG_FILE=str(eval_file)),
             clear=True,
         ):
-            with mock.patch(
-                "sysconfig.get_path", lambda x, y="foo": str(temp_dir)
-            ):
+            with mock.patch("sysconfig.get_path", lambda x, y="foo": str(temp_dir)):
                 yield eval_file
 
 
@@ -304,16 +292,14 @@ def invalid_eval_conf_file() -> Iterator[Path]:
     with TemporaryDirectory() as temp_dir:
         eval_file = Path(temp_dir) / "eval.conf"
         eval_file.write_text(
-            "[foo]\n" "solr.host = http://localhost\n" "databrowser.port = 8080"
+            "[foo]\nsolr.host = http://localhost\ndatabrowser.port = 8080"
         )
         with mock.patch.dict(
             os.environ,
             _prep_env(EVALUATION_SYSTEM_CONFIG_FILE=str(eval_file)),
             clear=True,
         ):
-            with mock.patch(
-                "sysconfig.get_path", lambda x, y="foo": str(temp_dir)
-            ):
+            with mock.patch("sysconfig.get_path", lambda x, y="foo": str(temp_dir)):
                 yield eval_file
 
 
@@ -361,28 +347,35 @@ def flavour_server(test_server: str) -> Iterator[str]:
 
 @pytest.fixture(scope="function")
 def auth(test_server: str):
-    """Factory to create auth tokens for different user types."""
+    """Factory to create auth tokens for different user types.
+
+    With broker_mode=True the server only accepts its own RS256 JWTs.
+    We mint tokens directly via the server's token_issuer (same key, same
+    audience) instead of doing an HTTP round-trip through Keycloak — this
+    is the same approach used in test_authflows.py for role/expiry tests.
+    """
+    from getpass import getuser
+    from freva_rest.auth import auth as oidc_auth
 
     def _create_auth(user_type: str = "user") -> Token:
-        from getpass import getuser
-
-        server_config = ServerConfig()
-        user_configs = {
-            "user": {"username": "janedoe", "password": "janedoe123"},
-            "admin": {"username": getuser(), "password": "secret"},
-        }
-        config = user_configs.get(user_type, user_configs["user"])
-        data = {
-            "client_id": server_config.oidc_client_id or "",
-            "client_secret": server_config.oidc_client_secret or "",
-            "grant_type": "password",
-            **config,
-        }
-        res = requests.post(
-            server_config.oidc_overview["token_endpoint"],
-            data={k: v for (k, v) in data.items() if v.strip()},
+        username = "janedoe" if user_type == "user" else getuser()
+        broker = asyncio.run(oidc_auth._ensure_broker_ready())
+        jwt, _ = broker.mint(
+            sub=username,
+            email=f"{username}@dkrz.de",
+            roles=["offline_access"] + [] if user_type == "user" else ["admin"],
+            preferred_username=username,
         )
-        return _build_token(res.json())
+        now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+        return Token(
+            access_token=jwt,
+            token_type="Bearer",
+            expires=now + 3600,
+            refresh_token=jwt,
+            refresh_expires=now + 7200,
+            scope="openid profile email",
+            headers={"Authorization": f"Bearer {jwt}"},
+        )
 
     user_token = _create_auth("user")
     admin_token = _create_auth("admin")

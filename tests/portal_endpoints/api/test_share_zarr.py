@@ -148,7 +148,6 @@ def test_zarr_utils(test_server: str, auth: Dict[str, str]) -> None:
     )
     assert res.status_code == 201
     files = list(res.iter_lines(decode_unicode=True))
-    print(files)
     data = requests.get(
         f"{test_server}/data-portal/zarr-utils/html",
         params={"url": f"{files[0]}", "timeout": 3},
@@ -163,6 +162,7 @@ def test_zarr_utils(test_server: str, auth: Dict[str, str]) -> None:
         headers={"Authorization": f"Bearer {token}"},
         timeout=3,
     )
+    print(token)
     assert data.status_code == 200
     _id = encode_cache_token("foo.zarr")
     data = requests.get(
@@ -369,12 +369,11 @@ def test_presigned_url_failed(
     """The the functionlity of token/sig verification."""
     from freva_rest.utils.base_utils import server_config
 
-    collection = pymongo.MongoClient(server_config.mongo_url)[
-        server_config.mongo_db
-    ]["zarr_shared_keys"]
+    collection = pymongo.MongoClient(server_config.mongo_url)[server_config.mongo_db][
+        "zarr_shared_keys"
+    ]
     collection.delete_many({"_id": {"$in": ["foo", "bar", "baz"]}})
     try:
-
         res = requests.get(
             f"{test_server}/databrowser/load/freva/",
             params={"dataset": "cmip6-fs"},
@@ -393,13 +392,11 @@ def test_presigned_url_failed(
         assert "url" in res.json()
         sig = res.json()["sig"]
 
-        token = f'/zarr/{encode_cache_token("/work.foo")}.zarr'
+        token = f"/zarr/{encode_cache_token('/work.foo')}.zarr"
         token_bad, sig_bad = sign_token_path(token, -1, None)
 
         # Missing token
-        res = requests.get(
-            f"{test_server}/data-portal/share/foo/bar.zarr/.zgroup"
-        )
+        res = requests.get(f"{test_server}/data-portal/share/foo/bar.zarr/.zgroup")
         assert res.status_code == 403
         assert "doesn't exist" in res.json()["detail"].lower()
         # Expiried TTL
@@ -418,9 +415,7 @@ def test_presigned_url_failed(
             upsert=True,
         )
 
-        res = requests.get(
-            f"{test_server}/data-portal/share/foo/bar.zarr/.zgroup"
-        )
+        res = requests.get(f"{test_server}/data-portal/share/foo/bar.zarr/.zgroup")
         assert res.status_code == 403
         assert "expired" in res.json()["detail"].lower()
         # Wrong signature
@@ -437,9 +432,7 @@ def test_presigned_url_failed(
             return_value,
             upsert=True,
         )
-        res = requests.get(
-            f"{test_server}/data-portal/share/bar/foo.zarr/.zgroup"
-        )
+        res = requests.get(f"{test_server}/data-portal/share/bar/foo.zarr/.zgroup")
         assert res.status_code == 403
         assert "invalid" in res.json()["detail"].lower()
         # Wrong token
@@ -456,9 +449,7 @@ def test_presigned_url_failed(
             return_value,
             upsert=True,
         )
-        res = requests.get(
-            f"{test_server}/data-portal/share/baz/foo.zarr/.zgroup"
-        )
+        res = requests.get(f"{test_server}/data-portal/share/baz/foo.zarr/.zgroup")
         assert res.status_code == 400
         assert "invalid" in res.json()["detail"].lower()
 
@@ -477,9 +468,7 @@ def test_presigned_url_failed(
         )
         assert res.status_code == 400
 
-        res = requests.get(
-            f"{test_server}/data-portal/share/{sig}/foo.zarr/.zgroup"
-        )
+        res = requests.get(f"{test_server}/data-portal/share/{sig}/foo.zarr/.zgroup")
         assert res.status_code >= 400
     finally:
         collection.delete_many({"_id": {"$in": ["foo", "bar"]}})

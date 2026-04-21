@@ -7,9 +7,10 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 import os
 from datetime import date
-
-import freva_client
+import pathlib
 from freva_client import __version__
+import json
+import requests
 
 project = "Freva Databrowser"
 copyright = f"{date.today().year}, DKRZ"
@@ -17,8 +18,46 @@ author = "DKRZ"
 release = __version__
 
 
+def _get_versions() -> list:
+    try:
+        resp = requests.get(
+            "https://api.github.com/repos/freva-org/freva-nextgen/tags",
+            timeout=5,
+        )
+        resp.raise_for_status()
+        versions = [
+            {
+                "name": tag["name"],
+                "version": tag["name"],
+                "url": f"https://freva-org.github.io/freva-nextgen/{tag['name']}/",
+            }
+            for tag in resp.json()
+            if (
+                tag.get("name", "")
+                and "dev" not in tag["name"]
+                and "rc" not in tag["name"]
+            )
+        ]
+        # Add stable/latest aliases
+        versions.insert(
+            0,
+            {
+                "name": "stable",
+                "version": "stable",
+                "url": "https://freva-org.github.io/freva-nextgen/stable/",
+            },
+        )
+        return versions
+    except Exception:
+        return []
+
+
+_switcher_path = pathlib.Path(__file__).parent / "_static" / "switcher.json"
+_switcher_path.write_text(json.dumps(_get_versions(), indent=2))
+
+
 # -- General configuration ---------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
+
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -51,13 +90,18 @@ html_theme_options = {
             "icon": "fa-brands fa-github",
         }
     ],
+    "header_links_before_dropdown": 3,
     "navigation_with_keys": False,
     "show_toc_level": 4,
     "collapse_navigation": False,
     "navigation_depth": 4,
     "navbar_align": "left",
     "show_nav_level": 4,
-    "navigation_depth": 4,
+    "switcher": {
+        "json_url": "https://freva-org.github.io/freva-nextgen/stable/_static/switcher.json",
+        "version_match": release,
+    },
+    "navbar_end": ["version-switcher", "navbar-icon-links"],
     "navbar_center": ["navbar-nav"],
     "secondary_sidebar_items": ["page-toc"],
 }
@@ -85,9 +129,7 @@ html_meta = {
 }
 
 ogp_site_url = "https://freva-org.github.io/freva-legacy"
-opg_image = (
-    "https://freva-org.github.io/freva-admin/_images/freva_flowchart-new.png",
-)
+opg_image = ("https://freva-org.github.io/freva-admin/_images/freva_flowchart-new.png",)
 ogp_type = "website"
 ogp_custom_meta_tags = [
     '<meta name="twitter:card" content="summary_large_image">',

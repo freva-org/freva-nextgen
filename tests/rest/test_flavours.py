@@ -11,7 +11,6 @@ This module tests all flavour-related endpoints:
 from typing import Any, Dict
 
 import mock
-import pytest
 import requests
 
 
@@ -36,9 +35,7 @@ def _get_flavours(
     )
 
 
-def _post_flavour(
-    base: str, payload: Dict[str, Any], *, token: str | None = None
-):
+def _post_flavour(base: str, payload: Dict[str, Any], *, token: str | None = None):
     """POST /databrowser/flavours."""
     return requests.post(
         f"{base}/databrowser/flavours",
@@ -134,9 +131,7 @@ class TestListFlavours:
 
     def test_list_flavours_filter_nonexistent(self, flavour_server: str) -> None:
         """GET: filter by non-existent flavour returns empty list."""
-        res = _get_flavours(
-            flavour_server, params={"flavour_name": "nonexistent_xyz"}
-        )
+        res = _get_flavours(flavour_server, params={"flavour_name": "nonexistent_xyz"})
         assert res.status_code == 200
         assert res.json()["total"] == 0
 
@@ -196,16 +191,12 @@ class TestAddFlavour:
             "mapping": {"project": "my_project", "variable": "my_variable"},
             "is_global": False,
         }
-        res = _post_flavour(
-            flavour_server, custom_flavour, token=auth["access_token"]
-        )
+        res = _post_flavour(flavour_server, custom_flavour, token=auth["access_token"])
         assert res.status_code == 201
         assert "status" in res.json()
 
         # Cleanup
-        _delete_flavour(
-            flavour_server, "test_personal_add", token=auth["access_token"]
-        )
+        _delete_flavour(flavour_server, "test_personal_add", token=auth["access_token"])
 
     def test_add_duplicate_flavour(
         self, flavour_server: str, auth: Dict[str, str]
@@ -217,21 +208,15 @@ class TestAddFlavour:
             "is_global": False,
         }
         # Create first
-        res1 = _post_flavour(
-            flavour_server, custom_flavour, token=auth["access_token"]
-        )
+        res1 = _post_flavour(flavour_server, custom_flavour, token=auth["access_token"])
         assert res1.status_code == 201
 
         # Try duplicate
-        res2 = _post_flavour(
-            flavour_server, custom_flavour, token=auth["access_token"]
-        )
+        res2 = _post_flavour(flavour_server, custom_flavour, token=auth["access_token"])
         assert res2.status_code == 409
 
         # Cleanup
-        _delete_flavour(
-            flavour_server, "test_duplicate", token=auth["access_token"]
-        )
+        _delete_flavour(flavour_server, "test_duplicate", token=auth["access_token"])
 
     def test_add_flavour_restricted_chars(
         self, flavour_server: str, auth: Dict[str, str]
@@ -256,9 +241,7 @@ class TestAddFlavour:
             "mapping": {"project": "my_project"},
             "is_global": True,
         }
-        res = _post_flavour(
-            flavour_server, global_flavour, token=auth["access_token"]
-        )
+        res = _post_flavour(flavour_server, global_flavour, token=auth["access_token"])
         assert res.status_code == 403
 
     def test_add_global_flavour_admin(
@@ -267,7 +250,7 @@ class TestAddFlavour:
         """POST: admin user can add global flavour."""
         auth_admin = auth["admin"]
         with mock.patch(
-            "freva_rest.rest.server_config.admins_token_claims",
+            "freva_rest.rest.server_config.admin_token_claims",
             {"resource_access.realm-management.roles": ["admin"]},
         ):
             res = _post_flavour(
@@ -295,7 +278,7 @@ class TestAddFlavour:
         """POST: admin cannot add global flavour with same name as existing (409)."""
         auth_admin = auth["admin"]
         with mock.patch(
-            "freva_rest.rest.server_config.admins_token_claims",
+            "freva_rest.rest.server_config.admin_token_claims",
             {"resource_access.realm-management.roles": ["admin"]},
         ):
             # Create first
@@ -346,9 +329,7 @@ class TestAddFlavour:
         assert "test_visible" in names
 
         # Cleanup
-        _delete_flavour(
-            flavour_server, "test_visible", token=auth["access_token"]
-        )
+        _delete_flavour(flavour_server, "test_visible", token=auth["access_token"])
 
 
 # =========================================================================
@@ -402,9 +383,7 @@ class TestUpdateFlavour:
         assert "status" in res.json()
 
         # Cleanup
-        _delete_flavour(
-            flavour_server, "test_update", token=auth["access_token"]
-        )
+        _delete_flavour(flavour_server, "test_update", token=auth["access_token"])
 
     def test_update_flavour_preserves_original_keys(
         self, flavour_server: str, auth: Dict[str, str]
@@ -446,9 +425,7 @@ class TestUpdateFlavour:
         assert updated["mapping"]["project"] == "my_project"  # Original preserved
 
         # Cleanup
-        _delete_flavour(
-            flavour_server, "test_preserve", token=auth["access_token"]
-        )
+        _delete_flavour(flavour_server, "test_preserve", token=auth["access_token"])
 
     def test_update_flavour_invalid_name(
         self, flavour_server: str, auth: Dict[str, str]
@@ -512,9 +489,7 @@ class TestUpdateFlavour:
         assert res.status_code == 200
 
         # Cleanup
-        _delete_flavour(
-            flavour_server, "test_uptodate", token=auth["access_token"]
-        )
+        _delete_flavour(flavour_server, "test_uptodate", token=auth["access_token"])
 
     def test_update_flavour_name_conflict(
         self, flavour_server: str, auth: Dict[str, str]
@@ -554,12 +529,8 @@ class TestUpdateFlavour:
         assert res.status_code == 409
 
         # Cleanup
-        _delete_flavour(
-            flavour_server, "test_rename_a", token=auth["access_token"]
-        )
-        _delete_flavour(
-            flavour_server, "test_rename_b", token=auth["access_token"]
-        )
+        _delete_flavour(flavour_server, "test_rename_a", token=auth["access_token"])
+        _delete_flavour(flavour_server, "test_rename_b", token=auth["access_token"])
 
     def test_update_nonexistent_flavour(
         self, flavour_server: str, auth: Dict[str, str]
@@ -585,7 +556,7 @@ class TestUpdateFlavour:
 
         # Create global flavour as admin
         with mock.patch(
-            "freva_rest.rest.server_config.admins_token_claims",
+            "freva_rest.rest.server_config.admin_token_claims",
             {"resource_access.realm-management.roles": ["admin"]},
         ):
             _post_flavour(
@@ -613,7 +584,7 @@ class TestUpdateFlavour:
 
         # Cleanup
         with mock.patch(
-            "freva_rest.rest.server_config.admins_token_claims",
+            "freva_rest.rest.server_config.admin_token_claims",
             {"resource_access.realm-management.roles": ["admin"]},
         ):
             _delete_flavour(
@@ -630,7 +601,7 @@ class TestUpdateFlavour:
         auth_admin = auth["admin"]
 
         with mock.patch(
-            "freva_rest.rest.server_config.admins_token_claims",
+            "freva_rest.rest.server_config.admin_token_claims",
             {"resource_access.realm-management.roles": ["admin"]},
         ):
             # Create global flavour
@@ -673,8 +644,8 @@ class TestUpdateFlavour:
         auth_admin = auth["admin"]
 
         with mock.patch(
-            "freva_rest.rest.server_config.admins_token_claims",
-            {"resource_access.realm-management.roles": ["admin"]},
+            "freva_rest.rest.server_config.admin_token_claims",
+            {"roles": ["admin"]},
         ):
             res = _put_flavour(
                 flavour_server,
@@ -729,9 +700,7 @@ class TestDeleteFlavour:
         self, flavour_server: str, auth: Dict[str, str]
     ) -> None:
         """DELETE: built-in flavours cannot be deleted."""
-        res = _delete_flavour(
-            flavour_server, "freva", token=auth["access_token"]
-        )
+        res = _delete_flavour(flavour_server, "freva", token=auth["access_token"])
         assert res.status_code == 422
         assert "built-in or does not exist" in res.json()["detail"]
 
@@ -752,7 +721,7 @@ class TestDeleteFlavour:
 
         # Create global flavour as admin
         with mock.patch(
-            "freva_rest.rest.server_config.admins_token_claims",
+            "freva_rest.rest.server_config.admin_token_claims",
             {"resource_access.realm-management.roles": ["admin"]},
         ):
             _post_flavour(
@@ -776,7 +745,7 @@ class TestDeleteFlavour:
 
         # Cleanup
         with mock.patch(
-            "freva_rest.rest.server_config.admins_token_claims",
+            "freva_rest.rest.server_config.admin_token_claims",
             {"resource_access.realm-management.roles": ["admin"]},
         ):
             _delete_flavour(
@@ -793,7 +762,7 @@ class TestDeleteFlavour:
         auth_admin = auth["admin"]
 
         with mock.patch(
-            "freva_rest.rest.server_config.admins_token_claims",
+            "freva_rest.rest.server_config.admin_token_claims",
             {"resource_access.realm-management.roles": ["admin"]},
         ):
             # Create global flavour
@@ -823,7 +792,7 @@ class TestDeleteFlavour:
         auth_admin = auth["admin"]
 
         with mock.patch(
-            "freva_rest.rest.server_config.admins_token_claims",
+            "freva_rest.rest.server_config.admin_token_claims",
             {"resource_access.realm-management.roles": ["admin"]},
         ):
             res = _delete_flavour(
@@ -842,7 +811,7 @@ class TestDeleteFlavour:
 
         # Admin creates personal flavour
         with mock.patch(
-            "freva_rest.rest.server_config.admins_token_claims",
+            "freva_rest.rest.server_config.admin_token_claims",
             {"resource_access.realm-management.roles": ["admin"]},
         ):
             _post_flavour(
@@ -863,7 +832,7 @@ class TestDeleteFlavour:
 
         # Cleanup
         with mock.patch(
-            "freva_rest.rest.server_config.admins_token_claims",
+            "freva_rest.rest.server_config.admin_token_claims",
             {"resource_access.realm-management.roles": ["admin"]},
         ):
             _delete_flavour(
@@ -912,7 +881,7 @@ class TestMixedScenarios:
 
         # Admin creates global flavour
         with mock.patch(
-            "freva_rest.rest.server_config.admins_token_claims",
+            "freva_rest.rest.server_config.admin_token_claims",
             {"resource_access.realm-management.roles": ["admin"]},
         ):
             res1 = _post_flavour(
@@ -946,7 +915,7 @@ class TestMixedScenarios:
 
         # Cleanup
         with mock.patch(
-            "freva_rest.rest.server_config.admins_token_claims",
+            "freva_rest.rest.server_config.admin_token_claims",
             {"resource_access.realm-management.roles": ["admin"]},
         ):
             _delete_flavour(
@@ -955,9 +924,7 @@ class TestMixedScenarios:
                 token=auth_admin["access_token"],
                 query="is_global=true",
             )
-        _delete_flavour(
-            flavour_server, "dual_name", token=auth["access_token"]
-        )
+        _delete_flavour(flavour_server, "dual_name", token=auth["access_token"])
 
     def test_personal_flavour_same_as_builtin(
         self, flavour_server: str, auth: Dict[str, str]
@@ -980,9 +947,7 @@ class TestMixedScenarios:
         assert "janedoe:cmip6" in res2.json()["flavours"]
 
         # Cleanup
-        _delete_flavour(
-            flavour_server, "janedoe:cmip6", token=auth["access_token"]
-        )
+        _delete_flavour(flavour_server, "janedoe:cmip6", token=auth["access_token"])
 
     def test_create_update_delete_lifecycle(
         self, flavour_server: str, auth: Dict[str, str]

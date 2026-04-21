@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response
 from py_oidc_auth import IDToken as TokenPayload
 from pydantic import AnyHttpUrl, BaseModel, Field
 
-from freva_rest.auth import auth, check_token
+from freva_rest.auth import auth
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 from freva_rest.utils.base_utils import Cache, add_ttl_key_to_db_and_cache
@@ -42,9 +42,7 @@ class LoadResponse(BaseModel):
         ),
         title="Zarr URLs",
         examples=[
-            [
-                f"{server_config.proxy}/api/freva-nextgen/data-portal/zarr/abc123.zarr"
-            ]
+            [f"{server_config.proxy}/api/freva-nextgen/data-portal/zarr/abc123.zarr"]
         ],
     )
 
@@ -196,12 +194,12 @@ async def get_status(
             le=1500,
         ),
     ] = 1,
+    current_user: Optional[TokenPayload] = auth.optional(),
 ) -> ZarrStatus:
     """Get the status of a loading process."""
     _, split, keys = url.removesuffix(".zarr").partition("/data-portal/share/")
-    if not _is_public_zarr_url(url):
-        auth_header = request.headers.get("authorization")
-        await check_token(auth_header)
+    if not _is_public_zarr_url(url) and not current_user:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
     try:
         if split and keys:
@@ -276,10 +274,7 @@ async def zarr_key_data(
         Path(
             title="token",
             description=(
-                (
-                    "The token that was generated, when task to stream data "
-                    "was created."
-                )
+                "The token that was generated, when task to stream data was created."
             ),
         ),
     ],
@@ -342,10 +337,7 @@ async def zarr_key_data_shared(
         Path(
             title="token",
             description=(
-                (
-                    "The token that was generated, when task to stream data "
-                    "was created."
-                )
+                "The token that was generated, when task to stream data was created."
             ),
         ),
     ],
@@ -436,13 +428,8 @@ async def create_presigned_url(
     payload = payload_from_url(normalise_path(str(body.path)))
     # TODO: we should check if the user is allowed to read the dataset.
     ttl = max(MIN_TTL_SECONDS, min(body.ttl_seconds, MAX_TTL_SECONDS))
-    res = await add_ttl_key_to_db_and_cache(
-        payload["path"], ttl, payload["assembly"]
-    )
-    url = (
-        f"{server_config.proxy}/api/freva-nextgen/data-portal/share/"
-        f"{res['key']}.zarr"
-    )
+    res = await add_ttl_key_to_db_and_cache(payload["path"], ttl, payload["assembly"])
+    url = f"{server_config.proxy}/api/freva-nextgen/data-portal/share/{res['key']}.zarr"
     return PresignUrlResponse(
         url=cast(AnyHttpUrl, url),
         token=res["token"],

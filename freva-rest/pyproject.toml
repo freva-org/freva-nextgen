@@ -38,7 +38,7 @@ dependencies = [
 "httpx",
 "xarray",
 "zarr",
-"py-oidc-auth[fastapi]",
+"py-oidc-auth[fastapi]>=2604.2.0",
 ]
 [project.scripts]
 freva-rest-server = "freva_rest.cli:cli"
