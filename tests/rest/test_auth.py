@@ -94,7 +94,7 @@ def test_systemuser_insufficient_claims(
         real_verify = broker.verify
 
         def _verify_and_fail_claims(token):
-            result = real_verify(token)
+            real_verify(token)
             raise HTTPException(status_code=403, detail="Insufficient claims.")
 
         broker.verify = _verify_and_fail_claims
