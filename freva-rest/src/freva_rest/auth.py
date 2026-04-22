@@ -3,9 +3,10 @@
 from typing import Annotated, List, Optional
 
 import httpx
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
-from py_oidc_auth import FastApiOIDCAuth, MongoDBBrokerStore
+from py_oidc_auth import FastApiOIDCAuth, IDToken, MongoDBBrokerStore
+from py_oidc_auth.utils import get_username
 from pydantic import BaseModel, Field
 
 from .config import ServerConfig
@@ -52,7 +53,54 @@ class TokenPayload(BaseModel):
     email: Optional[str] = None
 
 
+class SystemUser(BaseModel):
+    """Response model for the system user endpoint."""
+
+    username: Annotated[
+        str,
+        Field(
+            title="Username",
+            description="Username of the authenticated user.",
+        ),
+    ]
+    email: Annotated[
+        str,
+        Field(
+            title="Email",
+            description="Email address of the authenticated user.",
+        ),
+    ]
+
+
 # Freva-specific endpoints (not provided by py-oidc-auth)
+@auth_router.get(
+    "/auth/v2/systemuser",
+    response_model=SystemUser,
+    summary="Check if the authenticated user is a valid system user.",
+    responses={
+        200: {"description": "User is a valid system user."},
+        401: {"description": "Missing or invalid token."},
+        403: {"description": "User is not part of the required claims; so guest."},
+    },
+)
+async def systemuser(
+    request: Request,
+    current_user: IDToken = auth.required(),
+) -> SystemUser:
+    """Validate the bearer token against the configured
+    ``token_claims`` to recognize the guests.
+    """
+    username = await get_username(
+        current_user=current_user,
+        header=dict(request.headers),
+        cfg=auth.config,
+    )
+    return SystemUser(
+        username=username or "",
+        email=current_user.email or "",
+    )
+
+
 @auth_router.get(
     "/auth/v2/.well-known/openid-configuration",
     response_class=JSONResponse,
