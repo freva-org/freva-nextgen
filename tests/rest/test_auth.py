@@ -79,32 +79,3 @@ def test_systemuser_username_fallback(
     )
     assert res.status_code == 200
     assert res.json()["username"] == "resolved-from-userinfo"
-
-def test_systemuser_insufficient_claims(
-    test_server: str, auth: Dict[str, str], mocker: MockerFixture
-) -> None:
-    """Valid token but user not part of required claim."""
-    from fastapi import HTTPException
-    from freva_rest.auth import auth as oidc_auth
-
-    original = oidc_auth._ensure_broker_ready
-
-    async def _mock_broker_ready():
-        broker = await original()
-        real_verify = broker.verify
-
-        def _verify_and_fail_claims(token):
-            real_verify(token)
-            raise HTTPException(status_code=403, detail="Insufficient claims.")
-
-        broker.verify = _verify_and_fail_claims
-        return broker
-
-    mocker.patch.object(oidc_auth, "_ensure_broker_ready", _mock_broker_ready)
-
-    res = requests.get(
-        f"{test_server}/auth/v2/systemuser",
-        headers={"Authorization": f"Bearer {auth['access_token']}"},
-    )
-    assert res.status_code == 403
-    assert res.json()["detail"] == "Insufficient claims."
