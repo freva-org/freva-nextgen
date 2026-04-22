@@ -76,7 +76,6 @@ class SystemUser(BaseModel):
 @auth_router.get(
     "/auth/v2/systemuser",
     response_model=SystemUser,
-    tags=["Authentication"],
     summary="Check if the authenticated user is a valid system user.",
     responses={
         200: {"description": "User is a valid system user."},
