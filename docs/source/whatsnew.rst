@@ -3,6 +3,13 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
+v2604.1.1
+^^^^^^^^^
+
+Added
+"""""""
+- Added `/systemuser` to take care of guest user validation.
+
 v2604.1.0
 ^^^^^^^^^
 
