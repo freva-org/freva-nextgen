@@ -44,3 +44,67 @@ def test_oidc_overview_cached(test_server: str) -> None:
     config = ServerConfig()
     config._oidc_overview = {"issuer": "https://example.com"}
     assert config.oidc_overview == {"issuer": "https://example.com"}
+def test_systemuser_no_token(test_server: str) -> None:
+    """No Authorization header → 401."""
+    res = requests.get(f"{test_server}/auth/v2/systemuser")
+    assert res.status_code == 401
+
+
+def test_systemuser_full_user(
+    test_server: str, auth: Dict[str, str]
+) -> None:
+    """Valid token, no claims configured"""
+    res = requests.get(
+        f"{test_server}/auth/v2/systemuser",
+        headers={"Authorization": f"Bearer {auth['access_token']}"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert "username" in data
+    assert "email" in data
+
+
+def test_systemuser_username_fallback(
+    test_server: str, auth: Dict[str, str], mocker: MockerFixture
+) -> None:
+    """When token has no preferred_username."""
+    async def _mock_get_username(current_user, header, cfg):
+        return "resolved-from-userinfo"
+
+    mocker.patch("freva_rest.auth.get_username", side_effect=_mock_get_username)
+
+    res = requests.get(
+        f"{test_server}/auth/v2/systemuser",
+        headers={"Authorization": f"Bearer {auth['access_token']}"},
+    )
+    assert res.status_code == 200
+    assert res.json()["username"] == "resolved-from-userinfo"
+
+def test_systemuser_insufficient_claims(
+    test_server: str, auth: Dict[str, str], mocker: MockerFixture
+) -> None:
+    """Valid token but user not part of required claim."""
+    from fastapi import HTTPException
+    from freva_rest.auth import auth as oidc_auth
+
+    original = oidc_auth._ensure_broker_ready
+
+    async def _mock_broker_ready():
+        broker = await original()
+        real_verify = broker.verify
+
+        def _verify_and_fail_claims(token):
+            result = real_verify(token)
+            raise HTTPException(status_code=403, detail="Insufficient claims.")
+
+        broker.verify = _verify_and_fail_claims
+        return broker
+
+    mocker.patch.object(oidc_auth, "_ensure_broker_ready", _mock_broker_ready)
+
+    res = requests.get(
+        f"{test_server}/auth/v2/systemuser",
+        headers={"Authorization": f"Bearer {auth['access_token']}"},
+    )
+    assert res.status_code == 403
+    assert res.json()["detail"] == "Insufficient claims."
