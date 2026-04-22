@@ -45,7 +45,7 @@ def test_oidc_overview_cached(test_server: str) -> None:
     config._oidc_overview = {"issuer": "https://example.com"}
     assert config.oidc_overview == {"issuer": "https://example.com"}
 def test_systemuser_no_token(test_server: str) -> None:
-    """No Authorization header → 401."""
+    """No authorization header"""
     res = requests.get(f"{test_server}/auth/v2/systemuser")
     assert res.status_code == 401
 
@@ -53,7 +53,7 @@ def test_systemuser_no_token(test_server: str) -> None:
 def test_systemuser_full_user(
     test_server: str, auth: Dict[str, str]
 ) -> None:
-    """Valid token, no claims configured"""
+    """Valid token, but no claims configured"""
     res = requests.get(
         f"{test_server}/auth/v2/systemuser",
         headers={"Authorization": f"Bearer {auth['access_token']}"},
