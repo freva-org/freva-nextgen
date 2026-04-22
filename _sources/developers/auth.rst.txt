@@ -463,18 +463,23 @@ then be included in the authorization header for secured endpoints.
 ---
 
 
-.. http:get:: /api/freva-nextgen/auth/v2/checkuser
+.. http:get:: /api/freva-nextgen/auth/v2/systemuser
 
-    Check if user token is authorized.
+    Check whether the authenticated user is a valid system (non-guest) user.
 
-    This endpoint can be useful to check if a user token can be used to
-    perform or access restricted actions and resources.
+    This endpoint is protected by the configured ``token_claims``. It is
+    used after login to determine whether a user should be treated as a
+    full system user or a guest.
+
+    If no ``token_claims`` are configured, all authenticated users receive a
+    **200** response.
 
 
     :reqheader Authorization: The OAuth2 access token
-    :statuscode 200: no error
-    :statuscode 401: unauthorized
-    :resheader Content-Type: ``application/json``: access and refresh token.
+    :statuscode 200: User is a valid system user.
+    :statuscode 401: Missing or invalid token.
+    :statuscode 403: Valid token but user is not part of the required claim (guest).
+    :resheader Content-Type: ``application/json``: username and email of the user.
 
 
     Example Request
@@ -482,7 +487,7 @@ then be included in the authorization header for secured endpoints.
 
     .. sourcecode:: http
 
-        POST /api/freva-nextgen/auth/v2/checkuser HTTP/1.1
+        GET /api/freva-nextgen/auth/v2/systemuser HTTP/1.1
         host: www.freva.dkrz.de
         Authorization: Bearer your_access_token
 
@@ -495,7 +500,8 @@ then be included in the authorization header for secured endpoints.
         Content-Type: application/json
 
         {
-           "pw_name": "janedoe"
+            "username": "janedoe",
+            "email": "jane@example.com"
         }
 
     Code examples
@@ -508,7 +514,7 @@ then be included in the authorization header for secured endpoints.
         .. code-tab:: bash
             :caption: Shell
 
-            curl -X GET https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/checkuser \
+            curl -X GET https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser \
              -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 
         .. code-tab:: python
@@ -516,10 +522,10 @@ then be included in the authorization header for secured endpoints.
 
             import requests
             response = requests.get(
-              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/checkuser",
+              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser",
               headers={"Authorization": "Bearer YOUR_ACCESS_TOKEN"}
             )
-            token_data = response.json()
+            user_data = response.json()
 
         .. code-tab:: r
             :caption: gnuR
@@ -527,10 +533,10 @@ then be included in the authorization header for secured endpoints.
             library(httr)
 
             response <- GET(
-               "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/checkuser",
+               "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser",
                add_headers(Authorization = paste("Bearer", "YOUR_ACCESS_TOKEN"))
             )
-            token_data <- content(response, "parsed")
+            user_data <- content(response, "parsed")
 
         .. code-tab:: julia
             :caption: Julia
@@ -539,10 +545,10 @@ then be included in the authorization header for secured endpoints.
             using JSON
 
             response = HTTP.get(
-              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/checkuser",
+              "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser",
               headers = Dict("Authorization" => "Bearer YOUR_ACCESS_TOKEN")
             )
-            token_data = JSON.parse(String(response.body))
+            user_data = JSON.parse(String(response.body))
 
         .. code-tab:: c
             :caption: C/C++
@@ -560,7 +566,7 @@ then be included in the authorization header for secured endpoints.
                     struct curl_slist *headers = NULL;
                     headers = curl_slist_append(headers, "Authorization: Bearer YOUR_ACCESS_TOKEN");
 
-                    curl_easy_setopt(curl, CURLOPT_URL, "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/checkuser");
+                    curl_easy_setopt(curl, CURLOPT_URL, "https://www.freva.dkrz.de/api/freva-nextgen/auth/v2/systemuser");
                     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
                     res = curl_easy_perform(curl);
