@@ -18,6 +18,30 @@ author = "DKRZ"
 release = __version__
 
 
+def _get_rtd_versions() -> list:
+    """Fetch active versions from the ReadTheDocs API."""
+    try:
+        resp = requests.get(
+            "https://readthedocs.org/api/v3/projects/py-oidc-auth/versions/",
+            params={"active": True, "limit": 50},
+            timeout=5,
+        )
+        resp.raise_for_status()
+        versions = []
+        for v in resp.json().get("results", []):
+            slug = v["slug"]
+            versions.append(
+                {
+                    "name": slug,
+                    "version": slug,
+                    "url": f"https://py-oidc-auth.readthedocs.io/en/{slug}/",
+                }
+            )
+        return versions
+    except Exception:
+        return []  # fail silently so builds don't break offline
+
+
 def _get_versions() -> list:
     try:
         resp = requests.get(
@@ -53,7 +77,10 @@ def _get_versions() -> list:
 
 
 _switcher_path = pathlib.Path(__file__).parent / "_static" / "switcher.json"
-_switcher_path.write_text(json.dumps(_get_versions(), indent=2))
+if not os.environ.get("READTHEDOCS"):
+    _switcher_path.write_text(json.dumps(_get_rtd_versions(), indent=2))
+else:
+    _switcher_path.write_text(json.dumps(_get_versions(), indent=2))
 
 
 # -- General configuration ---------------------------------------------------
