@@ -84,8 +84,8 @@ session required pam_sss.so\n\
         tomli \
         xarray \
         xarray-prism \
-        'py-oidc-auth-fastapi>2604.2.0' \
-        'py-oidc-auth>2604.2.0' \
+        'py-oidc-auth-fastapi>2604.2.2' \
+        'py-oidc-auth>2604.2.2' \
         zarr; \
     else \
         echo "Invalid CMD argument: $CMD" && exit 1; \
