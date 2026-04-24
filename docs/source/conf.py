@@ -22,7 +22,7 @@ def _get_rtd_versions() -> list:
     """Fetch active versions from the ReadTheDocs API."""
     try:
         resp = requests.get(
-            "https://readthedocs.org/api/v3/projects/py-oidc-auth/versions/",
+            "https://readthedocs.org/api/v3/projects/freva-nextgen/versions/",
             params={"active": True, "limit": 50},
             timeout=5,
         )
@@ -34,7 +34,7 @@ def _get_rtd_versions() -> list:
                 {
                     "name": slug,
                     "version": slug,
-                    "url": f"https://py-oidc-auth.readthedocs.io/en/{slug}/",
+                    "url": f"https://freva-nextgen.readthedocs.io/en/{slug}/",
                 }
             )
         return versions
@@ -78,8 +78,10 @@ def _get_versions() -> list:
 
 _switcher_path = pathlib.Path(__file__).parent / "_static" / "switcher.json"
 if not os.environ.get("READTHEDOCS"):
+    json_url = "https://freva-nextgen.readthedocs.io/en/stable/_static/switcher.json"
     _switcher_path.write_text(json.dumps(_get_rtd_versions(), indent=2))
 else:
+    json_url = "https://freva-org.github.io/freva-nextgen/_static/switcher.json"
     _switcher_path.write_text(json.dumps(_get_versions(), indent=2))
 
 
@@ -125,7 +127,7 @@ html_theme_options = {
     "navbar_align": "left",
     "show_nav_level": 4,
     "switcher": {
-        "json_url": "https://freva-org.github.io/freva-nextgen/stable/_static/switcher.json",
+        "json_url": json_url,
         "version_match": release,
     },
     "navbar_end": ["version-switcher", "navbar-icon-links"],
