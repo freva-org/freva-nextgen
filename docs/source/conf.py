@@ -42,47 +42,9 @@ def _get_rtd_versions() -> list:
         return []  # fail silently so builds don't break offline
 
 
-def _get_versions() -> list:
-    try:
-        resp = requests.get(
-            "https://api.github.com/repos/freva-org/freva-nextgen/tags",
-            timeout=5,
-        )
-        resp.raise_for_status()
-        versions = [
-            {
-                "name": tag["name"],
-                "version": tag["name"],
-                "url": f"https://freva-org.github.io/freva-nextgen/{tag['name']}/",
-            }
-            for tag in resp.json()
-            if (
-                tag.get("name", "")
-                and "dev" not in tag["name"]
-                and "rc" not in tag["name"]
-            )
-        ]
-        # Add stable/latest aliases
-        versions.insert(
-            0,
-            {
-                "name": "stable",
-                "version": "stable",
-                "url": "https://freva-org.github.io/freva-nextgen/stable/",
-            },
-        )
-        return versions
-    except Exception:
-        return []
-
-
 _switcher_path = pathlib.Path(__file__).parent / "_static" / "switcher.json"
-if not os.environ.get("READTHEDOCS"):
-    json_url = "https://freva-nextgen.readthedocs.io/en/stable/_static/switcher.json"
-    _switcher_path.write_text(json.dumps(_get_rtd_versions(), indent=2))
-else:
-    json_url = "https://freva-org.github.io/freva-nextgen/_static/switcher.json"
-    _switcher_path.write_text(json.dumps(_get_versions(), indent=2))
+json_url = "https://freva-nextgen.readthedocs.io/en/stable/_static/switcher.json"
+_switcher_path.write_text(json.dumps(_get_rtd_versions(), indent=2))
 
 
 # -- General configuration ---------------------------------------------------
