@@ -1,4 +1,8 @@
 #!/bin/sh
+#
+# Install systemd unit with
+# CONFIG_FILE=path_to_data_loader.json curl -fsSL https://raw.githubusercontent.com/freva-org/freva-nextgen/main/freva-data-portal-worker/data-loader | bash -s -- unit
+
 set -e
 
 SCRIPT_URL="https://raw.githubusercontent.com/freva-org/freva-nextgen/main/freva-data-portal-worker/data-loader"
