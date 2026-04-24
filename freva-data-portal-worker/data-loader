@@ -1,11 +1,58 @@
 #!/bin/sh
+#
+# Install systemd unit with
+# CONFIG_FILE=path_to_data_loader.json curl -fsSL https://raw.githubusercontent.com/freva-org/freva-nextgen/main/freva-data-portal-worker/data-loader | bash -s -- unit
+
 set -e
 
+SCRIPT_URL="https://raw.githubusercontent.com/freva-org/freva-nextgen/main/freva-data-portal-worker/data-loader"
+
 MAMBA_DIR=${MAMBA_DIR:-/opt/mamba}
+# Define the config FILE
+CONFIG_FILE=${CONFIG_FILE:-"$HOME/.data-portal-cluster-config.json"}
+
+# Print a systemd unit file to stdout and exit
+print_unit_file() {
+    _env_lines=""
+    [ -n "$CONFIG_DIR" ] && _env_lines="${_env_lines}Environment=CONFIG_DIR=${CONFIG_DIR}
+"
+    [ -n "$CONFIG_FILE" ] && _env_lines="${_env_lines}Environment=CONFIG_FILE=${CONFIG_FILE}
+"
+    [ -n "$MAMBA_DIR" ] && _env_lines="${_env_lines}Environment=MAMBA_DIR=${MAMBA_DIR}
+"
+    cat <<EOF
+[Unit]
+Description=Start the freva data-loader %i service.
+After=network.target
+ConditionHost=$(hostname)
+
+[Service]
+Type=simple
+PermissionsStartOnly=true
+NoNewPrivileges=true
+KillSignal=SIGTERM
+${_env_lines}ExecStartPre=/bin/sh -c "curl -fsSL ${SCRIPT_URL} -o /tmp/data-loader-\$(whoami)"
+ExecStart=/bin/sh -c "/bin/sh /tmp/data-loader-\$(whoami) %i"
+Restart=on-failure
+RestartSec=5
+StartLimitBurst=5
+UMask=007
+
+[Install]
+WantedBy=default.target
+EOF
+}
+
+# Handle "unit" subcommand
+if [ "$1" = "unit" ]; then
+    print_unit_file
+    exit 0
+fi
 # Set MAMBA_DIR based on write permissions to /opt
 if [ ! -w $MAMBA_DIR ]; then
     MAMBA_DIR=~/.mamba
 fi
+
 
 # Determine if this is a worker based on the argument
 if [ "$1" = "worker" ]; then
@@ -100,28 +147,28 @@ if [ ! -f ${MAMBA_DIR}/bin/data-loader-worker ]; then
     rm -fr $TEMP_DIR
 fi
 
-if ([ ! -f "$HOME/.data-portal-cluster-config.json" ] && [ "x$IS_WORKER" = x ]); then
-    TEMP_DIR=~ ${MAMBA_DIR}/bin/python ${MAMBA_DIR}//freva-data-portal-worker/setup/config/dev-utils.py redis-config $HOME/.data-portal-cluster-config.json
+if ([ ! -f "${CONFIG_FILE}" ] && [ "x$IS_WORKER" = x ]); then
+    TEMP_DIR=~ ${MAMBA_DIR}/bin/python ${MAMBA_DIR}/freva-data-portal-worker/setup/config/dev-utils.py redis-config $CONFIG_FILE
 fi
 
 export PATH=${MAMBA_DIR}/bin:$PATH
-redis_host=$(base64 -d ~/.data-portal-cluster-config.json | jq -r .host)
-dask_host=$(base64 -d ~/.data-portal-cluster-config.json | jq -r .scheduler_host)
+redis_host=$(base64 -d "${CONFIG_FILE}" | jq -r .host)
+dask_host=$(base64 -d "${CONFIG_FILE}" | jq -r .scheduler_host)
 scheduler_port=${dask_host##*:}
 scheduler_port=${scheduler_port%%/*}
 port_part=${redis_host##*:}
 redis_port=${port_part%%/*}
 
 if [ "x$IS_WORKER" = x ]; then
-    user=$(base64 -d ~/.data-portal-cluster-config.json | jq -r .user)
-    passwd=$(base64 -d ~/.data-portal-cluster-config.json | jq -r .passwd)
-    cache_exp=$(base64 -d ~/.data-portal-cluster-config.json | jq -r .cache_exp)
+    user=$(base64 -d "${CONFIG_FILE}" | jq -r .user)
+    passwd=$(base64 -d "${CONFIG_FILE}" | jq -r .passwd)
+    cache_exp=$(base64 -d "${CONFIG_FILE}" | jq -r .cache_exp)
     TEMP_DIR=$(mktemp -d)
     ${MAMBA_DIR}/bin/git clone https://github.com/freva-org/freva-nextgen.git $TEMP_DIR || { rm -fr $TEMP_DIR; exit 1; }
     ${MAMBA_DIR}/bin/python -m pip install -U $TEMP_DIR/freva-data-portal-worker || { rm -r $TEMP_DIR; exit 1; }
     rm -rf $TEMP_DIR
     CMD="${MAMBA_DIR}/bin/python -m data_portal_worker \
-        -c ~/.data-portal-cluster-config.json -e \
+        -c ${CONFIG_FILE} -e \
         $cache_exp -r $redis_host -p \
         $scheduler_port"
 else

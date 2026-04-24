@@ -87,6 +87,7 @@ session required pam_sss.so\n\
         'py-oidc-auth-fastapi>2604.2.0' \
         'py-oidc-auth>2604.2.0' \
         zarr; \
+        micromamba run python3 -m pip install -U 'py-oidc-auth[fastapi]'; \
     else \
         echo "Invalid CMD argument: $CMD" && exit 1; \
     fi &&\
