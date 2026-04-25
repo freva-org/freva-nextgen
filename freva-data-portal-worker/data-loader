@@ -14,8 +14,6 @@ CONFIG_FILE=${CONFIG_FILE:-"$HOME/.data-portal-cluster-config.json"}
 # Print a systemd unit file to stdout and exit
 print_unit_file() {
     _env_lines=""
-    [ -n "$CONFIG_DIR" ] && _env_lines="${_env_lines}Environment=CONFIG_DIR=${CONFIG_DIR}
-"
     [ -n "$CONFIG_FILE" ] && _env_lines="${_env_lines}Environment=CONFIG_FILE=${CONFIG_FILE}
 "
     [ -n "$MAMBA_DIR" ] && _env_lines="${_env_lines}Environment=MAMBA_DIR=${MAMBA_DIR}
@@ -34,8 +32,12 @@ KillSignal=SIGTERM
 ${_env_lines}ExecStartPre=/bin/sh -c "curl -fsSL ${SCRIPT_URL} -o /tmp/data-loader-\$(whoami)"
 ExecStart=/bin/sh -c "/bin/sh /tmp/data-loader-\$(whoami) %i"
 Restart=on-failure
+Environment="API_LOGLEVEL=INFO"
 RestartSec=5
 StartLimitBurst=5
+StandardOutput=journal
+StandardError=journal
+Environment=PYTHONUNBUFFERED=1
 UMask=007
 
 [Install]

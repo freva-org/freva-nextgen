@@ -4,7 +4,7 @@ import time
 from base64 import b64encode
 from pathlib import Path
 from tempfile import TemporaryDirectory
-
+import logging
 from distributed import Client
 from pytest import LogCaptureFixture
 
@@ -23,11 +23,14 @@ def test_get_client() -> None:
 
 def test_broker(caplog: LogCaptureFixture) -> None:
     """Test seding messags to the broker."""
+    from data_portal_worker.utils import data_logger
+
     caplog.clear()
-    cache = RedisCacheFactory()
-    cache.publish("data-portal", "foo")
-    time.sleep(0.5)
-    assert caplog.records
+    with caplog.at_level(logging.DEBUG, logger=data_logger.name):
+        cache = RedisCacheFactory()
+        cache.publish("data-portal", "foo")
+        time.sleep(0.5)
+        assert caplog.records
 
 
 def test_read_config() -> None:
@@ -42,8 +45,6 @@ def test_read_config() -> None:
         for value in config.values():
             assert not value
         config_file.write_bytes(b64encode('{"user": "foo"}'.encode()))
-        config = get_redis_config(
-            config_file, redis_user="bar", redis_password="bar"
-        )
+        config = get_redis_config(config_file, redis_user="bar", redis_password="bar")
         assert config["user"] == "foo"
         assert config["passwd"] == "bar"

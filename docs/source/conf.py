@@ -43,7 +43,7 @@ def _get_rtd_versions() -> list:
 
 
 _switcher_path = pathlib.Path(__file__).parent / "_static" / "switcher.json"
-json_url = "https://freva-nextgen.readthedocs.io/en/stable/_static/switcher.json"
+json_url = "https://freva-nextgen.readthedocs.io/en/latest/_static/switcher.json"
 _switcher_path.write_text(json.dumps(_get_rtd_versions(), indent=2))
 
 
