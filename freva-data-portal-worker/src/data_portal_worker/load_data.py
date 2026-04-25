@@ -47,7 +47,6 @@ CLIENT: Optional[Client] = None
 
 
 class StateEnum(Enum):
-
     finished_ok = 0
     finished_failed = 1
     finished_not_found = 2
@@ -249,6 +248,8 @@ class DataLoadFactory:
         chunk_size: float = 16.0,
     ) -> None:
         """Create a zarr object from an input path."""
+        start = time.time()
+        data_logger.info("Registering serialisation task ...")
         agg = DatasetAggregator()
         opt = ChunkOptimizer(
             access_pattern=access_pattern,
@@ -267,7 +268,7 @@ class DataLoadFactory:
         expires_in = str_to_int(os.environ.get("API_CACHE_EXP"), 3600)
         status_dict["status"] = StateEnum.processing.value
         self.cache.setex(path_id, expires_in, cloudpickle.dumps(status_dict))
-        data_logger.debug("Reading %s", ",".join(input_paths))
+        data_logger.info("%s", ",".join(input_paths))
         try:
             dsets = {
                 k: opt.apply(d)
@@ -277,10 +278,17 @@ class DataLoadFactory:
                     plan=assembly,
                 ).items()
             }
+            step = time.time()
+            data_logger.info("Reading done within %.2f sec", step - start)
+            data_logger.info("Serialising data")
             combined_meta = write_grouped_zarr(dsets)
             status_dict["data"] = combined_meta
             status_dict["repr_html"] = xr_repr_html(dsets)
             pkls = cloudpickle.dumps(dsets)
+            step2 = time.time()
+            data_logger.info("Serialisation data done within %.2f sec", step2 - step)
+            step = time.time()
+            data_logger.info("Ceching data")
             # We need to add the xr dataset to an extra cache entry because the
             # status_dict will be loaded by the rest-api, if the xarray dataset
             # would be present in the status_dict the rest-api code would attempt
@@ -291,6 +299,7 @@ class DataLoadFactory:
             # own.
             status_dict["status"] = StateEnum.finished_ok.value
             self.cache.setex(f"{path_id}-dset", expires_in, pkls)
+            data_logger.info("Caching done within %.2f sec", time.time() - step)
         except Exception as error:
             data_logger.exception("Could not process %s: %s", path_id, error)
             status_dict["status"] = StateEnum.from_exception(error)
@@ -300,6 +309,7 @@ class DataLoadFactory:
             expires_in,
             cloudpickle.dumps(status_dict),
         )
+        data_logger.info("Task done within %.2f sec", time.time() - start)
 
     def get_zarr_chunk(
         self,
@@ -313,6 +323,7 @@ class DataLoadFactory:
         try:
             meta, dsets = self.load_object(key)
             arr_meta = meta["metadata"][f"{var_group}/{ZARRAY_JSON}"]
+            data_logger.debug("Encoding data for variable %s  ... ", variable)
             data = encode_chunk(
                 get_data_chunk(
                     encode_zarr_variable(
@@ -325,18 +336,13 @@ class DataLoadFactory:
                 compressor=numcodecs.get_codec(arr_meta["compressor"]),
             )
             package = LoadDict(data=data, status=0, reason="")
+            data_logger.debug("Encoding data for variable %s ... done", variable)
         except Exception as error:
             data_logger.exception(error)
-            package = dict(
-                reason=str(error), status=StateEnum.from_exception(error)
-            )
-        self.cache.setex(
-            f"{key}-{var_group}-{chunk}", 360, cloudpickle.dumps(package)
-        )
+            package = dict(reason=str(error), status=StateEnum.from_exception(error))
+        self.cache.setex(f"{key}-{var_group}-{chunk}", 360, cloudpickle.dumps(package))
 
-    def load_object(
-        self, key: str
-    ) -> Tuple[Dict[str, Any], Dict[str, xr.Dataset]]:
+    def load_object(self, key: str) -> Tuple[Dict[str, Any], Dict[str, xr.Dataset]]:
         """Load a cached dataset.
 
         Parameters
@@ -353,12 +359,14 @@ class DataLoadFactory:
                       which means that there is a load status != 0
         KeyError: If the key doesn't exist in the cache (anymore).
         """
+        data_logger.debug("Loading %s ...", key)
         metadata_cache = cast(Optional[bytes], self.cache.get(key))
         dset_cache = self.cache.get(f"{key}-dset")
         if metadata_cache is None or dset_cache is None:
             raise KeyError(f"{key} uuid does not exist (anymore).")
         load_dict: LoadDict = cloudpickle.loads(metadata_cache)
         dsets = cast(Dict[str, xr.Dataset], cloudpickle.loads(dset_cache))
+        data_logger.debug("Loading %s ... done", key)
         return cast(Dict[str, Any], load_dict["data"]), dsets
 
 
@@ -377,9 +385,7 @@ class ProcessQueue(DataLoadFactory):
         self.client = get_dask_client(dev_mode=dev_mode)
         self.dev_mode = dev_mode
 
-    def _close_pubsub(
-        self, pubsub: Optional[PubSub], recycle: bool = False
-    ) -> None:
+    def _close_pubsub(self, pubsub: Optional[PubSub], recycle: bool = False) -> None:
         if pubsub is not None:
             self.backoff_sec = min(self._max_backoff_sec, self._backoff_sec * 2)
             try:
@@ -430,9 +436,7 @@ class ProcessQueue(DataLoadFactory):
                 message["uri"]["uuid"],
                 assembly=message["uri"].get("assembly"),
                 access_pattern=message["uri"].get("access_pattern", "map"),
-                map_primary_chunksize=message["uri"].get(
-                    "map_primary_chunksize", 1
-                ),
+                map_primary_chunksize=message["uri"].get("map_primary_chunksize", 1),
                 reload=message["uri"].get("reload", False),
                 chunk_size=message["uri"].get("chunk_size", 16.0),
             )
@@ -457,9 +461,7 @@ class ProcessQueue(DataLoadFactory):
         chunk_size: float = 16.0,
     ) -> None:
         """Submit a new data loading task to the process pool."""
-        data_logger.debug(
-            "Assigning %s to %s for future processing", inp_objs, uuid5
-        )
+        data_logger.debug("Assigning %s to %s for future processing", inp_objs, uuid5)
         data_cache = cast(
             LoadDict,
             cloudpickle.loads(self.cache.get(uuid5) or b"\x80\x05}\x94."),

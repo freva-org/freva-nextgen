@@ -17,7 +17,7 @@ try:
 except ImportError:
     pass
 
-_LOG_LEVELS = {
+LOG_LEVELS = {
     "DEBUG": logging.DEBUG,
     "10": logging.DEBUG,
     "INFO": logging.INFO,
@@ -29,8 +29,8 @@ _LOG_LEVELS = {
     "50": logging.CRITICAL,
     "CRITICAL": logging.CRITICAL,
 }
-DEFAULT_LOG_LEVEL: int = _LOG_LEVELS.get(
-    os.getenv("API_LOGLEVEL", "ERROR"), logging.ERROR
+DEFAULT_LOG_LEVEL: int = LOG_LEVELS.get(
+    os.getenv("API_LOGLEVEL", "WRNING"), logging.WARNING
 )
 
 

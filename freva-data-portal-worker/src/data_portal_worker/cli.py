@@ -14,7 +14,7 @@ from watchfiles import run_process
 
 from ._version import __version__
 from .load_data import CLIENT, ProcessQueue, RedisKw
-from .utils import data_logger
+from .utils import data_logger, logger_file_handle, DEFAULT_LOG_LEVEL
 
 
 def read_file_content(input_file: Optional[Union[str, Path]] = None) -> str:
@@ -24,9 +24,7 @@ def read_file_content(input_file: Optional[Union[str, Path]] = None) -> str:
     try:
         return Path(input_file).read_text()
     except Exception as error:
-        data_logger.warning(
-            "Could not read content of file: %s: %s", input_file, error
-        )
+        data_logger.warning("Could not read content of file: %s: %s", input_file, error)
     return ""
 
 
@@ -44,16 +42,12 @@ def get_redis_config(
         try:
             cache_config = json.loads(b64decode(file_config.encode()))
         except Exception as error:
-            data_logger.warning(
-                "Could not decode file: %s: %s", config_file, error
-            )
+            data_logger.warning("Could not decode file: %s: %s", config_file, error)
     return RedisKw(
         user=cache_config.get("user", redis_user or ""),
         passwd=cache_config.get("passwd", redis_password or ""),
         ssl_key=cache_config.get("ssl_key", read_file_content(redis_ssl_keyfile)),
-        ssl_cert=cache_config.get(
-            "ssl_cert", read_file_content(redis_ssl_certfile)
-        ),
+        ssl_cert=cache_config.get("ssl_cert", read_file_content(redis_ssl_certfile)),
     )
 
 
@@ -67,6 +61,7 @@ def _main(
     redis_ssl_certfile: Optional[str] = None,
     redis_ssl_keyfile: Optional[str] = None,
     dev: bool = False,
+    log_level: str = "WARNING",
 ) -> None:
     """Run the loader process."""
     data_logger.debug("Loading cluster config from %s", config_file)
@@ -79,7 +74,7 @@ def _main(
         redis_ssl_keyfile=redis_ssl_keyfile,
     )
     try:
-        os.environ["API_LOGLEVEL"] = "DEBUG" if dev else "INFO"
+        os.environ["API_LOGLEVEL"] = log_level
         os.environ["DASK_PORT"] = str(port)
         os.environ["API_CACHE_EXP"] = str(exp)
         os.environ["API_REDIS_HOST"] = redis_host
@@ -109,6 +104,15 @@ def _main(
             handler.close()
             logging.root.removeHandler(handler)
         os.environ = env  # type: ignore
+
+
+def _set_loglevel_from_verbosity(level: int = 0) -> str:
+
+    _levels = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
+    _level = _levels[max(min(0, level), 2)] if level else DEFAULT_LOG_LEVEL
+    data_logger.setLevel(_level)
+    logger_file_handle.setLevel(_level)
+    return logging.getLevelName(data_logger.level)
 
 
 def run_data_loader(argv: Optional[List[str]] = None) -> None:
@@ -167,9 +171,9 @@ def run_data_loader(argv: Optional[List[str]] = None) -> None:
     parser.add_argument(
         "-v",
         "--verbose",
-        action="store_true",
-        help="Display debug messages.",
-        default=False,
+        action="count",
+        default=0,
+        help="Increase verbosity",
     )
     parser.add_argument(
         "-V",
@@ -202,8 +206,7 @@ def run_data_loader(argv: Optional[List[str]] = None) -> None:
         default=os.getenv("API_REDIS_SSL_CERTFILE"),
     )
     args = parser.parse_args(argv)
-    if args.verbose is True:
-        data_logger.setLevel(logging.DEBUG)
+    log_level = _set_loglevel_from_verbosity(args.verbose)
     kwargs = {
         "port": args.port,
         "exp": args.exp,
@@ -213,6 +216,7 @@ def run_data_loader(argv: Optional[List[str]] = None) -> None:
         "redis_user": args.redis_username,
         "redis_ssl_certfile": args.redis_ssl_certfile,
         "redis_ssl_keyfile": args.redis_ssl_keyfile,
+        "log_level": log_level,
     }
     if args.dev:
         run_process(
