@@ -14,7 +14,7 @@ from watchfiles import run_process
 
 from ._version import __version__
 from .load_data import CLIENT, ProcessQueue, RedisKw
-from .utils import data_logger, logger_file_handle, DEFAULT_LOG_LEVEL
+from .utils import DEFAULT_LOG_LEVEL, data_logger, logger_file_handle
 
 
 def read_file_content(input_file: Optional[Union[str, Path]] = None) -> str:
