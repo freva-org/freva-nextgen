@@ -1,107 +1,97 @@
 [
   {
-    "name": "stable",
-    "version": "stable",
-    "url": "https://freva-org.github.io/freva-nextgen/stable/"
-  },
-  {
     "name": "v2604.1.1",
     "version": "v2604.1.1",
-    "url": "https://freva-org.github.io/freva-nextgen/v2604.1.1/"
+    "url": "https://freva-nextgen.readthedocs.io/en/v2604.1.1/"
   },
   {
     "name": "v2604.1.0",
     "version": "v2604.1.0",
-    "url": "https://freva-org.github.io/freva-nextgen/v2604.1.0/"
-  },
-  {
-    "name": "v2604.0.0",
-    "version": "v2604.0.0",
-    "url": "https://freva-org.github.io/freva-nextgen/v2604.0.0/"
-  },
-  {
-    "name": "v2603.1.1",
-    "version": "v2603.1.1",
-    "url": "https://freva-org.github.io/freva-nextgen/v2603.1.1/"
+    "url": "https://freva-nextgen.readthedocs.io/en/v2604.1.0/"
   },
   {
     "name": "v2603.1.0",
     "version": "v2603.1.0",
-    "url": "https://freva-org.github.io/freva-nextgen/v2603.1.0/"
+    "url": "https://freva-nextgen.readthedocs.io/en/v2603.1.0/"
   },
   {
     "name": "v2601.0.0",
     "version": "v2601.0.0",
-    "url": "https://freva-org.github.io/freva-nextgen/v2601.0.0/"
+    "url": "https://freva-nextgen.readthedocs.io/en/v2601.0.0/"
   },
   {
     "name": "v2511.0.0",
     "version": "v2511.0.0",
-    "url": "https://freva-org.github.io/freva-nextgen/v2511.0.0/"
+    "url": "https://freva-nextgen.readthedocs.io/en/v2511.0.0/"
   },
   {
     "name": "v2510.1.2",
     "version": "v2510.1.2",
-    "url": "https://freva-org.github.io/freva-nextgen/v2510.1.2/"
-  },
-  {
-    "name": "v2510.1.1",
-    "version": "v2510.1.1",
-    "url": "https://freva-org.github.io/freva-nextgen/v2510.1.1/"
-  },
-  {
-    "name": "v2510.1.0",
-    "version": "v2510.1.0",
-    "url": "https://freva-org.github.io/freva-nextgen/v2510.1.0/"
-  },
-  {
-    "name": "v2510.0.1",
-    "version": "v2510.0.1",
-    "url": "https://freva-org.github.io/freva-nextgen/v2510.0.1/"
-  },
-  {
-    "name": "v2510.0.0",
-    "version": "v2510.0.0",
-    "url": "https://freva-org.github.io/freva-nextgen/v2510.0.0/"
+    "url": "https://freva-nextgen.readthedocs.io/en/v2510.1.2/"
   },
   {
     "name": "v2509.2.0",
     "version": "v2509.2.0",
-    "url": "https://freva-org.github.io/freva-nextgen/v2509.2.0/"
-  },
-  {
-    "name": "v2509.1.0",
-    "version": "v2509.1.0",
-    "url": "https://freva-org.github.io/freva-nextgen/v2509.1.0/"
-  },
-  {
-    "name": "v2509.0.0",
-    "version": "v2509.0.0",
-    "url": "https://freva-org.github.io/freva-nextgen/v2509.0.0/"
+    "url": "https://freva-nextgen.readthedocs.io/en/v2509.2.0/"
   },
   {
     "name": "v2508.0.1",
     "version": "v2508.0.1",
-    "url": "https://freva-org.github.io/freva-nextgen/v2508.0.1/"
+    "url": "https://freva-nextgen.readthedocs.io/en/v2508.0.1/"
   },
   {
     "name": "v2507.0.0",
     "version": "v2507.0.0",
-    "url": "https://freva-org.github.io/freva-nextgen/v2507.0.0/"
-  },
-  {
-    "name": "v2506.0.1",
-    "version": "v2506.0.1",
-    "url": "https://freva-org.github.io/freva-nextgen/v2506.0.1/"
+    "url": "https://freva-nextgen.readthedocs.io/en/v2507.0.0/"
   },
   {
     "name": "v2506.0.0",
     "version": "v2506.0.0",
-    "url": "https://freva-org.github.io/freva-nextgen/v2506.0.0/"
+    "url": "https://freva-nextgen.readthedocs.io/en/v2506.0.0/"
   },
   {
     "name": "v2502.0.0",
     "version": "v2502.0.0",
-    "url": "https://freva-org.github.io/freva-nextgen/v2502.0.0/"
+    "url": "https://freva-nextgen.readthedocs.io/en/v2502.0.0/"
+  },
+  {
+    "name": "v2411.0.0",
+    "version": "v2411.0.0",
+    "url": "https://freva-nextgen.readthedocs.io/en/v2411.0.0/"
+  },
+  {
+    "name": "v2410.0.1",
+    "version": "v2410.0.1",
+    "url": "https://freva-nextgen.readthedocs.io/en/v2410.0.1/"
+  },
+  {
+    "name": "v2408.0.0",
+    "version": "v2408.0.0",
+    "url": "https://freva-nextgen.readthedocs.io/en/v2408.0.0/"
+  },
+  {
+    "name": "v2407.0.0",
+    "version": "v2407.0.0",
+    "url": "https://freva-nextgen.readthedocs.io/en/v2407.0.0/"
+  },
+  {
+    "name": "v2403.0.3",
+    "version": "v2403.0.3",
+    "url": "https://freva-nextgen.readthedocs.io/en/v2403.0.3/"
+  },
+  {
+    "name": "v2403.0.1",
+    "version": "v2403.0.1",
+    "url": "https://freva-nextgen.readthedocs.io/en/v2403.0.1/"
+  },
+  {
+    "name": "stable",
+    "version": "stable",
+    "url": "https://freva-nextgen.readthedocs.io/en/stable/"
+  },
+  {
+    "name": "latest",
+    "version": "latest",
+    "url": "https://freva-nextgen.readthedocs.io/en/latest/"
   }
 ]
