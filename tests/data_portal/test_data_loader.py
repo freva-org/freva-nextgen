@@ -1,10 +1,11 @@
 """Tests for the data loader."""
 
+import logging
 import time
 from base64 import b64encode
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import logging
+
 from distributed import Client
 from pytest import LogCaptureFixture
 

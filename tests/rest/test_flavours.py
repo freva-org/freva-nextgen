@@ -13,7 +13,6 @@ from typing import Any, Dict
 import mock
 import requests
 
-
 # -------------------------
 # Helper request wrappers
 # -------------------------

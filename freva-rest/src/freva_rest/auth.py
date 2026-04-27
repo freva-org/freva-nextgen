@@ -1,15 +1,19 @@
 """Authentication-related endpoints and utilities for the Freva REST API."""
 
-from typing import Annotated, List, Optional
+import logging
+from typing import Annotated, Dict, List, Optional
 
 import httpx
-from fastapi import HTTPException, Request
+from fastapi import HTTPException
 from fastapi.responses import JSONResponse
-from py_oidc_auth import FastApiOIDCAuth, IDToken, MongoDBBrokerStore
-from py_oidc_auth.utils import get_username
+from py_oidc_auth import FastApiOIDCAuth, MongoDBBrokerStore
+from py_oidc_auth.schema import IDToken, Payload
+from py_oidc_auth.utils import get_userinfo
 from pydantic import BaseModel, Field
 
 from .config import ServerConfig
+
+logger = logging.getLogger(__name__)
 
 server_config = ServerConfig()
 
@@ -72,6 +76,14 @@ class SystemUser(BaseModel):
     ]
 
 
+async def query_user_info(jti: str) -> Dict[str, Payload]:
+    """Query the user endpoint of the of the IDP server."""
+
+    broker = await auth._ensure_broker_ready()
+    user_data = await broker.get_user_info(jti)
+    return user_data
+
+
 # Freva-specific endpoints (not provided by py-oidc-auth)
 @auth_router.get(
     "/auth/v2/systemuser",
@@ -84,20 +96,27 @@ class SystemUser(BaseModel):
     },
 )
 async def systemuser(
-    request: Request,
     current_user: IDToken = auth.required(),
 ) -> SystemUser:
     """Validate the bearer token against the configured
     ``token_claims`` to recognize the guests.
     """
-    username = await get_username(
-        current_user=current_user,
-        header=dict(request.headers),
-        cfg=auth.config,
+    jti: Optional[str] = (
+        str(
+            getattr(current_user, "jti", None)
+            or (current_user.model_extra or {}).get("jti")
+            or ""
+        )
+        or None
     )
+
+    payload = await query_user_info(jti or "")
+    if not payload:
+        raise HTTPException(403, detail="Token expired.")
+    _user = get_userinfo(payload)
     return SystemUser(
-        username=username or "",
-        email=current_user.email or "",
+        username=_user.get("username", current_user.preferred_username or ""),
+        email=_user.get("email", current_user.email or ""),
     )
 
 

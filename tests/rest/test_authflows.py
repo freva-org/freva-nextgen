@@ -13,7 +13,9 @@ def test_wrong_token_claims(test_server: str) -> None:
 
 
 def test_request_headers() -> None:
-    from py_oidc_auth.auth_base import _set_request_header as set_request_header
+    from py_oidc_auth.auth_base import (
+        _set_request_header as set_request_header,
+    )
 
     header, data = {"Content-Type": "foo"}, {}
     set_request_header("foo", "bar", data, header)

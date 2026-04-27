@@ -3,6 +3,14 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
+v2604.1.2
+^^^^^^^^^
+
+Changed
+^^^^^^^
+- Update `systemuser` endpoint to get IDP `userinfo` query results.
+
+
 v2604.1.1
 ^^^^^^^^^
 
