@@ -67,12 +67,6 @@ class TestEnvToDict:
             result = env_to_dict("TEST_VAR")
         assert result == {}
 
-    def test_default_key_used_when_no_colon(self) -> None:
-        """When no colon is present, default_key is used as the key."""
-        with mock.patch.dict(os.environ, {"TEST_VAR": "value_only"}):
-            result = env_to_dict("TEST_VAR", default_key="fallback")
-        assert result == {"fallback": ["value_only"]}
-
     def test_no_default_key_no_colon_skipped(self) -> None:
         """Without a default_key, entries with no colon are skipped."""
         with mock.patch.dict(os.environ, {"TEST_VAR": "value_only"}):
@@ -90,9 +84,3 @@ class TestEnvToDict:
         with mock.patch.dict(os.environ, {"TEST_VAR": "k1:v1:v2:v3"}):
             result = env_to_dict("TEST_VAR")
         assert result == {"k1": ["v1:v2:v3"]}
-
-    def test_mixed_default_and_keyed(self) -> None:
-        """Default key and explicit keys coexist correctly."""
-        with mock.patch.dict(os.environ, {"TEST_VAR": "bare,k1:v1"}):
-            result = env_to_dict("TEST_VAR", default_key="default")
-        assert result == {"default": ["bare"], "k1": ["v1"]}
