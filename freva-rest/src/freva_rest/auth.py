@@ -76,7 +76,7 @@ class SystemUser(BaseModel):
     ]
 
 
-async def query_userendpoint(jti: str) -> Dict[str, Payload]:
+async def query_user_info(jti: str) -> Dict[str, Payload]:
     """Query the user endpoint of the of the IDP server."""
 
     broker = await auth._ensure_broker_ready()
@@ -112,7 +112,7 @@ async def systemuser(
         or None
     )
 
-    payload = await query_userendpoint(jti or "")
+    payload = await query_user_info(jti or "")
     _user = get_userinfo(payload)
     return SystemUser(
         username=_user.get("username", current_user.preferred_username or ""),
