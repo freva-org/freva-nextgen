@@ -1,13 +1,10 @@
 """Test for the authorisation utilities."""
 
-from typing import Any, Dict
-from unittest.mock import Mock, PropertyMock
+from typing import Dict
+from unittest.mock import AsyncMock
 
 import requests
-import pytest
 from pytest_mock import MockerFixture
-
-from py_oidc_auth.exceptions import InvalidRequest
 
 
 def test_missing_oidc_server(test_server: str, mocker: MockerFixture) -> None:
@@ -37,6 +34,7 @@ def test_well_known_endpoint(test_server: str) -> None:
     res = requests.get(f"{test_server}/auth/v2/.well-known/openid-configuration")
     assert res.status_code == 200
 
+
 def test_oidc_overview_cached(test_server: str) -> None:
     """Test oidc_overview returns cached result."""
     from freva_rest.config import ServerConfig
@@ -44,6 +42,8 @@ def test_oidc_overview_cached(test_server: str) -> None:
     config = ServerConfig()
     config._oidc_overview = {"issuer": "https://example.com"}
     assert config.oidc_overview == {"issuer": "https://example.com"}
+
+
 def test_systemuser_no_token(test_server: str) -> None:
     """No authorization header"""
     res = requests.get(f"{test_server}/auth/v2/systemuser")
@@ -51,31 +51,35 @@ def test_systemuser_no_token(test_server: str) -> None:
 
 
 def test_systemuser_full_user(
-    test_server: str, auth: Dict[str, str]
+    test_server: str, auth: Dict[str, str], mocker: MockerFixture
 ) -> None:
     """Valid token, but no claims configured"""
-    res = requests.get(
-        f"{test_server}/auth/v2/systemuser",
-        headers={"Authorization": f"Bearer {auth['access_token']}"},
-    )
-    assert res.status_code == 200
-    data = res.json()
-    assert "username" in data
-    assert "email" in data
+    with mocker.patch(
+        "py_oidc_auth.broker.issuer.TokenBroker.get_user_info",
+        new=AsyncMock(
+            return_value={"username": "testuser", "email": "test@example.com"}
+        ),
+    ):
+        res = requests.get(
+            f"{test_server}/auth/v2/systemuser",
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "username" in data
+        assert "email" in data
 
 
-def test_systemuser_username_fallback(
+def test_systemuser_unkown_jti(
     test_server: str, auth: Dict[str, str], mocker: MockerFixture
 ) -> None:
     """When token has no preferred_username."""
-    async def _mock_get_username(current_user, header, cfg):
-        return "resolved-from-userinfo"
-
-    mocker.patch("freva_rest.auth.get_username", side_effect=_mock_get_username)
-
-    res = requests.get(
-        f"{test_server}/auth/v2/systemuser",
-        headers={"Authorization": f"Bearer {auth['access_token']}"},
-    )
-    assert res.status_code == 200
-    assert res.json()["username"] == "resolved-from-userinfo"
+    with mocker.patch(
+        "py_oidc_auth.broker.issuer.TokenBroker.get_user_info",
+        new=AsyncMock(return_value={}),
+    ):
+        res = requests.get(
+            f"{test_server}/auth/v2/systemuser",
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+        )
+        assert res.status_code == 403

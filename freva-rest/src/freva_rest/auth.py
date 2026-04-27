@@ -81,8 +81,6 @@ async def query_user_info(jti: str) -> Dict[str, Payload]:
 
     broker = await auth._ensure_broker_ready()
     user_data = await broker.get_user_info(jti)
-    if not user_data:
-        raise HTTPException(403, detail="Token expired.")
     return user_data
 
 
@@ -113,6 +111,8 @@ async def systemuser(
     )
 
     payload = await query_user_info(jti or "")
+    if not payload:
+        raise HTTPException(403, detail="Token expired.")
     _user = get_userinfo(payload)
     return SystemUser(
         username=_user.get("username", current_user.preferred_username or ""),

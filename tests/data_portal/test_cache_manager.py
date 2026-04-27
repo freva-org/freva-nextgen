@@ -1,13 +1,14 @@
 """tests for _cache_manager."""
  
 from __future__ import annotations
- 
+
 from unittest.mock import MagicMock, patch
- 
+
 import pytest
+
 import data_portal_worker._cache_manager as cm
- 
- 
+
+
 def test_run_cache_cleanup_happy_path() -> None:
     """Successful cleanup logs info and does not raise."""
     mock_prism = MagicMock()

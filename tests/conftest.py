@@ -355,6 +355,7 @@ def auth(test_server: str):
     is the same approach used in test_authflows.py for role/expiry tests.
     """
     from getpass import getuser
+
     from freva_rest.auth import auth as oidc_auth
 
     def _create_auth(user_type: str = "user") -> Token:

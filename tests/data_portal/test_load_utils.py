@@ -2,12 +2,13 @@
 
 import os.path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 import netCDF4
 import numpy as np
 import rasterio
 import zarr
-from unittest.mock import patch
+
 from data_portal_worker.utils import str_to_int as str_to_int2
 from freva_rest.utils.base_utils import get_userinfo, str_to_int
 
