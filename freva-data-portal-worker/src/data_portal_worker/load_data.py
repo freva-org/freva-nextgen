@@ -36,6 +36,7 @@ from .backends import load_data
 from .rechunker import ChunkOptimizer
 from .utils import (
     JSONObject,
+    background_task,
     data_logger,
     str_to_int,
     user_can_read,
@@ -245,6 +246,7 @@ class DataLoadFactory:
             self._cache = RedisCacheFactory()
         return self._cache
 
+    @background_task
     def from_object_path(
         self,
         input_paths: List[str],
@@ -318,6 +320,7 @@ class DataLoadFactory:
         )
         data_logger.info("Task done within %.2f sec", time.time() - start)
 
+    @background_task
     def get_zarr_chunk(
         self,
         key: str,

@@ -58,7 +58,7 @@ class TestConvert:
         files = list(db)
         headers = {"Authorization": f"Bearer {mock_authenticate['access_token']}"}
         urls = convert(*files, host=test_server)
-        time.sleep(2)
+        time.sleep(5)
         assert isinstance(
             xr.open_zarr(urls[0], storage_options={"headers": headers}),
             xr.Dataset,

@@ -1,5 +1,6 @@
 """Utility functions for loading data."""
 
+import threading
 import grp
 import logging
 import os
@@ -12,7 +13,7 @@ from html import escape
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from socket import gethostname
-from typing import Dict, List, Optional, TypeAlias, Union
+from typing import Any, Callable, Dict, List, Optional, TypeAlias, Union
 
 import xarray as xr
 from platformdirs import user_log_dir
@@ -161,3 +162,14 @@ def xr_repr_html(groups: XrGroups) -> str:
 
     parts.append("</div>")
     return "".join(parts)
+
+
+def background_task(func: Callable[..., Any]) -> Callable[..., threading.Thread]:
+    """Run the decorated function in a daemon thread."""
+
+    def wrapper(*args: Any, **kwargs: Any) -> threading.Thread:
+        thread = threading.Thread(target=func, args=args, kwargs=kwargs, daemon=True)
+        thread.start()
+        return thread
+
+    return wrapper
