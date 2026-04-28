@@ -320,7 +320,8 @@ def test_no_cache(
                 headers={"Authorization": f"Bearer {auth['access_token']}"},
                 timeout=7,
             )
-            assert res.status_code == 404
+            assert res.status_code == 503
+            assert "retry-after" not in res.headers
         Cache._connection_checked = False
         with mock.patch("freva_rest.utils.base_utils.CONFIG.services", ""):
             with mock.patch.dict(
