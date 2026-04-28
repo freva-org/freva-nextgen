@@ -232,17 +232,14 @@ async def get_token_from_cache(_id: str) -> Tuple[str, str]:
     3. Add entry back to redis for hot lookup with updated TTL
     """
     await Cache.check_connection()
-    data = json.loads(
-        await cast(Awaitable[Optional[str]], Cache.get(_id)) or "{}"
-    )
+    data = json.loads(await cast(Awaitable[Optional[str]], Cache.get(_id)) or "{}")
     token, sig = data.get("token"), data.get("signature")
     if token and sig:
         return token, sig
     now = datetime.now(timezone.utc)
     doc = cast(
         PresignDict,
-        await server_config.mongo_collection_share_key.find_one({"_id": _id})
-        or {},
+        await server_config.mongo_collection_share_key.find_one({"_id": _id}) or {},
     )
     expires_at = doc.get("expires_at", now).replace(tzinfo=timezone.utc)
     ttl_remaining = expires_at - now
@@ -263,13 +260,13 @@ async def get_token_from_cache(_id: str) -> Tuple[str, str]:
     logger.debug("Sig %s was added with a new ttl of %i", _id, ttl)
     return doc["token"], doc["signature"]
 
+
 async def add_ttl_key_to_db_and_cache(
     path: Union[List[str], str],
     ttl_seconds: float,
     assembly: Optional[Dict[str, Optional[str]]] = None,
 ) -> PresignDict:
     """Create an entry of a signature."""
-
     await Cache.check_connection()
     expires_in = timedelta(seconds=ttl_seconds)
     expires_at = datetime.now(timezone.utc) + expires_in

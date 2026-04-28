@@ -5,7 +5,7 @@ import hashlib
 import json
 import uuid
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Awaitable, Dict, List, Literal, Optional, Union, cast
 
 import cloudpickle
 from fastapi import status
@@ -75,10 +75,14 @@ async def _query_broker_on_permissions(
         ).encode("utf-8"),
     )
     # Block-wait for the reply
-    result = await Cache.blpop(f"access-reply:{request_id}", timeout=timeout)
+    result = await cast(
+        Awaitable[Optional[List[bytes]]],
+        Cache.blpop(f"access-reply:{request_id}", timeout=timeout),
+    )
     if result is None:
         raise HTTPException(503, "Data-loader service unavailable.")
-    return json.loads(result[1])["allowed"]
+    allowed: bool = json.loads(result[1]).get("allowed", False)
+    return allowed
 
 
 async def check_read_permission(username: Optional[str], paths: List[str]) -> None:

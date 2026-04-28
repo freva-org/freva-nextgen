@@ -100,7 +100,8 @@ async def query_user_info(token_data: IDToken) -> Dict[str, Payload]:
 async def get_system_username(token_data: Optional[IDToken]) -> Optional[str]:
     """Check if a user must be considered as guest."""
     user_info = (await query_user_info(token_data)) if token_data else {}
-    return _user_claim_check.search(user_info)
+    username: Optional[str] = _user_claim_check.search(user_info)
+    return username
 
 
 # Freva-specific endpoints (not provided by py-oidc-auth)
