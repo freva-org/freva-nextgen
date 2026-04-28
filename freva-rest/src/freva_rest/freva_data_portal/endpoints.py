@@ -310,7 +310,7 @@ async def zarr_key_data(
             ge=0,
             le=1500,
         ),
-    ] = 1,
+    ] = 10,
     current_user: TokenPayload = auth.required(),
 ) -> Response:
     """
@@ -385,7 +385,7 @@ async def zarr_key_data_shared(
             ge=0,
             le=1500,
         ),
-    ] = 1,
+    ] = 10,
 ) -> Response:
     """
     Serve arbitrary Zarr metadata or chunk keys for shared datasets.
