@@ -173,7 +173,7 @@ def test_invalid_token_returns_400(
     # token lookup — a bad bearer token returns 401 rather than reaching the
     # zarr path at all, so we accept either status code here.
     assert r.status_code in (400, 401)
-    assert "invalid path" in r.json()["detail"].lower()
+    assert "invalid" in r.json()["detail"].lower()
 
 
 def test_load_chunk_keyerror_branch_direct_call(
