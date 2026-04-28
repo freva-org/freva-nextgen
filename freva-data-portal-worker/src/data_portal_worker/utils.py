@@ -1,6 +1,5 @@
 """Utility functions for loading data."""
 
-import threading
 import grp
 import logging
 import os
@@ -8,6 +7,7 @@ import pwd
 import shlex
 import stat
 import subprocess
+import threading
 from collections.abc import Mapping
 from html import escape
 from logging.handlers import RotatingFileHandler
