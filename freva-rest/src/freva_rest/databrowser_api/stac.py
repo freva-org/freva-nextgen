@@ -351,7 +351,11 @@ class STAC(Solr):
 
         properties = {
             **{
-                self.translator.forward_lookup.get(k, k): result.get(k)
+                (
+                    "freva:data_type"
+                    if self.translator.forward_lookup.get(k, k) == "data_type"
+                    else self.translator.forward_lookup.get(k, k)
+                ): result.get(k)
                 for k in self._config.solr_fields
                 if k in result and result.get(k) is not None
             },
