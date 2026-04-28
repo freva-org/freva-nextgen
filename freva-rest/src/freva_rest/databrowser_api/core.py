@@ -950,6 +950,7 @@ class Solr:
         str:
             The zarr stream path or error message
         """
+        zarr_options.setdefault("username", "")
         uri = doc[self.uniq_key]
         try:
             return await publish_datasets(uri, **zarr_options)
