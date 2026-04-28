@@ -34,9 +34,23 @@ STATUS_LOOKUP = {
     5: "gone",
 }
 
+# Default retry interval in seconds, sent via Retry-After header
+_RETRY_AFTER = 2
+
 
 class LoadStatus(Enum):
-    """Definitions of the load status."""
+    """Definitions of the load status.
+
+    Each member maps an internal processing state to an appropriate
+    HTTP response code:
+
+    * ``finished_ok`` → 200: data ready.
+    * ``finished_failed`` → 500: loading failed permanently.
+    * ``finished_not_found`` → 404: source file does not exist.
+    * ``waiting`` → 503 + Retry-After: queued, not yet started.
+    * ``processing`` → 503 + Retry-After: actively being loaded.
+    * ``unknown`` → 404: never submitted or cache evicted.
+    """
 
     finished_ok = 0
     finished_failed = 1
@@ -54,8 +68,25 @@ class LoadStatus(Enum):
             "finished_not_found": 404,
             "waiting": 503,
             "processing": 503,
-            "unknown": 503,
-        }.get(self.name, 503)
+            "unknown": 404,
+        }.get(self.name, 500)
+
+    @property
+    def retryable(self) -> bool:
+        """Whether the client should retry after this status."""
+        return self.value in (self.waiting.value, self.processing.value)
+
+    @property
+    def detail(self) -> str:
+        """Default human-readable message for this status."""
+        return {
+            "finished_ok": "Data ready.",
+            "finished_failed": "Data loading failed.",
+            "finished_not_found": "Source file not found.",
+            "waiting": "Data is queued for loading, please retry.",
+            "processing": "Data is being loaded, please retry.",
+            "unknown": "Dataset not found.",
+        }.get(self.name, "Unknown status.")
 
 
 async def _query_broker_on_permissions(
@@ -85,9 +116,8 @@ async def _query_broker_on_permissions(
     return allowed
 
 
-async def check_read_permission(username: Optional[str], paths: List[str]) -> None:
+async def check_read_permission(username: str, paths: List[str]) -> None:
     """Check (via data-loader) if a given user has read access to a path."""
-    username = username or ""
     paths_bytes = json.dumps(paths).encode("utf-8")
     hex_digest = hashlib.sha256(paths_bytes).hexdigest()
     cache_key = f"access:{username}:{hex_digest}"
@@ -99,6 +129,39 @@ async def check_read_permission(username: Optional[str], paths: List[str]) -> No
         allowed = cached == b"1"
     if not allowed:
         raise HTTPException(status_code=403, detail="User not allowed to read paths.")
+
+
+async def _trigger_loading(
+    paths: List[str],
+    token: str,
+    assembly: Optional[Dict[str, Optional[str]]] = None,
+    access_pattern: str = "map",
+    map_primary_chunksize: int = 1,
+    reload: bool = False,
+    chunk_size: float = 16.0,
+) -> None:
+    """Send a loading instruction to the data-loader via Redis.
+
+    This is an internal helper that bypasses permission checks.
+    It should only be called from code paths where permissions have
+    already been verified (e.g. lazy re-publish from ``read_redis_data``).
+    """
+    await Cache.publish(
+        "data-portal",
+        json.dumps(
+            {
+                "uri": {
+                    "path": paths,
+                    "uuid": token,
+                    "assembly": assembly or {},
+                    "access_pattern": access_pattern,
+                    "map_primary_chunksize": map_primary_chunksize,
+                    "reload": reload,
+                    "chunk_size": chunk_size,
+                }
+            }
+        ).encode("utf-8"),
+    )
 
 
 async def publish_datasets(
@@ -135,38 +198,33 @@ async def publish_datasets(
     reload: bool
         (Re)trigger the loading of a data set.
     chunk_size: float
-        Set the target chunk size
-    username: str
-        Username that wants to publish data and needs checkingfor fs permissions.
+        Set the target chunk size.
+    username: str, optional
+        Username for filesystem permission checks. If ``None``,
+        permission checks are skipped (caller asserts they were
+        already performed).
 
     Returns
     -------
     str:
-        The url to the converted zarr endpoint
-
+        The url to the converted zarr endpoint.
     """
     await Cache.check_connection()
     paths = paths if isinstance(paths, list) else [paths]
     norm_paths = [p.replace("file:///", "/") for p in paths]
-    await check_read_permission(username, norm_paths)
+    if username is not None:
+        await check_read_permission(username, norm_paths)
     token = encode_cache_token(norm_paths, assembly=aggregation_plan)
     api_path = f"{server_config.proxy}/api/freva-nextgen/data-portal"
     if publish or reload:
-        await Cache.publish(
-            "data-portal",
-            json.dumps(
-                {
-                    "uri": {
-                        "path": norm_paths,
-                        "uuid": token,
-                        "assembly": aggregation_plan or {},
-                        "access_pattern": access_pattern,
-                        "map_primary_chunksize": map_primary_chunksize,
-                        "reload": reload,
-                        "chunk_size": chunk_size,
-                    }
-                }
-            ).encode("utf-8"),
+        await _trigger_loading(
+            norm_paths,
+            token,
+            assembly=aggregation_plan,
+            access_pattern=access_pattern,
+            map_primary_chunksize=map_primary_chunksize,
+            reload=reload,
+            chunk_size=chunk_size,
         )
     if public is True:
         res = await add_ttl_key_to_db_and_cache(
@@ -179,57 +237,81 @@ async def publish_datasets(
 async def read_redis_data(
     token: str,
     subkey: str = "data",
-    timeout: int = 1,
+    timeout: int = 3,
     token_suffix: str = "",
 ) -> Any:
-    """Read the cache data given by a key.
+    """Read cached data for a zarr token, triggering lazy loading if needed.
 
     Parameters
     ----------
     token: str
         The token used to decode the path.
-    subkey: str|None
-        If the data under key is a pickled dict the the will be
-        unpickled and and the value of that subkey will be returned
+    subkey: str
+        If the data under key is a pickled dict then it will be
+        unpickled and the value of that subkey will be returned.
     timeout: int
-        Wait for timeout seconds until a not found error is risen.
-    jsonify: bool
-        Jsonify data.
+        Wait for timeout seconds until a not-ready error is raised.
+    token_suffix: str
+        Suffix appended to the token to form the cache key for
+        chunk-level data.
     """
-
     await Cache.check_connection()
     try:
         payload = decode_cache_token(token)
     except (UnicodeDecodeError, json.JSONDecodeError):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid path.")
+
     key = token + token_suffix
-    meta_data = cloudpickle.loads((await Cache.get(token)) or b"\x80\x05}\x94.")
-    load_status = meta_data.get("status", 5)
-    if not meta_data or load_status == 1:
-        await publish_datasets(
-            payload["path"],
-            aggregation_plan=payload["assembly"],
-            ttl_seconds=payload["exp"],
-            publish=True,
-        )
-        timeout += 1
+    raw = await Cache.get(token)
+
+    just_triggered = bool(token_suffix)
+    if raw is None:
+        # No metadata in cache — lazy publish: send loading instruction
+        # directly without re-checking permissions (already verified at
+        # the endpoint level).
+        await _trigger_loading(payload["path"], token, assembly=payload["assembly"])
+        just_triggered = True
+
+    else:
+        meta_data = cloudpickle.loads(raw)
+        load_status = meta_data.get("status", LoadStatus.unknown.value)
+        if load_status == LoadStatus.finished_failed.value:
+            # Previously failed — retry loading
+            await _trigger_loading(
+                payload["path"],
+                token,
+                assembly=payload["assembly"],
+                reload=True,
+            )
+            just_triggered = True
+    # If we just triggered loading, default to "waiting" — we know
+    # work is in flight. Otherwise default to "unknown" — the data
+    # should already be there.
+    default_status = (
+        LoadStatus.waiting.value if just_triggered else LoadStatus.unknown.value
+    )
+
+    # Poll for completion
     npolls = 0.0
     dt = 0.5
     data = cloudpickle.loads((await Cache.get(key)) or b"\x80\x05}\x94.")
-    task_status = LoadStatus(data.get("status", 5))
-    while task_status.value > 2:
+    task_status = LoadStatus(data.get("status", default_status))
+    while task_status.retryable:
         npolls += dt
+        if npolls >= timeout:
+            break
         await asyncio.sleep(dt)
         data = cloudpickle.loads((await Cache.get(key)) or b"\x80\x05}\x94.")
         task_status = LoadStatus(data.get("status", LoadStatus.processing.value))
-        if npolls >= timeout:
-            break
 
     task_status = LoadStatus(data.get("status", LoadStatus.unknown.value))
-    if task_status.value != 0:
+    if task_status.value != LoadStatus.finished_ok.value:
         raise HTTPException(
             task_status.response,
-            detail=data.get("reason", f"{key} uuid does not exist (anymore)."),
+            detail=data.get("reason") or task_status.detail,
+            headers={"Retry-After": str(_RETRY_AFTER)}
+            if task_status.retryable
+            else None,
         )
     return data[subkey]
 
@@ -246,7 +328,7 @@ async def load_chunk(_id: str, variable: str, chunk: str, timeout: int = 1) -> R
 
 
 async def load_zarr_metadata(
-    _id: str, attr: Optional[str] = None, timeout: int = 1
+    _id: str, attr: Optional[str] = None, timeout: int = 10
 ) -> JSONResponse:
     """Read the .zarrattr."""
     meta: Dict[str, Any] = await read_redis_data(_id, "data", timeout=timeout)
@@ -264,22 +346,19 @@ async def load_zarr_metadata(
     return JSONResponse(content=meta, status_code=status.HTTP_200_OK)
 
 
-async def process_zarr_data(token: str, zarr_key: str, timeout: int = 1) -> Response:
+async def process_zarr_data(token: str, zarr_key: str, timeout: int = 10) -> Response:
     """Serve arbitrary Zarr metadata or chunk keys.
 
     Zarr clients access stores by issuing HTTP GET requests on a hierarchy of
     keys rather than downloading a single monolithic file.  This method
     enables the rest endpoints to access any key under a namespace,
-    whether it refers to root-level metadata (e.g. `.zmetadata`, `.zgroup`,
-    `.zattrs`), variable-specific metadata (e.g. `tas/.zarray`), or data
-    chunks (e.g. `tas/0.0.0`).  For root-level metadata keys we call
+    whether it refers to root-level metadata (e.g. ``.zmetadata``, ``.zgroup``,
+    ``.zattrs``), variable-specific metadata (e.g. ``tas/.zarray``), or data
+    chunks (e.g. ``tas/0.0.0``).  For root-level metadata keys we call
     ``load_zarr_metadata``, and for all other keys we delegate to
     ``load_chunk`` using the parent path as the variable and the final
     segment as the chunk identifier.
     """
-    # Root-level keys: `.zmetadata`, `.zgroup` and `.zattrs` have no
-    # variable context and therefore need special handling.  We explicitly
-    # check for these cases and call the appropriate metadata loader.
     if zarr_key == ZARR_JSON:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -287,28 +366,20 @@ async def process_zarr_data(token: str, zarr_key: str, timeout: int = 1) -> Resp
         )
     if zarr_key == ZMETADATA_JSON:
         return await load_zarr_metadata(token, timeout=timeout)
-    if zarr_key in (ZMETADATA_JSON, ZGROUP_JSON, ZATTRS_JSON):
+    if zarr_key in (ZGROUP_JSON, ZATTRS_JSON):
         return await load_zarr_metadata(token, zarr_key, timeout=timeout)
     zarr_key = zarr_key.lstrip("/")
     if zarr_key.endswith(("/" + ZGROUP_JSON, "/" + ZATTRS_JSON, "/" + ZARRAY_JSON)):
-        # prefix may be "group0" or "group0/tas"
         return await load_zarr_metadata(
             token,
             zarr_key,
             timeout=timeout,
         )
-    if zarr_key == ZARRAY_JSON or zarr_key == ZATTRS_JSON:
-        # Requests like `/.../.zarray` or `/.../.zattrs` at the root level are
-        # invalid because a variable path is required.  Return a descriptive
-        # error rather than delegating to the chunk loader, which would
-        # misinterpret these keys.
+    if zarr_key in (ZARRAY_JSON, ZATTRS_JSON):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="A group/variable name must precede .zarray or .zattrs",
         )
-    # The remaining keys must include at least one slash to separate the
-    # variable path from the final chunk or metadata suffix.  Without a
-    # slash, the request is malformed.
     if "/" not in zarr_key:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -318,7 +389,4 @@ async def process_zarr_data(token: str, zarr_key: str, timeout: int = 1) -> Resp
             ),
         )
     array_path, _, leaf = zarr_key.rpartition("/")
-    # Delegate to load_chunk.  It will detect `.zarray` and `.zattrs`
-    # requests at the variable level and return the metadata accordingly,
-    # otherwise it will stream the requested data chunk.
     return await load_chunk(token, array_path, leaf, timeout)
