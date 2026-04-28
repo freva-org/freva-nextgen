@@ -21,9 +21,11 @@ import socket
 import threading
 import time
 from base64 import b64encode
+from getpass import getuser
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Dict, Iterator
+from unittest.mock import AsyncMock
 
 import jwt
 import mock
@@ -323,9 +325,19 @@ def test_server() -> Iterator[str]:
     ):
         env[key] = os.getenv(f"API_{key}", "")
     env["REDIS_PASS"] = os.getenv("API_REDIS_PASSWORD", "")
+    user = getuser()
     with mock.patch.dict(os.environ, env, clear=True):
-        yield from setup_server()
-        shutdown_data_loader()
+        with mock.patch(
+            "py_oidc_auth.broker.issuer.TokenBroker.get_user_info",
+            new=AsyncMock(
+                return_value={
+                    "preferred_username": user,
+                    "email": f"{user}@example.com",
+                }
+            ),
+        ):
+            yield from setup_server()
+            shutdown_data_loader()
 
 
 @pytest.fixture(scope="function")
