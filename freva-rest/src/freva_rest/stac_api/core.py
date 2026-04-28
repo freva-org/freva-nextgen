@@ -526,7 +526,7 @@ class STACAPI:
 
         properties = {
             **{
-                k: result.get(k)
+                ("freva:data_type" if k == "data_type" else k): result.get(k)
                 for k in self.config.solr_fields
                 if k in result and result.get(k) is not None
             },
