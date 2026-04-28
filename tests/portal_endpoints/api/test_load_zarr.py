@@ -149,16 +149,12 @@ def test_zarr_helper_branches_via_rest_api(
         timeout=60,
     )
     assert r.status_code == 200
-    assert r.headers.get("content-type", "").startswith(
-        "application/octet-stream"
-    )
+    assert r.headers.get("content-type", "").startswith("application/octet-stream")
     assert isinstance(r.content, (bytes, bytearray))
     assert len(r.content) > 0
 
 
-def test_invalid_token_returns_400(
-    test_server: str, auth: Dict[str, str]
-) -> None:
+def test_invalid_token_returns_400(test_server: str, auth: Dict[str, str]) -> None:
     """
     Covers the invalid-token branch in read_redis_data via the REST endpoint.
     """
