@@ -111,9 +111,7 @@ class Solr:
         self._config = config
         self.uniq_key = uniq_key
         self.multi_version = multi_version
-        self.translator = _translator or Translator(
-            flavour, translate, config=config
-        )
+        self.translator = _translator or Translator(flavour, translate, config=config)
         try:
             self.time = self.adjust_time_string(
                 query.pop("time", [""])[0],
@@ -351,9 +349,7 @@ class Solr:
         for key in query:
             clean_key = key.lower().replace("_not_", "")
             if clean_key not in valid_facets and clean_key not in allowed_params:
-                raise HTTPException(
-                    status_code=422, detail="Could not validate input."
-                )
+                raise HTTPException(status_code=422, detail="Could not validate input.")
 
     @classmethod
     async def validate_parameters(
@@ -391,17 +387,13 @@ class Solr:
         user_name: Optinonal[str], default: None
             The current user name for flavour validation.
         """
-        translator = await Flavour.validate_and_get_flavour(
-            config, flavour, user_name
-        )
+        translator = await Flavour.validate_and_get_flavour(config, flavour, user_name)
         translator.translate = translate
         valid_facets = translator.valid_facets
         version_param = translator.translate_facets(["version"])[0]
 
         if not multi_version and version_param in query:
-            raise HTTPException(
-                status_code=422, detail="Could not validate input."
-            )
+            raise HTTPException(status_code=422, detail="Could not validate input.")
         cls._validate_query_params(query, valid_facets, cls.uniq_keys)
 
         return Solr(
@@ -461,9 +453,7 @@ class Solr:
             raise ValidationError(f"Choose `time_select` from {methods}") from exc
         start, _, end = time.lower().partition("to")
         try:
-            start = parse(
-                start or "1", default=datetime(1, 1, 1, 0, 0, 0)
-            ).isoformat()
+            start = parse(start or "1", default=datetime(1, 1, 1, 0, 0, 0)).isoformat()
             end = parse(
                 end or "9999", default=datetime(9999, 12, 31, 23, 59, 59)
             ).isoformat()
@@ -520,9 +510,7 @@ class Solr:
         try:
             min_lon, max_lon, min_lat, max_lat = bbox.split(",")
 
-            if not (
-                -180 <= float(min_lon) <= 180 and -180 <= float(max_lon) <= 180
-            ):
+            if not (-180 <= float(min_lon) <= 180 and -180 <= float(max_lon) <= 180):
                 raise ValidationError("Longitude must be between -180 and 180")
             if not (-90 <= float(min_lat) <= 90 and -90 <= float(max_lat) <= 90):
                 raise ValidationError("Latitude must be between -90 and 90")
@@ -593,9 +581,7 @@ class Solr:
             catalogue=catalogue, total_count=total_count
         )
 
-    async def _delete_from_mongo(
-        self, search_keys: Dict[str, Union[str, int]]
-    ) -> None:
+    async def _delete_from_mongo(self, search_keys: Dict[str, Union[str, int]]) -> None:
         """
         Delete bulk user metadata from MongoDB based on the search keys.
 
@@ -615,9 +601,7 @@ class Solr:
         except Exception as error:
             logger.warning("[MONGO] Could not remove metadata: %s", error)
 
-    async def _insert_to_mongo(
-        self, metadata_batch: List[Dict[str, Any]]
-    ) -> None:
+    async def _insert_to_mongo(self, metadata_batch: List[Dict[str, Any]]) -> None:
         """
         Bulk upsert user metadata into MongoDB.
 
@@ -632,9 +616,7 @@ class Solr:
             filter_query = {"file": metadata["file"], "uri": metadata["uri"]}
             update_query = {"$set": metadata}
 
-            bulk_operations.append(
-                UpdateOne(filter_query, update_query, upsert=True)
-            )
+            bulk_operations.append(UpdateOne(filter_query, update_query, upsert=True))
         if bulk_operations:
             try:
                 result = await self._config.mongo_collection_userdata.bulk_write(
@@ -710,20 +692,16 @@ class Solr:
             uniq_key=self.uniq_key,
         )
 
-    def _process_catalogue_result(
-        self, out: Dict[str, List[Sized]]
-    ) -> Dict[str, Any]:
+    def _process_catalogue_result(self, out: Dict[str, List[Sized]]) -> Dict[str, Any]:
         result = {}
         for freva_key in [self.uniq_key] + self.translator.facet_hierarchy:
             if out.get(freva_key):
-
                 translated_key = self.translator.forward_lookup.get(
                     freva_key, freva_key
                 )
                 result[translated_key] = (
                     out[freva_key][0]
-                    if isinstance(out.get(freva_key), list)
-                    and len(out[freva_key]) == 1
+                    if isinstance(out.get(freva_key), list) and len(out[freva_key]) == 1
                     else out.get(freva_key)
                 )
         return result
@@ -769,6 +747,7 @@ class Solr:
         facets: List[str],
         max_results: int,
         zarr_stream: bool = False,
+        username: Optional[str] = None,
     ) -> Tuple[int, SearchResult]:
         """Initialise the apache solr metadata search.
 
@@ -793,7 +772,7 @@ class Solr:
         )
 
         self.query["fl"] = [self.uniq_key, "fs_type"]
-        logger.info(
+        logger.debug(
             "Query %s for uniq_key: %s with %s",
             self.url,
             self.uniq_key,
@@ -806,7 +785,9 @@ class Solr:
 
         if zarr_stream and docs:
             for doc in docs:
-                doc[self.uniq_key] = await self.publish_to_zarr_stream(doc)
+                doc[self.uniq_key] = await self.publish_to_zarr_stream(
+                    doc, username=username
+                )
                 doc["fs_type"] = doc.get("fs_type", "posix")
         return search_status, SearchResult(
             total_count=search.get("response", {}).get("numFound", 0),
@@ -870,9 +851,7 @@ class Solr:
             False: self._config.solr_cores[-1],
         }[self.multi_version]
         url = f"{self._config.get_core_url(core)}/select/"
-        valid_facets = {
-            k: v for k, v in self.facets.items() if k != "zarr_stream"
-        }
+        valid_facets = {k: v for k, v in self.facets.items() if k != "zarr_stream"}
         query = []
         for key, value in valid_facets.items():
             query_pos, query_neg = self._join_facet_queries(key, value)
@@ -884,9 +863,7 @@ class Solr:
         # Cause we are adding a new query which effects
         # all queries, it might be a neckbottle of performance
         user_query = (
-            "user:*"
-            if self.translator.flavour == "user"
-            else "{!ex=userTag}-user:*"
+            "user:*" if self.translator.flavour == "user" else "{!ex=userTag}-user:*"
         )
         base_query = "*:*" if not (self.time or self.bbox) else None
         joined_query = " AND ".join(query) if query else base_query
@@ -912,8 +889,7 @@ class Solr:
         }[self.multi_version]
 
         url = (
-            f"{self._config.get_core_url(core)}/update/json"
-            "?commit=true&overwrite=false"
+            f"{self._config.get_core_url(core)}/update/json?commit=true&overwrite=false"
         )
         return url
 
@@ -1062,9 +1038,7 @@ class Solr:
                 if status == 200:
                     self.total_ingested_files += 1
 
-    async def _delete_from_solr(
-        self, search_keys: Dict[str, Union[str, int]]
-    ) -> None:
+    async def _delete_from_solr(self, search_keys: Dict[str, Union[str, int]]) -> None:
         """
         Delete user data from Apache Solr based on search keys.
 
@@ -1095,14 +1069,10 @@ class Solr:
                 escaped_value = escape_special_chars(str(value).lower())
                 query_parts.append(f"{key_lower}:{escaped_value}")
         query_str = " AND ".join(query_parts)
-        async with self._session_post(
-            self._post_url, {"delete": {"query": query_str}}
-        ):
+        async with self._session_post(self._post_url, {"delete": {"query": query_str}}):
             pass
 
-    async def _ingest_user_metadata(
-        self, user_metadata: List[Dict[str, Any]]
-    ) -> None:
+    async def _ingest_user_metadata(self, user_metadata: List[Dict[str, Any]]) -> None:
         """
         Ingest validated user metadata.
 
@@ -1138,16 +1108,12 @@ class Solr:
 
             if not uri and not file_path:
                 continue
-            is_duplicate = await self._is_query_duplicate(
-                str(uri), str(file_path)
-            )
+            is_duplicate = await self._is_query_duplicate(str(uri), str(file_path))
             if not is_duplicate:
                 new_querie.append(metadata)
         return [dict(t) for t in {tuple(sorted(d.items())) for d in new_querie}]
 
-    async def _purge_user_data(
-        self, search_keys: Dict[str, Union[str, int]]
-    ) -> None:
+    async def _purge_user_data(self, search_keys: Dict[str, Union[str, int]]) -> None:
         """
         Purge the user data from both the Apache Solr search system and MongoDB.
 
@@ -1266,6 +1232,4 @@ class Solr:
         """
         search_keys["user"] = user_name
         await self._purge_user_data(search_keys)
-        logger.info(
-            "Deleted files from Solr and MongoDB with keys: %s", search_keys
-        )
+        logger.info("Deleted files from Solr and MongoDB with keys: %s", search_keys)

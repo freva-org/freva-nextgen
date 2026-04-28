@@ -3,6 +3,7 @@
 import logging
 from typing import Annotated, Dict, List, Optional
 
+import jmespath
 import httpx
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
@@ -32,6 +33,11 @@ auth = FastApiOIDCAuth(
     trusted_issuers=server_config.oidc_trusted_issuers or [],
 )
 auth_router = auth.create_auth_router(prefix="/api/freva-nextgen")
+
+
+_user_claim_check = jmespath.compile(
+    server_config.oidc_systemuser_claim.strip() or "preferred_username"
+)
 
 
 class AuthPorts(BaseModel):
@@ -76,12 +82,25 @@ class SystemUser(BaseModel):
     ]
 
 
-async def query_user_info(jti: str) -> Dict[str, Payload]:
+async def query_user_info(token_data: IDToken) -> Dict[str, Payload]:
     """Query the user endpoint of the of the IDP server."""
-
+    jti: Optional[str] = (
+        str(
+            getattr(token_data, "jti", None)
+            or (token_data.model_extra or {}).get("jti")
+            or ""
+        )
+        or None
+    )
     broker = await auth._ensure_broker_ready()
-    user_data = await broker.get_user_info(jti)
+    user_data = await broker.get_user_info(jti or "")
     return user_data
+
+
+async def get_system_username(token_data: Optional[IDToken]) -> Optional[str]:
+    """Check if a user must be considered as guest."""
+    user_info = (await query_user_info(token_data)) if token_data else {}
+    return _user_claim_check.search(user_info)
 
 
 # Freva-specific endpoints (not provided by py-oidc-auth)
@@ -101,21 +120,13 @@ async def systemuser(
     """Validate the bearer token against the configured
     ``token_claims`` to recognize the guests.
     """
-    jti: Optional[str] = (
-        str(
-            getattr(current_user, "jti", None)
-            or (current_user.model_extra or {}).get("jti")
-            or ""
-        )
-        or None
-    )
-
-    payload = await query_user_info(jti or "")
+    payload = await query_user_info(current_user)
     if not payload:
         raise HTTPException(403, detail="Token expired.")
     _user = get_userinfo(payload)
+    username = _user_claim_check.search(payload)
     return SystemUser(
-        username=_user.get("username", current_user.preferred_username or ""),
+        username=username or current_user.preferred_username or "",
         email=_user.get("email", current_user.email or ""),
     )
 

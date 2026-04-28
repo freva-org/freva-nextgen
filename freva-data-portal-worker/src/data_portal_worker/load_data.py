@@ -18,7 +18,7 @@ from typing import (
     Union,
     cast,
 )
-
+from pathlib import Path
 import cloudpickle
 import numcodecs
 import xarray as xr
@@ -33,7 +33,7 @@ from ._cache_manager import CacheScheduler
 from .aggregator import DatasetAggregator, write_grouped_zarr
 from .backends import load_data
 from .rechunker import ChunkOptimizer
-from .utils import JSONObject, data_logger, str_to_int, xr_repr_html
+from .utils import JSONObject, data_logger, str_to_int, xr_repr_html, user_can_read
 from .zarr_utils import (
     encode_chunk,
     get_data_chunk,
@@ -394,6 +394,32 @@ class ProcessQueue(DataLoadFactory):
                 pass
             time.sleep(self.backoff_sec)
 
+    def _handle_access_check(self, data: Dict[str, str]) -> None:
+        """Publish the result of a fs access check for a user."""
+        username = data.get("username") or None
+        paths = data["paths"]
+        data_logger.debug(
+            "Checking read permissions for user %s on path %s",
+            username or "guest",
+            ",".join(paths),
+        )
+        try:
+            allowed = all(
+                [user_can_read(p, username) for p in paths if Path(p).exists()]
+            )
+        except Exception as error:
+            data_logger.error(
+                "Could not determine file permissions for %s:\n%s",
+                ",".join(paths),
+                error,
+            )
+            allowed = False
+        self.cache.lpush(
+            f"access-reply:{data['request_id']}",
+            json.dumps({"allowed": allowed}),
+        )
+        self.cache.expire(f"access-reply:{data['request_id']}", 30)
+
     def run_for_ever(self, channel: str) -> None:
         """Start the listener daemon."""
         data_logger.info("Starting data-loading daemon")
@@ -446,6 +472,8 @@ class ProcessQueue(DataLoadFactory):
                 message["chunk"]["chunk"],
                 message["chunk"]["variable"],
             )
+        elif "access_check" in message:
+            self._handle_access_check(message["access_check"])
         elif "shutdown" in message:
             if message["shutdown"] is True and self.dev_mode is True:
                 raise KeyboardInterrupt("Shutdown client")

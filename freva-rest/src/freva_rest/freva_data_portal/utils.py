@@ -1,10 +1,11 @@
 """Utilities for zarr loading."""
 
+import hashlib
 import asyncio
 import json
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
-
+import uuid
 import cloudpickle
 from fastapi import status
 from fastapi.exceptions import HTTPException
@@ -56,6 +57,45 @@ class LoadStatus(Enum):
         }.get(self.name, 503)
 
 
+async def _query_broker_on_permissions(
+    username: str, paths: List[str], timeout: float = 5.0
+) -> bool:
+    request_id = str(uuid.uuid4())
+    await Cache.publish(
+        "data-portal",
+        json.dumps(
+            {
+                "access_check": {
+                    "request_id": request_id,
+                    "username": username or None,
+                    "paths": paths,
+                }
+            }
+        ).encode("utf-8"),
+    )
+    # Block-wait for the reply
+    result = await Cache.blpop(f"access-reply:{request_id}", timeout=timeout)
+    if result is None:
+        raise HTTPException(503, "Data-loader service unavailable.")
+    return json.loads(result[1])["allowed"]
+
+
+async def check_read_permission(username: Optional[str], paths: List[str]) -> None:
+    """Check (via data-loader) if a given user has read access to a path."""
+    username = username or ""
+    paths_bytes = json.dumps(paths).encode("utf-8")
+    hex_digest = hashlib.sha256(paths_bytes).hexdigest()
+    cache_key = f"access:{username}:{hex_digest}"
+    cached = await Cache.get(cache_key)
+    if cached is None:
+        allowed = await _query_broker_on_permissions(username, paths)
+        await Cache.set(cache_key, b"1" if allowed else b"0", ex=300)
+    else:
+        allowed = cached == b"1"
+    if not allowed:
+        raise HTTPException(status_code=403, detail="User not allowed to read paths.")
+
+
 async def publish_datasets(
     paths: Union[str, List[str]],
     public: bool = False,
@@ -66,6 +106,7 @@ async def publish_datasets(
     map_primary_chunksize: int = 1,
     reload: bool = False,
     chunk_size: float = 16.0,
+    username: Optional[str] = None,
 ) -> str:
     """Publish a path on disk for zarr conversion to the broker.
 
@@ -90,6 +131,8 @@ async def publish_datasets(
         (Re)trigger the loading of a data set.
     chunk_size: float
         Set the target chunk size
+    username: str
+        Username that wants to publish data and needs checkingfor fs permissions.
 
     Returns
     -------
@@ -100,6 +143,7 @@ async def publish_datasets(
     await Cache.check_connection()
     paths = paths if isinstance(paths, list) else [paths]
     norm_paths = [p.replace("file:///", "/") for p in paths]
+    await check_read_permission(username, norm_paths)
     token = encode_cache_token(norm_paths, assembly=aggregation_plan)
     api_path = f"{server_config.proxy}/api/freva-nextgen/data-portal"
     if publish or reload:
@@ -185,9 +229,7 @@ async def read_redis_data(
     return data[subkey]
 
 
-async def load_chunk(
-    _id: str, variable: str, chunk: str, timeout: int = 1
-) -> Response:
+async def load_chunk(_id: str, variable: str, chunk: str, timeout: int = 1) -> Response:
     """Load a zarr chunk from the cache."""
     detail = {"chunk": {"uuid": _id, "variable": variable, "chunk": chunk}}
     await Cache.check_connection()
@@ -217,9 +259,7 @@ async def load_zarr_metadata(
     return JSONResponse(content=meta, status_code=status.HTTP_200_OK)
 
 
-async def process_zarr_data(
-    token: str, zarr_key: str, timeout: int = 1
-) -> Response:
+async def process_zarr_data(token: str, zarr_key: str, timeout: int = 1) -> Response:
     """Serve arbitrary Zarr metadata or chunk keys.
 
     Zarr clients access stores by issuing HTTP GET requests on a hierarchy of
@@ -245,9 +285,7 @@ async def process_zarr_data(
     if zarr_key in (ZMETADATA_JSON, ZGROUP_JSON, ZATTRS_JSON):
         return await load_zarr_metadata(token, zarr_key, timeout=timeout)
     zarr_key = zarr_key.lstrip("/")
-    if zarr_key.endswith(
-        ("/" + ZGROUP_JSON, "/" + ZATTRS_JSON, "/" + ZARRAY_JSON)
-    ):
+    if zarr_key.endswith(("/" + ZGROUP_JSON, "/" + ZATTRS_JSON, "/" + ZARRAY_JSON)):
         # prefix may be "group0" or "group0/tas"
         return await load_zarr_metadata(
             token,

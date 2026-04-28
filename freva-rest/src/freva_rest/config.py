@@ -267,6 +267,19 @@ class ServerConfig(BaseModel):
             description="Specify the access level the application needs to request. ",
         ),
     ] = os.getenv("API_OIDC_SCOPES", "")
+    oidc_systemuser_claim: Annotated[
+        str,
+        Field(
+            title="System User Claim",
+            description=(
+                "JMESPath expression to extract the authoritative local "
+                "username from the IDP's `userinfo` response. This "
+                "username is used for filesystem permission checks "
+                "(e.g. can this user read the requested file?)."
+            ),
+        ),
+    ] = os.getenv("API_OIDC_SYSTEMUSER_CLAIM", "")
+
     oidc_auth_ports: Annotated[
         List[int],
         Field(
@@ -366,6 +379,9 @@ class ServerConfig(BaseModel):
             "oidc", "client_id"
         )
         self.oidc_scopes = self.oidc_scopes or self._read_config("oidc", "scopes")
+        self.oidc_systemuser_claim = self.oidc_systemuser_claim or self._read_config(
+            "oidc", "systemuser_claim"
+        )
         self.mongo_host = self.mongo_host or self._read_config("mongo_db", "hostname")
         self.mongo_user = self.mongo_user or self._read_config("mongo_db", "user")
         self.mongo_password = self.mongo_password or self._read_config(

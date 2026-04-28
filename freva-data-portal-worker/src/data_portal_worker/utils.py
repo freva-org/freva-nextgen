@@ -9,6 +9,13 @@ from pathlib import Path
 from socket import gethostname
 from typing import Dict, List, Optional, TypeAlias, Union
 
+import grp
+import pwd
+import shlex
+import stat
+import subprocess
+
+
 import xarray as xr
 from platformdirs import user_log_dir
 
@@ -70,6 +77,47 @@ JSONValue: TypeAlias = Union[
 ]
 JSONObject: TypeAlias = Dict[str, JSONValue]
 JSONArray: TypeAlias = List[JSONValue]
+
+
+def _can_read_su(path: str, username: str) -> bool:
+    """Kernel-level read check via su. Requires root."""
+    result = subprocess.run(
+        ["su", "-s", "/bin/sh", username, "-c", f"test -r {shlex.quote(path)}"],
+        capture_output=True,
+        timeout=5,
+    )
+    return result.returncode == 0
+
+
+def _can_read_stat(path: str, username: str) -> bool:
+    """Stat-based read check. Works without privileges."""
+    pw = pwd.getpwnam(username)
+    st = os.stat(path)
+    mode = st.st_mode
+
+    if pw.pw_uid == st.st_uid:
+        return bool(mode & stat.S_IRUSR)
+    groups = {pw.pw_gid} | {g.gr_gid for g in grp.getgrall() if username in g.gr_mem}
+    if st.st_gid in groups:
+        return bool(mode & stat.S_IRGRP)
+    return bool(mode & stat.S_IROTH)
+
+
+def user_can_read(path: str, username: Optional[str] = None) -> bool:
+    """Check if a user can read a file.
+
+    If username is None, checks world-readability only (guest).
+    If running as root, delegates to su + test -r for kernel-level
+    checks including ACLs. Otherwise falls back to stat-based checks.
+    """
+    username = (username or "").strip()
+    if not username:
+        st = os.stat(path)
+        return bool(st.st_mode & stat.S_IROTH)
+
+    if os.getuid() == 0:
+        return _can_read_su(path, username)
+    return _can_read_stat(path, username)
 
 
 def str_to_int(inp: Optional[str], default: int) -> int:

@@ -263,7 +263,6 @@ async def get_token_from_cache(_id: str) -> Tuple[str, str]:
     logger.debug("Sig %s was added with a new ttl of %i", _id, ttl)
     return doc["token"], doc["signature"]
 
-
 async def add_ttl_key_to_db_and_cache(
     path: Union[List[str], str],
     ttl_seconds: float,
