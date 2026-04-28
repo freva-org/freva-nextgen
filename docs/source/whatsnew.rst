@@ -14,6 +14,9 @@ Changed
 ^^^^^^^
 - Update `systemuser` endpoint to get IDP `userinfo` query results.
 
+Added
+"""""""
+- Implement user privilege checks in rest-api data-loader RPC
 
 v2604.1.1
 ^^^^^^^^^
