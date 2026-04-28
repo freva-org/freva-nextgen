@@ -1,20 +1,18 @@
 """Utility functions for loading data."""
 
+import grp
 import logging
 import os
+import pwd
+import shlex
+import stat
+import subprocess
 from collections.abc import Mapping
 from html import escape
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from socket import gethostname
 from typing import Dict, List, Optional, TypeAlias, Union
-
-import grp
-import pwd
-import shlex
-import stat
-import subprocess
-
 
 import xarray as xr
 from platformdirs import user_log_dir

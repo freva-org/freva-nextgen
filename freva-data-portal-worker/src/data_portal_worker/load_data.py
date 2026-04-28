@@ -6,6 +6,7 @@ import ssl
 import time
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import (
     Any,
     Dict,
@@ -18,7 +19,7 @@ from typing import (
     Union,
     cast,
 )
-from pathlib import Path
+
 import cloudpickle
 import numcodecs
 import xarray as xr
@@ -33,7 +34,13 @@ from ._cache_manager import CacheScheduler
 from .aggregator import DatasetAggregator, write_grouped_zarr
 from .backends import load_data
 from .rechunker import ChunkOptimizer
-from .utils import JSONObject, data_logger, str_to_int, xr_repr_html, user_can_read
+from .utils import (
+    JSONObject,
+    data_logger,
+    str_to_int,
+    user_can_read,
+    xr_repr_html,
+)
 from .zarr_utils import (
     encode_chunk,
     get_data_chunk,
