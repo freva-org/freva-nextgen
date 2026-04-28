@@ -1,5 +1,6 @@
 """Load backend for reading different datasets."""
 
+import itertools
 import json
 import os
 import ssl
@@ -239,6 +240,62 @@ class DataLoadFactory:
     def __init__(self) -> None:
         self._cache: Optional[Redis] = None
 
+    def _preload_coordinate_chunks(
+        self,
+        token: str,
+        meta: Dict[str, Any],
+        dsets: Dict[str, xr.Dataset],
+        ttl: int = 360,
+    ) -> None:
+        """Pre-populate coordinate chunks in the cache.
+
+        Coordinates are small but xarray reads them eagerly on
+        ``open_zarr``. Writing them alongside metadata avoids NaN
+        coordinates on the first open.
+        """
+        for group_name, ds in dsets.items():
+            group_prefix = "" if group_name == "root" else f"{group_name}/"
+            for coord_name in ds.coords:
+                var_key = f"{group_prefix}{coord_name}"
+                arr_meta_key = f"{var_key}/{ZARRAY_JSON}"
+                if arr_meta_key not in meta["metadata"]:
+                    continue
+                arr_meta = meta["metadata"][arr_meta_key]
+                encoded = encode_zarr_variable(
+                    ds.variables[coord_name], name=coord_name
+                )
+                shape = arr_meta["chunks"]
+                compressor = numcodecs.get_codec(arr_meta["compressor"])
+                filters = arr_meta["filters"]
+
+                # Determine chunk count per dimension
+                if hasattr(encoded.data, "chunks"):
+                    chunk_ranges = [range(len(c)) for c in encoded.data.chunks]
+                else:
+                    chunk_ranges = [range(1)]
+
+                for idx in itertools.product(*chunk_ranges):
+                    chunk_id = ".".join(map(str, idx))
+                    try:
+                        data = encode_chunk(
+                            get_data_chunk(
+                                encoded.data, chunk_id, out_shape=shape
+                            ).tobytes(),
+                            filters=filters,
+                            compressor=compressor,
+                        )
+                        package = cloudpickle.dumps(
+                            LoadDict(data=data, status=0, reason="")
+                        )
+                        self.cache.setex(f"{token}-{var_key}-{chunk_id}", ttl, package)
+                    except Exception as error:
+                        data_logger.warning(
+                            "Failed to preload %s chunk %s: %s",
+                            var_key,
+                            chunk_id,
+                            error,
+                        )
+
     @property
     def cache(self) -> Redis:
         """Get or create the cache."""
@@ -293,6 +350,9 @@ class DataLoadFactory:
             combined_meta = write_grouped_zarr(dsets)
             status_dict["data"] = combined_meta
             status_dict["repr_html"] = xr_repr_html(dsets)
+            self._preload_coordinate_chunks(
+                path_id, combined_meta, dsets, ttl=expires_in
+            )
             pkls = cloudpickle.dumps(dsets)
             step2 = time.time()
             data_logger.info("Serialisation data done within %.2f sec", step2 - step)
