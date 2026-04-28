@@ -18,5 +18,5 @@ official documentation: https://freva-org.github.io/freva-legacy
 from .auth import authenticate
 from .query import databrowser
 
-__version__ = "2604.1.2"
+__version__ = "2605.0.0"
 __all__ = ["authenticate", "databrowser", "__version__"]
