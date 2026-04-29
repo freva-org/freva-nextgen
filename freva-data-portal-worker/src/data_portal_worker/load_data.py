@@ -247,12 +247,7 @@ class DataLoadFactory:
         dsets: Dict[str, xr.Dataset],
         ttl: int = 360,
     ) -> None:
-        """Pre-populate coordinate chunks in the cache.
-
-        Coordinates are small but xarray reads them eagerly on
-        ``open_zarr``. Writing them alongside metadata avoids NaN
-        coordinates on the first open.
-        """
+        """Pre-populate coordinate chunks in the cache."""
         for group_name, ds in dsets.items():
             group_prefix = "" if group_name == "root" else f"{group_name}/"
             for coord_name in ds.coords:
@@ -261,31 +256,35 @@ class DataLoadFactory:
                 if arr_meta_key not in meta["metadata"]:
                     continue
                 arr_meta = meta["metadata"][arr_meta_key]
-                encoded = encode_zarr_variable(
-                    ds.variables[coord_name], name=coord_name
+                chunk_shape = arr_meta["chunks"]
+                total_shape = arr_meta["shape"]
+                compressor = (
+                    numcodecs.get_codec(arr_meta["compressor"])
+                    if arr_meta.get("compressor")
+                    else None
                 )
-                shape = arr_meta["chunks"]
-                compressor = numcodecs.get_codec(arr_meta["compressor"])
                 filters = arr_meta["filters"]
+                values = ds.variables[coord_name].values
 
-                # Determine chunk count per dimension
-                if hasattr(encoded.data, "chunks"):
-                    chunk_ranges = [range(len(c)) for c in encoded.data.chunks]
-                else:
-                    chunk_ranges = [range(1)]
+                chunk_ranges = [
+                    range(-(-s // c)) for s, c in zip(total_shape, chunk_shape)
+                ]
 
                 for idx in itertools.product(*chunk_ranges):
                     chunk_id = ".".join(map(str, idx))
                     try:
-                        data = encode_chunk(
-                            get_data_chunk(
-                                encoded.data, chunk_id, out_shape=shape
-                            ).tobytes(),
+                        slices = tuple(
+                            slice(i * c, min((i + 1) * c, s))
+                            for i, c, s in zip(idx, chunk_shape, total_shape)
+                        )
+                        chunk_data = values[slices]
+                        raw = encode_chunk(
+                            chunk_data.tobytes(),
                             filters=filters,
                             compressor=compressor,
                         )
                         package = cloudpickle.dumps(
-                            LoadDict(data=data, status=0, reason="")
+                            LoadDict(data=raw, status=0, reason="")
                         )
                         self.cache.setex(f"{token}-{var_key}-{chunk_id}", ttl, package)
                     except Exception as error:
@@ -350,9 +349,12 @@ class DataLoadFactory:
             combined_meta = write_grouped_zarr(dsets)
             status_dict["data"] = combined_meta
             status_dict["repr_html"] = xr_repr_html(dsets)
-            self._preload_coordinate_chunks(
-                path_id, combined_meta, dsets, ttl=expires_in
-            )
+            try:
+                self._preload_coordinate_chunks(
+                    path_id, combined_meta, dsets, ttl=expires_in
+                )
+            except Exception as error:
+                data_logger.warning("Couldn't preload coords: %s", error)
             pkls = cloudpickle.dumps(dsets)
             step2 = time.time()
             data_logger.info("Serialisation data done within %.2f sec", step2 - step)
