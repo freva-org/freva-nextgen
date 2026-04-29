@@ -201,3 +201,113 @@ class TestUserCanRead:
         mock_stat_fn.return_value = True
         assert user_can_read("/data/file.nc", "testuser") is True
         mock_stat_fn.assert_called_once_with("/data/file.nc", "testuser")
+
+
+class TestPreloadCoordinateChunks:
+    """Tests for _preload_coordinate_chunks."""
+
+    def _make_factory(self):
+        """Create a DataLoadFactory with a mock cache."""
+        from data_portal_worker.load_data import DataLoadFactory
+
+        factory = DataLoadFactory.__new__(DataLoadFactory)
+        object.__setattr__(factory, "_cache", MagicMock())
+        return factory
+
+    def test_unchunked_coordinates(self) -> None:
+        """Numpy-backed coordinates produce a single chunk."""
+        import numpy as np
+        import xarray as xr
+
+        factory = self._make_factory()
+        ds = xr.Dataset({"temp": (["x"], np.arange(10.0))})
+        ds = ds.assign_coords(x=np.arange(10.0))
+        meta = {
+            "metadata": {
+                "x/.zarray": {
+                    "chunks": [10],
+                    "filters": None,
+                    "compressor": None,
+                    "shape": [10],
+                }
+            }
+        }
+
+        factory._preload_coordinate_chunks("test-token", meta, {"root": ds})
+        assert factory.cache.setex.call_count >= 1
+        key = factory.cache.setex.call_args_list[0][0][0]
+        assert key == "test-token-x-0"
+
+    def test_chunked_coordinates(self) -> None:
+        """Dask-backed coordinates produce multiple chunks."""
+        import numpy as np
+        import xarray as xr
+
+        mock_cache = MagicMock()
+        factory = self._make_factory()
+
+        ds = xr.Dataset({"temp": (["x"], np.arange(100.0))})
+        ds = ds.assign_coords(x=np.arange(100.0))
+        ds = ds.chunk({"x": 25})
+
+        meta = {
+            "metadata": {
+                "x/.zarray": {
+                    "chunks": [25],
+                    "filters": None,
+                    "compressor": None,
+                    "shape": [100],
+                }
+            }
+        }
+
+        factory._preload_coordinate_chunks("test-token", meta, {"root": ds})
+        assert factory.cache.setex.call_count >= 1
+
+    def test_missing_zarray_skipped(self) -> None:
+        """Coordinates without a .zarray entry in metadata are skipped."""
+        import numpy as np
+        import xarray as xr
+
+        factory = self._make_factory()
+        ds = xr.Dataset({"temp": (["x"], np.arange(10.0))})
+        ds = ds.assign_coords(x=np.arange(10.0))
+        meta = {"metadata": {}}  # no x/.zarray
+
+        factory._preload_coordinate_chunks("test-token", meta, {"root": ds})
+        factory.cache.setex.assert_not_called()
+
+    def test_encoding_failure_logged_not_raised(self) -> None:
+        """A failure encoding one coordinate doesn't block others."""
+        import numpy as np
+        import xarray as xr
+
+        factory = self._make_factory()
+        ds = xr.Dataset({"temp": (["x", "y"], np.arange(20.0).reshape(4, 5))})
+        ds = ds.assign_coords(
+            x=np.arange(4.0),
+            y=np.arange(5.0),
+        )
+        meta = {
+            "metadata": {
+                "x/.zarray": {
+                    "chunks": [4],
+                    "filters": None,
+                    "compressor": None,
+                    "shape": [4],
+                },
+                "y/.zarray": {
+                    "chunks": [5],
+                    "filters": None,
+                    "compressor": None,
+                    "shape": [5],
+                },
+            }
+        }
+
+        with patch(
+            "data_portal_worker.load_data.encode_chunk",
+            side_effect=[Exception("boom"), MagicMock(return_value=b"ok")],
+        ):
+            # Should not raise — logs warning for x, continues with y
+            factory._preload_coordinate_chunks("test-token", meta, {"root": ds})
