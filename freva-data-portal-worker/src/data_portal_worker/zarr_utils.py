@@ -167,9 +167,7 @@ def jsonify_zmetadata(
             compressor_config = zjson["metadata"][f"{key}/{ZARRAY_JSON}"][
                 "compressor"
             ].get_config()
-            zjson["metadata"][f"{key}/{ZARRAY_JSON}"][
-                "compressor"
-            ] = compressor_config
+            zjson["metadata"][f"{key}/{ZARRAY_JSON}"]["compressor"] = compressor_config
 
     return zjson
 
@@ -235,9 +233,7 @@ def get_data_chunk(
         return cast(np.typing.NDArray[Any], chunk_data)
 
 
-def encode_fill_value(
-    v: Any, dtype: np.dtype[Any], object_codec: Any = None
-) -> Any:
+def encode_fill_value(v: Any, dtype: np.dtype[Any], object_codec: Any = None) -> Any:
     """Encode fill value for zarr array."""
     # early out
     if v is None:
