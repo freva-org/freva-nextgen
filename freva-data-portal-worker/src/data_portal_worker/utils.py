@@ -36,7 +36,7 @@ LOG_LEVELS = {
     "CRITICAL": logging.CRITICAL,
 }
 DEFAULT_LOG_LEVEL: int = LOG_LEVELS.get(
-    os.getenv("API_LOGLEVEL", "WRNING"), logging.WARNING
+    os.getenv("API_LOGLEVEL", "WARNING"), logging.WARNING
 )
 
 
@@ -48,8 +48,8 @@ logging.basicConfig(
 )
 
 data_logger = logging.getLogger(BASE_NAME)
-
 data_logger.setLevel(DEFAULT_LOG_LEVEL)
+data_logger.propagate = False
 log_dir = (
     Path("/var/log" if os.access("/var/log", os.W_OK) else user_log_dir())
     / "data-loader"
@@ -64,8 +64,28 @@ logger_file_handle = RotatingFileHandler(
     encoding="utf-8",
     delay=False,
 )
+logger_file_handle.setFormatter(
+    logging.Formatter(
+        "%(name)s - %(asctime)s - %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S",
+    )
+)
 logger_file_handle.setLevel(DEFAULT_LOG_LEVEL)
+
+# Stderr handler (shows up in journald via StandardError=journal)
+logger_stderr_handle = logging.StreamHandler()
+logger_stderr_handle.setLevel(DEFAULT_LOG_LEVEL)
+logger_stderr_handle.setFormatter(
+    logging.Formatter(
+        "%(name)s - %(asctime)s - %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S",
+    )
+)
+
+data_logger.addHandler(logger_stderr_handle)
 data_logger.addHandler(logger_file_handle)
+
+logger_handlers = [logger_stderr_handle, logger_file_handle]
 
 XrGroups = Mapping[str, xr.Dataset]
 JSONScalar: TypeAlias = Union[str, int, float, bool, None]
