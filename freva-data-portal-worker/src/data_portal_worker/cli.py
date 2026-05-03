@@ -14,7 +14,7 @@ from watchfiles import run_process
 
 from ._version import __version__
 from .load_data import CLIENT, ProcessQueue, RedisKw
-from .utils import DEFAULT_LOG_LEVEL, data_logger, logger_file_handle
+from .utils import DEFAULT_LOG_LEVEL, data_logger, logger_handlers
 
 
 def read_file_content(input_file: Optional[Union[str, Path]] = None) -> str:
@@ -107,11 +107,11 @@ def _main(
 
 
 def _set_loglevel_from_verbosity(level: int = 0) -> str:
-
     _levels = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
     _level = _levels[max(min(0, level), 2)] if level else DEFAULT_LOG_LEVEL
     data_logger.setLevel(_level)
-    logger_file_handle.setLevel(_level)
+    for hdl in logger_handlers:
+        hdl.setLevel(_level)
     return logging.getLevelName(data_logger.level)
 
 

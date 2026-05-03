@@ -1,11 +1,13 @@
 """Load backend for reading different datasets."""
 
+import itertools
 import json
 import os
 import ssl
 import time
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import (
     Any,
     Dict,
@@ -33,7 +35,14 @@ from ._cache_manager import CacheScheduler
 from .aggregator import DatasetAggregator, write_grouped_zarr
 from .backends import load_data
 from .rechunker import ChunkOptimizer
-from .utils import JSONObject, data_logger, str_to_int, xr_repr_html
+from .utils import (
+    JSONObject,
+    background_task,
+    data_logger,
+    str_to_int,
+    user_can_read,
+    xr_repr_html,
+)
 from .zarr_utils import (
     encode_chunk,
     get_data_chunk,
@@ -231,6 +240,61 @@ class DataLoadFactory:
     def __init__(self) -> None:
         self._cache: Optional[Redis] = None
 
+    def _preload_coordinate_chunks(
+        self,
+        token: str,
+        meta: Dict[str, Any],
+        dsets: Dict[str, xr.Dataset],
+        ttl: int = 360,
+    ) -> None:
+        """Pre-populate coordinate chunks in the cache."""
+        for group_name, ds in dsets.items():
+            group_prefix = "" if group_name == "root" else f"{group_name}/"
+            for coord_name in ds.coords:
+                var_key = f"{group_prefix}{coord_name}"
+                arr_meta_key = f"{var_key}/{ZARRAY_JSON}"
+                if arr_meta_key not in meta["metadata"]:
+                    continue
+                arr_meta = meta["metadata"][arr_meta_key]
+                chunk_shape = arr_meta["chunks"]
+                total_shape = arr_meta["shape"]
+                compressor = (
+                    numcodecs.get_codec(arr_meta["compressor"])
+                    if arr_meta.get("compressor")
+                    else None
+                )
+                filters = arr_meta["filters"]
+                values = ds.variables[coord_name].values
+
+                chunk_ranges = [
+                    range(-(-s // c)) for s, c in zip(total_shape, chunk_shape)
+                ]
+
+                for idx in itertools.product(*chunk_ranges):
+                    chunk_id = ".".join(map(str, idx))
+                    try:
+                        slices = tuple(
+                            slice(i * c, min((i + 1) * c, s))
+                            for i, c, s in zip(idx, chunk_shape, total_shape)
+                        )
+                        chunk_data = values[slices]
+                        raw = encode_chunk(
+                            chunk_data.tobytes(),
+                            filters=filters,
+                            compressor=compressor,
+                        )
+                        package = cloudpickle.dumps(
+                            LoadDict(data=raw, status=0, reason="")
+                        )
+                        self.cache.setex(f"{token}-{var_key}-{chunk_id}", ttl, package)
+                    except Exception as error:
+                        data_logger.warning(
+                            "Failed to preload %s chunk %s: %s",
+                            var_key,
+                            chunk_id,
+                            error,
+                        )
+
     @property
     def cache(self) -> Redis:
         """Get or create the cache."""
@@ -238,6 +302,7 @@ class DataLoadFactory:
             self._cache = RedisCacheFactory()
         return self._cache
 
+    @background_task
     def from_object_path(
         self,
         input_paths: List[str],
@@ -284,6 +349,12 @@ class DataLoadFactory:
             combined_meta = write_grouped_zarr(dsets)
             status_dict["data"] = combined_meta
             status_dict["repr_html"] = xr_repr_html(dsets)
+            try:
+                self._preload_coordinate_chunks(
+                    path_id, combined_meta, dsets, ttl=expires_in
+                )
+            except Exception as error:
+                data_logger.warning("Couldn't preload coords: %s", error)
             pkls = cloudpickle.dumps(dsets)
             step2 = time.time()
             data_logger.info("Serialisation data done within %.2f sec", step2 - step)
@@ -311,6 +382,7 @@ class DataLoadFactory:
         )
         data_logger.info("Task done within %.2f sec", time.time() - start)
 
+    @background_task
     def get_zarr_chunk(
         self,
         key: str,
@@ -394,6 +466,32 @@ class ProcessQueue(DataLoadFactory):
                 pass
             time.sleep(self.backoff_sec)
 
+    def _handle_access_check(self, data: Dict[str, str]) -> None:
+        """Publish the result of a fs access check for a user."""
+        username = data.get("username") or None
+        paths = data["paths"]
+        data_logger.debug(
+            "Checking read permissions for user %s on path %s",
+            username or "guest",
+            ",".join(paths),
+        )
+        try:
+            allowed = all(
+                [user_can_read(p, username) for p in paths if Path(p).exists()]
+            )
+        except Exception as error:
+            data_logger.error(
+                "Could not determine file permissions for %s:\n%s",
+                ",".join(paths),
+                error,
+            )
+            allowed = False
+        self.cache.lpush(
+            f"access-reply:{data['request_id']}",
+            json.dumps({"allowed": allowed}),
+        )
+        self.cache.expire(f"access-reply:{data['request_id']}", 30)
+
     def run_for_ever(self, channel: str) -> None:
         """Start the listener daemon."""
         data_logger.info("Starting data-loading daemon")
@@ -446,6 +544,8 @@ class ProcessQueue(DataLoadFactory):
                 message["chunk"]["chunk"],
                 message["chunk"]["variable"],
             )
+        elif "access_check" in message:
+            self._handle_access_check(message["access_check"])
         elif "shutdown" in message:
             if message["shutdown"] is True and self.dev_mode is True:
                 raise KeyboardInterrupt("Shutdown client")

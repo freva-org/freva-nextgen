@@ -1,6 +1,5 @@
 """Unit tests for data queries via the rest-api."""
 
-import asyncio
 import json
 import time
 from typing import Dict
@@ -12,480 +11,660 @@ from pytest_mock import MockerFixture
 from freva_rest.config import ServerConfig
 
 
-def test_attributes(test_server: str) -> None:
-    """Test getting the attributes."""
-    res1 = requests.get(f"{test_server}/databrowser/overview")
-    assert isinstance(res1.json()["flavours"], list)
-    assert isinstance(res1.json()["attributes"], dict)
+class TestOverview:
+    """Tests for the databrowser overview endpoint."""
+
+    def test_attributes(self, test_server: str) -> None:
+        """Test getting the attributes."""
+        res = requests.get(f"{test_server}/databrowser/overview")
+        assert isinstance(res.json()["flavours"], list)
+        assert isinstance(res.json()["attributes"], dict)
 
 
-def test_databrowser(test_server: str) -> None:
-    """Test the default databrowser functionality."""
-    res1 = requests.get(
-        f"{test_server}/databrowser/data-search/cmip6/uri",
-        params={"activity_id": "cmipx"},
-    )
-    assert res1.status_code == 200
-    res2 = requests.get(
-        f"{test_server}/databrowser/data-search/cmip6/uri",
-        params={"translate": "false", "product": "cmip"},
-    )
-    res3 = requests.get(
-        f"{test_server}/databrowser/data-search/freva/uri",
-        params={"product": "cmip"},
-    )
-    assert len(res1.text.split()) == 0
-    assert res2.text == res3.text
-    res4 = requests.get(
-        f"{test_server}/databrowser/data-search/cmip6/uri",
-        params={"foo": "bar"},
-    )
-    assert res4.status_code == 422
-    res5 = requests.get(
-        f"{test_server}/databrowser/data-search/cmip6/uri",
-        params={
-            "translate": "false",
-            "product": "cmip",
-            "multi-version": "true",
-        },
-    )
-    assert len(res2.text.split()) < len(res5.text.split())
+class TestDataSearch:
+    """Tests for the databrowser data-search endpoint."""
 
-    # wrong flavour
-    res6 = requests.get(f"{test_server}/databrowser/data-search/cmipx/file")
-    assert res6.status_code == 422
+    def test_basic_search(self, test_server: str) -> None:
+        """Test basic data search with valid and invalid parameters."""
+        res = requests.get(
+            f"{test_server}/databrowser/data-search/cmip6/uri",
+            params={"activity_id": "cmipx"},
+        )
+        assert res.status_code == 200
+        assert len(res.text.split()) == 0
 
+    def test_translate_equivalence(self, test_server: str) -> None:
+        """Untranslated cmip6 and translated freva return the same results."""
+        res_cmip6 = requests.get(
+            f"{test_server}/databrowser/data-search/cmip6/uri",
+            params={"translate": "false", "product": "cmip"},
+        )
+        res_freva = requests.get(
+            f"{test_server}/databrowser/data-search/freva/uri",
+            params={"product": "cmip"},
+        )
+        assert res_cmip6.text == res_freva.text
 
-def test_multiversion(test_server: str) -> None:
-    """Test the behaviour for multi versions."""
-    res1 = requests.get(
-        f"{test_server}/databrowser/metadata-search/freva/file",
-        params={"multi-version": True},
-    )
-    assert res1.status_code == 200
-    assert "facets" in res1.json()
-    assert "version" in res1.json()["facets"]
-    version = res1.json()["facets"]["version"][0]
+    def test_multi_version_returns_more(self, test_server: str) -> None:
+        """Multi-version search returns more results than latest-only."""
+        res_latest = requests.get(
+            f"{test_server}/databrowser/data-search/cmip6/uri",
+            params={"translate": "false", "product": "cmip"},
+        )
+        res_multi = requests.get(
+            f"{test_server}/databrowser/data-search/cmip6/uri",
+            params={
+                "translate": "false",
+                "product": "cmip",
+                "multi-version": "true",
+            },
+        )
+        assert len(res_latest.text.split()) < len(res_multi.text.split())
 
-    res2 = requests.get(
-        f"{test_server}/databrowser/metadata-search/freva/file",
-        params={"multi-version": False},
-    )
-    assert res2.status_code == 200
-    assert "facets" in res2.json()
-    assert "version" not in res2.json()["facets"]
+    def test_invalid_facet_rejected(self, test_server: str) -> None:
+        """Unknown facet key returns 422."""
+        res = requests.get(
+            f"{test_server}/databrowser/data-search/cmip6/uri",
+            params={"foo": "bar"},
+        )
+        assert res.status_code == 422
 
-    res3 = requests.get(
-        f"{test_server}/databrowser/data-search/freva/file",
-        params={"multi-version": True},
-    )
-    assert res3.status_code == 200
-    res4 = requests.get(
-        f"{test_server}/databrowser/data-search/freva/file",
-        params={"multi-version": False},
-    )
-    assert res4.status_code == 200
-    assert len(list(res4.text.split())) < len(list(res3.text.split()))
-
-    res5 = requests.get(
-        f"{test_server}/databrowser/data-search/freva/file",
-        params={"multi-version": True, "version": version},
-    )
-    assert res5.status_code == 200
-
-    res6 = requests.get(
-        f"{test_server}/databrowser/data-search/freva/file",
-        params={"multi-version": False, "version": version},
-    )
-    assert res6.status_code != 200
+    def test_invalid_flavour_rejected(self, test_server: str) -> None:
+        """Non-existent flavour returns 422."""
+        res = requests.get(f"{test_server}/databrowser/data-search/cmipx/file")
+        assert res.status_code == 422
 
 
-def test_no_solr(test_server: str, mocker: MockerFixture) -> None:
-    """Test what happens if there is no connection to the solr."""
-    mocker.patch("freva_rest.rest.server_config.solr_host", "foo.bar")
-    res = requests.get(
-        f"{test_server}/databrowser/data-search/cmip6/uri",
-        params={"activity_id": "cmipx"},
-    )
-    assert res.status_code == 503
+class TestMultiVersion:
+    """Tests for multi-version search behaviour."""
+
+    def test_metadata_version_facet_present(self, test_server: str) -> None:
+        """Multi-version metadata includes the version facet."""
+        res = requests.get(
+            f"{test_server}/databrowser/metadata-search/freva/file",
+            params={"multi-version": True},
+        )
+        assert res.status_code == 200
+        assert "version" in res.json()["facets"]
+
+    def test_metadata_version_facet_absent(self, test_server: str) -> None:
+        """Latest-only metadata excludes the version facet."""
+        res = requests.get(
+            f"{test_server}/databrowser/metadata-search/freva/file",
+            params={"multi-version": False},
+        )
+        assert res.status_code == 200
+        assert "version" not in res.json()["facets"]
+
+    def test_data_search_multi_returns_more(self, test_server: str) -> None:
+        """Multi-version data search returns more files than latest-only."""
+        res_multi = requests.get(
+            f"{test_server}/databrowser/data-search/freva/file",
+            params={"multi-version": True},
+        )
+        res_latest = requests.get(
+            f"{test_server}/databrowser/data-search/freva/file",
+            params={"multi-version": False},
+        )
+        assert res_multi.status_code == 200
+        assert res_latest.status_code == 200
+        assert len(res_latest.text.split()) < len(res_multi.text.split())
+
+    def test_version_filter_with_multi(self, test_server: str) -> None:
+        """Filtering by a specific version works with multi-version enabled."""
+        res = requests.get(
+            f"{test_server}/databrowser/metadata-search/freva/file",
+            params={"multi-version": True},
+        )
+        version = res.json()["facets"]["version"][0]
+        res_filtered = requests.get(
+            f"{test_server}/databrowser/data-search/freva/file",
+            params={"multi-version": True, "version": version},
+        )
+        assert res_filtered.status_code == 200
+
+    def test_version_filter_without_multi_fails(self, test_server: str) -> None:
+        """Filtering by version without multi-version is rejected."""
+        res = requests.get(
+            f"{test_server}/databrowser/metadata-search/freva/file",
+            params={"multi-version": True},
+        )
+        version = res.json()["facets"]["version"][0]
+        res_filtered = requests.get(
+            f"{test_server}/databrowser/data-search/freva/file",
+            params={"multi-version": False, "version": version},
+        )
+        assert res_filtered.status_code != 200
 
 
-def test_file_select(test_server: str) -> None:
-    """Test what happens if we search for files/uris."""
-    res = requests.get(
-        f"{test_server}/databrowser/data-search/cmip6/file",
-        params={"file": "/arch/bb1203/*/CPC/*"},
-    )
-    assert res.status_code == 200
-    assert len(res.text.split()) > 0
-    res = requests.get(
-        f"{test_server}/databrowser/metadata-search/cmip6/file",
-        params={"uri": "slk:///arch/bb1203/*/CPC/*"},
-    )
-    assert res.status_code == 200
-    data = res.json()
-    assert len(data) > 0
-    assert "cmorph" in data["facets"]["experiment_id"]
+class TestFileAndUriSearch:
+    """Tests for file and URI based search."""
+
+    def test_file_glob_search(self, test_server: str) -> None:
+        """Glob pattern search returns results."""
+        res = requests.get(
+            f"{test_server}/databrowser/data-search/cmip6/file",
+            params={"file": "/arch/bb1203/*/CPC/*"},
+        )
+        assert res.status_code == 200
+        assert len(res.text.split()) > 0
+
+    def test_uri_metadata_search(self, test_server: str) -> None:
+        """URI pattern search returns matching facets."""
+        res = requests.get(
+            f"{test_server}/databrowser/metadata-search/cmip6/file",
+            params={"uri": "slk:///arch/bb1203/*/CPC/*"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert len(data) > 0
+        assert "cmorph" in data["facets"]["experiment_id"]
 
 
-def test_time_selection(test_server: str) -> None:
-    """Test the time select functionality of the API."""
-    res1 = requests.get(
-        f"{test_server}/databrowser/data-search/freva/file",
-        params={"time": "1898 to 1901"},
-    )
-    assert len(res1.text.split()) >= 1
-    res2 = requests.get(
-        f"{test_server}/databrowser/data-search/freva/file",
-        params={"time": "1898 to 1901", "time_select": "foo"},
-    )
-    assert res2.status_code == 500
-    res3 = requests.get(
-        f"{test_server}/databrowser/data-search/freva/file",
-        params={"time": "fx"},
-    )
-    assert res3.status_code == 500
+class TestTimeSelection:
+    """Tests for time-based filtering."""
+
+    def test_valid_time_range(self, test_server: str) -> None:
+        """A valid time range returns results."""
+        res = requests.get(
+            f"{test_server}/databrowser/data-search/freva/file",
+            params={"time": "1898 to 1901"},
+        )
+        assert len(res.text.split()) >= 1
+
+    def test_invalid_time_select(self, test_server: str) -> None:
+        """An invalid time_select value returns 500."""
+        res = requests.get(
+            f"{test_server}/databrowser/data-search/freva/file",
+            params={"time": "1898 to 1901", "time_select": "foo"},
+        )
+        assert res.status_code == 500
+
+    def test_unparseable_time(self, test_server: str) -> None:
+        """An unparseable time string returns 500."""
+        res = requests.get(
+            f"{test_server}/databrowser/data-search/freva/file",
+            params={"time": "fx"},
+        )
+        assert res.status_code == 500
 
 
-def test_bbox_selection(test_server: str) -> None:
-    """Test the bbox select functionality of the API."""
-    res1 = requests.get(
-        f"{test_server}/databrowser/data-search/freva/file",
-        params={"bbox": "-10,10,-10,10"},
-    )
-    assert len(res1.text.split()) == 61
-    res2 = requests.get(
-        f"{test_server}/databrowser/data-search/freva/file",
-        params={"bbox": "-10,10,-10,10", "bbox_select": "foo"},
-    )
-    assert res2.status_code == 500
-    res3 = requests.get(
-        f"{test_server}/databrowser/data-search/freva/file",
-        params={"bbox": "fx"},
-    )
-    assert res3.status_code == 500
+class TestBboxSelection:
+    """Tests for bounding-box filtering."""
 
-    res3 = requests.get(
-        f"{test_server}/databrowser/data-search/freva/file",
-        params={"bbox": "-181,181,-10,10"},
-    )
-    assert res3.status_code == 500
+    def test_valid_bbox(self, test_server: str) -> None:
+        """A valid bbox returns the expected number of results."""
+        res = requests.get(
+            f"{test_server}/databrowser/data-search/freva/file",
+            params={"bbox": "-10,10,-10,10"},
+        )
+        assert len(res.text.split()) == 61
 
-    res4 = requests.get(
-        f"{test_server}/databrowser/data-search/freva/file",
-        params={"bbox": "-10,10,-91,91"},
-    )
-    assert res4.status_code == 500
+    def test_invalid_bbox_select(self, test_server: str) -> None:
+        """An invalid bbox_select value returns 500."""
+        res = requests.get(
+            f"{test_server}/databrowser/data-search/freva/file",
+            params={"bbox": "-10,10,-10,10", "bbox_select": "foo"},
+        )
+        assert res.status_code == 500
 
+    def test_unparseable_bbox(self, test_server: str) -> None:
+        """An unparseable bbox string returns 500."""
+        res = requests.get(
+            f"{test_server}/databrowser/data-search/freva/file",
+            params={"bbox": "fx"},
+        )
+        assert res.status_code == 500
 
-def test_primary_facets(test_server: str) -> None:
-    """Test the functionality of primary facet definitions."""
-    res1 = requests.get(
-        f"{test_server}/databrowser/metadata-search/freva/file"
-    ).json()
-    res2 = requests.get(
-        f"{test_server}/databrowser/metadata-search/cmip6/file"
-    ).json()
-    res3 = requests.get(
-        f"{test_server}/databrowser/metadata-search/cmip6/file",
-        params={"translate": "f"},
-    ).json()
-    assert "primary_facets" in res1
-    assert "primary_facets" in res2
-    assert "primary_facets" in res3
-    assert (
-        len(res1["primary_facets"])
-        == len(res2["primary_facets"])
-        == len(res3["primary_facets"])
-    )
-    assert res1["primary_facets"] == res3["primary_facets"]
-    assert res1["primary_facets"] != res2["primary_facets"]
+    def test_longitude_out_of_range(self, test_server: str) -> None:
+        """Longitude outside [-180, 180] returns 500."""
+        res = requests.get(
+            f"{test_server}/databrowser/data-search/freva/file",
+            params={"bbox": "-181,181,-10,10"},
+        )
+        assert res.status_code == 500
+
+    def test_latitude_out_of_range(self, test_server: str) -> None:
+        """Latitude outside [-90, 90] returns 500."""
+        res = requests.get(
+            f"{test_server}/databrowser/data-search/freva/file",
+            params={"bbox": "-10,10,-91,91"},
+        )
+        assert res.status_code == 500
 
 
-def test_extended_search(
-    test_server: str, auth: Dict[str, str], mocker: MockerFixture
-) -> None:
-    """Test the facet search functionality."""
-    res1 = requests.get(
-        f"{test_server}/databrowser/extended-search/cmip6/uri",
-        params={"start": 0, "activity_id": "cmip", "max-results": 2},
-    ).json()
-    assert len(res1["search_results"]) > 0
-    assert "activity_id" in res1["facets"]
-    res2 = requests.get(
-        f"{test_server}/databrowser/extended-search/cmip6/uri",
-        params={"start": 1000, "activity_id": "cmip", "max-results": 2},
-    ).json()
-    assert "rcm_name" not in res2["primary_facets"]
-    assert res2["search_results"] == []
-    res3 = requests.get(
-        f"{test_server}/databrowser/extended-search/cmip5/uri",
-        params={"activity_id": "cmip", "translate": "false", "max-results": 2},
-    )
-    assert res3.status_code == 422
-    res4 = requests.get(
-        f"{test_server}/databrowser/extended-search/cmip6/uri",
-        params={"activity_id": "cmipx", "translate": "true", "max-results": 2},
-    )
-    assert res4.status_code == 200
-    res5 = requests.get(
-        f"{test_server}/databrowser/extended-search/cordex/uri",
-        params={"domain": "eur-11", "translate": "true"},
-    ).json()
-    assert "rcm_name" in res5["facets"]
-    assert "rcm_name" in res5["primary_facets"]
+class TestPrimaryFacets:
+    """Tests for primary facet definitions."""
 
-    res6 = requests.get(
-        f"{test_server}/databrowser/extended-search/cmip6/uri",
-        params={"facets": "activity_id"},
-    ).json()
-    assert len(res6["facets"].keys()) == 1
-    res7 = requests.get(
-        f"{test_server}/databrowser/extended-search/cmip6/uri",
-        params={"facets": "activity_id", "max-results": 0},
-    ).json()
-    assert len(res7["search_results"]) == 0
-    # test the zarr stream pagination functionality
-    res8 = requests.get(
-        f"{test_server}/databrowser/extended-search/cmip6/uri",
-        params={"facets": "activity_id", "max-results": 1, "zarr_stream": True},
-        headers={"Authorization": f"Bearer {auth['access_token']}"},
-    ).json()
-    assert len(res8["search_results"]) == 1
+    def test_primary_facets_present(self, test_server: str) -> None:
+        """All flavours return primary_facets with equal length."""
+        res_freva = requests.get(
+            f"{test_server}/databrowser/metadata-search/freva/file"
+        ).json()
+        res_cmip6 = requests.get(
+            f"{test_server}/databrowser/metadata-search/cmip6/file"
+        ).json()
+        res_cmip6_raw = requests.get(
+            f"{test_server}/databrowser/metadata-search/cmip6/file",
+            params={"translate": "f"},
+        ).json()
+        assert "primary_facets" in res_freva
+        assert "primary_facets" in res_cmip6
+        assert "primary_facets" in res_cmip6_raw
+        assert (
+            len(res_freva["primary_facets"])
+            == len(res_cmip6["primary_facets"])
+            == len(res_cmip6_raw["primary_facets"])
+        )
 
-    res9 = requests.get(
-        f"{test_server}/databrowser/extended-search/cmip6/uri",
-        params={"facets": "activity_id", "max-results": 1, "zarr_stream": True},
-    )
-    assert res9.status_code == 401
-    mocker.patch("freva_rest.freva_data_portal.utils.Cache", "foo")
-    res10 = requests.get(
-        f"{test_server}/databrowser/extended-search/cmip6/uri",
-        params={
-            "facets": "activity_id",
-            "max-results": 1,
-            "zarr_stream": True,
-        },
-        headers={"Authorization": f"Bearer {auth['access_token']}"},
-    ).json()
-    assert (
-        res10["search_results"][0]["uri"]
-        == "Internal error, service not able to publish"
-    )
-
-    mocker.patch("freva_rest.rest.server_config.services", "databrowser")
-    res11 = requests.get(
-        f"{test_server}/databrowser/extended-search/cmip6/uri",
-        params={
-            "facets": "activity_id",
-            "max-results": 1,
-            "zarr_stream": True,
-        },
-    )
-    # get the normal response
-    assert res11.status_code == 200
+    def test_primary_facets_translation(self, test_server: str) -> None:
+        """Untranslated cmip6 matches freva, translated cmip6 differs."""
+        res_freva = requests.get(
+            f"{test_server}/databrowser/metadata-search/freva/file"
+        ).json()
+        res_cmip6 = requests.get(
+            f"{test_server}/databrowser/metadata-search/cmip6/file"
+        ).json()
+        res_cmip6_raw = requests.get(
+            f"{test_server}/databrowser/metadata-search/cmip6/file",
+            params={"translate": "f"},
+        ).json()
+        assert res_freva["primary_facets"] == res_cmip6_raw["primary_facets"]
+        assert res_freva["primary_facets"] != res_cmip6["primary_facets"]
 
 
-def test_metadata_search(test_server: str) -> None:
-    """Test the facet search functionality."""
-    res1 = requests.get(
-        f"{test_server}/databrowser/metadata-search/cmip6/uri",
-        params={"activity_id": "cmip"},
-    ).json()
-    assert "search_results" not in res1.keys()
-    assert "activity_id" in res1["facets"]
-    res3 = requests.get(
-        f"{test_server}/databrowser/extended-search/cmip5/uri",
-        params={"activity_id": "cmip", "translate": "false"},
-    )
-    assert res3.status_code == 422
-    res4 = requests.get(
-        f"{test_server}/databrowser/metadata-search/cmip6/uri",
-        params={"activity_id": "cmipx", "translate": "true"},
-    )
-    assert res4.status_code == 200
-    res5 = requests.get(
-        f"{test_server}/databrowser/metadata-search/cordex/uri",
-        params={"domain": "eur-11", "translate": "true"},
-    ).json()
-    assert "rcm_name" in res5["facets"]
-    assert "rcm_name" in res5["primary_facets"]
+class TestExtendedSearch:
+    """Tests for the extended-search endpoint."""
 
-    res6 = requests.get(
-        f"{test_server}/databrowser/metadata-search/cmip6/uri",
-        params={"facets": "activity_id"},
-    ).json()
-    assert len(res6["facets"].keys()) == 1
+    def test_basic_extended_search(self, test_server: str) -> None:
+        """Extended search returns results with facets."""
+        res = requests.get(
+            f"{test_server}/databrowser/extended-search/cmip6/uri",
+            params={"start": 0, "activity_id": "cmip", "max-results": 2},
+        ).json()
+        assert len(res["search_results"]) > 0
+        assert "activity_id" in res["facets"]
 
+    def test_offset_beyond_results(self, test_server: str) -> None:
+        """A large start offset returns empty results."""
+        res = requests.get(
+            f"{test_server}/databrowser/extended-search/cmip6/uri",
+            params={"start": 1000, "activity_id": "cmip", "max-results": 2},
+        ).json()
+        assert "rcm_name" not in res["primary_facets"]
+        assert res["search_results"] == []
 
-def test_contains_not(test_server: str) -> None:
-    """Test for searches that should *not* contain values."""
+    def test_untranslated_cmip5_rejected(self, test_server: str) -> None:
+        """Untranslated cmip5 query returns 422."""
+        res = requests.get(
+            f"{test_server}/databrowser/extended-search/cmip5/uri",
+            params={"activity_id": "cmip", "translate": "false", "max-results": 2},
+        )
+        assert res.status_code == 422
 
-    res1 = requests.get(
-        f"{test_server}/databrowser/metadata-search/freva/file",
-        params={
-            "dataset": ["-cmip6-swift", "not cmip6-fs"],
-            "project": "cmip6",
-        },
-    ).json()
-    assert "cmip6-swift" not in res1["facets"]["dataset"]
-    assert "cmip6-fs" not in res1["facets"]["dataset"]
-    assert "cmip6-hsm" in res1["facets"]["dataset"]
-    res2 = requests.get(
-        f"{test_server}/databrowser/metadata-search/freva/file",
-        params={
-            "project_not_": "cmip6",
-        },
-    ).json()
-    assert "cmip6" not in res2["facets"]["project"]
+    def test_no_match_returns_200(self, test_server: str) -> None:
+        """A query with no matches still returns 200."""
+        res = requests.get(
+            f"{test_server}/databrowser/extended-search/cmip6/uri",
+            params={"activity_id": "cmipx", "translate": "true", "max-results": 2},
+        )
+        assert res.status_code == 200
 
+    def test_cordex_facets(self, test_server: str) -> None:
+        """Cordex search returns rcm_name in facets and primary_facets."""
+        res = requests.get(
+            f"{test_server}/databrowser/extended-search/cordex/uri",
+            params={"domain": "eur-11", "translate": "true"},
+        ).json()
+        assert "rcm_name" in res["facets"]
+        assert "rcm_name" in res["primary_facets"]
 
-def test_intake_search(test_server: str) -> None:
-    """Test the creation of intake catalogues."""
-    res1 = requests.get(
-        f"{test_server}/databrowser/intake-catalogue/cmip6/uri",
-        params={"activity_id": "cmip", "multi-version": True},
-    )
-    assert res1.json() == json.loads(res1.text)
-    res2 = requests.get(
-        f"{test_server}/databrowser/intake-catalogue/cmip6/uri",
-    )
-    assert len(res2.json()["catalog_dict"]) > len(res1.json()["catalog_dict"])
-    res3 = requests.get(
-        f"{test_server}/databrowser/intake-catalogue/cmip6/uri",
-        params={
-            "activity_id": "cmip",
-            "multi-version": False,
-        },
-    )
-    assert len(res1.json()["catalog_dict"]) > len(res3.json()["catalog_dict"])
-    res4 = requests.get(
-        f"{test_server}/databrowser/intake-catalogue/cmip6/uri",
-        params={
-            "multi-version": False,
-            "max-results": 1,
-        },
-    )
-    assert res4.status_code == 413
+    def test_single_facet_filter(self, test_server: str) -> None:
+        """Requesting a single facet returns only that facet."""
+        res = requests.get(
+            f"{test_server}/databrowser/extended-search/cmip6/uri",
+            params={"facets": "activity_id"},
+        ).json()
+        assert len(res["facets"].keys()) == 1
 
+    def test_max_results_zero(self, test_server: str) -> None:
+        """max-results=0 returns no search results."""
+        res = requests.get(
+            f"{test_server}/databrowser/extended-search/cmip6/uri",
+            params={"facets": "activity_id", "max-results": 0},
+        ).json()
+        assert len(res["search_results"]) == 0
 
-def test_stac_catalogue(test_server: str) -> None:
-    """Test the creation of STAC Catalogue."""
+    def test_zarr_stream_with_auth(
+        self, test_server: str, auth: Dict[str, str]
+    ) -> None:
+        """Zarr stream search with valid auth returns results."""
+        res = requests.get(
+            f"{test_server}/databrowser/extended-search/cmip6/uri",
+            params={
+                "facets": "activity_id",
+                "max-results": 1,
+                "zarr_stream": True,
+            },
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+        ).json()
+        assert len(res["search_results"]) == 1
 
-    # 200 OK from STAC static endpoint
-    res = requests.get(
-        f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
-        params={"activity_id": "cmip", "multi-version": True, "max_results": 2},
-        allow_redirects=False,
-    )
-    assert res.status_code == 200
+    def test_zarr_stream_without_auth(self, test_server: str) -> None:
+        """Zarr stream search without auth returns 401."""
+        res = requests.get(
+            f"{test_server}/databrowser/extended-search/cmip6/uri",
+            params={
+                "facets": "activity_id",
+                "max-results": 1,
+                "zarr_stream": True,
+            },
+        )
+        assert res.status_code == 401
 
-    # 413 Request Entity Too Large
-    res3 = requests.get(
-        f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
-        params={"activity_id": "cmip", "multi-version": False, "max-results": 1},
-    )
-    assert res3.status_code == 413
-    # 422 Unprocessable Entity
-    res4 = requests.get(
-        f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
-        params={"collection": "cmip2", "multi-version": False},
-    )
-    assert res4.status_code == 422
-    # 404 Not Found
-    res5 = requests.get(
-        f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
-        params={"activity_id": "cmip3", "multi-version": False},
-    )
-    assert res5.status_code == 404
+    def test_zarr_stream_broken_cache(
+        self, test_server: str, auth: Dict[str, str], mocker: MockerFixture
+    ) -> None:
+        """Zarr stream with broken cache returns internal error."""
+        mocker.patch("freva_rest.freva_data_portal.utils.Cache", "foo")
+        res = requests.get(
+            f"{test_server}/databrowser/extended-search/cmip6/uri",
+            params={
+                "facets": "activity_id",
+                "max-results": 1,
+                "zarr_stream": True,
+            },
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+        ).json()
+        assert (
+            res["search_results"][0]["uri"]
+            == "Internal error, service not able to publish"
+        )
 
-
-def test_bad_intake_request(test_server: str) -> None:
-    """Test for a wrong intake request."""
-    res1 = requests.get(
-        f"{test_server}/databrowser/intake-catalogue/cmip6/uri",
-        params={"activity_id": "cmip2"},
-    )
-    assert res1.status_code == 404
-
-
-def test_parameter_validation(test_server: str) -> None:
-    """Test if only valid parameter requests make it."""
-
-    res1 = requests.get(
-        f"{test_server}/databrowser/data-search/cmip6/uri",
-        params={"activity_id": "cmip", "translate": "false"},
-    ).status_code
-    res2 = requests.get(
-        f"{test_server}/databrowser/data-search/cmip6/uri",
-        params={"product": "cmip", "translate": "true"},
-    ).status_code
-    res3 = requests.get(
-        f"{test_server}/databrowser/data-search/cmip6/uri",
-        params={"activity_": "cmip"},
-    ).status_code
-    assert res1 == res2 == res3 == 422
+    def test_zarr_stream_service_disabled(
+        self, test_server: str, mocker: MockerFixture
+    ) -> None:
+        """Zarr stream returns 200 when service is disabled (no zarr)."""
+        mocker.patch("freva_rest.rest.server_config.services", "databrowser")
+        res = requests.get(
+            f"{test_server}/databrowser/extended-search/cmip6/uri",
+            params={
+                "facets": "activity_id",
+                "max-results": 1,
+                "zarr_stream": True,
+            },
+        )
+        assert res.status_code == 200
 
 
-def test_no_mongo_parameter_insert(
-    test_server: str, mocker: MockerFixture
-) -> None:
-    """Test the insertion of data into the mongodb."""
-    from freva_rest.rest import server_config
+class TestMetadataSearch:
+    """Tests for the metadata-search endpoint."""
 
-    url = server_config.mongo_url
+    def test_basic_metadata_search(self, test_server: str) -> None:
+        """Metadata search returns facets without search_results."""
+        res = requests.get(
+            f"{test_server}/databrowser/metadata-search/cmip6/uri",
+            params={"activity_id": "cmip"},
+        ).json()
+        assert "search_results" not in res.keys()
+        assert "activity_id" in res["facets"]
 
-    with MongoClient(server_config.mongo_url) as mongo_client:
-        collection = mongo_client[server_config.mongo_db]["search_queries"]
-        collection.drop()
-        assert collection.find_one() is None
-    mocker.patch("freva_rest.rest.server_config.mongo_password", "foo")
-    mocker.patch("freva_rest.rest.server_config._mongo_client", None)
-    res1 = requests.get(
-        f"{test_server}/databrowser/data-search/cmip6/uri",
-        params={"activity_id": "cmip"},
-    ).status_code
-    assert res1 == 200
-    mocker.patch(
-        "freva_rest.rest.server_config.mongo_password",
-    )
-    with MongoClient(url) as mongo_client:
-        collection = mongo_client[server_config.mongo_db]["search_queries"]
-        assert collection.find_one() is None
+    def test_untranslated_cmip5_rejected(self, test_server: str) -> None:
+        """Untranslated cmip5 metadata query returns 422."""
+        res = requests.get(
+            f"{test_server}/databrowser/extended-search/cmip5/uri",
+            params={"activity_id": "cmip", "translate": "false"},
+        )
+        assert res.status_code == 422
+
+    def test_no_match_returns_200(self, test_server: str) -> None:
+        """A metadata query with no matches still returns 200."""
+        res = requests.get(
+            f"{test_server}/databrowser/metadata-search/cmip6/uri",
+            params={"activity_id": "cmipx", "translate": "true"},
+        )
+        assert res.status_code == 200
+
+    def test_cordex_rcm_name(self, test_server: str) -> None:
+        """Cordex metadata includes rcm_name in facets and primary_facets."""
+        res = requests.get(
+            f"{test_server}/databrowser/metadata-search/cordex/uri",
+            params={"domain": "eur-11", "translate": "true"},
+        ).json()
+        assert "rcm_name" in res["facets"]
+        assert "rcm_name" in res["primary_facets"]
+
+    def test_single_facet_filter(self, test_server: str) -> None:
+        """Requesting a single facet returns only that facet."""
+        res = requests.get(
+            f"{test_server}/databrowser/metadata-search/cmip6/uri",
+            params={"facets": "activity_id"},
+        ).json()
+        assert len(res["facets"].keys()) == 1
 
 
-def test_zarr_stream_not_implemented(
-    test_server: str, auth: Dict[str, str], mocker: MockerFixture
-) -> None:
-    """Test if zarr request is not served when told not to do so."""
-    mocker.patch("freva_rest.rest.server_config.services", "")
-    res = requests.get(
-        f"{test_server}/databrowser/load/freva",
-        headers={"Authorization": f"Bearer {auth['access_token']}"},
-    )
-    assert res.status_code == 503
+class TestNegationSearch:
+    """Tests for negation operators in search queries."""
+
+    def test_dash_and_not_prefix(self, test_server: str) -> None:
+        """Dash and 'not' prefixes exclude matching facet values."""
+        res = requests.get(
+            f"{test_server}/databrowser/metadata-search/freva/file",
+            params={
+                "dataset": ["-cmip6-swift", "not cmip6-fs"],
+                "project": "cmip6",
+            },
+        ).json()
+        assert "cmip6-swift" not in res["facets"]["dataset"]
+        assert "cmip6-fs" not in res["facets"]["dataset"]
+        assert "cmip6-hsm" in res["facets"]["dataset"]
+
+    def test_not_suffix(self, test_server: str) -> None:
+        """The _not_ suffix excludes matching facet values."""
+        res = requests.get(
+            f"{test_server}/databrowser/metadata-search/freva/file",
+            params={"project_not_": "cmip6"},
+        ).json()
+        assert "cmip6" not in res["facets"]["project"]
 
 
-def test_mongo_parameter_insert(test_server: str, cfg: ServerConfig) -> None:
-    """Test the successfull insertion of the search stats."""
-    res1 = requests.get(
-        f"{test_server}/databrowser/data-search/cordex/uri",
-        params={"variable": ["wind", "cape"]},
-    )
-    assert res1.status_code == 200
-    time.sleep(2)
-    mongo_client = MongoClient(cfg.mongo_url)
-    collection = mongo_client[cfg.mongo_db]["search_queries"]
-    assert len(res1.text.split()) > 0
-    stats = list(collection.find())
-    assert len(stats) > 0
-    assert isinstance(stats[0], dict)
-    assert "metadata" in stats[0]
-    assert "query" in stats[0]
-    assert isinstance(stats[0]["query"], dict)
-    assert isinstance(stats[0]["metadata"], dict)
-    # The search keys should have been converted to strings.
-    assert (
-        len([k for k in stats[0]["query"].values() if not isinstance(k, str)])
-        == 0
-    )
+class TestIntakeCatalogue:
+    """Tests for intake catalogue generation."""
+
+    def test_basic_intake(self, test_server: str) -> None:
+        """Intake catalogue response is valid JSON."""
+        res = requests.get(
+            f"{test_server}/databrowser/intake-catalogue/cmip6/uri",
+            params={"activity_id": "cmip", "multi-version": True},
+        )
+        assert res.json() == json.loads(res.text)
+
+    def test_unfiltered_returns_more(self, test_server: str) -> None:
+        """Unfiltered catalogue has more entries than filtered."""
+        res_filtered = requests.get(
+            f"{test_server}/databrowser/intake-catalogue/cmip6/uri",
+            params={"activity_id": "cmip", "multi-version": True},
+        )
+        res_all = requests.get(
+            f"{test_server}/databrowser/intake-catalogue/cmip6/uri",
+        )
+        assert len(res_all.json()["catalog_dict"]) > len(
+            res_filtered.json()["catalog_dict"]
+        )
+
+    def test_latest_only_returns_fewer(self, test_server: str) -> None:
+        """Latest-only catalogue has fewer entries than multi-version."""
+        res_multi = requests.get(
+            f"{test_server}/databrowser/intake-catalogue/cmip6/uri",
+            params={"activity_id": "cmip", "multi-version": True},
+        )
+        res_latest = requests.get(
+            f"{test_server}/databrowser/intake-catalogue/cmip6/uri",
+            params={"activity_id": "cmip", "multi-version": False},
+        )
+        assert len(res_multi.json()["catalog_dict"]) > len(
+            res_latest.json()["catalog_dict"]
+        )
+
+    def test_max_results_limit(self, test_server: str) -> None:
+        """max-results=1 returns 413."""
+        res = requests.get(
+            f"{test_server}/databrowser/intake-catalogue/cmip6/uri",
+            params={"multi-version": False, "max-results": 1},
+        )
+        assert res.status_code == 413
+
+    def test_no_match_returns_404(self, test_server: str) -> None:
+        """A query with no matches returns 404."""
+        res = requests.get(
+            f"{test_server}/databrowser/intake-catalogue/cmip6/uri",
+            params={"activity_id": "cmip2"},
+        )
+        assert res.status_code == 404
+
+
+class TestStacCatalogue:
+    """Tests for STAC catalogue generation."""
+
+    def test_basic_stac(self, test_server: str) -> None:
+        """STAC endpoint returns 200 for valid query."""
+        res = requests.get(
+            f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
+            params={
+                "activity_id": "cmip",
+                "multi-version": True,
+                "max_results": 2,
+            },
+            allow_redirects=False,
+        )
+        assert res.status_code == 200
+
+    def test_max_results_limit(self, test_server: str) -> None:
+        """max-results=1 returns 413."""
+        res = requests.get(
+            f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
+            params={
+                "activity_id": "cmip",
+                "multi-version": False,
+                "max-results": 1,
+            },
+        )
+        assert res.status_code == 413
+
+    def test_invalid_collection(self, test_server: str) -> None:
+        """Invalid collection parameter returns 422."""
+        res = requests.get(
+            f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
+            params={"collection": "cmip2", "multi-version": False},
+        )
+        assert res.status_code == 422
+
+    def test_no_match_returns_404(self, test_server: str) -> None:
+        """A query with no matches returns 404."""
+        res = requests.get(
+            f"{test_server}/databrowser/stac-catalogue/cmip6/uri",
+            params={"activity_id": "cmip3", "multi-version": False},
+        )
+        assert res.status_code == 404
+
+
+class TestParameterValidation:
+    """Tests for query parameter validation."""
+
+    def test_invalid_parameters_rejected(self, test_server: str) -> None:
+        """Various invalid parameter combinations return 422."""
+        res1 = requests.get(
+            f"{test_server}/databrowser/data-search/cmip6/uri",
+            params={"activity_id": "cmip", "translate": "false"},
+        )
+        res2 = requests.get(
+            f"{test_server}/databrowser/data-search/cmip6/uri",
+            params={"product": "cmip", "translate": "true"},
+        )
+        res3 = requests.get(
+            f"{test_server}/databrowser/data-search/cmip6/uri",
+            params={"activity_": "cmip"},
+        )
+        assert res1.status_code == res2.status_code == res3.status_code == 422
+
+
+class TestSolrConnection:
+    """Tests for Solr connection error handling."""
+
+    def test_no_solr(self, test_server: str, mocker: MockerFixture) -> None:
+        """A bad Solr host returns 503."""
+        mocker.patch("freva_rest.rest.server_config.solr_host", "foo.bar")
+        res = requests.get(
+            f"{test_server}/databrowser/data-search/cmip6/uri",
+            params={"activity_id": "cmipx"},
+        )
+        assert res.status_code == 503
+
+
+class TestZarrStreamService:
+    """Tests for zarr stream service availability."""
+
+    def test_not_implemented(
+        self, test_server: str, auth: Dict[str, str], mocker: MockerFixture
+    ) -> None:
+        """Zarr request returns 503 when service is disabled."""
+        mocker.patch("freva_rest.rest.server_config.services", "")
+        res = requests.get(
+            f"{test_server}/databrowser/load/freva",
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+        )
+        assert res.status_code == 503
+
+
+class TestMongoStatistics:
+    """Tests for MongoDB search statistics insertion."""
+
+    def test_failed_mongo_insert(
+        self, test_server: str, mocker: MockerFixture
+    ) -> None:
+        """Search works even when MongoDB is unreachable."""
+        from freva_rest.rest import server_config
+
+        url = server_config.mongo_url
+        with MongoClient(server_config.mongo_url) as mongo_client:
+            collection = mongo_client[server_config.mongo_db]["search_queries"]
+            collection.drop()
+            assert collection.find_one() is None
+
+        mocker.patch("freva_rest.rest.server_config.mongo_password", "foo")
+        mocker.patch("freva_rest.rest.server_config._mongo_client", None)
+        res = requests.get(
+            f"{test_server}/databrowser/data-search/cmip6/uri",
+            params={"activity_id": "cmip"},
+        )
+        assert res.status_code == 200
+
+        mocker.patch("freva_rest.rest.server_config.mongo_password")
+        with MongoClient(url) as mongo_client:
+            collection = mongo_client[server_config.mongo_db]["search_queries"]
+            assert collection.find_one() is None
+
+    def test_successful_insert(
+        self, test_server: str, cfg: ServerConfig
+    ) -> None:
+        """Search statistics are inserted into MongoDB."""
+        res = requests.get(
+            f"{test_server}/databrowser/data-search/cordex/uri",
+            params={"variable": ["wind", "cape"]},
+        )
+        assert res.status_code == 200
+        assert len(res.text.split()) > 0
+        time.sleep(2)
+        mongo_client = MongoClient(cfg.mongo_url)
+        collection = mongo_client[cfg.mongo_db]["search_queries"]
+        stats = list(collection.find())
+        assert len(stats) > 0
+        assert isinstance(stats[0], dict)
+        assert "metadata" in stats[0]
+        assert "query" in stats[0]
+        assert isinstance(stats[0]["query"], dict)
+        assert isinstance(stats[0]["metadata"], dict)
+        assert (
+            len([k for k in stats[0]["query"].values() if not isinstance(k, str)])
+            == 0
+        )

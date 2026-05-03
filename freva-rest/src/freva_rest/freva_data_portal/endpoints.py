@@ -9,10 +9,14 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response
 from py_oidc_auth import IDToken as TokenPayload
 from pydantic import AnyHttpUrl, BaseModel, Field
 
-from freva_rest.auth import auth
+from freva_rest.auth import auth, get_system_username
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
-from freva_rest.utils.base_utils import Cache, add_ttl_key_to_db_and_cache
+from freva_rest.utils.base_utils import (
+    Cache,
+    add_ttl_key_to_db_and_cache,
+    decode_cache_token,
+)
 from freva_rest.utils.presign_utils import (
     MAX_TTL_SECONDS,
     MIN_TTL_SECONDS,
@@ -25,6 +29,11 @@ from freva_rest.utils.presign_utils import (
 from .schema import PresignUrlRequest, PresignUrlResponse, ZarrConversion
 from .utils import (
     STATUS_LOOKUP,
+    ZARRAY_JSON,
+    ZATTRS_JSON,
+    ZGROUP_JSON,
+    ZMETADATA_JSON,
+    check_read_permission,
     process_zarr_data,
     publish_datasets,
     read_redis_data,
@@ -118,20 +127,22 @@ async def load_files(
         "group_by": convert.group_by,
     }
 
-    async def publish(path: Union[str, List[str]]) -> str:
-        return await publish_datasets(
-            path,
-            aggregation_plan={k: v for k, v in aggregation_plan.items() if v},
-            ttl_seconds=convert.ttl_seconds,
-            public=convert.public,
-            access_pattern=convert.access_pattern,
-            map_primary_chunksize=convert.map_primary_chunksize,
-            reload=convert.reload,
-            chunk_size=convert.chunk_size,
-            publish=True,
-        )
-
     try:
+
+        async def publish(path: Union[str, List[str]]) -> str:
+            return await publish_datasets(
+                path,
+                aggregation_plan={k: v for k, v in aggregation_plan.items() if v},
+                ttl_seconds=convert.ttl_seconds,
+                public=convert.public,
+                access_pattern=convert.access_pattern,
+                map_primary_chunksize=convert.map_primary_chunksize,
+                reload=convert.reload,
+                chunk_size=convert.chunk_size,
+                publish=True,
+                username=await get_system_username(current_user),
+            )
+
         if convert.aggregate is None:
             urls = [await publish(p) for p in paths]
         else:
@@ -299,7 +310,7 @@ async def zarr_key_data(
             ge=0,
             le=1500,
         ),
-    ] = 1,
+    ] = 2,
     current_user: TokenPayload = auth.required(),
 ) -> Response:
     """
@@ -315,6 +326,18 @@ async def zarr_key_data(
     ``load_chunk`` using the parent path as the variable and the final
     segment as the chunk identifier.
     """
+    if zarr_key in (ZMETADATA_JSON, ZGROUP_JSON, ZATTRS_JSON) or zarr_key.endswith(
+        ("/" + ZGROUP_JSON, "/" + ZATTRS_JSON, "/" + ZARRAY_JSON)
+    ):
+        try:
+            payload = decode_cache_token(token)
+            username = await get_system_username(current_user)
+            await check_read_permission(username, payload["path"])
+        except HTTPException:
+            raise
+        except Exception as error:
+            logger.warning("Could not process request for token %s: %s", token, error)
+            raise HTTPException(400, detail="Invalid request.")
     return await process_zarr_data(token, zarr_key, timeout=timeout)
 
 
@@ -362,7 +385,7 @@ async def zarr_key_data_shared(
             ge=0,
             le=1500,
         ),
-    ] = 1,
+    ] = 2,
 ) -> Response:
     """
     Serve arbitrary Zarr metadata or chunk keys for shared datasets.
@@ -426,7 +449,8 @@ async def create_presigned_url(
     *who may pre-sign which chunk* can be implemented based on `token`.
     """
     payload = payload_from_url(normalise_path(str(body.path)))
-    # TODO: we should check if the user is allowed to read the dataset.
+    username = await get_system_username(token)
+    await check_read_permission(username, payload["path"])
     ttl = max(MIN_TTL_SECONDS, min(body.ttl_seconds, MAX_TTL_SECONDS))
     res = await add_ttl_key_to_db_and_cache(payload["path"], ttl, payload["assembly"])
     url = f"{server_config.proxy}/api/freva-nextgen/data-portal/share/{res['key']}.zarr"

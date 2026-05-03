@@ -48,6 +48,10 @@ environment variables are evaluated:
                                 is admin to enable admin endpoints for.
 - ``API_OIDC_TRUSTED_ISSUER``: Define url's to trusted partner api's to establish
                                a network of token trust for token federation.
+- ``API_OIDC_SYSTEMUSER_CLAIM``: JMESPath expression to extract the authoritative
+                                 local username from the IDP's `userinfo` response.
+                                 This username is used for filesystem permission
+                                 checks e.g. can this user read the requested file?).
 
 📝  You can override the path to the default config file using the
     ``API_CONFIG`` environment variable. The default location of this config

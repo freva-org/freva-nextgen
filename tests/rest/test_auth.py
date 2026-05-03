@@ -50,24 +50,16 @@ def test_systemuser_no_token(test_server: str) -> None:
     assert res.status_code == 401
 
 
-def test_systemuser_full_user(
-    test_server: str, auth: Dict[str, str], mocker: MockerFixture
-) -> None:
+def test_systemuser_full_user(test_server: str, auth: Dict[str, str]) -> None:
     """Valid token, but no claims configured"""
-    with mocker.patch(
-        "py_oidc_auth.broker.issuer.TokenBroker.get_user_info",
-        new=AsyncMock(
-            return_value={"username": "testuser", "email": "test@example.com"}
-        ),
-    ):
-        res = requests.get(
-            f"{test_server}/auth/v2/systemuser",
-            headers={"Authorization": f"Bearer {auth['access_token']}"},
-        )
-        assert res.status_code == 200
-        data = res.json()
-        assert "username" in data
-        assert "email" in data
+    res = requests.get(
+        f"{test_server}/auth/v2/systemuser",
+        headers={"Authorization": f"Bearer {auth['access_token']}"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert "username" in data
+    assert "email" in data
 
 
 def test_systemuser_unkown_jti(

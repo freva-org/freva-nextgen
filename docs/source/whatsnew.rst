@@ -10,13 +10,13 @@ Fixed
 ^^^^^^^
 - Fix `data_type` STAC item property name conflict by renaming it to `freva:data_type`
 
-v2604.1.2
-^^^^^^^^^
-
 Changed
 ^^^^^^^
 - Update `systemuser` endpoint to get IDP `userinfo` query results.
 
+Added
+"""""""
+- Implement user privilege checks in rest-api data-loader RPC
 
 v2604.1.1
 ^^^^^^^^^
