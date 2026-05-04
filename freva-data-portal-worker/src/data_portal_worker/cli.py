@@ -111,7 +111,7 @@ def _set_loglevel_from_verbosity(level: int = 0) -> str:
     _level = _levels[max(min(0, level), 2)] if level else DEFAULT_LOG_LEVEL
     data_logger.setLevel(_level)
     for hdl in logger_handlers:
-        hdl.setLevel(_level)
+        hdl.setLevel(_level)  # type: ignore [attr-defined]
     return logging.getLevelName(data_logger.level)
 
 
