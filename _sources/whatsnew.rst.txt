@@ -3,6 +3,21 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
+v2605.0.0
+^^^^^^^^^
+
+Fixed
+^^^^^^^
+- Fix `data_type` STAC item property name conflict by renaming it to `freva:data_type`
+
+Changed
+^^^^^^^
+- Update `systemuser` endpoint to get IDP `userinfo` query results.
+
+Added
+"""""""
+- Implement user privilege checks in rest-api data-loader RPC
+
 v2604.1.1
 ^^^^^^^^^
 
