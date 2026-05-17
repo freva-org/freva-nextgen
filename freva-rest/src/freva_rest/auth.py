@@ -126,6 +126,8 @@ async def systemuser(
         raise HTTPException(403, detail="Token expired.")
     _user = get_userinfo(payload)
     username = _user_claim_check.search(payload)
+    if not username:
+        raise HTTPException(403, detail="Not a system user.")
     return SystemUser(
         username=username or current_user.preferred_username or "",
         email=_user.get("email", current_user.email or ""),
