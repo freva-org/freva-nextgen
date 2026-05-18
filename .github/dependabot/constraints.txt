@@ -2,7 +2,7 @@ aiohttp==3.13.5
 fastapi==0.136.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.2
-requests==2.33.1
+requests==2.34.2
 types-requests==2.33.0.20260518
 rich==14.3.3
 typer==0.24.1
