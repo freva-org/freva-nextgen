@@ -200,6 +200,7 @@ class Solr:
         self.query["facet.sort"] = "index"
         self.query["facet.mincount"] = "1"
         self.query["facet.limit"] = "-1"
+        self.query["facet.method"] = "enum"
 
     def set_query_params(self, **params: Union[str, int, List[str]]) -> None:
         """
@@ -559,6 +560,7 @@ class Solr:
         self.query["facet"] = "true"
         self.query["facet.mincount"] = "1"
         self.query["facet.limit"] = "-1"
+        self.query["facet.method"] = "enum"
         self.query["rows"] = self.batch_size
         self.query["facet.field"] = self._config.solr_fields
         self.query["fl"] = [self.uniq_key] + self._config.solr_fields
@@ -766,11 +768,18 @@ class Solr:
         self.query["facet.sort"] = "index"
         self.query["facet.mincount"] = "1"
         self.query["facet.limit"] = "-1"
+        self.query["facet.method"] = "enum"
         self.query["wt"] = "json"
         self.query["facet.field"] = self.translator.translate_facets(
             search_facets, backwards=True
         )
-
+        # enum is faster for unfiltered queries
+        # fc is faster for filtered queries
+        if self.facets:
+            # let Solr pick default fc
+            self.query.pop("facet.method", None)
+        else:
+            self.query["facet.method"] = "enum"
         self.query["fl"] = [self.uniq_key, "fs_type"]
         logger.debug(
             "Query %s for uniq_key: %s with %s",
@@ -781,6 +790,8 @@ class Solr:
         async with self._session_get() as res:
             search_status, search = res
 
+        self.query.pop("facet.method", None)
+
         docs = search.get("response", {}).get("docs", [])
 
         if zarr_stream and docs:
@@ -789,6 +800,7 @@ class Solr:
                     doc, username=username
                 )
                 doc["fs_type"] = doc.get("fs_type", "posix")
+
         return search_status, SearchResult(
             total_count=search.get("response", {}).get("numFound", 0),
             facets=self.translator.translate_query(
