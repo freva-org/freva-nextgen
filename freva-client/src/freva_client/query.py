@@ -1275,7 +1275,7 @@ class databrowser:
             overview["Note"] = note
         overview["Available search flavours"] = overview.pop("flavours")
         overview["Search attributes by flavour"] = overview.pop("attributes")
-        return yaml.safe_dump(overview, sort_keys=False)
+        return cast(str, yaml.safe_dump(overview, sort_keys=False))
 
     @property
     def url(self) -> str:
