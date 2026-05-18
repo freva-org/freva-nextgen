@@ -200,7 +200,6 @@ class Solr:
         self.query["facet.sort"] = "index"
         self.query["facet.mincount"] = "1"
         self.query["facet.limit"] = "-1"
-        self.query["facet.method"] = "enum"
 
     def set_query_params(self, **params: Union[str, int, List[str]]) -> None:
         """
@@ -560,7 +559,6 @@ class Solr:
         self.query["facet"] = "true"
         self.query["facet.mincount"] = "1"
         self.query["facet.limit"] = "-1"
-        self.query["facet.method"] = "enum"
         self.query["rows"] = self.batch_size
         self.query["facet.field"] = self._config.solr_fields
         self.query["fl"] = [self.uniq_key] + self._config.solr_fields
@@ -768,7 +766,6 @@ class Solr:
         self.query["facet.sort"] = "index"
         self.query["facet.mincount"] = "1"
         self.query["facet.limit"] = "-1"
-        self.query["facet.method"] = "enum"
         self.query["wt"] = "json"
         self.query["facet.field"] = self.translator.translate_facets(
             search_facets, backwards=True
