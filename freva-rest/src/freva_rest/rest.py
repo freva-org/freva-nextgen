@@ -99,8 +99,8 @@ async def refresh_extended_search_cache_periodically(
         try:
             for key in ("file", "uri"):
                 await Solr.refresh_extended_search_cache(uniq_key=key, max_results=100)
-        except asyncio.CancelledError: # pragma: no cover
-            raise # pragma: no cover
+        except asyncio.CancelledError:  # pragma: no cover
+            raise  # pragma: no cover
         except Exception as error:
             logger.warning(
                 "Could not refresh extended-search cache: %s",
@@ -113,7 +113,7 @@ async def refresh_extended_search_cache_periodically(
                 stop_event.wait(),
                 timeout=interval_seconds,
             )
-        except asyncio.TimeoutError: # pragma: no cover
+        except asyncio.TimeoutError:  # pragma: no cover
             pass  # pragma: no cover
 
 

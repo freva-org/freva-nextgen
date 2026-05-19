@@ -8,7 +8,7 @@ v2605.1.1
 
 Added
 """""
-- add cacheing of extend solr search query results.
+- add caching of extend solr search query results.
 
 
 v2605.1.0
