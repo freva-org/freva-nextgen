@@ -1,7 +1,7 @@
 """Main script that runs the rest API."""
 
 import uuid
-from typing import Annotated, Any, Dict, List, Literal, Optional, Union, cast
+from typing import Annotated, Dict, List, Literal, Optional, Union, cast
 
 from fastapi import (
     Body,
@@ -116,7 +116,12 @@ async def metadata_search(
         user_name=user_name,
         **SolrSchema.process_parameters(request),
     )
-    status_code, result = await solr_search.extended_search(facets or [], max_results=0)
+    status_code, result = await solr_search.extended_search(
+        facets,
+        max_results=0,
+        use_cache=False,
+        set_cache=False,
+    )
     await solr_search.store_results(result.total_count, status_code)
     output = result.model_dump()
     _ = output.pop("search_results", "")
@@ -332,19 +337,18 @@ async def extended_search(
 
     if "zarr-stream" not in server_config.services:
         zarr_stream = False
-    kwargs: Dict[str, Any] = {
-        "zarr_stream": zarr_stream,
-        "username": await get_system_username(current_user),
-    }
+    username = await get_system_username(current_user)
     if zarr_stream and current_user is None:
         logger.error("User not authenticated for zarr stream.")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not authenticated for zarr streaming.",
         )
-
     status_code, result = await solr_search.extended_search(
-        facets or [], max_results=max_results, **kwargs
+        facets,
+        max_results=max_results,
+        username=username,
+        zarr_stream=zarr_stream,
     )
     await solr_search.store_results(result.total_count, status_code)
     return JSONResponse(content=result.model_dump(), status_code=status_code)

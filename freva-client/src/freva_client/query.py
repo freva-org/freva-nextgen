@@ -401,8 +401,7 @@ class databrowser:
         self, facets: Tuple[str, ...], search_kw: Dict[str, List[str]]
     ) -> None:
         metadata = {
-            k: v[::2]
-            for (k, v) in self._facet_search(extended_search=True).items()
+            k: v[::2] for (k, v) in self._facet_search(extended_search=True).items()
         }
         primary_key = list(metadata.keys() or ["project"])[0]
         num_facets = 0
@@ -459,9 +458,7 @@ class databrowser:
 
         # Create a table-like structure for available flavors and search facets
         style = 'style="text-align: left"'
-        facet_heading = (
-            f"Available search facets for <em>{self._flavour}</em> flavour"
-        )
+        facet_heading = f"Available search facets for <em>{self._flavour}</em> flavour"
         html_repr = (
             "<table>"
             f"<tr><th colspan='2' {style}>{self.__class__.__name__}"
@@ -513,9 +510,7 @@ class databrowser:
                 for content in result.iter_content(decode_unicode=False):
                     stream.write(content)
         except Exception as error:
-            raise ValueError(
-                f"Couldn't write catalogue content: {error}"
-            ) from None
+            raise ValueError(f"Couldn't write catalogue content: {error}") from None
 
     def aggregate(
         self,
@@ -1000,9 +995,7 @@ class databrowser:
         result = this._facet_search(extended_search=extended_search)
         counts = {}
         for facet, value_counts in result.items():
-            counts[facet] = dict(
-                zip(value_counts[::2], map(int, value_counts[1::2]))
-            )
+            counts[facet] = dict(zip(value_counts[::2], map(int, value_counts[1::2])))
         return counts
 
     @cached_property
@@ -1275,7 +1268,7 @@ class databrowser:
             overview["Note"] = note
         overview["Available search flavours"] = overview.pop("flavours")
         overview["Search attributes by flavour"] = overview.pop("attributes")
-        return cast(str, yaml.safe_dump(overview, sort_keys=False))
+        return yaml.safe_dump(overview, sort_keys=False)
 
     @property
     def url(self) -> str:
