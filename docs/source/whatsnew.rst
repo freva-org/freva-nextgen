@@ -9,6 +9,9 @@ v2605.1.0
 Added
 ^^^^^^^
 - add adaptive `facet.method` for faster Solr faceting
+Fixed
+^^^^^^^
+- enforce system user access gate in systemuser endpoint
 
 v2605.0.0
 ^^^^^^^^^
