@@ -3,6 +3,13 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
+v2605.1.0
+^^^^^^^^^
+
+Added
+^^^^^^^
+- add adaptive `facet.method` for faster Solr faceting
+
 v2605.0.0
 ^^^^^^^^^
 
