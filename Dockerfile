@@ -61,6 +61,7 @@ session required pam_sss.so\n\
         micromamba install -y -q -c conda-forge --override-channels \
         'python<3.14' \
         aiohttp \
+        cachetools \
         cloudpickle \
        "cryptography=45.*" \
         fastapi \
