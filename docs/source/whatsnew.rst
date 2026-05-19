@@ -3,25 +3,34 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
+v2605.1.1
+^^^^^^^^^
+
+Added
+"""""
+- add cacheing of extend solr search query results.
+
+
 v2605.1.0
 ^^^^^^^^^
 
 Added
-^^^^^^^
+"""""
 - add adaptive `facet.method` for faster Solr faceting
+
 Fixed
-^^^^^^^
+"""""
 - enforce system user access gate in systemuser endpoint
 
 v2605.0.0
 ^^^^^^^^^
 
 Fixed
-^^^^^^^
+"""""
 - Fix `data_type` STAC item property name conflict by renaming it to `freva:data_type`
 
 Changed
-^^^^^^^
+"""""""
 - Update `systemuser` endpoint to get IDP `userinfo` query results.
 
 Added
