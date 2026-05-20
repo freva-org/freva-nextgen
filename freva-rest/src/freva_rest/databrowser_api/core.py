@@ -1,21 +1,26 @@
 """The core functionality to interact with the apache solr search system."""
 
+import hashlib
 import json
 from contextlib import asynccontextmanager
 from datetime import datetime
+from functools import lru_cache
 from typing import (
     Any,
     AsyncIterator,
     Dict,
     List,
     Literal,
+    Mapping,
     Optional,
     Sequence,
     Sized,
     Tuple,
+    TypeAlias,
     Union,
     cast,
 )
+from urllib.parse import urlencode
 
 import httpx
 from dateutil.parser import ParserError, parse
@@ -29,6 +34,7 @@ from freva_rest.freva_data_portal.utils import publish_datasets
 from freva_rest.logger import logger
 from freva_rest.utils.stats_utils import store_api_statistics
 
+from ..config import AsyncTTLCache
 from .schema import (
     FlavourResponse,
     FlavourType,
@@ -39,7 +45,48 @@ from .schema import (
 )
 from .services import Flavour, Translator
 
+QueryValue: TypeAlias = str | int | bool | list[str] | Tuple[str, ...]
+QueryItems: TypeAlias = Tuple[tuple[str, str], ...]
+
+
 BUILTIN_FLAVOURS = ["freva", "cmip6", "cmip5", "cordex", "user"]
+
+
+def normalise_solr_query(
+    query: Mapping[str, QueryValue],
+) -> QueryItems:
+    """Convert a Solr query mapping into a stable, hashable representation."""
+    items: List[Tuple[str, str]] = []
+
+    for key in sorted(query):
+        value = query[key]
+
+        if isinstance(value, (list, tuple)):
+            for item in sorted(str(v) for v in value):
+                items.append((key, item))
+        else:
+            items.append((key, str(value)))
+
+    return tuple(items)
+
+
+@lru_cache(maxsize=4096)
+def hash_from_query(
+    *,
+    url: str,
+    uniq_key: str,
+    query_items: QueryItems,
+) -> str:
+    """Create a stable hash for a complete Solr query."""
+    raw = urlencode(
+        (
+            ("url", url),
+            ("uniq_key", uniq_key),
+            *query_items,
+        ),
+        doseq=True,
+    )
+    return hashlib.sha256(raw.encode()).hexdigest()
 
 
 class Solr:
@@ -140,6 +187,7 @@ class Solr:
         # should be changed to cloud storage type. We need to find an approach
         # to determine the file system
         self.fs_type: str = "posix"
+        self._cache: AsyncTTLCache[Tuple[int, Dict[str, Any]]] = AsyncTTLCache()
 
     async def _is_query_duplicate(self, uri: str, file_path: str) -> bool:
         """
@@ -405,6 +453,29 @@ class Solr:
             multi_version=multi_version,
             _translator=translator,
             **query,
+        )
+
+    @classmethod
+    async def refresh_extended_search_cache(
+        cls,
+        uniq_key: Literal["file", "uri"] = "file",
+        max_results: int = 100,
+    ) -> None:
+        this = Solr(
+            ServerConfig(),
+            flavour="freva",
+            translate=True,
+            start=0,
+            uniq_key=uniq_key,
+            multi_version=False,
+        )
+        _ = await this.extended_search(
+            [],
+            max_results=max_results,
+            username="",
+            zarr_stream=False,
+            use_cache=False,
+            set_cache=True,
         )
 
     @staticmethod
@@ -744,10 +815,12 @@ class Solr:
 
     async def extended_search(
         self,
-        facets: List[str],
+        facets: Optional[List[str]],
         max_results: int,
         zarr_stream: bool = False,
         username: Optional[str] = None,
+        use_cache: bool = True,
+        set_cache: bool = True,
     ) -> Tuple[int, SearchResult]:
         """Initialise the apache solr metadata search.
 
@@ -755,21 +828,19 @@ class Solr:
         -------
         int: status code of the apache solr query.
         """
-        search_facets = [f for f in facets if f not in ("*", "all")] or [
+        facets = [f for f in facets or [] if f not in ("*", "all")] or [
             f for f in self._config.solr_fields
         ]
-        if self.multi_version:
-            search_facets.append("version")
-
+        if self.multi_version and "version" not in facets:
+            facets.append("version")
+        search_facets = self.translator.translate_facets(facets, backwards=True)
         self.query["facet"] = "true"
-        self.query["rows"] = max_results
+        self.query["rows"] = str(max_results)
         self.query["facet.sort"] = "index"
         self.query["facet.mincount"] = "1"
         self.query["facet.limit"] = "-1"
         self.query["wt"] = "json"
-        self.query["facet.field"] = self.translator.translate_facets(
-            search_facets, backwards=True
-        )
+        self.query["facet.field"] = search_facets
         # enum is faster for unfiltered queries
         # fc is faster for filtered queries
         if self.facets:
@@ -784,11 +855,32 @@ class Solr:
             self.uniq_key,
             self.query,
         )
-        async with self._session_get() as res:
-            search_status, search = res
+        query_items = normalise_solr_query(self.query)
+        key = hash_from_query(
+            url=self.url,
+            uniq_key=self.uniq_key,
+            query_items=query_items,
+        )
+
+        search_status: int
+        search: Dict[str, Any]
+        cached: Optional[Tuple[int, Dict[str, Any]]] = None
+        fetched_from_solr = False
+        if use_cache:
+            cached = await self._cache.get(key)
+        if cached is not None and 200 <= cached[0] < 300:
+            search_status, search = cached
+        else:
+            async with self._session_get() as res:
+                search_status, search = res
+            fetched_from_solr = True
+
+        should_cache = set_cache and fetched_from_solr and 200 <= search_status < 300
+
+        if should_cache:
+            await self._cache.set(key, (search_status, search))
 
         self.query.pop("facet.method", None)
-
         docs = search.get("response", {}).get("docs", [])
 
         if zarr_stream and docs:
@@ -798,18 +890,21 @@ class Solr:
                 )
                 doc["fs_type"] = doc.get("fs_type", "posix")
 
-        return search_status, SearchResult(
-            total_count=search.get("response", {}).get("numFound", 0),
-            facets=self.translator.translate_query(
-                search.get("facet_counts", {}).get("facet_fields", {})
+        return (
+            search_status,
+            SearchResult(
+                total_count=search.get("response", {}).get("numFound", 0),
+                facets=self.translator.translate_query(
+                    search.get("facet_counts", {}).get("facet_fields", {})
+                ),
+                search_results=docs,
+                facet_mapping={
+                    k: self.translator.forward_lookup[k]
+                    for k in self.query["facet.field"]
+                    if k in self.translator.forward_lookup
+                },
+                primary_facets=self.translator.primary_keys,
             ),
-            search_results=docs,
-            facet_mapping={
-                k: self.translator.forward_lookup[k]
-                for k in self.query["facet.field"]
-                if k in self.translator.forward_lookup
-            },
-            primary_facets=self.translator.primary_keys,
         )
 
     async def init_stream(self) -> Tuple[int, int]:

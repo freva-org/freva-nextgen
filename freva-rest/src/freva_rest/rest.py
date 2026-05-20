@@ -18,8 +18,9 @@ the Authorization header for secured endpoints.
 
 """
 
+import asyncio
 import os
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 from typing import AsyncIterator
 
@@ -87,12 +88,49 @@ if "stacapi" in server_config.services:
     )
 
 
+async def refresh_extended_search_cache_periodically(
+    stop_event: asyncio.Event,
+    interval_seconds: int,
+) -> None:
+    """Refresh the extended-search cache until shutdown is requested."""
+    from .databrowser_api.core import Solr
+
+    while not stop_event.is_set():
+        try:
+            for key in ("file", "uri"):
+                await Solr.refresh_extended_search_cache(uniq_key=key, max_results=100)
+        except asyncio.CancelledError:  # pragma: no cover
+            raise  # pragma: no cover
+        except Exception as error:
+            logger.warning(
+                "Could not refresh extended-search cache: %s",
+                error,
+                exc_info=True,
+            )  # pragma: no cover
+
+        try:
+            await asyncio.wait_for(
+                stop_event.wait(),
+                timeout=interval_seconds,
+            )
+        except asyncio.TimeoutError:  # pragma: no cover
+            pass  # pragma: no cover
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Start and end things before and after shutdown.
 
     Things before yield are executed on startup. Things after on teardown.
     """
+    cache_stop_event = asyncio.Event()
+    cache_refresh_task = asyncio.create_task(
+        refresh_extended_search_cache_periodically(
+            cache_stop_event,
+            300,
+        ),
+        name="extended-search-cache-refresh",
+    )
     try:
         _ = await server_config.mongo_collection_share_key.create_index(
             [("expires_at", 1)],
@@ -100,6 +138,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         )
         yield
     finally:
+        cache_stop_event.set()
+        cache_refresh_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await cache_refresh_task
+
         try:  # pragma: no cover
             await server_config.mongo_client.close()
         except Exception as error:
@@ -121,9 +164,7 @@ app = FastAPI(
     license_info={
         "name": "BSD 2-Clause License",
         "url": "https://opensource.org/license/bsd-2-clause",
-        "x-logo": {
-            "url": "https://freva-org.github.io/freva-nextgen/_static/logo.png"
-        },
+        "x-logo": {"url": "https://freva-org.github.io/freva-nextgen/_static/logo.png"},
     },
 )
 
@@ -147,9 +188,7 @@ async def custom_redoc_ui_html(request: Request) -> HTMLResponse:
     )
 
 
-@app.get(
-    "/api/freva-nextgen/ping", tags=["System"], summary="Health check endpoint"
-)
+@app.get("/api/freva-nextgen/ping", tags=["System"], summary="Health check endpoint")
 async def ping(request: Request) -> JSONResponse:
     """Health check endpoint that returns
     `pong` when the API is operational."""

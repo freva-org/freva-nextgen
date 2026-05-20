@@ -1,10 +1,12 @@
 """Authentication-related endpoints and utilities for the Freva REST API."""
 
+import hashlib
 import logging
 from typing import Annotated, Dict, List, Optional
 
 import httpx
 import jmespath
+from cachetools import TTLCache
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from py_oidc_auth import FastApiOIDCAuth, MongoDBBrokerStore
@@ -12,11 +14,12 @@ from py_oidc_auth.schema import IDToken, Payload
 from py_oidc_auth.utils import get_userinfo
 from pydantic import BaseModel, Field
 
-from .config import ServerConfig
+from .config import AsyncTTLCache, ServerConfig
 
 logger = logging.getLogger(__name__)
 
 server_config = ServerConfig()
+cache: AsyncTTLCache[str] = AsyncTTLCache(TTLCache(maxsize=1024, ttl=36400))
 
 auth = FastApiOIDCAuth(
     client_id=server_config.oidc_client_id,
@@ -99,8 +102,14 @@ async def query_user_info(token_data: IDToken) -> Dict[str, Payload]:
 
 async def get_system_username(token_data: Optional[IDToken]) -> str:
     """Check if a user must be considered as guest."""
-    user_info = (await query_user_info(token_data)) if token_data else {}
-    username: Optional[str] = _user_claim_check.search(user_info)
+    if token_data is None:
+        return ""
+    key = hashlib.sha256(token_data.model_dump_json().encode()).hexdigest()
+    username: Optional[str] = await cache.get(key)
+    if username is None:
+        user_info = await query_user_info(token_data)
+        username = _user_claim_check.search(user_info)
+        await cache.set(key, username or "")
     return username or ""
 
 

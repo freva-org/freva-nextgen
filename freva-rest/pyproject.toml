@@ -21,6 +21,7 @@ requires-python = ">=3.9"
 dependencies = [
 "aiohttp",
 "cloudpickle",
+"cachetools",
 "email-validator",
 "fastapi",
 "pymongo",

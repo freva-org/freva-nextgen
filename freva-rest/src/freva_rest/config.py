@@ -5,6 +5,8 @@ be overridden with a specific toml file holding configurations or environment
 variables.
 """
 
+import asyncio
+import copy
 import logging
 import os
 import re
@@ -16,6 +18,7 @@ from typing import (
     Any,
     ClassVar,
     Dict,
+    Generic,
     Iterator,
     List,
     Optional,
@@ -28,6 +31,7 @@ from typing import (
 
 import requests
 import tomli
+from cachetools import TTLCache
 from pydantic import BaseModel, Field
 from pymongo import AsyncMongoClient
 from pymongo.asynchronous.collection import AsyncCollection
@@ -36,7 +40,41 @@ from .logger import logger, logger_file_handle
 
 ConfigItem = Union[str, int, float, None]
 BUILTIN_FLAVOURS = ["freva", "cmip6", "cmip5", "cordex", "user"]
+SEARCH_CACHE: TTLCache[str, Any] = TTLCache(
+    maxsize=1024,
+    ttl=600,
+)
 T = TypeVar("T", str, int)
+G = TypeVar("G")
+
+
+class AsyncTTLCache(Generic[G]):
+    """Small async-safe wrapper around a TTL cache."""
+
+    _lock = asyncio.Lock()
+
+    def __init__(self, cache: Optional[TTLCache[str, Any]] = None) -> None:
+        self._cache = cache or SEARCH_CACHE
+
+    async def get(self, key: str) -> Optional[G]:
+        """Return a cached value if present."""
+        async with self._lock:
+            value: Optional[G] = self._cache.get(key)
+
+        if value is None:
+            return None
+
+        return copy.deepcopy(value)
+
+    async def set(self, key: str, value: G) -> None:
+        """Store a value in the cache."""
+        async with self._lock:
+            self._cache[key] = copy.deepcopy(value)
+
+    async def clear(self) -> None:
+        """Clear all cached values."""
+        async with self._lock:
+            self._cache.clear()
 
 
 def env_to_int(env_var: str, fallback: int) -> int:
