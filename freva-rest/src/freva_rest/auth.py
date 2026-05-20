@@ -6,6 +6,7 @@ from typing import Annotated, Dict, List, Optional
 
 import httpx
 import jmespath
+from cachetools import TTLCache
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from py_oidc_auth import FastApiOIDCAuth, MongoDBBrokerStore
@@ -18,7 +19,7 @@ from .config import AsyncTTLCache, ServerConfig
 logger = logging.getLogger(__name__)
 
 server_config = ServerConfig()
-cache: AsyncTTLCache[str] = AsyncTTLCache()
+cache: AsyncTTLCache[str] = AsyncTTLCache(TTLCache(maxsize=1024, ttl=36400))
 
 auth = FastApiOIDCAuth(
     client_id=server_config.oidc_client_id,

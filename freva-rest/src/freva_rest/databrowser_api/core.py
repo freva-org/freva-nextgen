@@ -861,16 +861,26 @@ class Solr:
             uniq_key=self.uniq_key,
             query_items=query_items,
         )
-        cached: Optional[Tuple[int, Dict[str, Any]]] = await self._cache.get(key)
-        if use_cache is False or cached is None:
+
+        search_status: int
+        search: Dict[str, Any]
+        cached: Optional[Tuple[int, Dict[str, Any]]] = None
+        fetched_from_solr = False
+        if use_cache:
+            cached = await self._cache.get(key)
+        if cached is not None and 200 <= cached[0] < 300:
+            search_status, search = cached
+        else:
             async with self._session_get() as res:
                 search_status, search = res
-        else:
-            search_status, search = cached
-        if set_cache:
-            await self._cache.set(key, (search_status, search))
-        self.query.pop("facet.method", None)
+            fetched_from_solr = True
 
+        should_cache = set_cache and fetched_from_solr and 200 <= search_status < 300
+
+        if should_cache:
+            await self._cache.set(key, (search_status, search))
+
+        self.query.pop("facet.method", None)
         docs = search.get("response", {}).get("docs", [])
 
         if zarr_stream and docs:

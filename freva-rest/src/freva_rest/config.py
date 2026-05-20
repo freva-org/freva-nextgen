@@ -44,8 +44,6 @@ SEARCH_CACHE: TTLCache[str, Any] = TTLCache(
     maxsize=1024,
     ttl=600,
 )
-EXTENDED_SEARCH_LOCK = asyncio.Lock()
-KEY_LOCKS: dict[str, asyncio.Lock] = {}
 T = TypeVar("T", str, int)
 G = TypeVar("G")
 
@@ -53,9 +51,10 @@ G = TypeVar("G")
 class AsyncTTLCache(Generic[G]):
     """Small async-safe wrapper around a TTL cache."""
 
-    def __init__(self) -> None:
-        self._cache = SEARCH_CACHE
-        self._lock = asyncio.Lock()
+    _lock = asyncio.Lock()
+
+    def __init__(self, cache: Optional[TTLCache[str, Any]] = None) -> None:
+        self._cache = cache or SEARCH_CACHE
 
     async def get(self, key: str) -> Optional[G]:
         """Return a cached value if present."""
