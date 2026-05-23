@@ -13,7 +13,7 @@ import appdirs
 from watchfiles import run_process
 
 from ._version import __version__
-from .load_data import CLIENT, ProcessQueue, RedisKw
+from .load_data import ProcessQueue, RedisKw
 from .utils import DEFAULT_LOG_LEVEL, data_logger, logger_handlers
 
 
@@ -97,8 +97,6 @@ def _main(
     except KeyboardInterrupt:
         pass
     finally:
-        if CLIENT is not None:
-            CLIENT.shutdown()  # pragma: no cover
         for handler in logging.root.handlers:
             handler.flush()
             handler.close()
