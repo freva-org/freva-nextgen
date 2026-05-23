@@ -24,7 +24,7 @@ from typing import (
 import cloudpickle
 import numcodecs
 import xarray as xr
-from dask.distributed import Client, LocalCluster
+from redis import BlockingConnectionPool, Connection, SSLConnection
 from redis.backoff import ExponentialBackoff
 from redis.client import PubSub, Redis
 from redis.exceptions import RedisError
@@ -35,6 +35,7 @@ from ._cache_manager import CacheScheduler
 from .aggregator import DatasetAggregator, write_grouped_zarr
 from .backends import load_data
 from .rechunker import ChunkOptimizer
+from .sanitizer import sanitize_message
 from .utils import (
     JSONObject,
     background_task,
@@ -52,8 +53,6 @@ ZARR_CONSOLIDATED_FORMAT = 1
 ZARR_FORMAT = 2
 ZARRAY_JSON = ".zarray"
 
-CLIENT: Optional[Client] = None
-
 
 class StateEnum(Enum):
     finished_ok = 0
@@ -62,12 +61,15 @@ class StateEnum(Enum):
     waiting = 3
     processing = 4
     ukown = 5
+    finished_permission_denied = 6
 
     @classmethod
     def from_exception(cls, error: Exception) -> int:
         """Define which error state we should assign."""
         if isinstance(error, (FileNotFoundError, KeyError)):
             return cls.finished_not_found.value
+        if isinstance(error, (PermissionError,)):
+            return cls.finished_permission_denied.value
         return cls.finished_failed.value
 
 
@@ -111,19 +113,35 @@ class RedisConnectionDict(TypedDict, total=False):
     retry_on_error: List[Type[Exception]]
     retry_on_timeout: bool
     socket_keepalive: bool
+    max_connections: int
 
 
 class RedisCacheFactory(Redis):
     """Define a custom redis cache."""
 
-    def __init__(self, db: int = 0, retry_interval: int = 30) -> None:
+    def __init__(self, db: int = 0, retry_interval: int = 30, timeout: int = 5) -> None:
         self._db = db
         self._retry = Retry(ExponentialBackoff(cap=10, base=0.1), retries=25)
         self._retry_interval = retry_interval
         conn = self.connection_args
-        data_logger.info("Creating redis connection using: %s", conn)
-
-        super().__init__(**conn)
+        obscure = (
+            "username",
+            "password",
+            "ssl_certfile",
+            "ssl_keyfile",
+            "ssl_ca_certs",
+        )
+        conn_info = [
+            f"{k}=***" if k in obscure and s else f"{k}={s}" for (k, s) in conn.items()
+        ]
+        data_logger.info(
+            "Creating redis connection pool using: %s", " ".join(conn_info)
+        )
+        connection_class = Connection if conn.pop("ssl") is False else SSLConnection
+        pool = BlockingConnectionPool(
+            timeout=timeout, connection_class=connection_class, **conn
+        )
+        super().__init__(connection_pool=pool)
 
     @property
     def connection_args(self) -> RedisConnectionDict:
@@ -150,6 +168,7 @@ class RedisCacheFactory(Redis):
             retry=self._retry,
             retry_on_error=[RedisError, OSError],
             retry_on_timeout=True,
+            max_connections=50,
         )
 
 
@@ -200,23 +219,6 @@ class LoadStatus:
             repr_html=load_dict.get("repr_html", cls.repr_html),
         )
         return cls(**_dict)
-
-
-def get_dask_client(
-    client: Optional[Client] = CLIENT, dev_mode: bool = False
-) -> Optional[Client]:
-    """Get or create a cached dask cluster."""
-    if client is None and dev_mode is False:
-        client = Client(
-            LocalCluster(
-                host="0.0.0.0",
-                scheduler_port=int(os.getenv("DASK_PORT", "40000")),
-            )
-        )
-        data_logger.info("Created new cluster: %s", client.dashboard_link)
-    else:
-        data_logger.debug("recycling dask cluster.")
-    return client
 
 
 class DataLoadFactory:
@@ -311,6 +313,7 @@ class DataLoadFactory:
         map_primary_chunksize: int = 1,
         access_pattern: Literal["time_series", "map"] = "map",
         chunk_size: float = 16.0,
+        username: Optional[str] = None,
     ) -> None:
         """Create a zarr object from an input path."""
         start = time.time()
@@ -335,6 +338,7 @@ class DataLoadFactory:
         self.cache.setex(path_id, expires_in, cloudpickle.dumps(status_dict))
         data_logger.info("%s", ",".join(input_paths))
         try:
+            ProcessQueue.check_for_access_permissions(username, input_paths)
             dsets = {
                 k: opt.apply(d)
                 for k, d in agg.aggregate(
@@ -454,7 +458,6 @@ class ProcessQueue(DataLoadFactory):
         super().__init__()
         self._backoff_sec = backoff_sec
         self._max_backoff_sec = max_backoff_sec
-        self.client = get_dask_client(dev_mode=dev_mode)
         self.dev_mode = dev_mode
 
     def _close_pubsub(self, pubsub: Optional[PubSub], recycle: bool = False) -> None:
@@ -466,25 +469,37 @@ class ProcessQueue(DataLoadFactory):
                 pass
             time.sleep(self.backoff_sec)
 
-    def _handle_access_check(self, data: Dict[str, str]) -> None:
-        """Publish the result of a fs access check for a user."""
-        username = data.get("username") or None
-        paths = data["paths"]
+    @staticmethod
+    def check_for_access_permissions(username: Optional[str], paths: List[str]) -> None:
+        """Check if a user is allowed to read *all* paths on the file system."""
         data_logger.debug(
             "Checking read permissions for user %s on path %s",
             username or "guest",
             ",".join(paths),
         )
+        allowed = False
         try:
             allowed = all(
                 [user_can_read(p, username) for p in paths if Path(p).exists()]
             )
         except Exception as error:
-            data_logger.error(
+            data_logger.warning(
                 "Could not determine file permissions for %s:\n%s",
                 ",".join(paths),
                 error,
             )
+        if allowed is False:
+            _paths = " ,".join(paths)
+            raise PermissionError(f"Permission denied for{_paths}")
+
+    def _handle_access_check(self, data: Dict[str, Any]) -> None:
+        """Publish the result of a fs access check for a user."""
+        try:
+            self.check_for_access_permissions(
+                username=data.get("username") or None, paths=data.get("paths", [])
+            )
+            allowed = True
+        except PermissionError:
             allowed = False
         self.cache.lpush(
             f"access-reply:{data['request_id']}",
@@ -524,15 +539,17 @@ class ProcessQueue(DataLoadFactory):
     ) -> None:
         """Callback method to receive rabbit mq messages."""
         try:
-            message = json.loads(body)
-        except json.JSONDecodeError:
-            data_logger.warning("could not decode message")
+            message = sanitize_message(json.loads(body))
+        except (json.JSONDecodeError, ValueError) as exc:
+            data_logger.warning("Rejected broker message: %s", exc)
             return
+
         if "uri" in message:
             self.spawn(
                 message["uri"]["path"],
                 message["uri"]["uuid"],
                 assembly=message["uri"].get("assembly"),
+                username=message["uri"].get("username"),
                 access_pattern=message["uri"].get("access_pattern", "map"),
                 map_primary_chunksize=message["uri"].get("map_primary_chunksize", 1),
                 reload=message["uri"].get("reload", False),
@@ -555,6 +572,7 @@ class ProcessQueue(DataLoadFactory):
         inp_objs: List[str],
         uuid5: str,
         assembly: Optional[Dict[str, Optional[str]]] = None,
+        username: Optional[str] = None,
         access_pattern: Literal["map", "time_series"] = "map",
         map_primary_chunksize: int = 1,
         reload: bool = False,
@@ -574,4 +592,5 @@ class ProcessQueue(DataLoadFactory):
                 access_pattern=access_pattern,
                 map_primary_chunksize=map_primary_chunksize,
                 chunk_size=chunk_size,
+                username=username,
             )
