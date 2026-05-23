@@ -64,12 +64,13 @@ class CacheKwArgs(TypedDict, total=False):
     retry_on_error: List[Type[Exception]]
     retry_on_timeout: bool
     socket_keepalive: bool
+    max_connections: int
 
 
 class RedisCache(redis.Redis):
     """Define a custom redis cache."""
 
-    def __init__(self, db: int = 0, retry_interval: int = 30) -> None:
+    def __init__(self, db: int = 0, retry_interval: int = 30, timeout: int = 5) -> None:
         self._kwargs = CacheKwArgs(
             host=CONFIG.redis_url,
             port=CONFIG.redis_port,
@@ -86,10 +87,33 @@ class RedisCache(redis.Redis):
             retry=Retry(ExponentialBackoff(cap=10, base=0.1), retries=25),
             retry_on_error=[RedisError, OSError],
             retry_on_timeout=True,
+            max_connections=50,
         )
-        logger.info("Creating redis connection using: %s", self._kwargs)
+        obscure = (
+            "username",
+            "password",
+            "ssl_certfile",
+            "ssl_keyfile",
+            "ssl_ca_certs",
+        )
+        conn_info = [
+            f"{k}=***" if k in obscure and s else f"{k}={s}"
+            for (k, s) in self._kwargs.items()
+        ]
+        logger.info("Creating redis connection pool using: %s", " ".join(conn_info))
+        connection_class = (
+            redis.Connection
+            if self._kwargs.pop("ssl") is False
+            else redis.SSLConnection
+        )
+        pool = redis.BlockingConnectionPool(
+            timeout=timeout,
+            connection_class=connection_class,
+            **self._kwargs,
+        )
+
         self._connection_checked = False
-        super().__init__(**self._kwargs)
+        super().__init__(connection_pool=pool)
 
     async def check_connection(self) -> None:
         if self._connection_checked is True:
