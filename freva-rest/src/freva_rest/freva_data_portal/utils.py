@@ -1,6 +1,7 @@
 """Utilities for zarr loading."""
 
 import asyncio
+import binascii
 import hashlib
 import json
 import uuid
@@ -32,6 +33,7 @@ STATUS_LOOKUP = {
     3: "waiting",
     4: "processing",
     5: "gone",
+    6: "permission denied",
 }
 
 # Default retry interval in seconds, sent via Retry-After header
@@ -46,6 +48,7 @@ class LoadStatus(Enum):
 
     * ``finished_ok`` → 200: data ready.
     * ``finished_failed`` → 500: loading failed permanently.
+    * ``finished_permission_denied`` →  403: permission denied
     * ``finished_not_found`` → 404: source file does not exist.
     * ``waiting`` → 503 + Retry-After: queued, not yet started.
     * ``processing`` → 503 + Retry-After: actively being loaded.
@@ -58,6 +61,7 @@ class LoadStatus(Enum):
     waiting = 3
     processing = 4
     unknown = 5
+    finished_permission_denied = 6
 
     @property
     def response(self) -> int:
@@ -69,6 +73,7 @@ class LoadStatus(Enum):
             "waiting": 503,
             "processing": 503,
             "unknown": 404,
+            "finished_permission_denied": 403,
         }.get(self.name, 500)
 
     @property
@@ -83,6 +88,7 @@ class LoadStatus(Enum):
             "finished_ok": "Data ready.",
             "finished_failed": "Data loading failed.",
             "finished_not_found": "Source file not found.",
+            "finished_permisson_denied": "Not allowed to access resource",
             "waiting": "Data is queued for loading, please retry.",
             "processing": "Data is being loaded, please retry.",
             "unknown": "Dataset not found.",
@@ -139,6 +145,7 @@ async def _trigger_loading(
     map_primary_chunksize: int = 1,
     reload: bool = False,
     chunk_size: float = 16.0,
+    username: Optional[str] = None,
 ) -> None:
     """Send a loading instruction to the data-loader via Redis.
 
@@ -151,6 +158,7 @@ async def _trigger_loading(
         json.dumps(
             {
                 "uri": {
+                    "username": username,
                     "path": paths,
                     "uuid": token,
                     "assembly": assembly or {},
@@ -225,6 +233,7 @@ async def publish_datasets(
             map_primary_chunksize=map_primary_chunksize,
             reload=reload,
             chunk_size=chunk_size,
+            username=username,
         )
     if public is True:
         res = await add_ttl_key_to_db_and_cache(
@@ -258,7 +267,7 @@ async def read_redis_data(
     await Cache.check_connection()
     try:
         payload = decode_cache_token(token)
-    except (UnicodeDecodeError, json.JSONDecodeError):
+    except (binascii.Error, UnicodeDecodeError, json.JSONDecodeError):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid path.")
 
     key = token + token_suffix
