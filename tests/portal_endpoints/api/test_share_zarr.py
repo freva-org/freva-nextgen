@@ -213,6 +213,7 @@ def test_load_files_fail(
 
         res = requests.get(
             f"{url}/.zmetadata",
+            params={"timeout": 3},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert res.status_code > 201
@@ -250,6 +251,7 @@ def test_load_files_fail(
     data = requests.get(
         f"{test_server}/data-portal/zarr/{_id}.zarr/lon/.zmetadata",
         headers={"Authorization": f"Bearer {token}"},
+        params={"timeout": 4},
         timeout=10,
     )
     data = requests.get(
