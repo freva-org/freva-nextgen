@@ -36,6 +36,7 @@ dependencies = [
 "tomli",
 "typing_extensions",
 "uvicorn",
+"uvloop ; sys_platform != 'win32'",
 "httpx",
 "xarray",
 "zarr",

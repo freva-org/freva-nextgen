@@ -51,13 +51,13 @@ _ALLOWED_SCHEMES: frozenset[str] = frozenset(
     {
         # Object stores
         "s3",
-        "s3a",   # Hadoop S3A (used by some Spark / fsspec stacks)
-        "s3n",   # Hadoop S3N (legacy)
-        "gs",    # Google Cloud Storage
-        "az",    # Azure Blob (fsspec short form)
+        "s3a",  # Hadoop S3A (used by some Spark / fsspec stacks)
+        "s3n",  # Hadoop S3N (legacy)
+        "gs",  # Google Cloud Storage
+        "az",  # Azure Blob (fsspec short form)
         "abfs",  # Azure Data Lake Gen2
-        "abfss", # Azure Data Lake Gen2 (TLS)
-        "swift", # OpenStack Swift
+        "abfss",  # Azure Data Lake Gen2 (TLS)
+        "swift",  # OpenStack Swift
         # HTTP
         "https",
         "http",
@@ -152,7 +152,7 @@ def _sanitize_posix_path(raw: str, field: str) -> str:
     * Returns the normalised form (``PurePosixPath`` collapses ``//``, etc.).
     """
     if not raw:
-        raise ValueError(f"{field!r} path must not be empty")
+        raise ValueError(f"{field!r} path must not be empty")  # pragma: no cover
     if "\x00" in raw:
         raise ValueError(f"{field!r} path contains a null byte")
     if not raw.startswith("/"):
@@ -162,9 +162,7 @@ def _sanitize_posix_path(raw: str, field: str) -> str:
         )
     pure = PurePosixPath(raw)
     if ".." in pure.parts:
-        raise ValueError(
-            f"{field!r} path contains '..' traversal component: {raw!r}"
-        )
+        raise ValueError(f"{field!r} path contains '..' traversal component: {raw!r}")
     return str(pure)
 
 
@@ -202,9 +200,7 @@ def _sanitize_url_path(raw: str, field: str) -> str:
         )
 
     if not parsed.netloc.split("@")[-1]:
-        raise ValueError(
-            f"{field!r} URL has no host or bucket name: {raw!r}"
-        )
+        raise ValueError(f"{field!r} URL has no host or bucket name: {raw!r}")
 
     # Check the path portion for traversal.  ``PurePosixPath`` is the right
     # tool because object-store key hierarchies use POSIX-style separators.
@@ -299,15 +295,11 @@ def _sanitize_variable(raw: Any) -> str:
     """
     s = _require_str(raw, "variable")
     if not s or len(s) > 256:
-        raise ValueError(
-            f"'variable' must be 1–256 characters, got {len(s)}: {s!r}"
-        )
+        raise ValueError(f"'variable' must be 1–256 characters, got {len(s)}: {s!r}")
     if s[0] == "/" or s[-1] == "/":
         raise ValueError(f"'variable' must not start or end with '/': {s!r}")
     if s.translate(_VARIABLE_STRIP):
-        raise ValueError(
-            f"'variable' contains invalid characters: {s!r}"
-        )
+        raise ValueError(f"'variable' contains invalid characters: {s!r}")
     # Must come after the charset check so we only split strings we know
     # contain only '/', letters, digits, '_', '-', '.'.
     if any(part in (".", "..") for part in s.split("/")):
@@ -329,9 +321,7 @@ def _sanitize_access_pattern(raw: Any) -> str:
 
 def _sanitize_chunk_size(raw: Any) -> float:
     if not isinstance(raw, (int, float)):
-        raise ValueError(
-            f"'chunk_size' must be a number, got {type(raw).__name__}"
-        )
+        raise ValueError(f"'chunk_size' must be a number, got {type(raw).__name__}")
     value = float(raw)
     if not (_MIN_CHUNK_SIZE_MIB <= value <= _MAX_CHUNK_SIZE_MIB):
         raise ValueError(
@@ -359,12 +349,8 @@ def _sanitize_assembly(raw: Any) -> Optional[Dict[str, Optional[str]]]:
     if raw is None or raw == {}:
         return None
     if not isinstance(raw, dict):
-        raise ValueError(
-            f"'assembly' must be a dict or null, got {type(raw).__name__}"
-        )
-    _allowed_keys = {
-        "mode", "dim", "compat", "join", "data_vars", "coords", "group_by"
-    }
+        raise ValueError(f"'assembly' must be a dict or null, got {type(raw).__name__}")
+    _allowed_keys = {"mode", "dim", "compat", "join", "data_vars", "coords", "group_by"}
     for k, v in raw.items():
         if not isinstance(k, str):
             raise ValueError(f"'assembly' key must be a string, got {k!r}")
@@ -421,7 +407,12 @@ def _sanitize_access_check(payload: Any) -> Dict[str, Any]:
     # isprintable() is False for all control characters (tab, LF, etc.) and
     # for non-printable Unicode; the explicit " " check catches the space
     # character which is printable but still disallowed in a key suffix.
-    if not request_id or len(request_id) > 128 or not request_id.isprintable() or " " in request_id:
+    if (
+        not request_id
+        or len(request_id) > 128
+        or not request_id.isprintable()
+        or " " in request_id
+    ):
         raise ValueError(
             f"'access_check.request_id' must be 1–128 printable non-whitespace "
             f"characters, got {request_id!r}"

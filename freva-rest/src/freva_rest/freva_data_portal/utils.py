@@ -6,7 +6,7 @@ import hashlib
 import json
 import uuid
 from enum import Enum
-from typing import Any, Awaitable, Dict, List, Literal, Optional, Union, cast
+from typing import Any, Dict, List, Literal, Optional, Union
 
 import cloudpickle
 from fastapi import status
@@ -99,7 +99,7 @@ async def _query_broker_on_permissions(
     username: str, paths: List[str], timeout: float = 5.0
 ) -> bool:
     request_id = str(uuid.uuid4())
-    await Cache.publish(
+    await Cache.lpush(
         "data-portal",
         json.dumps(
             {
@@ -112,10 +112,7 @@ async def _query_broker_on_permissions(
         ).encode("utf-8"),
     )
     # Block-wait for the reply
-    result = await cast(
-        Awaitable[Optional[List[bytes]]],
-        Cache.blpop(f"access-reply:{request_id}", timeout=timeout),
-    )
+    result = await Cache.blpop(f"access-reply:{request_id}", timeout=timeout)
     if result is None:
         raise HTTPException(503, "Data-loader service unavailable.")
     allowed: bool = json.loads(result[1]).get("allowed", False)
@@ -153,7 +150,7 @@ async def _trigger_loading(
     It should only be called from code paths where permissions have
     already been verified (e.g. lazy re-publish from ``read_redis_data``).
     """
-    await Cache.publish(
+    await Cache.lpush(
         "data-portal",
         json.dumps(
             {
@@ -325,11 +322,13 @@ async def read_redis_data(
     return data[subkey]
 
 
-async def load_chunk(_id: str, variable: str, chunk: str, timeout: int = 1) -> Response:
+async def load_chunk(
+    _id: str, variable: str, chunk: str, timeout: int = 30
+) -> Response:
     """Load a zarr chunk from the cache."""
     detail = {"chunk": {"uuid": _id, "variable": variable, "chunk": chunk}}
     await Cache.check_connection()
-    await Cache.publish("data-portal", json.dumps(detail).encode("utf-8"))
+    await Cache.lpush("data-portal", json.dumps(detail).encode("utf-8"))
     data: bytes = await read_redis_data(
         _id, "data", token_suffix=f"-{variable}-{chunk}", timeout=timeout
     )

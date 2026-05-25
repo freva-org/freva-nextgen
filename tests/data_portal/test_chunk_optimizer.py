@@ -2,11 +2,8 @@ import dask.array as da
 import numpy as np
 import xarray as xr
 
-from data_portal_worker.rechunker import (
-    ChunkOptimizer,
-    _dtype_itemsize,
-    _group_vars_by_dims,
-)
+from data_portal_worker.rechunker import (ChunkOptimizer, _dtype_itemsize,
+                                          _group_vars_by_dims)
 
 
 def _mk_ds_map_like() -> xr.Dataset:

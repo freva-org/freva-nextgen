@@ -6,20 +6,10 @@ from base64 import b64encode
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from distributed import Client
 from pytest import LogCaptureFixture
 
 from data_portal_worker.cli import get_redis_config
-from data_portal_worker.load_data import RedisCacheFactory, get_dask_client
-
-
-def test_get_client() -> None:
-    """Test the dask client creation."""
-
-    assert get_dask_client(None, True) is None
-    client = get_dask_client()
-    assert isinstance(client, Client)
-    client.shutdown()
+from data_portal_worker.load_data import RedisCacheFactory
 
 
 def test_broker(caplog: LogCaptureFixture) -> None:

@@ -385,7 +385,7 @@ async def zarr_key_data_shared(
             ge=0,
             le=1500,
         ),
-    ] = 2,
+    ] = 12,
 ) -> Response:
     """
     Serve arbitrary Zarr metadata or chunk keys for shared datasets.

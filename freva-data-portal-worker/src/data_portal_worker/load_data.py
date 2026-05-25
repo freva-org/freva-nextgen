@@ -4,6 +4,7 @@ import itertools
 import json
 import os
 import ssl
+import threading
 import time
 from dataclasses import dataclass
 from enum import Enum
@@ -24,9 +25,10 @@ from typing import (
 import cloudpickle
 import numcodecs
 import xarray as xr
+from cachetools import TTLCache
 from redis import BlockingConnectionPool, Connection, SSLConnection
 from redis.backoff import ExponentialBackoff
-from redis.client import PubSub, Redis
+from redis.client import Redis
 from redis.exceptions import RedisError
 from redis.retry import Retry
 from xarray.backends.zarr import encode_zarr_variable
@@ -241,6 +243,20 @@ class DataLoadFactory:
 
     def __init__(self) -> None:
         self._cache: Optional[Redis] = None
+        # Per-process, per-instance cache: avoids re-deserialising the
+        # cloudpickle blob for every concurrent get_zarr_chunk thread.
+        self._object_cache: TTLCache[
+            str, Optional[Tuple[Dict[str, Any], Dict[str, xr.Dataset]]]
+        ] = TTLCache(
+            maxsize=int(os.environ.get("API_OBJECT_CACHE_SIZE", "32")),
+            ttl=int(os.environ.get("API_CACHE_EXP", "3600")),
+        )
+        self._object_cache_lock = threading.Lock()
+
+    def _evict_object_cache(self, key: str) -> None:
+        """Remove *key* from the in-memory cache (call before a reload)."""
+        with self._object_cache_lock:
+            self._object_cache.pop(key, None)
 
     def _preload_coordinate_chunks(
         self,
@@ -329,6 +345,7 @@ class DataLoadFactory:
             LoadDict,
             cloudpickle.loads(self.cache.get(path_id) or b"\x80\x05}\x94."),
         )
+        self._evict_object_cache(path_id)
         data["status"] = StateEnum.processing.value
         data.setdefault("obj_path", f"/api/freva-data-portal/zarr/{path_id}.zarr")
         data.setdefault("repr_html", "<b>Data hasn't been loaded.</b>")
@@ -364,14 +381,14 @@ class DataLoadFactory:
             data_logger.info("Serialisation data done within %.2f sec", step2 - step)
             step = time.time()
             data_logger.info("Ceching data")
-            # We need to add the xr dataset to an extra cache entry because the
-            # status_dict will be loaded by the rest-api, if the xarray dataset
-            # would be present in the status_dict the rest-api code would attempt
-            # to instantiate the pickled dataset object and that might fail
-            # because we might or might not have xarray and all the backends
-            # instantiated. Since the xarray dataset object isn't needed
-            # anyway byt the rest-api we simply add it to a cache entry of its
-            # own.
+            # We need to add the xr dataset to an extra cache entry because
+            # the status_dict will be loaded by the rest-api, if the xarray
+            # dataset would be present in the status_dict the rest-api
+            # code would attempt to instantiate the pickled dataset object
+            # and that might fail because we might or might not have xarray
+            # and all the backends instantiated. Since the xarray dataset
+            # object isn't needed anyway but the rest-api we simply add it
+            # to a cache entry of its own.
             status_dict["status"] = StateEnum.finished_ok.value
             self.cache.setex(f"{path_id}-dset", expires_in, pkls)
             data_logger.info("Caching done within %.2f sec", time.time() - step)
@@ -418,6 +435,16 @@ class DataLoadFactory:
             package = dict(reason=str(error), status=StateEnum.from_exception(error))
         self.cache.setex(f"{key}-{var_group}-{chunk}", 360, cloudpickle.dumps(package))
 
+    def _cache_lookup(
+        self, key: str
+    ) -> Optional[Tuple[Dict[str, Any], Dict[str, xr.Dataset]]]:
+        for _ in range(2):
+            with self._object_cache_lock:
+                cached = self._object_cache.get(key)
+                if cached is not None:
+                    return cached
+        return None
+
     def load_object(self, key: str) -> Tuple[Dict[str, Any], Dict[str, xr.Dataset]]:
         """Load a cached dataset.
 
@@ -435,15 +462,21 @@ class DataLoadFactory:
                       which means that there is a load status != 0
         KeyError: If the key doesn't exist in the cache (anymore).
         """
-        data_logger.debug("Loading %s ...", key)
-        metadata_cache = cast(Optional[bytes], self.cache.get(key))
-        dset_cache = self.cache.get(f"{key}-dset")
-        if metadata_cache is None or dset_cache is None:
-            raise KeyError(f"{key} uuid does not exist (anymore).")
-        load_dict: LoadDict = cloudpickle.loads(metadata_cache)
-        dsets = cast(Dict[str, xr.Dataset], cloudpickle.loads(dset_cache))
-        data_logger.debug("Loading %s ... done", key)
-        return cast(Dict[str, Any], load_dict["data"]), dsets
+        result = self._cache_lookup(key)
+        if result is not None:
+            return result
+        with self._object_cache_lock:
+            data_logger.debug("Loading %s ...", key)
+            metadata_cache = cast(Optional[bytes], self.cache.get(key))
+            dset_cache = self.cache.get(f"{key}-dset")
+            if metadata_cache is None or dset_cache is None:
+                raise KeyError(f"{key} uuid does not exist (anymore).")
+            load_dict: LoadDict = cloudpickle.loads(metadata_cache)
+            dsets = cast(Dict[str, xr.Dataset], cloudpickle.loads(dset_cache))
+            data_logger.debug("Loading %s ... done", key)
+            result = cast(Dict[str, Any], load_dict["data"]), dsets
+            self._object_cache[key] = result
+        return result
 
 
 class ProcessQueue(DataLoadFactory):
@@ -451,23 +484,24 @@ class ProcessQueue(DataLoadFactory):
 
     def __init__(
         self,
-        dev_mode: bool = False,
         backoff_sec: float = 0.2,
         max_backoff_sec: float = 5.0,
     ) -> None:
         super().__init__()
         self._backoff_sec = backoff_sec
         self._max_backoff_sec = max_backoff_sec
-        self.dev_mode = dev_mode
 
-    def _close_pubsub(self, pubsub: Optional[PubSub], recycle: bool = False) -> None:
-        if pubsub is not None:
-            self.backoff_sec = min(self._max_backoff_sec, self._backoff_sec * 2)
-            try:
-                pubsub.close()
-            except Exception:
-                pass
-            time.sleep(self.backoff_sec)
+    def __enter__(self) -> "ProcessQueue":
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[Any],
+    ) -> None:
+        self.cache.close()
+        return None
 
     @staticmethod
     def check_for_access_permissions(username: Optional[str], paths: List[str]) -> None:
@@ -510,26 +544,22 @@ class ProcessQueue(DataLoadFactory):
     def run_for_ever(self, channel: str) -> None:
         """Start the listener daemon."""
         data_logger.info("Starting data-loading daemon")
-        pubsub: Optional[PubSub] = None
         cache_scheduler = CacheScheduler()
         data_logger.info("Broker will listen for messages now")
         while True:
             try:
-                if pubsub is None:
-                    pubsub = self.cache.pubsub()
-                    pubsub.subscribe(channel)
                 cache_scheduler.tick()
-                message = pubsub.get_message()
-                if message and message["type"] == "message":
-                    self.redis_callback(message["data"])
-                else:
-                    time.sleep(0.1)
+                result = cast(
+                    Optional[Tuple[str, bytes]],
+                    self.cache.brpop(channel, timeout=1),
+                )
+                if result:
+                    _, body = result
+                    self.redis_callback(body)
             except KeyboardInterrupt:
-                self._close_pubsub(pubsub)
-                raise KeyboardInterrupt("Exiting")
+                break
             except RedisError:  # pragma: no cover
-                self._close_pubsub(pubsub)  # pragma: no cover
-                pubsub = None  # pragma: no cover
+                time.sleep(1)  # back off and retry
             except Exception as error:
                 data_logger.exception(error)
 
@@ -538,6 +568,7 @@ class ProcessQueue(DataLoadFactory):
         body: bytes,
     ) -> None:
         """Callback method to receive rabbit mq messages."""
+        data_logger.critical(body)
         try:
             message = sanitize_message(json.loads(body))
         except (json.JSONDecodeError, ValueError) as exc:
@@ -563,9 +594,6 @@ class ProcessQueue(DataLoadFactory):
             )
         elif "access_check" in message:
             self._handle_access_check(message["access_check"])
-        elif "shutdown" in message:
-            if message["shutdown"] is True and self.dev_mode is True:
-                raise KeyboardInterrupt("Shutdown client")
 
     def spawn(
         self,

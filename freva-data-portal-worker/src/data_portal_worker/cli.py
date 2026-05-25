@@ -4,17 +4,24 @@ import argparse
 import json
 import logging
 import os
+import signal
+import time
 from base64 import b64decode
+from multiprocessing import Process
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List, Optional, Union
+from types import FrameType
+from typing import Any, List, Optional, Union
 
 import appdirs
-from watchfiles import run_process
 
 from ._version import __version__
 from .load_data import ProcessQueue, RedisKw
 from .utils import DEFAULT_LOG_LEVEL, data_logger, logger_handlers
+
+
+def _sigterm_handler(signum: int, frame: Optional[FrameType]) -> None:
+    raise KeyboardInterrupt("SIGTERM received")
 
 
 def read_file_content(input_file: Optional[Union[str, Path]] = None) -> str:
@@ -53,19 +60,20 @@ def get_redis_config(
 
 def _main(
     config_file: Optional[Path] = None,
-    port: int = 40000,
     exp: int = 3600,
     redis_host: str = "redis://localhost:6379",
     redis_password: Optional[str] = None,
     redis_user: Optional[str] = None,
     redis_ssl_certfile: Optional[str] = None,
     redis_ssl_keyfile: Optional[str] = None,
-    dev: bool = False,
     log_level: str = "WARNING",
 ) -> None:
     """Run the loader process."""
+    try:
+        signal.signal(signal.SIGTERM, _sigterm_handler)
+    except Exception as error:
+        data_logger.warning(error)
     data_logger.debug("Loading cluster config from %s", config_file)
-    env = os.environ.copy()
     cache_config = get_redis_config(
         config_file=config_file,
         redis_password=redis_password,
@@ -73,44 +81,104 @@ def _main(
         redis_ssl_certfile=redis_ssl_certfile,
         redis_ssl_keyfile=redis_ssl_keyfile,
     )
-    try:
-        os.environ["API_LOGLEVEL"] = log_level
-        os.environ["DASK_PORT"] = str(port)
-        os.environ["API_CACHE_EXP"] = str(exp)
-        os.environ["API_REDIS_HOST"] = redis_host
-        os.environ["API_REDIS_USER"] = cache_config["user"]
-        os.environ["API_REDIS_PASSWORD"] = cache_config["passwd"]
-        with TemporaryDirectory() as temp:
-            if cache_config["ssl_cert"] and cache_config["ssl_key"]:
-                cert_file = Path(temp) / "client-cert.pem"
-                key_file = Path(temp) / "client-key.pem"
-                cert_file.write_text(cache_config["ssl_cert"])
-                key_file.write_text(cache_config["ssl_key"])
-                key_file.chmod(0o600)
-                cert_file.chmod(0o600)
-                os.environ["API_REDIS_SSL_CERTFILE"] = str(cert_file)
-                os.environ["API_REDIS_SSL_KEYFILE"] = str(key_file)
+    os.environ["API_LOGLEVEL"] = log_level
+    os.environ["API_CACHE_EXP"] = str(exp)
+    os.environ["API_REDIS_HOST"] = redis_host
+    os.environ["API_REDIS_USER"] = cache_config["user"]
+    os.environ["API_REDIS_PASSWORD"] = cache_config["passwd"]
+    with TemporaryDirectory() as temp:
+        if cache_config["ssl_cert"] and cache_config["ssl_key"]:
+            cert_file = Path(temp) / "client-cert.pem"
+            key_file = Path(temp) / "client-key.pem"
+            cert_file.write_text(cache_config["ssl_cert"])
+            key_file.write_text(cache_config["ssl_key"])
+            key_file.chmod(0o600)
+            cert_file.chmod(0o600)
+            os.environ["API_REDIS_SSL_CERTFILE"] = str(cert_file)
+            os.environ["API_REDIS_SSL_KEYFILE"] = str(key_file)
 
-            data_logger.debug("Starting data-loader process")
-            queue = ProcessQueue(dev_mode=dev)
-            queue.run_for_ever("data-portal")
-    except KeyboardInterrupt:
-        pass
+        data_logger.debug("Starting data-loader process")
+        with ProcessQueue() as q:
+            q.run_for_ever("data-portal")
+
+
+def _set_loglevel_from_verbosity(level: int = 0) -> str:
+    _levels = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
+    _level = _levels[max(min(level, 2), 0)] if level else DEFAULT_LOG_LEVEL
+    data_logger.setLevel(_level)
+    for hdl in logger_handlers:
+        hdl.setLevel(_level)  # type: ignore [attr-defined]
+    return logging.getLevelName(data_logger.level)
+
+
+def _load_wrapper(config_file: Path, **kwargs: Any) -> None:
+    from watchfiles import run_process
+
+    try:
+        run_process(
+            Path(__file__).parent, target=_main, args=(config_file,), kwargs=kwargs
+        )
     finally:
         for handler in logging.root.handlers:
             handler.flush()
             handler.close()
             logging.root.removeHandler(handler)
-        os.environ = env  # type: ignore
 
 
-def _set_loglevel_from_verbosity(level: int = 0) -> str:
-    _levels = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
-    _level = _levels[max(min(0, level), 2)] if level else DEFAULT_LOG_LEVEL
-    data_logger.setLevel(_level)
-    for hdl in logger_handlers:
-        hdl.setLevel(_level)  # type: ignore [attr-defined]
-    return logging.getLevelName(data_logger.level)
+def daemon(config_file: Path, num_proc: int, **kwargs: Any) -> None:
+    """Run the main function as a daemon with retry strategy."""
+    data_logger.info("Starting data-loading daemon")
+    processes: List[Optional[Process]] = [
+        Process(
+            target=_main,
+            args=(config_file.expanduser(),),
+            kwargs=kwargs,
+            daemon=True,
+            name=f"data-portal-worker-{i}",
+        )
+        for i in range(num_proc)
+    ]
+    for p in processes:
+        if p is not None:
+            p.start()
+    try:
+        # Restart any worker that dies unexpectedly
+        while not all(p is None for p in processes):
+            for i, p in enumerate(processes):
+                if p is None or p.is_alive():
+                    continue
+                if p.exitcode == 0:
+                    data_logger.info("Worker %s exited cleanly", p.name)
+                    processes[i] = None
+                else:
+                    data_logger.warning(
+                        "Worker %s died (exit %s), restarting", p.name, p.exitcode
+                    )
+                    new = Process(
+                        target=_main,
+                        args=(config_file.expanduser(),),
+                        kwargs=kwargs,
+                        daemon=True,
+                        name=p.name,
+                    )
+                    new.start()
+                    processes[i] = new
+            time.sleep(5)
+    except KeyboardInterrupt:
+        for p in processes:
+            if p is not None:
+                p.terminate()
+                p.join(timeout=10)
+        for p in processes:
+            if p is not None and p.is_alive():
+                data_logger.warning("Worker %s did not terminate, killing", p.name)
+                p.kill()
+                p.join(timeout=3)
+    finally:
+        for handler in logging.root.handlers:
+            handler.flush()
+            handler.close()
+            logging.root.removeHandler(handler)
 
 
 def run_data_loader(argv: Optional[List[str]] = None) -> None:
@@ -155,13 +223,6 @@ def run_data_loader(argv: Optional[List[str]] = None) -> None:
         default=f"redis://{redis_host}:{redis_port}",
     )
     parser.add_argument(
-        "-p",
-        "--port",
-        type=int,
-        help="Dask scheduler port for loading data.",
-        default=os.getenv("API_PORT", "40000"),
-    )
-    parser.add_argument(
         "--dev",
         action="store_true",
         help="Development mode",
@@ -203,10 +264,15 @@ def run_data_loader(argv: Optional[List[str]] = None) -> None:
         help="Path to the public redis cert file.",
         default=os.getenv("API_REDIS_SSL_CERTFILE"),
     )
+    parser.add_argument(
+        "--num-proc",
+        "-p",
+        type=int,
+        default=max(1, min(8, int(os.getenv("API_NUM_PROCS", str(os.cpu_count()))))),
+    )
     args = parser.parse_args(argv)
     log_level = _set_loglevel_from_verbosity(args.verbose)
     kwargs = {
-        "port": args.port,
         "exp": args.exp,
         "redis_host": args.redis_host,
         "dev": args.dev,
@@ -216,12 +282,8 @@ def run_data_loader(argv: Optional[List[str]] = None) -> None:
         "redis_ssl_keyfile": args.redis_ssl_keyfile,
         "log_level": log_level,
     }
+    nprocs = args.num_proc if args.dev is False else 1
     if args.dev:
-        run_process(
-            Path(__file__).parent,
-            target=_main,
-            args=(args.config_file.expanduser(),),
-            kwargs=kwargs,
-        )
+        _load_wrapper(args.config_file.expanduser(), **kwargs)
     else:
-        _main(args.config_file.expanduser(), **kwargs)
+        daemon(args.config_file.expanduser(), nprocs, **kwargs)

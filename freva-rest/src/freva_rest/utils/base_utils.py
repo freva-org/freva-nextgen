@@ -136,6 +136,21 @@ class RedisCache(redis.Redis):
             ) from None
         self._connection_checked = True
 
+    async def lpush(self, name: str, *values: bytes) -> int:  # type: ignore[override]
+        """Async wrapper matching the event-loop-aware connection pool."""
+        return await cast(Awaitable[int], super().lpush(name, *values))
+
+    async def blpop(  # type: ignore[override]
+        self,
+        keys: Union[str, List[str]],
+        timeout: Union[int, float] = 5.0,
+    ) -> Optional[List[bytes]]:
+        """Async wrapper matching the event-loop-aware connection pool."""
+        return await cast(
+            Awaitable[Optional[List[bytes]]],
+            super().blpop(keys, timeout=timeout),
+        )
+
 
 Cache = RedisCache()
 

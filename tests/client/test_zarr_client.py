@@ -229,10 +229,8 @@ class TestEnum:
 
     def test_enum_equivalence(self) -> None:
         """String and enum enum values should produce equivalent dicts."""
-        from freva_client.cli.zarr_cli import (
-            AggregationCombine,
-            AggregationOption,
-        )
+        from freva_client.cli.zarr_cli import (AggregationCombine,
+                                               AggregationOption)
 
         a1 = AggregationOption(join="minimal").to_dict()
         a2 = AggregationOption(join=AggregationCombine.minimal).to_dict()

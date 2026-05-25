@@ -161,22 +161,17 @@ scheduler_port=${scheduler_port%%/*}
 port_part=${redis_host##*:}
 redis_port=${port_part%%/*}
 
-if [ "x$IS_WORKER" = x ]; then
-    user=$(base64 -d "${CONFIG_FILE}" | jq -r .user)
-    passwd=$(base64 -d "${CONFIG_FILE}" | jq -r .passwd)
-    cache_exp=$(base64 -d "${CONFIG_FILE}" | jq -r .cache_exp)
-    TEMP_DIR=$(mktemp -d)
-    ${MAMBA_DIR}/bin/git clone https://github.com/freva-org/freva-nextgen.git $TEMP_DIR || { rm -fr $TEMP_DIR; exit 1; }
-    ${MAMBA_DIR}/bin/python -m pip install -U $TEMP_DIR/freva-data-portal-worker || { rm -r $TEMP_DIR; exit 1; }
-    rm -rf $TEMP_DIR
-    CMD="${MAMBA_DIR}/bin/python -m data_portal_worker \
-        -c ${CONFIG_FILE} -e \
-        $cache_exp -r $redis_host -p \
-        $scheduler_port"
-else
-    CMD="${MAMBA_DIR}/bin/python -m distributed.cli.dask_worker \
-        ${dask_host} --nanny --nworkers -1 --nthreads 2"
-fi
+user=$(base64 -d "${CONFIG_FILE}" | jq -r .user)
+passwd=$(base64 -d "${CONFIG_FILE}" | jq -r .passwd)
+cache_exp=$(base64 -d "${CONFIG_FILE}" | jq -r .cache_exp)
+TEMP_DIR=$(mktemp -d)
+${MAMBA_DIR}/bin/git clone https://github.com/freva-org/freva-nextgen.git $TEMP_DIR || { rm -fr $TEMP_DIR; exit 1; }
+${MAMBA_DIR}/bin/python -m pip install -U $TEMP_DIR/freva-data-portal-worker || { rm -r $TEMP_DIR; exit 1; }
+rm -rf $TEMP_DIR
+CMD="${MAMBA_DIR}/bin/python -m data_portal_worker \
+    -c ${CONFIG_FILE} -e \
+    $cache_exp -r $redis_host -p \
+    $scheduler_port"
 
 echo $CMD
 $CMD

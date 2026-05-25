@@ -24,6 +24,7 @@ env = [
     "API_CONFIG={PWD}/freva-rest/src/freva_rest/api_config.toml",
     "JUPYTER_PLATFORM_DIRS=1",
     "FREVA_BATCH_JOB=foo",
+    "API_USE_TTY=0",
 ]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"

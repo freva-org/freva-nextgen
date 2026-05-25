@@ -6,6 +6,18 @@ All notable changes to this project will be documented in this file.
 v2605.1.1
 ^^^^^^^^^
 
+Changed
+""""""""
+- improved logging.
+- use ``uvloop`` for non-windows os.
+- double check data access permissions for data-loader.
+- drop dask distributed clients.
+
+
+
+v2605.1.1
+^^^^^^^^^
+
 Added
 """""
 - add caching of extend solr search query results.

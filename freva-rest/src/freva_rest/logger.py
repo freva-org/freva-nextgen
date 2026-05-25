@@ -1,12 +1,51 @@
 """Definition of the central logging system."""
 
+import asyncio
 import logging
 import os
+import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 import rich.logging
+import uvicorn
 from rich.console import Console
+
+from .loop import get_async_model
+
+
+def isatty() -> bool:
+    """Check if we are in an interactive env."""
+    _isatty = int(getattr(sys.stdout, "isatty", lambda: False)())
+    return bool(int(os.getenv("API_USE_TTY", str(_isatty))))
+
+
+def make_log_handler() -> logging.Handler:
+    if "PYTEST_CURRENT_TEST" in os.environ or os.getenv("API_USE_TTY", "1") == "0":
+        handler = logging.StreamHandler()
+        handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s %(levelname)-8s %(name)s - %(message)s",
+                datefmt="%Y-%m-%dT%H:%M:%S",
+            )
+        )
+        return handler
+    return rich.logging.RichHandler(
+        rich_tracebacks=isatty(),
+        show_path=True,
+        tracebacks_suppress=[
+            get_async_model(),
+            asyncio,
+            uvicorn,
+        ],
+        console=Console(
+            soft_wrap=False,
+            force_jupyter=False,
+            stderr=True,
+            force_terminal=isatty(),
+        ),
+    )
+
 
 _LOG_LEVELS = {
     "DEBUG": logging.DEBUG,
@@ -26,11 +65,11 @@ THIS_NAME: str = "freva-rest"
 DEFAULT_LOG_LEVEL: int = _LOG_LEVELS.get(
     os.getenv("API_LOGLEVEL", "INFO"), logging.INFO
 )
-LOG_DIR: Path = Path(
-    os.environ.get("API_LOGDIR") or Path(f"/tmp/log/{THIS_NAME}")
-)
+LOG_DIR: Path = Path(os.environ.get("API_LOGDIR") or Path(f"/tmp/log/{THIS_NAME}"))
+
 logfmt = "%(name)s - %(message)s"
 datefmt = "%Y-%m-%dT%H:%M"
+
 LOG_DIR.mkdir(exist_ok=True, parents=True)
 logger_format = logging.Formatter(
     "%(asctime)s %(levelname)s %(name)s - %(message)s", datefmt
@@ -45,15 +84,7 @@ logger_file_handle = RotatingFileHandler(
 )
 logger_file_handle.setFormatter(logger_format)
 logger_file_handle.setLevel(DEFAULT_LOG_LEVEL)
-logger_stream_handle = rich.logging.RichHandler(
-    rich_tracebacks=True,
-    show_path=True,
-    console=Console(
-        soft_wrap=False,
-        force_jupyter=False,
-        stderr=True,
-    ),
-)
+logger_stream_handle = make_log_handler()
 logger_stream_handle.setLevel(DEFAULT_LOG_LEVEL)
 logger = logging.getLogger(THIS_NAME)
 logger.setLevel(DEFAULT_LOG_LEVEL)
