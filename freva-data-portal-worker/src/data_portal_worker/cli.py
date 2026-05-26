@@ -275,7 +275,6 @@ def run_data_loader(argv: Optional[List[str]] = None) -> None:
     kwargs = {
         "exp": args.exp,
         "redis_host": args.redis_host,
-        "dev": args.dev,
         "redis_password": args.redis_password,
         "redis_user": args.redis_username,
         "redis_ssl_certfile": args.redis_ssl_certfile,

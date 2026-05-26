@@ -568,7 +568,6 @@ class ProcessQueue(DataLoadFactory):
         body: bytes,
     ) -> None:
         """Callback method to receive rabbit mq messages."""
-        data_logger.critical(body)
         try:
             message = sanitize_message(json.loads(body))
         except (json.JSONDecodeError, ValueError) as exc:
