@@ -37,16 +37,13 @@ session required pam_sss.so\n\
         micromamba install -y -q -c conda-forge --override-channels \
         'python<3.14' \
         appdirs \
-        asyncssh \
+        cachetools \
         cfgrib \
         cloudpickle \
        "cryptography=45.*" \
-        bokeh \
         dask \
-        distributed \
         h5netcdf \
         jq \
-        jupyter-server-proxy \
         netcdf4 \
         numpy \
         rasterio \

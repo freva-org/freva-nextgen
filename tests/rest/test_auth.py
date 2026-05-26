@@ -1,10 +1,13 @@
 """Test for the authorisation utilities."""
 
 from typing import Dict
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
+import pytest
 import requests
 from pytest_mock import MockerFixture
+
+pytestmark = [pytest.mark.auth, pytest.mark.rest]
 
 
 def test_missing_oidc_server(test_server: str, mocker: MockerFixture) -> None:
@@ -60,6 +63,16 @@ def test_systemuser_full_user(test_server: str, auth: Dict[str, str]) -> None:
     data = res.json()
     assert "username" in data
     assert "email" in data
+
+
+def test_systemuser_unknown_user(test_server: str, auth: Dict[str, str]) -> None:
+    """Valid token, but no claims configured"""
+    with patch("freva_rest.auth._user_claim_check.search", return_value=None):
+        res = requests.get(
+            f"{test_server}/auth/v2/systemuser",
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+        )
+        assert res.status_code == 403
 
 
 def test_systemuser_unkown_jti(

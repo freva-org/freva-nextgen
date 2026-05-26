@@ -52,7 +52,7 @@ def kill_proc(proc: str) -> None:
             sys.executable,
             os.path.join("dev-env", "config", "dev-utils.py"),
             "kill",
-            f'{TEMP_DIR / f"{proc}.pid"}',
+            f"{TEMP_DIR / f'{proc}.pid'}",
         ],
         check=True,
     )
@@ -74,10 +74,10 @@ def start_server(inp_dir: Path, foreground: bool = False, *args: str) -> None:
                 python_exe,
                 "-m",
                 "data_portal_worker",
-                "-v",
-                "--dev",
+                "-vvvvv",
                 "-c",
                 f"{config_file}",
+                "--dev",
             ]
         )
         rest_proc = Popen([python_exe, "-m", "freva_rest.cli"] + list(args))

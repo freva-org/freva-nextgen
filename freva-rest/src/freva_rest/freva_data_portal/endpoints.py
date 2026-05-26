@@ -39,6 +39,9 @@ from .utils import (
     read_redis_data,
 )
 
+_LOAD_TIMEOUT: int = 12
+"""Default timeout for loading zarr datasets."""
+
 
 class LoadResponse(BaseModel):
     """Response schema returning the URL of the future Zarr dataset."""
@@ -204,7 +207,7 @@ async def get_status(
             ge=0,
             le=1500,
         ),
-    ] = 1,
+    ] = _LOAD_TIMEOUT,
     current_user: Optional[TokenPayload] = auth.optional(),
 ) -> ZarrStatus:
     """Get the status of a loading process."""
@@ -261,7 +264,7 @@ async def zarr_html_view(
             ge=0,
             le=1500,
         ),
-    ] = 1,
+    ] = _LOAD_TIMEOUT,
     current_user: TokenPayload = auth.required(),
 ) -> HTMLResponse:
     """Get HTML representation of the Zarr dataset.
@@ -310,7 +313,7 @@ async def zarr_key_data(
             ge=0,
             le=1500,
         ),
-    ] = 2,
+    ] = _LOAD_TIMEOUT,
     current_user: TokenPayload = auth.required(),
 ) -> Response:
     """
@@ -385,7 +388,7 @@ async def zarr_key_data_shared(
             ge=0,
             le=1500,
         ),
-    ] = 2,
+    ] = _LOAD_TIMEOUT,
 ) -> Response:
     """
     Serve arbitrary Zarr metadata or chunk keys for shared datasets.

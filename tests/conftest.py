@@ -135,19 +135,16 @@ def get_data_loader_config() -> bytes:
     )
 
 
-def run_loader_process(port: int) -> None:
+def run_loader_process() -> None:
     """Start the data loader process on the given port."""
     with NamedTemporaryFile(suffix=".json") as temp_f:
         Path(temp_f.name).write_bytes(get_data_loader_config())
-        run_data_loader(Path(temp_f.name), port=port, dev=True)
+        run_data_loader(Path(temp_f.name))
 
 
 def shutdown_data_loader() -> None:
     """Publish a shutdown message to the cache and flush it."""
     cache = Cache()
-    for _ in range(5):
-        cache.publish("data-portal", json.dumps({"shutdown": True}).encode("utf-8"))
-        time.sleep(1)
     cache.flushdb()
 
 
@@ -176,11 +173,12 @@ def setup_server() -> Iterator[str]:
     thread1.daemon = True
     thread1.start()
     time.sleep(1)
-    thread2 = threading.Thread(target=run_loader_process, args=(find_free_port(),))
+    thread2 = threading.Thread(target=run_loader_process)
     thread2.daemon = True
     thread2.start()
     time.sleep(5)
     yield f"http://localhost:{port}/api/freva-nextgen"
+    Cache().flushdb()
 
 
 @pytest.fixture(scope="function", autouse=True)

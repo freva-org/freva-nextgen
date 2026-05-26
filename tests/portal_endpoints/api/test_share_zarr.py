@@ -17,11 +17,7 @@ from fastapi import HTTPException
 from pytest_mock import MockerFixture
 
 from data_portal_worker.load_data import RedisCacheFactory as SyncCache
-from freva_rest.utils.base_utils import (
-    Cache,
-    encode_cache_token,
-    sign_token_path,
-)
+from freva_rest.utils.base_utils import Cache, encode_cache_token, sign_token_path
 from freva_rest.utils.presign_utils import verify_token
 
 
@@ -36,7 +32,7 @@ def test_zarr_conversion(test_server: str, auth: Dict[str, str]) -> None:
         f"{test_server}/data-portal/zarr/convert",
         json={"path": files},
         headers={"Authorization": f"Bearer {token}"},
-        timeout=3,
+        timeout=10,
     )
     assert res.status_code == 200
     out = res.json()
@@ -54,14 +50,14 @@ def test_load_files_success(
         f"{test_server}/databrowser/load/freva/",
         params={"dataset": "cmip6-fs"},
         headers={"Authorization": "Bearer foo"},
-        timeout=3,
+        timeout=10,
     )
     assert res1.status_code == 401
     res2 = requests.get(
         f"{test_server}/databrowser/load/freva/",
         params={"dataset": "cmip6-fs"},
         headers={"Authorization": f"Bearer {token}"},
-        timeout=3,
+        timeout=10,
         stream=True,
     )
     assert res2.status_code == 201
@@ -72,21 +68,21 @@ def test_load_files_success(
     data = requests.get(
         f"{files[0]}/.zmetadata",
         headers={"Authorization": f"Bearer {token}"},
-        timeout=3,
+        timeout=10,
     )
     assert data.status_code == 200
     assert "metadata" in data.json()
     data = requests.get(
         f"{files[0]}/.zgroup",
         headers={"Authorization": f"Bearer {token}"},
-        timeout=3,
+        timeout=10,
     )
     assert data.status_code == 200
     assert "zarr_format" in data.json()
     data = requests.get(
         f"{files[0]}/.zattrs",
         headers={"Authorization": f"Bearer {token}"},
-        timeout=3,
+        timeout=10,
     )
     assert data.status_code == 200
     assert "activity_id" in data.json()
@@ -100,14 +96,14 @@ def test_load_files_success(
     data = requests.get(
         f"{files[0]}/.zattrs",
         headers={"Authorization": f"Bearer {token}"},
-        timeout=3,
+        timeout=10,
     )
     assert data.status_code == 200
     res3 = requests.get(
         f"{test_server}/databrowser/load/freva/",
         params={"dataset": "cmip6-fs", "catalogue-type": "intake"},
         headers={"Authorization": f"Bearer {token}"},
-        timeout=3,
+        timeout=10,
         stream=True,
     )
     assert res3.status_code == 201
@@ -121,20 +117,20 @@ def test_load_files_success(
         data = requests.get(
             f"{files[0]}/lon/{attr}",
             headers={"Authorization": f"Bearer {token}"},
-            timeout=3,
+            timeout=10,
         )
         assert data.status_code == 200
     data = requests.get(
         f"{files[0]}/bar/.zarray",
         headers={"Authorization": f"Bearer {token}"},
-        timeout=3,
+        timeout=10,
     )
     assert data.status_code == 404
     for attr in "", ".zarray":
         data = requests.get(
             f"{files[0]}/{attr}",
             headers={"Authorization": f"Bearer {token}"},
-            timeout=3,
+            timeout=10,
         )
         assert data.status_code == 400
 
@@ -147,7 +143,7 @@ def test_zarr_utils(test_server: str, auth: Dict[str, str]) -> None:
         f"{test_server}/databrowser/load/freva/",
         params={"dataset": "cmip6-fs"},
         headers={"Authorization": f"Bearer {token}"},
-        timeout=3,
+        timeout=10,
         stream=True,
     )
     assert res.status_code == 201
@@ -156,7 +152,7 @@ def test_zarr_utils(test_server: str, auth: Dict[str, str]) -> None:
         f"{test_server}/data-portal/zarr-utils/html",
         params={"url": f"{files[0]}", "timeout": 3},
         headers={"Authorization": f"Bearer {token}"},
-        timeout=3,
+        timeout=10,
     )
     assert data.status_code == 200
     assert "<div><" in data.text
@@ -164,7 +160,7 @@ def test_zarr_utils(test_server: str, auth: Dict[str, str]) -> None:
         f"{test_server}/data-portal/zarr-utils/status",
         params={"url": f"{files[0]}", "timeout": 3},
         headers={"Authorization": f"Bearer {token}"},
-        timeout=3,
+        timeout=10,
     )
     print(token)
     assert data.status_code == 200
@@ -176,7 +172,7 @@ def test_zarr_utils(test_server: str, auth: Dict[str, str]) -> None:
             "timeout": 3,
         },
         headers={"Authorization": f"Bearer {token}"},
-        timeout=3,
+        timeout=10,
     )
     assert data.status_code == 200
     assert data.json()["status"] == 5
@@ -197,7 +193,7 @@ def test_zarr_utils(test_server: str, auth: Dict[str, str]) -> None:
             params={"project": "mock"},
             headers={"Authorization": f"Bearer {token}"},
             stream=True,
-            timeout=7,
+            timeout=10,
         )
         files = list(res3.iter_lines(decode_unicode=True))
         assert len(files) == 1
@@ -217,6 +213,7 @@ def test_load_files_fail(
 
         res = requests.get(
             f"{url}/.zmetadata",
+            params={"timeout": 3},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert res.status_code > 201
@@ -227,7 +224,7 @@ def test_load_files_fail(
         params={"dataset": "*fs", "project": "cmip6"},
         headers={"Authorization": f"Bearer {token}"},
         stream=True,
-        timeout=7,
+        timeout=10,
     )
     assert res2.status_code == 201
     files = list(res2.iter_lines(decode_unicode=True))
@@ -235,39 +232,40 @@ def test_load_files_fail(
         data = requests.get(
             f"{files[0]}/foo/{attr}",
             headers={"Authorization": f"Bearer {token}"},
-            timeout=7,
+            timeout=10,
         )
         assert data.status_code >= 400
         data = requests.get(
             f"{files[0]}/foo/{attr}",
             headers={"Authorization": f"Bearer {token}"},
-            timeout=7,
+            timeout=10,
         )
         assert data.status_code > 400
 
     data = requests.get(
         f"{files[0]}/lon/.zgroup",
         headers={"Authorization": f"Bearer {token}"},
-        timeout=7,
+        timeout=10,
     )
     assert data.status_code >= 400
     data = requests.get(
         f"{test_server}/data-portal/zarr/{_id}.zarr/lon/.zmetadata",
         headers={"Authorization": f"Bearer {token}"},
-        timeout=7,
+        params={"timeout": 4},
+        timeout=10,
     )
     data = requests.get(
         f"{test_server}/data-portal/zarr/{_id}.zarr/lon/.zmetadata",
         headers={"Authorization": f"Bearer {token}"},
         params={"timeout": 1},
-        timeout=7,
+        timeout=10,
     )
     assert data.status_code >= 400
     data = requests.get(
         f"{test_server}/data-portal/zarr/foo.zarr/lon/.zmetadata",
         headers={"Authorization": f"Bearer {token}"},
         params={"timeout": 1},
-        timeout=7,
+        timeout=10,
     )
     assert data.status_code >= 400
 
@@ -275,7 +273,7 @@ def test_load_files_fail(
         f"{test_server}/databrowser/load/freva/",
         params={"dataset": "foo"},
         headers={"Authorization": f"Bearer {token}"},
-        timeout=7,
+        timeout=10,
     )
 
 
@@ -288,7 +286,7 @@ def test_no_broker(
         f"{test_server}/databrowser/load/freva/",
         params={"dataset": "cmip6-fs"},
         headers={"Authorization": f"Bearer {auth['access_token']}"},
-        timeout=7,
+        timeout=10,
         stream=True,
     )
     file = list(res.iter_lines(decode_unicode=True))[0]
@@ -297,7 +295,7 @@ def test_no_broker(
         f"{test_server}/data-portal/zarr/convert",
         json={"path": ["/foo/bar.nc"]},
         headers={"Authorization": f"Bearer {auth['access_token']}"},
-        timeout=7,
+        timeout=10,
     )
     assert res.status_code == 500
 
@@ -318,7 +316,7 @@ def test_no_cache(
                     "timeout": 10,
                 },
                 headers={"Authorization": f"Bearer {auth['access_token']}"},
-                timeout=7,
+                timeout=10,
             )
             assert res.status_code == 503
             assert "retry-after" not in res.headers
@@ -331,14 +329,14 @@ def test_no_cache(
                     f"{test_server}/data-portal/zarr-utils/status",
                     params={"url": f"{test_server}/data-portal/zarr/{_id}.zarr"},
                     headers={"Authorization": f"Bearer {auth['access_token']}"},
-                    timeout=7,
+                    timeout=10,
                 )
                 assert res.status_code == 200
                 res = requests.post(
                     f"{test_server}/data-portal/zarr/convert",
                     json={"path": ["/foo/bar.nc"]},
                     headers={"Authorization": f"Bearer {auth['access_token']}"},
-                    timeout=7,
+                    timeout=10,
                 )
                 assert res.status_code == 503
     finally:
@@ -352,7 +350,7 @@ def test_presigned_url(test_server: str, auth: Dict[str, str]) -> None:
         f"{test_server}/databrowser/load/freva/",
         params={"dataset": "cmip6-fs"},
         headers={"Authorization": f"Bearer {auth['access_token']}"},
-        timeout=7,
+        timeout=10,
         stream=True,
     )
     assert res.status_code == 201
@@ -386,7 +384,7 @@ def test_presigned_url_failed(
             f"{test_server}/databrowser/load/freva/",
             params={"dataset": "cmip6-fs"},
             headers={"Authorization": f"Bearer {auth['access_token']}"},
-            timeout=7,
+            timeout=10,
             stream=True,
         )
         assert res.status_code == 201

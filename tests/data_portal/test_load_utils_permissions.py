@@ -7,11 +7,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from data_portal_worker.utils import (
-    _can_read_stat,
-    _can_read_su,
-    user_can_read,
-)
+from data_portal_worker.utils import (_can_read_stat, _can_read_su,
+                                      user_can_read)
 
 
 def _make_stat(mode: int, uid: int = 1000, gid: int = 1000) -> os.stat_result:

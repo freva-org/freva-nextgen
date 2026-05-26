@@ -8,13 +8,9 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from data_portal_worker.zarr_utils import (
-    encode_chunk,
-    encode_fill_value,
-    extract_dataarray_coords,
-    get_data_chunk,
-    normalize_shape,
-)
+from data_portal_worker.zarr_utils import (encode_chunk, encode_fill_value,
+                                           extract_dataarray_coords,
+                                           get_data_chunk, normalize_shape)
 
 
 class DummyCodec:

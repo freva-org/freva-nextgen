@@ -34,9 +34,10 @@ from freva_rest import __version__
 from .auth import auth_router
 from .config import ServerConfig
 from .logger import logger, reset_loggers
+from .loop import get_async_model
 
 server_config = ServerConfig()
-
+get_async_model()
 
 metadata_tags = [
     {

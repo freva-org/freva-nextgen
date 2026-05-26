@@ -1,10 +1,113 @@
+import logging
 import os
+import sys
 from typing import Annotated, Dict, List, Optional, Union
 
 import mock
+import pytest
+import rich.logging
 from pytest_mock import MockerFixture
 
 from freva_rest.cli import cli, get_cert_file
+from freva_rest.logger import isatty, make_log_handler
+
+
+class TestLogger:
+    """Tests for logger helper functions."""
+
+    def test_isatty_uses_stdout_when_env_is_unset(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Without API_USE_TTY, sys.stdout.isatty() decides."""
+        monkeypatch.delenv("API_USE_TTY", raising=False)
+        monkeypatch.setattr(sys.stdout, "isatty", lambda: True, raising=False)
+
+        assert isatty() is True
+
+        monkeypatch.setattr(sys.stdout, "isatty", lambda: False, raising=False)
+
+        assert isatty() is False
+
+    def test_isatty_env_overrides_stdout(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """API_USE_TTY overrides sys.stdout.isatty()."""
+        monkeypatch.setattr(sys.stdout, "isatty", lambda: False, raising=False)
+        monkeypatch.setenv("API_USE_TTY", "1")
+
+        assert isatty() is True
+
+        monkeypatch.setattr(sys.stdout, "isatty", lambda: True, raising=False)
+        monkeypatch.setenv("API_USE_TTY", "0")
+
+        assert isatty() is False
+
+    def test_make_log_handler_returns_plain_handler_in_pytest(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """PYTEST_CURRENT_TEST=1 forces plain logs."""
+        monkeypatch.setenv("PYTEST_CURRENT_TEST", "1")
+        monkeypatch.delenv("API_USE_TTY", raising=False)
+
+        handler = make_log_handler()
+
+        assert isinstance(handler, logging.StreamHandler)
+        assert not isinstance(handler, rich.logging.RichHandler)
+        assert handler.formatter is not None
+
+    def test_make_log_handler_returns_plain_handler_when_tty_is_disabled(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """API_USE_TTY=0 forces plain logs."""
+        monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+        monkeypatch.setenv("API_USE_TTY", "0")
+
+        handler = make_log_handler()
+
+        assert isinstance(handler, logging.StreamHandler)
+        assert not isinstance(handler, rich.logging.RichHandler)
+        assert handler.formatter is not None
+
+    def test_make_log_handler_plain_formatter(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Plain handler uses the expected non-Rich formatter."""
+        monkeypatch.setenv("PYTEST_CURRENT_TEST", "1")
+
+        handler = make_log_handler()
+        assert handler.formatter is not None
+
+        record = logging.LogRecord(
+            name="freva-rest",
+            level=logging.ERROR,
+            pathname=__file__,
+            lineno=1,
+            msg="boom",
+            args=(),
+            exc_info=None,
+        )
+        formatted = handler.formatter.format(record)
+
+        assert "ERROR" in formatted
+        assert "freva-rest - boom" in formatted
+
+    def test_make_log_handler_returns_rich_handler_when_tty_is_enabled(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Interactive mode returns a RichHandler."""
+        monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+        monkeypatch.setenv("API_USE_TTY", "1")
+        monkeypatch.setattr(sys.stdout, "isatty", lambda: True, raising=False)
+
+        handler = make_log_handler()
+
+        assert isinstance(handler, rich.logging.RichHandler)
 
 
 def test_get_cert_file() -> None:
@@ -58,6 +161,4 @@ def test_cli_utils() -> None:
 
     inner_type = Union[Dict[str, str], List[str]]
     assert _is_type_annotation(inner_type, dict) is True
-    assert (
-        _is_type_annotation(Annotated[Optional[inner_type], "foo"], dict) is True
-    )
+    assert _is_type_annotation(Annotated[Optional[inner_type], "foo"], dict) is True
