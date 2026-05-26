@@ -170,8 +170,7 @@ ${MAMBA_DIR}/bin/python -m pip install -U $TEMP_DIR/freva-data-portal-worker || 
 rm -rf $TEMP_DIR
 CMD="${MAMBA_DIR}/bin/python -m data_portal_worker \
     -c ${CONFIG_FILE} -e \
-    $cache_exp -r $redis_host -p \
-    $scheduler_port"
+    $cache_exp -r $redis_host -p"
 
 echo $CMD
 $CMD
