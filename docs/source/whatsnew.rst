@@ -3,7 +3,7 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
-v2605.1.1
+v2605.2.1
 ^^^^^^^^^
 
 Changed
