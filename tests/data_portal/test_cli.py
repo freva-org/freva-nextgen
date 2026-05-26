@@ -582,4 +582,4 @@ class TestRunDataLoader:
             Path(tmp.name).write_bytes(loader_config)
             run_data_loader(["-c", tmp.name])
 
-        assert mock_daemon.call_args[1]["dev"] is False
+        assert "dev" not in mock_daemon.call_args[1]
