@@ -196,7 +196,15 @@ class TestMain:
 
         _main()
 
-        mock_cls.assert_called_once_with()
+        mock_cls.assert_called_once_with(
+            **{
+                "hostname": "localhost",
+                "password": None,
+                "ssl_certfile": None,
+                "ssl_keyfile": None,
+                "username": None,
+            }
+        )
 
     def test_run_for_ever_called_with_data_portal_channel(
         self, mocker: MockerFixture

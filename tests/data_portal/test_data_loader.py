@@ -27,12 +27,16 @@ def test_broker(caplog: LogCaptureFixture) -> None:
 def test_read_config() -> None:
     """Test the redis cache reading functionality."""
     with TemporaryDirectory() as temp_dir:
-        config = get_redis_config(Path(temp_dir))
+        config = get_redis_config(Path(temp_dir)).copy()
+        assert "host" in config
+        assert config.pop("host") == "localhost"
         for value in config.values():
             assert not value
         config_file = Path(temp_dir) / "foo"
         config_file.write_text("")
-        config = get_redis_config(config_file)
+        config = get_redis_config(config_file).copy()
+        assert "host" in config
+        assert config.pop("host") == "localhost"
         for value in config.values():
             assert not value
         config_file.write_bytes(b64encode('{"user": "foo"}'.encode()))
