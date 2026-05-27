@@ -165,7 +165,10 @@ class RedisCacheFactory(Redis):
 
     @property
     def _use_ssl(self) -> bool:
-        return os.getenv("API_REDIS_SSL_CERTFILE") is not None
+        return (
+            self._kwargs.get("ssl_certfile", os.getenv("API_REDIS_SSL_CERTFILE"))
+            is not None
+        )
 
     @property
     def connection_args(self) -> RedisConnectionDict:
