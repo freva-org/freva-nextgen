@@ -1,6 +1,7 @@
 """Test various utilities."""
 
 import os.path
+from typing import Dict
 
 import netCDF4
 import numpy as np
@@ -61,9 +62,9 @@ def test_get_auth_userinfo() -> None:
     assert out["first_name"] == "Jane"
 
 
-def test_close_cache() -> None:
+def test_close_cache(redis_kw: Dict[str, str]) -> None:
     from data_portal_worker.load_data import ProcessQueue
 
-    with ProcessQueue() as q:
+    with ProcessQueue(**redis_kw) as q:
         cache = q.cache
         assert cache.ping()

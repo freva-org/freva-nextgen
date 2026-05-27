@@ -103,8 +103,12 @@ class RedisCache(redis.Redis):
             f"{k}=***" if k in obscure and s else f"{k}={s}"
             for (k, s) in self._kwargs.items()
         ]
-        logger.info("Creating redis connection pool using: %s", " ".join(conn_info))
         connection_class = redis.Connection if _ssl is False else redis.SSLConnection
+        logger.info(
+            "Creating redis connection pool using: %s via %s",
+            " ".join(conn_info),
+            connection_class,
+        )
         pool = redis.BlockingConnectionPool(
             timeout=timeout,
             connection_class=connection_class,

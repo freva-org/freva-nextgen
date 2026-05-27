@@ -116,6 +116,17 @@ def find_free_port() -> int:
         return s.getsockname()[1]
 
 
+def redis_connection_kwargs() -> Dict[str, str]:
+
+    return {
+        "username": os.getenv("API_REDIS_USER", ""),
+        "password": os.getenv("API_REDIS_PASSWORD", ""),
+        "hostname": os.getenv("API_REDIS_HOST", ""),
+        "ssl_certfile": os.getenv("API_REDIS_SSL_CERTFILE", ""),
+        "ssl_keyfile": os.getenv("API_REDIS_SSL_KEYFILE", ""),
+    }
+
+
 def get_data_loader_config() -> bytes:
     """Create the config for the data-loader process.
 
@@ -144,7 +155,7 @@ def run_loader_process() -> None:
 
 def shutdown_data_loader() -> None:
     """Publish a shutdown message to the cache and flush it."""
-    cache = Cache()
+    cache = Cache(**redis_connection_kwargs())
     cache.flushdb()
 
 
@@ -167,7 +178,7 @@ def setup_server() -> Iterator[str]:
     server base URL. Upon teardown, both threads are allowed to exit.
     """
     port = find_free_port()
-    cache = Cache()
+    cache = Cache(**redis_connection_kwargs())
     cache.flushdb()
     thread1 = threading.Thread(target=run_test_server, args=(port,))
     thread1.daemon = True
@@ -178,7 +189,12 @@ def setup_server() -> Iterator[str]:
     thread2.start()
     time.sleep(5)
     yield f"http://localhost:{port}/api/freva-nextgen"
-    Cache().flushdb()
+    cache.flushdb()
+
+
+@pytest.fixture(scope="session")
+def redis_kw() -> Dict[str, str]:
+    return redis_connection_kwargs()
 
 
 @pytest.fixture(scope="function", autouse=True)

@@ -12,16 +12,10 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from data_portal_worker.cli import (
-    _load_wrapper,
-    _main,
-    _set_loglevel_from_verbosity,
-    _sigterm_handler,
-    daemon,
-    get_redis_config,
-    read_file_content,
-    run_data_loader,
-)
+from data_portal_worker.cli import (_load_wrapper, _main,
+                                    _set_loglevel_from_verbosity,
+                                    _sigterm_handler, daemon, get_redis_config,
+                                    read_file_content, run_data_loader)
 from data_portal_worker.utils import DEFAULT_LOG_LEVEL
 
 # ---------------------------------------------------------------------------

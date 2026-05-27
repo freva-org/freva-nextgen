@@ -87,9 +87,7 @@ configure_redis_from_cache_config() {
     export_json_value_if_not_empty "$decoded_cache_config" \
         API_REDIS_HOST '.host'
     export_json_value_if_not_empty "$decoded_cache_config" \
-        API_REDIS_SCHEDULER_HOST '.scheduler_host'
-    export_json_value_if_not_empty "$decoded_cache_config" \
-        API_REDIS_CACHE_EXP '.cache_exp'
+        API_CACHE_EXP '.cache_exp'
 
     # Redis TLS files. The file path env vars are only exported when the
     # corresponding file content exists.

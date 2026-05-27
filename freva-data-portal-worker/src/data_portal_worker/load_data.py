@@ -153,10 +153,12 @@ class RedisCacheFactory(Redis):
         conn_info = [
             f"{k}=***" if k in obscure and s else f"{k}={s}" for (k, s) in conn.items()
         ]
-        data_logger.info(
-            "Creating redis connection pool using: %s", " ".join(conn_info)
-        )
         connection_class = Connection if self._use_ssl is False else SSLConnection
+        data_logger.info(
+            "Creating redis connection pool using: %s via %s",
+            " ".join(conn_info),
+            connection_class,
+        )
 
         pool = BlockingConnectionPool(
             timeout=timeout, connection_class=connection_class, **conn
@@ -175,8 +177,8 @@ class RedisCacheFactory(Redis):
         """Define the arguments for the redis connection."""
         hostname = (
             self._kwargs.get("hostname", os.getenv("API_REDIS_HOST")) or "localhost"
-        )
-        host, _, port = hostname.replace("redis://", "").partition(":")
+        ).split("://")[-1]
+        host, _, port = hostname.partition(":")
         port_i = int(port or "6379")
         kwargs = RedisConnectionDict(
             host=host,

@@ -5,6 +5,7 @@ import time
 from base64 import b64encode
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Dict
 
 from pytest import LogCaptureFixture
 
@@ -12,13 +13,13 @@ from data_portal_worker.cli import get_redis_config
 from data_portal_worker.load_data import RedisCacheFactory
 
 
-def test_broker(caplog: LogCaptureFixture) -> None:
+def test_broker(caplog: LogCaptureFixture, redis_kw: Dict[str, str]) -> None:
     """Test seding messags to the broker."""
     from data_portal_worker.utils import data_logger
 
     caplog.clear()
     with caplog.at_level(logging.DEBUG, logger=data_logger.name):
-        cache = RedisCacheFactory()
+        cache = RedisCacheFactory(**redis_kw)
         cache.publish("data-portal", "foo")
         time.sleep(0.5)
         assert caplog.records
