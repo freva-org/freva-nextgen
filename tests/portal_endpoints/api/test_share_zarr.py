@@ -17,7 +17,8 @@ from fastapi import HTTPException
 from pytest_mock import MockerFixture
 
 from data_portal_worker.load_data import RedisCacheFactory as SyncCache
-from freva_rest.utils.base_utils import Cache, encode_cache_token, sign_token_path
+from freva_rest.utils.base_utils import (Cache, encode_cache_token,
+                                         sign_token_path)
 from freva_rest.utils.presign_utils import verify_token
 
 
@@ -201,14 +202,17 @@ def test_zarr_utils(test_server: str, auth: Dict[str, str]) -> None:
 
 
 def test_load_files_fail(
-    test_server: str, auth: Dict[str, str], mocker: MockerFixture
+    test_server: str,
+    auth: Dict[str, str],
+    mocker: MockerFixture,
+    redis_kw: Dict[str, str],
 ) -> None:
     """Test for things that can go wrong when loading the data."""
     token = auth["access_token"]
     with NamedTemporaryFile(suffix=".nc") as tf:
         path = tf.name
         key = encode_cache_token(path)
-        SyncCache().setex(key, 3, cloudpickle.dumps({"status": 3}))
+        SyncCache(**redis_kw).setex(key, 3, cloudpickle.dumps({"status": 3}))
         url = f"{test_server}/data-portal/zarr/{key}.zarr"
 
         res = requests.get(

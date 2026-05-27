@@ -3,6 +3,14 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
+v2605.2.2
+^^^^^^^^^
+
+Fixed
+"""""
+- bug fix redis connection settings.
+
+
 v2605.2.1
 ^^^^^^^^^
 

@@ -41,6 +41,7 @@ def get_redis_config(
     redis_user: Optional[str] = None,
     redis_ssl_certfile: Optional[str] = None,
     redis_ssl_keyfile: Optional[str] = None,
+    redis_host: Optional[str] = None,
 ) -> RedisKw:
     """Read redis connection information."""
     file_config = read_file_content(config_file)
@@ -55,13 +56,14 @@ def get_redis_config(
         passwd=cache_config.get("passwd", redis_password or ""),
         ssl_key=cache_config.get("ssl_key", read_file_content(redis_ssl_keyfile)),
         ssl_cert=cache_config.get("ssl_cert", read_file_content(redis_ssl_certfile)),
+        host=cache_config.get("host", redis_host or "localhost"),
     )
 
 
 def _main(
     config_file: Optional[Path] = None,
     exp: int = 3600,
-    redis_host: str = "redis://localhost:6379",
+    redis_host: Optional[str] = None,
     redis_password: Optional[str] = None,
     redis_user: Optional[str] = None,
     redis_ssl_certfile: Optional[str] = None,
@@ -80,25 +82,34 @@ def _main(
         redis_user=redis_user,
         redis_ssl_certfile=redis_ssl_certfile,
         redis_ssl_keyfile=redis_ssl_keyfile,
+        redis_host=redis_host,
     )
     os.environ["API_LOGLEVEL"] = log_level
     os.environ["API_CACHE_EXP"] = str(exp)
-    os.environ["API_REDIS_HOST"] = redis_host
+    os.environ["API_REDIS_HOST"] = cache_config["host"]
     os.environ["API_REDIS_USER"] = cache_config["user"]
     os.environ["API_REDIS_PASSWORD"] = cache_config["passwd"]
+    cert_file: Optional[str] = None
+    key_file: Optional[str] = None
     with TemporaryDirectory() as temp:
         if cache_config["ssl_cert"] and cache_config["ssl_key"]:
-            cert_file = Path(temp) / "client-cert.pem"
-            key_file = Path(temp) / "client-key.pem"
-            cert_file.write_text(cache_config["ssl_cert"])
-            key_file.write_text(cache_config["ssl_key"])
-            key_file.chmod(0o600)
-            cert_file.chmod(0o600)
-            os.environ["API_REDIS_SSL_CERTFILE"] = str(cert_file)
-            os.environ["API_REDIS_SSL_KEYFILE"] = str(key_file)
+            _cert_file = Path(temp) / "client-cert.pem"
+            _key_file = Path(temp) / "client-key.pem"
+            _cert_file.write_text(cache_config["ssl_cert"])
+            _key_file.write_text(cache_config["ssl_key"])
+            _key_file.chmod(0o600)
+            _cert_file.chmod(0o600)
+            os.environ["API_REDIS_SSL_CERTFILE"] = cert_file = str(_cert_file)
+            os.environ["API_REDIS_SSL_KEYFILE"] = key_file = str(_key_file)
 
         data_logger.debug("Starting data-loader process")
-        with ProcessQueue() as q:
+        with ProcessQueue(
+            hostname=cache_config["host"],
+            username=cache_config["user"] or None,
+            password=cache_config["passwd"] or None,
+            ssl_certfile=cert_file or None,
+            ssl_keyfile=key_file or None,
+        ) as q:
             q.run_for_ever("data-portal")
 
 

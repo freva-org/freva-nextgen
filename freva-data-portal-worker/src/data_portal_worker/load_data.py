@@ -121,10 +121,27 @@ class RedisConnectionDict(TypedDict, total=False):
 class RedisCacheFactory(Redis):
     """Define a custom redis cache."""
 
-    def __init__(self, db: int = 0, retry_interval: int = 30, timeout: int = 5) -> None:
+    def __init__(
+        self,
+        db: int = 0,
+        retry_interval: int = 30,
+        timeout: int = 5,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        ssl_certfile: Optional[str] = None,
+        ssl_keyfile: Optional[str] = None,
+        hostname: Optional[str] = None,
+    ) -> None:
         self._db = db
         self._retry = Retry(ExponentialBackoff(cap=10, base=0.1), retries=25)
         self._retry_interval = retry_interval
+        self._kwargs: Dict[str, Optional[str]] = {
+            "username": username,
+            "password": password,
+            "ssl_certfile": ssl_certfile,
+            "ssl_keyfile": ssl_keyfile,
+            "hostname": hostname,
+        }
         conn = self.connection_args
         obscure = (
             "username",
@@ -136,35 +153,39 @@ class RedisCacheFactory(Redis):
         conn_info = [
             f"{k}=***" if k in obscure and s else f"{k}={s}" for (k, s) in conn.items()
         ]
+        connection_class = Connection if self._use_ssl is False else SSLConnection
         data_logger.info(
-            "Creating redis connection pool using: %s", " ".join(conn_info)
+            "Creating redis connection pool using: %s via %s",
+            " ".join(conn_info),
+            connection_class,
         )
-        connection_class = Connection if conn.pop("ssl") is False else SSLConnection
+
         pool = BlockingConnectionPool(
             timeout=timeout, connection_class=connection_class, **conn
         )
         super().__init__(connection_pool=pool)
 
     @property
+    def _use_ssl(self) -> bool:
+        return (
+            self._kwargs.get("ssl_certfile", os.getenv("API_REDIS_SSL_CERTFILE"))
+            is not None
+        )
+
+    @property
     def connection_args(self) -> RedisConnectionDict:
         """Define the arguments for the redis connection."""
-        host, _, port = (
-            (os.environ.get("API_REDIS_HOST") or "localhost")
-            .replace("redis://", "")
-            .partition(":")
-        )
+        hostname = (
+            self._kwargs.get("hostname", os.getenv("API_REDIS_HOST")) or "localhost"
+        ).split("://")[-1]
+        host, _, port = hostname.partition(":")
         port_i = int(port or "6379")
-        return RedisConnectionDict(
+        kwargs = RedisConnectionDict(
             host=host,
             port=port_i,
             db=self._db,
-            username=os.getenv("API_REDIS_USER") or None,
-            password=os.getenv("API_REDIS_PASSWORD") or None,
-            ssl_certfile=os.getenv("API_REDIS_SSL_CERTFILE") or None,
-            ssl_keyfile=os.getenv("API_REDIS_SSL_KEYFILE") or None,
-            ssl_ca_certs=os.getenv("API_REDIS_SSL_CERTFILE") or None,
-            ssl=os.getenv("API_REDIS_SSL_CERTFILE") is not None,
-            ssl_cert_reqs=ssl.CERT_NONE,
+            username=self._kwargs["username"] or os.getenv("API_REDIS_USER"),
+            password=self._kwargs["password"] or os.getenv("API_REDIS_PASSWORD"),
             health_check_interval=self._retry_interval,
             socket_keepalive=True,
             retry=self._retry,
@@ -172,6 +193,18 @@ class RedisCacheFactory(Redis):
             retry_on_timeout=True,
             max_connections=50,
         )
+        ssl_args: RedisConnectionDict = {
+            "ssl_certfile": self._kwargs["ssl_certfile"]
+            or os.getenv("API_REDIS_SSL_CERTFILE"),
+            "ssl_keyfile": self._kwargs["ssl_keyfile"]
+            or os.getenv("API_REDIS_SSL_KEYFILE"),
+            "ssl_ca_certs": self._kwargs["ssl_certfile"]
+            or os.getenv("API_REDIS_SSL_CERTFILE"),
+            "ssl_cert_reqs": ssl.CERT_NONE,
+        }
+        if self._use_ssl:
+            kwargs.update(ssl_args)
+        return kwargs
 
 
 @dataclass
@@ -241,10 +274,24 @@ class DataLoadFactory:
     A posix file system if assumed if scheme is empty, e.g /home/bar/foo.nc
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        hostname: Optional[str] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        ssl_keyfile: Optional[str] = None,
+        ssl_certfile: Optional[str] = None,
+    ) -> None:
         self._cache: Optional[Redis] = None
         # Per-process, per-instance cache: avoids re-deserialising the
         # cloudpickle blob for every concurrent get_zarr_chunk thread.
+        self._connection_args: Dict[str, Optional[str]] = {
+            "hostname": hostname,
+            "username": username,
+            "password": password,
+            "ssl_keyfile": ssl_keyfile,
+            "ssl_certfile": ssl_certfile,
+        }
         self._object_cache: TTLCache[
             str, Optional[Tuple[Dict[str, Any], Dict[str, xr.Dataset]]]
         ] = TTLCache(
@@ -317,7 +364,13 @@ class DataLoadFactory:
     def cache(self) -> Redis:
         """Get or create the cache."""
         if self._cache is None:
-            self._cache = RedisCacheFactory()
+            self._cache = RedisCacheFactory(
+                hostname=self._connection_args["hostname"],
+                username=self._connection_args["username"],
+                password=self._connection_args["password"],
+                ssl_certfile=self._connection_args["ssl_certfile"],
+                ssl_keyfile=self._connection_args["ssl_keyfile"],
+            )
         return self._cache
 
     @background_task
@@ -486,8 +539,10 @@ class ProcessQueue(DataLoadFactory):
         self,
         backoff_sec: float = 0.2,
         max_backoff_sec: float = 5.0,
+        hostname: str = "localhost",
+        **kwargs: Optional[str],
     ) -> None:
-        super().__init__()
+        super().__init__(hostname=hostname, **kwargs)
         self._backoff_sec = backoff_sec
         self._max_backoff_sec = max_backoff_sec
 

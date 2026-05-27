@@ -53,7 +53,6 @@ class CacheKwArgs(TypedDict, total=False):
     port: int
     username: Optional[str]
     password: Optional[str]
-    ssl: bool
     ssl_certfile: Optional[str]
     ssl_keyfile: Optional[str]
     ssl_ca_certs: Optional[str]
@@ -71,16 +70,12 @@ class RedisCache(redis.Redis):
     """Define a custom redis cache."""
 
     def __init__(self, db: int = 0, retry_interval: int = 30, timeout: int = 5) -> None:
+        _ssl = (CONFIG.redis_ssl_certfile or None) is not None
         self._kwargs = CacheKwArgs(
             host=CONFIG.redis_url,
             port=CONFIG.redis_port,
             username=CONFIG.redis_user or None,
             password=CONFIG.redis_password or None,
-            ssl=(CONFIG.redis_ssl_certfile or None) is not None,
-            ssl_certfile=CONFIG.redis_ssl_certfile or None,
-            ssl_keyfile=CONFIG.redis_ssl_keyfile or None,
-            ssl_ca_certs=CONFIG.redis_ssl_certfile or None,
-            ssl_cert_reqs=ssl.CERT_NONE,
             db=db,
             health_check_interval=retry_interval,
             socket_keepalive=True,
@@ -89,6 +84,14 @@ class RedisCache(redis.Redis):
             retry_on_timeout=True,
             max_connections=50,
         )
+        ssl_args: CacheKwArgs = {
+            "ssl_certfile": CONFIG.redis_ssl_certfile or None,
+            "ssl_keyfile": CONFIG.redis_ssl_keyfile or None,
+            "ssl_ca_certs": CONFIG.redis_ssl_certfile or None,
+            "ssl_cert_reqs": ssl.CERT_NONE,
+        }
+        if _ssl:
+            self._kwargs.update(ssl_args)
         obscure = (
             "username",
             "password",
@@ -100,11 +103,11 @@ class RedisCache(redis.Redis):
             f"{k}=***" if k in obscure and s else f"{k}={s}"
             for (k, s) in self._kwargs.items()
         ]
-        logger.info("Creating redis connection pool using: %s", " ".join(conn_info))
-        connection_class = (
-            redis.Connection
-            if self._kwargs.pop("ssl") is False
-            else redis.SSLConnection
+        connection_class = redis.Connection if _ssl is False else redis.SSLConnection
+        logger.info(
+            "Creating redis connection pool using: %s via %s",
+            " ".join(conn_info),
+            connection_class,
         )
         pool = redis.BlockingConnectionPool(
             timeout=timeout,

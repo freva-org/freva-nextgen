@@ -12,16 +12,10 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from data_portal_worker.cli import (
-    _load_wrapper,
-    _main,
-    _set_loglevel_from_verbosity,
-    _sigterm_handler,
-    daemon,
-    get_redis_config,
-    read_file_content,
-    run_data_loader,
-)
+from data_portal_worker.cli import (_load_wrapper, _main,
+                                    _set_loglevel_from_verbosity,
+                                    _sigterm_handler, daemon, get_redis_config,
+                                    read_file_content, run_data_loader)
 from data_portal_worker.utils import DEFAULT_LOG_LEVEL
 
 # ---------------------------------------------------------------------------
@@ -196,7 +190,15 @@ class TestMain:
 
         _main()
 
-        mock_cls.assert_called_once_with()
+        mock_cls.assert_called_once_with(
+            **{
+                "hostname": "localhost",
+                "password": None,
+                "ssl_certfile": None,
+                "ssl_keyfile": None,
+                "username": None,
+            }
+        )
 
     def test_run_for_ever_called_with_data_portal_channel(
         self, mocker: MockerFixture
