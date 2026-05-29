@@ -33,7 +33,7 @@ from freva_rest import __version__
 
 from .auth import auth_router
 from .config import ServerConfig
-from .logger import logger, set_logger_level, reset_loggers
+from .logger import logger, reset_loggers, set_logger_level
 from .loop import get_async_model
 
 server_config = ServerConfig()
