@@ -4,14 +4,30 @@ import asyncio
 import logging
 import os
 import sys
+from contextlib import contextmanager
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from typing import Iterator, List
 
 import rich.logging
 import uvicorn
 from rich.console import Console
 
 from .loop import get_async_model
+
+
+@contextmanager
+def set_logger_level(*names: str, level: int = logging.WARNING) -> Iterator[None]:
+    loggers = [logging.getLogger(n) for n in names]
+    old_levels = [logger.level for logger in loggers]
+
+    try:
+        for logger in loggers:
+            logger.setLevel(level)
+        yield
+    finally:
+        for logger, old_level in zip(loggers, old_levels):
+            logger.setLevel(old_level)
 
 
 def isatty() -> bool:
@@ -45,6 +61,17 @@ def make_log_handler() -> logging.Handler:
             force_terminal=isatty(),
         ),
     )
+
+
+class EndpointFilter(logging.Filter):
+    """Filter certain logging events from an endpoint."""
+
+    def __init__(self, excluded_endpoints: List[str]) -> None:
+        self.excluded = excluded_endpoints
+        super().__init__()
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return not any(ep in record.getMessage() for ep in self.excluded)
 
 
 _LOG_LEVELS = {
@@ -108,6 +135,12 @@ def reset_loggers(level: int = DEFAULT_LOG_LEVEL) -> None:
             ]
             logging.getLogger(name).propagate = True
             logging.getLogger(name).level = level
+
+    for name in "topology", "connection":
+        logging.getLogger(f"pymongo.{name}").setLevel(logging.WARNING)
+    logging.getLogger("uvicorn.access").addFilter(
+        EndpointFilter(["/api/freva-nextgen/ping"])
+    )
 
 
 reset_loggers()
