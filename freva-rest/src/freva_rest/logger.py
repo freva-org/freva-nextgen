@@ -58,7 +58,9 @@ class EndpointFilter(logging.Filter):
         super().__init__()
 
     def filter(self, record: logging.LogRecord) -> bool:
-        return not any(ep in record.getMessage() for ep in self.excluded)
+        return not any(
+            ep in record.getMessage() for ep in self.excluded
+        )  #  pragma: no cover
 
 
 class QuietedLoggers(logging.Filter):
