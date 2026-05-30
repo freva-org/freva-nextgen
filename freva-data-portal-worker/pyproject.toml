@@ -29,7 +29,7 @@ dependencies = [
 "h5netcdf",
 "packaging",
 "netcdf4",
-"platfromdirs",
+"platformdirs",
 "rasterio",
 "redis",
 "requests",
