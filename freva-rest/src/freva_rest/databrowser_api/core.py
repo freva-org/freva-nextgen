@@ -324,7 +324,9 @@ class Solr:
         return SearchFlavours(flavours=flavours, attributes=attributes)
 
     @asynccontextmanager
-    async def _session_get(self) -> AsyncIterator[Tuple[int, Dict[str, Any]]]:
+    async def _session_get(
+        self,
+    ) -> AsyncIterator[Tuple[int, Dict[str, Any]]]:
         """Wrap the get request round a try and catch statement."""
         logger.info(
             "Query %s for uniq_key: %s with %s",
@@ -849,12 +851,6 @@ class Solr:
         else:
             self.query["facet.method"] = "enum"
         self.query["fl"] = [self.uniq_key, "fs_type"]
-        logger.debug(
-            "Query %s for uniq_key: %s with %s",
-            self.url,
-            self.uniq_key,
-            self.query,
-        )
         query_items = normalise_solr_query(self.query)
         key = hash_from_query(
             url=self.url,

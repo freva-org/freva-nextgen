@@ -1,33 +1,20 @@
 """Definition of the central logging system."""
 
 import asyncio
+import contextvars
 import logging
 import os
 import sys
 from contextlib import contextmanager
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Iterator, List
+from typing import Iterator, FrozenSet, List, Optional, Tuple
 
 import rich.logging
 import uvicorn
 from rich.console import Console
 
 from .loop import get_async_model
-
-
-@contextmanager
-def set_logger_level(*names: str, level: int = logging.WARNING) -> Iterator[None]:
-    loggers = [logging.getLogger(n) for n in names]
-    old_levels = [logger.level for logger in loggers]
-
-    try:
-        for logger in loggers:
-            logger.setLevel(level)
-        yield
-    finally:
-        for logger, old_level in zip(loggers, old_levels):
-            logger.setLevel(old_level)
 
 
 def isatty() -> bool:
@@ -72,6 +59,43 @@ class EndpointFilter(logging.Filter):
 
     def filter(self, record: logging.LogRecord) -> bool:
         return not any(ep in record.getMessage() for ep in self.excluded)
+
+
+class QuietedLoggers(logging.Filter):
+    _ctx: contextvars.ContextVar[Optional[Tuple[int, FrozenSet[str]]]] = (
+        contextvars.ContextVar("log_floor", default=None)
+    )
+    _instance: Optional["QuietedLoggers"] = None
+
+    def __new__(cls) -> "QuietedLoggers":
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Filter for loggers in the contestvars."""
+        ctx = self._ctx.get()
+        if ctx is not None:
+            floor, names = ctx
+            if record.name in names and record.levelno < floor:
+                record.levelno = logging.DEBUG
+                record.levelname = logging.getLevelName(logging.DEBUG)
+        return True
+
+    @classmethod
+    @contextmanager
+    def floor(cls, *names: str, level: int = logging.WARNING) -> Iterator[None]:
+        """Floor the log level of a given set of loggers to a given level."""
+        this = cls()
+        for name in names:
+            logging.getLogger(name).addFilter(this)
+        token = cls._ctx.set((level, frozenset(names)))
+        try:
+            yield
+        finally:
+            cls._ctx.reset(token)
+            for name in names:
+                logging.getLogger(name).removeFilter(this)
 
 
 _LOG_LEVELS = {
@@ -129,12 +153,9 @@ def reset_loggers(level: int = DEFAULT_LOG_LEVEL) -> None:
     """Unify all loggers that we have currently aboard."""
     for name in logging.root.manager.loggerDict.keys():
         if name != THIS_NAME:
-            logging.getLogger(name).handlers = [
-                logger_file_handle,
-                logger_stream_handle,
-            ]
+            logging.getLogger(name).handlers = []  # let root handle it via propagation
             logging.getLogger(name).propagate = True
-            logging.getLogger(name).level = level
+            logging.getLogger(name).setLevel(level)
 
     for name in "topology", "connection":
         logging.getLogger(f"pymongo.{name}").setLevel(logging.WARNING)
