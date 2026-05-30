@@ -87,17 +87,17 @@ class QuietedLoggers(logging.Filter):
     @classmethod
     @contextmanager
     def floor(cls, *names: str, level: int = logging.WARNING) -> Iterator[None]:
-        """Floor the log level of a given set of loggers to a given level."""
+        """Floor the log level of a given set of loggers to a given level.
+
+        The filter must be attached to the target loggers at startup via
+        ``reset_loggers()`` before this context manager has any effect.
+        """
         this = cls()
-        for name in names:
-            logging.getLogger(name).addFilter(this)
-        token = cls._ctx.set((level, frozenset(names)))
+        token = this._ctx.set((level, frozenset(names)))
         try:
             yield
         finally:
-            cls._ctx.reset(token)
-            for name in names:
-                logging.getLogger(name).removeFilter(this)
+            this._ctx.reset(token)
 
 
 _LOG_LEVELS = {
@@ -153,12 +153,14 @@ logging.basicConfig(
 
 def reset_loggers(level: int = DEFAULT_LOG_LEVEL) -> None:
     """Unify all loggers that we have currently aboard."""
+    quieted = QuietedLoggers()
     for name in logging.root.manager.loggerDict.keys():
+        log = logging.getLogger(name)
         if name != THIS_NAME:
-            logging.getLogger(name).handlers = []  # let root handle it via propagation
-            logging.getLogger(name).propagate = True
-            logging.getLogger(name).setLevel(level)
-
+            log.handlers = []  # let root handle it via propagation
+            log.propagate = True
+            log.setLevel(level)
+        log.addFilter(quieted)
     for name in "topology", "connection":
         logging.getLogger(f"pymongo.{name}").setLevel(logging.WARNING)
     logging.getLogger("uvicorn.access").addFilter(
