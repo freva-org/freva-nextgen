@@ -22,20 +22,20 @@ classifiers = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-"appdirs",
-"requests",
 "cachetools",
 "cloudpickle",
 "dask[array]",
-"xarray-prism",
+"fsspec",
 "h5netcdf",
 "packaging",
 "netcdf4",
+"platfromdirs",
 "rasterio",
 "redis",
+"requests",
 "watchfiles",
+"xarray-prism",
 "zarr",
-"fsspec",
 ]
 [project.scripts]
 data-loader-worker = "data_portal_worker:cli.run_data_loader"
