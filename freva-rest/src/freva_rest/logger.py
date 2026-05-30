@@ -8,7 +8,7 @@ import sys
 from contextlib import contextmanager
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Iterator, FrozenSet, List, Optional, Tuple
+from typing import FrozenSet, Iterator, List, Optional, Tuple
 
 import rich.logging
 import uvicorn
