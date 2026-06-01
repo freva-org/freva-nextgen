@@ -10,7 +10,7 @@ import copy
 import logging
 import os
 import re
-from functools import cached_property, reduce
+from functools import reduce
 from pathlib import Path
 from socket import gethostname
 from typing import (
@@ -19,7 +19,6 @@ from typing import (
     ClassVar,
     Dict,
     Generic,
-    Iterator,
     List,
     Optional,
     Tuple,
@@ -389,7 +388,6 @@ class ServerConfig(BaseModel):
         self.debug = bool(self.debug)
         self.set_debug(self.debug)
         self._mongo_client: Optional[AsyncMongoClient[Any]] = None
-        self._solr_fields = self._get_solr_fields()
         self._oidc_overview: Optional[Dict[str, Any]] = None
         self.services = self.services or self._read_config("restAPI", "services") or []
         self.session_cookie_name = self.session_cookie_name or self._read_config(
@@ -420,13 +418,17 @@ class ServerConfig(BaseModel):
         self.oidc_systemuser_claim = self.oidc_systemuser_claim or self._read_config(
             "oidc", "systemuser_claim"
         )
-        self.mongo_host = self.mongo_host or self._read_config("mongo_db", "hostname")
+        self.mongo_host = (
+            self.mongo_host or self._read_config("mongo_db", "hostname") or "localhost"
+        )
         self.mongo_user = self.mongo_user or self._read_config("mongo_db", "user")
         self.mongo_password = self.mongo_password or self._read_config(
             "mongo_db", "password"
         )
         self.mongo_db = self.mongo_db or self._read_config("mongo_db", "name")
-        self.solr_host = self.solr_host or self._read_config("solr", "hostname")
+        self.solr_host = (
+            self.solr_host or self._read_config("solr", "hostname") or "localhost"
+        )
         self.solr_core = self.solr_core or self._read_config("solr", "core")
         self.redis_user = self.redis_user or self._read_config("cache", "user")
         self.redis_password = self.redis_password or self._read_config(
@@ -439,7 +441,9 @@ class ServerConfig(BaseModel):
         self.redis_ssl_certfile = self.redis_ssl_certfile or self._read_config(
             "cache", "cert_file"
         )
-        self.redis_host = self.redis_host or self._read_config("cache", "hostname")
+        self.redis_host = (
+            self.redis_host or self._read_config("cache", "hostname") or "localhost"
+        )
         self.admin_token_claims = (
             self.admin_token_claims or self._read_config("oidc", "admin_token_claims")
         ) or {}
@@ -453,6 +457,7 @@ class ServerConfig(BaseModel):
             scheme = scheme or "https"
             _trusted_issuers.append(f"{scheme}://{uri}")
         self.oidc_trusted_issuers = _trusted_issuers
+        self._solr_fields = self._get_solr_fields()
 
     @staticmethod
     def get_url(url: str, default_port: Union[str, int]) -> str:
@@ -574,10 +579,11 @@ class ServerConfig(BaseModel):
         logger.setLevel(level)
         logger_file_handle.setLevel(level)
 
-    @cached_property
+    @property
     def solr_fields(self) -> List[str]:
         """Get all relevant solr facet fields."""
-        return list(self._solr_fields)
+        self._solr_fields = self._solr_fields or self._get_solr_fields()
+        return self._solr_fields
 
     @property
     def solr_cores(self) -> Tuple[str, str]:
@@ -598,17 +604,18 @@ class ServerConfig(BaseModel):
             return f"http://{url}"
         return url
 
-    def _get_solr_fields(self) -> Iterator[str]:
+    def _get_solr_fields(self) -> List[str]:
         url = f"{self.get_core_url(self.solr_cores[-1])}/schema/fields"
+        fields: List[str] = []
         try:
             for entry in requests.get(url, timeout=5).json().get("fields", []):
                 if entry["type"] in ("extra_facet", "text_general") and entry[
                     "name"
                 ] not in ("file_name", "file", "file_no_version"):
-                    yield entry["name"]
+                    fields.append(entry["name"])
         except (
             requests.exceptions.ConnectionError,
             requests.exceptions.JSONDecodeError,
         ) as error:  # pragma: no cover
             logger.error("Connection to %s failed: %s", url, error)  # pragma: no cover
-            yield ""  # pragma: no cover
+        return fields
