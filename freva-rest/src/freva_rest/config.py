@@ -419,13 +419,17 @@ class ServerConfig(BaseModel):
         self.oidc_systemuser_claim = self.oidc_systemuser_claim or self._read_config(
             "oidc", "systemuser_claim"
         )
-        self.mongo_host = self.mongo_host or self._read_config("mongo_db", "hostname")
+        self.mongo_host = (
+            self.mongo_host or self._read_config("mongo_db", "hostname") or "localhost"
+        )
         self.mongo_user = self.mongo_user or self._read_config("mongo_db", "user")
         self.mongo_password = self.mongo_password or self._read_config(
             "mongo_db", "password"
         )
         self.mongo_db = self.mongo_db or self._read_config("mongo_db", "name")
-        self.solr_host = self.solr_host or self._read_config("solr", "hostname")
+        self.solr_host = (
+            self.solr_host or self._read_config("solr", "hostname") or "localhost"
+        )
         self.solr_core = self.solr_core or self._read_config("solr", "core")
         self.redis_user = self.redis_user or self._read_config("cache", "user")
         self.redis_password = self.redis_password or self._read_config(
@@ -438,7 +442,9 @@ class ServerConfig(BaseModel):
         self.redis_ssl_certfile = self.redis_ssl_certfile or self._read_config(
             "cache", "cert_file"
         )
-        self.redis_host = self.redis_host or self._read_config("cache", "hostname")
+        self.redis_host = (
+            self.redis_host or self._read_config("cache", "hostname") or "localhost"
+        )
         self.admin_token_claims = (
             self.admin_token_claims or self._read_config("oidc", "admin_token_claims")
         ) or {}
