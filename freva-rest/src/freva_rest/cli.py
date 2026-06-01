@@ -316,13 +316,19 @@ def cli(argv: Optional[List[str]] = None) -> None:
         logging_config["loggers"]["uvicorn.access"]["level"] = level
 
         Path(temp_f.name).write_text(env, encoding="utf-8")
+        reload = args.dev or args.reload
+        reload_paths = [
+            str(Path(__file__).parent.absolute()),
+            str(Path.cwd().parent.absolute() / "py-oidc-auth"),
+        ]
         uvicorn.run(
             "freva_rest.api:app",
             host="0.0.0.0",
             port=args.port,
-            reload=args.dev or args.reload,
+            reload=reload,
+            reload_dirs=reload_paths if reload is True else None,
             log_level=cfg.log_level,
-            workers=workers[args.dev or args.reload],
+            workers=workers[reload],
             env_file=temp_f.name,
             log_config=logging_config,
         )

@@ -13,7 +13,7 @@ from tempfile import TemporaryDirectory
 from types import FrameType
 from typing import Any, List, Optional, Union
 
-import appdirs
+import platformdirs
 
 from ._version import __version__
 from .load_data import ProcessQueue, RedisKw
@@ -197,7 +197,7 @@ def run_data_loader(argv: Optional[List[str]] = None) -> None:
     config_file = os.getenv(
         "API_CONFIG",
         os.path.join(
-            appdirs.user_cache_dir("freva"), "data-portal-cluster-config.json"
+            platformdirs.user_cache_dir("freva"), "data-portal-cluster-config.json"
         ),
     )
 

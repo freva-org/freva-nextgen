@@ -19,6 +19,7 @@ the Authorization header for secured endpoints.
 """
 
 import asyncio
+import logging
 import os
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
@@ -33,7 +34,7 @@ from freva_rest import __version__
 
 from .auth import auth_router
 from .config import ServerConfig
-from .logger import logger, reset_loggers
+from .logger import QuietedLoggers, logger, reset_loggers
 from .loop import get_async_model
 
 server_config = ServerConfig()
@@ -98,8 +99,13 @@ async def refresh_extended_search_cache_periodically(
 
     while not stop_event.is_set():
         try:
-            for key in ("file", "uri"):
-                await Solr.refresh_extended_search_cache(uniq_key=key, max_results=100)
+            with QuietedLoggers.floor(
+                "httpx", "httpcore", "freva-rest", level=logging.WARNING
+            ):
+                for key in ("file", "uri"):
+                    await Solr.refresh_extended_search_cache(
+                        uniq_key=key, max_results=100
+                    )
         except asyncio.CancelledError:  # pragma: no cover
             raise  # pragma: no cover
         except Exception as error:

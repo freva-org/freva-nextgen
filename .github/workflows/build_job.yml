@@ -187,7 +187,6 @@ jobs:
 
       - name: Build and push freva-data-loader image
         uses: docker/build-push-action@v4
-        if: env.IS_PRERELEASE == 'false'
         with:
           context: .
           file: Dockerfile

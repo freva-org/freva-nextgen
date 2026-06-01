@@ -130,7 +130,7 @@ class RedisCache(redis.Redis):
                 detail="Service not enabled.",
             )
         try:
-            await cast(Awaitable[bool], self.ping())
+            await self.ping()
         except Exception as error:
             logger.error("Cloud not connect to redis cache: %s", error)
             raise HTTPException(
@@ -141,7 +141,7 @@ class RedisCache(redis.Redis):
 
     async def lpush(self, name: str, *values: bytes) -> int:  # type: ignore[override]
         """Async wrapper matching the event-loop-aware connection pool."""
-        return await cast(Awaitable[int], super().lpush(name, *values))
+        return await super().lpush(name, *values)
 
     async def blpop(  # type: ignore[override]
         self,
