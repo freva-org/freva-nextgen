@@ -5,8 +5,8 @@ All notable changes to this project will be documented in this file.
 
 v2605.2.1
 ^^^^^^^^^
-- improved logging
-
+- improve logging.
+- fix Solr facet caching bug.
 
 v2605.2.2
 ^^^^^^^^^
