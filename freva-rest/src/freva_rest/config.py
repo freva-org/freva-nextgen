@@ -10,7 +10,7 @@ import copy
 import logging
 import os
 import re
-from functools import cached_property, reduce
+from functools import reduce
 from pathlib import Path
 from socket import gethostname
 from typing import (
@@ -19,7 +19,6 @@ from typing import (
     ClassVar,
     Dict,
     Generic,
-    Iterator,
     List,
     Optional,
     Tuple,
@@ -574,10 +573,11 @@ class ServerConfig(BaseModel):
         logger.setLevel(level)
         logger_file_handle.setLevel(level)
 
-    @cached_property
+    @property
     def solr_fields(self) -> List[str]:
         """Get all relevant solr facet fields."""
-        return list(self._solr_fields)
+        self._solr_fields = self._solr_fields or self._get_solr_fields()
+        return self._solr_fields
 
     @property
     def solr_cores(self) -> Tuple[str, str]:
@@ -598,17 +598,18 @@ class ServerConfig(BaseModel):
             return f"http://{url}"
         return url
 
-    def _get_solr_fields(self) -> Iterator[str]:
+    def _get_solr_fields(self) -> List[str]:
         url = f"{self.get_core_url(self.solr_cores[-1])}/schema/fields"
+        fields: List[str] = []
         try:
             for entry in requests.get(url, timeout=5).json().get("fields", []):
                 if entry["type"] in ("extra_facet", "text_general") and entry[
                     "name"
                 ] not in ("file_name", "file", "file_no_version"):
-                    yield entry["name"]
+                    fields.append(entry["name"])
         except (
             requests.exceptions.ConnectionError,
             requests.exceptions.JSONDecodeError,
         ) as error:  # pragma: no cover
             logger.error("Connection to %s failed: %s", url, error)  # pragma: no cover
-            yield ""  # pragma: no cover
+        return fields
