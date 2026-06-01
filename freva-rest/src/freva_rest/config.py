@@ -388,7 +388,6 @@ class ServerConfig(BaseModel):
         self.debug = bool(self.debug)
         self.set_debug(self.debug)
         self._mongo_client: Optional[AsyncMongoClient[Any]] = None
-        self._solr_fields = self._get_solr_fields()
         self._oidc_overview: Optional[Dict[str, Any]] = None
         self.services = self.services or self._read_config("restAPI", "services") or []
         self.session_cookie_name = self.session_cookie_name or self._read_config(
@@ -458,6 +457,7 @@ class ServerConfig(BaseModel):
             scheme = scheme or "https"
             _trusted_issuers.append(f"{scheme}://{uri}")
         self.oidc_trusted_issuers = _trusted_issuers
+        self._solr_fields = self._get_solr_fields()
 
     @staticmethod
     def get_url(url: str, default_port: Union[str, int]) -> str:
