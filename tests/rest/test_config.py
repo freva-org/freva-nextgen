@@ -190,3 +190,53 @@ class TestEnvToDict:
         with mock.patch.dict(os.environ, {"TEST_VAR": "k1:v1:v2:v3"}):
             result = env_to_dict("TEST_VAR")
         assert result == {"k1": ["v1:v2:v3"]}
+
+
+class TestSolrConnection:
+    """Tests for handling apache solr connections."""
+
+    def test_solr_fields_retry_after_startup_failure(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """An empty startup fetch should be retried on the next access."""
+        ServerConfig._instance = None
+        ServerConfig._initialised = False
+        monkeypatch.setenv("API_TESTS", "1")
+
+        calls = 0
+
+        def fake_get_solr_fields(this: ServerConfig) -> list[str]:
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                return []
+            return ["project", "experiment"]
+
+        monkeypatch.setattr(ServerConfig, "_get_solr_fields", fake_get_solr_fields)
+
+        cfg = ServerConfig()
+
+        # First call happens during model_post_init()
+        assert cfg._solr_fields == []
+
+        # Second access should retry and refill the cache
+        assert cfg.solr_fields == ["project", "experiment"]
+        assert cfg._solr_fields == ["project", "experiment"]
+        assert calls == 2
+
+    def test_solr_fields_failure_stays_empty_list(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """A failed Solr field fetch should not create ['']."""
+        ServerConfig._instance = None
+        ServerConfig._initialised = False
+        monkeypatch.setenv("API_TESTS", "1")
+
+        monkeypatch.setattr(ServerConfig, "_get_solr_fields", lambda this: [])
+
+        cfg = ServerConfig()
+
+        assert cfg.solr_fields == []
+        assert cfg.solr_fields != [""]
