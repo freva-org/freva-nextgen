@@ -1,4 +1,5 @@
 ---
+name: freva-dev
 services:
   solr:
     networks:
@@ -58,6 +59,7 @@ services:
       - keycloak
     volumes:
       - ./create-user.sh:/create-user.sh:ro
+    restart: "no"
     environment:
       USER: ${USER}
       KEYCLOAK_ADMIN: keycloak

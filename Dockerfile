@@ -36,14 +36,15 @@ session required pam_sss.so\n\
         PKGNAME=freva-data-portal-worker && \
         micromamba install -y -q -c conda-forge --override-channels \
         'python<3.14' \
-        appdirs \
         cachetools \
         cfgrib \
         cloudpickle \
        "cryptography=45.*" \
         dask \
+        fsspec \
         h5netcdf \
         jq \
+        platformdirs \
         netcdf4 \
         numpy \
         rasterio \
