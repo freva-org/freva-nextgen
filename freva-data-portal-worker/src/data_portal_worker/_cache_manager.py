@@ -19,7 +19,7 @@ def run_cache_cleanup(force: bool = False) -> None:
 
         xarray_prism.clear_cache()
         info = xarray_prism.cache_info()
-        data_logger.info(
+        data_logger.debug(
             "Cache cleanup done: %d file(s), %.1f MB remaining at %s",
             info["files"],
             info["size_bytes"] / 1024**2,
