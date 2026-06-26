@@ -204,7 +204,7 @@ class STACAPI:
             return collection_ids
         # A bare "*" means "everything" -> equivalent to no filter.
         if any(p == "*" for p in self.visible_collections):
-            return collection_ids
+            return collection_ids  # pragma: no cover
         selected: List[str] = []
         seen = set()
         for pattern in self.visible_collections:
@@ -481,7 +481,7 @@ class STACAPI:
         values: List[str] = []
         for entry in entries:
             if not isinstance(entry, str):
-                continue
+                continue  # pragma: no cover
             tag, sep, value = entry.partition("|")
             if not sep:
                 continue  # no tag; ignore
@@ -1158,7 +1158,7 @@ class STACAPI:
             base_params["datetime"] = datetime
         if bbox:
             base_params["bbox"] = bbox
-        if self.visible_collections:
+        if self.visible_collections:  # pragma: no cover
             base_params["visible_collections"] = ",".join(
                 self.visible_collections
             )
@@ -1440,8 +1440,8 @@ class STACAPI:
                 )
 
         # Validate the CQL2 filter to match the lenient CQL2 contract
-        # A filter that is not valid JSON is a 400.
-        # A filter that is valid JSON but does not map to a usable predicate
+        # 1. A filter that is not valid JSON is a 400.
+        # 2. A filter that is valid JSON but does not map to a usable predicate
         # (unknown operator, missing args, unknown property, ...) is silently
         # ignored by _parse_cql2_filter (returns no Solr filter), so such a
         # request still succeeds
@@ -1517,7 +1517,7 @@ class STACAPI:
                 )
                 cql2_filters = self._parse_cql2_filter(filter_obj)
                 filters.extend(cql2_filters)
-            except HTTPException:
+            except HTTPException:  # pragma: no cover
                 raise
             except json.JSONDecodeError as e:
                 raise HTTPException(

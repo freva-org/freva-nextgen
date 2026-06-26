@@ -934,7 +934,7 @@ async def test_unit_assert_collection_visible(make_api) -> None:
         return ["cmip6"]
 
     api = make_api(collection_axis="project", visible_collections=["cmip6"])
-    api.get_all_collection_facets = _fake_facets  # type: ignore[assignment]
+    api.get_all_collection_facets = _fake_facets
     # visible/existing; no raise
     await api._assert_collection_visible("cmip6")
     # hidden or non-existent; 404
@@ -1207,3 +1207,166 @@ def test_unit_visibility_glob_no_match_400(make_api) -> None:
     with pytest.raises(Exception) as exc:
         api._apply_visibility(all_ids)
     assert getattr(exc.value, "status_code", None) == 400
+
+def test_unit_visibility_expansion_cap(make_api) -> None:
+    """A pattern expanding past MAX_VISIBLE_COLLECTIONS_EXPANSION is rejected
+    with 400 naming the limit, rather than building an oversized Solr filter."""
+    api = make_api(collection_axis="project", visible_collections=["c*"])
+    cap = api.MAX_VISIBLE_COLLECTIONS_EXPANSION
+    # one more id than the cap allows, all matching the glob
+    all_ids = [f"c{i}" for i in range(cap + 1)]
+    with pytest.raises(Exception) as exc:
+        api._apply_visibility(all_ids)
+    assert getattr(exc.value, "status_code", None) == 400
+    assert "too many collections" in getattr(exc.value, "detail", "")
+    # exactly at the cap is still allowed
+    api2 = make_api(collection_axis="project", visible_collections=["c*"])
+    at_cap = [f"c{i}" for i in range(cap)]
+    assert api2._apply_visibility(at_cap) == at_cap
+
+
+@pytest.mark.asyncio
+async def test_unit_search_out_of_view_400(make_api) -> None:
+    """prepare_search rejects an explicit collection outside the visible view
+    with 400 naming the offending collection(s)."""
+
+    async def _facets():
+        return ["cmip6"]
+
+    api = make_api(collection_axis="project", visible_collections=["cmip6"])
+    api.get_all_collection_facets = _facets
+
+    with pytest.raises(Exception) as exc:
+        await api.prepare_search(collections="cordex")
+    assert getattr(exc.value, "status_code", None) == 400
+    detail = getattr(exc.value, "detail", "")
+    assert "not visible in this view" in detail
+    assert "cordex" in detail
+    # a collection inside the view does not raise
+    await api.prepare_search(collections="cmip6")
+
+
+@pytest.mark.asyncio
+async def test_unit_search_cql2_json_vs_unmappable(make_api) -> None:
+    """prepare_search returns 400 for malformed CQL2 JSON but ignores valid
+    JSON that does not map to a predicate (lenient CQL2 contract)."""
+
+    async def _no_visible():
+        return None
+
+    api = make_api(collection_axis="project")
+    api._resolved_visible = _no_visible
+
+    # malformed JSON; 400
+    with pytest.raises(Exception) as exc:
+        await api.prepare_search(filter="{not valid json")
+    assert getattr(exc.value, "status_code", None) == 400
+    assert "Invalid CQL2 JSON" in getattr(exc.value, "detail", "")
+
+    # valid JSON but unmappable filters -> no raise (search proceeds)
+    for unmappable in (
+        "{}",
+        '{"op": "invalid_op", "args": []}',
+        '{"op": "=", "args": [{"property": "project"}]}',
+        '{"op": "s_intersects", "args": [{"property": "geometry"},'
+        ' {"type": "Polygon", "coordinates": []}]}',
+    ):
+        await api.prepare_search(filter=unmappable)
+
+
+def test_unit_cql2_empty_coordinates_no_filter(make_api) -> None:
+    """_parse_cql2_filter yields no filter (rather than raising) for an
+    s_intersects polygon with empty coordinates."""
+    api = make_api(collection_axis="project")
+    geom_empty = {
+        "op": "s_intersects",
+        "args": [
+            {"property": "geometry"},
+            {"type": "Polygon", "coordinates": []},
+        ],
+    }
+    geom_short = {
+        "op": "s_intersects",
+        "args": [
+            {"property": "geometry"},
+            {"type": "Polygon", "coordinates": [[[10, 20]]]},
+        ],
+    }
+    assert api._parse_cql2_filter(geom_empty) == []
+    assert api._parse_cql2_filter(geom_short) == []
+
+
+@pytest.mark.asyncio
+async def test_unit_collection_bbox_malformed_falls_back(make_api) -> None:
+    """A malformed collection_bbox falls back to the global extent instead
+    of raising."""
+    async def _facets():
+        return ["cmip6"]
+    async def _meta(_cid):
+        return {"collection_bbox": ["project|not,a,valid,bbox"]}
+    async def _noop():
+        return None
+
+    api = make_api(collection_axis="project", axis_in_path=True)
+    api.get_all_collection_facets = _facets
+    api._get_collection_metadata = _meta
+    api._set_solr_query = _noop
+
+    col = await api.get_collection("cmip6")
+    assert col.extent.spatial["bbox"] == [[-180.0, -90.0, 180.0, 90.0]]
+
+
+async def _drain(gen):
+    return [c async for c in gen]
+
+
+@pytest.mark.asyncio
+async def test_get_search_out_of_view_400(make_api) -> None:
+    """get_search itself rejects out-of-view collections (defense in depth,
+    independent of the endpoint-level prepare_search check)."""
+    async def _facets():
+        return ["cmip6"]
+
+    api = make_api(collection_axis="project", visible_collections=["cmip6"])
+    api.get_all_collection_facets = _facets
+
+    with pytest.raises(Exception) as exc:
+        await _drain(api.get_search(collections="cordex"))
+    assert getattr(exc.value, "status_code", None) == 400
+    assert "not visible in this view" in getattr(exc.value, "detail", "")
+
+
+@pytest.mark.asyncio
+async def test_get_search_bad_json_400(make_api) -> None:
+    """get_search returns 400 on malformed CQL2 JSON."""
+    async def _nov():
+        return None
+
+    api = make_api(collection_axis="project")
+    api._resolved_visible = _nov
+
+    with pytest.raises(Exception) as exc:
+        await _drain(api.get_search(filter="{not valid json"))
+    assert getattr(exc.value, "status_code", None) == 400
+    assert "Invalid CQL2 JSON" in getattr(exc.value, "detail", "")
+
+
+@pytest.mark.asyncio
+async def test_get_search_parse_exception_400(make_api) -> None:
+    """An unexpected error from _parse_cql2_filter is converted to a 400
+    'Invalid CQL2 filter' rather than surfacing as a 500."""
+    async def _nov():
+        return None
+
+    api = make_api(collection_axis="project")
+    api._resolved_visible = _nov
+
+    def _boom(_obj):
+        raise RuntimeError("boom")
+
+    api._parse_cql2_filter = _boom
+
+    with pytest.raises(Exception) as exc:
+        await _drain(api.get_search(filter='{"op": "=", "args": []}'))
+    assert getattr(exc.value, "status_code", None) == 400
+    assert "Invalid CQL2 filter" in getattr(exc.value, "detail", "")
