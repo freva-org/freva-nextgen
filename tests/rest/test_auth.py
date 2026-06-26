@@ -35,7 +35,7 @@ def test_missing_oidc_server(test_server: str, mocker: MockerFixture) -> None:
 def test_well_known_endpoint(test_server: str) -> None:
     """Test the .well-known oidc endpoint when it is available."""
     res = requests.get(f"{test_server}/auth/v2/.well-known/openid-configuration")
-    assert res.status_code == 503
+    assert res.status_code == 200
 
 
 def test_oidc_overview_cached(test_server: str) -> None:
