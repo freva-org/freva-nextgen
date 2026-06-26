@@ -2,6 +2,7 @@
 
 import subprocess
 
+import pytest
 import requests
 
 
@@ -18,7 +19,7 @@ def test_stacapi_basic(test_server: str) -> None:
     result_collection = requests.get(f"{test_server}/stacapi/collections/cmip6")
     assert result_collection.status_code == 200
     assert result_collection.json()["id"] == "cmip6"
-    assert result_collection.json()["stac_version"] == "1.1.0"
+    assert result_collection.json()["stac_version"] == "1.0.0"
     assert result_collection.json()["type"] == "Collection"
 
     result_items = requests.get(f"{test_server}/stacapi/collections/cmip6/items")
@@ -58,7 +59,7 @@ def test_stacapi_item_params(test_server: str) -> None:
     result = requests.get(
         f"{test_server}/stacapi/collections/cmip6/items", params={"limitx": 1001}
     )
-    assert result.status_code == 422
+    assert result.status_code == 400
 
     result = requests.get(
         f"{test_server}/stacapi/collections/cmip6/items",
@@ -589,12 +590,13 @@ def test_stacapi_search_filter(test_server: str) -> None:
         )
         assert res.status_code == 200
 
-    # Invalid JSON
+    # Invalid JSON: an unparseable CQL2 filter must be rejected (400),
+    # not silently ignored.
     res = requests.get(
         f"{test_server}/stacapi/search",
         params={"filter": "invalid_json", "limit": 1},
     )
-    assert res.status_code == 200
+    assert res.status_code == 400
 
 
 def test_generate_local_access_desc_remote_files():
@@ -617,3 +619,591 @@ def test_generate_local_access_desc_remote_files():
     assert "# Accessing local Zarr data" in local_zarr_desc
     assert 'engine="zarr"' in local_zarr_desc
     assert "pip install zarr" in local_zarr_desc
+
+
+def test_stacapi_axis_backwards_compatible(test_server: str) -> None:
+    """
+    Unscoped (legacy) routes must behave exactly as before.
+    """
+    res = requests.get(f"{test_server}/stacapi/")
+    assert res.status_code == 200
+    assert res.json()["type"] == "Catalog"
+
+    # No axis segment in any self/child link of the default landing page.
+    for link in res.json()["links"]:
+        assert "/stacapi/project/" not in link["href"]
+
+    res_col = requests.get(f"{test_server}/stacapi/collections/cmip6")
+    assert res_col.status_code == 200
+    assert res_col.json()["id"] == "cmip6"
+
+
+def test_stacapi_axis_project_alias(test_server: str) -> None:
+    """The explicit ``project`` axis root mirrors the default behaviour."""
+    res = requests.get(f"{test_server}/stacapi/project/")
+    assert res.status_code == 200
+    assert res.json()["type"] == "Catalog"
+
+    res_col = requests.get(f"{test_server}/stacapi/project/collections/cmip6")
+    assert res_col.status_code == 200
+    assert res_col.json()["id"] == "cmip6"
+    self_links = [
+        link
+        for link in res_col.json()["links"]
+        if link["rel"] == "self"
+    ]
+    assert self_links
+    assert "/stacapi/project/collections/cmip6" in self_links[0]["href"]
+
+
+def test_stacapi_axis_product(test_server: str) -> None:
+    """
+    different axis exposes a different set of collections.
+    """
+    res = requests.get(f"{test_server}/stacapi/product/collections")
+    assert res.status_code == 200
+    collection_ids = {c["id"] for c in res.json()["collections"]}
+    assert collection_ids
+    assert "cmip6" not in collection_ids
+    some_product = sorted(collection_ids)[0]
+    res_items = requests.get(
+        f"{test_server}/stacapi/product/collections/{some_product}/items",
+        params={"limit": 1},
+    )
+    assert res_items.status_code == 200
+    assert res_items.json()["type"] == "FeatureCollection"
+
+
+def test_stacapi_axis_unknown(test_server: str) -> None:
+    """An unknown / unavailable axis must return 404."""
+    res = requests.get(f"{test_server}/stacapi/not_a_facet/collections")
+    assert res.status_code == 404
+
+
+def test_stacapi_nonexistent_collection_items_404(test_server: str) -> None:
+    """Items of a collection that does not exist return 404, not an empty
+    FeatureCollection."""
+    res = requests.get(
+        f"{test_server}/stacapi/collections/does-not-exist/items"
+    )
+    assert res.status_code == 404
+
+
+def test_stacapi_axis_query_param_ignored(test_server: str) -> None:
+    """``?axis=`` on a legacy route must NOT switch the axis (the axis is a
+    path segment only)"""
+    res = requests.get(f"{test_server}/stacapi/", params={"axis": "product"})
+    assert res.status_code == 200
+    for link in res.json()["links"]:
+        assert "/stacapi/product/" not in link["href"]
+
+
+def test_stacapi_invalid_cql2_400(test_server: str) -> None:
+    """An invalid CQL2 filter returns 400 rather than being ignored."""
+    res = requests.get(
+        f"{test_server}/stacapi/search",
+        params={"filter": "{not valid json"},
+    )
+    assert res.status_code == 400
+
+
+def test_stacapi_token_context_mismatch_400(test_server: str) -> None:
+    """A pagination token minted for another scope is rejected."""
+    res = requests.get(
+        f"{test_server}/stacapi/collections/cmip6/items",
+        params={"token": "next:cordex:0"},
+    )
+    assert res.status_code == 400
+
+
+def test_stacapi_visible_collections_landing(test_server: str) -> None:
+    """``visible_collections`` filters the landing page child links and
+    keeps them propagated into those links."""
+    res = requests.get(
+        f"{test_server}/stacapi/", params={"visible_collections": "cmip6"}
+    )
+    assert res.status_code == 200
+    child_links = [
+        link for link in res.json()["links"] if link["rel"] == "child"
+    ]
+    assert child_links
+    for link in child_links:
+        assert "/collections/cmip6" in link["href"]
+        # The filter must be carried forward into the child link.
+        assert "visible_collections=cmip6" in link["href"]
+
+
+def test_stacapi_visible_collections_listing(test_server: str) -> None:
+    """The /collections listing respects the visibility filter, and it
+    agrees with the landing page."""
+    res = requests.get(
+        f"{test_server}/stacapi/collections",
+        params={"visible_collections": "cmip6"},
+    )
+    assert res.status_code == 200
+    ids = {c["id"] for c in res.json()["collections"]}
+    assert ids == {"cmip6"}
+
+
+def test_stacapi_visible_collections_hidden_404(test_server: str) -> None:
+    """A collection hidden by the view must 404 on detail and items."""
+    res = requests.get(
+        f"{test_server}/stacapi/collections/cordex",
+        params={"visible_collections": "cmip6"},
+    )
+    assert res.status_code == 404
+
+    res_items = requests.get(
+        f"{test_server}/stacapi/collections/cordex/items",
+        params={"visible_collections": "cmip6"},
+    )
+    assert res_items.status_code == 404
+
+
+def test_stacapi_visible_collections_search_400(test_server: str) -> None:
+    """Searching an explicit collection outside the view returns 400."""
+    res = requests.get(
+        f"{test_server}/stacapi/search",
+        params={"collections": "cordex", "visible_collections": "cmip6"},
+    )
+    assert res.status_code == 400
+
+
+def test_stacapi_visible_collections_search_scoped(test_server: str) -> None:
+    """A search with no explicit collections is constrained to the view."""
+    res = requests.get(
+        f"{test_server}/stacapi/search",
+        params={"visible_collections": "cmip6", "limit": 5},
+    )
+    assert res.status_code == 200
+    for feature in res.json()["features"]:
+        assert feature.get("collection") == "cmip6"
+
+
+def test_stacapi_visible_collections_post(test_server: str) -> None:
+    """POST search honours the body ``visible_collections`` field."""
+    res = requests.post(
+        f"{test_server}/stacapi/search",
+        json={"visible_collections": ["cmip6"], "limit": 5},
+    )
+    assert res.status_code == 200
+    for feature in res.json()["features"]:
+        assert feature.get("collection") == "cmip6"
+
+
+def test_stacapi_axis_queryables(test_server: str) -> None:
+    """Queryables advertise the active axis in the ``collection`` enum."""
+    res = requests.get(f"{test_server}/stacapi/product/queryables")
+    assert res.status_code == 200
+    collection = res.json()["properties"]["collection"]
+    # The enum should contain product values, not project values.
+    if "enum" in collection:
+        assert "cmip6" not in collection["enum"]
+
+
+def test_stacapi_visible_collections_queryables_enum(test_server: str) -> None:
+    """The global queryables ``collection`` enum respects the view filter."""
+    res = requests.get(
+        f"{test_server}/stacapi/queryables",
+        params={"visible_collections": "cmip6"},
+    )
+    assert res.status_code == 200
+    collection = res.json()["properties"]["collection"]
+    if "enum" in collection:
+        assert collection["enum"] == ["cmip6"]
+
+
+def test_stacapi_visible_collections_queryables_hidden_404(
+    test_server: str,
+) -> None:
+    """Collection queryables for a hidden collection 404."""
+    res = requests.get(
+        f"{test_server}/stacapi/collections/cordex/queryables",
+        params={"visible_collections": "cmip6"},
+    )
+    assert res.status_code == 404
+
+
+def test_stacapi_visible_collections_post_query(test_server: str) -> None:
+    """POST search accepts visibility from the query string."""
+    res = requests.post(
+        f"{test_server}/stacapi/search?visible_collections=cmip6",
+        json={"limit": 5},
+    )
+    assert res.status_code == 200
+    for feature in res.json()["features"]:
+        assert feature.get("collection") == "cmip6"
+
+
+def test_stacapi_visible_collections_post_conflict(test_server: str) -> None:
+    """Conflicting query vs body visibility in POST search returns 400."""
+    res = requests.post(
+        f"{test_server}/stacapi/search?visible_collections=cmip6",
+        json={"limit": 5, "visible_collections": ["cordex"]},
+    )
+    assert res.status_code == 400
+
+
+def test_unit_default_axis(stac_module, make_api) -> None:
+    """No axis given -> defaults to ``project`` and unscoped links."""
+    assert stac_module.DEFAULT_COLLECTION_AXIS == "project"
+    api = make_api()
+    assert api.collection_axis == "project"
+    assert api.axis_in_path is False
+    assert api._stac_base() == "https://host/api/freva-nextgen/stacapi"
+    assert (
+        api._href("/collections")
+        == "https://host/api/freva-nextgen/stacapi/collections"
+    )
+
+
+def test_unit_axis_in_path(make_api) -> None:
+    """Axis in path"""
+    api = make_api(collection_axis="product", axis_in_path=True)
+    assert api.collection_axis == "product"
+    assert (
+        api._stac_base()
+        == "https://host/api/freva-nextgen/stacapi/product"
+    )
+
+
+def test_unit_href_carries_visibility(make_api) -> None:
+    """Navigational links carry the visibility filter; identifiers do not."""
+    api = make_api(
+        collection_axis="product",
+        visible_collections=["tas", "pr"],
+        axis_in_path=True,
+    )
+    nav = api._href("/collections")
+    assert "visible_collections=tas%2Cpr" in nav  # urlencoded comma
+    ident = api._href("/queryables", navigational=False)
+    assert "visible_collections" not in ident
+    assert ident.endswith("/product/queryables")
+
+
+def test_unit_unknown_axis_404(make_api) -> None:
+    """An axis not in the hierarchy raises 404."""
+    with pytest.raises(Exception) as exc:
+        make_api(collection_axis="bogus", axis_in_path=True)
+    assert getattr(exc.value, "status_code", None) == 404
+
+
+def test_unit_axis_not_in_solr_404(make_api) -> None:
+    """An axis in the hierarchy but absent from Solr raises 404."""
+    # ``institute`` is in the hierarchy but not in the fake solr_fields.
+    with pytest.raises(Exception) as exc:
+        make_api(collection_axis="institute", axis_in_path=True)
+    assert getattr(exc.value, "status_code", None) == 404
+
+
+def test_unit_map_collection_field(make_api) -> None:
+    """``collection`` -> active axis, ``id`` -> uniq_key, others unchanged."""
+    api = make_api(collection_axis="product", axis_in_path=True)
+    assert api._map_collection_field("collection") == "product"
+    assert api._map_collection_field("id") == api.uniq_key
+    assert api._map_collection_field("variable") == "variable"
+
+
+def test_unit_apply_visibility(make_api) -> None:
+    """Visibility filter keeps only the allowed collection ids."""
+    api = make_api(
+        collection_axis="project", visible_collections=["cmip6"]
+    )
+    assert api._apply_visibility(["cmip6", "cordex", "nextgems"]) == ["cmip6"]
+    # No filter -> list passes through unchanged.
+    api2 = make_api(collection_axis="project")
+    assert api2._apply_visibility(["a", "b"]) == ["a", "b"]
+
+
+def test_unit_collection_fq_escaping(make_api) -> None:
+    """Collection filter values are quoted and Solr-escaped on the active
+    axis."""
+    api = make_api(collection_axis="product", axis_in_path=True)
+    fq = api._collection_fq("foo:bar")
+    assert fq.startswith('product:"')
+    # the colon inside the value must be escaped
+    assert "\\:" in fq
+
+
+@pytest.mark.asyncio
+async def test_unit_assert_collection_visible(make_api) -> None:
+    """The direct-access guard 404s collections that are absent from the
+    enumerated (visibility-filtered) set, and passes visible ones."""
+
+    async def _fake_facets():
+        return ["cmip6"]
+
+    api = make_api(collection_axis="project", visible_collections=["cmip6"])
+    api.get_all_collection_facets = _fake_facets  # type: ignore[assignment]
+    # visible/existing; no raise
+    await api._assert_collection_visible("cmip6")
+    # hidden or non-existent; 404
+    with pytest.raises(Exception) as exc:
+        await api._assert_collection_visible("cordex")
+    assert getattr(exc.value, "status_code", None) == 404
+
+
+@pytest.mark.parametrize(
+    "expr,expected",
+    [
+        ({"op": "=", "args": [{"property": "collection"}, "tas"]},
+         ['product:"tas"']),
+        ({"op": "!=", "args": [{"property": "collection"}, "tas"]},
+         ['-product:"tas"']),
+        ({"op": "<", "args": [{"property": "collection"}, "x"]},
+         ["product:{* TO x}"]),
+        ({"op": "<=", "args": [{"property": "collection"}, "x"]},
+         ["product:[* TO x]"]),
+        ({"op": ">", "args": [{"property": "collection"}, "x"]},
+         ["product:{x TO *}"]),
+        ({"op": ">=", "args": [{"property": "collection"}, "x"]},
+         ["product:[x TO *]"]),
+        ({"op": "isNull", "args": [{"property": "collection"}]},
+         ["-product:[* TO *]"]),
+        ({"op": "=", "args": [{"property": "id"}, "abc"]},
+         ['file:"abc"']),
+        ({"op": "=", "args": [{"property": "variable"}, "tas"]},
+         ['variable:"tas"']),
+    ],
+)
+def test_unit_cql2_collection_mapping(make_api, expr, expected) -> None:
+    """Every CQL2 operator branch maps ``collection`` to the active axis."""
+    api = make_api(collection_axis="product", axis_in_path=True)
+    assert api._parse_cql2_filter(expr) == expected
+
+
+def test_unit_parse_visible_forms() -> None:
+    """visible_collections accepts comma-separated, repeated, and mixed
+    forms, and normalises empties to None."""
+    from freva_rest.stac_api.schema import parse_visible as pv
+
+    # comma-separated single param
+    assert pv(["cmip6,cordex"]) == ["cmip6", "cordex"]
+    # repeated param
+    assert pv(["cmip6", "cordex"]) == ["cmip6", "cordex"]
+    # mix of both
+    assert pv(["cmip6,cordex", "nextgems"]) == ["cmip6", "cordex", "nextgems"]
+    # whitespace trimmed
+    assert pv([" cmip6 , cordex "]) == ["cmip6", "cordex"]
+    # absent / empty -> None
+    assert pv(None) is None
+    assert pv([""]) is None
+
+
+@pytest.mark.asyncio
+async def test_unit_collection_metadata_fallback(make_api) -> None:
+    """get_collection falls back to generated defaults when no collection
+    metadata is stored."""
+
+    async def _facets():
+        return ["cmip6"]
+
+    async def _no_meta(_cid):
+        return {}
+
+    async def _noop():
+        return None
+
+    api = make_api(collection_axis="project", axis_in_path=True)
+    api.get_all_collection_facets = _facets
+    api._get_collection_metadata = _no_meta
+    api._set_solr_query = _noop
+
+    col = await api.get_collection("cmip6")
+    assert col.title == "CMIP6"
+    assert col.description == "Collection CMIP6"
+    assert col.license == "proprietary"
+    assert col.extent.spatial["bbox"] == [[-180, -90, 180, 90]]
+    assert col.extent.temporal["interval"] == [[None, None]]
+    assert col.assets is None
+
+
+def test_unit_tagged_values(make_api) -> None:
+    """_tagged_values returns only values for the active axis, ignores
+    unknown/untagged entries, and splits on the first '|' only."""
+    api = make_api(collection_axis="project", axis_in_path=True)
+    raw = [
+        "project|CMIP6 Global Climate",
+        "product|Model Output",
+        # value may contain pipes
+        "project|extra | with | pipes",
+        # unknown tag; ignored
+        "bogus|ignored",
+        # no separator; ignored
+        "no-tag-here",
+    ]
+    assert api._tagged_values(raw) == [
+        "CMIP6 Global Climate",
+        "extra | with | pipes",
+    ]
+    assert api._tagged_single(raw) == "CMIP6 Global Climate"
+    # different axis selects different entries
+    api2 = make_api(collection_axis="product", axis_in_path=True)
+    assert api2._tagged_single(raw) == "Model Output"
+
+
+# Shared multi-axis tagged metadata
+_TAGGED_META = {
+    "collection_title": [
+        "project|CMIP6 Global Climate",
+        "product|Model Output",
+    ],
+    "collection_description": [
+        "project|The CMIP6 ensemble",
+        "product|Raw output across projects",
+    ],
+    "collection_license": ["project|CC-BY-4.0", "product|various"],
+    "collection_license_url": [
+        "project|https://creativecommons.org/licenses/by/4.0/",
+    ],
+    "collection_keywords": [
+        "project|cmip6",
+        "project|climate",
+        "product|output",
+    ],
+    "collection_thumbnail_url": ["project|https://example/cmip6.png"],
+    "collection_thumbnail_type": ["project|image/png"],
+    "collection_documentation_url": ["product|https://docs.example/output"],
+    "collection_bbox": [
+        "project|-180,-90,180,90",
+        "product|-10,35,40,70",
+    ],
+    "collection_time_start": [
+        "project|1850-01-01T00:00:00Z",
+        "product|1900-01-01T00:00:00Z",
+    ],
+    "collection_time_end": [
+        "project|2014-12-31T00:00:00Z",
+        "product|2100-12-31T00:00:00Z",
+    ],
+}
+
+
+@pytest.mark.asyncio
+async def test_unit_collection_metadata_project_axis(make_api) -> None:
+    """Under axis=project, the project-tagged entries are used."""
+
+    async def _facets():
+        return ["cmip6"]
+
+    async def _meta(_cid):
+        return _TAGGED_META
+
+    async def _noop():
+        return None
+
+    api = make_api(collection_axis="project", axis_in_path=True)
+    api.get_all_collection_facets = _facets
+    api._get_collection_metadata = _meta
+    api._set_solr_query = _noop
+
+    col = await api.get_collection("cmip6")
+    assert col.title == "CMIP6 Global Climate"
+    assert col.license == "CC-BY-4.0"
+    assert col.keywords == ["cmip6", "climate"]
+    assert col.extent.spatial["bbox"] == [[-180.0, -90.0, 180.0, 90.0]]
+    assert col.assets and col.assets["thumbnail"]["href"] == (
+        "https://example/cmip6.png"
+    )
+    # documentation is product-tagged only
+    assert not [link for link in col.links if link.rel == "describedby"]
+
+
+@pytest.mark.asyncio
+async def test_unit_collection_metadata_product_axis(make_api) -> None:
+    """The SAME doc under axis=product yields the product-tagged entries."""
+
+    async def _facets():
+        return ["output"]
+
+    async def _meta(_cid):
+        return _TAGGED_META
+
+    async def _noop():
+        return None
+
+    api = make_api(collection_axis="product", axis_in_path=True)
+    api.get_all_collection_facets = _facets
+    api._get_collection_metadata = _meta
+    api._set_solr_query = _noop
+
+    col = await api.get_collection("output")
+    assert col.title == "Model Output"
+    assert col.license == "various"
+    assert col.keywords == ["output"]
+    assert col.extent.spatial["bbox"] == [[-10.0, 35.0, 40.0, 70.0]]
+    doc_links = [link for link in col.links if link.rel == "describedby"]
+    assert doc_links and doc_links[0].href == "https://docs.example/output"
+
+
+@pytest.mark.asyncio
+async def test_unit_collection_metadata_axis_mismatch_fallback(
+    make_api,
+) -> None:
+    """When the active axis has NO tagged entries, fall back to generated
+    defaults rather than leaking another axis's metadata."""
+
+    async def _facets():
+        return ["output"]
+
+    async def _meta(_cid):
+        # only project tags present; active axis is product
+        return {
+            "collection_title": ["project|CMIP6 Global Climate"],
+            "collection_bbox": ["project|-180,-90,180,90"],
+        }
+
+    async def _noop():
+        return None
+
+    api = make_api(collection_axis="product", axis_in_path=True)
+    api.get_all_collection_facets = _facets
+    api._get_collection_metadata = _meta
+    api._set_solr_query = _noop
+
+    col = await api.get_collection("output")
+    assert col.title == "OUTPUT"  # generated, NOT "CMIP6 Global Climate"
+    assert col.extent.spatial["bbox"] == [[-180, -90, 180, 90]]
+    assert col.assets is None
+
+
+def test_unit_visibility_glob(make_api) -> None:
+    """visible_collections entries are glob patterns: prefix globs expand,
+    literals match exactly, results de-duplicate."""
+    all_ids = ["cmip6", "cmip6_amon", "cmip6_omon", "cordex", "nextgems"]
+    api = make_api(collection_axis="project", visible_collections=["cmip6*"])
+    assert api._apply_visibility(all_ids) == [
+        "cmip6",
+        "cmip6_amon",
+        "cmip6_omon",
+    ]
+    # literal still matches exactly itself
+    api = make_api(collection_axis="project", visible_collections=["cmip6"])
+    assert api._apply_visibility(all_ids) == ["cmip6"]
+    # mixed glob + literal, de-duplicated
+    api = make_api(
+        collection_axis="project",
+        visible_collections=["cmip6*", "cmip6_amon", "cordex"],
+    )
+    assert api._apply_visibility(all_ids) == [
+        "cmip6",
+        "cmip6_amon",
+        "cmip6_omon",
+        "cordex",
+    ]
+
+
+def test_unit_visibility_glob_no_match_400(make_api) -> None:
+    """A pattern matching no collection raises 400 naming that pattern."""
+    all_ids = ["cmip6", "cordex"]
+    api = make_api(collection_axis="project", visible_collections=["typo*"])
+    with pytest.raises(Exception) as exc:
+        api._apply_visibility(all_ids)
+    assert getattr(exc.value, "status_code", None) == 400
+    assert "typo*" in getattr(exc.value, "detail", "")
+    api = make_api(
+        collection_axis="project", visible_collections=["cmip6*", "typo*"]
+    )
+    with pytest.raises(Exception) as exc:
+        api._apply_visibility(all_ids)
+    assert getattr(exc.value, "status_code", None) == 400

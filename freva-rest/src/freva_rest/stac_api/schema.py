@@ -8,24 +8,57 @@ from pydantic.config import JsonValue
 STAC_VERSION = "1.0.0"
 
 CONFORMANCE_URLS: Final[List[str]] = [
+    # STAC API core + features
     "https://api.stacspec.org/v1.0.0/core",
     "https://api.stacspec.org/v1.0.0/item-search",
     "https://api.stacspec.org/v1.0.0/collections",
     "https://api.stacspec.org/v1.0.0/ogcapi-features",
+    # free-text search
     "https://api.stacspec.org/v1.0.0-rc.1/item-search#free-text",
     "https://api.stacspec.org/v1.0.0-rc.1/ogcapi-features#free-text",
+    # OGC API - Features
     "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
     "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson",
     "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
     "http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/filter",
+    # CQL2 filter
     "http://www.opengis.net/spec/cql2/1.0/conf/basic-cql2",
     "http://www.opengis.net/spec/cql2/1.0/conf/cql2-json",
     "http://www.opengis.net/spec/cql2/1.0/conf/cql2-text",
-    "http://www.opengis.net/spec/cql2/1.0/conf/cql2-text",
-    "https://api.stacspec.org/v1.0.0/collections",
+    # query + filter extensions
     "https://api.stacspec.org/v1.0.0/item-search#query",
     "https://api.stacspec.org/v1.0.0-rc.2/item-search#filter",
 ]
+
+
+VISIBLE_COLLECTIONS_QUERY = Query(
+    None,
+    title="Visible Collections",
+    description=(
+        "Collection ids to expose; other collections are hidden for this "
+        "request. Provide them comma-separated (a,b) and/or by repeating the "
+        "parameter (visible_collections=a&visible_collections=b). Each entry "
+        "is a glob pattern, so 'cmip6*' selects every collection with that "
+        "prefix; a pattern matching no collection returns 400. Values are "
+        "values of the active collection axis."
+    ),
+)
+
+
+def parse_visible(
+    visible_collections: Optional[List[str]],
+) -> Optional[List[str]]:
+    """
+    Normalise the visibility filter into a flat list of ids.
+    """
+    if not visible_collections:
+        return None
+    result: List[str] = []
+    for raw in visible_collections:
+        if not raw:
+            continue
+        result.extend(c.strip() for c in raw.split(",") if c.strip())
+    return result or None
 
 
 class STACLinks(BaseModel):
@@ -72,7 +105,7 @@ class LandingPageResponse(BaseModel):
         json_schema_extra={
             "example": {
                 "type": "Catalog",
-                "stac_version": "1.1.0",
+                "stac_version": "1.0.0",
                 "id": "freva",
                 "title": "FREVA STAC-API",
                 "description": "FAIR data for Freva STAC-API",
@@ -151,9 +184,9 @@ class STACCollection(BaseModel):
         json_schema_extra={
             "example": {
                 "type": "Collection",
-                "stac_version": "1.1.0",
-                "id": "project",
-                "title": "Freva project search parameters",
+                "stac_version": "1.0.0",
+                "id": "cmip6",
+                "title": "CMIP6",
                 "description": "A collection of data",
                 "license": "proprietary",
                 "extent": {
@@ -168,14 +201,14 @@ class STACCollection(BaseModel):
                     {
                         "rel": "self",
                         "type": "application/json",
-                        "href": "/api/freva-nextgen/stacapi/collections/observations",
+                        "href": "/api/freva-nextgen/stacapi/collections/cmip6",
                     },
                     {
                         "rel": "items",
                         "type": "application/geo+json",
                         "href": (
                             "/api/freva-nextgen/stacapi/"
-                            "collections/observations/items"
+                            "collections/cmip6/items"
                         ),
                     },
                 ],
@@ -197,9 +230,9 @@ class CollectionsResponse(BaseModel):
                 "collections": [
                     {
                         "type": "Collection",
-                        "stac_version": "1.1.0",
-                        "id": "project",
-                        "title": "Freva project search parameters",
+                        "stac_version": "1.0.0",
+                        "id": "cmip6",
+                        "title": "CMIP6",
                         "description": "FAIR data for Freva STAC-API",
                         "license": "proprietary",
                         "extent": {
@@ -253,7 +286,7 @@ class STACItem(BaseModel):
         json_schema_extra={
             "example": {
                 "type": "Feature",
-                "stac_version": "1.1.0",
+                "stac_version": "1.0.0",
                 "id": "12345678",
                 "geometry": {
                     "type": "Polygon",
@@ -318,7 +351,7 @@ class ItemCollectionResponse(BaseModel):
                 "features": [
                     {
                         "type": "Feature",
-                        "stac_version": "1.1.0",
+                        "stac_version": "1.0.0",
                         "id": "12345678",
                         "geometry": {"type": "Point", "coordinates": [0, 0]},
                         "properties": {"datetime": "2023-01-01T00:00:00Z"},
@@ -446,6 +479,14 @@ class SearchPostRequest(BaseModel):
     filter: Optional[Dict[str, Any]] = Field(
         None, description="CQL filter expression"
     )
+    visible_collections: Optional[List[str]] = Field(
+        None,
+        description=(
+            "Vendor view filter. Restricts the collections visible/accessible "
+            "through this request to the given collection ids (values of the "
+            "active collection axis)."
+        ),
+    )
 
 
 class STACAPISchema:
@@ -490,6 +531,9 @@ class STACAPISchema:
         for key, param in cls.params.items():
             _ = query.pop(key, [""])
             _ = query.pop(param.alias, [""])
+        # IMPORTANT: Vendor view parameter is handled explicitly by the endpoints and
+        # must not leak into the facet/search query mapping.
+        _ = query.pop("visible_collections", [""])
         return query
 
 

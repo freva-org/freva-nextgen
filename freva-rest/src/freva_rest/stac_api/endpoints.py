@@ -1,8 +1,11 @@
 """Replicate the STAC-API Endpoints"""
 
-from typing import Optional
+import functools
+import inspect
+import json
+from typing import Any, Callable, List, Optional
 
-from fastapi import Body, Query, Request
+from fastapi import Body, HTTPException, Query, Request
 from fastapi.responses import (
     JSONResponse,
     PlainTextResponse,
@@ -14,6 +17,7 @@ from freva_rest.rest import app, server_config
 from .core import STACAPI
 from .schema import (
     CONFORMANCE_URLS,
+    VISIBLE_COLLECTIONS_QUERY,
     CollectionsResponse,
     ConformanceResponse,
     ItemCollectionResponse,
@@ -24,18 +28,62 @@ from .schema import (
     STACAPISchema,
     STACCollection,
     STACItem,
+    parse_visible,
 )
 
+_STAC_BASE = "/api/freva-nextgen/stacapi"
 
-@app.get(
-    "/api/freva-nextgen/stacapi/",
+
+def stac_route(
+    suffix: str, *, method: str = "get", **kwargs: Any
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """
+    Register an endpoint under both the legacy (unscoped) and the
+    ``{axis}``-scoped STAC path with a single declaration.
+    """
+    register = getattr(app, method)
+
+    def decorator(impl: Callable[..., Any]) -> Callable[..., Any]:
+        # Scoped route
+        register(
+            f"{_STAC_BASE}/{{axis}}{suffix}",
+            include_in_schema=False,
+            **kwargs,
+        )(impl)
+
+        # Legacy route
+        sig = inspect.signature(impl)
+        legacy_params = [
+            p for name, p in sig.parameters.items() if name != "axis"
+        ]
+
+        @functools.wraps(impl)
+        async def legacy(*args: Any, **kw: Any) -> Any:
+            kw.pop("axis", None)
+            return await impl(*args, axis=None, **kw)
+
+        # Present the axis-free signature to FastAPI for dependency parsing.
+        legacy.__signature__ = sig.replace(  # type: ignore[attr-defined]
+            parameters=legacy_params
+        )
+        register(f"{_STAC_BASE}{suffix}", **kwargs)(legacy)
+        return impl
+
+    return decorator
+
+
+@stac_route(
+    "/",
     tags=["STAC API"],
     status_code=200,
     response_model=LandingPageResponse,
     responses={503: {"description": "Search backend error"}},
     response_class=JSONResponse,
 )
-async def landing_page() -> JSONResponse:
+async def landing_page(
+    axis: Optional[str] = None,
+    visible_collections: Optional[List[str]] = VISIBLE_COLLECTIONS_QUERY,
+) -> JSONResponse:
     """STAC API landing page declaration.
 
     This endpoint provides the landing page of the STAC API,
@@ -44,21 +92,29 @@ async def landing_page() -> JSONResponse:
     The landing page serves as an entry point for users to
     explore the available collections and items in the STAC API.
     """
-    stac_instance = STACAPI(server_config)
+    stac_instance = STACAPI(
+        server_config,
+        collection_axis=axis,
+        visible_collections=parse_visible(visible_collections),
+        axis_in_path=axis is not None,
+    )
     await stac_instance.store_results(0, 200, "landing_page", {})
     response = await stac_instance.get_landing_page()
     return JSONResponse(response)
 
 
-@app.get(
-    "/api/freva-nextgen/stacapi/conformance",
+@stac_route(
+    "/conformance",
     tags=["STAC API"],
     status_code=200,
     response_model=ConformanceResponse,
     responses={503: {"description": "Search backend error"}},
     response_class=JSONResponse,
 )
-async def conformance() -> JSONResponse:
+async def conformance(
+    axis: Optional[str] = None,
+    visible_collections: Optional[List[str]] = VISIBLE_COLLECTIONS_QUERY,
+) -> JSONResponse:
     """STAC API conformance declaration.
 
     This endpoint returns the conformance classes that the STAC API
@@ -69,15 +125,18 @@ async def conformance() -> JSONResponse:
     return JSONResponse(response)
 
 
-@app.get(
-    "/api/freva-nextgen/stacapi/collections",
+@stac_route(
+    "/collections",
     tags=["STAC API"],
     status_code=200,
     response_model=CollectionsResponse,
     responses={503: {"description": "Search backend error"}},
     response_class=PlainTextResponse,
 )
-async def collections() -> StreamingResponse:
+async def collections(
+    axis: Optional[str] = None,
+    visible_collections: Optional[List[str]] = VISIBLE_COLLECTIONS_QUERY,
+) -> StreamingResponse:
     """List all collections in the STAC API.
 
     This endpoint retrieves a list of all collections available in the STAC API.
@@ -85,16 +144,24 @@ async def collections() -> StreamingResponse:
     about the collection, including its ID, title, description, and spatial
     and temporal extents.
     """
-    stacapi_instance = STACAPI(server_config)
+    stacapi_instance = STACAPI(
+        server_config,
+        collection_axis=axis,
+        visible_collections=parse_visible(visible_collections),
+        axis_in_path=axis is not None,
+    )
     await stacapi_instance.store_results(0, 200, "collections", {})
+    # validate against:
+    # a bad glob (no-match / too broad)= 400
+    await stacapi_instance.get_all_collection_facets()
     return StreamingResponse(
         stacapi_instance.get_collections(),
         media_type="application/json",
     )
 
 
-@app.get(
-    "/api/freva-nextgen/stacapi/collections/{collection_id}",
+@stac_route(
+    "/collections/{collection_id}",
     tags=["STAC API"],
     status_code=200,
     response_model=STACCollection,
@@ -104,13 +171,22 @@ async def collections() -> StreamingResponse:
     },
     response_class=JSONResponse,
 )
-async def collection(collection_id: str) -> JSONResponse:
+async def collection(
+    collection_id: str,
+    axis: Optional[str] = None,
+    visible_collections: Optional[List[str]] = VISIBLE_COLLECTIONS_QUERY,
+) -> JSONResponse:
     """Get a specific collection.
 
     This endpoint retrieves a specific collection from the STAC API.
     The collection is identified by its ID.
     """
-    stacapi_instance = STACAPI(server_config)
+    stacapi_instance = STACAPI(
+        server_config,
+        collection_axis=axis,
+        visible_collections=parse_visible(visible_collections),
+        axis_in_path=axis is not None,
+    )
     await stacapi_instance.store_results(
         0, 200, "collection", {"collection_id": collection_id}
     )
@@ -120,8 +196,8 @@ async def collection(collection_id: str) -> JSONResponse:
     )
 
 
-@app.get(
-    "/api/freva-nextgen/stacapi/collections/{collection_id}/items",
+@stac_route(
+    "/collections/{collection_id}/items",
     tags=["STAC API"],
     status_code=200,
     response_model=ItemCollectionResponse,
@@ -170,6 +246,8 @@ async def collection_items(
             r"-?\d+(\.\d+)?$"
         ),
     ),
+    axis: Optional[str] = None,
+    visible_collections: Optional[List[str]] = VISIBLE_COLLECTIONS_QUERY,
 ) -> StreamingResponse:
     """Get items from a specific collection.
 
@@ -184,6 +262,9 @@ async def collection_items(
         datetime=datetime,
         bbox=bbox,
         uniuq_key="file",
+        collection_axis=axis,
+        visible_collections=parse_visible(visible_collections),
+        axis_in_path=axis is not None,
         **STACAPISchema.process_parameters(request),
     )
     query_params = {
@@ -194,6 +275,11 @@ async def collection_items(
         "bbox": bbox,
     }
     await stac_instance.store_results(0, 200, "collection_items", query_params)
+    # Validate against:
+    # missing/hidden collection = 404
+    # bad pagination-token context = 400
+    await stac_instance.prepare_collection_items(collection_id)
+    stac_instance._validate_pagination_token(token, collection_id.lower())
     return StreamingResponse(
         stac_instance.get_collection_items(
             collection_id, limit, token, datetime, bbox
@@ -202,8 +288,8 @@ async def collection_items(
     )
 
 
-@app.get(
-    "/api/freva-nextgen/stacapi/collections/{collection_id}/items/{item_id}",
+@stac_route(
+    "/collections/{collection_id}/items/{item_id}",
     tags=["STAC API"],
     status_code=200,
     response_model=STACItem,
@@ -216,13 +302,20 @@ async def collection_items(
 async def collection_item(
     collection_id: str,
     item_id: str,
+    axis: Optional[str] = None,
+    visible_collections: Optional[List[str]] = VISIBLE_COLLECTIONS_QUERY,
 ) -> JSONResponse:
     """Get a specific item from a collection.
 
     This endpoint retrieves a specific item from a collection in the STAC API.
     The collection is identified by its ID, and the item is identified by its ID.
     """
-    stac_instance = STACAPI(server_config)
+    stac_instance = STACAPI(
+        server_config,
+        collection_axis=axis,
+        visible_collections=parse_visible(visible_collections),
+        axis_in_path=axis is not None,
+    )
     await stac_instance.store_results(
         0,
         200,
@@ -236,8 +329,8 @@ async def collection_item(
     )
 
 
-@app.get(
-    "/api/freva-nextgen/stacapi/search",
+@stac_route(
+    "/search",
     tags=["STAC API"],
     status_code=200,
     response_model=ItemCollectionResponse,
@@ -323,6 +416,8 @@ async def search_get(
         title="Filter",
         description="CQL filter as JSON string",
     ),
+    axis: Optional[str] = None,
+    visible_collections: Optional[List[str]] = VISIBLE_COLLECTIONS_QUERY,
 ) -> StreamingResponse:
     """STAC API search endpoint (GET).
 
@@ -336,6 +431,9 @@ async def search_get(
         datetime=datetime,
         bbox=bbox,
         uniuq_key="file",
+        collection_axis=axis,
+        visible_collections=parse_visible(visible_collections),
+        axis_in_path=axis is not None,
         **STACAPISchema.process_parameters(request),
     )
     query_params = {
@@ -347,6 +445,10 @@ async def search_get(
         "q": q,
     }
     await stac_instance.store_results(0, 200, "search_get", query_params)
+    # Validate before the stream starts against:
+    # out-of-view collection, malformed CQL2, bad token context= 400
+    await stac_instance.prepare_search(collections=collections, filter=filter)
+    stac_instance._validate_pagination_token(token, "search")
     return StreamingResponse(
         stac_instance.get_search(
             collections=collections,
@@ -365,8 +467,9 @@ async def search_get(
     )
 
 
-@app.post(
-    "/api/freva-nextgen/stacapi/search",
+@stac_route(
+    "/search",
+    method="post",
     tags=["STAC API"],
     status_code=200,
     response_model=ItemCollectionResponse,
@@ -379,8 +482,28 @@ async def search_get(
 async def search_post(
     request: Request,
     body: SearchPostRequest = Body(...),
+    axis: Optional[str] = None,
+    visible_collections: Optional[List[str]] = VISIBLE_COLLECTIONS_QUERY,
 ) -> StreamingResponse:
     """STAC API search endpoint (POST)"""
+
+    query_visible = parse_visible(visible_collections)
+    # IMPORTANT: Visibility may come from the query string (so STAC
+    # Browser global request parameters work) or the JSON body. If
+    # both are given and disagree, reject rather than silently
+    # picking one.
+    if (
+        query_visible is not None
+        and body.visible_collections is not None
+        and set(query_visible) != set(body.visible_collections)
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Conflicting 'visible_collections' in query string and body."
+            ),
+        )
+    visible = query_visible or body.visible_collections
 
     stac_instance = await STACAPI.validate_parameters(
         config=server_config,
@@ -389,6 +512,9 @@ async def search_post(
         datetime=body.datetime,
         bbox=",".join(map(str, body.bbox)) if body.bbox else None,
         uniuq_key="file",
+        collection_axis=axis,
+        visible_collections=visible,
+        axis_in_path=axis is not None,
         **STACAPISchema.process_parameters(request),
     )
 
@@ -402,6 +528,16 @@ async def search_post(
     }
     await stac_instance.store_results(0, 200, "search_post", query_params)
 
+    # Validate against:
+    # malformed request= 400 rather than a truncated stream.
+    collections_str = ",".join(body.collections) if body.collections else None
+    filter_str = (
+        json.dumps(body.filter) if isinstance(body.filter, dict) else body.filter
+    )
+    await stac_instance.prepare_search(
+        collections=collections_str, filter=filter_str
+    )
+    stac_instance._validate_pagination_token(body.token, "search")
     return StreamingResponse(
         stac_instance.post_search(
             collections=body.collections,
@@ -421,28 +557,36 @@ async def search_post(
     )
 
 
-@app.get(
-    "/api/freva-nextgen/stacapi/queryables",
+@stac_route(
+    "/queryables",
     tags=["STAC API"],
     status_code=200,
     response_model=QueryablesResponse,
     responses={503: {"description": "Search backend error"}},
     response_class=JSONResponse,
 )
-async def queryables() -> JSONResponse:
+async def queryables(
+    axis: Optional[str] = None,
+    visible_collections: Optional[List[str]] = VISIBLE_COLLECTIONS_QUERY,
+) -> JSONResponse:
     """Global queryables endpoint.
 
     This endpoint returns the queryables that can be used in filter expressions
     across all collections. It returns a JSON Schema document describing the
     available properties that can be used for filtering.
     """
-    stac_instance = STACAPI(server_config)
+    stac_instance = STACAPI(
+        server_config,
+        collection_axis=axis,
+        visible_collections=parse_visible(visible_collections),
+        axis_in_path=axis is not None,
+    )
     response = await stac_instance.get_queryables()
     return JSONResponse(response, media_type="application/schema+json")
 
 
-@app.get(
-    "/api/freva-nextgen/stacapi/collections/{collection_id}/queryables",
+@stac_route(
+    "/collections/{collection_id}/queryables",
     tags=["STAC API"],
     status_code=200,
     response_model=QueryablesResponse,
@@ -452,14 +596,23 @@ async def queryables() -> JSONResponse:
     },
     response_class=JSONResponse,
 )
-async def collection_queryables(collection_id: str) -> JSONResponse:
+async def collection_queryables(
+    collection_id: str,
+    axis: Optional[str] = None,
+    visible_collections: Optional[List[str]] = VISIBLE_COLLECTIONS_QUERY,
+) -> JSONResponse:
     """Collection-specific queryables endpoint.
 
     This endpoint returns the queryables that can be used in filter expressions
     for a specific collection. It returns a JSON Schema document describing the
     available properties that can be used for filtering within that collection.
     """
-    stac_instance = STACAPI(server_config)
+    stac_instance = STACAPI(
+        server_config,
+        collection_axis=axis,
+        visible_collections=parse_visible(visible_collections),
+        axis_in_path=axis is not None,
+    )
     response = await stac_instance.get_collection_queryables(collection_id)
     return JSONResponse(response, media_type="application/schema+json")
 
