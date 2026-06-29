@@ -16,11 +16,28 @@ Getting Started
 
 The STAC API organizes data into **Collections** and **Items**:
 
-- **Collections**: ``project`` search parameters (e.g., "observations", "CMIP6")
+- **Collections**: values of the *collection axis* (``project`` by default,
+  e.g. "observations", "CMIP6")
 
 - **Items**: Individual dataset ``files`` with geospatial and temporal metadata
 
 Authentication is not required for read-only access to the STAC API.
+
+Collection axis and visibility
+------------------------------
+
+By default a STAC collection corresponds to a ``project`` value. The collection
+axis is configurable per request by prefixing the path with the axis name, for
+example ``/api/freva-nextgen/stacapi/product/collections`` to expose
+``product`` values as collections. Paths without an axis prefix continue to use
+``project``, so existing URLs are unaffected.
+
+Collection-listing and search requests also accept an optional
+``visible_collections`` parameter that restricts which collections the request
+exposes. It accepts a comma-separated list and/or repeated values, and each
+entry is a glob pattern. For example ``visible_collections=cmip6*`` exposes
+every collection whose id begins with ``cmip6``, while a bare ``*`` exposes all
+of them. A pattern that matches no collection results in a ``400`` response.
 
 ---
 
