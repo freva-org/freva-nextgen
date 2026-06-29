@@ -3,6 +3,15 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
+v2606.0.0
+^^^^^^^^^
+
+Added
+"""""
+- STAC API: configurable collection axis path segment with an 
+  optional ``visible_collections`` parameter to scope
+
+
 v2605.2.3
 ^^^^^^^^^
 - improve logging.
