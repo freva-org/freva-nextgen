@@ -1044,35 +1044,35 @@ def test_unit_tagged_values(make_api) -> None:
 
 # Shared multi-axis tagged metadata
 _TAGGED_META = {
-    "collection_title": [
+    "stac_collection_title": [
         "project|CMIP6 Global Climate",
         "product|Model Output",
     ],
-    "collection_description": [
+    "stac_collection_description": [
         "project|The CMIP6 ensemble",
         "product|Raw output across projects",
     ],
-    "collection_license": ["project|CC-BY-4.0", "product|various"],
-    "collection_license_url": [
+    "stac_collection_license": ["project|CC-BY-4.0", "product|various"],
+    "stac_collection_license_url": [
         "project|https://creativecommons.org/licenses/by/4.0/",
     ],
-    "collection_keywords": [
+    "stac_collection_keywords": [
         "project|cmip6",
         "project|climate",
         "product|output",
     ],
-    "collection_thumbnail_url": ["project|https://example/cmip6.png"],
-    "collection_thumbnail_type": ["project|image/png"],
-    "collection_documentation_url": ["product|https://docs.example/output"],
-    "collection_bbox": [
+    "stac_collection_thumbnail_url": ["project|https://example/cmip6.png"],
+    "stac_collection_thumbnail_type": ["project|image/png"],
+    "stac_collection_documentation_url": ["product|https://docs.example/output"],
+    "stac_collection_bbox": [
         "project|-180,-90,180,90",
         "product|-10,35,40,70",
     ],
-    "collection_time_start": [
+    "stac_collection_time_start": [
         "project|1850-01-01T00:00:00Z",
         "product|1900-01-01T00:00:00Z",
     ],
-    "collection_time_end": [
+    "stac_collection_time_end": [
         "project|2014-12-31T00:00:00Z",
         "product|2100-12-31T00:00:00Z",
     ],
@@ -1149,8 +1149,8 @@ async def test_unit_collection_metadata_axis_mismatch_fallback(
     async def _meta(_cid):
         # only project tags present; active axis is product
         return {
-            "collection_title": ["project|CMIP6 Global Climate"],
-            "collection_bbox": ["project|-180,-90,180,90"],
+            "stac_collection_title": ["project|CMIP6 Global Climate"],
+            "stac_collection_bbox": ["project|-180,-90,180,90"],
         }
 
     async def _noop():
@@ -1303,7 +1303,7 @@ async def test_unit_collection_bbox_malformed_falls_back(make_api) -> None:
     async def _facets():
         return ["cmip6"]
     async def _meta(_cid):
-        return {"collection_bbox": ["project|not,a,valid,bbox"]}
+        return {"stac_collection_bbox": ["project|not,a,valid,bbox"]}
     async def _noop():
         return None
 

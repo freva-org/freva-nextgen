@@ -456,17 +456,17 @@ class STACAPI:
     # Optional STAC collection-level metadata fields. Every field
     # is a multi-valued, axis-tagged string: each entry is "<axis>|<value>".
     _COLLECTION_META_FIELDS: Final[Tuple[str, ...]] = (
-        "collection_title",
-        "collection_description",
-        "collection_license",
-        "collection_license_url",
-        "collection_keywords",
-        "collection_thumbnail_url",
-        "collection_thumbnail_type",
-        "collection_documentation_url",
-        "collection_bbox",
-        "collection_time_start",
-        "collection_time_end",
+        "stac_collection_title",
+        "stac_collection_description",
+        "stac_collection_license",
+        "stac_collection_license_url",
+        "stac_collection_keywords",
+        "stac_collection_thumbnail_url",
+        "stac_collection_thumbnail_type",
+        "stac_collection_documentation_url",
+        "stac_collection_bbox",
+        "stac_collection_time_start",
+        "stac_collection_time_end",
     )
 
     def _tagged_values(self, raw: Any) -> List[str]:
@@ -538,18 +538,18 @@ class STACAPI:
         # Per-field values for the ACTIVE axis (tag-parsed), with fallbacks to
         # the historic generated constants when no entry matches the axis.
         title = (
-            self._tagged_single(meta.get("collection_title"))
+            self._tagged_single(meta.get("stac_collection_title"))
             or collection_id.upper()
         )
         description = (
-            self._tagged_single(meta.get("collection_description"))
+            self._tagged_single(meta.get("stac_collection_description"))
             or f"Collection {collection_id.upper()}"
         )
         license_ = (
-            self._tagged_single(meta.get("collection_license"))
+            self._tagged_single(meta.get("stac_collection_license"))
             or "proprietary"
         )
-        keywords = self._tagged_values(meta.get("collection_keywords")) or [
+        keywords = self._tagged_values(meta.get("stac_collection_keywords")) or [
             collection_id,
             "climate",
             "analysis",
@@ -557,7 +557,7 @@ class STACAPI:
         ]
 
         bbox = [[-180.0, -90.0, 180.0, 90.0]]
-        bbox_raw = self._tagged_single(meta.get("collection_bbox"))
+        bbox_raw = self._tagged_single(meta.get("stac_collection_bbox"))
         if bbox_raw:
             try:
                 parts = [float(x) for x in bbox_raw.split(",")]
@@ -565,19 +565,19 @@ class STACAPI:
                     bbox = [parts[:4]]
             except ValueError:
                 logger.warning(
-                    "Invalid collection_bbox for %s:%s -> %r",
+                    "Invalid stac_collection_bbox for %s:%s -> %r",
                     self.collection_axis,
                     collection_id,
                     bbox_raw,
                 )  # malformed; keep global default
 
         # Temporal extent: stored start/end for the active axis
-        temporal_start = self._tagged_single(meta.get("collection_time_start"))
-        temporal_end = self._tagged_single(meta.get("collection_time_end"))
+        temporal_start = self._tagged_single(meta.get("stac_collection_time_start"))
+        temporal_end = self._tagged_single(meta.get("stac_collection_time_end"))
         interval = [[temporal_start, temporal_end]]
 
         # License link: stored url for the active axis or the BSD default.
-        license_url = self._tagged_single(meta.get("collection_license_url"))
+        license_url = self._tagged_single(meta.get("stac_collection_license_url"))
         license_link = STACLinks(
             rel="license",
             href=license_url or "https://opensource.org/license/bsd-3-clause",
@@ -647,7 +647,7 @@ class STACAPI:
 
         # Optional documentation link
         documentation_url = self._tagged_single(
-            meta.get("collection_documentation_url")
+            meta.get("stac_collection_documentation_url")
         )
         if documentation_url:
             links.append(
@@ -664,13 +664,13 @@ class STACAPI:
 
         # Optional thumbnail asset
         assets: Optional[Dict[str, Any]] = None
-        thumbnail_url = self._tagged_single(meta.get("collection_thumbnail_url"))
+        thumbnail_url = self._tagged_single(meta.get("stac_collection_thumbnail_url"))
         if thumbnail_url:
             assets = {
                 "thumbnail": {
                     "href": thumbnail_url,
                     "type": self._tagged_single(
-                        meta.get("collection_thumbnail_type")
+                        meta.get("stac_collection_thumbnail_type")
                     )
                     or "image/png",
                     "roles": ["thumbnail"],
