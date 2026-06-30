@@ -1370,3 +1370,43 @@ async def test_get_search_parse_exception_400(make_api) -> None:
         await _drain(api.get_search(filter='{"op": "=", "args": []}'))
     assert getattr(exc.value, "status_code", None) == 400
     assert "Invalid CQL2 filter" in getattr(exc.value, "detail", "")
+
+def test_unit_href_propagates_scope(make_api) -> None:
+    """Navigational links carry visible_collections; non-navigational don't."""
+    api = make_api(
+        collection_axis="product",
+        axis_in_path=True,
+        visible_collections=["cmip6", "dyamond"],
+    )
+    # navigational links keep the scope
+    assert "visible_collections=cmip6%2Cdyamond" in api._href("/collections")
+    assert "visible_collections=cmip6%2Cdyamond" in api._href(
+        "/collections/cmip6"
+    )
+    # non-navigational links stay bare
+    assert "visible_collections" not in api._href(
+        "/conformance", navigational=False
+    )
+    # no visibility -> no param
+    api2 = make_api(collection_axis="product", axis_in_path=True)
+    assert "?" not in api2._href("/collections")
+
+def test_unit_href_propagates_scope(make_api) -> None:
+    """Navigational links carry visible_collections; non-navigational don't."""
+    api = make_api(
+        collection_axis="product",
+        axis_in_path=True,
+        visible_collections=["cmip6", "dyamond"],
+    )
+    # navigational links keep the scope
+    assert "visible_collections=cmip6%2Cdyamond" in api._href("/collections")
+    assert "visible_collections=cmip6%2Cdyamond" in api._href(
+        "/collections/cmip6"
+    )
+    # non-navigational links stay bare
+    assert "visible_collections" not in api._href(
+        "/conformance", navigational=False
+    )
+    # no visibility -> no param
+    api2 = make_api(collection_axis="product", axis_in_path=True)
+    assert "?" not in api2._href("/collections")
