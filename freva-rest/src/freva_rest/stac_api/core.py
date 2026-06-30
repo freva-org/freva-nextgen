@@ -137,24 +137,28 @@ class STACAPI:
             return f"{base}/{self.collection_axis}"
         return base
 
+    def _scoping_params(self) -> Dict[str, Any]:
+        """
+        Query parameters that scope a request and must survive navigation.
+        """
+        params: Dict[str, Any] = dict(self.stacapi_query or {})
+        if self.visible_collections:
+            params["visible_collections"] = ",".join(self.visible_collections)
+        return params
+
     def _href(self, path: str = "", *, navigational: bool = True) -> str:
         """
-        Build a STAC link href
+        Build a STAC link href.
         """
         href = self._stac_base() + path
-        if navigational and self.visible_collections:
-            sep = "&" if "?" in href else "?"
-            href = (
-                href
-                + sep
-                + urlencode(
-                    {
-                        "visible_collections": ",".join(
-                            self.visible_collections
-                        )
-                    }
-                )
-            )
+        if navigational:
+            scoping = self._scoping_params()
+            if scoping:
+                # doseq=True preserves repeated/multi-valued params exactly.
+                query = urlencode(scoping, doseq=True)
+                if query:
+                    sep = "&" if "?" in href else "?"
+                    href = href + sep + query
         return href
 
     def _map_collection_field(self, field: str) -> str:
@@ -565,7 +569,7 @@ class STACAPI:
                     bbox = [parts[:4]]
             except ValueError:
                 logger.warning(
-                    "Invalid stac_collection_bbox for %s:%s -> %r",
+                    "Invalid collection_bbox for %s:%s -> %r",
                     self.collection_axis,
                     collection_id,
                     bbox_raw,
@@ -1158,10 +1162,9 @@ class STACAPI:
             base_params["datetime"] = datetime
         if bbox:
             base_params["bbox"] = bbox
-        if self.visible_collections:  # pragma: no cover
-            base_params["visible_collections"] = ",".join(
-                self.visible_collections
-            )
+        # Preserve scoping parameters (visible_collections) on the
+        # self/next/prev pagination links so the scope survives paging.
+        base_params.update(self._scoping_params())
         base_url = self._stac_base() + (
             f"/collections/{collection_id}/items"
         )
@@ -1488,10 +1491,9 @@ class STACAPI:
             base_params["q"] = q
         if filter:
             base_params["filter"] = filter
-        if self.visible_collections:
-            base_params["visible_collections"] = ",".join(
-                self.visible_collections
-            )
+        # Preserve scoping parameters (visible_collections) on the
+        # self/next/prev pagination links so the scope survives paging.
+        base_params.update(self._scoping_params())
 
         # Reject explicit collections that fall outside the visible view.
         resolved_visible = await self._resolved_visible()
@@ -1652,18 +1654,43 @@ class STACAPI:
             yield chunk
 
     async def _fetch_facets(self) -> Dict[str, List[str]]:
-        """Fetch current facets to use it in the search filter."""
+        """
+        Enumerate facet values for the queryables schema.
+        """
         try:
             await self._set_solr_query()
-            _, search_result = await self.solr_object.extended_search(
-                [], max_results=0
-            )
 
-            facet_values = {}
-            for facet_name, facet_data in search_result.facets.items():
+            # Scope the facet enumeration to the visible collections, mirroring
+            # the filter the search endpoint applies to items.
+            resolved_visible = await self._resolved_visible()
+            fq: List[str] = []
+            if resolved_visible:
+                fq.append(
+                    "("
+                    + " OR ".join(
+                        self._collection_fq(coll) for coll in resolved_visible
+                    )
+                    + ")"
+                )
+
+            self.solr_object.set_query_params(
+                facet_field=self.config.solr_fields,
+                fq=fq,
+                rows=0,
+            )
+            async with self.solr_object._session_get() as res:
+                _, search = res
+
+            facet_fields = (
+                search.get("facet_counts", {}).get("facet_fields", {})
+            )
+            facet_values: Dict[str, List[str]] = {}
+            for facet_name, facet_data in facet_fields.items():
                 if isinstance(facet_data, list) and len(facet_data) > 1:
                     values = [
-                        str(facet_data[i]) for i in range(0, len(facet_data), 2)
+                        str(facet_data[i])
+                        for i in range(0, len(facet_data), 2)
+                        if facet_data[i + 1] > 0
                     ]
                     if values:
                         facet_values[facet_name] = values
