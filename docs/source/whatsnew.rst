@@ -3,6 +3,14 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
+v2606.0.1
+^^^^^^^^^
+
+Fixed
+"""""
+- propagate scope into links and scope queryables to visible view
+
+
 v2606.0.0
 ^^^^^^^^^
 
