@@ -124,7 +124,7 @@ class Solr:
     was requested."""
 
     extra_return_fields: Tuple[str, ...] = ("time", "bbox", "file", "uri")
-    """Returnable, but missing from ``ServerConfig.solr_fields``"""
+    """Returnable fields, but missing from ``ServerConfig.solr_fields``"""
 
     max_return_fields: int = 25
     """Upper bound for the number of fields a client may request at once."""
