@@ -24,6 +24,7 @@ from ..schema import (
     FlavourResponse,
     FlavourType,
     FlavourUpdateDefinition,
+    validate_flavour_mapping,
 )
 
 BUILTIN_FLAVOURS = ["freva", "cmip6", "cmip5", "cordex", "user"]
@@ -513,6 +514,12 @@ class Flavour:
                 )
 
         updated_mapping = {**current_flavour.mapping, **flavour_def.mapping}
+        # The composed mapping has to be validated again, here, before anything
+        # is written.
+        try:
+            validate_flavour_mapping(updated_mapping)
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
         # Since mtime always changes, we check if there are any
         # important changes happens to avoid unnecessary updates
         has_meaningful_changes = (

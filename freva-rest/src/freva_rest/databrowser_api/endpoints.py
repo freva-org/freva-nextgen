@@ -317,6 +317,7 @@ async def extended_search(
         Query(description="Enable zarr streaming functionality", alias="zarr_stream"),
     ] = False,
     facets: Annotated[Union[List[str], None], SolrSchema.params["facets"]] = None,
+    fields: Annotated[Union[List[str], None], SolrSchema.params["fields"]] = None,
     request: Request = Required,
     current_user: Optional[TokenPayload] = auth.optional(),
 ) -> JSONResponse:
@@ -347,6 +348,7 @@ async def extended_search(
     status_code, result = await solr_search.extended_search(
         facets,
         max_results=max_results,
+        fields=fields,
         username=username,
         zarr_stream=zarr_stream,
     )
