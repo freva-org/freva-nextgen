@@ -119,6 +119,16 @@ class Solr:
     uniq_keys: Tuple[str, str] = ("file", "uri")
     """The names of all unique keys in the indexing system."""
 
+    always_return_fields: Tuple[str, ...] = ("fs_type",)
+    """Fields that are always part of a search result, on top of whatever
+    was requested."""
+
+    extra_return_fields: Tuple[str, ...] = ("time", "bbox", "file", "uri")
+    """Returnable, but missing from ``ServerConfig.solr_fields``"""
+
+    max_return_fields: int = 25
+    """Upper bound for the number of fields a client may request at once."""
+
     timeout: httpx.Timeout = httpx.Timeout(30)
     """30 seconds for timeout."""
     batch_size: int = 150
@@ -815,10 +825,80 @@ class Solr:
                 yield line
             yield "\n   ]\n}"
 
+    def _build_field_list(self, fields: Optional[List[str]]) -> List[str]:
+        """Translate, validate and assemble the Solr fl parameter.
+
+        Parameters
+        ----------
+        fields: list[str], default: None
+            The additional fields requested by the client.
+
+        Returns
+        -------
+        list[str]: the validated solr field names, unique key first.
+        """
+        requested = self.translator.translate_facets(
+            [f for f in fields or [] if f], backwards=True
+        )
+        if len(requested) > self.max_return_fields:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Too many fields requested, at most "
+                    f"{self.max_return_fields} fields can be returned."
+                ),
+            )
+        allowed = set(self._config.solr_fields) | set(self.extra_return_fields)
+        invalid = sorted({f for f in requested if f not in allowed})
+        if invalid:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Invalid fields: {', '.join(invalid)}. Valid fields are: "
+                    f"{', '.join(sorted(allowed))}."
+                ),
+            )
+        # dict.fromkeys de-duplicates while keeping the order, the mandatory
+        # fields are prepended so that they always survive de-duplication.
+        return list(
+            dict.fromkeys(
+                [self.uniq_key, *self.always_return_fields, *requested]
+            )
+        )
+
+    def _translate_docs(self, docs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Translate the solr field names of the search results to the flavour.
+        The unique key is never translated, clients look it up by the very name
+        they asked the search results for.
+        """
+        if not self.translator.translate:
+            return docs
+        lookup = self.translator.forward_lookup
+        # every reserved key is protected, not just the unique key
+        reserved = (self.uniq_key, *self.always_return_fields)
+        translated: List[Dict[str, Any]] = []
+        for doc in docs:
+            new: Dict[str, Any] = {}
+            for key in reserved:
+                if key in doc:
+                    new[key] = doc[key]
+            for key, value in doc.items():
+                if key in new:
+                    continue
+                name = lookup.get(key, key)
+                if name in new:
+                    name = key
+                if name in new:  # pragma: no cover
+                    continue
+                new[name] = value
+            translated.append(new)
+        return translated
+
     async def extended_search(
         self,
         facets: Optional[List[str]],
         max_results: int,
+        fields: Optional[List[str]] = None,
         zarr_stream: bool = False,
         username: Optional[str] = None,
         use_cache: bool = True,
@@ -850,7 +930,7 @@ class Solr:
             self.query.pop("facet.method", None)
         else:
             self.query["facet.method"] = "enum"
-        self.query["fl"] = [self.uniq_key, "fs_type"]
+        self.query["fl"] = self._build_field_list(fields)
         query_items = normalise_solr_query(self.query)
         key = hash_from_query(
             url=self.url,
@@ -885,6 +965,8 @@ class Solr:
                     doc, username=username
                 )
                 doc["fs_type"] = doc.get("fs_type", "posix")
+
+        docs = self._translate_docs(docs)
 
         return (
             search_status,

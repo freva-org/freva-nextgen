@@ -62,6 +62,15 @@ class SolrSchema:
                 "number, -1 for all results."
             ),
         ),
+        "fields": Query(
+            title="Fields",
+            alias="fields",
+            description=(
+                "Additional metadata fields that should be returned for every "
+                "search result. It is additive: the unique key (`file` or `uri`) "
+                "and `fs_type` are always part of the result."
+            ),
+        ),
     }
 
     path_params: Dict[str, Any] = {
@@ -112,6 +121,83 @@ class SearchFlavours(BaseModel):
     attributes: Dict[Union[FlavourType, str], List[str]]
 
 
+# Result keys that a custom flavour must never be able to rename or take over.
+RESERVED_RESULT_KEYS = ("file", "uri", "fs_type")
+
+
+def validate_flavour_mapping(mapping: Dict[str, str]) -> Dict[str, str]:
+    """
+    Validate the effective mapping of a custom flavour.
+    """
+    from freva_rest.databrowser_api.services.translator import Translator
+
+    reserved = set(RESERVED_RESULT_KEYS)
+    shadowed = sorted(
+        f"{key} -> {value}"
+        for key, value in mapping.items()
+        if value in reserved and key != value
+    )
+    if shadowed:
+        raise ValueError(
+            "A mapping must not translate onto the reserved result keys "
+            f"{sorted(reserved)}: {shadowed}"
+        )
+    renamed = sorted(
+        f"{key} -> {value}"
+        for key, value in mapping.items()
+        if key in reserved and key != value
+    )
+    if renamed:
+        raise ValueError(
+            "A mapping must not rename the reserved result keys "
+            f"{sorted(reserved)}: {renamed}"
+        )
+    # the identity mapping the custom flavour is layered on top of
+    base = {k: k for k in Translator("freva", translate=True).forward_lookup}
+    effective = {**base, **mapping}
+    seen: Dict[str, str] = {}
+    collisions = []
+    for key, value in effective.items():
+        if value in seen:
+            collisions.append(f"{sorted((seen[value], key))} -> {value}")
+        seen[value] = key
+    if collisions:
+        raise ValueError(
+            "The effective mapping is not unique, these facets would overwrite "
+            f"each other: {sorted(collisions)}"
+        )
+    return mapping
+
+
+def validate_flavour_name(name: Optional[str]) -> Optional[str]:
+    """
+    Validate a flavour name, tolerating ``None``.
+    """
+    import re
+
+    if name is None:  # pragma: no cover
+        return name
+    if not re.match(r"^[a-zA-Z0-9_-]+$", name):
+        raise ValueError(
+            "Flavour name can only contain letters, "
+            "numbers, underscores, and hyphens"
+        )
+    return name
+
+
+def validate_mapping_keys(mapping: Dict[str, str]) -> Dict[str, str]:
+    """Validate that mapping keys are valid freva facets."""
+    valid_facets = set(server_config.solr_fields)
+    valid_facets.update({"time", "bbox", "user"})
+    invalid_keys = set(mapping.keys()) - valid_facets
+    if invalid_keys:
+        raise ValueError(
+            f"Invalid mapping keys: {sorted(invalid_keys)}. "
+            f"Valid freva facets are: {sorted(valid_facets)}"
+        )
+    return mapping
+
+
 class FlavourDefinition(BaseModel):
     """Schema for flavour definition."""
 
@@ -141,29 +227,20 @@ class FlavourDefinition(BaseModel):
 
     @field_validator("flavour_name")
     @classmethod
-    def validate_flavour_name(cls, v: str) -> str:
-        import re
-
-        if not re.match(r"^[a-zA-Z0-9_-]+$", v):
-            raise ValueError(
-                "Flavour name can only contain letters, "
-                "numbers, underscores, and hyphens"
-            )
-        return v
+    def _check_flavour_name(cls, v: str) -> str:
+        return str(validate_flavour_name(v))
 
     @field_validator("mapping")
     @classmethod
-    def validate_mapping_keys(cls, v: Dict[str, str]) -> Dict[str, str]:
+    def _check_mapping_keys(cls, v: Dict[str, str]) -> Dict[str, str]:
         """Validate that mapping keys are valid freva facets."""
-        valid_facets = set(server_config.solr_fields)
-        valid_facets.update({"time", "bbox", "user"})
-        invalid_keys = set(v.keys()) - valid_facets
-        if invalid_keys:  # pragma: no cover
-            raise ValueError(
-                f"Invalid mapping keys: {sorted(invalid_keys)}. "
-                f"Valid freva facets are: {sorted(valid_facets)}"
-            )
-        return v
+        return validate_mapping_keys(v)
+
+    @field_validator("mapping")
+    @classmethod
+    def _check_mapping_values(cls, v: Dict[str, str]) -> Dict[str, str]:
+        """Validate the effective mapping, not just the submitted one."""
+        return validate_flavour_mapping(v)
 
 
 class FlavourUpdateDefinition(BaseModel):
@@ -174,7 +251,10 @@ class FlavourUpdateDefinition(BaseModel):
 
     flavour_name: Optional[str] = Field(
         None,
-        description="Name of the flavour (must don't exist for new flavours)",
+        description=(
+            "New name of the flavour. Omit it, or send `null`, to keep the "
+            "current one."
+        ),
         examples=["nextgem", "custom_project"],
     )
     mapping: Dict[str, str] = Field(
@@ -187,15 +267,21 @@ class FlavourUpdateDefinition(BaseModel):
 
     @field_validator("flavour_name")
     @classmethod
-    def validate_flavour_name(cls, v: str) -> str:
-        import re
+    def _check_flavour_name(cls, v: Optional[str]) -> Optional[str]:
+        """``None`` is legal here: it means "keep the current name"."""
+        return validate_flavour_name(v)
 
-        if not re.match(r"^[a-zA-Z0-9_-]+$", v):
-            raise ValueError(
-                "Flavour name can only contain letters, "
-                "numbers, underscores, and hyphens"
-            )
-        return v
+    @field_validator("mapping")
+    @classmethod
+    def _check_mapping_keys(cls, v: Dict[str, str]) -> Dict[str, str]:
+        """Validate that mapping keys are valid freva facets."""
+        return validate_mapping_keys(v)
+
+    @field_validator("mapping")
+    @classmethod
+    def _check_mapping_values(cls, v: Dict[str, str]) -> Dict[str, str]:
+        """An update must not be able to introduce what a create cannot."""
+        return validate_flavour_mapping(v)
 
 
 class FlavourResponse(BaseModel):

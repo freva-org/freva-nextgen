@@ -1002,3 +1002,138 @@ class TestMixedScenarios:
             token=auth["access_token"],
         )
         assert res5.json()["total"] == 0
+
+
+class TestFlavourMappingSafety:
+    """
+    A custom flavour must not be able to corrupt a search result.
+    """
+
+    def test_mapping_onto_the_uniq_key_rejected(
+        self, flavour_server: str, auth: Dict[str, Any]
+    ) -> None:
+        """{"project": "uri"} would overwrite the unique key of every doc."""
+        res = _post_flavour(
+            flavour_server,
+            {"flavour_name": "bad_uniq", "mapping": {"project": "uri"}},
+            token=auth["access_token"],
+        )
+        assert res.status_code == 422
+
+    def test_renaming_fs_type_rejected(
+        self, flavour_server: str, auth: Dict[str, Any]
+    ) -> None:
+        """fs_type is contractually always present in a search result."""
+        res = _post_flavour(
+            flavour_server,
+            {"flavour_name": "bad_fs", "mapping": {"fs_type": "storage_type"}},
+            token=auth["access_token"],
+        )
+        assert res.status_code == 422
+
+    def test_effective_mapping_collision_rejected(
+        self, flavour_server: str, auth: Dict[str, Any]
+    ) -> None:
+        """{"project": "variable"} collides with the identity ``variable``."""
+        res = _post_flavour(
+            flavour_server,
+            {"flavour_name": "bad_effective", "mapping": {"project": "variable"}},
+            token=auth["access_token"],
+        )
+        assert res.status_code == 422
+
+    def test_update_is_validated_too(
+        self, flavour_server: str, auth: Dict[str, Any]
+    ) -> None:
+        """An update must not be able to introduce what a create cannot."""
+        token = auth["access_token"]
+        _post_flavour(
+            flavour_server,
+            {"flavour_name": "upd_safety", "mapping": {"model": "source_id"}},
+            token=token,
+        )
+        try:
+            res = _put_flavour(
+                flavour_server,
+                "upd_safety",
+                {"mapping": {"project": "uri"}},
+                token=token,
+            )
+            assert res.status_code == 422
+        finally:
+            _delete_flavour(flavour_server, "upd_safety", token=token)
+
+    def test_composed_mapping_collision_rejected(
+        self, flavour_server: str, auth: Dict[str, Any]
+    ) -> None:
+        """
+        An update is composed with the *existing* mapping before it is stored.
+        """
+        token = auth["access_token"]
+        _post_flavour(
+            flavour_server,
+            {"flavour_name": "composed", "mapping": {"model": "source_id"}},
+            token=token,
+        )
+        try:
+            res = _put_flavour(
+                flavour_server,
+                "composed",
+                {"mapping": {"project": "source_id"}},
+                token=token,
+            )
+            assert res.status_code == 422
+        finally:
+            _delete_flavour(flavour_server, "composed", token=token)
+
+class TestFlavourMappingKeys:
+    """
+    A mapping key has to be a freva facet.
+    """
+
+    def test_unknown_mapping_key_rejected_on_create(
+        self, flavour_server: str, auth: Dict[str, Any]
+    ) -> None:
+        res = _post_flavour(
+            flavour_server,
+            {"flavour_name": "bad_key", "mapping": {"not_a_facet": "x"}},
+            token=auth["access_token"],
+        )
+        assert res.status_code == 422
+        assert "not_a_facet" in str(res.json())
+
+    def test_unknown_mapping_key_rejected_on_update(
+        self, flavour_server: str, auth: Dict[str, Any]
+    ) -> None:
+        """The update path had no key validator at all."""
+        token = auth["access_token"]
+        _post_flavour(
+            flavour_server,
+            {"flavour_name": "key_update", "mapping": {"model": "source_id"}},
+            token=token,
+        )
+        try:
+            res = _put_flavour(
+                flavour_server,
+                "key_update",
+                {"mapping": {"not_a_facet": "x"}},
+                token=token,
+            )
+            assert res.status_code == 422
+        finally:
+            _delete_flavour(flavour_server, "key_update", token=token)
+
+    def test_several_unknown_keys_are_all_reported(
+        self, flavour_server: str, auth: Dict[str, Any]
+    ) -> None:
+        res = _post_flavour(
+            flavour_server,
+            {
+                "flavour_name": "bad_keys",
+                "mapping": {"nope": "a", "also_nope": "b"},
+            },
+            token=auth["access_token"],
+        )
+        assert res.status_code == 422
+        detail = str(res.json())
+        assert "also_nope" in detail and "nope" in detail
