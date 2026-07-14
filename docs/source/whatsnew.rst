@@ -3,6 +3,13 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
+v2607.0.0
+^^^^^^^^^
+
+Added
+"""""
+- Allow extended-search return arbitrary result fields
+
 v2606.0.1
 ^^^^^^^^^
 
