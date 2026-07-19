@@ -3,6 +3,13 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
+v2607.1.0
+^^^^^^^^^
+
+Changed
+"""""
+- unify and reshape the STAC assets across the static and the API
+
 v2607.0.0
 ^^^^^^^^^
 
