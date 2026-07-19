@@ -158,6 +158,21 @@ def guess_engine(file_id: str) -> str:
     return "h5netcdf"
 
 
+ANON_PROTOCOLS = frozenset({"s3", "gs", "gcs", "az", "abfs", "adl", "oss"})
+
+# The fsspec backend package each protocol needs
+PROTOCOL_PACKAGES = {
+    "s3": "s3fs",
+    "gs": "gcsfs",
+    "gcs": "gcsfs",
+    "az": "adlfs",
+    "abfs": "adlfs",
+    "adl": "adlfs",
+    "http": "aiohttp",
+    "https": "aiohttp",
+}
+
+
 # Descriptions
 _DOCS = "https://freva-org.github.io/freva-nextgen/"
 
@@ -246,12 +261,14 @@ def streamed_access_desc(ctx: AssetContext, item_id: str) -> str:
         ---
         ⚠️ Treat the token file like a password: `chmod 600`, never commit
         it, and refresh it rather than re-using an expired one.
+
         💡 Three ways to get one, all interchangeable: `authenticate()` in
         Python, `freva-client auth` on the command line, or a download from
         the [Freva web portal]({ctx.base_url}). On a machine that cannot
         open a browser, pass an existing refresh token with
         `authenticate(token_file="~/.freva-token.json")` or
         `freva-client auth --token-file ...`.
+
         💡 Zarr streams expire if they are not read in time. See the
         [freva-client documentation]({_DOCS}).
         """
@@ -260,24 +277,63 @@ def streamed_access_desc(ctx: AssetContext, item_id: str) -> str:
 
 def remote_access_desc(item_id: str) -> str:
     """Access instructions for data held on remote storage."""
+    protocol, _ = split_protocol(item_id)
+    protocol = (protocol or "").lower()
     engine = guess_engine(item_id)
+    anonymous = protocol in ANON_PROTOCOLS
+
+    packages = ["xarray"]
     if engine == "zarr":
-        open_call = dedent(
-            f"""
-            store = fsspec.get_mapper("{item_id}", anon=True)
-            dset = xr.open_dataset(store, engine="zarr")
-            """
-        ).strip()
-        extras = "zarr"
+        packages.append("zarr")
     else:
+        packages.extend(["fsspec", engine])
+    backend = PROTOCOL_PACKAGES.get(protocol)
+    if backend and backend not in packages:
+        packages.append(backend)
+
+    if engine == "zarr":
+        imports = "import xarray as xr"
+        if anonymous:
+            open_call = dedent(
+                f"""
+                dset = xr.open_dataset(
+                    "{item_id}",
+                    engine="zarr",
+                    storage_options={{"anon": True}},
+                )
+                """
+            ).strip()
+        else:
+            open_call = dedent(
+                f"""
+                dset = xr.open_dataset("{item_id}", engine="zarr")
+                """
+            ).strip()
+    else:
+        imports = "import fsspec\nimport xarray as xr"
+        anon_arg = ", anon=True" if anonymous else ""
         open_call = dedent(
             f"""
-            with fsspec.open("{item_id}", anon=True) as fobj:
+            with fsspec.open("{item_id}"{anon_arg}) as fobj:
                 dset = xr.open_dataset(fobj, engine="{engine}")
             """
         ).strip()
-        extras = "h5netcdf" if engine == "h5netcdf" else engine
 
+    if anonymous:
+        credentials = (
+            "If the call above fails with an authentication or permission "
+            "error (HTTP 401 / 403), drop `anon=True` and pass your own "
+            "credentials for that storage backend."
+        )
+    else:
+        credentials = (
+            "If the call above fails with an authentication or permission "
+            "error (HTTP 401 / 403), pass your own credentials through "
+            "`storage_options`, or configure them for the backend the usual "
+            "way (`~/.aws/credentials`, `~/.netrc`, an auth header, ...)."
+        )
+
+    imports = indent(imports, " " * 8).lstrip()
     open_call = indent(open_call, " " * 8).lstrip()
 
     return dedent(
@@ -291,14 +347,13 @@ def remote_access_desc(item_id: str) -> str:
         ## 1. Install the dependencies
 
         ```bash
-        pip install xarray fsspec {extras}
+        pip install {" ".join(packages)}
         ```
 
         ## 2. Open it in Python
 
         ```python
-        import fsspec
-        import xarray as xr
+        {imports}
 
         {open_call}
         ```
@@ -306,9 +361,7 @@ def remote_access_desc(item_id: str) -> str:
         ---
         ⚠️ **Access to this dataset may be restricted.** Freva indexes both
         public and non-public collections and cannot always tell them apart,
-        so this link is not a guarantee of access. If the call above fails
-        with an authentication or permission error (HTTP 401 / 403), drop
-        `anon=True` and pass your own credentials for that storage backend.
+        so this link is not a guarantee of access. {credentials}
         If you do not have credentials, please contact the **data provider**
         or your **project coordinator** to request access.
         """
@@ -405,7 +458,7 @@ def databrowser_collection_desc(facet: str, value: str) -> str:
 
 
 def collection_streamed_access_desc(ctx: AssetContext) -> str:
-    """Open*everything in this collection as one dataset."""
+    """Open everything in this collection as one dataset."""
     return dedent(
         f"""
         # Access the whole collection
@@ -478,12 +531,14 @@ def collection_streamed_access_desc(ctx: AssetContext) -> str:
         a good starting point.
         ⚠️ Treat the token file like a password: `chmod 600`, never commit
         it, and refresh it rather than re-using an expired one.
+
         💡 Three ways to get one, all interchangeable: `authenticate()` in
         Python, `freva-client auth` on the command line, or a download from
         the [Freva web portal]({ctx.base_url}). On a machine that cannot
         open a browser, pass an existing refresh token with
         `authenticate(token_file="~/.freva-token.json")` or
         `freva-client auth --token-file ...`.
+
         💡 Zarr streams expire if they are not read in time - see the
         [freva-client documentation]({_DOCS}).
         """
