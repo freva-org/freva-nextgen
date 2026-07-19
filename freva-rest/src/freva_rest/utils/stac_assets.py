@@ -409,6 +409,7 @@ def stac_download_desc(url: str) -> str:
         ## 1. Download and unpack
 
         ```bash
+        # you can download it via curl, but ir requires to have curl installed on your workspace
         curl -L -o stac-catalog.zip "{url}"
         unzip stac-catalog.zip
         ```
@@ -658,7 +659,7 @@ def build_item_assets(
 
     if storage == "local":
         access = Asset(
-            href=ctx.zarr_url(item_id),
+            href=item_id,
             title="Access data (Zarr stream)",
             description=streamed_access_desc(ctx, item_id),
             roles=["data"],
