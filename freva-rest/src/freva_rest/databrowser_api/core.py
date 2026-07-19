@@ -14,6 +14,7 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
+    Set,
     Sized,
     Tuple,
     TypeAlias,
@@ -168,6 +169,7 @@ class Solr:
         self._config = config
         self.uniq_key = uniq_key
         self.multi_version = multi_version
+        self._multi_valued: Optional[Set[str]] = None
         self.translator = _translator or Translator(flavour, translate, config=config)
         try:
             self.time = self.adjust_time_string(
@@ -603,8 +605,21 @@ class Solr:
         except ValueError as exc:
             raise ValidationError(f"Failed to parse bbox string: {exc}") from exc
 
-    async def _create_intake_catalogue(self, *facets: str) -> IntakeType:
+    @staticmethod
+    def _is_single_valued(facet_counts: Sequence[Any], total_count: int) -> bool:
+        """
+        Whether a facet holds at most one value per document.
+        """
+        return sum(facet_counts[1::2]) <= total_count
+
+    async def _create_intake_catalogue(
+        self,
+        *facets: str,
+        groupby_attrs: Optional[Sequence[str]] = None,
+    ) -> IntakeType:
         var_name = self.translator.forward_lookup["variable"]
+        # groupby_attrs must never be left empty
+        groupby = [f for f in (groupby_attrs or facets) if f != var_name]
         catalogue: IntakeType = {
             "esmcat_version": "0.1.0",
             "attributes": [
@@ -624,7 +639,7 @@ class Solr:
             "last_updated": f"{datetime.now().isoformat()}",
             "aggregation_control": {
                 "variable_column_name": var_name,
-                "groupby_attrs": [],
+                "groupby_attrs": groupby or [self.uniq_key],
                 "aggregations": [
                     {
                         "type": "union",
@@ -653,13 +668,23 @@ class Solr:
         async with self._session_get() as res:
             search_status, search = res
         total_count = cast(int, search.get("response", {}).get("numFound", 0))
-        facets = search.get("facet_counts", {}).get("facet_fields", {})
-        facets = [
-            self.translator.forward_lookup.get(v, v)
-            for v in self.translator.facet_hierarchy
-            if facets.get(v)
-        ]
-        catalogue = await self._create_intake_catalogue(*facets)
+        facet_counts = search.get("facet_counts", {}).get("facet_fields", {})
+        facets: List[str] = []
+        groupby: List[str] = []
+        self._multi_valued = set()
+        for key in self.translator.facet_hierarchy:
+            counts = facet_counts.get(key)
+            if not counts:
+                continue
+            name = self.translator.forward_lookup.get(key, key)
+            facets.append(name)
+            if self._is_single_valued(counts, total_count):
+                groupby.append(name)
+            else:
+                self._multi_valued.add(name)
+        catalogue = await self._create_intake_catalogue(
+            *facets, groupby_attrs=groupby
+        )
         return search_status, IntakeCatalogue(
             catalogue=catalogue, total_count=total_count
         )
@@ -782,11 +807,21 @@ class Solr:
                 translated_key = self.translator.forward_lookup.get(
                     freva_key, freva_key
                 )
-                result[translated_key] = (
-                    out[freva_key][0]
-                    if isinstance(out.get(freva_key), list) and len(out[freva_key]) == 1
-                    else out.get(freva_key)
-                )
+                value = out.get(freva_key)
+                if self._multi_valued is None:
+                    result[translated_key] = (
+                        value[0]
+                        if isinstance(value, list) and len(value) == 1
+                        else value
+                    )
+                elif translated_key in self._multi_valued:
+                    result[translated_key] = (
+                        list(value) if isinstance(value, list) else [value]
+                    )
+                else:
+                    result[translated_key] = (
+                        value[0] if isinstance(value, list) and value else value
+                    )
         return result
 
     async def _iterintake(self) -> AsyncIterator[str]:
