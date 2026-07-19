@@ -3,6 +3,14 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
+v2607.1.0
+^^^^^^^^^
+
+Fixed
+"""""
+- unbreak the intake catalogue for multi-valued facets
+
+
 v2607.0.0
 ^^^^^^^^^
 
