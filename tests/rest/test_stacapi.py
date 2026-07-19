@@ -809,7 +809,9 @@ def test_streamed_access_uses_documented_auth() -> None:
 
     for desc in (item.description, collection.description):
         assert "from freva_client import authenticate, databrowser" in desc
-        assert 'authenticate(host="https://host")["headers"]' in desc
+        assert 'authenticate(host="https://host")' in desc
+        assert 'storage_options = {"headers": token["headers"]}' in desc
+        assert "storage_options = authenticate" not in desc
         assert "storage_options=storage_options" in desc
         assert "auth_token" not in desc
         assert "Authorization: Bearer" not in desc.split("## 4.")[0]

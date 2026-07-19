@@ -214,7 +214,8 @@ def streamed_access_desc(ctx: AssetContext, item_id: str) -> str:
         import xarray as xr
         from freva_client import authenticate, databrowser
 
-        storage_options = authenticate(host="{ctx.base_url}")["headers"]
+        token = authenticate(host="{ctx.base_url}")
+        storage_options = {{"headers": token["headers"]}}
 
         db = databrowser(
             {ctx.python_params}{ctx.uniq_key}="{item_id}",
@@ -493,7 +494,8 @@ def collection_streamed_access_desc(ctx: AssetContext) -> str:
         import xarray as xr
         from freva_client import authenticate, databrowser
 
-        storage_options = authenticate(host="{ctx.base_url}")["headers"]
+        token = authenticate(host="{ctx.base_url}")
+        storage_options = {{"headers": token["headers"]}}
 
         db = databrowser(
             {ctx.python_params}stream_zarr=True,
