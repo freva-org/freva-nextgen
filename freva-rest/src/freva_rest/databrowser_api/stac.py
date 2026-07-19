@@ -22,11 +22,15 @@ from fastapi import Request
 
 from freva_rest.config import ServerConfig
 from freva_rest.logger import logger
+from freva_rest.utils.stac_assets import (
+    STATIC_COLLECTION_ASSETS,
+    AssetContext,
+    build_collection_assets,
+    build_item_assets,
+)
 from freva_rest.utils.stac_utils import (
-    Asset,
     Item,
     Link,
-    generate_local_access_desc,
     parse_bbox,
     parse_datetime,
 )
@@ -178,7 +182,11 @@ class STAC(Solr):
         """Validate search and get result counts."""
         self._set_catalogue_queries()
         self.query["facet.field"] = self._config.solr_fields + ["time", "bbox"]
-        self.query["fl"] = [self.uniq_key] + self._config.solr_fields + ["time", "bbox"]
+        self.query["fl"] = (
+            [self.uniq_key]
+            + self._config.solr_fields
+            + ["time", "bbox", "fs_type"]
+        )
         async with self._session_get() as res:
             search_status, search = res
         total_count = int(search.get("response", {}).get("numFound", 0))
@@ -200,6 +208,20 @@ class STAC(Solr):
             ),
             "only_params": str(filtered_params) if filtered_params != {} else "",
         }
+
+    def _asset_context(self) -> AssetContext:
+        """Context shared by all asset builders for this request."""
+        params = (
+            ast.literal_eval(str(self.assets_prereqs.get("only_params")))
+            if self.assets_prereqs.get("only_params", "")
+            else {}
+        )
+        return AssetContext(
+            str(self.config.proxy),
+            flavour=str(self.translator.flavour),
+            uniq_key=self.uniq_key,
+            params=params,
+        )
 
     def _update_spatial_extent(self, bbox: List[float]) -> None:
         """
@@ -237,84 +259,7 @@ class STAC(Solr):
 
     async def _create_stac_item(self, result: Dict[str, Any]) -> "Item":
         id = result.get(self.uniq_key, "")
-        params_dict = (
-            ast.literal_eval(str(self.assets_prereqs.get("only_params")))
-            if self.assets_prereqs.get("only_params", "")
-            else {}
-        )
-        python_params = " ".join(
-            f"{k}='{v}',"
-            for k, v in params_dict.items()
-            if k not in ("translate", "start")
-        )
-
-        cli_params = " ".join(
-            f"{k}={v}" for k, v in params_dict.items()
-            if k not in ("translate", "start")
-        )
-
-        api_params = "&".join(
-            f"{k}={v}" for k, v in params_dict.items()
-            if k not in ("translate", "start")
-        )
-        intake_desc = dedent(
-            f"""
-            # Installing Intake-ESM
-            ```bash
-            pip install intake-esm
-            conda install -c conda-forge intake-esm
-            ```
-            # Quick Guide: INTAKE-ESM Catalog (Python)
-            ```python
-            import intake
-            cat = intake.open_esm_datastore(
-            '{str(self.assets_prereqs.get('full_endpoint')).replace(
-                "stac-catalogue", "intake-catalogue")}')
-            ```
-            """
-        )
-        zarr_desc = dedent(
-            f"""
-            # Accessing Zarr Data
-            1. Install freva-client
-            ```bash
-            pip install freva-client
-            ```
-            2. Python - recommended
-            ```python
-            from freva_client import authenticate, databrowser
-            import xarray as xr
-            db = databrowser({python_params} {self.uniq_key}='{id}', \\
-                            stream_zarr=True, host='{self.config.proxy}')
-            xarray_dataset = xr.open_mfdataset(
-            list(db),
-            chunks="auto",
-            engine="zarr",
-            storage_options={{"headers":
-                    {{
-                    "Authorization": f"Bearer {{db.auth_token['access_token']}}"
-                    }}
-            }}
-            )
-            ```
-            3. CLI:
-            ```bash
-            freva-client databrowser data-search {cli_params} {self.uniq_key}={id} \\
-                --zarr --host {self.config.proxy}
-            ```
-            4. Access the zarr data directly (API - language agnostic)
-            ```bash
-            curl -X GET {self.assets_prereqs.get('base_url')}api/ \\
-            freva-nextgen/databrowser/load/\\
-            {self.translator.flavour}?{api_params}\\
-            &{self.uniq_key}={id} \\
-              -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-            ```
-            💡: Read more about the
-            [freva-client](https://freva-org.github.io/freva-nextgen/)
-            """
-        )  # noqa: E501
-        local_access_desc = generate_local_access_desc(id)
+        ctx = self._asset_context()
         item_id = "item" + str(self.count_item)
         bbox = result.get("bbox")
         if bbox:
@@ -397,65 +342,17 @@ class STAC(Solr):
                 )
                 item.add_link(link)
 
-        assets = {
-            "freva-databrowser": Asset(
-                href=(
-                    f"{self.assets_prereqs.get('base_url')}databrowser/?"
-                    f"{api_params}&{self.uniq_key}={id}"
-                ),
-                media_type="text/html",
-                title="Freva Web DataBrowser",
-                description=(
-                    "Access the Freva web interface for data exploration and analysis"
-                ),
-                roles=["overview"]
+        assets = build_item_assets(
+            ctx,
+            id,
+            fs_type=result.get("fs_type"),
+            include=(
+                "freva-databrowser",
+                "freva-data-viewer",
+                "access-data",
+                "intake-catalogue",
             ),
-            "intake-catalogue": Asset(
-                href=(
-                    str(self.assets_prereqs.get("full_endpoint")).replace(
-                        "stac-catalogue", "intake-catalogue"
-                    )
-                    + f"&{self.uniq_key}={id}"
-                ),
-                media_type="application/json",
-                title="Intake Catalogue",
-                description=intake_desc,
-                roles=["metadata"]
-            ),
-            "zarr-access": Asset(
-                href=(
-                    f"{self.assets_prereqs.get('base_url')}api/freva-nextgen/"
-                    f"databrowser/load/{self.translator.flavour}?"
-                    f"{api_params}&{self.uniq_key}={id}"
-                ),
-                media_type="application/vnd+zarr",
-                title="Stream Zarr Data",
-                description=zarr_desc,
-                roles=["data"],
-                extra_fields={
-                    "requires": ["oauth2"],
-                    "authentication": {
-                        "type": "oauth2",
-                        "description": (
-                            "Authentication using your Freva credentials is required."
-                        ),
-                    },
-                },
-            ),
-            "local-access": Asset(
-                href=(
-                    f"{self.assets_prereqs.get('base_url')}api/freva-nextgen/"
-                    f"databrowser/data-search/{self.translator.flavour}/"
-                    f"{self.uniq_key}?"
-                    f"{api_params}"
-                    f"&{self.uniq_key}={id}"
-                ),
-                title="Access data locally",
-                description=local_access_desc,
-                roles=["data"],
-                media_type="application/netcdf"
-            ),
-        }
+        )
         for key, asset in assets.items():
             item.add_asset(key, asset)
 
@@ -463,110 +360,7 @@ class STAC(Solr):
 
     def _create_stac_collection(self) -> Generator[str, None, None]:
 
-        intake_desc = dedent(
-            f"""
-            # Installing Intake-ESM
-            ```bash
-            # Method 1: Using pip
-            pip install intake-esm
-            # Method 2: Using conda (recommended)
-            conda install -c conda-forge intake-esm
-            ```
-            # Quick Guide: INTAKE-ESM Catalog on Levante (Python)
-            ```python
-            import intake
-            # create a catalog object from a EMS JSON file containing dataset metadata
-            cat = intake.open_esm_datastore(
-            '{str(self.assets_prereqs.get('full_endpoint')).replace(
-                "stac-catalogue", "intake-catalogue")}')
-            ```
-            """
-        )
-        stac_static_desc = dedent(
-            """
-            # STAC Static Catalog Setup
-            ```bash
-            pip install pystac
-            ```
-            # Load the STAC Catalog
-            ```python
-            import pystac, tempfile, os, subprocess
-            temp_dir = tempfile.mkdtemp()
-            subprocess.run(['unzip', '-o',
-                            'stac-catalog-Dataset-freva-52f66bb4-a8f-file.zip',
-                            '-d', temp_dir],
-                        stderr=subprocess.PIPE)
-            catalog = pystac.Catalog.from_file(
-                os.path.join(temp_dir, 'stac-catalog/catalog.json')
-                )
-            print(catalog.describe())
-            ```
-            Also one can setup a web server to serve the static catalog.
-            💡: This has been also desigend to work with the data locally. So you
-            can copy the catalog link from here and download and load the catalog
-            locally via the provided script.
-            """
-        )
-
-        params_dict = (
-            ast.literal_eval(str(self.assets_prereqs.get("only_params")))
-            if self.assets_prereqs.get("only_params", "")
-            else {}
-        )
-        python_params = " ".join(
-            f"{k}='{v}','"
-            for k, v in params_dict.items()
-            if k not in ("translate")
-        )
-        cli_params = " ".join(
-            f"{k}={v}" for k, v in params_dict.items()
-            if k not in ("translate")
-        )
-        api_params = "&".join(
-            f"{k}={v}" for k, v in params_dict.items()
-            if k not in ("translate")
-        )
-
-        zarr_desc = dedent(
-            f"""
-            # Accessing Zarr Data
-            1. Install freva-client
-            ```bash
-            pip install freva-client
-            ```
-            2. Python - recommended
-            ```python
-            from freva_client import authenticate, databrowser
-            import xarray as xr
-            db = databrowser({python_params} stream_zarr=True,\\
-                                host='{self.config.proxy}')
-            xarray_dataset = xr.open_mfdataset(
-            list(db),
-            chunks="auto",
-            engine="zarr",
-            storage_options={{"headers":
-                    {{
-                    "Authorization": f"Bearer {{db.auth_token['access_token']}}"
-                    }}
-            }}
-            )
-            ```
-            3. CLI
-            ```bash
-            freva-client databrowser data-search {cli_params} --zarr\\
-                            --host {self.config.proxy}
-            ```
-            4. Access the zarr data directly (API - language agnostic)
-            ```bash
-            curl -X GET {self.assets_prereqs.get('base_url')}api/ \\
-            freva-nextgen/databrowser/load/\\
-            {self.translator.flavour}?{api_params} \\
-            -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-            ```
-            💡: Read more about the
-            [freva-client](https://freva-org.github.io/freva-nextgen/)
-            """
-        )
+        ctx = self._asset_context()
 
         collection_spatial = [[
             self.spatial_extent["minx"],
@@ -611,57 +405,9 @@ class STAC(Solr):
             link_chunk = f', {json.dumps(link)}'
             yield link_chunk
 
-        assets = {
-            "freva-databrowser": Asset(
-                href=(
-                    f"{self.assets_prereqs.get('base_url')}databrowser/?"
-                    f"{api_params}"
-                ),
-                title="Freva Data-Browser",
-                description=(
-                    "Interactive web interface for data exploration and analysis. "
-                    "Access through any browser."
-                ),
-                roles=["overview"],
-                media_type="text/html",
-            ),
-            "intake-catalogue": Asset(
-                href=str(self.assets_prereqs.get("full_endpoint")).replace(
-                    "stac-catalogue", "intake-catalogue"
-                ),
-                title="Intake-ESM Catalogue",
-                description=intake_desc,
-                roles=["metadata"],
-                media_type="application/json",
-            ),
-            "stac-static-catalogue": Asset(
-                href=str(self.assets_prereqs.get("full_endpoint")),
-                title="STAC Static Catalogue",
-                description=stac_static_desc,
-                roles=["metadata"],
-                media_type="application/zip",
-            ),
-            "zarr-access": Asset(
-                href=(
-                    f"{self.assets_prereqs.get('base_url')}api/freva-nextgen/"
-                    f"databrowser/load/{self.translator.flavour}?"
-                    f"{api_params}"
-                ),
-                title="Stream Zarr Dataset",
-                description=zarr_desc,
-                roles=["data"],
-                media_type="application/vnd+zarr",
-                extra_fields={
-                    "requires": ["oauth2"],
-                    "authentication": {
-                        "type": "oauth2",
-                        "description": (
-                            "Authentication using your Freva credentials is required."
-                        ),
-                    },
-                },
-            ),
-        }
+        assets = build_collection_assets(
+            ctx, include=STATIC_COLLECTION_ASSETS
+        )
         assets_json = json.dumps(
             {key: asset.to_dict() for key, asset in assets.items()}
         )

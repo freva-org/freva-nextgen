@@ -1,7 +1,6 @@
 import fnmatch
 import json
 import sys
-from textwrap import dedent
 from typing import (
     Any,
     AsyncGenerator,
@@ -22,11 +21,14 @@ from fastapi.encoders import jsonable_encoder
 from freva_rest.config import ServerConfig
 from freva_rest.databrowser_api import Solr
 from freva_rest.logger import logger
+from freva_rest.utils.stac_assets import (
+    AssetContext,
+    build_collection_assets,
+    build_item_assets,
+)
 from freva_rest.utils.stac_utils import (
-    Asset,
     Item,
     Link,
-    generate_local_access_desc,
     parse_bbox,
     parse_datetime,
 )
@@ -160,6 +162,14 @@ class STACAPI:
                     sep = "&" if "?" in href else "?"
                     href = href + sep + query
         return href
+
+    def _asset_context(self) -> AssetContext:
+        """Context shared by all asset builders for this request."""
+        return AssetContext(
+            str(self.config.proxy),
+            flavour="freva",
+            uniq_key=self.uniq_key,
+        )
 
     def _map_collection_field(self, field: str) -> str:
         """
@@ -666,20 +676,26 @@ class STACAPI:
                 )
             )
 
+        assets: Dict[str, Any] = {
+            key: asset.to_dict()
+            for key, asset in build_collection_assets(
+                self._asset_context(),
+                facet=self.collection_axis,
+                value=collection_id,
+            ).items()
+        }
+
         # Optional thumbnail asset
-        assets: Optional[Dict[str, Any]] = None
         thumbnail_url = self._tagged_single(meta.get("stac_collection_thumbnail_url"))
         if thumbnail_url:
-            assets = {
-                "thumbnail": {
-                    "href": thumbnail_url,
-                    "type": self._tagged_single(
-                        meta.get("stac_collection_thumbnail_type")
-                    )
-                    or "image/png",
-                    "roles": ["thumbnail"],
-                    "title": "Thumbnail",
-                }
+            assets["thumbnail"] = {
+                "href": thumbnail_url,
+                "type": self._tagged_single(
+                    meta.get("stac_collection_thumbnail_type")
+                )
+                or "image/png",
+                "roles": ["thumbnail"],
+                "title": "Thumbnail",
             }
 
         return STACCollection(
@@ -764,48 +780,6 @@ class STACAPI:
         """Create a STAC item from the Solr doc."""
         collection_id = collection_id.lower()
         id = result.get(self.uniq_key, "")
-        zarr_desc = dedent(
-            f"""
-            # Accessing Zarr Data
-            1. Install freva-client
-            ```bash
-            pip install freva-client
-            ```
-            2. Python - recommended:
-            ```python
-            from freva_client import databrowser
-            import xarray as xr
-            db = databrowser({self.uniq_key}='{id}', \\
-                            stream_zarr=True, host='{self.config.proxy}')
-            xarray_dataset = xr.open_mfdataset(
-            list(db),
-            chunks="auto",
-            engine="zarr",
-            storage_options={{"headers":
-                    {{
-                    "Authorization": f"Bearer {{db.auth_token['access_token']}}"
-                    }}
-            }}
-            )
-            ```
-            3. CLI:
-            ```bash
-            freva-client databrowser data-search {self.uniq_key}={id} \\
-                --zarr --host {self.config.proxy}
-            ```
-            4. Access the zarr data directly (API - language agnostic)
-            ```bash
-            curl -X GET {self.config.proxy}api/ \\
-            freva-nextgen/databrowser/load/\\
-            freva?\\
-            {self.uniq_key}={id} \\
-              -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-            ```
-            💡: Read more about the
-            [freva-client](https://freva-org.github.io/freva-nextgen/)
-            """
-        )  # noqa: E501
-        local_access_desc = generate_local_access_desc(id)
         item_id = str(result.get("_version_"))
         bbox = result.get("bbox")
         if bbox:
@@ -891,51 +865,11 @@ class STACAPI:
                 )
                 item.add_link(link)
 
-        assets = {
-            "freva-databrowser": Asset(
-                href=(
-                    f"{self.config.proxy}/databrowser/?" f"{self.uniq_key}={id}"
-                ),
-                media_type="text/html",
-                title="Freva Web DataBrowser",
-                description=(
-                    "Access the Freva web interface for data exploration and analysis"
-                ),
-                roles=["overview"],
-            ),
-            "zarr-access": Asset(
-                href=(
-                    f"{self.config.proxy}/api/freva-nextgen/"
-                    f"databrowser/load/freva?"
-                    f"{self.uniq_key}={id}"
-                ),
-                media_type="application/vnd+zarr",
-                title="Stream Zarr Data",
-                description=zarr_desc,
-                roles=["data"],
-                extra_fields={
-                    "requires": ["oauth2"],
-                    "authentication": {
-                        "type": "oauth2",
-                        "description": (
-                            "Authentication using your Freva credentials is required."
-                        ),
-                    },
-                },
-            ),
-            "local-access": Asset(
-                href=(
-                    f"{self.config.proxy}/api/freva-nextgen/"
-                    f"databrowser/data-search/freva/"
-                    f"{self.uniq_key}?"
-                    f"{self.uniq_key}={id}"
-                ),
-                title="Access data locally",
-                description=local_access_desc,
-                roles=["data"],
-                media_type="application/netcdf",
-            ),
-        }
+        assets = build_item_assets(
+            self._asset_context(),
+            id,
+            fs_type=result.get("fs_type"),
+        )
         for key, asset in assets.items():
             item.add_asset(key, asset)
 
@@ -987,7 +921,7 @@ class STACAPI:
             facet_field=self.config.solr_fields + ["time", "bbox"],
             fl=[self.uniq_key]
             + self.config.solr_fields
-            + ["time", "bbox", "_version_"],
+            + ["time", "bbox", "_version_", "fs_type"],
             sort="_version_ asc,file asc",
             fq=filters,
             rows=0,
@@ -1203,7 +1137,7 @@ class STACAPI:
             facet_field=self.config.solr_fields + ["time", "bbox"],
             fl=[self.uniq_key]
             + self.config.solr_fields
-            + ["time", "bbox", "_version_"],
+            + ["time", "bbox", "_version_", "fs_type"],
             sort="_version_ asc,file asc",
             fq=[
                 self._collection_fq(collection_id),
