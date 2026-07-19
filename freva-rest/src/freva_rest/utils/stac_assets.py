@@ -410,7 +410,7 @@ def stac_download_desc(url: str) -> str:
 
         ```bash
         curl -L -o stac-catalog.zip "{url}"
-        unzip stac-catalog.zip -d stac-catalog
+        unzip stac-catalog.zip
         ```
 
         ## 2. Open it with pystac
@@ -422,8 +422,8 @@ def stac_download_desc(url: str) -> str:
         ```python
         import pystac
 
-        catalog = pystac.Catalog.from_file("stac-catalog/stac-catalog/catalog.json")
-        print(catalog.describe())
+        catalog = pystac.Catalog.from_file("stac-catalog/catalog.json")
+        catalog.describe()
         ```
 
         ---
@@ -608,7 +608,7 @@ def static_archive_desc(url: str) -> str:
         import pystac
 
         catalog = pystac.Catalog.from_file("stac-catalog/catalog.json")
-        print(catalog.describe())
+        catalog.describe()
 
         for item in catalog.get_items(recursive=True):
             print(item.id, item.assets["access-data"].href)
