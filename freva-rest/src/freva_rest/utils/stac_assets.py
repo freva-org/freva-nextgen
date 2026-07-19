@@ -260,7 +260,7 @@ def streamed_access_desc(ctx: AssetContext, item_id: str) -> str:
 
         ---
         ⚠️ Treat the token file like a password: `chmod 600`, never commit
-        it, and refresh it rather than re-using an expired one.
+        it, and refresh it rather than reusing an expired one.
 
         💡 Three ways to get one, all interchangeable: `authenticate()` in
         Python, `freva-client auth` on the command line, or a download from
@@ -409,7 +409,8 @@ def stac_download_desc(url: str) -> str:
         ## 1. Download and unpack
 
         ```bash
-        # you can download it via curl, but ir requires to have curl installed on your workspace
+        # you can download the catalogue via curl as well, but ir requires to
+        # have curl installed on your workspace
         curl -L -o stac-catalog.zip "{url}"
         unzip stac-catalog.zip
         ```
@@ -531,7 +532,7 @@ def collection_streamed_access_desc(ctx: AssetContext) -> str:
         collection, narrow the search down first - the databrowser asset is
         a good starting point.
         ⚠️ Treat the token file like a password: `chmod 600`, never commit
-        it, and refresh it rather than re-using an expired one.
+        it, and refresh it rather than reusing an expired one.
 
         💡 Three ways to get one, all interchangeable: `authenticate()` in
         Python, `freva-client auth` on the command line, or a download from

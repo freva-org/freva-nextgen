@@ -687,6 +687,141 @@ def test_local_asset_ignores_format() -> None:
         assert "cfgrib" not in asset.description
 
 
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://s3.waterpark.dkrz.de/cmip6/healpix/P1M/level_5.zarr",
+        "http://data.example.org/tas.zarr",
+        "https://data.example.org/tas.nc",
+    ],
+)
+def test_remote_http_never_passes_anon(url) -> None:
+    """
+    anon is not a generic fsspec option.
+    """
+    from freva_rest.utils.stac_assets import AssetContext, build_item_assets
+
+    desc = build_item_assets(
+        AssetContext("https://host"), url, fs_type="swift"
+    )["access-data"].description
+
+    assert "anon" not in desc
+    assert "aiohttp" in desc
+
+
+@pytest.mark.parametrize(
+    "url,backend",
+    [
+        ("s3://bucket/tas.zarr", "s3fs"),
+        ("gs://bucket/tas.zarr", "gcsfs"),
+        ("az://container/tas.zarr", "adlfs"),
+        ("s3://bucket/tas.nc", "s3fs"),
+    ],
+)
+def test_remote_object_store_passes_anon(url, backend) -> None:
+    """Object stores do understand anon, and need a backend package."""
+    from freva_rest.utils.stac_assets import AssetContext, build_item_assets
+
+    desc = build_item_assets(
+        AssetContext("https://host"), url, fs_type="s3"
+    )["access-data"].description
+
+    assert "anon" in desc
+    assert backend in desc
+
+
+def test_remote_zarr_does_not_use_fsspec() -> None:
+    """xarray opens a Zarr URL directly; a mapper adds nothing."""
+    from freva_rest.utils.stac_assets import AssetContext, build_item_assets
+
+    desc = build_item_assets(
+        AssetContext("https://host"), "s3://b/tas.zarr", fs_type="s3"
+    )["access-data"].description
+
+    assert "get_mapper" not in desc
+    assert "import fsspec" not in desc
+    assert 'storage_options={"anon": True}' in desc
+
+
+def test_remote_snippets_are_executable_python() -> None:
+    """The generated snippets must at least parse and import cleanly."""
+    import ast
+
+    from freva_rest.utils.stac_assets import AssetContext, build_item_assets
+
+    ctx = AssetContext("https://host")
+    for url in (
+        "https://d.org/tas.zarr",
+        "s3://b/tas.zarr",
+        "https://d.org/tas.nc",
+        "s3://b/tas.grib2",
+        "gs://b/tas.h5",
+    ):
+        desc = build_item_assets(ctx, url, fs_type="s3")["access-data"].description
+        code = desc.split("```python")[1].split("```")[0]
+        ast.parse(code)
+
+
+def test_pystac_snippets_are_correct() -> None:
+    """
+    The pystac snippets must not wrap describe() in print().
+    """
+    from freva_rest.utils.stac_assets import (
+        STATIC_COLLECTION_ASSETS,
+        AssetContext,
+        build_collection_assets,
+        build_item_assets,
+    )
+
+    ctx = AssetContext("https://host")
+    download = build_item_assets(ctx, "/w/x.nc", fs_type="posix")[
+        "stac-catalogue"
+    ].description
+    archive = build_collection_assets(ctx, include=STATIC_COLLECTION_ASSETS)[
+        "stac-catalogue"
+    ].description
+
+    for desc in (download, archive):
+        assert "print(catalog.describe())" not in desc
+        assert "catalog.describe()" in desc
+        assert 'from_file("stac-catalog/catalog.json")' in desc
+        assert "stac-catalog/stac-catalog" not in desc
+
+    assert "unzip stac-catalog.zip -d stac-catalog" not in download
+
+
+def test_streamed_access_uses_documented_auth() -> None:
+    """
+    The generated snippets must match the real freva-client auth API.
+    """
+    from freva_rest.utils.stac_assets import (
+        STATIC_COLLECTION_ASSETS,
+        AssetContext,
+        build_collection_assets,
+        build_item_assets,
+    )
+
+    ctx = AssetContext("https://host", params={"project": "cmip6"})
+    item = build_item_assets(ctx, "/w/tas.nc", fs_type="posix")["access-data"]
+    collection = build_collection_assets(
+        ctx, include=STATIC_COLLECTION_ASSETS
+    )["access-data"]
+
+    for desc in (item.description, collection.description):
+        assert "from freva_client import authenticate, databrowser" in desc
+        assert 'authenticate(host="https://host")["headers"]' in desc
+        assert "storage_options=storage_options" in desc
+        assert "auth_token" not in desc
+        assert "Authorization: Bearer" not in desc.split("## 4.")[0]
+
+        assert "freva-client auth --host https://host" in desc
+        assert "--token-file ~/.freva-token.json" in desc
+        assert "chmod 600" in desc
+
+        assert "Freva web portal" in desc
+        assert "authenticate()" in desc
+
+
 def test_classify_storage_vocabularies_are_separate() -> None:
     """
     fs_type names and URI schemes are different vocabularies.
@@ -714,7 +849,7 @@ def test_access_desc_remote_files() -> None:
     )["access-data"]
     assert zarr_asset.href == "gs://bucket/data.zarr"
     assert zarr_asset.media_type == "application/vnd+zarr"
-    assert "fsspec.get_mapper" in zarr_asset.description
+    assert 'xr.open_dataset(' in zarr_asset.description
     assert 'engine="zarr"' in zarr_asset.description
 
     nc_asset = build_item_assets(
@@ -742,10 +877,8 @@ def test_access_desc_local_files() -> None:
     )["access-data"]
 
     assert asset.href == (
-        "https://host/api/freva-nextgen/databrowser/load/freva"
-        "?file=%2Frandom%2Fpath%2Fto%2Fdata.zarr"
+        "/random/path/to/data.zarr"
     )
-    assert "/random/path/to/data.zarr" not in asset.href
     assert asset.media_type == "application/vnd+zarr"
     assert asset.to_dict()["requires"] == ["oauth2"]
     assert asset.to_dict()["freva:storage"] == "local"
