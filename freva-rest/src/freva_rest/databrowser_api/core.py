@@ -624,7 +624,9 @@ class Solr:
             "last_updated": f"{datetime.now().isoformat()}",
             "aggregation_control": {
                 "variable_column_name": var_name,
-                "groupby_attrs": [],
+                # An empty list is not "do not group": intake-esm reads it as
+                # "group by every column"
+                "groupby_attrs": [f for f in facets if f != var_name],
                 "aggregations": [
                     {
                         "type": "union",
@@ -777,15 +779,17 @@ class Solr:
 
     def _process_catalogue_result(self, out: Dict[str, List[Sized]]) -> Dict[str, Any]:
         result = {}
+        var_name = self.translator.forward_lookup["variable"]
         for freva_key in [self.uniq_key] + self.translator.facet_hierarchy:
             if out.get(freva_key):
                 translated_key = self.translator.forward_lookup.get(
                     freva_key, freva_key
                 )
+                value = out[freva_key]
                 result[translated_key] = (
-                    out[freva_key][0]
-                    if isinstance(out.get(freva_key), list) and len(out[freva_key]) == 1
-                    else out.get(freva_key)
+                    list(value)
+                    if translated_key == var_name
+                    else (value[0] if isinstance(value, list) and value else value)
                 )
         return result
 
