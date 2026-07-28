@@ -1,5 +1,5 @@
 """
-Fixtures shared by the rest-api tests for the STAC unit tests 
+Fixtures shared by the rest-api tests for the STAC unit tests
 """
 
 import importlib.util
@@ -12,13 +12,23 @@ from typing import Iterator
 import pytest
 
 # Directory that contains the ``freva_rest.stac_api`` package
-_STAC_API_DIR = (
+_FREVA_REST_DIR = (
     Path(__file__).resolve().parents[2]
     / "freva-rest"
     / "src"
     / "freva_rest"
-    / "stac_api"
 )
+_STAC_API_DIR = _FREVA_REST_DIR / "stac_api"
+_UTILS_DIR = _FREVA_REST_DIR / "utils"
+
+
+def _load_real(name: str, path: Path) -> types.ModuleType:
+    """Import a dependency-free helper module straight from disk."""
+    spec = importlib.util.spec_from_file_location(name, str(path))
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 @pytest.fixture(scope="module")
@@ -32,6 +42,7 @@ def stac_module() -> Iterator[object]:
         "freva_rest.logger",
         "freva_rest.utils",
         "freva_rest.utils.stac_utils",
+        "freva_rest.utils.stac_assets",
         "freva_rest.utils.stats_utils",
         "sc",
         "sc.schema",
@@ -61,18 +72,11 @@ def stac_module() -> Iterator[object]:
     lg.logger = logging.getLogger("stac-test")
     sys.modules["freva_rest.logger"] = lg
 
-    su = types.ModuleType("freva_rest.utils.stac_utils")
-    for name in [
-        "Asset",
-        "Item",
-        "Link",
-        "generate_local_access_desc",
-        "parse_bbox",
-        "parse_datetime",
-    ]:
-        setattr(su, name, object)
-    sys.modules["freva_rest.utils"] = types.ModuleType("freva_rest.utils")
-    sys.modules["freva_rest.utils.stac_utils"] = su
+    utils_pkg = types.ModuleType("freva_rest.utils")
+    utils_pkg.__path__ = [str(_UTILS_DIR)]
+    sys.modules["freva_rest.utils"] = utils_pkg
+    _load_real("freva_rest.utils.stac_utils", _UTILS_DIR / "stac_utils.py")
+    _load_real("freva_rest.utils.stac_assets", _UTILS_DIR / "stac_assets.py")
 
     stats = types.ModuleType("freva_rest.utils.stats_utils")
 

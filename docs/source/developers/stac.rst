@@ -681,11 +681,37 @@ Get Collection Item Details
             "collection": "observations",
             "bbox": [-180.0, -90.0, 180.0, 90.0],
             "assets": {
-                "zarr-access": {
-                    "href": "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/load/freva?file=/path/to/file.nc",
-                    "title": "Stream Zarr Data",
+                "freva-databrowser": {
+                    "href": "https://www.freva.dkrz.de/databrowser/?file=%2Fpath%2Fto%2Ffile.nc",
+                    "title": "Freva Web DataBrowser",
+                    "type": "text/html",
+                    "roles": ["overview"]
+                },
+                "freva-data-viewer": {
+                    "href": "https://www.freva.dkrz.de/inspect/?file=%2Fpath%2Fto%2Ffile.nc",
+                    "title": "Freva Data Viewer",
+                    "type": "text/html",
+                    "roles": ["overview", "visual"]
+                },
+                "access-data": {
+                    "href": "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/load/freva?file=%2Fpath%2Fto%2Ffile.nc",
+                    "title": "Access data (Zarr stream)",
                     "type": "application/vnd+zarr",
-                    "roles": ["data"]
+                    "roles": ["data"],
+                    "requires": ["oauth2"],
+                    "freva:storage": "local"
+                },
+                "intake-catalogue": {
+                    "href": "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake-catalogue/freva/file?file=%2Fpath%2Fto%2Ffile.nc",
+                    "title": "Intake-ESM Catalogue",
+                    "type": "application/json",
+                    "roles": ["metadata"]
+                },
+                "stac-catalogue": {
+                    "href": "https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-catalogue/freva/file?file=%2Fpath%2Fto%2Ffile.nc",
+                    "title": "Static STAC Catalogue (ZIP)",
+                    "type": "application/zip",
+                    "roles": ["metadata"]
                 }
             }
         }
