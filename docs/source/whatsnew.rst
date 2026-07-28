@@ -9,6 +9,10 @@ v2607.1.0
 Changed
 """""
 - unify and reshape the STAC assets across the static and the API
+Fixed
+"""""
+- unbreak the intake catalogue for multi-valued facets
+
 
 v2607.0.0
 ^^^^^^^^^
