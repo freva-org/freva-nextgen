@@ -7,6 +7,7 @@ import ssl
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from typing import (
+    Any,
     Awaitable,
     Dict,
     List,
@@ -36,6 +37,26 @@ CACHING_SERVICES = set(("zarr-stream",))
 CONFIG = ServerConfig()
 
 
+class ReductionDict(TypedDict, total=False):
+    """Dimension-reduction plan carried in a cache token.
+
+    Mixed-typed (unlike ``assembly``) because it carries a boolean, a float
+    and a list of dimension names alongside the vocabulary strings.  Values
+    are JSON-native so the mapping can be embedded verbatim in the token.
+    """
+
+    time_freq: str
+    time_method: str
+    climatology: bool
+    min_coverage: float
+    dtype: str
+    # Reserved for spatial reduction; the wire format is final already so
+    # enabling it later needs no token-format change.
+    space: str
+    space_dims: List[str]
+    weighting: str
+
+
 class PresignDict(TypedDict):
     """The response of the pre sign process."""
 
@@ -44,6 +65,7 @@ class PresignDict(TypedDict):
     token: str
     key: str
     assembly: Optional[Dict[str, Optional[str]]]
+    reduce: Optional[ReductionDict]
 
 
 class CacheKwArgs(TypedDict, total=False):
@@ -168,11 +190,19 @@ class SystemUserInfo(TypedDict):
 
 
 class CacheTokenPayload(TypedDict):
-    """The information encoded in a cache token."""
+    """The information encoded in a cache token.
+
+    The token *is* the cache key, so everything that changes the bytes the
+    client will receive has to be in here.  ``reduce`` in particular: without
+    it a reduced and an unreduced view of the same path collide on one key,
+    and the lazy re-trigger in ``read_redis_data`` would silently
+    re-materialise the unreduced dataset under the reduced dataset's key.
+    """
 
     path: List[str]
     exp: float
     assembly: Optional[Dict[str, Optional[str]]]
+    reduce: Optional[ReductionDict]
 
 
 def get_userinfo(
@@ -228,27 +258,75 @@ def sign_token_path(
     path: Union[str, List[str]],
     expires_at: float,
     assembly: Optional[Dict[str, Optional[str]]],
+    reduce: Optional[ReductionDict] = None,
 ) -> Tuple[str, str]:
     """Create a base64 encoded token and a signature of that token."""
     secret = server_config.redis_password
-    token = encode_cache_token(path, expires_at, assembly)
+    token = encode_cache_token(path, expires_at, assembly, reduce)
     sig = hmac.new(secret.encode("utf-8"), token.encode("utf-8"), sha256).digest()
     return token, b64url(sig)
+
+
+#: Sentinel for "this key has no default", so that a legitimate value is
+#: never accidentally equal to it.
+_MISSING = object()
+
+#: Reduction options whose value carries no information when it equals the
+#: default the worker would apply anyway.  Stripping them keeps the cache
+#: token canonical: a client that spells out ``time_method="mean"`` must land
+#: on the same store as one that leaves it out.  Note that falsy values alone
+#: are not enough here -- ``"mean"`` and ``"float32"`` are truthy.
+REDUCTION_DEFAULTS: Dict[str, Any] = {
+    "time_method": "mean",
+    "dtype": "float32",
+    "climatology": False,
+    "min_coverage": 0.0,
+    "weighting": "auto",
+}
+
+
+def canonical_reduction(
+    reduce: Optional[ReductionDict],
+) -> Optional[ReductionDict]:
+    """Reduce a plan to the options that actually change the result.
+
+    Drops entries that are empty or that restate a default, then returns
+    ``None`` for a plan that says nothing at all.  This is the single source
+    of truth for reduction-plan identity: every route that mints a token goes
+    through :func:`encode_cache_token`, which calls this.
+
+    Because defaults are resolved here rather than in the token, changing a
+    default changes what old tokens mean.  That is intentional -- the
+    alternative is a cache keyed on noise -- but it makes the defaults part
+    of the wire contract.
+    """
+    canonical = {
+        key: value
+        for key, value in (reduce or {}).items()
+        if value and value != REDUCTION_DEFAULTS.get(key, _MISSING)
+    }
+    return cast(Optional[ReductionDict], canonical or None)
 
 
 def encode_cache_token(
     path: Union[str, List[str]],
     expires_at: float = 0.0,
     assembly: Optional[Dict[str, Optional[str]]] = None,
+    reduce: Optional[ReductionDict] = None,
 ) -> str:
-    """Create a URL-safe token that encodes `path` and expiry.
+    """Create a URL-safe token that encodes `path`, plan and expiry.
 
     Returns an opaque id you can embed in a URL or use as "uuid".
+
+    The reduction plan is canonicalised (see :func:`canonical_reduction`) so
+    that an explicitly-defaulted option and an omitted one produce the same
+    token; combined with the sorted keys below this keeps tokens canonical.
     """
     payload = CacheTokenPayload(
         path=path if isinstance(path, list) else [path],
         exp=expires_at,
         assembly=assembly,
+        reduce=canonical_reduction(reduce),
     )
     return b64url(
         json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
@@ -261,8 +339,13 @@ def decode_cache_token(token: str) -> CacheTokenPayload:
     Raises ValueError if token is invalid or expired.
     """
     payload = json.loads(b64url_decode(token))
+    # ``reduce`` is read with .get() so tokens minted before reduction
+    # existed stay decodable.
     return CacheTokenPayload(
-        path=payload["path"], exp=payload["exp"], assembly=payload["assembly"]
+        path=payload["path"],
+        exp=payload["exp"],
+        assembly=payload["assembly"],
+        reduce=payload.get("reduce"),
     )
 
 
@@ -307,14 +390,22 @@ async def add_ttl_key_to_db_and_cache(
     path: Union[List[str], str],
     ttl_seconds: float,
     assembly: Optional[Dict[str, Optional[str]]] = None,
+    reduce: Optional[ReductionDict] = None,
 ) -> PresignDict:
     """Create an entry of a signature."""
     await Cache.check_connection()
     expires_in = timedelta(seconds=ttl_seconds)
     expires_at = datetime.now(timezone.utc) + expires_in
-    token, signature = sign_token_path(path, expires_at.timestamp(), assembly)
+    token, signature = sign_token_path(
+        path, expires_at.timestamp(), assembly, reduce
+    )
     _id = generate_slug()
-    mapping = {"signature": signature, "token": token, "assembly": assembly}
+    mapping = {
+        "signature": signature,
+        "token": token,
+        "assembly": assembly,
+        "reduce": reduce,
+    }
     doc = cast(
         Optional[PresignDict],
         await server_config.mongo_collection_share_key.find_one({"_id": _id}),
@@ -335,4 +426,5 @@ async def add_ttl_key_to_db_and_cache(
         token=token,
         signature=signature,
         assembly=assembly,
+        reduce=reduce,
     )

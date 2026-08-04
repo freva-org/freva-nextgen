@@ -167,6 +167,189 @@ class TestConvertCli:
         assert res.exit_code == 0
 
 
+class TestReduction:
+    """Dimension reduction requested through the client."""
+
+    def test_convert_with_monthly_means(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """A reduced store opens and has fewer time steps than the source."""
+        db = databrowser(host=test_server, dataset="cmip6-fs")
+        files = list(db)
+        headers = {"Authorization": f"Bearer {mock_authenticate['access_token']}"}
+
+        plain = convert(*files, host=test_server)
+        reduced = convert(
+            *files, host=test_server, zarr_options={"time_freq": "monthly"}
+        )
+
+        # The reduction is part of the store identity: same paths, different
+        # url.  Without this a reduced and an unreduced view would collide on
+        # one cache key.
+        assert plain != reduced
+
+        for url in (plain[0], reduced[0]):
+            for _ in range(15):
+                res = requests.get(f"{url}/.zattrs", headers=headers)
+                if res.headers.get("retry-after") and res.status_code == 503:
+                    time.sleep(1)
+                    continue
+                break
+
+        source = xr.open_zarr(plain[0], storage_options={"headers": headers})
+        monthly = xr.open_zarr(reduced[0], storage_options={"headers": headers})
+        assert monthly.sizes["time"] <= source.sizes["time"]
+        # Reduced stores are CF-decoded by design.
+        assert monthly["time"].dtype.kind in "MO"
+
+    def test_convert_climatology_differs_from_resampling(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """The two readings of "monthly" must not share a store."""
+        db = databrowser(host=test_server, dataset="cmip6-fs")
+        files = list(db)
+        resampled = convert(
+            *files, host=test_server, zarr_options={"time_freq": "monthly"}
+        )
+        climatology = convert(
+            *files,
+            host=test_server,
+            zarr_options={"time_freq": "monthly", "climatology": True},
+        )
+        assert resampled != climatology
+
+    def test_aggregate_with_reduction(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """Reduction options survive the databrowser aggregate path."""
+        db = databrowser(host=test_server, dataset="agg")
+        url = db.aggregate(
+            "auto", zarr_options={"time_freq": "monthly", "min_coverage": 0.5}
+        )
+        headers = {"Authorization": f"Bearer {mock_authenticate['access_token']}"}
+        res = requests.get(f"{url}/.zgroup", headers=headers)
+        assert res.status_code in (200, 503)
+
+    def test_stream_zarr_forwards_reduction(
+        self, test_server: str, mock_authenticate: Token
+    ) -> None:
+        """`stream_zarr` uses a different endpoint; it must not drop them."""
+        plain = list(
+            databrowser(host=test_server, dataset="cmip6-fs", stream_zarr=True)
+        )
+        reduced = list(
+            databrowser(
+                host=test_server,
+                dataset="cmip6-fs",
+                stream_zarr=True,
+                zarr_options={"time_freq": "monthly"},
+            )
+        )
+        assert plain and reduced
+        assert plain != reduced
+
+
+class TestReductionCli:
+    """Dimension reduction requested through the cli."""
+
+    def test_convert_cli_with_reduction(
+        self,
+        cli_runner: CliRunner,
+        test_server: str,
+        token_file: Path,
+        mock_authenticate: Token,
+    ) -> None:
+        files = list(databrowser(dataset="agg", host=test_server))
+        res = cli_runner.invoke(
+            zarr_app,
+            ["convert"]
+            + files
+            + [
+                "--host",
+                test_server,
+                "--token-file",
+                str(token_file),
+                "--time-freq",
+                "monthly",
+                "--time-method",
+                "mean",
+                "--min-coverage",
+                "0.5",
+            ],
+        )
+        assert res.exit_code == 0
+
+    def test_data_search_cli_with_reduction(
+        self,
+        cli_runner: CliRunner,
+        test_server: str,
+        token_file: Path,
+        mock_authenticate: Token,
+    ) -> None:
+        res = cli_runner.invoke(
+            databrowser_app,
+            [
+                "data-search",
+                "dataset=agg",
+                "--host",
+                test_server,
+                "--token-file",
+                str(token_file),
+                "--aggregate",
+                "auto",
+                "--time-freq",
+                "monthly",
+                "--climatology",
+            ],
+        )
+        assert res.exit_code == 0
+
+    def test_unknown_frequency_is_rejected_by_the_cli(
+        self,
+        cli_runner: CliRunner,
+        test_server: str,
+        token_file: Path,
+    ) -> None:
+        """The closed vocabulary is enforced before any request is made."""
+        res = cli_runner.invoke(
+            zarr_app,
+            [
+                "convert",
+                "/a.nc",
+                "--host",
+                test_server,
+                "--token-file",
+                str(token_file),
+                "--time-freq",
+                "fortnightly",
+            ],
+        )
+        assert res.exit_code != 0
+
+    def test_out_of_range_min_coverage_is_rejected_by_the_cli(
+        self,
+        cli_runner: CliRunner,
+        test_server: str,
+        token_file: Path,
+    ) -> None:
+        res = cli_runner.invoke(
+            zarr_app,
+            [
+                "convert",
+                "/a.nc",
+                "--host",
+                test_server,
+                "--token-file",
+                str(token_file),
+                "--time-freq",
+                "monthly",
+                "--min-coverage",
+                "5",
+            ],
+        )
+        assert res.exit_code != 0
+
+
 class TestStatus:
     """Tests for zarr store status checking."""
 
@@ -229,8 +412,7 @@ class TestEnum:
 
     def test_enum_equivalence(self) -> None:
         """String and enum enum values should produce equivalent dicts."""
-        from freva_client.cli.zarr_cli import (AggregationCombine,
-                                               AggregationOption)
+        from freva_client.cli.zarr_cli import AggregationCombine, AggregationOption
 
         a1 = AggregationOption(join="minimal").to_dict()
         a2 = AggregationOption(join=AggregationCombine.minimal).to_dict()

@@ -22,10 +22,6 @@ from xarray.core.types import ZarrWriteModes
 from .utils import data_logger
 from .zarr_utils import jsonify_zmetadata
 
-try:
-    from xarray.backends.api import to_zarr  # type: ignore[attr-defined]
-except (ModuleNotFoundError, ImportError):
-    from xarray.backends.writers import to_zarr
 
 
 class RedisLike(Protocol):
@@ -259,31 +255,28 @@ def write_grouped_zarr(
 
     Notes
     -----
-    - This function writes each dataset with `consolidated=False`.
-    - It then builds a combined `.zmetadata` by:
+    - No bytes are written anywhere: this store is virtual.  Chunks are
+      materialised lazily, one at a time, by `get_zarr_chunk`.
+    - The combined `.zmetadata` is built by:
       1) generating per-dataset metadata using `jsonify_zmetadata`
       2) prefixing subgroup keys (e.g. "tas/.zarray" -> "group0/tas/.zarray")
-      3) writing one root `.zmetadata` that references all arrays in all groups
+      3) returning one root `.zmetadata` that references all arrays in all
+         groups
 
     This is compatible with clients that open the store root and then access
     group paths (e.g. "group0").
     """
     options = options or WriteZarrOptions()
 
-    # 1) Write datasets into the store (root and groups).
-    for name, ds in datasets.items():
-        group: Optional[str] = None if name == "root" else name
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            to_zarr(
-                ds,
-                group=group,
-                mode=options.mode if name == "root" else "a",
-                consolidated=options.consolidated,
-                compute=True,
-            )
-
-    # 2) Build combined consolidated metadata.
+    # Build combined consolidated metadata.
+    #
+    # NOTE: this used to call `to_zarr(ds, ..., compute=True)` without a
+    # `store` argument first.  That makes xarray open an in-memory zarr
+    # store and write *every chunk of every dataset* into it, only for the
+    # result to be discarded -- the metadata below is derived from the
+    # dataset, not from the store, and is byte-for-byte identical without
+    # the write.  It pinned peak RSS at the full (aggregated, reduced) size
+    # of the request and defeated the lazy chunk-serving design.
     combined_meta: Dict[str, Any] = {}
     combined_meta.setdefault("zarr_consolidated_format", 1)
     combined_meta.setdefault("metadata", {})

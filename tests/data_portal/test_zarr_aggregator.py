@@ -78,31 +78,13 @@ def test_signatures_and_choose_group_key() -> None:
 
 
 def test_write_grouped_zarr_happy_path(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[Dict[str, Any]] = []
-
-    def fake_to_zarr(
-        ds: xr.Dataset,
-        *,
-        group: Any,
-        mode: str,
-        consolidated: bool,
-        compute: bool,
-    ) -> None:
-        calls.append(
-            {
-                "group": group,
-                "mode": mode,
-                "consolidated": consolidated,
-                "compute": compute,
-                "vars": list(ds.data_vars),
-            }
-        )
+    seen: list[str] = []
 
     def fake_jsonify(ds: xr.Dataset) -> Dict[str, Any]:
         # Return a minimal metadata mapping.
+        seen.append(",".join(map(str, ds.data_vars)))
         return {"metadata": {"tas/.zarray": {"dummy": True}}}
 
-    monkeypatch.setattr(aggmod, "to_zarr", fake_to_zarr)
     monkeypatch.setattr(aggmod, "jsonify_zmetadata", fake_jsonify)
 
     root = _ds_with_time("tas", 0)
@@ -110,11 +92,8 @@ def test_write_grouped_zarr_happy_path(monkeypatch: pytest.MonkeyPatch) -> None:
 
     meta = aggmod.write_grouped_zarr({"root": root, "group0": g0})
 
-    # Writes root with mode from options (default "w"), groups with append "a".
-    assert calls[0]["group"] is None
-    assert calls[0]["mode"] == "w"
-    assert calls[1]["group"] == "group0"
-    assert calls[1]["mode"] == "a"
+    # Every group contributes exactly one metadata block.
+    assert seen == ["tas", "tas"]
 
     assert meta["zarr_consolidated_format"] == 1
     assert "metadata" in meta
@@ -131,17 +110,46 @@ def test_write_grouped_zarr_happy_path(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_write_grouped_zarr_raises_on_bad_jsonify(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def fake_to_zarr(*args: Any, **kwargs: Any) -> None:
-        return None
-
     def bad_jsonify(_ds: xr.Dataset) -> Dict[str, Any]:
         return {"metadata": "not-a-dict"}
 
-    monkeypatch.setattr(aggmod, "to_zarr", fake_to_zarr)
     monkeypatch.setattr(aggmod, "jsonify_zmetadata", bad_jsonify)
 
     with pytest.raises(TypeError, match="unexpected structure"):
         aggmod.write_grouped_zarr({"root": _ds_with_time("tas")})
+
+
+def test_write_grouped_zarr_never_computes_the_data() -> None:
+    """The virtual store must stay lazy.
+
+    ``write_grouped_zarr`` only derives consolidated metadata; the chunks
+    themselves are materialised one at a time by ``get_zarr_chunk`` when a
+    client asks for them.  This used to call ``to_zarr`` without a store,
+    which makes xarray write every chunk into an in-memory zarr store that
+    is then discarded -- pinning peak RSS at the full size of the request.
+
+    The dask array below raises as soon as any block is computed, so this
+    test fails loudly if eager materialisation ever comes back.
+    """
+    import dask.array as dsa
+    import numpy as np
+
+    def explode(block_info: Any = None) -> Any:
+        raise AssertionError("write_grouped_zarr must not compute chunks")
+
+    arr = dsa.map_blocks(
+        explode,
+        chunks=((2, 2), (3,)),
+        dtype="float32",
+        meta=np.array((), dtype="float32"),
+    )
+    ds = xr.Dataset(
+        {"tas": (("time", "x"), arr)},
+        coords={"time": np.arange(4), "x": np.arange(3)},
+    )
+
+    meta = aggmod.write_grouped_zarr({"root": ds})
+    assert meta["metadata"]["tas/.zarray"]["shape"] == [4, 3]
 
 
 def test_datasetaggregator_returns_empty_dataset_for_no_inputs() -> None:

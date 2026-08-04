@@ -16,6 +16,7 @@ from fastapi.responses import JSONResponse, Response
 from freva_rest.rest import server_config
 from freva_rest.utils.base_utils import (
     Cache,
+    ReductionDict,
     add_ttl_key_to_db_and_cache,
     decode_cache_token,
     encode_cache_token,
@@ -138,6 +139,7 @@ async def _trigger_loading(
     paths: List[str],
     token: str,
     assembly: Optional[Dict[str, Optional[str]]] = None,
+    reduce: Optional[ReductionDict] = None,
     access_pattern: str = "map",
     map_primary_chunksize: int = 1,
     reload: bool = False,
@@ -159,6 +161,7 @@ async def _trigger_loading(
                     "path": paths,
                     "uuid": token,
                     "assembly": assembly or {},
+                    "reduce": reduce or {},
                     "access_pattern": access_pattern,
                     "map_primary_chunksize": map_primary_chunksize,
                     "reload": reload,
@@ -175,6 +178,7 @@ async def publish_datasets(
     ttl_seconds: float = 86400.0,
     publish: bool = False,
     aggregation_plan: Optional[Dict[str, Optional[str]]] = None,
+    reduction_plan: Optional[ReductionDict] = None,
     access_pattern: Literal["map", "time_series"] = "map",
     map_primary_chunksize: int = 1,
     reload: bool = False,
@@ -196,6 +200,9 @@ async def publish_datasets(
     aggregation_plan: dict, optional
         A plan dict describing how to aggregate the datasets.
         If None, the worker will infer a plan.
+    reduction_plan: dict, optional
+        A plan dict describing how to reduce dimensions of the dataset
+        (e.g. monthly means). If None, no reduction is applied.
     access_pattern: str
         Apply chunk size optimisation for this access pattern.
     map_primary_chunksize: int
@@ -219,13 +226,16 @@ async def publish_datasets(
     norm_paths = [p.replace("file:///", "/") for p in paths]
     if username is not None:
         await check_read_permission(username, norm_paths)
-    token = encode_cache_token(norm_paths, assembly=aggregation_plan)
+    token = encode_cache_token(
+        norm_paths, assembly=aggregation_plan, reduce=reduction_plan
+    )
     api_path = f"{server_config.proxy}/api/freva-nextgen/data-portal"
     if publish or reload:
         await _trigger_loading(
             norm_paths,
             token,
             assembly=aggregation_plan,
+            reduce=reduction_plan,
             access_pattern=access_pattern,
             map_primary_chunksize=map_primary_chunksize,
             reload=reload,
@@ -234,7 +244,7 @@ async def publish_datasets(
         )
     if public is True:
         res = await add_ttl_key_to_db_and_cache(
-            norm_paths, ttl_seconds, aggregation_plan
+            norm_paths, ttl_seconds, aggregation_plan, reduction_plan
         )
         return f"{api_path}/share/{res['key']}.zarr"
     return f"{api_path}/zarr/{token}.zarr"
@@ -275,7 +285,12 @@ async def read_redis_data(
         # No metadata in cache — lazy publish: send loading instruction
         # directly without re-checking permissions (already verified at
         # the endpoint level).
-        await _trigger_loading(payload["path"], token, assembly=payload["assembly"])
+        await _trigger_loading(
+            payload["path"],
+            token,
+            assembly=payload["assembly"],
+            reduce=payload.get("reduce"),
+        )
         just_triggered = True
 
     else:
@@ -287,6 +302,7 @@ async def read_redis_data(
                 payload["path"],
                 token,
                 assembly=payload["assembly"],
+                reduce=payload.get("reduce"),
                 reload=True,
             )
             just_triggered = True

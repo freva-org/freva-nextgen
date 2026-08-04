@@ -32,12 +32,21 @@ from freva_client.utils.types import ZarrOptionsDict
 
 from .cli_utils import parse_cli_args, print_df, version_callback
 from .zarr_cli import (
+    CLIMATOLOGY_HELP,
+    MIN_COVERAGE_HELP,
+    REDUCE_DTYPE_HELP,
+    TIME_FREQ_HELP,
+    TIME_METHOD_HELP,
     AccessPattern,
     Aggregate,
     AggregationCombine,
     AggregationCompat,
     AggregationJoin,
     AggregationOption,
+    ReduceDtype,
+    TimeFrequency,
+    TimeMethod,
+    reduction_options,
 )
 
 
@@ -392,6 +401,21 @@ def data_search(
         "--reload-zarr",
         help="Trigger a zarr data-store reload.",
     ),
+    time_freq: Optional[TimeFrequency] = typer.Option(
+        None, "--time-freq", help=TIME_FREQ_HELP
+    ),
+    time_method: Optional[TimeMethod] = typer.Option(
+        None, "--time-method", help=TIME_METHOD_HELP
+    ),
+    climatology: bool = typer.Option(
+        False, "--climatology", help=CLIMATOLOGY_HELP
+    ),
+    min_coverage: float = typer.Option(
+        0.0, "--min-coverage", min=0.0, max=1.0, help=MIN_COVERAGE_HELP
+    ),
+    dtype: Optional[ReduceDtype] = typer.Option(
+        None, "--dtype", help=REDUCE_DTYPE_HELP
+    ),
     time: Optional[str] = typer.Option(
         None,
         "-t",
@@ -474,6 +498,11 @@ def data_search(
         "chunk_size": chunk_size,
     }
     zarr_options = {k: v for k, v in zarr_options.items() if v is not None}
+    zarr_options.update(
+        reduction_options(
+            time_freq, time_method, climatology, min_coverage, dtype
+        )
+    )
 
     result = databrowser(
         *(facets or []),

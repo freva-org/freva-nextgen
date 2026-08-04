@@ -28,6 +28,7 @@ _VALID_URI: dict = {
         "uuid": "abc123",
         "username": "k204230",
         "assembly": None,
+        "reduce": None,
         "access_pattern": "map",
         "map_primary_chunksize": 1,
         "reload": False,
@@ -97,6 +98,7 @@ class TestValidMessages:
         assert out["uri"]["map_primary_chunksize"] == 1
         assert out["uri"]["username"] is None
         assert out["uri"]["assembly"] is None
+        assert out["uri"]["reduce"] is None
 
     def test_blank_username_is_normalised_to_none(self) -> None:
         msg = {"uri": {**_VALID_URI["uri"], "username": "   "}}
@@ -367,6 +369,146 @@ class TestUriAssembly:
     def test_wrong_assembly_dict_type(self) -> None:
         msg = {"uri": {**_VALID_URI["uri"], "assembly": {1: "foo"}}}
         with pytest.raises(ValueError, match="must be a string"):
+            sanitize_message(msg)
+
+
+class TestUriReduction:
+    """The dimension-reduction plan is mixed-typed, so it has its own rules.
+
+    The sanitiser only validates *shape*: whether a frequency is known and
+    whether a climatology is meaningful is decided by
+    ``reducer.plan_reduction`` against the concrete dataset.  What must not
+    get through is anything malformed or dangerous.
+    """
+
+    def test_full_valid_plan_passes(self) -> None:
+        plan = {
+            "time_freq": "monthly",
+            "time_method": "mean",
+            "climatology": False,
+            "min_coverage": 0.8,
+            "dtype": "float32",
+        }
+        msg = {"uri": {**_VALID_URI["uri"], "reduce": plan}}
+        assert sanitize_message(msg)["uri"]["reduce"] == plan
+
+    def test_spatial_keys_are_accepted_for_forward_compatibility(self) -> None:
+        """The wire format is final even though the worker rejects these.
+
+        Accepting them here means enabling spatial reduction later needs no
+        change to the broker contract.
+        """
+        plan = {
+            "space": "mean",
+            "space_dims": ["lat", "lon"],
+            "weighting": "cos_lat",
+        }
+        msg = {"uri": {**_VALID_URI["uri"], "reduce": plan}}
+        assert sanitize_message(msg)["uri"]["reduce"] == plan
+
+    def test_empty_and_null_plans_normalise_to_none(self) -> None:
+        for empty in (None, {}, {"time_freq": None}):
+            msg = {"uri": {**_VALID_URI["uri"], "reduce": empty}}
+            assert sanitize_message(msg)["uri"]["reduce"] is None
+
+    def test_null_values_are_stripped(self) -> None:
+        msg = {
+            "uri": {
+                **_VALID_URI["uri"],
+                "reduce": {"time_freq": "monthly", "dtype": None},
+            }
+        }
+        assert sanitize_message(msg)["uri"]["reduce"] == {"time_freq": "monthly"}
+
+    def test_non_dict_reduce_is_rejected(self) -> None:
+        for bad in ("monthly", [], 42):
+            msg = {"uri": {**_VALID_URI["uri"], "reduce": bad}}
+            with pytest.raises(ValueError, match="reduce"):
+                sanitize_message(msg)
+
+    def test_unknown_reduce_key_is_rejected(self) -> None:
+        msg = {
+            "uri": {
+                **_VALID_URI["uri"],
+                "reduce": {"__proto__": "evil", "time_freq": "monthly"},
+            }
+        }
+        with pytest.raises(ValueError, match="unexpected key"):
+            sanitize_message(msg)
+
+    def test_non_string_reduce_key_is_rejected(self) -> None:
+        msg = {"uri": {**_VALID_URI["uri"], "reduce": {1: "monthly"}}}
+        with pytest.raises(ValueError, match="must be a string"):
+            sanitize_message(msg)
+
+    @pytest.mark.parametrize("field", ["time_freq", "time_method", "dtype"])
+    def test_non_string_vocabulary_value_is_rejected(self, field: str) -> None:
+        for bad in (3, ["monthly"], {"a": 1}, True):
+            msg = {"uri": {**_VALID_URI["uri"], "reduce": {field: bad}}}
+            with pytest.raises(ValueError, match="alphanumeric token"):
+                sanitize_message(msg)
+
+    @pytest.mark.parametrize(
+        "bad",
+        ["../etc/passwd", "month ly", "mon/thly", "month\x00ly", "a" * 40],
+    )
+    def test_dangerous_vocabulary_tokens_are_rejected(self, bad: str) -> None:
+        msg = {"uri": {**_VALID_URI["uri"], "reduce": {"time_freq": bad}}}
+        with pytest.raises(ValueError, match="alphanumeric token"):
+            sanitize_message(msg)
+
+    def test_non_bool_climatology_is_rejected(self) -> None:
+        for bad in ("yes", 1, 0, []):
+            msg = {"uri": {**_VALID_URI["uri"], "reduce": {"climatology": bad}}}
+            with pytest.raises(ValueError, match="climatology"):
+                sanitize_message(msg)
+
+    def test_non_numeric_min_coverage_is_rejected(self) -> None:
+        for bad in ("0.5", [0.5], {}):
+            msg = {"uri": {**_VALID_URI["uri"], "reduce": {"min_coverage": bad}}}
+            with pytest.raises(ValueError, match="min_coverage"):
+                sanitize_message(msg)
+
+    def test_bool_min_coverage_is_rejected(self) -> None:
+        # bool is a subclass of int in Python - must be explicitly excluded.
+        msg = {"uri": {**_VALID_URI["uri"], "reduce": {"min_coverage": True}}}
+        with pytest.raises(ValueError, match="must be a number"):
+            sanitize_message(msg)
+
+    @pytest.mark.parametrize("bad", [-0.1, 1.5, 100])
+    def test_out_of_range_min_coverage_is_rejected(self, bad: float) -> None:
+        msg = {"uri": {**_VALID_URI["uri"], "reduce": {"min_coverage": bad}}}
+        with pytest.raises(ValueError, match=r"within \[0, 1\]"):
+            sanitize_message(msg)
+
+    def test_min_coverage_is_coerced_to_float(self) -> None:
+        msg = {"uri": {**_VALID_URI["uri"], "reduce": {"min_coverage": 1}}}
+        value = sanitize_message(msg)["uri"]["reduce"]["min_coverage"]
+        assert isinstance(value, float)
+        assert value == 1.0
+
+    def test_non_list_space_dims_is_rejected(self) -> None:
+        for bad in ("lat", 42, {"lat": 1}):
+            msg = {"uri": {**_VALID_URI["uri"], "reduce": {"space_dims": bad}}}
+            with pytest.raises(ValueError, match="list of at most"):
+                sanitize_message(msg)
+
+    def test_over_long_space_dims_list_is_rejected(self) -> None:
+        msg = {
+            "uri": {
+                **_VALID_URI["uri"],
+                "reduce": {"space_dims": [f"d{i}" for i in range(9)]},
+            }
+        }
+        with pytest.raises(ValueError, match="list of at most"):
+            sanitize_message(msg)
+
+    @pytest.mark.parametrize(
+        "bad", ["", "../x", "la t", "lat/lon", "l" * 65, 42, None]
+    )
+    def test_invalid_dimension_name_is_rejected(self, bad: object) -> None:
+        msg = {"uri": {**_VALID_URI["uri"], "reduce": {"space_dims": ["lat", bad]}}}
+        with pytest.raises(ValueError, match="invalid dimension name"):
             sanitize_message(msg)
 
 

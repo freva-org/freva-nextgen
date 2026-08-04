@@ -274,6 +274,128 @@ class TestUriBrokerMessages:
         assert status["repr_html"] == "<b>dataset</b>"
         assert cache.get(f"{token}-dset") is not None
 
+    def test_uri_message_applies_the_reduction_plan(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """A `reduce` block reaches the reducer and shrinks the served store.
+
+        The reduction has to run *between* aggregation and chunking: the
+        chunk plan must be computed for the shape the client will actually
+        see, not for the source.
+        """
+        cache = InMemoryCache()
+        queue = _make_queue(cache)
+        source = tmp_path / "daily.nc"
+        source.write_bytes(b"dummy")
+        token = "reduce-ok-token"
+
+        # 90 daily steps, CF-encoded exactly as `decode_cf=False` yields.
+        dataset = xr.Dataset(
+            {"tas": (("time",), np.arange(90, dtype="f4"))},
+            coords={
+                "time": (
+                    "time",
+                    np.arange(90, dtype="int64"),
+                    {"units": "days since 2000-01-01", "calendar": "standard"},
+                )
+            },
+        )
+
+        chunked: list[xr.Dataset] = []
+
+        class DummyOptimizer:
+            def __init__(self, **kwargs: Any) -> None:
+                self.kwargs = kwargs
+
+            def apply(self, ds: xr.Dataset) -> xr.Dataset:
+                chunked.append(ds)
+                return ds
+
+        monkeypatch.setattr(
+            "data_portal_worker.load_data.user_can_read",
+            lambda path, username: True,
+        )
+        monkeypatch.setattr(
+            "data_portal_worker.load_data.load_data", lambda path: dataset
+        )
+        monkeypatch.setattr(
+            "data_portal_worker.load_data.ChunkOptimizer", DummyOptimizer
+        )
+        monkeypatch.setattr(
+            "data_portal_worker.load_data.write_grouped_zarr",
+            lambda dsets: {"metadata": {".zgroup": {"zarr_format": 2}}},
+        )
+        monkeypatch.setattr(
+            "data_portal_worker.load_data.xr_repr_html",
+            lambda dsets: "<b>dataset</b>",
+        )
+        monkeypatch.setattr(
+            "data_portal_worker.load_data.DataLoadFactory._preload_coordinate_chunks",
+            lambda self, token, meta, dsets, ttl: None,
+        )
+
+        _send_broker_message(
+            queue,
+            {
+                "uri": {
+                    "path": [str(source)],
+                    "uuid": token,
+                    "username": "alice",
+                    "reduce": {"time_freq": "monthly", "time_method": "mean"},
+                }
+            },
+        )
+
+        _wait_for_cached_status(cache, token, StateEnum.finished_ok.value)
+
+        # The optimiser saw the *reduced* dataset, not the 90 daily steps.
+        assert len(chunked) == 1
+        assert chunked[0].sizes["time"] == 3
+        assert np.issubdtype(chunked[0]["time"].dtype, np.datetime64)
+
+        served = cloudpickle.loads(cache.get(f"{token}-dset"))
+        assert served["root"].sizes["time"] == 3
+
+    def test_uri_message_reports_an_invalid_reduction_as_a_failure(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """A bad plan must surface as a readable reason, not a stack trace."""
+        cache = InMemoryCache()
+        queue = _make_queue(cache)
+        source = tmp_path / "input.nc"
+        source.write_bytes(b"dummy")
+        token = "reduce-bad-token"
+
+        monkeypatch.setattr(
+            "data_portal_worker.load_data.user_can_read",
+            lambda path, username: True,
+        )
+        monkeypatch.setattr(
+            "data_portal_worker.load_data.load_data",
+            lambda path: xr.Dataset({"z": (("lat",), np.zeros(2))}),
+        )
+
+        _send_broker_message(
+            queue,
+            {
+                "uri": {
+                    "path": [str(source)],
+                    "uuid": token,
+                    "username": "alice",
+                    "reduce": {"time_freq": "monthly"},
+                }
+            },
+        )
+
+        status = _wait_for_cached_status(
+            cache, token, StateEnum.finished_failed.value
+        )
+        assert "no time dimension" in status["reason"]
+
     def test_uri_message_denied_by_worker_side_permission_check(
         self,
         tmp_path: Path,

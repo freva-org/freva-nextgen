@@ -37,6 +37,7 @@ from ._cache_manager import CacheScheduler
 from .aggregator import DatasetAggregator, write_grouped_zarr
 from .backends import load_data
 from .rechunker import ChunkOptimizer
+from .reducer import plan_removes_spatial_dims, reduce_datasets
 from .sanitizer import sanitize_message
 from .utils import (
     JSONObject,
@@ -329,8 +330,9 @@ class DataLoadFactory:
                     else None
                 )
                 filters = arr_meta["filters"]
-                values = ds.variables[coord_name].values
-
+                values = encode_zarr_variable(
+                    ds.variables[coord_name], name=str(coord_name)
+                ).values
                 chunk_ranges = [
                     range(-(-s // c)) for s, c in zip(total_shape, chunk_shape)
                 ]
@@ -379,6 +381,7 @@ class DataLoadFactory:
         input_paths: List[str],
         path_id: str,
         assembly: Optional[Dict[str, Optional[str]]] = None,
+        reduce: Optional[Dict[str, Any]] = None,
         map_primary_chunksize: int = 1,
         access_pattern: Literal["time_series", "map"] = "map",
         chunk_size: float = 16.0,
@@ -388,11 +391,6 @@ class DataLoadFactory:
         start = time.time()
         data_logger.info("Registering serialisation task ...")
         agg = DatasetAggregator()
-        opt = ChunkOptimizer(
-            access_pattern=access_pattern,
-            target=f"{chunk_size}MiB",
-            map_primary_chunksize=map_primary_chunksize,
-        )
 
         data = cast(
             LoadDict,
@@ -409,14 +407,27 @@ class DataLoadFactory:
         data_logger.info("%s", ",".join(input_paths))
         try:
             ProcessQueue.check_for_access_permissions(username, input_paths)
-            dsets = {
-                k: opt.apply(d)
-                for k, d in agg.aggregate(
-                    [load_data(p) for p in input_paths],
-                    job_id=path_id,
-                    plan=assembly,
-                ).items()
-            }
+            aggregated = agg.aggregate(
+                [load_data(p) for p in input_paths],
+                job_id=path_id,
+                plan=assembly,
+            )
+            # Reduce before chunking: the chunk plan must be computed for the
+            # shape the client will actually see, not for the source.
+            reduced = reduce_datasets(aggregated, reduce)
+            # A reduction that collapses the spatial dimensions leaves a bare
+            # time series.  Chunking that for `map` access pins the primary
+            # axis to 1 and yields one chunk of a handful of bytes per step,
+            # i.e. one HTTP round-trip per time step.
+            pattern: Literal["time_series", "map"] = access_pattern
+            if plan_removes_spatial_dims(aggregated, reduce):
+                pattern = "time_series"
+            opt = ChunkOptimizer(
+                access_pattern=pattern,
+                target=f"{chunk_size}MiB",
+                map_primary_chunksize=map_primary_chunksize,
+            )
+            dsets = {k: opt.apply(d) for k, d in reduced.items()}
             step = time.time()
             data_logger.info("Reading done within %.2f sec", step - start)
             data_logger.info("Serialising data")
@@ -634,6 +645,7 @@ class ProcessQueue(DataLoadFactory):
                 message["uri"]["path"],
                 message["uri"]["uuid"],
                 assembly=message["uri"].get("assembly"),
+                reduce=message["uri"].get("reduce"),
                 username=message["uri"].get("username"),
                 access_pattern=message["uri"].get("access_pattern", "map"),
                 map_primary_chunksize=message["uri"].get("map_primary_chunksize", 1),
@@ -654,6 +666,7 @@ class ProcessQueue(DataLoadFactory):
         inp_objs: List[str],
         uuid5: str,
         assembly: Optional[Dict[str, Optional[str]]] = None,
+        reduce: Optional[Dict[str, Any]] = None,
         username: Optional[str] = None,
         access_pattern: Literal["map", "time_series"] = "map",
         map_primary_chunksize: int = 1,
@@ -671,6 +684,7 @@ class ProcessQueue(DataLoadFactory):
                 inp_objs,
                 uuid5,
                 assembly=assembly,
+                reduce=reduce,
                 access_pattern=access_pattern,
                 map_primary_chunksize=map_primary_chunksize,
                 chunk_size=chunk_size,

@@ -124,6 +124,92 @@ class ZarrConversion(BaseModel):
             examples=["ensemble"],
         ),
     ] = None
+    time_freq: Annotated[
+        Optional[
+            Literal[
+                "hourly",
+                "3hourly",
+                "6hourly",
+                "daily",
+                "monthly",
+                "seasonal",
+                "yearly",
+                "decadal",
+            ]
+        ],
+        Field(
+            title="Temporal reduction frequency",
+            description=(
+                "Reduce the time dimension to this target frequency, for "
+                "example to serve monthly means instead of daily data. "
+                "Leave unset for no temporal reduction.\n\n"
+                "Reduced datasets are always CF-decoded: packed integers are "
+                "unpacked, `_FillValue` is honoured, and the result is "
+                "floating point. Pass-through (unreduced) datasets are served "
+                "raw, so the two differ in dtype by design."
+            ),
+            examples=["monthly"],
+        ),
+    ] = None
+    time_method: Annotated[
+        Optional[
+            Literal["mean", "sum", "min", "max", "std", "var", "median", "count"]
+        ],
+        Field(
+            title="Temporal reduction method",
+            description=(
+                "How to reduce each time group. Requires `time_freq`. "
+                "Defaults to `mean`."
+            ),
+            examples=["mean"],
+        ),
+    ] = None
+    climatology: Annotated[
+        bool,
+        Field(
+            title="Climatology instead of resampling",
+            description=(
+                "Controls what `time_freq` means:\n"
+                "  - false (default): resample, i.e. one value per calendar "
+                "period in the record. `monthly` over 10 years gives 120 "
+                "steps.\n"
+                "  - true: climatology, i.e. group across the whole record. "
+                "`monthly` over 10 years gives 12 steps.\n\n"
+                "Only `hourly`, `daily`, `monthly` and `seasonal` are "
+                "meaningful as climatologies."
+            ),
+            examples=[False],
+        ),
+    ] = False
+    min_coverage: Annotated[
+        float,
+        Field(
+            title="Minimum valid fraction per group",
+            description=(
+                "Mask an output step unless at least this fraction of its "
+                "source time steps were valid (non-missing). A monthly mean "
+                "built from two valid days is usually worse than no value at "
+                "all. `0` (default) keeps every group that has at least one "
+                "valid point."
+            ),
+            ge=0.0,
+            le=1.0,
+            examples=[0.8],
+        ),
+    ] = 0.0
+    dtype: Annotated[
+        Literal["float32", "float64", "keep"],
+        Field(
+            title="Output dtype of reduced variables",
+            description=(
+                "CF-decoding packed data promotes to `float64` whenever "
+                "`scale_factor` is stored as a double, which quadruples the "
+                "transferred bytes for no gain in precision. Defaults to "
+                "`float32`; use `keep` to leave whatever decoding produced."
+            ),
+            examples=["float32"],
+        ),
+    ] = "float32"
     public: Annotated[
         bool,
         Field(
