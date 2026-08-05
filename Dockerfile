@@ -41,6 +41,7 @@ session required pam_sss.so\n\
         cloudpickle \
        "cryptography=45.*" \
         dask \
+        decorator \
         fsspec \
         h5netcdf \
         jq \
