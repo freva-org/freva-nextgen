@@ -74,9 +74,18 @@ class TestZarrReduction:
 
     @staticmethod
     def _files(test_server: str) -> List[str]:
+        """Files to convert.
+
+        Uses ``agg`` rather than ``cmip6-fs``: it is contiguous monthly
+        data, so a coarser frequency is an actual reduction whatever the
+        deployment holds.  Datasets that span disjoint periods make
+        resampling *inflate* the axis instead, which is a real behaviour
+        but too data-dependent to assert on here -- ``test_zarr_reducer``
+        covers it against a fixed fixture.
+        """
         files = requests.get(
             f"{test_server}/databrowser/data-search/freva/file",
-            params={"dataset": "cmip6-fs"},
+            params={"dataset": "agg"},
             timeout=10,
         ).text.splitlines()
         assert files
@@ -123,7 +132,10 @@ class TestZarrReduction:
         """
         files = self._files(test_server)
         token = auth["access_token"]
-        plain = self._convert(test_server, token, files)
+        # Every variant must aggregate identically, so that the reduction is
+        # the only thing that differs. Without `aggregate` the endpoint
+        # returns one url per file, which is a different store entirely.
+        plain = self._convert(test_server, token, files, aggregate="auto")
         monthly = self._convert(
             test_server, token, files, aggregate="auto", time_freq="monthly"
         )
@@ -151,14 +163,14 @@ class TestZarrReduction:
         files = self._files(test_server)
         token = auth["access_token"]
         terse = self._convert(
-            test_server, token, files, aggregate="auto", time_freq="monthly"
+            test_server, token, files, aggregate="auto", time_freq="yearly"
         )
         verbose = self._convert(
             test_server,
             token,
             files,
             aggregate="auto",
-            time_freq="monthly",
+            time_freq="yearly",
             time_method="mean",
             climatology=False,
             min_coverage=0.0,
@@ -176,23 +188,26 @@ class TestZarrReduction:
         plain = self._zmetadata(
             self._convert(test_server, token, files, aggregate="auto")[0], token
         )
-        monthly = self._zmetadata(
+        reduced = self._zmetadata(
             self._convert(
-                test_server, token, files, aggregate="auto", time_freq="monthly"
+                test_server, token, files, aggregate="auto", time_freq="yearly"
             )[0],
             token,
         )
-        assert monthly["metadata"]["time/.zarray"]["shape"][0] <= (
-            plain["metadata"]["time/.zarray"]["shape"][0]
-        )
+        keys = [k for k in plain["metadata"] if k.endswith("time/.zarray")]
+        assert keys, "no time axis in the store"
+        for key in keys:
+            assert reduced["metadata"][key]["shape"][0] < (
+                plain["metadata"][key]["shape"][0]
+            ), f"{key} was not reduced"
         # `cell_methods` records what was done, per CF.
         variables = [
             key
-            for key in monthly["metadata"]
+            for key in reduced["metadata"]
             if key.endswith("/.zattrs") and key.count("/") == 1
         ]
         assert any(
-            "time: mean" in str(monthly["metadata"][key].get("cell_methods", ""))
+            "time: mean" in str(reduced["metadata"][key].get("cell_methods", ""))
             for key in variables
         )
 
@@ -216,13 +231,43 @@ class TestZarrReduction:
             f"{test_server}/data-portal/zarr/convert",
             json={
                 "path": self._files(test_server),
-                "time_freq": "monthly",
+                "time_freq": "yearly",
                 "min_coverage": bad,
             },
             headers={"Authorization": f"Bearer {auth['access_token']}"},
             timeout=30,
         )
         assert res.status_code == 422
+
+    def test_upsampling_reports_a_readable_reason(
+        self, test_server: str, auth: Dict[str, str]
+    ) -> None:
+        """The mock model data is monthly, so 6hourly is upsampling.
+
+        Without the guard this inflates the time axis ~121x into a 99% NaN
+        array that ``resample`` materialises eagerly in the worker.
+        """
+        files = self._files(test_server)
+        token = auth["access_token"]
+        url = self._convert(
+            test_server, token, files, aggregate="auto", time_freq="6hourly"
+        )[0]
+        assert "not a reduction" in self._failure_reason(test_server, token, url)
+
+    def _failure_reason(self, test_server: str, token: str, url: str) -> str:
+        for _ in range(20):
+            res = requests.get(
+                f"{test_server}/data-portal/zarr-utils/status",
+                params={"url": url},
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=30,
+            )
+            body = res.json()
+            if body.get("status") in (3, 4):
+                time.sleep(1)
+                continue
+            return str(body.get("reason", ""))
+        raise AssertionError(f"Job never settled: {url}")
 
     def test_meaningless_climatology_reports_a_readable_reason(
         self, test_server: str, auth: Dict[str, str]
@@ -235,24 +280,12 @@ class TestZarrReduction:
             token,
             files,
             aggregate="auto",
+            # A yearly climatology would pool every year into one value:
+            # meaningless, unlike the monthly one used above.
             time_freq="yearly",
             climatology=True,
         )[0]
-        reason = ""
-        for _ in range(20):
-            res = requests.get(
-                f"{test_server}/data-portal/zarr-utils/status",
-                params={"url": url},
-                headers={"Authorization": f"Bearer {token}"},
-                timeout=30,
-            )
-            body = res.json()
-            if body.get("status") in (3, 4):
-                time.sleep(1)
-                continue
-            reason = str(body.get("reason", ""))
-            break
-        assert "not meaningful" in reason
+        assert "not meaningful" in self._failure_reason(test_server, token, url)
 
 
 class TestZarrMetadata:

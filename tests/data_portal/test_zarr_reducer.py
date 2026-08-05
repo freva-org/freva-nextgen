@@ -224,13 +224,66 @@ class TestPlanReduction:
     def test_upsampling_is_rejected(self, freq: str) -> None:
         """Resampling upwards is not a reduction, it is a memory bomb.
 
-        xarray inserts an empty group for every missing step, so monthly
-        CORDEX data asked for at ``6hourly`` becomes a 121x longer, 99.2%
-        NaN array -- 13 GiB from a 112 MiB source, materialised eagerly
-        inside ``resample``.
+        xarray emits a group for every period between the first and last
+        time step, so monthly CORDEX data asked for at ``6hourly`` becomes
+        a 121x longer, 99.2% NaN array -- 13 GiB from a 112 MiB source,
+        materialised eagerly inside ``resample``.
         """
-        with pytest.raises(redmod.ReductionError, match="already coarser"):
+        with pytest.raises(redmod.ReductionError, match="not a reduction"):
             redmod.plan_reduction(_packed_daily(), {"time_freq": freq})
+
+    def test_sparse_time_axis_is_rejected(self) -> None:
+        """A short axis spanning centuries inflates just as badly.
+
+        Aggregating files from disjoint periods -- a piControl slice
+        alongside a historical one -- gives few steps across a huge span.
+        Comparing nominal frequencies cannot catch this: the median step is
+        a perfectly ordinary month.
+        """
+        ds = xr.Dataset(
+            {"tas": (("time",), np.arange(22.0))},
+            coords={
+                "time": (
+                    "time",
+                    # two steps ~1500 years before the other twenty
+                    np.array([0, 31] + list(range(547500, 548109, 31)), dtype="int64"),
+                    {"units": "days since 0455-01-01"},
+                )
+            },
+        )
+        # The median step alone looks entirely benign.
+        assert redmod._median_step_seconds(ds, "time") == 31 * 86400.0
+        with pytest.raises(redmod.ReductionError) as excinfo:
+            redmod.plan_reduction(ds, {"time_freq": "yearly"})
+        assert "not a reduction" in excinfo.value.reason
+        assert excinfo.value.details["source_steps"] == "22"
+        assert "sparse" in excinfo.value.details["hint"]
+
+    def test_unsorted_axis_is_measured_by_its_span(self) -> None:
+        """Order must not matter: the span is what drives the group count."""
+        values = np.arange(0, 620, 31, dtype="int64")
+        rng = np.random.default_rng(0)
+        rng.shuffle(values)
+        ds = xr.Dataset(
+            {"tas": (("time",), np.arange(float(values.size)))},
+            coords={
+                "time": ("time", values, {"units": "days since 2000-01-01"})
+            },
+        )
+        assert redmod.plan_reduction(ds, {"time_freq": "yearly"}).time
+        with pytest.raises(redmod.ReductionError, match="not a reduction"):
+            redmod.plan_reduction(ds, {"time_freq": "daily"})
+
+    def test_a_constant_time_axis_does_not_block_the_request(self) -> None:
+        """Zero span means nothing to divide by."""
+        ds = xr.Dataset(
+            {"tas": (("time",), np.arange(4.0))},
+            coords={
+                "time": ("time", np.zeros(4, dtype="int64"),
+                         {"units": "days since 2000-01-01"})
+            },
+        )
+        assert redmod.plan_reduction(ds, {"time_freq": "yearly"}).time
 
     def test_same_frequency_is_allowed(self) -> None:
         """Month lengths vary 28-31 days; the guard must tolerate that."""
@@ -275,6 +328,14 @@ class TestPlanReduction:
         """A dimension without a coordinate cannot be measured."""
         ds = xr.Dataset({"tas": (("time",), np.arange(3.0))})
         assert redmod._median_step_seconds(ds, "time") is None
+        assert redmod._axis_seconds(ds, "time") is None
+
+    def test_decoded_axis_is_measured_directly(self) -> None:
+        ds = xr.Dataset(
+            {"tas": (("time",), np.arange(3.0))},
+            coords={"time": pd.date_range("2000-01-01", periods=3, freq="D")},
+        )
+        assert redmod._median_step_seconds(ds, "time") == 86400.0
 
     def test_single_step_axis_does_not_block_the_request(self) -> None:
         ds = _packed_daily(n=1)

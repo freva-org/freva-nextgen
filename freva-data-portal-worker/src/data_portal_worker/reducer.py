@@ -123,11 +123,10 @@ _FREQUENCY_SECONDS: Dict[str, float] = {
     "decadal": 3652.5 * 86400.0,
 }
 
-#: How much finer than the source a target may nominally be before it counts
-#: as upsampling.  Month lengths vary by up to 31/28 = 1.107, so the
-#: threshold has to sit below 1/1.107 to keep monthly -> monthly legal, while
-#: staying high enough to catch a 2x upsample such as 6hourly -> 3hourly.
-_UPSAMPLE_TOLERANCE = 0.85
+#: How much longer than the input the output axis may be before the request
+#: stops counting as a reduction.  Slack absorbs calendar irregularity --
+#: resampling monthly data to ``monthly`` can land one step either side.
+_INFLATION_TOLERANCE = 1.01
 
 #: CF time units mapped to seconds, for reading an undecoded time axis.
 _UNIT_SECONDS: Dict[str, float] = {
@@ -479,54 +478,83 @@ def _resolve_weights(
     )
 
 
-def _median_step_seconds(ds: xr.Dataset, dim: str) -> Optional[float]:
-    """Median spacing of the time axis in seconds, or ``None`` if unknowable.
+def _axis_seconds(ds: xr.Dataset, dim: str) -> Optional[np.ndarray]:
+    """The time axis expressed in seconds, or ``None`` if unknowable.
 
     Works on the undecoded axis: CF ``units`` give the unit, so no decoding
-    is needed to compare frequencies.  Returns ``None`` for a single-step
-    axis or unparsable units, in which case the caller must not guess.
+    is needed in order to reason about spacing.  Returns ``None`` for a
+    single-step axis, unparsable units or values that will not become
+    numbers, in which case the caller must not guess.
     """
     if dim not in ds.variables or ds.sizes.get(dim, 0) < 2:
         return None
     var = ds[dim]
     if np.issubdtype(var.dtype, np.datetime64):
-        steps = np.diff(var.values).astype("timedelta64[s]").astype("float64")
-        return float(np.median(steps)) if steps.size else None
+        return var.values.astype("datetime64[s]").astype("float64")
     units = str(var.attrs.get("units", "")).lower()
     unit = units.split(" since ", 1)[0].strip() if " since " in units else ""
     scale = _UNIT_SECONDS.get(unit)
     if scale is None:
         return None
     try:
-        steps = np.diff(np.asarray(var.values, dtype="float64"))
+        return np.asarray(var.values, dtype="float64") * scale
     except (TypeError, ValueError):
         return None
-    return float(np.median(steps)) * scale if steps.size else None
 
 
-def _check_not_upsampling(ds: xr.Dataset, dim: str, freq: str) -> None:
-    """Reject a target frequency finer than the data already has.
+def _median_step_seconds(ds: xr.Dataset, dim: str) -> Optional[float]:
+    """Median spacing of the time axis in seconds, for error messages."""
+    axis = _axis_seconds(ds, dim)
+    if axis is None:
+        return None
+    steps = np.diff(axis)
+    return float(np.median(steps)) if steps.size else None
 
-    Resampling upwards is not a reduction: xarray inserts an empty group for
-    every missing step, so monthly CORDEX data asked for at ``6hourly``
-    becomes a 121x longer, 99.2% NaN array -- 13 GiB from a 112 MiB source,
-    materialised eagerly inside ``resample``.  That is a memory bomb in the
-    worker and the exact opposite of what this feature is for.
+
+def _check_not_inflating(ds: xr.Dataset, dim: str, freq: str) -> None:
+    """Reject a resampling that would produce more steps than it consumes.
+
+    ``resample`` emits a group for every period between the first and last
+    timestamp, whether or not any data falls in it.  That inflates the axis
+    in two distinct ways, and both are memory bombs in the worker because
+    the empty groups are materialised eagerly:
+
+    * the target is simply finer than the source -- monthly data asked for
+      at ``6hourly`` becomes a 121x longer, 99.2% NaN array, 13 GiB from a
+      112 MiB source;
+    * the axis is sparse -- aggregating files from disjoint periods (say a
+      piControl slice alongside a historical one) leaves a 22-step axis
+      spanning 1500 years, which ``yearly`` expands to ~1550 steps.
+
+    Comparing nominal frequencies only catches the first: the sparse axis
+    has a perfectly ordinary median step of one month.  So the check is on
+    the invariant that actually matters -- a reduction must not grow the
+    axis -- which covers both.
     """
-    step = _median_step_seconds(ds, dim)
-    if step is None or step <= 0:
-        return
+    axis = _axis_seconds(ds, dim)
     target = _FREQUENCY_SECONDS.get(freq)
-    if target is None or target >= step * _UPSAMPLE_TOLERANCE:
+    if axis is None or target is None:
         return
+    span = float(np.nanmax(axis) - np.nanmin(axis))
+    if span <= 0:
+        return
+    n_in = int(axis.size)
+    n_out = int(span // target) + 1
+    if n_out <= n_in * _INFLATION_TOLERANCE + 1:
+        return
+    step = _median_step_seconds(ds, dim)
     raise ReductionError(
-        f"Cannot reduce to {freq!r}: the data is already coarser than that.",
+        f"Cannot reduce to {freq!r}: that would produce {n_out} time steps "
+        f"from {n_in}, which is not a reduction.",
         {
-            "source_step": _describe_seconds(step),
+            "source_steps": str(n_in),
+            "source_span": _describe_seconds(span),
+            "source_step": _describe_seconds(step) if step else "unknown",
             "requested": _describe_seconds(target),
             "hint": (
-                "Reduction only makes data coarser. Pick a frequency at or "
-                "below the resolution of the source."
+                "Either the requested frequency is finer than the data, or "
+                "the time axis is sparse -- resampling fills every period "
+                "between the first and last time step."
             ),
         },
     )
@@ -607,8 +635,8 @@ def plan_reduction(
                 {"allowed": ", ".join(CLIMATOLOGY_GROUPS)},
             )
         if not climatology:
-            # A climatology always collapses, so only resampling can upsample.
-            _check_not_upsampling(ds, dim, freq)
+            # A climatology always collapses, so only resampling can inflate.
+            _check_not_inflating(ds, dim, freq)
         time = TimeReduction(
             dim=dim,
             freq=freq,
