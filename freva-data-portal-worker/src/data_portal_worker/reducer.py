@@ -484,7 +484,7 @@ def _median_step_seconds(ds: xr.Dataset, dim: str) -> Optional[float]:
 
     Works on the undecoded axis: CF ``units`` give the unit, so no decoding
     is needed to compare frequencies.  Returns ``None`` for a single-step
-    axis or unparseable units, in which case the caller must not guess.
+    axis or unparsable units, in which case the caller must not guess.
     """
     if dim not in ds.variables or ds.sizes.get(dim, 0) < 2:
         return None

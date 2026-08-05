@@ -23,7 +23,6 @@ from .utils import data_logger
 from .zarr_utils import jsonify_zmetadata
 
 
-
 class RedisLike(Protocol):
     """
     Minimal Redis protocol for caching aggregation errors.
