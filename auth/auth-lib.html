@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>Authentication using the freva-client library &#8212; Freva Databrowser 2607.0.0 documentation</title>
+    <title>Authentication using the freva-client library &#8212; Freva Databrowser 2607.1.0 documentation</title>
   
   
   
@@ -49,7 +49,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=b1d95881"></script>
+    <script src="../_static/documentation_options.js?v=c00c12d8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -64,7 +64,7 @@
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://freva-nextgen.readthedocs.io/en/latest/_static/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2607.0.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2607.1.0';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -149,8 +149,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2607.0.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2607.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2607.1.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2607.1.0 documentation - Home"/>
   
   
 </a></div>
@@ -547,21 +547,21 @@ sub command of the command line interface</p>
  Create OAuth2 access and refresh token.                                        
                                                                                 
 [2m╭─[0m[2m Options [0m[2m───────────────────────────────────────────────────────────────────[0m[2m─╮[0m
-[2m│[0m [1;36m-[0m[1;36m-host[0m                [1;33mTEXT   [0m  Set the hostname of the databrowser, if not   [2m│[0m
-[2m│[0m                                set (default) the hostname is read from a     [2m│[0m
-[2m│[0m                                config file                                   [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-token[0m[1;36m-file[0m          [1;33mTEXT   [0m  Instead of authenticating via code based      [2m│[0m
-[2m│[0m                                authentication flow you can set the path to   [2m│[0m
-[2m│[0m                                the json file that contains a `refresh token` [2m│[0m
-[2m│[0m                                containing a refresh_token key.               [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-force[0m       [1;32m-f[0m      [1;33m       [0m  Force token recreation, even if current token [2m│[0m
-[2m│[0m                                is still valid.                               [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-timeout[0m             [1;33mINTEGER[0m  Set the timeout for login in secdonds, 0 for  [2m│[0m
-[2m│[0m                                indefinite                                    [2m│[0m
-[2m│[0m                                [2m[default: 30]                                [0m [2m│[0m
-[2m│[0m               [1;32m-v[0m      [1;33mINTEGER[0m  Increase verbosity [2m[default: 0][0m               [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-version[0m     [1;32m-V[0m      [1;33m       [0m  Show version an exit                          [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-help[0m                [1;33m       [0m  Show this message and exit.                   [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-host[0m                [1;2;33m&lt;[0m[1;33mstr[0m[1;2;33m&gt;[0m  Set the hostname of the databrowser, if not set [2m│[0m
+[2m│[0m                              (default) the hostname is read from a config    [2m│[0m
+[2m│[0m                              file                                            [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-token[0m[1;36m-file[0m          [1;2;33m&lt;[0m[1;33mstr[0m[1;2;33m&gt;[0m  Instead of authenticating via code based        [2m│[0m
+[2m│[0m                              authentication flow you can set the path to the [2m│[0m
+[2m│[0m                              json file that contains a `refresh token`       [2m│[0m
+[2m│[0m                              containing a refresh_token key.                 [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-force[0m       [1;32m-f[0m      [1;33m     [0m  Force token recreation, even if current token   [2m│[0m
+[2m│[0m                              is still valid.                                 [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-timeout[0m             [1;2;33m&lt;[0m[1;33mint[0m[1;2;33m&gt;[0m  Set the timeout for login in secdonds, 0 for    [2m│[0m
+[2m│[0m                              indefinite                                      [2m│[0m
+[2m│[0m                              [2m[default: 30]                                  [0m [2m│[0m
+[2m│[0m               [1;32m-v[0m      [1;2;33m&lt;[0m[1;33mint[0m[1;2;33m&gt;[0m  Increase verbosity [2m[default: 0][0m                 [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-version[0m     [1;32m-V[0m      [1;33m     [0m  Show version an exit                            [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-help[0m                [1;33m     [0m  Show this message and exit.                     [2m│[0m
 [2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
 
 

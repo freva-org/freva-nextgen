@@ -1,5 +1,10 @@
 [
   {
+    "name": "v2607.1.0",
+    "version": "v2607.1.0",
+    "url": "https://freva-nextgen.readthedocs.io/en/v2607.1.0/"
+  },
+  {
     "name": "v2607.0.0",
     "version": "v2607.0.0",
     "url": "https://freva-nextgen.readthedocs.io/en/v2607.0.0/"
