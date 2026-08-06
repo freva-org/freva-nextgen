@@ -41,8 +41,6 @@ session required pam_sss.so\n\
         cloudpickle \
        "cryptography=45.*" \
         dask \
-        decorator \
-        fsspec \
         h5netcdf \
         jq \
         platformdirs \
@@ -83,7 +81,6 @@ session required pam_sss.so\n\
         uvicorn \
         tomli \
         xarray \
-        xarray-prism \
         'py-oidc-auth-fastapi>2604.2.0' \
         'py-oidc-auth>2604.2.0' \
         zarr; \
