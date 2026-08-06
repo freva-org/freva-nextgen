@@ -31,6 +31,7 @@ dependencies = [
 "cloudpickle",
 "cachetools",
 "email-validator",
+"jmespath",
 "fastapi",
 "pymongo",
 "pyjwt",
