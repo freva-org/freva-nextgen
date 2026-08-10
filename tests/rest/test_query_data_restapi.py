@@ -4,6 +4,7 @@ import json
 import time
 from typing import Dict
 
+import pytest
 import requests
 from pymongo import MongoClient
 from pytest_mock import MockerFixture
@@ -614,6 +615,126 @@ class TestZarrStreamService:
             headers={"Authorization": f"Bearer {auth['access_token']}"},
         )
         assert res.status_code == 503
+
+
+class TestZarrStreamReduction:
+    """Reduction options on the databrowser streaming route.
+
+    `stream_zarr` goes through /databrowser/load, not /data-portal/zarr/
+    convert.  If this endpoint ignored the reduction the client would get
+    unreduced data under a url that claims to be monthly means.
+    """
+
+    @staticmethod
+    def _urls(test_server: str, auth: Dict[str, str], **params: object) -> list:
+        res = requests.get(
+            f"{test_server}/databrowser/load/freva",
+            params={"dataset": "cmip6-fs", **params},
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+        )
+        assert res.status_code == 201, res.text
+        urls = [line for line in res.text.splitlines() if line.strip()]
+        assert urls
+        return urls
+
+    def test_reduction_changes_the_streamed_urls(
+        self, test_server: str, auth: Dict[str, str]
+    ) -> None:
+        plain = self._urls(test_server, auth)
+        monthly = self._urls(test_server, auth, time_freq="monthly")
+        assert len(plain) == len(monthly)
+        assert plain != monthly
+
+    def test_climatology_is_a_distinct_store(
+        self, test_server: str, auth: Dict[str, str]
+    ) -> None:
+        resampled = self._urls(test_server, auth, time_freq="monthly")
+        climatology = self._urls(
+            test_server, auth, time_freq="monthly", climatology="true"
+        )
+        assert resampled != climatology
+
+    def test_defaults_do_not_change_the_urls(
+        self, test_server: str, auth: Dict[str, str]
+    ) -> None:
+        """Explicit defaults must canonicalise away, as on /zarr/convert."""
+        terse = self._urls(test_server, auth, time_freq="monthly")
+        verbose = self._urls(
+            test_server,
+            auth,
+            time_freq="monthly",
+            time_method="mean",
+            climatology="false",
+            min_coverage=0.0,
+            dtype="float32",
+        )
+        assert terse == verbose
+
+    def test_dtype_alone_does_not_change_the_urls(
+        self, test_server: str, auth: Dict[str, str]
+    ) -> None:
+        """`dtype` is meaningless without a frequency and must be dropped."""
+        assert self._urls(test_server, auth) == self._urls(
+            test_server, auth, dtype="float64"
+        )
+
+    def test_unknown_frequency_is_rejected(
+        self, test_server: str, auth: Dict[str, str]
+    ) -> None:
+        res = requests.get(
+            f"{test_server}/databrowser/load/freva",
+            params={"dataset": "cmip6-fs", "time_freq": "fortnightly"},
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+        )
+        assert res.status_code == 422
+
+    @pytest.mark.parametrize("bad", [-0.5, 1.5])
+    def test_out_of_range_min_coverage_is_rejected(
+        self, test_server: str, auth: Dict[str, str], bad: float
+    ) -> None:
+        res = requests.get(
+            f"{test_server}/databrowser/load/freva",
+            params={
+                "dataset": "cmip6-fs",
+                "time_freq": "monthly",
+                "min_coverage": bad,
+            },
+            headers={"Authorization": f"Bearer {auth['access_token']}"},
+        )
+        assert res.status_code == 422
+
+    def test_chunk_size_and_reduction_reach_publish_datasets(
+        self, test_server: str, auth: Dict[str, str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Every accepted option must actually be forwarded.
+
+        `chunk_size` was accepted as a query parameter here but never passed
+        on to `zarr_response`, so it silently did nothing on this route.
+        """
+        from freva_rest.databrowser_api import core
+
+        seen: Dict[str, object] = {}
+        original = core.Solr.publish_to_zarr_stream
+
+        async def spy(self: object, doc: Dict[str, object], **kwargs: object) -> str:
+            seen.update(kwargs)
+            return await original(self, doc, **kwargs)  # type: ignore[arg-type]
+
+        monkeypatch.setattr(core.Solr, "publish_to_zarr_stream", spy)
+        self._urls(
+            test_server,
+            auth,
+            chunk_size=42.0,
+            time_freq="monthly",
+            min_coverage=0.5,
+        )
+        assert seen.get("chunk_size") == 42.0
+        assert seen.get("reduction_plan") == {
+            "time_freq": "monthly",
+            "min_coverage": 0.5,
+            "dtype": "float32",
+        }
 
 
 class TestMongoStatistics:

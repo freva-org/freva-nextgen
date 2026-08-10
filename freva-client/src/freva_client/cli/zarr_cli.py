@@ -67,6 +67,97 @@ class AccessPattern(str, Enum):
     time_series = "time_series"
 
 
+class TimeFrequency(str, Enum):
+    """Target frequency for temporal reduction."""
+
+    hourly = "hourly"
+    three_hourly = "3hourly"
+    six_hourly = "6hourly"
+    daily = "daily"
+    monthly = "monthly"
+    seasonal = "seasonal"
+    yearly = "yearly"
+    decadal = "decadal"
+
+
+class TimeMethod(str, Enum):
+    """How each time group is reduced."""
+
+    mean = "mean"
+    sum = "sum"
+    min = "min"
+    max = "max"
+    std = "std"
+    var = "var"
+    median = "median"
+    # `count` shadows `str.count` on this str-mixin enum.  Harmless here --
+    # nothing looks members up by name, and typer renders values, not names --
+    # but mypy flags the signature clash.
+    count = "count"  # type: ignore[assignment]
+
+
+class ReduceDtype(str, Enum):
+    """Output dtype of reduced variables."""
+
+    float32 = "float32"
+    float64 = "float64"
+    keep = "keep"
+
+
+#: Help strings for the reduction flags, shared by ``freva-client zarr
+#: convert`` and ``freva-client databrowser data-search`` so the two stay in
+#: sync.
+TIME_FREQ_HELP = (
+    "Reduce the time dimension to this frequency server side, e.g. to "
+    "stream monthly means instead of daily data."
+)
+TIME_METHOD_HELP = (
+    "How to reduce each time group. Requires --time-freq. Default: mean."
+)
+CLIMATOLOGY_HELP = (
+    "Interpret --time-freq as a climatology (one value per period of the "
+    "year, over the whole record) instead of a resampling (one value per "
+    "period in the record)."
+)
+MIN_COVERAGE_HELP = (
+    "Mask an output step unless at least this fraction (0-1) of its source "
+    "time steps were valid. Requires --time-freq."
+)
+REDUCE_DTYPE_HELP = (
+    "Output dtype of reduced variables. Requires --time-freq. "
+    "Default: float32."
+)
+
+
+def reduction_options(
+    time_freq: Optional[TimeFrequency],
+    time_method: Optional[TimeMethod],
+    climatology: bool,
+    min_coverage: float,
+    dtype: Optional[ReduceDtype],
+) -> ZarrOptionsDict:
+    """Build the reduction part of the zarr options from cli flags.
+
+    Options that only make sense together with a target frequency are
+    dropped when none was given, so that a request without ``--time-freq``
+    is byte-identical to one from before reduction existed. That matters:
+    the server derives its cache key from the request, so a spurious
+    reduction key would needlessly miss the cache.
+    """
+    if time_freq is None:
+        return {}
+    options: ZarrOptionsDict = {"time_freq": time_freq.value}
+    if time_method is not None:
+        options["time_method"] = time_method.value
+    if climatology:
+        options["climatology"] = True
+    if min_coverage:
+        options["min_coverage"] = min_coverage
+    if dtype is not None:
+        options["dtype"] = dtype.value
+    return options
+
+
 @dataclass
 class AggregationOption:
     """Helper to make mypy happy about the aggregation options."""
@@ -159,6 +250,21 @@ def zarr_convert(
         "--reload-zarr",
         help="Trigger a zarr data-store reload.",
     ),
+    time_freq: Optional[TimeFrequency] = typer.Option(
+        None, "--time-freq", help=TIME_FREQ_HELP
+    ),
+    time_method: Optional[TimeMethod] = typer.Option(
+        None, "--time-method", help=TIME_METHOD_HELP
+    ),
+    climatology: bool = typer.Option(
+        False, "--climatology", help=CLIMATOLOGY_HELP
+    ),
+    min_coverage: float = typer.Option(
+        0.0, "--min-coverage", min=0.0, max=1.0, help=MIN_COVERAGE_HELP
+    ),
+    dtype: Optional[ReduceDtype] = typer.Option(
+        None, "--dtype", help=REDUCE_DTYPE_HELP
+    ),
     token_file: Optional[Path] = typer.Option(
         None,
         "--token-file",
@@ -211,6 +317,11 @@ def zarr_convert(
         "chunk_size": chunk_size,
     }
     zarr_options = {k: v for k, v in zarr_options.items() if v is not None}
+    zarr_options.update(
+        reduction_options(
+            time_freq, time_method, climatology, min_coverage, dtype
+        )
+    )
 
     results = z_utils.convert(
         *paths,

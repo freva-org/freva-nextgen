@@ -24,6 +24,7 @@ from freva_rest.auth import auth, get_system_username
 from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 
+from ..utils.base_utils import ReductionDict
 from ..utils.presign_utils import MAX_TTL_SECONDS, MIN_TTL_SECONDS
 from .core import Solr
 from .schema import (
@@ -435,6 +436,81 @@ async def load_data(
             examples=[100.5],
         ),
     ] = 16.0,
+    time_freq: Annotated[
+        Optional[
+            Literal[
+                "hourly",
+                "3hourly",
+                "6hourly",
+                "daily",
+                "monthly",
+                "seasonal",
+                "yearly",
+                "decadal",
+            ]
+        ],
+        Query(
+            title="Temporal reduction frequency",
+            description=(
+                "Reduce the time dimension to this target frequency, for "
+                "example to stream monthly means instead of daily data. "
+                "Reduced stores are CF-decoded and floating point; "
+                "unreduced stores are streamed raw."
+            ),
+            examples=["monthly"],
+        ),
+    ] = None,
+    time_method: Annotated[
+        Optional[
+            Literal["mean", "sum", "min", "max", "std", "var", "median", "count"]
+        ],
+        Query(
+            title="Temporal reduction method",
+            description=(
+                "How to reduce each time group. Requires ``time_freq``. "
+                "Defaults to ``mean``."
+            ),
+            examples=["mean"],
+        ),
+    ] = None,
+    climatology: Annotated[
+        bool,
+        Query(
+            title="Climatology instead of resampling",
+            description=(
+                "If false (default) ``time_freq`` resamples: one value per "
+                "calendar period in the record. If true it builds a "
+                "climatology: one value per period of the year, over the "
+                "whole record."
+            ),
+            examples=[False],
+        ),
+    ] = False,
+    min_coverage: Annotated[
+        float,
+        Query(
+            title="Minimum valid fraction per group",
+            description=(
+                "Mask an output step unless at least this fraction of its "
+                "source time steps were valid."
+            ),
+            ge=0.0,
+            le=1.0,
+            examples=[0.8],
+        ),
+    ] = 0.0,
+    dtype: Annotated[
+        Literal["float32", "float64", "keep"],
+        Query(
+            title="Output dtype of reduced variables",
+            description=(
+                "Only applied when ``time_freq`` is set. CF-decoding packed "
+                "data promotes to ``float64``, which quadruples the "
+                "transferred bytes for no gain in precision."
+            ),
+            examples=["float32"],
+        ),
+    ] = "float32",
     request: Request = Required,
     current_user: TokenPayload = auth.required(),
 ) -> StreamingResponse:
@@ -471,6 +547,11 @@ async def load_data(
             "map_primary_chunksize",
             "reload",
             "chunk_size",
+            "time_freq",
+            "time_method",
+            "climatology",
+            "min_coverage",
+            "dtype",
         ),
     )
     _, total_count = await solr_search.init_stream()
@@ -487,6 +568,24 @@ async def load_data(
             access_pattern=access_pattern,
             map_primary_chunksize=map_primary_chunksize,
             reload=reload,
+            # NOTE: chunk_size was accepted as a query parameter but never
+            # forwarded, so --chunk-size silently did nothing on this route.
+            chunk_size=chunk_size,
+            reduction_plan=cast(
+                ReductionDict,
+                {
+                    k: v
+                    for k, v in {
+                        "time_freq": time_freq,
+                        "time_method": time_method,
+                        "climatology": climatology,
+                        "min_coverage": min_coverage,
+                        "dtype": dtype if time_freq else None,
+                    }.items()
+                    if v
+                },
+            )
+            or None,
             username=await get_system_username(current_user),
         ),
         status_code=status_code,

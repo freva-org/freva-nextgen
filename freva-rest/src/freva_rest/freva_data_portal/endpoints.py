@@ -14,6 +14,7 @@ from freva_rest.logger import logger
 from freva_rest.rest import app, server_config
 from freva_rest.utils.base_utils import (
     Cache,
+    ReductionDict,
     add_ttl_key_to_db_and_cache,
     decode_cache_token,
 )
@@ -129,6 +130,22 @@ async def load_files(
         "coords": convert.coords,
         "group_by": convert.group_by,
     }
+    # Falsy entries are stripped so that an explicitly-defaulted option and
+    # an omitted one produce the same cache token.
+    reduction_plan = cast(
+        ReductionDict,
+        {
+            k: v
+            for k, v in {
+                "time_freq": convert.time_freq,
+                "time_method": convert.time_method,
+                "climatology": convert.climatology,
+                "min_coverage": convert.min_coverage,
+                "dtype": convert.dtype if convert.time_freq else None,
+            }.items()
+            if v
+        },
+    )
 
     try:
 
@@ -136,6 +153,7 @@ async def load_files(
             return await publish_datasets(
                 path,
                 aggregation_plan={k: v for k, v in aggregation_plan.items() if v},
+                reduction_plan=reduction_plan or None,
                 ttl_seconds=convert.ttl_seconds,
                 public=convert.public,
                 access_pattern=convert.access_pattern,
@@ -455,7 +473,9 @@ async def create_presigned_url(
     username = await get_system_username(token)
     await check_read_permission(username, payload["path"])
     ttl = max(MIN_TTL_SECONDS, min(body.ttl_seconds, MAX_TTL_SECONDS))
-    res = await add_ttl_key_to_db_and_cache(payload["path"], ttl, payload["assembly"])
+    res = await add_ttl_key_to_db_and_cache(
+        payload["path"], ttl, payload["assembly"], payload.get("reduce")
+    )
     url = f"{server_config.proxy}/api/freva-nextgen/data-portal/share/{res['key']}.zarr"
     return PresignUrlResponse(
         url=cast(AnyHttpUrl, url),

@@ -94,7 +94,9 @@ async def verify_token(key: str, slug: str) -> Dict[str, str]:
     if now >= int(payload.get("exp", 0)):
         raise HTTPException(status_code=403, detail="Share link has expired.")
     payload["_id"] = encode_cache_token(
-        payload.get("path", ""), assembly=payload.get("assembly")
+        payload.get("path", ""),
+        assembly=payload.get("assembly"),
+        reduce=payload.get("reduce"),
     )
     return payload
 

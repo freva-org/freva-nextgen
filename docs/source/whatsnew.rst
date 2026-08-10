@@ -3,6 +3,13 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
+v2607.8.0
+^^^^^^^^^
+
+Added
+"""""
+- Dimension reduction across time and spatial dims (e.g monthly means)
+
 v2607.1.0
 ^^^^^^^^^
 
@@ -34,7 +41,7 @@ v2606.0.0
 
 Added
 """""
-- STAC API: configurable collection axis path segment with an 
+- STAC API: configurable collection axis path segment with an
   optional ``visible_collections`` parameter to scope
 
 

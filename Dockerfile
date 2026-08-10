@@ -65,6 +65,7 @@ session required pam_sss.so\n\
         email-validator \
         httpx \
         jq \
+        jmespath \
         motor>=3.6 \
         pyjwt \
         pymongo>=4.9 \

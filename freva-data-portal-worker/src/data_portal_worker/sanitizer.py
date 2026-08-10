@@ -83,6 +83,11 @@ _USERNAME_STRIP = str.maketrans(
 _VARIABLE_STRIP = str.maketrans(
     "", "", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_./-"
 )
+#: Vocabulary tokens (frequencies, methods, dtypes, dimension names) are
+#: plain identifiers: letters, digits and underscore only.
+_TOKEN_STRIP = str.maketrans(
+    "", "", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_"
+)
 
 #: RFC 3986 scheme characters: ALPHA / DIGIT / "+" / "-" / "."
 #: Used in _has_url_scheme; frozenset lookup is O(1) and avoids re.match overhead.
@@ -366,6 +371,84 @@ def _sanitize_assembly(raw: Any) -> Optional[Dict[str, Optional[str]]]:
     return raw
 
 
+def _sanitize_reduction(raw: Any) -> Optional[Dict[str, Any]]:
+    """Validate the optional dimension-reduction plan dict.
+
+    Unlike ``assembly`` the reduction plan is not flat ``str | None``: it
+    mixes strings, booleans, a float and a list of dimension names, so it
+    gets its own validator.
+
+    Only the *shape* of the payload is checked here.  Whether a frequency is
+    known, whether a climatology is meaningful, and whether the dataset even
+    has a time axis are decided by ``reducer.plan_reduction`` against the
+    concrete dataset -- the sanitiser's job is only to guarantee that
+    nothing dangerous or structurally broken reaches it.
+
+    The spatial keys (``space``, ``space_dims``, ``weighting``) are accepted
+    here even though the reducer rejects them, so that the wire format is
+    already final and enabling spatial reduction later needs no change on
+    the broker contract.
+    """
+    if raw is None or raw == {}:
+        return None
+    if not isinstance(raw, dict):
+        raise ValueError(
+            f"'reduce' must be a dict or null, got {type(raw).__name__}"
+        )
+    _str_keys = {"time_freq", "time_method", "dtype", "space", "weighting"}
+    _bool_keys = {"climatology"}
+    _float_keys = {"min_coverage"}
+    _list_keys = {"space_dims"}
+    _allowed_keys = _str_keys | _bool_keys | _float_keys | _list_keys
+    out: Dict[str, Any] = {}
+    for k, v in raw.items():
+        if not isinstance(k, str):
+            raise ValueError(f"'reduce' key must be a string, got {k!r}")
+        if k not in _allowed_keys:
+            raise ValueError(
+                f"'reduce' contains unexpected key {k!r}; "
+                f"allowed: {sorted(_allowed_keys)}"
+            )
+        if v is None:
+            continue
+        if k in _str_keys:
+            if not isinstance(v, str) or len(v) > 32 or v.translate(_TOKEN_STRIP):
+                raise ValueError(
+                    f"'reduce[{k!r}]' must be a short alphanumeric token, got {v!r}"
+                )
+        elif k in _bool_keys:
+            if not isinstance(v, bool):
+                raise ValueError(
+                    f"'reduce[{k!r}]' must be a boolean, got {type(v).__name__}"
+                )
+        elif k in _float_keys:
+            if not isinstance(v, (int, float)) or isinstance(v, bool):
+                raise ValueError(
+                    f"'reduce[{k!r}]' must be a number, got {type(v).__name__}"
+                )
+            if not (0.0 <= float(v) <= 1.0):
+                raise ValueError(f"'reduce[{k!r}]' must be within [0, 1], got {v}")
+            v = float(v)
+        else:  # _list_keys
+            if not isinstance(v, list) or len(v) > 8:
+                raise ValueError(
+                    f"'reduce[{k!r}]' must be a list of at most 8 dimension names"
+                )
+            for item in v:
+                if (
+                    not isinstance(item, str)
+                    or not item
+                    or len(item) > 64
+                    or item.translate(_TOKEN_STRIP)
+                ):
+                    raise ValueError(
+                        f"'reduce[{k!r}]' contains an invalid dimension name: "
+                        f"{item!r}"
+                    )
+        out[k] = v
+    return out or None
+
+
 # ---------------------------------------------------------------------------
 # Per-message-type sanitisers
 # ---------------------------------------------------------------------------
@@ -379,6 +462,7 @@ def _sanitize_uri(payload: Any) -> Dict[str, Any]:
         "uuid": _require_str(payload.get("uuid", ""), "uri.uuid"),
         "username": _sanitize_username(payload.get("username")),
         "assembly": _sanitize_assembly(payload.get("assembly")),
+        "reduce": _sanitize_reduction(payload.get("reduce")),
         "access_pattern": _sanitize_access_pattern(
             payload.get("access_pattern", "map")
         ),

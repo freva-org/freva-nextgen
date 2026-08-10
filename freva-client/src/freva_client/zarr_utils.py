@@ -117,7 +117,7 @@ def convert(
             You can set the following options
             (see also :class:`freva_client.utils.types.ZarrOptions`):
 
-            **Public urls:*** If you wish to create public instead of a
+            **Public urls:** If you wish to create public instead of a
             private url that expires in one hour you can set:
 
             ``zarr_options={"public": True, "ttl_seconds": 3600}``.
@@ -139,6 +139,13 @@ def convert(
 
             ``zarr_options={"reload": True}```
 
+            **Dimension reduction:** To have the service reduce the time
+            dimension before serving - for example to get monthly means
+            instead of daily data - set the ``time_freq`` option:
+
+            ``zarr_options={"time_freq": "monthly"}``
+
+            See the *Dimension reduction* section below.
 
     Example
     ~~~~~~~
@@ -171,7 +178,7 @@ def convert(
         )
         dset = xr.open_zarr(urls[0])
 
-    **Chunk sizes:***
+    **Chunk sizes:**
 
     Depending on how you would like to access the data different chunk sizes
     can make the data access more performant. ``freva_client`` defines two
@@ -224,6 +231,55 @@ def convert(
         )
         dset = xr.open_zarr(urls[0])
 
+    **Dimension reduction:**
+
+    Instead of transferring the full resolution data you can ask the service
+    to reduce the time dimension first. This happens server side, so only the
+    reduced data crosses the wire.
+
+    ``time_freq`` selects the target frequency, ``time_method`` how each
+    group is reduced (``mean`` by default):
+
+    .. code-block:: python
+
+        from freva_client.zarr_utils import convert
+        urls = convert(
+            "/mnt/data/daily1.nc",
+            "/mnt/data/daily2.nc",
+            aggregate="concat",
+            dim="time",
+            zarr_options={"time_freq": "monthly"},
+        )
+        dset = xr.open_zarr(urls[0])
+
+    Note that ``time_freq`` is ambiguous in everyday speech, so the two
+    readings are separate options. By default you get a `resampling`: one
+    value per calendar period in the record. Set ``climatology`` for the
+    other reading: one value per period of the year, averaged over the whole
+    record.
+
+    .. code-block:: python
+
+        # ten years of daily data -> 120 monthly steps
+        zarr_options={"time_freq": "monthly"}
+
+        # ten years of daily data -> 12 climatological months
+        zarr_options={"time_freq": "monthly", "climatology": True}
+
+    Guard against groups with too much missing data using ``min_coverage``.
+    A monthly mean computed from two valid days is usually worse than no
+    value at all:
+
+    .. code-block:: python
+
+        zarr_options={"time_freq": "monthly", "min_coverage": 0.8}
+
+    **Note:** reduced stores are always CF-decoded and floating point, while
+    unreduced stores are served raw. This is deliberate: reducing packed
+    integers without unpacking them and honouring ``_FillValue`` would
+    produce nonsense. Use ``dtype`` to control the output precision, which
+    defaults to ``float32``.
+
     **Dataset aggregation:**
 
     You can also be more specific on the aggregation operation
@@ -265,7 +321,7 @@ def convert(
         "aggregate": aggregate,
         "join": join,
         "compat": compat,
-        "data-vars": data_vars,
+        "data_vars": data_vars,
         "coords": coords,
         "dim": dim,
         "group_by": group_by,

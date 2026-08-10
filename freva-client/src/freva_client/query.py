@@ -129,6 +129,18 @@ class databrowser:
         ``reaload=True`` option:
 
         ``zarr_options={"reload": True}```
+
+        **Dimension reduction:** To have the service reduce the time
+        dimension before streaming - for example monthly means instead of
+        daily data - set ``time_freq``. Use ``climatology`` to switch between
+        a resampling (one value per period in the record) and a climatology
+        (one value per period of the year), and ``min_coverage`` to mask
+        groups with too much missing data:
+
+        ``zarr_options={"time_freq": "monthly", "min_coverage": 0.8}``
+
+        Reduced stores are always CF-decoded and floating point, while
+        unreduced stores are streamed raw.
     multiversion: bool, default: False
         Select all versions and not just the latest version (default).
     fail_on_error: bool, default: False
@@ -609,6 +621,18 @@ class databrowser:
             ``reaload=True`` option:
 
             ``zarr_options={"reload": True}```
+
+            **Dimension reduction:** To have the service reduce the time
+            dimension before streaming - for example monthly means instead
+            of daily data - set ``time_freq``. Use ``climatology`` to switch
+            between a resampling (one value per period in the record) and a
+            climatology (one value per period of the year), and
+            ``min_coverage`` to mask groups with too much missing data:
+
+            ``zarr_options={"time_freq": "monthly", "min_coverage": 0.8}``
+
+            Reduced stores are always CF-decoded and floating point, while
+            unreduced stores are streamed raw.
 
         Examples
         ~~~~~~~~
