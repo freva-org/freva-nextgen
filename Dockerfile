@@ -61,14 +61,18 @@ session required pam_sss.so\n\
         cachetools \
         cloudpickle \
        "cryptography=45.*" \
+        'docutils>=0.19' \
         fastapi \
         email-validator \
         httpx \
         jq \
         jmespath \
-        motor>=3.6 \
+        'mistune>=3.0' \
+        'motor>=3.6' \
+        'nh3>=0.2.15' \
+        'pygments>=2.12' \
         pyjwt \
-        pymongo>=4.9 \
+        'pymongo>=4.9' \
         python-dotenv \
         python-dateutil \
         python-multipart \

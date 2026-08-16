@@ -89,11 +89,18 @@ def env_to_dict(env_var: str, default_key: str = "") -> Dict[str, List[str]]:
 
     key1:value1,key2:value2,key1:value2 -> {"key1": ["value1", "value2"],
                                             "key2": ["value2"]}
+
+    An entry with no ``:`` is a bare value for ``default_key``, so with
+    ``default_key="roles"`` the entry ``admin`` means ``roles:admin``. Without a
+    ``default_key`` it is ignored.
     """
     result: Dict[str, List[str]] = {}
     for kv in os.getenv(env_var, "").split(","):
-        key, _, value = kv.partition(":")
-        key = key or default_key
+        raw_key, separator, raw_value = kv.partition(":")
+        if separator:
+            key, value = raw_key or default_key, raw_value
+        else:
+            key, value = default_key, raw_key
         if key and value:
             result.setdefault(key, [])
             if value not in result[key]:
@@ -342,7 +349,7 @@ class ServerConfig(BaseModel):
                 "dot-separated keys."
             ),
         ),
-    ] = env_to_dict("API_ADMIN_TOKEN_CLAIMS", default_key="roles") or None
+    ] = env_to_dict("API_ADMIN_CLAIMS", default_key="roles") or None
     oidc_trusted_issuers: Annotated[
         Optional[List[str]],
         Field(
@@ -511,26 +518,50 @@ class ServerConfig(BaseModel):
         """Define the mongoDB collection for custom flavours."""
         return self.mongo_client[self.mongo_db]["custom_flavours"]
 
+    @property
+    def mongo_collection_settings(self) -> AsyncCollection[Any]:
+        """Settings records, one document per (resource_name, record_id)."""
+        return self.mongo_client[self.mongo_db]["settings"]
+
+    @property
+    def mongo_collection_ui_contents(self) -> AsyncCollection[Any]:
+        """UI content pages, one document per (ui_id, content_id)."""
+        return self.mongo_client[self.mongo_db]["ui_contents"]
+
     def is_admin_user(self, current_user: BaseModel) -> bool:
         """
         Return True if any (claim-path -> regex) in `admin_token_claims`
         matches any value in the current_user's decoded JWT claims.
+
+        The flat ``roles`` claim is consulted only for the legacy
+        configuration - a bare list, which is shorthand for ``{"roles": [...]}``,
+        or an explicit ``roles`` path. It is not a fallback for other configured
+        paths: a claim path that the token does not carry simply does not match,
+        so ``{"groups": ["^settings-admin$"]}`` never authorises against a
+        ``roles`` claim the operator never nominated.
         """
         claims = current_user.model_dump()
-        flat_roles = (
-            (claims.get("model_extra") or {}).get("roles") or claims.get("roles") or []
-        )
+        model_extra = getattr(current_user, "model_extra", None) or {}
+        flat_roles = model_extra.get("roles") or claims.get("roles") or []
+        if not isinstance(flat_roles, list):
+            flat_roles = [flat_roles]
         claim_ck = self.admin_token_claims or {}
+        is_legacy_list = not isinstance(claim_ck, dict)
         adm_claims: Dict[str, List[str]] = (
             claim_ck if isinstance(claim_ck, dict) else {"roles": claim_ck}
         )
         for path, patterns in adm_claims.items():
-            # Try dotted path first
-            values = _get_in(claims, path.split(".")) or flat_roles
+            values = _get_in(claims, path.split("."))
+            if not values:
+                if not (is_legacy_list or path == "roles"):
+                    continue
+                values = flat_roles
             values = [values] if not isinstance(values, list) else values
-            # Fall back to flat roles list
+            # fullmatch, not search: re.search("admin", val) is also true for
+            # "non-admin", "admin-readonly" and "admin\n". (everything that has
+            # admin in the key, but has nothing to do with admin really)
             if any(
-                re.search(pat, val)
+                re.fullmatch(pat, val)
                 for val in values
                 if isinstance(val, str)
                 for pat in patterns

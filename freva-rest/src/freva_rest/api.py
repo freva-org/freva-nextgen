@@ -4,6 +4,7 @@ from freva_rest.config import ServerConfig
 from freva_rest.databrowser_api.endpoints import *  # noqa: F401
 from freva_rest.freva_data_portal.endpoints import *  # noqa: F401
 from freva_rest.rest import app
+from freva_rest.settings_api.endpoints import *  # noqa: F401
 
 from .logger import logger
 

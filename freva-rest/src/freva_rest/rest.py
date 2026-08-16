@@ -71,6 +71,13 @@ metadata_tags = [
         "name": "System",
         "description": "System utility endpoints for monitoring and diagnostics.",
     },
+    {
+        "name": "Settings",
+        "description": (
+            "Runtime UI settings and content pages, served from mongo. Public "
+            "to read, administrator to change."
+        ),
+    },
 ]
 
 if "stacapi" in server_config.services:

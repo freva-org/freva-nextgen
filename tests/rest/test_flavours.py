@@ -250,7 +250,7 @@ class TestAddFlavour:
         auth_admin = auth["admin"]
         with mock.patch(
             "freva_rest.rest.server_config.admin_token_claims",
-            {"resource_access.realm-management.roles": ["admin"]},
+            {"roles": ["admin"]},
         ):
             res = _post_flavour(
                 flavour_server,
@@ -278,7 +278,7 @@ class TestAddFlavour:
         auth_admin = auth["admin"]
         with mock.patch(
             "freva_rest.rest.server_config.admin_token_claims",
-            {"resource_access.realm-management.roles": ["admin"]},
+            {"roles": ["admin"]},
         ):
             # Create first
             _post_flavour(
@@ -556,7 +556,7 @@ class TestUpdateFlavour:
         # Create global flavour as admin
         with mock.patch(
             "freva_rest.rest.server_config.admin_token_claims",
-            {"resource_access.realm-management.roles": ["admin"]},
+            {"roles": ["admin"]},
         ):
             _post_flavour(
                 flavour_server,
@@ -584,7 +584,7 @@ class TestUpdateFlavour:
         # Cleanup
         with mock.patch(
             "freva_rest.rest.server_config.admin_token_claims",
-            {"resource_access.realm-management.roles": ["admin"]},
+            {"roles": ["admin"]},
         ):
             _delete_flavour(
                 flavour_server,
@@ -601,7 +601,7 @@ class TestUpdateFlavour:
 
         with mock.patch(
             "freva_rest.rest.server_config.admin_token_claims",
-            {"resource_access.realm-management.roles": ["admin"]},
+            {"roles": ["admin"]},
         ):
             # Create global flavour
             _post_flavour(
@@ -721,7 +721,7 @@ class TestDeleteFlavour:
         # Create global flavour as admin
         with mock.patch(
             "freva_rest.rest.server_config.admin_token_claims",
-            {"resource_access.realm-management.roles": ["admin"]},
+            {"roles": ["admin"]},
         ):
             _post_flavour(
                 flavour_server,
@@ -745,7 +745,7 @@ class TestDeleteFlavour:
         # Cleanup
         with mock.patch(
             "freva_rest.rest.server_config.admin_token_claims",
-            {"resource_access.realm-management.roles": ["admin"]},
+            {"roles": ["admin"]},
         ):
             _delete_flavour(
                 flavour_server,
@@ -762,7 +762,7 @@ class TestDeleteFlavour:
 
         with mock.patch(
             "freva_rest.rest.server_config.admin_token_claims",
-            {"resource_access.realm-management.roles": ["admin"]},
+            {"roles": ["admin"]},
         ):
             # Create global flavour
             _post_flavour(
@@ -792,7 +792,7 @@ class TestDeleteFlavour:
 
         with mock.patch(
             "freva_rest.rest.server_config.admin_token_claims",
-            {"resource_access.realm-management.roles": ["admin"]},
+            {"roles": ["admin"]},
         ):
             res = _delete_flavour(
                 flavour_server,
@@ -811,7 +811,7 @@ class TestDeleteFlavour:
         # Admin creates personal flavour
         with mock.patch(
             "freva_rest.rest.server_config.admin_token_claims",
-            {"resource_access.realm-management.roles": ["admin"]},
+            {"roles": ["admin"]},
         ):
             _post_flavour(
                 flavour_server,
@@ -832,7 +832,7 @@ class TestDeleteFlavour:
         # Cleanup
         with mock.patch(
             "freva_rest.rest.server_config.admin_token_claims",
-            {"resource_access.realm-management.roles": ["admin"]},
+            {"roles": ["admin"]},
         ):
             _delete_flavour(
                 flavour_server, "admin_personal", token=auth_admin["access_token"]
@@ -881,7 +881,7 @@ class TestMixedScenarios:
         # Admin creates global flavour
         with mock.patch(
             "freva_rest.rest.server_config.admin_token_claims",
-            {"resource_access.realm-management.roles": ["admin"]},
+            {"roles": ["admin"]},
         ):
             res1 = _post_flavour(
                 flavour_server,
@@ -915,7 +915,7 @@ class TestMixedScenarios:
         # Cleanup
         with mock.patch(
             "freva_rest.rest.server_config.admin_token_claims",
-            {"resource_access.realm-management.roles": ["admin"]},
+            {"roles": ["admin"]},
         ):
             _delete_flavour(
                 flavour_server,

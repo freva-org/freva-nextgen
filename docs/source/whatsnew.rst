@@ -3,6 +3,19 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
+v2608.0.0
+^^^^^^^^^
+
+Added
+"""""
+- Settings API: server-driven UI configuration and content pages under
+  ``/api/freva-nextgen/settings``.
+
+Fixed
+"""""
+- switch from ``API_ADMIN_TOKEN_CLAIMS`` to ``API_ADMIN_CLAIMS`` to be
+   synced with freva-admin
+
 v2607.8.0
 ^^^^^^^^^
 

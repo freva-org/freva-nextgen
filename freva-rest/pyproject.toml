@@ -33,7 +33,8 @@ dependencies = [
 "email-validator",
 "jmespath",
 "fastapi",
-"pymongo",
+# AsyncMongoClient landed in pymongo 4.9
+"pymongo>=4.9",
 "pyjwt",
 "python-dotenv",
 "python-dateutil",
@@ -50,6 +51,11 @@ dependencies = [
 "xarray",
 "zarr",
 "py-oidc-auth[fastapi]>=2604.3.0",
+# Settings content API render dependencies
+"nh3>=0.2.15",
+"mistune>=3.0",
+"docutils>=0.19",
+"pygments>=2.12",
 ]
 [project.scripts]
 freva-rest-server = "freva_rest.cli:cli"

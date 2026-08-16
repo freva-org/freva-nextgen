@@ -44,7 +44,7 @@ environment variables are evaluated:
 - ``API_OIDC_CLIENT_SECRET``: You can set a client secret, if you have
 - ``API_OIDC_TOKEN_CLAIMS``:  Valid token claims, to check against
 - ``API_SERVICES``:  The services the api should serve.
-- ``API_ADMIN_TOKEN_CLAIMS``:  Valid admin token claims, to check if a user
+- ``API_ADMIN_CLAIMS``:  Valid admin token claims, to check if a user
                                 is admin to enable admin endpoints for.
 - ``API_OIDC_TRUSTED_ISSUER``: Define url's to trusted partner api's to establish
                                a network of token trust for token federation.
