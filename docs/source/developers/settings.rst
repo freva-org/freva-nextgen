@@ -779,7 +779,7 @@ Errors
 
 * ``401`` - a write without authentication.
 * ``403`` - a write by a non-administrator. If no admin claim filter is configured
-  (``API_ADMIN_TOKEN_CLAIMS`` unset) then no user is an admin and the message says
+  (``API_ADMIN_CLAIMS`` unset) then no user is an admin and the message says
   so.
 * ``404`` - unknown resource, or unknown content.
 * ``409`` - deleting content a ui still references, moving referenced content
@@ -793,13 +793,13 @@ Errors
 Administrator claims
 --------------------
 
-``API_ADMIN_TOKEN_CLAIMS`` maps a claim path to a list of regular expressions. The
+``API_ADMIN_CLAIMS`` maps a claim path to a list of regular expressions. The
 environment variable takes comma-separated ``path:pattern`` pairs, and a bare
 entry is shorthand for the ``roles`` path::
 
-    API_ADMIN_TOKEN_CLAIMS=roles:admin
-    API_ADMIN_TOKEN_CLAIMS=admin                    # the same thing
-    API_ADMIN_TOKEN_CLAIMS=groups:^admins$,admin    # both paths
+    API_ADMIN_CLAIMS=roles:admin
+    API_ADMIN_CLAIMS=admin                    # the same thing
+    API_ADMIN_CLAIMS=groups:^admins$,admin    # both paths
 
 A configured path the token does not carry simply does not match: the flat
 ``roles`` claim is consulted **only** for the bare-list form or an explicit
