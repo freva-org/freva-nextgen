@@ -11753,7 +11753,7 @@ class TestEndpointHelpers:
             with pytest.raises(HTTPException) as raised:
                 endpoints._require_admin(object())
         assert raised.value.status_code == 403
-        assert "API_ADMIN_TOKEN_CLAIMS" in str(raised.value.detail)
+        assert "API_ADMIN_CLAIMS" in str(raised.value.detail)
 
     def test_settings_store_rejects_an_unknown_resource(self) -> None:
         from fastapi import HTTPException
@@ -14313,15 +14313,15 @@ class TestDiscriminatorsAreRequired:
 
 
 class TestAdminClaimShorthand:
-    """A bare entry in `API_ADMIN_TOKEN_CLAIMS` is a value for the default
+    """A bare entry in `API_ADMIN_CLAIMS` is a value for the default
     claim path."""
 
     @staticmethod
     def _claims(monkeypatch, raw: str, default_key: str = "roles") -> dict:
         from freva_rest.config import env_to_dict
 
-        monkeypatch.setenv("API_ADMIN_TOKEN_CLAIMS", raw)
-        return env_to_dict("API_ADMIN_TOKEN_CLAIMS", default_key=default_key)
+        monkeypatch.setenv("API_ADMIN_CLAIMS", raw)
+        return env_to_dict("API_ADMIN_CLAIMS", default_key=default_key)
 
     def test_a_bare_value_lands_under_the_default_key(self, monkeypatch) -> None:
         assert self._claims(monkeypatch, "admin") == {"roles": ["admin"]}

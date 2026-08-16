@@ -13,7 +13,7 @@ Added
 
 Fixed
 """""
-- switch from ``API_ADMIN_TOKEN_CLAIMS`` to ``API_ADMIN_CLAIMS`` to be
+- switch from ``API_ADMIN_CLAIMS`` to ``API_ADMIN_CLAIMS`` to be
    synced with freva-admin
 
 v2607.8.0

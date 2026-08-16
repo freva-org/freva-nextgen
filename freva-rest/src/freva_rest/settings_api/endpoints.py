@@ -81,8 +81,8 @@ def _require_admin(current_user: TokenPayload) -> None:
                 detail=(
                     "No admin claim filter is configured, so no user can be an "
                     "admin and the settings cannot be changed. Set "
-                    "API_ADMIN_TOKEN_CLAIMS, for example "
-                    "'API_ADMIN_TOKEN_CLAIMS=roles:admin'."
+                    "API_ADMIN_CLAIMS, for example "
+                    "'API_ADMIN_CLAIMS=roles:admin'."
                 ),
             )
         raise SettingsError(
