@@ -10,7 +10,10 @@ Fixed
 """""
 - switch from ``API_ADMIN_TOKEN_CLAIMS`` to ``API_ADMIN_CLAIMS`` to be
    synced with freva-admin
-
+- Configured admin claim paths no longer fall back to top-level roles,
+and regex patterns must match the complete claim value. This prevents a
+pattern such as `admin` from also authorising values such as `non-admin`
+or `admin-readonly`.
 
 v2607.8.0
 ^^^^^^^^^
