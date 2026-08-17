@@ -3,6 +3,15 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
+v2608.0.0
+^^^^^^^^^
+
+Fixed
+"""""
+- switch from ``API_ADMIN_TOKEN_CLAIMS`` to ``API_ADMIN_CLAIMS`` to be
+   synced with freva-admin
+
+
 v2607.8.0
 ^^^^^^^^^
 
