@@ -63,6 +63,7 @@ session required pam_sss.so\n\
        "cryptography=45.*" \
         fastapi \
         email-validator \
+        greenlet \
         httpx \
         jq \
         jmespath \

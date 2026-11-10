@@ -24,7 +24,7 @@ jobs:
           cache-environment: true
           cache-downloads: true
           create-args: >-
-            python
+            python=3.13
             gdal
             rasterio
             pip

@@ -615,6 +615,7 @@ class ServerConfig(BaseModel):
                     fields.append(entry["name"])
         except (
             requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout,
             requests.exceptions.JSONDecodeError,
         ) as error:  # pragma: no cover
             logger.error("Connection to %s failed: %s", url, error)  # pragma: no cover

@@ -33,6 +33,7 @@ dependencies = [
 "email-validator",
 "jmespath",
 "fastapi",
+"greenlet",
 "pymongo",
 "pyjwt",
 "python-dotenv",
