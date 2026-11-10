@@ -6,6 +6,14 @@ All notable changes to this project will be documented in this file.
 v2607.8.0
 ^^^^^^^^^
 
+Fixed
+"""""
+- RestAPI startup race with Solr and MongoDB
+
+
+v2607.8.0
+^^^^^^^^^
+
 Added
 """""
 - Dimension reduction across time and spatial dims (e.g monthly means)
