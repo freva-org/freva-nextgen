@@ -3,7 +3,7 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
-v2607.8.0
+v2611.0.0
 ^^^^^^^^^
 
 Fixed
