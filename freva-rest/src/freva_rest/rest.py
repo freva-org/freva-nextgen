@@ -124,6 +124,20 @@ async def refresh_extended_search_cache_periodically(
             pass  # pragma: no cover
 
 
+async def create_mongo_index() -> None:
+    """Create the mongoDB index, wait for the mongoDB if it isn't up yet."""
+    while True:
+        try:
+            _ = await server_config.mongo_collection_share_key.create_index(
+                [("expires_at", 1)],
+                expireAfterSeconds=0,
+            )
+            return
+        except Exception as error:  # pragma: no cover
+            logger.warning("MongoDB not ready: %s", error)  # pragma: no cover
+            await asyncio.sleep(5)  # pragma: no cover
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Start and end things before and after shutdown.
@@ -138,17 +152,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         ),
         name="extended-search-cache-refresh",
     )
+    mongo_index_task = asyncio.create_task(create_mongo_index())
     try:
-        _ = await server_config.mongo_collection_share_key.create_index(
-            [("expires_at", 1)],
-            expireAfterSeconds=0,
-        )
         yield
     finally:
         cache_stop_event.set()
         cache_refresh_task.cancel()
+        mongo_index_task.cancel()
         with suppress(asyncio.CancelledError):
             await cache_refresh_task
+        with suppress(asyncio.CancelledError):
+            await mongo_index_task
 
         try:  # pragma: no cover
             await server_config.mongo_client.close()
