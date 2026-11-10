@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 
@@ -16,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>Databrowser python module &#8212; Freva Databrowser 2607.1.0 documentation</title>
+    <title>Databrowser python module &#8212; Freva Databrowser 2611.0.0 documentation</title>
   
   
   
@@ -35,8 +34,8 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -44,12 +43,12 @@
     <link rel="stylesheet" type="text/css" href="../_static/code-tabs.css?v=1bc26e2f" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=c00c12d8"></script>
+    <script src="../_static/documentation_options.js?v=4c28454c"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -62,9 +61,9 @@
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'zarr-utils/python-lib';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_version = '0.24.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://freva-nextgen.readthedocs.io/en/latest/_static/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2607.1.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2611.0.0';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -76,6 +75,7 @@
     <link rel="next" title="The zarr utils command line interface" href="cli.html" />
     <link rel="prev" title="Remote data access utilities" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
   
@@ -125,7 +125,7 @@
   
     <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
-  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
     <span class="fa-solid fa-bars"></span>
   </button>
   
@@ -149,8 +149,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2607.1.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2607.1.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2611.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2611.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -227,7 +227,7 @@
         <div class="navbar-item navbar-persistent--container">
           
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
  <i class="fa-solid fa-magnifying-glass"></i>
  <span class="search-button__default-text">Search</span>
  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
@@ -277,7 +277,7 @@
   
     <div class="navbar-persistent--mobile">
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
  <i class="fa-solid fa-magnifying-glass"></i>
  <span class="search-button__default-text">Search</span>
  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
@@ -286,7 +286,7 @@
   
 
   
-    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page" aria-expanded="false" aria-controls="pst-secondary-sidebar-modal">
       <span class="fa-solid fa-outdent"></span>
     </button>
   
@@ -300,7 +300,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
       <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
         
 
@@ -429,7 +429,7 @@
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">Databrowser python module</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
+<li class="toctree-l1 current active has-children"><a aria-current="page" class="current reference internal" href="#">Databrowser python module</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="cli.html">The zarr utils command line interface</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
@@ -472,7 +472,7 @@
     
     <li class="breadcrumb-item breadcrumb-home">
       <a href="../index.html" class="nav-link" aria-label="Home">
-        <i class="fa-solid fa-home"></i>
+        <i class="fa-solid fa-house"></i>
       </a>
     </li>
     
@@ -594,7 +594,7 @@ is attempted only when direct combine fails.</p>
 <li><p><strong>zarr_options</strong> (<em>dict</em><em>, </em><em>default: None</em>) – <p>Set additional options for creating the dynamic zarr streams.
 You can set the following options
 (see also <a class="reference internal" href="#freva_client.utils.types.ZarrOptions" title="freva_client.utils.types.ZarrOptions"><code class="xref py py-class docutils literal notranslate"><span class="pre">freva_client.utils.types.ZarrOptions</span></code></a>):</p>
-<p><strong>Public urls:*</strong> If you wish to create public instead of a
+<p><strong>Public urls:</strong> If you wish to create public instead of a
 private url that expires in one hour you can set:</p>
 <p><code class="docutils literal notranslate"><span class="pre">zarr_options={&quot;public&quot;:</span> <span class="pre">True,</span> <span class="pre">&quot;ttl_seconds&quot;:</span> <span class="pre">3600}</span></code>.</p>
 <p><strong>Access Pattern:</strong> To optimise the chunk size according to your
@@ -610,6 +610,11 @@ chunk size of the primary dimensions, such as time, using the
 requests are cached server side. To force a <cite>reload</cite> you can add the
 <code class="docutils literal notranslate"><span class="pre">reaload=True</span></code> option:</p>
 <p><code class="docutils literal notranslate"><span class="pre">zarr_options={&quot;reload&quot;:</span> <span class="pre">True}`</span></code></p>
+<p><strong>Dimension reduction:</strong> To have the service reduce the time
+dimension before serving - for example to get monthly means
+instead of daily data - set the <code class="docutils literal notranslate"><span class="pre">time_freq</span></code> option:</p>
+<p><code class="docutils literal notranslate"><span class="pre">zarr_options={&quot;time_freq&quot;:</span> <span class="pre">&quot;monthly&quot;}</span></code></p>
+<p>See the <em>Dimension reduction</em> section below.</p>
 </p></li>
 </ul>
 </dd>
@@ -617,9 +622,9 @@ requests are cached server side. To force a <cite>reload</cite> you can add the
 <p class="rubric">Example</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">authenticate</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">freva_client.zarr_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert</span>
-<span class="n">storage_options</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">()[</span><span class="s2">&quot;headers&quot;</span><span class="p">]</span>
+<span class="n">storage_options</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">()[</span><span class="s2">"headers"</span><span class="p">]</span>
 
-<span class="n">urls</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="s2">&quot;/mnt/data/test1.nc&quot;</span><span class="p">,</span> <span class="s2">&quot;/mnt/data/test2.nc&quot;</span><span class="p">)</span>
+<span class="n">urls</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="s2">"/mnt/data/test1.nc"</span><span class="p">,</span> <span class="s2">"/mnt/data/test2.nc"</span><span class="p">)</span>
 <span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span>
     <span class="n">url</span><span class="p">,</span>
     <span class="n">storage_options</span><span class="o">=</span><span class="n">storage_options</span>
@@ -632,14 +637,14 @@ requests are cached server side. To force a <cite>reload</cite> you can add the
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client.zarr_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert</span>
 
 <span class="n">urls</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span>
-    <span class="s2">&quot;/mnt/data/test1.nc&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;/mnt/data/test2.nc&quot;</span><span class="p">,</span>
-    <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;public&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;ttl_seconds&quot;</span><span class="p">:</span> <span class="mi">86400</span><span class="p">}</span>
+    <span class="s2">"/mnt/data/test1.nc"</span><span class="p">,</span>
+    <span class="s2">"/mnt/data/test2.nc"</span><span class="p">,</span>
+    <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"public"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"ttl_seconds"</span><span class="p">:</span> <span class="mi">86400</span><span class="p">}</span>
 <span class="p">)</span>
 <span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span><span class="n">urls</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
-<p><strong>Chunk sizes:*</strong></p>
+<p><strong>Chunk sizes:</strong></p>
 <p>Depending on how you would like to access the data different chunk sizes
 can make the data access more performant. <code class="docutils literal notranslate"><span class="pre">freva_client</span></code> defines two
 major access patterns <code class="docutils literal notranslate"><span class="pre">map</span></code> and <code class="docutils literal notranslate"><span class="pre">time_series</span></code>. Depending on which
@@ -656,12 +661,12 @@ if the <code class="docutils literal notranslate"><span class="pre">access_patte
 analysis using the fowlloing <code class="docutils literal notranslate"><span class="pre">zarr_options</span></code></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client.zarr_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert</span>
 <span class="n">urls</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span>
-    <span class="s2">&quot;/mnt/data/test1.nc&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;/mnt/data/test2.nc&quot;</span><span class="p">,</span>
-    <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;public&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-                  <span class="s2">&quot;ttl_seconds&quot;</span><span class="p">:</span> <span class="mi">86400</span><span class="p">,</span>
-                  <span class="s2">&quot;chunk_size&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
-                  <span class="s2">&quot;access_pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;time_series&quot;</span>
+    <span class="s2">"/mnt/data/test1.nc"</span><span class="p">,</span>
+    <span class="s2">"/mnt/data/test2.nc"</span><span class="p">,</span>
+    <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"public"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                  <span class="s2">"ttl_seconds"</span><span class="p">:</span> <span class="mi">86400</span><span class="p">,</span>
+                  <span class="s2">"chunk_size"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+                  <span class="s2">"access_pattern"</span><span class="p">:</span> <span class="s2">"time_series"</span>
                   <span class="p">}</span>
 <span class="p">)</span>
 <span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span><span class="n">urls</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -674,27 +679,67 @@ at once.</p>
 <blockquote>
 <div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client.zarr_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert</span>
 <span class="n">urls</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span>
-    <span class="s2">&quot;/mnt/data/test1.nc&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;/mnt/data/test2.nc&quot;</span><span class="p">,</span>
-    <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;public&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-                  <span class="s2">&quot;ttl_seconds&quot;</span><span class="p">:</span> <span class="mi">86400</span><span class="p">,</span>
-                  <span class="s2">&quot;chunk_size&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
-                  <span class="s2">&quot;map_primary_chunksize&quot;</span><span class="p">:</span> <span class="mi">100</span>
+    <span class="s2">"/mnt/data/test1.nc"</span><span class="p">,</span>
+    <span class="s2">"/mnt/data/test2.nc"</span><span class="p">,</span>
+    <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"public"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                  <span class="s2">"ttl_seconds"</span><span class="p">:</span> <span class="mi">86400</span><span class="p">,</span>
+                  <span class="s2">"chunk_size"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+                  <span class="s2">"map_primary_chunksize"</span><span class="p">:</span> <span class="mi">100</span>
                   <span class="p">}</span>
 <span class="p">)</span>
 <span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span><span class="n">urls</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
 </div></blockquote>
+<p><strong>Dimension reduction:</strong></p>
+<p>Instead of transferring the full resolution data you can ask the service
+to reduce the time dimension first. This happens server side, so only the
+reduced data crosses the wire.</p>
+<p><code class="docutils literal notranslate"><span class="pre">time_freq</span></code> selects the target frequency, <code class="docutils literal notranslate"><span class="pre">time_method</span></code> how each
+group is reduced (<code class="docutils literal notranslate"><span class="pre">mean</span></code> by default):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client.zarr_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert</span>
+<span class="n">urls</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span>
+    <span class="s2">"/mnt/data/daily1.nc"</span><span class="p">,</span>
+    <span class="s2">"/mnt/data/daily2.nc"</span><span class="p">,</span>
+    <span class="n">aggregate</span><span class="o">=</span><span class="s2">"concat"</span><span class="p">,</span>
+    <span class="n">dim</span><span class="o">=</span><span class="s2">"time"</span><span class="p">,</span>
+    <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"time_freq"</span><span class="p">:</span> <span class="s2">"monthly"</span><span class="p">},</span>
+<span class="p">)</span>
+<span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span><span class="n">urls</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Note that <code class="docutils literal notranslate"><span class="pre">time_freq</span></code> is ambiguous in everyday speech, so the two
+readings are separate options. By default you get a <cite>resampling</cite>: one
+value per calendar period in the record. Set <code class="docutils literal notranslate"><span class="pre">climatology</span></code> for the
+other reading: one value per period of the year, averaged over the whole
+record.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ten years of daily data -&gt; 120 monthly steps</span>
+<span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"time_freq"</span><span class="p">:</span> <span class="s2">"monthly"</span><span class="p">}</span>
+
+<span class="c1"># ten years of daily data -&gt; 12 climatological months</span>
+<span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"time_freq"</span><span class="p">:</span> <span class="s2">"monthly"</span><span class="p">,</span> <span class="s2">"climatology"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Guard against groups with too much missing data using <code class="docutils literal notranslate"><span class="pre">min_coverage</span></code>.
+A monthly mean computed from two valid days is usually worse than no
+value at all:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"time_freq"</span><span class="p">:</span> <span class="s2">"monthly"</span><span class="p">,</span> <span class="s2">"min_coverage"</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Note:</strong> reduced stores are always CF-decoded and floating point, while
+unreduced stores are served raw. This is deliberate: reducing packed
+integers without unpacking them and honouring <code class="docutils literal notranslate"><span class="pre">_FillValue</span></code> would
+produce nonsense. Use <code class="docutils literal notranslate"><span class="pre">dtype</span></code> to control the output precision, which
+defaults to <code class="docutils literal notranslate"><span class="pre">float32</span></code>.</p>
 <p><strong>Dataset aggregation:</strong></p>
 <p>You can also be more specific on the aggregation operation</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">authenticate</span>
-<span class="n">storage_options</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">()[</span><span class="s2">&quot;headers&quot;</span><span class="p">]</span>
+<span class="n">storage_options</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">()[</span><span class="s2">"headers"</span><span class="p">]</span>
 <span class="n">url</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span>
-    <span class="s2">&quot;/mnt/data/test1.nc&quot;</span><span class="p">,</span> <span class="s2">&quot;/mnt/data/test2.nc&quot;</span><span class="p">,</span>
-    <span class="n">aggregate</span><span class="o">=</span><span class="s2">&quot;concat&quot;</span><span class="p">,</span>
-    <span class="n">join</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span>
-    <span class="n">dim</span><span class="o">=</span><span class="s2">&quot;ensemble&quot;</span><span class="p">,</span>
+    <span class="s2">"/mnt/data/test1.nc"</span><span class="p">,</span> <span class="s2">"/mnt/data/test2.nc"</span><span class="p">,</span>
+    <span class="n">aggregate</span><span class="o">=</span><span class="s2">"concat"</span><span class="p">,</span>
+    <span class="n">join</span><span class="o">=</span><span class="s2">"inner"</span><span class="p">,</span>
+    <span class="n">dim</span><span class="o">=</span><span class="s2">"ensemble"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span>
     <span class="n">url</span><span class="p">,</span>
@@ -706,11 +751,11 @@ at once.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">authenticate</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">()</span>
 <span class="n">url</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span>
-    <span class="s2">&quot;/mnt/data/test1.nc&quot;</span><span class="p">,</span> <span class="s2">&quot;/mnt/data/test2.nc&quot;</span><span class="p">,</span>
-    <span class="n">aggregate</span><span class="o">=</span><span class="s2">&quot;concat&quot;</span><span class="p">,</span>
-    <span class="n">join</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span>
-    <span class="n">dim</span><span class="o">=</span><span class="s2">&quot;ensemble&quot;</span><span class="p">,</span>
-    <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;public&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="n">ttl_seconds</span><span class="p">:</span> <span class="mi">86400</span><span class="p">}</span>
+    <span class="s2">"/mnt/data/test1.nc"</span><span class="p">,</span> <span class="s2">"/mnt/data/test2.nc"</span><span class="p">,</span>
+    <span class="n">aggregate</span><span class="o">=</span><span class="s2">"concat"</span><span class="p">,</span>
+    <span class="n">join</span><span class="o">=</span><span class="s2">"inner"</span><span class="p">,</span>
+    <span class="n">dim</span><span class="o">=</span><span class="s2">"ensemble"</span><span class="p">,</span>
+    <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"public"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="n">ttl_seconds</span><span class="p">:</span> <span class="mi">86400</span><span class="p">}</span>
 <span class="p">)</span>
 <span class="n">dset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_zarr</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
 </pre></div>
@@ -756,10 +801,120 @@ the freva config file.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="freva_client.utils.types.ZarrOptions">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">freva_client.utils.types.</span></span><span class="sig-name descname"><span class="pre">ZarrOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">public</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ttl_seconds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">86400.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'map'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'time_series'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'map'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">16.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_primary_chunksize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#freva_client.utils.types.ZarrOptions" title="Link to this definition">#</a></dt>
-<dd><p>Configuration options for Zarr URL requests.</p>
-<p>Controls URL generation, caching behavior, and chunk size optimization
-for different data access patterns.</p>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">freva_client.utils.types.</span></span><span class="sig-name descname"><span class="pre">ZarrOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">public</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ttl_seconds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">86400.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'map'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'time_series'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'map'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">16.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_primary_chunksize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_freq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'hourly'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'3hourly'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'6hourly'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'daily'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'monthly'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'seasonal'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'yearly'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'decadal'</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'mean'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'sum'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'min'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'max'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'std'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'var'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'median'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'count'</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">climatology</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_coverage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'float32'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'float64'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'keep'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'float32'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#freva_client.utils.types.ZarrOptions" title="Link to this definition">#</a></dt>
+<dd><p>Options controlling how the service builds a Zarr store.</p>
+<p>Every entry point that produces a Zarr URL accepts these as a plain
+dict via <code class="docutils literal notranslate"><span class="pre">zarr_options</span></code>: <a class="reference internal" href="#freva_client.zarr_utils.convert" title="freva_client.zarr_utils.convert"><code class="xref py py-func docutils literal notranslate"><span class="pre">freva_client.zarr_utils.convert()</span></code></a>,
+<a class="reference internal" href="../databrowser/python-lib.html#freva_client.databrowser.aggregate" title="freva_client.databrowser.aggregate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">freva_client.databrowser.aggregate()</span></code></a>, and
+<a class="reference internal" href="../databrowser/python-lib.html#freva_client.databrowser" title="freva_client.databrowser"><code class="xref py py-class docutils literal notranslate"><span class="pre">freva_client.databrowser</span></code></a> with <code class="docutils literal notranslate"><span class="pre">stream_zarr=True</span></code>. Only the
+keys you set need to be given; unknown keys are ignored.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">freva_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">databrowser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">freva_client.zarr_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert</span>
+
+<span class="n">urls</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="s2">"/work/data/tas_day.nc"</span><span class="p">,</span>
+               <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"time_freq"</span><span class="p">:</span> <span class="s2">"monthly"</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>The options fall into four groups.</p>
+<p><strong>URL and lifetime</strong> – <code class="docutils literal notranslate"><span class="pre">public</span></code> decides whether the URL carries its
+own signature and can be handed to someone else, and <code class="docutils literal notranslate"><span class="pre">ttl_seconds</span></code>
+how long it stays valid.</p>
+<p><strong>Chunking</strong> – <code class="docutils literal notranslate"><span class="pre">access_pattern</span></code>, <code class="docutils literal notranslate"><span class="pre">chunk_size</span></code> and
+<code class="docutils literal notranslate"><span class="pre">map_primary_chunksize</span></code> shape the chunk grid. They change how many
+requests a client makes and how large each one is, never the values.
+Pick <code class="docutils literal notranslate"><span class="pre">&quot;map&quot;</span></code> when readers want whole fields a step at a time, and
+<code class="docutils literal notranslate"><span class="pre">&quot;time_series&quot;</span></code> when they want long series at a few points.</p>
+<p><strong>Caching</strong> – stores are cached server side and keyed on the request,
+so the same paths and the same options resolve to the same URL. Set
+<code class="docutils literal notranslate"><span class="pre">reload</span></code> to force a rebuild.</p>
+<p><strong>Dimension reduction</strong> – <code class="docutils literal notranslate"><span class="pre">time_freq</span></code>, <code class="docutils literal notranslate"><span class="pre">time_method</span></code>,
+<code class="docutils literal notranslate"><span class="pre">climatology</span></code>, <code class="docutils literal notranslate"><span class="pre">min_coverage</span></code> and <code class="docutils literal notranslate"><span class="pre">dtype</span></code> make the service
+collapse the time dimension before serving, so that only the reduced
+data crosses the wire. Reduction is off unless <code class="docutils literal notranslate"><span class="pre">time_freq</span></code> is set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>public</strong> (<em>bool</em><em>, </em><em>default: False</em>) – Generate a pre-signed URL that anyone can open, rather than one
+requiring the caller’s token.</p></li>
+<li><p><strong>ttl_seconds</strong> (<em>float</em><em>, </em><em>default: 86400.0</em>) – Lifetime of the generated URL, in seconds. One day by default.</p></li>
+<li><p><strong>access_pattern</strong> (<em>str</em><em>, </em><em>default: &quot;map&quot;</em>) – <code class="docutils literal notranslate"><span class="pre">&quot;map&quot;</span></code> chunks along time, so one request returns one full
+field. <code class="docutils literal notranslate"><span class="pre">&quot;time_series&quot;</span></code> chunks along the geographical
+dimensions, so one request returns a long series at few points.</p></li>
+<li><p><strong>chunk_size</strong> (<em>float</em><em>, </em><em>default: 16.0</em>) – Target size of a single chunk in megabytes.</p></li>
+<li><p><strong>map_primary_chunksize</strong> (<em>int</em><em>, </em><em>default: 1</em>) – Number of steps along the primary (usually time) dimension per
+chunk, when <code class="docutils literal notranslate"><span class="pre">access_pattern=&quot;map&quot;</span></code>.</p></li>
+<li><p><strong>reload</strong> (<em>bool</em><em>, </em><em>default: False</em>) – Bypass the server-side cache and rebuild the store.</p></li>
+<li><p><strong>time_freq</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>default: None</em>) – Target frequency for temporal reduction, one of <code class="docutils literal notranslate"><span class="pre">&quot;hourly&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;3hourly&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;6hourly&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;daily&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;monthly&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;seasonal&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;yearly&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;decadal&quot;</span></code>. <code class="docutils literal notranslate"><span class="pre">None</span></code> applies no
+reduction. Every other reduction option is ignored without it.</p></li>
+<li><p><strong>time_method</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>default: None</em>) – How each group is reduced: <code class="docutils literal notranslate"><span class="pre">&quot;mean&quot;</span></code> (the default applied
+server side), <code class="docutils literal notranslate"><span class="pre">&quot;sum&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;min&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;max&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;std&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;var&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;median&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;count&quot;</span></code>.</p></li>
+<li><p><strong>climatology</strong> (<em>bool</em><em>, </em><em>default: False</em>) – Whether <code class="docutils literal notranslate"><span class="pre">time_freq</span></code> means a climatology instead of a
+resampling. See the example below – the two are easy to confuse
+and give very different results.</p></li>
+<li><p><strong>min_coverage</strong> (<em>float</em><em>, </em><em>default: 0.0</em>) – Fraction between 0 and 1. An output step whose group contained a
+smaller fraction of valid (non-missing) source steps is masked.</p></li>
+<li><p><strong>dtype</strong> (<em>str</em><em>, </em><em>default: &quot;float32&quot;</em>) – Output precision of reduced variables: <code class="docutils literal notranslate"><span class="pre">&quot;float32&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;float64&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;keep&quot;</span></code> to leave decoding’s own result.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Serve monthly means of a daily dataset:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">convert</span><span class="p">(</span><span class="s2">"/work/data/tas_day.nc"</span><span class="p">,</span>
+        <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"time_freq"</span><span class="p">:</span> <span class="s2">"monthly"</span><span class="p">})</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">time_freq</span></code> on its own <strong>resamples</strong>: one value per calendar period
+in the record. Set <code class="docutils literal notranslate"><span class="pre">climatology</span></code> for the other reading of “monthly
+mean”, one value per period of the year across the whole record. Ten
+years of daily data gives:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 120 steps, one per month of the record</span>
+<span class="p">{</span><span class="s2">"time_freq"</span><span class="p">:</span> <span class="s2">"monthly"</span><span class="p">}</span>
+
+<span class="c1"># 12 steps, one per month of the year</span>
+<span class="p">{</span><span class="s2">"time_freq"</span><span class="p">:</span> <span class="s2">"monthly"</span><span class="p">,</span> <span class="s2">"climatology"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Guard against groups built from too little data. A monthly mean
+computed from two valid days is usually worse than no value at all:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s2">"time_freq"</span><span class="p">:</span> <span class="s2">"monthly"</span><span class="p">,</span> <span class="s2">"min_coverage"</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Reduce with something other than a mean, and keep full precision:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s2">"time_freq"</span><span class="p">:</span> <span class="s2">"yearly"</span><span class="p">,</span> <span class="s2">"time_method"</span><span class="p">:</span> <span class="s2">"max"</span><span class="p">,</span> <span class="s2">"dtype"</span><span class="p">:</span> <span class="s2">"float64"</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Combine reduction with chunking suited to point extraction:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">db</span> <span class="o">=</span> <span class="n">databrowser</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="s2">"cmip6-fs"</span><span class="p">)</span>
+<span class="n">url</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="s2">"concat"</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s2">"time"</span><span class="p">,</span> <span class="n">zarr_options</span><span class="o">=</span><span class="p">{</span>
+    <span class="s2">"time_freq"</span><span class="p">:</span> <span class="s2">"monthly"</span><span class="p">,</span>
+    <span class="s2">"access_pattern"</span><span class="p">:</span> <span class="s2">"time_series"</span><span class="p">,</span>
+    <span class="s2">"ttl_seconds"</span><span class="p">:</span> <span class="mi">3600</span><span class="p">,</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<p class="rubric">Notes</p>
+<p>Reduced stores are always CF-decoded: packed integers are unpacked,
+<code class="docutils literal notranslate"><span class="pre">scale_factor</span></code>/<code class="docutils literal notranslate"><span class="pre">add_offset</span></code> are applied, <code class="docutils literal notranslate"><span class="pre">_FillValue</span></code> becomes
+NaN, and the result is floating point. Unreduced stores are served
+raw. The two therefore differ in dtype by design – decoding is not
+optional for a reduction, since averaging packed integers that still
+carry an in-band fill value produces nonsense.</p>
+<p><code class="docutils literal notranslate"><span class="pre">dtype</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">&quot;float32&quot;</span></code> because decoding packed data
+promotes to <code class="docutils literal notranslate"><span class="pre">float64</span></code> whenever <code class="docutils literal notranslate"><span class="pre">scale_factor</span></code> is stored as a
+double, which is the common case. That quadruples the transferred
+bytes relative to the source for no gain in precision.</p>
+<p>Reduction only ever makes data coarser. Asking for a frequency finer
+than the source is rejected: it is not a reduction but an
+interpolation onto a mostly-empty axis, and would inflate the store
+by orders of magnitude.</p>
+<p>Time-invariant variables such as <code class="docutils literal notranslate"><span class="pre">orog</span></code>, and CF grid-mapping
+containers such as <code class="docutils literal notranslate"><span class="pre">rotated_pole</span></code>, are carried through a reduction
+unchanged rather than being averaged or broadcast onto the new time
+axis.</p>
 </dd></dl>
 
 </section>
@@ -800,7 +955,7 @@ for different data access patterns.</p>
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <dialog id="pst-secondary-sidebar-modal" tabindex="-1"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
@@ -837,8 +992,8 @@ for different data access patterns.</p>
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -858,8 +1013,7 @@ for different data access patterns.</p>
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
-    <br/>
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.2.0.
   </p>
 </div>
       
@@ -872,7 +1026,7 @@ for different data access patterns.</p>
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.24.0.
 </p></div>
       
     </div>

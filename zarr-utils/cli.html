@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 
@@ -16,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>The zarr utils command line interface &#8212; Freva Databrowser 2607.1.0 documentation</title>
+    <title>The zarr utils command line interface &#8212; Freva Databrowser 2611.0.0 documentation</title>
   
   
   
@@ -35,8 +34,8 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -44,12 +43,12 @@
     <link rel="stylesheet" type="text/css" href="../_static/code-tabs.css?v=1bc26e2f" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=c00c12d8"></script>
+    <script src="../_static/documentation_options.js?v=4c28454c"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -62,9 +61,9 @@
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'zarr-utils/cli';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_version = '0.24.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://freva-nextgen.readthedocs.io/en/latest/_static/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2607.1.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2611.0.0';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -76,6 +75,7 @@
     <link rel="next" title="Authentication &amp; Authorization" href="../auth/index.html" />
     <link rel="prev" title="Databrowser python module" href="python-lib.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
   
@@ -125,7 +125,7 @@
   
     <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
-  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
     <span class="fa-solid fa-bars"></span>
   </button>
   
@@ -149,8 +149,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2607.1.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2607.1.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2611.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2611.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -227,7 +227,7 @@
         <div class="navbar-item navbar-persistent--container">
           
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
  <i class="fa-solid fa-magnifying-glass"></i>
  <span class="search-button__default-text">Search</span>
  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
@@ -277,7 +277,7 @@
   
     <div class="navbar-persistent--mobile">
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
  <i class="fa-solid fa-magnifying-glass"></i>
  <span class="search-button__default-text">Search</span>
  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
@@ -286,7 +286,7 @@
   
 
   
-    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page" aria-expanded="false" aria-controls="pst-secondary-sidebar-modal">
       <span class="fa-solid fa-outdent"></span>
     </button>
   
@@ -300,7 +300,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
       <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
         
 
@@ -432,7 +432,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="python-lib.html">Databrowser python module</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
 </ul>
 </details></li>
-<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">The zarr utils command line interface</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
+<li class="toctree-l1 current active has-children"><a aria-current="page" class="current reference internal" href="#">The zarr utils command line interface</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
 </ul>
 </details></li>
 </ul>
@@ -472,7 +472,7 @@
     
     <li class="breadcrumb-item breadcrumb-home">
       <a href="../index.html" class="nav-link" aria-label="Home">
-        <i class="fa-solid fa-home"></i>
+        <i class="fa-solid fa-house"></i>
       </a>
     </li>
     
@@ -521,11 +521,12 @@ via http(s). To do so use the <code class="docutils literal notranslate"><span c
  Convert different data sets (files) to a http ready zarr store.                
                                                                                 
 [2m╭─[0m[2m Arguments [0m[2m─────────────────────────────────────────────────────────────────[0m[2m─╮[0m
-[2m│[0m [31m*[0m    paths      [1;2;33m&lt;[0m[1;33mstr[0m[1;2;33m&gt;[0m  Paths to data files that should be aggregated.        [2m│[0m
-[2m│[0m                        [2;31m[required]                                    [0m        [2m│[0m
+[2m│[0m [31m*[0m    paths...      [1;2;33m&lt;[0m[1;33mlist[str][0m[1;2;33m&gt;[0m  Paths to data files that should be           [2m│[0m
+[2m│[0m                                 aggregated.                                  [2m│[0m
+[2m│[0m                                 [2;31m[required]                                  [0m [2m│[0m
 [2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
 [2m╭─[0m[2m Options [0m[2m───────────────────────────────────────────────────────────────────[0m[2m─╮[0m
-[2m│[0m [1;36m-[0m[1;36m-public[0m                        [1;33m                    [0m  Make any zarr url      [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-public[0m                        [1;2;33m&lt;[0m[1;33mbool[0m[1;2;33m&gt;[0m[1;33m              [0m  Make any zarr url      [2m│[0m
 [2m│[0m                                                       public                 [2m│[0m
 [2m│[0m [1;36m-[0m[1;36m-ttl[0m[1;36m-seconds[0m                   [1;2;33m&lt;[0m[1;33mfloat[0m[1;2;33m&gt;[0m[1;33m             [0m  Set the expiry time of [2m│[0m
 [2m│[0m                                                       any public zarr urls   [2m│[0m
@@ -561,8 +562,37 @@ via http(s). To do so use the <code class="docutils literal notranslate"><span c
 [2m│[0m [1;36m-[0m[1;36m-chunk[0m[1;36m-size[0m                    [1;2;33m&lt;[0m[1;33mfloat[0m[1;2;33m&gt;[0m[1;33m             [0m  Set the target chunk   [2m│[0m
 [2m│[0m                                                       size in megabytes.     [2m│[0m
 [2m│[0m                                                       [2m[default: 16.0]       [0m [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-reload[0m[1;36m-zarr[0m                   [1;33m                    [0m  Trigger a zarr         [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-reload[0m[1;36m-zarr[0m                   [1;2;33m&lt;[0m[1;33mbool[0m[1;2;33m&gt;[0m[1;33m              [0m  Trigger a zarr         [2m│[0m
 [2m│[0m                                                       data-store reload.     [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-time[0m[1;36m-freq[0m                     [1;2;33m&lt;[0m[1;33mhourly[0m[1;2;33m|[0m[1;33m3hourly[0m[1;2;33m|[0m[1;33m6hou[0m  Reduce the time        [2m│[0m
+[2m│[0m                                 [1;33mrly[0m[1;2;33m|[0m[1;33mdaily[0m[1;2;33m|[0m[1;33mmonthly[0m[1;2;33m|[0m[1;33mse[0m  dimension to this      [2m│[0m
+[2m│[0m                                 [1;33masonal[0m[1;2;33m|[0m[1;33myearly[0m[1;2;33m|[0m[1;33mdecada[0m  frequency server side, [2m│[0m
+[2m│[0m                                 [1;33ml[0m[1;2;33m&gt;[0m[1;33m                  [0m  e.g. to stream monthly [2m│[0m
+[2m│[0m                                                       means instead of daily [2m│[0m
+[2m│[0m                                                       data.                  [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-time[0m[1;36m-method[0m                   [1;2;33m&lt;[0m[1;33mmean[0m[1;2;33m|[0m[1;33msum[0m[1;2;33m|[0m[1;33mmin[0m[1;2;33m|[0m[1;33mmax[0m[1;2;33m|[0m[1;33mst[0m  How to reduce each     [2m│[0m
+[2m│[0m                                 [1;33md[0m[1;2;33m|[0m[1;33mvar[0m[1;2;33m|[0m[1;33mmedian[0m[1;2;33m|[0m[1;33mcount[0m[1;2;33m&gt;[0m[1;33m [0m  time group. Requires   [2m│[0m
+[2m│[0m                                                       [1;36m-[0m[1;36m-time[0m[1;36m-freq[0m. Default:  [2m│[0m
+[2m│[0m                                                       mean.                  [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-climatology[0m                   [1;2;33m&lt;[0m[1;33mbool[0m[1;2;33m&gt;[0m[1;33m              [0m  Interpret [1;36m-[0m[1;36m-time[0m[1;36m-freq[0m  [2m│[0m
+[2m│[0m                                                       as a climatology (one  [2m│[0m
+[2m│[0m                                                       value per period of    [2m│[0m
+[2m│[0m                                                       the year, over the     [2m│[0m
+[2m│[0m                                                       whole record) instead  [2m│[0m
+[2m│[0m                                                       of a resampling (one   [2m│[0m
+[2m│[0m                                                       value per period in    [2m│[0m
+[2m│[0m                                                       the record).           [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-min[0m[1;36m-coverage[0m                  [1;2;33m&lt;[0m[1;33mfloat range&gt;       [0m  Mask an output step    [2m│[0m
+[2m│[0m                                 [1;33m[0.0&lt;=x&lt;=1.0[0m[1;2;33m][0m[1;33m       [0m  unless at least this   [2m│[0m
+[2m│[0m                                                       fraction (0-1) of its  [2m│[0m
+[2m│[0m                                                       source time steps were [2m│[0m
+[2m│[0m                                                       valid. Requires        [2m│[0m
+[2m│[0m                                                       [1;36m-[0m[1;36m-time[0m[1;36m-freq[0m.           [2m│[0m
+[2m│[0m                                                       [2m[default: 0.0]        [0m [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-dtype[0m                         [1;2;33m&lt;[0m[1;33mfloat32[0m[1;2;33m|[0m[1;33mfloat64[0m[1;2;33m|[0m[1;33mkee[0m  Output dtype of        [2m│[0m
+[2m│[0m                                 [1;33mp[0m[1;2;33m&gt;[0m[1;33m                  [0m  reduced variables.     [2m│[0m
+[2m│[0m                                                       Requires [1;36m-[0m[1;36m-time[0m[1;36m-freq[0m.  [2m│[0m
+[2m│[0m                                                       Default: float32.      [2m│[0m
 [2m│[0m [1;36m-[0m[1;36m-token[0m[1;36m-file[0m           [1;32m-tf[0m      [1;2;33m&lt;[0m[1;33mpath[0m[1;2;33m&gt;[0m[1;33m              [0m  Instead of             [2m│[0m
 [2m│[0m                                                       authenticating via     [2m│[0m
 [2m│[0m                                                       code based             [2m│[0m
@@ -572,7 +602,7 @@ via http(s). To do so use the <code class="docutils literal notranslate"><span c
 [2m│[0m                                                       contains a `refresh    [2m│[0m
 [2m│[0m                                                       token` containing a    [2m│[0m
 [2m│[0m                                                       refresh_token key.     [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-json[0m                 [1;32m-j[0m       [1;33m                    [0m  Parse output in json   [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-json[0m                 [1;32m-j[0m       [1;2;33m&lt;[0m[1;33mbool[0m[1;2;33m&gt;[0m[1;33m              [0m  Parse output in json   [2m│[0m
 [2m│[0m                                                       format.                [2m│[0m
 [2m│[0m [1;36m-[0m[1;36m-host[0m                          [1;2;33m&lt;[0m[1;33mstr[0m[1;2;33m&gt;[0m[1;33m               [0m  Set the hostname of    [2m│[0m
 [2m│[0m                                                       the databrowser, if    [2m│[0m
@@ -581,8 +611,8 @@ via http(s). To do so use the <code class="docutils literal notranslate"><span c
 [2m│[0m                                                       a config file          [2m│[0m
 [2m│[0m                        [1;32m-v[0m       [1;2;33m&lt;[0m[1;33mint[0m[1;2;33m&gt;[0m[1;33m               [0m  Increase verbosity     [2m│[0m
 [2m│[0m                                                       [2m[default: 0]      [0m     [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-version[0m              [1;32m-V[0m       [1;33m                    [0m  Show version an exit   [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-help[0m                          [1;33m                    [0m  Show this message and  [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-version[0m              [1;32m-V[0m       [1;2;33m&lt;[0m[1;33mbool[0m[1;2;33m&gt;[0m[1;33m              [0m  Show version an exit   [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-help[0m                          [1;2;33m&lt;[0m[1;33mbool[0m[1;2;33m&gt;[0m[1;33m              [0m  Show this message and  [2m│[0m
 [2m│[0m                                                       exit.                  [2m│[0m
 [2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
 
@@ -623,8 +653,8 @@ potential issues.</p>
 [2m│[0m                                set (default) the hostname is read from a     [2m│[0m
 [2m│[0m                                config file                                   [2m│[0m
 [2m│[0m               [1;32m-v[0m       [1;2;33m&lt;[0m[1;33mint[0m[1;2;33m&gt;[0m[1;33m [0m  Increase verbosity [2m[default: 0][0m               [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-version[0m     [1;32m-V[0m       [1;33m      [0m  Show version an exit                          [2m│[0m
-[2m│[0m [1;36m-[0m[1;36m-help[0m                 [1;33m      [0m  Show this message and exit.                   [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-version[0m     [1;32m-V[0m       [1;2;33m&lt;[0m[1;33mbool[0m[1;2;33m&gt;[0m  Show version an exit                          [2m│[0m
+[2m│[0m [1;36m-[0m[1;36m-help[0m                 [1;2;33m&lt;[0m[1;33mbool[0m[1;2;33m&gt;[0m  Show this message and exit.                   [2m│[0m
 [2m╰──────────────────────────────────────────────────────────────────────────────╯[0m
 
 
@@ -669,7 +699,7 @@ potential issues.</p>
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <dialog id="pst-secondary-sidebar-modal" tabindex="-1"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
@@ -701,8 +731,8 @@ potential issues.</p>
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -722,8 +752,7 @@ potential issues.</p>
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
-    <br/>
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.2.0.
   </p>
 </div>
       
@@ -736,7 +765,7 @@ potential issues.</p>
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.24.0.
 </p></div>
       
     </div>

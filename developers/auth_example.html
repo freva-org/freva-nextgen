@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 
@@ -16,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>Integrating Authentication into your Web Applications &#8212; Freva Databrowser 2607.1.0 documentation</title>
+    <title>Integrating Authentication into your Web Applications &#8212; Freva Databrowser 2611.0.0 documentation</title>
   
   
   
@@ -35,8 +34,8 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -44,12 +43,12 @@
     <link rel="stylesheet" type="text/css" href="../_static/code-tabs.css?v=1bc26e2f" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=c00c12d8"></script>
+    <script src="../_static/documentation_options.js?v=4c28454c"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -62,9 +61,9 @@
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'developers/auth_example';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_version = '0.24.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://freva-nextgen.readthedocs.io/en/latest/_static/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2607.1.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2611.0.0';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -76,6 +75,7 @@
     <link rel="next" title="Databrowser Rest API" href="databrowser.html" />
     <link rel="prev" title="The restAPI auth endpoints" href="auth.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
   
@@ -125,7 +125,7 @@
   
     <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
-  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
     <span class="fa-solid fa-bars"></span>
   </button>
   
@@ -149,8 +149,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2607.1.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2607.1.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2611.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2611.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -227,7 +227,7 @@
         <div class="navbar-item navbar-persistent--container">
           
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
  <i class="fa-solid fa-magnifying-glass"></i>
  <span class="search-button__default-text">Search</span>
  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
@@ -277,7 +277,7 @@
   
     <div class="navbar-persistent--mobile">
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
  <i class="fa-solid fa-magnifying-glass"></i>
  <span class="search-button__default-text">Search</span>
  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
@@ -286,7 +286,7 @@
   
 
   
-    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page" aria-expanded="false" aria-controls="pst-secondary-sidebar-modal">
       <span class="fa-solid fa-outdent"></span>
     </button>
   
@@ -300,7 +300,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
       <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
         
 
@@ -430,7 +430,7 @@
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="auth.html">The restAPI auth endpoints</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Integrating Authentication into your Web Applications</a></li>
+<li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Integrating Authentication into your Web Applications</a></li>
 <li class="toctree-l1"><a class="reference internal" href="databrowser.html">Databrowser Rest API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userdata.html">Managing User Data and search Mappings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="zarr.html">Zarr Streaming API</a></li>
@@ -473,7 +473,7 @@
     
     <li class="breadcrumb-item breadcrumb-home">
       <a href="../index.html" class="nav-link" aria-label="Home">
-        <i class="fa-solid fa-home"></i>
+        <i class="fa-solid fa-house"></i>
       </a>
     </li>
     
@@ -567,18 +567,18 @@ Plotly graph.</p>
 <span class="linenos"> 11</span><span class="c1"># CONFIGURATION</span>
 <span class="linenos"> 12</span><span class="c1"># =============================</span>
 <span class="linenos"> 13</span>
-<span class="linenos"> 14</span><span class="n">FREVA_API_BASE</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;https://freva.dkrz.de/api/freva-nextgen/auth/v2&quot;</span>
-<span class="linenos"> 15</span><span class="n">REDIRECT_URI</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;http://localhost:8050/callback&quot;</span>
-<span class="linenos"> 16</span><span class="n">LOGIN_ENDPOINT</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">FREVA_API_BASE</span><span class="si">}</span><span class="s2">/login&quot;</span>
-<span class="linenos"> 17</span><span class="n">TOKEN_ENDPOINT</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">FREVA_API_BASE</span><span class="si">}</span><span class="s2">/token&quot;</span>
-<span class="linenos"> 18</span><span class="n">USERINFO_ENDPOINT</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">FREVA_API_BASE</span><span class="si">}</span><span class="s2">/userinfo&quot;</span>
+<span class="linenos"> 14</span><span class="n">FREVA_API_BASE</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"https://freva.dkrz.de/api/freva-nextgen/auth/v2"</span>
+<span class="linenos"> 15</span><span class="n">REDIRECT_URI</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"http://localhost:8050/callback"</span>
+<span class="linenos"> 16</span><span class="n">LOGIN_ENDPOINT</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">FREVA_API_BASE</span><span class="si">}</span><span class="s2">/login"</span>
+<span class="linenos"> 17</span><span class="n">TOKEN_ENDPOINT</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">FREVA_API_BASE</span><span class="si">}</span><span class="s2">/token"</span>
+<span class="linenos"> 18</span><span class="n">USERINFO_ENDPOINT</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">FREVA_API_BASE</span><span class="si">}</span><span class="s2">/userinfo"</span>
 <span class="linenos"> 19</span>
 <span class="linenos"> 20</span><span class="c1"># Initialize Flask server for Dash backend</span>
 <span class="linenos"> 21</span><span class="n">server</span><span class="p">:</span> <span class="n">Flask</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="linenos"> 22</span>
 <span class="linenos"> 23</span><span class="c1"># ⚠️ SECURITY WARNING:</span>
 <span class="linenos"> 24</span><span class="c1"># This key signs the session cookie. In production, use a secure env var:</span>
-<span class="linenos"> 25</span><span class="c1"># e.g., server.secret_key = os.environ[&quot;FLASK_SECRET_KEY&quot;]</span>
+<span class="linenos"> 25</span><span class="c1"># e.g., server.secret_key = os.environ["FLASK_SECRET_KEY"]</span>
 <span class="linenos"> 26</span><span class="n">server</span><span class="o">.</span><span class="n">secret_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">urandom</span><span class="p">(</span><span class="mi">24</span><span class="p">)</span>
 <span class="linenos"> 27</span>
 <span class="linenos"> 28</span><span class="c1"># =============================</span>
@@ -588,92 +588,92 @@ Plotly graph.</p>
 <span class="linenos"> 32</span><span class="n">app</span><span class="p">:</span> <span class="n">Dash</span> <span class="o">=</span> <span class="n">dash</span><span class="o">.</span><span class="n">Dash</span><span class="p">(</span>
 <span class="linenos"> 33</span>    <span class="vm">__name__</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="n">server</span><span class="p">,</span> <span class="n">use_pages</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suppress_callback_exceptions</span><span class="o">=</span><span class="kc">True</span>
 <span class="linenos"> 34</span><span class="p">)</span>
-<span class="linenos"> 35</span><span class="n">app</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;Freva OIDC Dash Example&quot;</span>
+<span class="linenos"> 35</span><span class="n">app</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s2">"Freva OIDC Dash Example"</span>
 <span class="linenos"> 36</span>
 <span class="linenos"> 37</span><span class="c1"># =============================</span>
 <span class="linenos"> 38</span><span class="c1"># FLASK AUTH ROUTES</span>
 <span class="linenos"> 39</span><span class="c1"># =============================</span>
 <span class="linenos"> 40</span>
 <span class="linenos"> 41</span>
-<span class="linenos"> 42</span><span class="nd">@server</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/login&quot;</span><span class="p">)</span>
+<span class="linenos"> 42</span><span class="nd">@server</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">"/login"</span><span class="p">)</span>
 <span class="linenos"> 43</span><span class="k">def</span><span class="w"> </span><span class="nf">login</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Response</span><span class="p">:</span>
-<span class="linenos"> 44</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Redirects user to Freva&#39;s OIDC login page.&quot;&quot;&quot;</span>
-<span class="linenos"> 45</span>    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">LOGIN_ENDPOINT</span><span class="si">}</span><span class="s2">?redirect_uri=</span><span class="si">{</span><span class="n">REDIRECT_URI</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos"> 44</span><span class="w">    </span><span class="sd">"""Redirects user to Freva's OIDC login page."""</span>
+<span class="linenos"> 45</span>    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">LOGIN_ENDPOINT</span><span class="si">}</span><span class="s2">?redirect_uri=</span><span class="si">{</span><span class="n">REDIRECT_URI</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <span class="linenos"> 46</span>
 <span class="linenos"> 47</span>
-<span class="linenos"> 48</span><span class="nd">@server</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/callback&quot;</span><span class="p">)</span>
+<span class="linenos"> 48</span><span class="nd">@server</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">"/callback"</span><span class="p">)</span>
 <span class="linenos"> 49</span><span class="k">def</span><span class="w"> </span><span class="nf">callback</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Response</span><span class="p">:</span>
-<span class="linenos"> 50</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Handles OIDC redirect, exchanges code for token, and stores in session.&quot;&quot;&quot;</span>
-<span class="linenos"> 51</span>    <span class="n">code</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;code&quot;</span><span class="p">)</span>
-<span class="linenos"> 52</span>    <span class="n">state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">)</span>
+<span class="linenos"> 50</span><span class="w">    </span><span class="sd">"""Handles OIDC redirect, exchanges code for token, and stores in session."""</span>
+<span class="linenos"> 51</span>    <span class="n">code</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"code"</span><span class="p">)</span>
+<span class="linenos"> 52</span>    <span class="n">state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"state"</span><span class="p">)</span>
 <span class="linenos"> 53</span>
 <span class="linenos"> 54</span>    <span class="k">if</span> <span class="ow">not</span> <span class="n">code</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">state</span><span class="p">:</span>
-<span class="linenos"> 55</span>        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="s2">&quot;Missing code or state&quot;</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
+<span class="linenos"> 55</span>        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="s2">"Missing code or state"</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
 <span class="linenos"> 56</span>
 <span class="linenos"> 57</span>    <span class="k">try</span><span class="p">:</span>
 <span class="linenos"> 58</span>        <span class="c1"># Exchange authorization code for token</span>
 <span class="linenos"> 59</span>        <span class="n">token_res</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
 <span class="linenos"> 60</span>            <span class="n">TOKEN_ENDPOINT</span><span class="p">,</span>
 <span class="linenos"> 61</span>            <span class="n">data</span><span class="o">=</span><span class="p">{</span>
-<span class="linenos"> 62</span>                <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">code</span><span class="p">,</span>
-<span class="linenos"> 63</span>                <span class="s2">&quot;redirect_uri&quot;</span><span class="p">:</span> <span class="n">REDIRECT_URI</span><span class="p">,</span>
-<span class="linenos"> 64</span>                <span class="s2">&quot;grant_type&quot;</span><span class="p">:</span> <span class="s2">&quot;authorization_code&quot;</span><span class="p">,</span>
+<span class="linenos"> 62</span>                <span class="s2">"code"</span><span class="p">:</span> <span class="n">code</span><span class="p">,</span>
+<span class="linenos"> 63</span>                <span class="s2">"redirect_uri"</span><span class="p">:</span> <span class="n">REDIRECT_URI</span><span class="p">,</span>
+<span class="linenos"> 64</span>                <span class="s2">"grant_type"</span><span class="p">:</span> <span class="s2">"authorization_code"</span><span class="p">,</span>
 <span class="linenos"> 65</span>            <span class="p">},</span>
 <span class="linenos"> 66</span>        <span class="p">)</span>
 <span class="linenos"> 67</span>        <span class="n">token_res</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
 <span class="linenos"> 68</span>        <span class="n">tokens</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">token_res</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
-<span class="linenos"> 69</span>        <span class="n">session</span><span class="p">[</span><span class="s2">&quot;access_token&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="s2">&quot;access_token&quot;</span><span class="p">]</span>
+<span class="linenos"> 69</span>        <span class="n">session</span><span class="p">[</span><span class="s2">"access_token"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="s2">"access_token"</span><span class="p">]</span>
 <span class="linenos"> 70</span>
 <span class="linenos"> 71</span>        <span class="c1"># Retrieve user info</span>
 <span class="linenos"> 72</span>        <span class="n">userinfo_res</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
 <span class="linenos"> 73</span>            <span class="n">USERINFO_ENDPOINT</span><span class="p">,</span>
-<span class="linenos"> 74</span>            <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Bearer </span><span class="si">{</span><span class="n">tokens</span><span class="p">[</span><span class="s1">&#39;access_token&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">},</span>
+<span class="linenos"> 74</span>            <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"Authorization"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"Bearer </span><span class="si">{</span><span class="n">tokens</span><span class="p">[</span><span class="s1">'access_token'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">},</span>
 <span class="linenos"> 75</span>        <span class="p">)</span>
 <span class="linenos"> 76</span>        <span class="n">userinfo_res</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
-<span class="linenos"> 77</span>        <span class="n">session</span><span class="p">[</span><span class="s2">&quot;userinfo&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">userinfo_res</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+<span class="linenos"> 77</span>        <span class="n">session</span><span class="p">[</span><span class="s2">"userinfo"</span><span class="p">]</span> <span class="o">=</span> <span class="n">userinfo_res</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
 <span class="linenos"> 78</span>
 <span class="linenos"> 79</span>    <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">RequestException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-<span class="linenos"> 80</span>        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Login failed: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+<span class="linenos"> 80</span>        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Login failed: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
 <span class="linenos"> 81</span>
-<span class="linenos"> 82</span>    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+<span class="linenos"> 82</span>    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
 <span class="linenos"> 83</span>
 <span class="linenos"> 84</span>
-<span class="linenos"> 85</span><span class="nd">@server</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/logout&quot;</span><span class="p">)</span>
+<span class="linenos"> 85</span><span class="nd">@server</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">"/logout"</span><span class="p">)</span>
 <span class="linenos"> 86</span><span class="k">def</span><span class="w"> </span><span class="nf">logout</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Response</span><span class="p">:</span>
-<span class="linenos"> 87</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Clears the session and logs user out.&quot;&quot;&quot;</span>
+<span class="linenos"> 87</span><span class="w">    </span><span class="sd">"""Clears the session and logs user out."""</span>
 <span class="linenos"> 88</span>    <span class="n">session</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-<span class="linenos"> 89</span>    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+<span class="linenos"> 89</span>    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
 <span class="linenos"> 90</span>
 <span class="linenos"> 91</span>
 <span class="linenos"> 92</span><span class="c1"># =============================</span>
 <span class="linenos"> 93</span><span class="c1"># DASH LAYOUT AND CALLBACK</span>
 <span class="linenos"> 94</span><span class="c1"># =============================</span>
 <span class="linenos"> 95</span>
-<span class="linenos"> 96</span><span class="n">app</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">([</span><span class="n">dcc</span><span class="o">.</span><span class="n">Location</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">&quot;url&quot;</span><span class="p">,</span> <span class="n">refresh</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">&quot;main&quot;</span><span class="p">)])</span>
+<span class="linenos"> 96</span><span class="n">app</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">([</span><span class="n">dcc</span><span class="o">.</span><span class="n">Location</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"url"</span><span class="p">,</span> <span class="n">refresh</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"main"</span><span class="p">)])</span>
 <span class="linenos"> 97</span>
 <span class="linenos"> 98</span>
-<span class="linenos"> 99</span><span class="nd">@app</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">Output</span><span class="p">(</span><span class="s2">&quot;main&quot;</span><span class="p">,</span> <span class="s2">&quot;children&quot;</span><span class="p">),</span> <span class="n">Input</span><span class="p">(</span><span class="s2">&quot;url&quot;</span><span class="p">,</span> <span class="s2">&quot;pathname&quot;</span><span class="p">))</span>
+<span class="linenos"> 99</span><span class="nd">@app</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">Output</span><span class="p">(</span><span class="s2">"main"</span><span class="p">,</span> <span class="s2">"children"</span><span class="p">),</span> <span class="n">Input</span><span class="p">(</span><span class="s2">"url"</span><span class="p">,</span> <span class="s2">"pathname"</span><span class="p">))</span>
 <span class="linenos">100</span><span class="k">def</span><span class="w"> </span><span class="nf">render_content</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="linenos">101</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Main page content: authenticated view or redirect to login.&quot;&quot;&quot;</span>
-<span class="linenos">102</span>    <span class="k">if</span> <span class="s2">&quot;userinfo&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">session</span><span class="p">:</span>
-<span class="linenos">103</span>        <span class="k">return</span> <span class="n">dcc</span><span class="o">.</span><span class="n">Location</span><span class="p">(</span><span class="n">href</span><span class="o">=</span><span class="s2">&quot;/login&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;redirect&quot;</span><span class="p">)</span>
+<span class="linenos">101</span><span class="w">    </span><span class="sd">"""Main page content: authenticated view or redirect to login."""</span>
+<span class="linenos">102</span>    <span class="k">if</span> <span class="s2">"userinfo"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">session</span><span class="p">:</span>
+<span class="linenos">103</span>        <span class="k">return</span> <span class="n">dcc</span><span class="o">.</span><span class="n">Location</span><span class="p">(</span><span class="n">href</span><span class="o">=</span><span class="s2">"/login"</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s2">"redirect"</span><span class="p">)</span>
 <span class="linenos">104</span>
-<span class="linenos">105</span>    <span class="n">user</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">session</span><span class="p">[</span><span class="s2">&quot;userinfo&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;username&quot;</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">)</span>
-<span class="linenos">106</span>    <span class="n">access_token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">session</span><span class="p">[</span><span class="s2">&quot;access_token&quot;</span><span class="p">]</span>
+<span class="linenos">105</span>    <span class="n">user</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">session</span><span class="p">[</span><span class="s2">"userinfo"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"username"</span><span class="p">,</span> <span class="s2">"Unknown"</span><span class="p">)</span>
+<span class="linenos">106</span>    <span class="n">access_token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">session</span><span class="p">[</span><span class="s2">"access_token"</span><span class="p">]</span>
 <span class="linenos">107</span>
-<span class="linenos">108</span>    <span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Freva Demo Scatter&quot;</span><span class="p">)</span>
+<span class="linenos">108</span>    <span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Freva Demo Scatter"</span><span class="p">)</span>
 <span class="linenos">109</span>
 <span class="linenos">110</span>    <span class="k">return</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span>
 <span class="linenos">111</span>        <span class="p">[</span>
-<span class="linenos">112</span>            <span class="n">html</span><span class="o">.</span><span class="n">H2</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Welcome, </span><span class="si">{</span><span class="n">user</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">),</span>
-<span class="linenos">113</span>            <span class="n">html</span><span class="o">.</span><span class="n">P</span><span class="p">(</span><span class="s2">&quot;Your OAuth2 token (access_token) is:&quot;</span><span class="p">),</span>
+<span class="linenos">112</span>            <span class="n">html</span><span class="o">.</span><span class="n">H2</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Welcome, </span><span class="si">{</span><span class="n">user</span><span class="si">}</span><span class="s2">"</span><span class="p">),</span>
+<span class="linenos">113</span>            <span class="n">html</span><span class="o">.</span><span class="n">P</span><span class="p">(</span><span class="s2">"Your OAuth2 token (access_token) is:"</span><span class="p">),</span>
 <span class="linenos">114</span>            <span class="n">html</span><span class="o">.</span><span class="n">Pre</span><span class="p">(</span>
 <span class="linenos">115</span>                <span class="n">access_token</span><span class="p">,</span>
-<span class="linenos">116</span>                <span class="n">style</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;whiteSpace&quot;</span><span class="p">:</span> <span class="s2">&quot;pre-wrap&quot;</span><span class="p">,</span> <span class="s2">&quot;wordBreak&quot;</span><span class="p">:</span> <span class="s2">&quot;break-all&quot;</span><span class="p">},</span>
+<span class="linenos">116</span>                <span class="n">style</span><span class="o">=</span><span class="p">{</span><span class="s2">"whiteSpace"</span><span class="p">:</span> <span class="s2">"pre-wrap"</span><span class="p">,</span> <span class="s2">"wordBreak"</span><span class="p">:</span> <span class="s2">"break-all"</span><span class="p">},</span>
 <span class="linenos">117</span>            <span class="p">),</span>
 <span class="linenos">118</span>            <span class="n">dcc</span><span class="o">.</span><span class="n">Graph</span><span class="p">(</span><span class="n">figure</span><span class="o">=</span><span class="n">fig</span><span class="p">),</span>
 <span class="linenos">119</span>            <span class="n">html</span><span class="o">.</span><span class="n">Br</span><span class="p">(),</span>
-<span class="linenos">120</span>            <span class="n">html</span><span class="o">.</span><span class="n">A</span><span class="p">(</span><span class="s2">&quot;Logout&quot;</span><span class="p">,</span> <span class="n">href</span><span class="o">=</span><span class="s2">&quot;/logout&quot;</span><span class="p">),</span>
+<span class="linenos">120</span>            <span class="n">html</span><span class="o">.</span><span class="n">A</span><span class="p">(</span><span class="s2">"Logout"</span><span class="p">,</span> <span class="n">href</span><span class="o">=</span><span class="s2">"/logout"</span><span class="p">),</span>
 <span class="linenos">121</span>        <span class="p">]</span>
 <span class="linenos">122</span>    <span class="p">)</span>
 <span class="linenos">123</span>
@@ -682,7 +682,7 @@ Plotly graph.</p>
 <span class="linenos">126</span><span class="c1"># LOCAL ENTRY POINT (FOR DEBUG)</span>
 <span class="linenos">127</span><span class="c1"># =============================</span>
 <span class="linenos">128</span>
-<span class="linenos">129</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">129</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
 <span class="linenos">130</span>    <span class="c1"># Use `gunicorn main:server` for production deployment</span>
 <span class="linenos">131</span>    <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
@@ -748,7 +748,7 @@ Plotly graph.</p>
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <dialog id="pst-secondary-sidebar-modal" tabindex="-1"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
@@ -783,8 +783,8 @@ Plotly graph.</p>
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -804,8 +804,7 @@ Plotly graph.</p>
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
-    <br/>
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.2.0.
   </p>
 </div>
       
@@ -818,7 +817,7 @@ Plotly graph.</p>
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.24.0.
 </p></div>
       
     </div>

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 
@@ -16,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>Managing User Data and search Mappings &#8212; Freva Databrowser 2607.1.0 documentation</title>
+    <title>Managing User Data and search Mappings &#8212; Freva Databrowser 2611.0.0 documentation</title>
   
   
   
@@ -35,8 +34,8 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -44,12 +43,12 @@
     <link rel="stylesheet" type="text/css" href="../_static/code-tabs.css?v=1bc26e2f" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=c00c12d8"></script>
+    <script src="../_static/documentation_options.js?v=4c28454c"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -62,9 +61,9 @@
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'developers/userdata';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_version = '0.24.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://freva-nextgen.readthedocs.io/en/latest/_static/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2607.1.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2611.0.0';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -76,6 +75,7 @@
     <link rel="next" title="Zarr Streaming API" href="zarr.html" />
     <link rel="prev" title="Databrowser Rest API" href="databrowser.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
   
@@ -125,7 +125,7 @@
   
     <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
-  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
     <span class="fa-solid fa-bars"></span>
   </button>
   
@@ -149,8 +149,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2607.1.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2607.1.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2611.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2611.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -227,7 +227,7 @@
         <div class="navbar-item navbar-persistent--container">
           
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
  <i class="fa-solid fa-magnifying-glass"></i>
  <span class="search-button__default-text">Search</span>
  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
@@ -277,7 +277,7 @@
   
     <div class="navbar-persistent--mobile">
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
  <i class="fa-solid fa-magnifying-glass"></i>
  <span class="search-button__default-text">Search</span>
  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
@@ -286,7 +286,7 @@
   
 
   
-    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page" aria-expanded="false" aria-controls="pst-secondary-sidebar-modal">
       <span class="fa-solid fa-outdent"></span>
     </button>
   
@@ -300,7 +300,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
       <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
         
 
@@ -432,7 +432,7 @@
 <li class="toctree-l1"><a class="reference internal" href="auth.html">The restAPI auth endpoints</a></li>
 <li class="toctree-l1"><a class="reference internal" href="auth_example.html">Integrating Authentication into your Web Applications</a></li>
 <li class="toctree-l1"><a class="reference internal" href="databrowser.html">Databrowser Rest API</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Managing User Data and search Mappings</a></li>
+<li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Managing User Data and search Mappings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="zarr.html">Zarr Streaming API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stac.html">STAC API</a></li>
 
@@ -473,7 +473,7 @@
     
     <li class="breadcrumb-item breadcrumb-home">
       <a href="../index.html" class="nav-link" aria-label="Home">
-        <i class="fa-solid fa-home"></i>
+        <i class="fa-solid fa-house"></i>
       </a>
     </li>
     
@@ -522,8 +522,8 @@ optional facets for indexing and searching their datasets.</p>
 </dd>
 <dt class="field-odd">Request Headers<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7235#section-4.2">Authorization</a></span> – Bearer token for authentication.</p></li>
-<li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7231#section-3.1.1.5">Content-Type</a></span> – application/json</p></li>
+<li><p><span><a class="reference external" href="https://www.rfc-editor.org/info/rfc7235#section-4.2">Authorization</a></span> – Bearer token for authentication.</p></li>
+<li><p><span><a class="reference external" href="https://www.rfc-editor.org/info/rfc7231#section-3.1.1.5">Content-Type</a></span> – application/json</p></li>
 </ul>
 </dd>
 <dt class="field-even">Status Codes<span class="colon">:</span></dt>
@@ -543,19 +543,19 @@ optional facets for indexing and searching their datasets.</p>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
 <span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;user_metadata&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="nt">"user_metadata"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">        </span><span class="p">{</span>
-<span class="w">            </span><span class="nt">&quot;file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/data/file1.nc&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="nt">&quot;variable&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tas&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="nt">&quot;time&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="nt">&quot;time_frequency&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mon&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="nt">&quot;additional_info&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Sample data file&quot;</span>
+<span class="w">            </span><span class="nt">"file"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/data/file1.nc"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"variable"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tas"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"time"</span><span class="p">:</span><span class="w"> </span><span class="s2">"[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"time_frequency"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mon"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"additional_info"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Sample data file"</span>
 <span class="w">        </span><span class="p">}</span>
 <span class="w">    </span><span class="p">],</span>
-<span class="w">    </span><span class="nt">&quot;facets&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user-data&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;product&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;new&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;institute&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;globe&quot;</span>
+<span class="w">    </span><span class="nt">"facets"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">"project"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user-data"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"product"</span><span class="p">:</span><span class="w"> </span><span class="s2">"new"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"institute"</span><span class="p">:</span><span class="w"> </span><span class="s2">"globe"</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
@@ -567,7 +567,7 @@ optional facets for indexing and searching their datasets.</p>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
 <span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Your data has been successfully added to the databrowser. (Ingested 5 files into Solr and MongoDB)&quot;</span>
+<span class="w">    </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Your data has been successfully added to the databrowser. (Ingested 5 files into Solr and MongoDB)"</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -578,7 +578,7 @@ optional facets for indexing and searching their datasets.</p>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
 <span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;No data was added to the databrowser. (No files ingested into Solr and MongoDB)&quot;</span>
+<span class="w">    </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"No data was added to the databrowser. (No files ingested into Solr and MongoDB)"</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -595,49 +595,49 @@ R</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(this)"
 Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
 C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="se">\</span>
-<span class="s1">&#39;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata&#39;</span><span class="w"> </span><span class="se">\</span>
--H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="w"> </span><span class="se">\</span>
--H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
--d<span class="w"> </span><span class="s1">&#39;{</span>
-<span class="s1">    &quot;user_metadata&quot;: [</span>
+<span class="s1">'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata'</span><span class="w"> </span><span class="se">\</span>
+-H<span class="w"> </span><span class="s2">"Authorization: Bearer YOUR_ACCESS_TOKEN"</span><span class="w"> </span><span class="se">\</span>
+-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+-d<span class="w"> </span><span class="s1">'{</span>
+<span class="s1">    "user_metadata": [</span>
 <span class="s1">        {</span>
-<span class="s1">            &quot;file&quot;: &quot;/data/file1.nc&quot;,</span>
-<span class="s1">            &quot;variable&quot;: &quot;tas&quot;,</span>
-<span class="s1">            &quot;time&quot;: &quot;[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]&quot;,</span>
-<span class="s1">            &quot;time_frequency&quot;: &quot;mon&quot;,</span>
-<span class="s1">            &quot;additional_info&quot;: &quot;Sample data file&quot;</span>
+<span class="s1">            "file": "/data/file1.nc",</span>
+<span class="s1">            "variable": "tas",</span>
+<span class="s1">            "time": "[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]",</span>
+<span class="s1">            "time_frequency": "mon",</span>
+<span class="s1">            "additional_info": "Sample data file"</span>
 <span class="s1">        }</span>
 <span class="s1">    ],</span>
-<span class="s1">    &quot;facets&quot;: {</span>
-<span class="s1">        &quot;project&quot;: &quot;user-data&quot;,</span>
-<span class="s1">        &quot;product&quot;: &quot;new&quot;,</span>
-<span class="s1">        &quot;institute&quot;: &quot;globe&quot;</span>
+<span class="s1">    "facets": {</span>
+<span class="s1">        "project": "user-data",</span>
+<span class="s1">        "product": "new",</span>
+<span class="s1">        "institute": "globe"</span>
 <span class="s1">    }</span>
-<span class="s1">}&#39;</span>
+<span class="s1">}'</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="1">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 
-<span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata&quot;</span>
+<span class="n">url</span> <span class="o">=</span> <span class="s2">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata"</span>
 <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="s2">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span>
+    <span class="s2">"Authorization"</span><span class="p">:</span> <span class="s2">"Bearer YOUR_ACCESS_TOKEN"</span><span class="p">,</span>
+    <span class="s2">"Content-Type"</span><span class="p">:</span> <span class="s2">"application/json"</span>
 <span class="p">}</span>
 <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;user_metadata&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="s2">"user_metadata"</span><span class="p">:</span> <span class="p">[</span>
         <span class="p">{</span>
-            <span class="s2">&quot;file&quot;</span><span class="p">:</span> <span class="s2">&quot;/data/file1.nc&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="s2">&quot;tas&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="s2">&quot;[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;time_frequency&quot;</span><span class="p">:</span> <span class="s2">&quot;mon&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;additional_info&quot;</span><span class="p">:</span> <span class="s2">&quot;Sample data file&quot;</span>
+            <span class="s2">"file"</span><span class="p">:</span> <span class="s2">"/data/file1.nc"</span><span class="p">,</span>
+            <span class="s2">"variable"</span><span class="p">:</span> <span class="s2">"tas"</span><span class="p">,</span>
+            <span class="s2">"time"</span><span class="p">:</span> <span class="s2">"[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]"</span><span class="p">,</span>
+            <span class="s2">"time_frequency"</span><span class="p">:</span> <span class="s2">"mon"</span><span class="p">,</span>
+            <span class="s2">"additional_info"</span><span class="p">:</span> <span class="s2">"Sample data file"</span>
         <span class="p">}</span>
     <span class="p">],</span>
-    <span class="s2">&quot;facets&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;user-data&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;product&quot;</span><span class="p">:</span> <span class="s2">&quot;new&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;institute&quot;</span><span class="p">:</span> <span class="s2">&quot;globe&quot;</span>
+    <span class="s2">"facets"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"project"</span><span class="p">:</span> <span class="s2">"user-data"</span><span class="p">,</span>
+        <span class="s2">"product"</span><span class="p">:</span> <span class="s2">"new"</span><span class="p">,</span>
+        <span class="s2">"institute"</span><span class="p">:</span> <span class="s2">"globe"</span>
     <span class="p">}</span>
 <span class="p">}</span>
 
@@ -648,56 +648,56 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 </div><div class="tab codetab" data-id="2">
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
 
-<span class="n">url</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata&quot;</span>
-<span class="n">headers</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">Authorization</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">)</span>
+<span class="n">url</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata"</span>
+<span class="n">headers</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">Authorization</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Bearer YOUR_ACCESS_TOKEN"</span><span class="p">)</span>
 <span class="n">body</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span>
 <span class="w">    </span><span class="n">user_metadata</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span>
 <span class="w">        </span><span class="nf">list</span><span class="p">(</span>
-<span class="w">            </span><span class="n">file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/data/file1.nc&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="n">variable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;tas&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="n">time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="n">time_frequency</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;mon&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="n">additional_info</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Sample data file&quot;</span>
+<span class="w">            </span><span class="n">file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"/data/file1.nc"</span><span class="p">,</span>
+<span class="w">            </span><span class="n">variable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"tas"</span><span class="p">,</span>
+<span class="w">            </span><span class="n">time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]"</span><span class="p">,</span>
+<span class="w">            </span><span class="n">time_frequency</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"mon"</span><span class="p">,</span>
+<span class="w">            </span><span class="n">additional_info</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Sample data file"</span>
 <span class="w">        </span><span class="p">)</span>
 <span class="w">    </span><span class="p">),</span>
 <span class="w">    </span><span class="n">facets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span>
-<span class="w">        </span><span class="n">project</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;user-data&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;new&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="n">institute</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;globe&quot;</span>
+<span class="w">        </span><span class="n">project</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"user-data"</span><span class="p">,</span>
+<span class="w">        </span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"new"</span><span class="p">,</span>
+<span class="w">        </span><span class="n">institute</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"globe"</span>
 <span class="w">    </span><span class="p">)</span>
 <span class="p">)</span>
 
-<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">POST</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="nf">add_headers</span><span class="p">(</span><span class="n">.headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">),</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">body</span><span class="p">,</span><span class="w"> </span><span class="n">encode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;json&quot;</span><span class="p">)</span>
-<span class="n">content</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;parsed&quot;</span><span class="p">)</span>
+<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">POST</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="nf">add_headers</span><span class="p">(</span><span class="n">.headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">),</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">body</span><span class="p">,</span><span class="w"> </span><span class="n">encode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"json"</span><span class="p">)</span>
+<span class="n">content</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="s">"parsed"</span><span class="p">)</span>
 <span class="nf">print</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="3">
 <div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span><span class="p">,</span><span class="w"> </span><span class="n">JSON</span>
 
-<span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata&quot;</span>
+<span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata"</span>
 <span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span>
-<span class="w">    </span><span class="s">&quot;Authorization&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="s">&quot;Content-Type&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;application/json&quot;</span>
+<span class="w">    </span><span class="s">"Authorization"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"Bearer YOUR_ACCESS_TOKEN"</span><span class="p">,</span>
+<span class="w">    </span><span class="s">"Content-Type"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"application/json"</span>
 <span class="p">)</span>
 <span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">json</span><span class="p">(</span><span class="kt">Dict</span><span class="p">(</span>
-<span class="w">    </span><span class="s">&quot;user_metadata&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s">"user_metadata"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">[</span>
 <span class="w">        </span><span class="kt">Dict</span><span class="p">(</span>
-<span class="w">            </span><span class="s">&quot;file&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;/data/file1.nc&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="s">&quot;variable&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;tas&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="s">&quot;time&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="s">&quot;time_frequency&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;mon&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="s">&quot;additional_info&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;Sample data file&quot;</span>
+<span class="w">            </span><span class="s">"file"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"/data/file1.nc"</span><span class="p">,</span>
+<span class="w">            </span><span class="s">"variable"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"tas"</span><span class="p">,</span>
+<span class="w">            </span><span class="s">"time"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]"</span><span class="p">,</span>
+<span class="w">            </span><span class="s">"time_frequency"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"mon"</span><span class="p">,</span>
+<span class="w">            </span><span class="s">"additional_info"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"Sample data file"</span>
 <span class="w">        </span><span class="p">)</span>
 <span class="w">    </span><span class="p">],</span>
-<span class="w">    </span><span class="s">&quot;facets&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span>
-<span class="w">        </span><span class="s">&quot;project&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;user-data&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="s">&quot;product&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;new&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="s">&quot;institute&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;globe&quot;</span>
+<span class="w">    </span><span class="s">"facets"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span>
+<span class="w">        </span><span class="s">"project"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"user-data"</span><span class="p">,</span>
+<span class="w">        </span><span class="s">"product"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"new"</span><span class="p">,</span>
+<span class="w">        </span><span class="s">"institute"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"globe"</span>
 <span class="w">    </span><span class="p">)</span>
 <span class="p">))</span>
 
-<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&quot;POST&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">body</span><span class="p">)</span>
+<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">"POST"</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">body</span><span class="p">)</span>
 <span class="n">println</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -709,32 +709,32 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="w">    </span><span class="n">CURL</span><span class="w"> </span><span class="o">*</span><span class="n">curl</span><span class="p">;</span>
 <span class="w">    </span><span class="n">CURLcode</span><span class="w"> </span><span class="n">res</span><span class="p">;</span>
 
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata&quot;</span><span class="p">;</span>
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;YOUR_ACCESS_TOKEN&quot;</span><span class="p">;</span>
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">json_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;{&quot;</span>
-<span class="w">        </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">user_metadata</span><span class="se">\&quot;</span><span class="s">: [&quot;</span>
-<span class="w">            </span><span class="s">&quot;{&quot;</span>
-<span class="w">                </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">file</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">/data/file1.nc</span><span class="se">\&quot;</span><span class="s">,&quot;</span>
-<span class="w">                </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">variable</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">tas</span><span class="se">\&quot;</span><span class="s">,&quot;</span>
-<span class="w">                </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">time</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]</span><span class="se">\&quot;</span><span class="s">,&quot;</span>
-<span class="w">                </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">time_frequency</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">mon</span><span class="se">\&quot;</span><span class="s">,&quot;</span>
-<span class="w">                </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">additional_info</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">Sample data file</span><span class="se">\&quot;</span><span class="s">&quot;</span>
-<span class="w">            </span><span class="s">&quot;}&quot;</span>
-<span class="w">        </span><span class="s">&quot;],&quot;</span>
-<span class="w">        </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">facets</span><span class="se">\&quot;</span><span class="s">: {&quot;</span>
-<span class="w">            </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">project</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">user-data</span><span class="se">\&quot;</span><span class="s">,&quot;</span>
-<span class="w">            </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">product</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">new</span><span class="se">\&quot;</span><span class="s">,&quot;</span>
-<span class="w">            </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">institute</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">globe</span><span class="se">\&quot;</span><span class="s">&quot;</span>
-<span class="w">        </span><span class="s">&quot;}&quot;</span>
-<span class="w">    </span><span class="s">&quot;}&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata"</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"YOUR_ACCESS_TOKEN"</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">json_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"{"</span>
+<span class="w">        </span><span class="s">"</span><span class="se">\"</span><span class="s">user_metadata</span><span class="se">\"</span><span class="s">: ["</span>
+<span class="w">            </span><span class="s">"{"</span>
+<span class="w">                </span><span class="s">"</span><span class="se">\"</span><span class="s">file</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">/data/file1.nc</span><span class="se">\"</span><span class="s">,"</span>
+<span class="w">                </span><span class="s">"</span><span class="se">\"</span><span class="s">variable</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">tas</span><span class="se">\"</span><span class="s">,"</span>
+<span class="w">                </span><span class="s">"</span><span class="se">\"</span><span class="s">time</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">[1979-01-16T12:00:00Z TO 1979-11-16T00:00:00Z]</span><span class="se">\"</span><span class="s">,"</span>
+<span class="w">                </span><span class="s">"</span><span class="se">\"</span><span class="s">time_frequency</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">mon</span><span class="se">\"</span><span class="s">,"</span>
+<span class="w">                </span><span class="s">"</span><span class="se">\"</span><span class="s">additional_info</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">Sample data file</span><span class="se">\"</span><span class="s">"</span>
+<span class="w">            </span><span class="s">"}"</span>
+<span class="w">        </span><span class="s">"],"</span>
+<span class="w">        </span><span class="s">"</span><span class="se">\"</span><span class="s">facets</span><span class="se">\"</span><span class="s">: {"</span>
+<span class="w">            </span><span class="s">"</span><span class="se">\"</span><span class="s">project</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">user-data</span><span class="se">\"</span><span class="s">,"</span>
+<span class="w">            </span><span class="s">"</span><span class="se">\"</span><span class="s">product</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">new</span><span class="se">\"</span><span class="s">,"</span>
+<span class="w">            </span><span class="s">"</span><span class="se">\"</span><span class="s">institute</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">globe</span><span class="se">\"</span><span class="s">"</span>
+<span class="w">        </span><span class="s">"}"</span>
+<span class="w">    </span><span class="s">"}"</span><span class="p">;</span>
 
 <span class="w">    </span><span class="c1">// Initialize curl</span>
 <span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">        </span><span class="k">struct</span><span class="w"> </span><span class="nc">curl_slist</span><span class="w"> </span><span class="o">*</span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
-<span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Content-Type: application/json&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">"Content-Type: application/json"</span><span class="p">);</span>
 <span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">auth_header</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
-<span class="w">        </span><span class="n">snprintf</span><span class="p">(</span><span class="n">auth_header</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">auth_header</span><span class="p">),</span><span class="w"> </span><span class="s">&quot;Authorization: Bearer %s&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">token</span><span class="p">);</span>
+<span class="w">        </span><span class="n">snprintf</span><span class="p">(</span><span class="n">auth_header</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">auth_header</span><span class="p">),</span><span class="w"> </span><span class="s">"Authorization: Bearer %s"</span><span class="p">,</span><span class="w"> </span><span class="n">token</span><span class="p">);</span>
 <span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="n">auth_header</span><span class="p">);</span>
 
 <span class="w">        </span><span class="c1">// Set the URL</span>
@@ -752,7 +752,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="w">        </span><span class="c1">// Perform the request</span>
 <span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
 <span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">res</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">CURLE_OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">            </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;curl_easy_perform() failed: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">curl_easy_strerror</span><span class="p">(</span><span class="n">res</span><span class="p">));</span>
+<span class="w">            </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">"curl_easy_perform() failed: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="n">curl_easy_strerror</span><span class="p">(</span><span class="n">res</span><span class="p">));</span>
 <span class="w">        </span><span class="p">}</span>
 
 <span class="w">        </span><span class="c1">// Clean up</span>
@@ -776,8 +776,8 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 </dd>
 <dt class="field-even">Request Headers<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7235#section-4.2">Authorization</a></span> – Bearer token for authentication.</p></li>
-<li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7231#section-3.1.1.5">Content-Type</a></span> – application/json</p></li>
+<li><p><span><a class="reference external" href="https://www.rfc-editor.org/info/rfc7235#section-4.2">Authorization</a></span> – Bearer token for authentication.</p></li>
+<li><p><span><a class="reference external" href="https://www.rfc-editor.org/info/rfc7231#section-3.1.1.5">Content-Type</a></span> – application/json</p></li>
 </ul>
 </dd>
 <dt class="field-odd">Status Codes<span class="colon">:</span></dt>
@@ -796,9 +796,9 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
 <span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user-data&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;product&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;new&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;institute&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;globe&quot;</span>
+<span class="w">    </span><span class="nt">"project"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user-data"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"product"</span><span class="p">:</span><span class="w"> </span><span class="s2">"new"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"institute"</span><span class="p">:</span><span class="w"> </span><span class="s2">"globe"</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -809,7 +809,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
 <span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;User data has been deleted successfully&quot;</span>
+<span class="w">    </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"User data has been deleted successfully"</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -826,28 +826,28 @@ R</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(this)"
 Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
 C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span><span class="se">\</span>
-<span class="s1">&#39;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata&#39;</span><span class="w"> </span><span class="se">\</span>
--H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="w"> </span><span class="se">\</span>
--H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
--d<span class="w"> </span><span class="s1">&#39;{</span>
-<span class="s1">    &quot;project&quot;: &quot;user-data&quot;,</span>
-<span class="s1">    &quot;product&quot;: &quot;new&quot;,</span>
-<span class="s1">    &quot;institute&quot;: &quot;globe&quot;</span>
-<span class="s1">}&#39;</span>
+<span class="s1">'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata'</span><span class="w"> </span><span class="se">\</span>
+-H<span class="w"> </span><span class="s2">"Authorization: Bearer YOUR_ACCESS_TOKEN"</span><span class="w"> </span><span class="se">\</span>
+-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+-d<span class="w"> </span><span class="s1">'{</span>
+<span class="s1">    "project": "user-data",</span>
+<span class="s1">    "product": "new",</span>
+<span class="s1">    "institute": "globe"</span>
+<span class="s1">}'</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="1">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 
-<span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata&quot;</span>
+<span class="n">url</span> <span class="o">=</span> <span class="s2">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata"</span>
 <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="s2">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span>
+    <span class="s2">"Authorization"</span><span class="p">:</span> <span class="s2">"Bearer YOUR_ACCESS_TOKEN"</span><span class="p">,</span>
+    <span class="s2">"Content-Type"</span><span class="p">:</span> <span class="s2">"application/json"</span>
 <span class="p">}</span>
 <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;user-data&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;product&quot;</span><span class="p">:</span> <span class="s2">&quot;new&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;institute&quot;</span><span class="p">:</span> <span class="s2">&quot;globe&quot;</span>
+    <span class="s2">"project"</span><span class="p">:</span> <span class="s2">"user-data"</span><span class="p">,</span>
+    <span class="s2">"product"</span><span class="p">:</span> <span class="s2">"new"</span><span class="p">,</span>
+    <span class="s2">"institute"</span><span class="p">:</span> <span class="s2">"globe"</span>
 <span class="p">}</span>
 
 <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
@@ -857,34 +857,34 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 </div><div class="tab codetab" data-id="2">
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
 
-<span class="n">url</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata&quot;</span>
-<span class="n">headers</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">Authorization</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">)</span>
+<span class="n">url</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata"</span>
+<span class="n">headers</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">Authorization</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Bearer YOUR_ACCESS_TOKEN"</span><span class="p">)</span>
 <span class="n">body</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span>
-<span class="w">    </span><span class="n">project</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;user-data&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;new&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="n">institute</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;globe&quot;</span>
+<span class="w">    </span><span class="n">project</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"user-data"</span><span class="p">,</span>
+<span class="w">    </span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"new"</span><span class="p">,</span>
+<span class="w">    </span><span class="n">institute</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"globe"</span>
 <span class="p">)</span>
 
-<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">DELETE</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="nf">add_headers</span><span class="p">(</span><span class="n">.headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">),</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">body</span><span class="p">,</span><span class="w"> </span><span class="n">encode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;json&quot;</span><span class="p">)</span>
-<span class="n">content</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;parsed&quot;</span><span class="p">)</span>
+<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">DELETE</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="nf">add_headers</span><span class="p">(</span><span class="n">.headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">),</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">body</span><span class="p">,</span><span class="w"> </span><span class="n">encode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"json"</span><span class="p">)</span>
+<span class="n">content</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="s">"parsed"</span><span class="p">)</span>
 <span class="nf">print</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="3">
 <div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span><span class="p">,</span><span class="w"> </span><span class="n">JSON</span>
 
-<span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata&quot;</span>
+<span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata"</span>
 <span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span>
-<span class="w">    </span><span class="s">&quot;Authorization&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="s">&quot;Content-Type&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;application/json&quot;</span>
+<span class="w">    </span><span class="s">"Authorization"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"Bearer YOUR_ACCESS_TOKEN"</span><span class="p">,</span>
+<span class="w">    </span><span class="s">"Content-Type"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"application/json"</span>
 <span class="p">)</span>
 <span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">json</span><span class="p">(</span><span class="kt">Dict</span><span class="p">(</span>
-<span class="w">    </span><span class="s">&quot;project&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;user-data&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="s">&quot;product&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;new&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="s">&quot;institute&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;globe&quot;</span>
+<span class="w">    </span><span class="s">"project"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"user-data"</span><span class="p">,</span>
+<span class="w">    </span><span class="s">"product"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"new"</span><span class="p">,</span>
+<span class="w">    </span><span class="s">"institute"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"globe"</span>
 <span class="p">))</span>
 
-<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&quot;DELETE&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">body</span><span class="p">)</span>
+<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">"DELETE"</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">body</span><span class="p">)</span>
 <span class="n">println</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -896,21 +896,21 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="w">    </span><span class="n">CURL</span><span class="w"> </span><span class="o">*</span><span class="n">curl</span><span class="p">;</span>
 <span class="w">    </span><span class="n">CURLcode</span><span class="w"> </span><span class="n">res</span><span class="p">;</span>
 
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata&quot;</span><span class="p">;</span>
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;YOUR_ACCESS_TOKEN&quot;</span><span class="p">;</span>
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">json_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;{&quot;</span>
-<span class="w">        </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">project</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">user-data</span><span class="se">\&quot;</span><span class="s">,&quot;</span>
-<span class="w">        </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">product</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">new</span><span class="se">\&quot;</span><span class="s">,&quot;</span>
-<span class="w">        </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">institute</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">globe</span><span class="se">\&quot;</span><span class="s">&quot;</span>
-<span class="w">    </span><span class="s">&quot;}&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/userdata"</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"YOUR_ACCESS_TOKEN"</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">json_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"{"</span>
+<span class="w">        </span><span class="s">"</span><span class="se">\"</span><span class="s">project</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">user-data</span><span class="se">\"</span><span class="s">,"</span>
+<span class="w">        </span><span class="s">"</span><span class="se">\"</span><span class="s">product</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">new</span><span class="se">\"</span><span class="s">,"</span>
+<span class="w">        </span><span class="s">"</span><span class="se">\"</span><span class="s">institute</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">globe</span><span class="se">\"</span><span class="s">"</span>
+<span class="w">    </span><span class="s">"}"</span><span class="p">;</span>
 
 <span class="w">    </span><span class="c1">// Initialize curl</span>
 <span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">        </span><span class="k">struct</span><span class="w"> </span><span class="nc">curl_slist</span><span class="w"> </span><span class="o">*</span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
-<span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Content-Type: application/json&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">"Content-Type: application/json"</span><span class="p">);</span>
 <span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">auth_header</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
-<span class="w">        </span><span class="n">snprintf</span><span class="p">(</span><span class="n">auth_header</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">auth_header</span><span class="p">),</span><span class="w"> </span><span class="s">&quot;Authorization: Bearer %s&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">token</span><span class="p">);</span>
+<span class="w">        </span><span class="n">snprintf</span><span class="p">(</span><span class="n">auth_header</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">auth_header</span><span class="p">),</span><span class="w"> </span><span class="s">"Authorization: Bearer %s"</span><span class="p">,</span><span class="w"> </span><span class="n">token</span><span class="p">);</span>
 <span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="n">auth_header</span><span class="p">);</span>
 
 <span class="w">        </span><span class="c1">// Set the URL</span>
@@ -920,7 +920,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_HTTPHEADER</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="p">);</span>
 
 <span class="w">        </span><span class="c1">// Set the HTTP method to DELETE</span>
-<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_CUSTOMREQUEST</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;DELETE&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_CUSTOMREQUEST</span><span class="p">,</span><span class="w"> </span><span class="s">"DELETE"</span><span class="p">);</span>
 
 <span class="w">        </span><span class="c1">// Set the JSON data to send</span>
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_POSTFIELDS</span><span class="p">,</span><span class="w"> </span><span class="n">json_data</span><span class="p">);</span>
@@ -928,7 +928,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="w">        </span><span class="c1">// Perform the request</span>
 <span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
 <span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">res</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">CURLE_OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">            </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;curl_easy_perform() failed: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">curl_easy_strerror</span><span class="p">(</span><span class="n">res</span><span class="p">));</span>
+<span class="w">            </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">"curl_easy_perform() failed: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="n">curl_easy_strerror</span><span class="p">(</span><span class="n">res</span><span class="p">));</span>
 <span class="w">        </span><span class="p">}</span>
 
 <span class="w">        </span><span class="c1">// Clean up</span>
@@ -961,7 +961,7 @@ The endpoint returns both global(accessible to all) flavours and user-specific c
 </dd>
 <dt class="field-even">Request Headers<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7235#section-4.2">Authorization</a></span> – Bearer token for authentication (optional).</p></li>
+<li><p><span><a class="reference external" href="https://www.rfc-editor.org/info/rfc7235#section-4.2">Authorization</a></span> – Bearer token for authentication (optional).</p></li>
 </ul>
 </dd>
 <dt class="field-odd">Status Codes<span class="colon">:</span></dt>
@@ -971,7 +971,7 @@ The endpoint returns both global(accessible to all) flavours and user-specific c
 </dd>
 <dt class="field-even">Response Headers<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7231#section-3.1.1.5">Content-Type</a></span> – <p><code class="docutils literal notranslate"><span class="pre">application/json</span></code>: List of available flavours and their mappings.</p>
+<li><p><span><a class="reference external" href="https://www.rfc-editor.org/info/rfc7231#section-3.1.1.5">Content-Type</a></span> – <p><code class="docutils literal notranslate"><span class="pre">application/json</span></code>: List of available flavours and their mappings.</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">total</span></code>: Total number of flavours found.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">flavours</span></code>: Array of flavour objects containing name, mapping, owner, and creation date.</p></li>
@@ -994,30 +994,30 @@ The endpoint returns both global(accessible to all) flavours and user-specific c
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
 <span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;total&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;flavours&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="nt">"total"</span><span class="p">:</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"flavours"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">        </span><span class="p">{</span>
-<span class="w">            </span><span class="nt">&quot;flavour_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;freva&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="nt">&quot;mapping&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">                </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;project&quot;</span><span class="p">,</span>
-<span class="w">                </span><span class="nt">&quot;product&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;product&quot;</span><span class="p">,</span>
-<span class="w">                </span><span class="nt">&quot;institute&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;institute&quot;</span><span class="p">,</span>
-<span class="w">                </span><span class="nt">&quot;model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;model&quot;</span><span class="p">,</span>
-<span class="w">                </span><span class="nt">&quot;experiment&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;experiment&quot;</span>
+<span class="w">            </span><span class="nt">"flavour_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"freva"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"mapping"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nt">"project"</span><span class="p">:</span><span class="w"> </span><span class="s2">"project"</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">"product"</span><span class="p">:</span><span class="w"> </span><span class="s2">"product"</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">"institute"</span><span class="p">:</span><span class="w"> </span><span class="s2">"institute"</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">"model"</span><span class="p">:</span><span class="w"> </span><span class="s2">"model"</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">"experiment"</span><span class="p">:</span><span class="w"> </span><span class="s2">"experiment"</span>
 <span class="w">            </span><span class="p">},</span>
-<span class="w">            </span><span class="nt">&quot;owner&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;global&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-01T00:00:00&quot;</span>
+<span class="w">            </span><span class="nt">"owner"</span><span class="p">:</span><span class="w"> </span><span class="s2">"global"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"created_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2024-01-01T00:00:00"</span>
 <span class="w">        </span><span class="p">},</span>
 <span class="w">        </span><span class="p">{</span>
-<span class="w">            </span><span class="nt">&quot;flavour_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cmip6&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="nt">&quot;mapping&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">                </span><span class="nt">&quot;experiment&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;experiment_id&quot;</span><span class="p">,</span>
-<span class="w">                </span><span class="nt">&quot;ensemble&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;member_id&quot;</span><span class="p">,</span>
-<span class="w">                </span><span class="nt">&quot;institute&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;institution_id&quot;</span><span class="p">,</span>
-<span class="w">                </span><span class="nt">&quot;model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;source_id&quot;</span>
+<span class="w">            </span><span class="nt">"flavour_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cmip6"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"mapping"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nt">"experiment"</span><span class="p">:</span><span class="w"> </span><span class="s2">"experiment_id"</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">"ensemble"</span><span class="p">:</span><span class="w"> </span><span class="s2">"member_id"</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">"institute"</span><span class="p">:</span><span class="w"> </span><span class="s2">"institution_id"</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">"model"</span><span class="p">:</span><span class="w"> </span><span class="s2">"source_id"</span>
 <span class="w">            </span><span class="p">},</span>
-<span class="w">            </span><span class="nt">&quot;owner&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;global&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-01T00:00:00&quot;</span>
+<span class="w">            </span><span class="nt">"owner"</span><span class="p">:</span><span class="w"> </span><span class="s2">"global"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"created_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2024-01-01T00:00:00"</span>
 <span class="w">        </span><span class="p">}</span>
 <span class="w">    </span><span class="p">]</span>
 <span class="p">}</span>
@@ -1037,18 +1037,18 @@ gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(thi
 Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
 C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="se">\</span>
-<span class="s1">&#39;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours?owner=global&#39;</span><span class="w"> </span><span class="se">\</span>
--H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer YOUR_ACCESS_TOKEN&quot;</span>
+<span class="s1">'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours?owner=global'</span><span class="w"> </span><span class="se">\</span>
+-H<span class="w"> </span><span class="s2">"Authorization: Bearer YOUR_ACCESS_TOKEN"</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="1">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 
-<span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="s2">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">}</span>
-<span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;owner&quot;</span><span class="p">:</span> <span class="s2">&quot;global&quot;</span><span class="p">}</span>
+<span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"Authorization"</span><span class="p">:</span> <span class="s2">"Bearer YOUR_ACCESS_TOKEN"</span><span class="p">}</span>
+<span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"owner"</span><span class="p">:</span> <span class="s2">"global"</span><span class="p">}</span>
 
 <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-    <span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours&quot;</span><span class="p">,</span>
+    <span class="s2">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours"</span><span class="p">,</span>
     <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
     <span class="n">params</span><span class="o">=</span><span class="n">params</span>
 <span class="p">)</span>
@@ -1058,23 +1058,23 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 </div><div class="tab codetab" data-id="2">
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
 
-<span class="n">headers</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">Authorization</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">)</span>
+<span class="n">headers</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">Authorization</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Bearer YOUR_ACCESS_TOKEN"</span><span class="p">)</span>
 <span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">GET</span><span class="p">(</span>
-<span class="w">    </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours"</span><span class="p">,</span>
 <span class="w">    </span><span class="nf">add_headers</span><span class="p">(</span><span class="n">.headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">),</span>
-<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="n">owner</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;global&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="n">owner</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"global"</span><span class="p">)</span>
 <span class="p">)</span>
-<span class="n">data</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">jsonlite</span><span class="o">::</span><span class="nf">fromJSON</span><span class="p">(</span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;text&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;utf-8&quot;</span><span class="p">))</span>
+<span class="n">data</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">jsonlite</span><span class="o">::</span><span class="nf">fromJSON</span><span class="p">(</span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"text"</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"utf-8"</span><span class="p">))</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="3">
 <div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span><span class="p">,</span><span class="w"> </span><span class="n">JSON</span>
 
-<span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span><span class="s">&quot;Authorization&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">)</span>
+<span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span><span class="s">"Authorization"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"Bearer YOUR_ACCESS_TOKEN"</span><span class="p">)</span>
 <span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-<span class="w">    </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours"</span><span class="p">,</span>
 <span class="w">    </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">,</span>
-<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span><span class="s">&quot;owner&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;global&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span><span class="s">"owner"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"global"</span><span class="p">)</span>
 <span class="p">)</span>
 <span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">))</span>
 </pre></div>
@@ -1089,10 +1089,10 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 
 <span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours?owner=global&quot;</span><span class="p">;</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours?owner=global"</span><span class="p">;</span>
 
 <span class="w">        </span><span class="k">struct</span><span class="w"> </span><span class="nc">curl_slist</span><span class="w"> </span><span class="o">*</span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
-<span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Authorization: Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">"Authorization: Bearer YOUR_ACCESS_TOKEN"</span><span class="p">);</span>
 
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">);</span>
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_HTTPHEADER</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="p">);</span>
@@ -1127,8 +1127,8 @@ Admin users can create <code class="docutils literal notranslate"><span class="p
 </dd>
 <dt class="field-even">Request Headers<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7235#section-4.2">Authorization</a></span> – Bearer token for authentication.</p></li>
-<li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7231#section-3.1.1.5">Content-Type</a></span> – application/json</p></li>
+<li><p><span><a class="reference external" href="https://www.rfc-editor.org/info/rfc7235#section-4.2">Authorization</a></span> – Bearer token for authentication.</p></li>
+<li><p><span><a class="reference external" href="https://www.rfc-editor.org/info/rfc7231#section-3.1.1.5">Content-Type</a></span> – application/json</p></li>
 </ul>
 </dd>
 <dt class="field-odd">Status Codes<span class="colon">:</span></dt>
@@ -1150,16 +1150,16 @@ Admin users can create <code class="docutils literal notranslate"><span class="p
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
 <span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;flavour_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my_custom_drs&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;mapping&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;proj_id&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;product&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;prod_name&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;institute&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;institution&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;model_name&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;experiment&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;exp_id&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;variable&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;var_name&quot;</span>
+<span class="w">    </span><span class="nt">"flavour_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"my_custom_drs"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"mapping"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">"project"</span><span class="p">:</span><span class="w"> </span><span class="s2">"proj_id"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"product"</span><span class="p">:</span><span class="w"> </span><span class="s2">"prod_name"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"institute"</span><span class="p">:</span><span class="w"> </span><span class="s2">"institution"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"model"</span><span class="p">:</span><span class="w"> </span><span class="s2">"model_name"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"experiment"</span><span class="p">:</span><span class="w"> </span><span class="s2">"exp_id"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"variable"</span><span class="p">:</span><span class="w"> </span><span class="s2">"var_name"</span>
 <span class="w">    </span><span class="p">},</span>
-<span class="w">    </span><span class="nt">&quot;is_global&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">    </span><span class="nt">"is_global"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -1170,7 +1170,7 @@ Admin users can create <code class="docutils literal notranslate"><span class="p
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
 <span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Flavour &#39;my_custom_drs&#39; added successfully&quot;</span>
+<span class="w">    </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Flavour 'my_custom_drs' added successfully"</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -1188,42 +1188,42 @@ gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(thi
 Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
 C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="se">\</span>
-<span class="s1">&#39;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours&#39;</span><span class="w"> </span><span class="se">\</span>
--H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="w"> </span><span class="se">\</span>
--H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
--d<span class="w"> </span><span class="s1">&#39;{</span>
-<span class="s1">    &quot;flavour_name&quot;: &quot;my_custom_drs&quot;,</span>
-<span class="s1">    &quot;mapping&quot;: {</span>
-<span class="s1">        &quot;project&quot;: &quot;proj_id&quot;,</span>
-<span class="s1">        &quot;product&quot;: &quot;prod_name&quot;,</span>
-<span class="s1">        &quot;institute&quot;: &quot;institution&quot;,</span>
-<span class="s1">        &quot;model&quot;: &quot;model_name&quot;,</span>
-<span class="s1">        &quot;experiment&quot;: &quot;exp_id&quot;,</span>
-<span class="s1">        &quot;variable&quot;: &quot;var_name&quot;</span>
+<span class="s1">'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours'</span><span class="w"> </span><span class="se">\</span>
+-H<span class="w"> </span><span class="s2">"Authorization: Bearer YOUR_ACCESS_TOKEN"</span><span class="w"> </span><span class="se">\</span>
+-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+-d<span class="w"> </span><span class="s1">'{</span>
+<span class="s1">    "flavour_name": "my_custom_drs",</span>
+<span class="s1">    "mapping": {</span>
+<span class="s1">        "project": "proj_id",</span>
+<span class="s1">        "product": "prod_name",</span>
+<span class="s1">        "institute": "institution",</span>
+<span class="s1">        "model": "model_name",</span>
+<span class="s1">        "experiment": "exp_id",</span>
+<span class="s1">        "variable": "var_name"</span>
 <span class="s1">    },</span>
-<span class="s1">    &quot;is_global&quot;: false</span>
-<span class="s1">}&#39;</span>
+<span class="s1">    "is_global": false</span>
+<span class="s1">}'</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="1">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 
-<span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours&quot;</span>
+<span class="n">url</span> <span class="o">=</span> <span class="s2">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours"</span>
 <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="s2">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span>
+    <span class="s2">"Authorization"</span><span class="p">:</span> <span class="s2">"Bearer YOUR_ACCESS_TOKEN"</span><span class="p">,</span>
+    <span class="s2">"Content-Type"</span><span class="p">:</span> <span class="s2">"application/json"</span>
 <span class="p">}</span>
 <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;flavour_name&quot;</span><span class="p">:</span> <span class="s2">&quot;my_custom_drs&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;mapping&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;proj_id&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;product&quot;</span><span class="p">:</span> <span class="s2">&quot;prod_name&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;institute&quot;</span><span class="p">:</span> <span class="s2">&quot;institution&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;model_name&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;experiment&quot;</span><span class="p">:</span> <span class="s2">&quot;exp_id&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="s2">&quot;var_name&quot;</span>
+    <span class="s2">"flavour_name"</span><span class="p">:</span> <span class="s2">"my_custom_drs"</span><span class="p">,</span>
+    <span class="s2">"mapping"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"project"</span><span class="p">:</span> <span class="s2">"proj_id"</span><span class="p">,</span>
+        <span class="s2">"product"</span><span class="p">:</span> <span class="s2">"prod_name"</span><span class="p">,</span>
+        <span class="s2">"institute"</span><span class="p">:</span> <span class="s2">"institution"</span><span class="p">,</span>
+        <span class="s2">"model"</span><span class="p">:</span> <span class="s2">"model_name"</span><span class="p">,</span>
+        <span class="s2">"experiment"</span><span class="p">:</span> <span class="s2">"exp_id"</span><span class="p">,</span>
+        <span class="s2">"variable"</span><span class="p">:</span> <span class="s2">"var_name"</span>
     <span class="p">},</span>
-    <span class="s2">&quot;is_global&quot;</span><span class="p">:</span> <span class="kc">False</span>
+    <span class="s2">"is_global"</span><span class="p">:</span> <span class="kc">False</span>
 <span class="p">}</span>
 
 <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
@@ -1233,48 +1233,48 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 </div><div class="tab codetab" data-id="2">
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
 
-<span class="n">url</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours&quot;</span>
-<span class="n">headers</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">Authorization</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">)</span>
+<span class="n">url</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours"</span>
+<span class="n">headers</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">Authorization</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Bearer YOUR_ACCESS_TOKEN"</span><span class="p">)</span>
 <span class="n">body</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span>
-<span class="w">    </span><span class="n">flavour_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;my_custom_drs&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">flavour_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"my_custom_drs"</span><span class="p">,</span>
 <span class="w">    </span><span class="n">mapping</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span>
-<span class="w">        </span><span class="n">project</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;proj_id&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;prod_name&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="n">institute</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;institution&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;model_name&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="n">experiment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;exp_id&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="n">variable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;var_name&quot;</span>
+<span class="w">        </span><span class="n">project</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"proj_id"</span><span class="p">,</span>
+<span class="w">        </span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"prod_name"</span><span class="p">,</span>
+<span class="w">        </span><span class="n">institute</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"institution"</span><span class="p">,</span>
+<span class="w">        </span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"model_name"</span><span class="p">,</span>
+<span class="w">        </span><span class="n">experiment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"exp_id"</span><span class="p">,</span>
+<span class="w">        </span><span class="n">variable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"var_name"</span>
 <span class="w">    </span><span class="p">),</span>
 <span class="w">    </span><span class="n">is_global</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">FALSE</span>
 <span class="p">)</span>
 
-<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">POST</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="nf">add_headers</span><span class="p">(</span><span class="n">.headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">),</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">body</span><span class="p">,</span><span class="w"> </span><span class="n">encode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;json&quot;</span><span class="p">)</span>
-<span class="n">content</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;parsed&quot;</span><span class="p">)</span>
+<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">POST</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="nf">add_headers</span><span class="p">(</span><span class="n">.headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">),</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">body</span><span class="p">,</span><span class="w"> </span><span class="n">encode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"json"</span><span class="p">)</span>
+<span class="n">content</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="s">"parsed"</span><span class="p">)</span>
 <span class="nf">print</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="3">
 <div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span><span class="p">,</span><span class="w"> </span><span class="n">JSON</span>
 
-<span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours&quot;</span>
+<span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours"</span>
 <span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span>
-<span class="w">    </span><span class="s">&quot;Authorization&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="s">&quot;Content-Type&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;application/json&quot;</span>
+<span class="w">    </span><span class="s">"Authorization"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"Bearer YOUR_ACCESS_TOKEN"</span><span class="p">,</span>
+<span class="w">    </span><span class="s">"Content-Type"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"application/json"</span>
 <span class="p">)</span>
 <span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">json</span><span class="p">(</span><span class="kt">Dict</span><span class="p">(</span>
-<span class="w">    </span><span class="s">&quot;flavour_name&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;my_custom_drs&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="s">&quot;mapping&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span>
-<span class="w">        </span><span class="s">&quot;project&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;proj_id&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="s">&quot;product&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;prod_name&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="s">&quot;institute&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;institution&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="s">&quot;model&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;model_name&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="s">&quot;experiment&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;exp_id&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="s">&quot;variable&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;var_name&quot;</span>
+<span class="w">    </span><span class="s">"flavour_name"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"my_custom_drs"</span><span class="p">,</span>
+<span class="w">    </span><span class="s">"mapping"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span>
+<span class="w">        </span><span class="s">"project"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"proj_id"</span><span class="p">,</span>
+<span class="w">        </span><span class="s">"product"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"prod_name"</span><span class="p">,</span>
+<span class="w">        </span><span class="s">"institute"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"institution"</span><span class="p">,</span>
+<span class="w">        </span><span class="s">"model"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"model_name"</span><span class="p">,</span>
+<span class="w">        </span><span class="s">"experiment"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"exp_id"</span><span class="p">,</span>
+<span class="w">        </span><span class="s">"variable"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"var_name"</span>
 <span class="w">    </span><span class="p">),</span>
-<span class="w">    </span><span class="s">&quot;is_global&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="nb">false</span>
+<span class="w">    </span><span class="s">"is_global"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="nb">false</span>
 <span class="p">))</span>
 
-<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&quot;POST&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">body</span><span class="p">)</span>
+<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">"POST"</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">body</span><span class="p">)</span>
 <span class="n">println</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -1286,25 +1286,25 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="w">    </span><span class="n">CURL</span><span class="w"> </span><span class="o">*</span><span class="n">curl</span><span class="p">;</span>
 <span class="w">    </span><span class="n">CURLcode</span><span class="w"> </span><span class="n">res</span><span class="p">;</span>
 
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours&quot;</span><span class="p">;</span>
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">json_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;{&quot;</span>
-<span class="w">        </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">flavour_name</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">my_custom_drs</span><span class="se">\&quot;</span><span class="s">,&quot;</span>
-<span class="w">        </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">mapping</span><span class="se">\&quot;</span><span class="s">: {&quot;</span>
-<span class="w">            </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">project</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">proj_id</span><span class="se">\&quot;</span><span class="s">,&quot;</span>
-<span class="w">            </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">product</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">prod_name</span><span class="se">\&quot;</span><span class="s">,&quot;</span>
-<span class="w">            </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">institute</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">institution</span><span class="se">\&quot;</span><span class="s">,&quot;</span>
-<span class="w">            </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">model</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">model_name</span><span class="se">\&quot;</span><span class="s">,&quot;</span>
-<span class="w">            </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">experiment</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">exp_id</span><span class="se">\&quot;</span><span class="s">,&quot;</span>
-<span class="w">            </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">variable</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">var_name</span><span class="se">\&quot;</span><span class="s">&quot;</span>
-<span class="w">        </span><span class="s">&quot;},&quot;</span>
-<span class="w">        </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">is_global</span><span class="se">\&quot;</span><span class="s">: false&quot;</span>
-<span class="w">    </span><span class="s">&quot;}&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours"</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">json_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"{"</span>
+<span class="w">        </span><span class="s">"</span><span class="se">\"</span><span class="s">flavour_name</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">my_custom_drs</span><span class="se">\"</span><span class="s">,"</span>
+<span class="w">        </span><span class="s">"</span><span class="se">\"</span><span class="s">mapping</span><span class="se">\"</span><span class="s">: {"</span>
+<span class="w">            </span><span class="s">"</span><span class="se">\"</span><span class="s">project</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">proj_id</span><span class="se">\"</span><span class="s">,"</span>
+<span class="w">            </span><span class="s">"</span><span class="se">\"</span><span class="s">product</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">prod_name</span><span class="se">\"</span><span class="s">,"</span>
+<span class="w">            </span><span class="s">"</span><span class="se">\"</span><span class="s">institute</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">institution</span><span class="se">\"</span><span class="s">,"</span>
+<span class="w">            </span><span class="s">"</span><span class="se">\"</span><span class="s">model</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">model_name</span><span class="se">\"</span><span class="s">,"</span>
+<span class="w">            </span><span class="s">"</span><span class="se">\"</span><span class="s">experiment</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">exp_id</span><span class="se">\"</span><span class="s">,"</span>
+<span class="w">            </span><span class="s">"</span><span class="se">\"</span><span class="s">variable</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">var_name</span><span class="se">\"</span><span class="s">"</span>
+<span class="w">        </span><span class="s">"},"</span>
+<span class="w">        </span><span class="s">"</span><span class="se">\"</span><span class="s">is_global</span><span class="se">\"</span><span class="s">: false"</span>
+<span class="w">    </span><span class="s">"}"</span><span class="p">;</span>
 
 <span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">        </span><span class="k">struct</span><span class="w"> </span><span class="nc">curl_slist</span><span class="w"> </span><span class="o">*</span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
-<span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Content-Type: application/json&quot;</span><span class="p">);</span>
-<span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Authorization: Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">"Content-Type: application/json"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">"Authorization: Bearer YOUR_ACCESS_TOKEN"</span><span class="p">);</span>
 
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">);</span>
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_HTTPHEADER</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="p">);</span>
@@ -1348,8 +1348,8 @@ Only provided keys will be updated; other mappings remain unchanged.</p>
 </dd>
 <dt class="field-odd">Request Headers<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7235#section-4.2">Authorization</a></span> – Bearer token for authentication.</p></li>
-<li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7231#section-3.1.1.5">Content-Type</a></span> – application/json</p></li>
+<li><p><span><a class="reference external" href="https://www.rfc-editor.org/info/rfc7235#section-4.2">Authorization</a></span> – Bearer token for authentication.</p></li>
+<li><p><span><a class="reference external" href="https://www.rfc-editor.org/info/rfc7231#section-3.1.1.5">Content-Type</a></span> – application/json</p></li>
 </ul>
 </dd>
 <dt class="field-even">Status Codes<span class="colon">:</span></dt>
@@ -1372,12 +1372,12 @@ Only provided keys will be updated; other mappings remain unchanged.</p>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
 <span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;flavour_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my_custom_drs&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;mapping&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;updated_model_name&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;experiment&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;updated_exp_id&quot;</span>
+<span class="w">    </span><span class="nt">"flavour_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"my_custom_drs"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"mapping"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">"model"</span><span class="p">:</span><span class="w"> </span><span class="s2">"updated_model_name"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"experiment"</span><span class="p">:</span><span class="w"> </span><span class="s2">"updated_exp_id"</span>
 <span class="w">    </span><span class="p">},</span>
-<span class="w">    </span><span class="nt">&quot;is_global&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">    </span><span class="nt">"is_global"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -1388,7 +1388,7 @@ Only provided keys will be updated; other mappings remain unchanged.</p>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
 <span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Flavour updated successfully&quot;</span>
+<span class="w">    </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Flavour updated successfully"</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -1406,34 +1406,34 @@ gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(thi
 Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
 C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span><span class="se">\</span>
-<span class="s1">&#39;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs&#39;</span><span class="w"> </span><span class="se">\</span>
--H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="w"> </span><span class="se">\</span>
--H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
--d<span class="w"> </span><span class="s1">&#39;{</span>
-<span class="s1">    &quot;flavour_name&quot;: &quot;my_custom_drs&quot;,</span>
-<span class="s1">    &quot;mapping&quot;: {</span>
-<span class="s1">        &quot;model&quot;: &quot;updated_model_name&quot;,</span>
-<span class="s1">        &quot;experiment&quot;: &quot;updated_exp_id&quot;</span>
+<span class="s1">'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs'</span><span class="w"> </span><span class="se">\</span>
+-H<span class="w"> </span><span class="s2">"Authorization: Bearer YOUR_ACCESS_TOKEN"</span><span class="w"> </span><span class="se">\</span>
+-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+-d<span class="w"> </span><span class="s1">'{</span>
+<span class="s1">    "flavour_name": "my_custom_drs",</span>
+<span class="s1">    "mapping": {</span>
+<span class="s1">        "model": "updated_model_name",</span>
+<span class="s1">        "experiment": "updated_exp_id"</span>
 <span class="s1">    },</span>
-<span class="s1">    &quot;is_global&quot;: false</span>
-<span class="s1">}&#39;</span>
+<span class="s1">    "is_global": false</span>
+<span class="s1">}'</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="1">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 
-<span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs&quot;</span>
+<span class="n">url</span> <span class="o">=</span> <span class="s2">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs"</span>
 <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="s2">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span>
+    <span class="s2">"Authorization"</span><span class="p">:</span> <span class="s2">"Bearer YOUR_ACCESS_TOKEN"</span><span class="p">,</span>
+    <span class="s2">"Content-Type"</span><span class="p">:</span> <span class="s2">"application/json"</span>
 <span class="p">}</span>
 <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;flavour_name&quot;</span><span class="p">:</span> <span class="s2">&quot;my_custom_drs&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;mapping&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;updated_model_name&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;experiment&quot;</span><span class="p">:</span> <span class="s2">&quot;updated_exp_id&quot;</span>
+    <span class="s2">"flavour_name"</span><span class="p">:</span> <span class="s2">"my_custom_drs"</span><span class="p">,</span>
+    <span class="s2">"mapping"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"model"</span><span class="p">:</span> <span class="s2">"updated_model_name"</span><span class="p">,</span>
+        <span class="s2">"experiment"</span><span class="p">:</span> <span class="s2">"updated_exp_id"</span>
     <span class="p">},</span>
-    <span class="s2">&quot;is_global&quot;</span><span class="p">:</span> <span class="kc">False</span>
+    <span class="s2">"is_global"</span><span class="p">:</span> <span class="kc">False</span>
 <span class="p">}</span>
 
 <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
@@ -1443,40 +1443,40 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 </div><div class="tab codetab" data-id="2">
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
 
-<span class="n">url</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs&quot;</span>
-<span class="n">headers</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">Authorization</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">)</span>
+<span class="n">url</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs"</span>
+<span class="n">headers</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">Authorization</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Bearer YOUR_ACCESS_TOKEN"</span><span class="p">)</span>
 <span class="n">body</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span>
-<span class="w">    </span><span class="n">flavour_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;my_custom_drs&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">flavour_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"my_custom_drs"</span><span class="p">,</span>
 <span class="w">    </span><span class="n">mapping</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span>
-<span class="w">        </span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;updated_model_name&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="n">experiment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;updated_exp_id&quot;</span>
+<span class="w">        </span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"updated_model_name"</span><span class="p">,</span>
+<span class="w">        </span><span class="n">experiment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"updated_exp_id"</span>
 <span class="w">    </span><span class="p">),</span>
 <span class="w">    </span><span class="n">is_global</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">FALSE</span>
 <span class="p">)</span>
 
-<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">PUT</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="nf">add_headers</span><span class="p">(</span><span class="n">.headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">),</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">body</span><span class="p">,</span><span class="w"> </span><span class="n">encode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;json&quot;</span><span class="p">)</span>
-<span class="n">content</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;parsed&quot;</span><span class="p">)</span>
+<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">PUT</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="nf">add_headers</span><span class="p">(</span><span class="n">.headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">),</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">body</span><span class="p">,</span><span class="w"> </span><span class="n">encode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"json"</span><span class="p">)</span>
+<span class="n">content</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="s">"parsed"</span><span class="p">)</span>
 <span class="nf">print</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="3">
 <div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span><span class="p">,</span><span class="w"> </span><span class="n">JSON</span>
 
-<span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs&quot;</span>
+<span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs"</span>
 <span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span>
-<span class="w">    </span><span class="s">&quot;Authorization&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="s">&quot;Content-Type&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;application/json&quot;</span>
+<span class="w">    </span><span class="s">"Authorization"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"Bearer YOUR_ACCESS_TOKEN"</span><span class="p">,</span>
+<span class="w">    </span><span class="s">"Content-Type"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"application/json"</span>
 <span class="p">)</span>
 <span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">json</span><span class="p">(</span><span class="kt">Dict</span><span class="p">(</span>
-<span class="w">    </span><span class="s">&quot;flavour_name&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;my_custom_drs&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="s">&quot;mapping&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span>
-<span class="w">        </span><span class="s">&quot;model&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;updated_model_name&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="s">&quot;experiment&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;updated_exp_id&quot;</span>
+<span class="w">    </span><span class="s">"flavour_name"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"my_custom_drs"</span><span class="p">,</span>
+<span class="w">    </span><span class="s">"mapping"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span>
+<span class="w">        </span><span class="s">"model"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"updated_model_name"</span><span class="p">,</span>
+<span class="w">        </span><span class="s">"experiment"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"updated_exp_id"</span>
 <span class="w">    </span><span class="p">),</span>
-<span class="w">    </span><span class="s">&quot;is_global&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="nb">false</span>
+<span class="w">    </span><span class="s">"is_global"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="nb">false</span>
 <span class="p">))</span>
 
-<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&quot;PUT&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">body</span><span class="p">)</span>
+<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">"PUT"</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">body</span><span class="p">)</span>
 <span class="n">println</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -1488,25 +1488,25 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="w">    </span><span class="n">CURL</span><span class="w"> </span><span class="o">*</span><span class="n">curl</span><span class="p">;</span>
 <span class="w">    </span><span class="n">CURLcode</span><span class="w"> </span><span class="n">res</span><span class="p">;</span>
 
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs&quot;</span><span class="p">;</span>
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">json_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;{&quot;</span>
-<span class="w">        </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">flavour_name</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">my_custom_drs</span><span class="se">\&quot;</span><span class="s">,&quot;</span>
-<span class="w">        </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">mapping</span><span class="se">\&quot;</span><span class="s">: {&quot;</span>
-<span class="w">            </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">model</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">updated_model_name</span><span class="se">\&quot;</span><span class="s">,&quot;</span>
-<span class="w">            </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">experiment</span><span class="se">\&quot;</span><span class="s">: </span><span class="se">\&quot;</span><span class="s">updated_exp_id</span><span class="se">\&quot;</span><span class="s">&quot;</span>
-<span class="w">        </span><span class="s">&quot;},&quot;</span>
-<span class="w">        </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">is_global</span><span class="se">\&quot;</span><span class="s">: false&quot;</span>
-<span class="w">    </span><span class="s">&quot;}&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs"</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">json_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"{"</span>
+<span class="w">        </span><span class="s">"</span><span class="se">\"</span><span class="s">flavour_name</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">my_custom_drs</span><span class="se">\"</span><span class="s">,"</span>
+<span class="w">        </span><span class="s">"</span><span class="se">\"</span><span class="s">mapping</span><span class="se">\"</span><span class="s">: {"</span>
+<span class="w">            </span><span class="s">"</span><span class="se">\"</span><span class="s">model</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">updated_model_name</span><span class="se">\"</span><span class="s">,"</span>
+<span class="w">            </span><span class="s">"</span><span class="se">\"</span><span class="s">experiment</span><span class="se">\"</span><span class="s">: </span><span class="se">\"</span><span class="s">updated_exp_id</span><span class="se">\"</span><span class="s">"</span>
+<span class="w">        </span><span class="s">"},"</span>
+<span class="w">        </span><span class="s">"</span><span class="se">\"</span><span class="s">is_global</span><span class="se">\"</span><span class="s">: false"</span>
+<span class="w">    </span><span class="s">"}"</span><span class="p">;</span>
 
 <span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">        </span><span class="k">struct</span><span class="w"> </span><span class="nc">curl_slist</span><span class="w"> </span><span class="o">*</span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
-<span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Content-Type: application/json&quot;</span><span class="p">);</span>
-<span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Authorization: Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">"Content-Type: application/json"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">"Authorization: Bearer YOUR_ACCESS_TOKEN"</span><span class="p">);</span>
 
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">);</span>
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_HTTPHEADER</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="p">);</span>
-<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_CUSTOMREQUEST</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;PUT&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_CUSTOMREQUEST</span><span class="p">,</span><span class="w"> </span><span class="s">"PUT"</span><span class="p">);</span>
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_POSTFIELDS</span><span class="p">,</span><span class="w"> </span><span class="n">json_data</span><span class="p">);</span>
 
 <span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
@@ -1536,7 +1536,7 @@ by regular users nor by admins.</p>
 </dd>
 <dt class="field-even">Request Headers<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7235#section-4.2">Authorization</a></span> – Bearer token for authentication.</p></li>
+<li><p><span><a class="reference external" href="https://www.rfc-editor.org/info/rfc7235#section-4.2">Authorization</a></span> – Bearer token for authentication.</p></li>
 </ul>
 </dd>
 <dt class="field-odd">Status Codes<span class="colon">:</span></dt>
@@ -1563,7 +1563,7 @@ by regular users nor by admins.</p>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
 <span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Personal flavour &#39;my_custom_drs&#39; deleted successfully&quot;</span>
+<span class="w">    </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Personal flavour 'my_custom_drs' deleted successfully"</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -1581,15 +1581,15 @@ gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(thi
 Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
 C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span><span class="se">\</span>
-<span class="s1">&#39;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs&#39;</span><span class="w"> </span><span class="se">\</span>
--H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer YOUR_ACCESS_TOKEN&quot;</span>
+<span class="s1">'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs'</span><span class="w"> </span><span class="se">\</span>
+-H<span class="w"> </span><span class="s2">"Authorization: Bearer YOUR_ACCESS_TOKEN"</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="1">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 
-<span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs&quot;</span>
-<span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="s2">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">}</span>
+<span class="n">url</span> <span class="o">=</span> <span class="s2">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs"</span>
+<span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"Authorization"</span><span class="p">:</span> <span class="s2">"Bearer YOUR_ACCESS_TOKEN"</span><span class="p">}</span>
 
 <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
@@ -1598,21 +1598,21 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 </div><div class="tab codetab" data-id="2">
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
 
-<span class="n">url</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs&quot;</span>
-<span class="n">headers</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">Authorization</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">)</span>
+<span class="n">url</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs"</span>
+<span class="n">headers</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">Authorization</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Bearer YOUR_ACCESS_TOKEN"</span><span class="p">)</span>
 
 <span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">DELETE</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="nf">add_headers</span><span class="p">(</span><span class="n">.headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">))</span>
-<span class="n">content</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;parsed&quot;</span><span class="p">)</span>
+<span class="n">content</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="s">"parsed"</span><span class="p">)</span>
 <span class="nf">print</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="3">
 <div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span><span class="p">,</span><span class="w"> </span><span class="n">JSON</span>
 
-<span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs&quot;</span>
-<span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span><span class="s">&quot;Authorization&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">)</span>
+<span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs"</span>
+<span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span><span class="s">"Authorization"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"Bearer YOUR_ACCESS_TOKEN"</span><span class="p">)</span>
 
-<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&quot;DELETE&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">)</span>
+<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">"DELETE"</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">headers</span><span class="p">)</span>
 <span class="n">println</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -1626,14 +1626,14 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 
 <span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs&quot;</span><span class="p">;</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/flavours/my_custom_drs"</span><span class="p">;</span>
 
 <span class="w">        </span><span class="k">struct</span><span class="w"> </span><span class="nc">curl_slist</span><span class="w"> </span><span class="o">*</span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
-<span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Authorization: Bearer YOUR_ACCESS_TOKEN&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="n">headers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_slist_append</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span><span class="w"> </span><span class="s">"Authorization: Bearer YOUR_ACCESS_TOKEN"</span><span class="p">);</span>
 
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">);</span>
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_HTTPHEADER</span><span class="p">,</span><span class="w"> </span><span class="n">headers</span><span class="p">);</span>
-<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_CUSTOMREQUEST</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;DELETE&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_CUSTOMREQUEST</span><span class="p">,</span><span class="w"> </span><span class="s">"DELETE"</span><span class="p">);</span>
 
 <span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
 
@@ -1694,7 +1694,7 @@ The actual response will include more datasets in the <cite>catalog_dict</cite> 
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <dialog id="pst-secondary-sidebar-modal" tabindex="-1"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
@@ -1724,8 +1724,8 @@ The actual response will include more datasets in the <cite>catalog_dict</cite> 
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1745,8 +1745,7 @@ The actual response will include more datasets in the <cite>catalog_dict</cite> 
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
-    <br/>
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.2.0.
   </p>
 </div>
       
@@ -1759,7 +1758,7 @@ The actual response will include more datasets in the <cite>catalog_dict</cite> 
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.24.0.
 </p></div>
       
     </div>

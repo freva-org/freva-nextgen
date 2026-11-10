@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 
@@ -16,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="keywords" content="freva, climate, data, evaluation, science, reproducibility">
 
-    <title>Databrowser Rest API &#8212; Freva Databrowser 2607.1.0 documentation</title>
+    <title>Databrowser Rest API &#8212; Freva Databrowser 2611.0.0 documentation</title>
   
   
   
@@ -35,8 +34,8 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -44,12 +43,12 @@
     <link rel="stylesheet" type="text/css" href="../_static/code-tabs.css?v=1bc26e2f" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=c00c12d8"></script>
+    <script src="../_static/documentation_options.js?v=4c28454c"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -62,9 +61,9 @@
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'developers/databrowser';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_version = '0.24.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://freva-nextgen.readthedocs.io/en/latest/_static/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2607.1.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2611.0.0';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -76,6 +75,7 @@
     <link rel="next" title="Managing User Data and search Mappings" href="userdata.html" />
     <link rel="prev" title="Integrating Authentication into your Web Applications" href="auth_example.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
   
@@ -125,7 +125,7 @@
   
     <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
-  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
     <span class="fa-solid fa-bars"></span>
   </button>
   
@@ -149,8 +149,8 @@
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2607.1.0 documentation - Home"/>
-    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2607.1.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Freva Databrowser 2611.0.0 documentation - Home"/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Freva Databrowser 2611.0.0 documentation - Home"/>
   
   
 </a></div>
@@ -227,7 +227,7 @@
         <div class="navbar-item navbar-persistent--container">
           
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
  <i class="fa-solid fa-magnifying-glass"></i>
  <span class="search-button__default-text">Search</span>
  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
@@ -277,7 +277,7 @@
   
     <div class="navbar-persistent--mobile">
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
  <i class="fa-solid fa-magnifying-glass"></i>
  <span class="search-button__default-text">Search</span>
  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
@@ -286,7 +286,7 @@
   
 
   
-    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page" aria-expanded="false" aria-controls="pst-secondary-sidebar-modal">
       <span class="fa-solid fa-outdent"></span>
     </button>
   
@@ -300,7 +300,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
       <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
         
 
@@ -431,7 +431,7 @@
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="auth.html">The restAPI auth endpoints</a></li>
 <li class="toctree-l1"><a class="reference internal" href="auth_example.html">Integrating Authentication into your Web Applications</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Databrowser Rest API</a></li>
+<li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Databrowser Rest API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userdata.html">Managing User Data and search Mappings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="zarr.html">Zarr Streaming API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stac.html">STAC API</a></li>
@@ -473,7 +473,7 @@
     
     <li class="breadcrumb-item breadcrumb-home">
       <a href="../index.html" class="nav-link" aria-label="Home">
-        <i class="fa-solid fa-home"></i>
+        <i class="fa-solid fa-house"></i>
       </a>
     </li>
     
@@ -526,7 +526,7 @@ searching and filtering datasets.</p>
 </dd>
 <dt class="field-even">Response Headers<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7231#section-3.1.1.5">Content-Type</a></span> – <p><code class="docutils literal notranslate"><span class="pre">application/json</span></code>: the available DRS search standards
+<li><p><span><a class="reference external" href="https://www.rfc-editor.org/info/rfc7231#section-3.1.1.5">Content-Type</a></span> – <p><code class="docutils literal notranslate"><span class="pre">application/json</span></code>: the available DRS search standards
 and their search facets.</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">flavours</span></code>: array of available DRS standards.</p></li>
@@ -549,33 +549,33 @@ and their search facets.</p>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
 <span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;flavours&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">        </span><span class="s2">&quot;freva&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="s2">&quot;cmip6&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="s2">&quot;cmip5&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="s2">&quot;cordex&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="s2">&quot;nextgems&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="s2">&quot;user&quot;</span>
+<span class="w">      </span><span class="nt">"flavours"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="s2">"freva"</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">"cmip6"</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">"cmip5"</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">"cordex"</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">"nextgems"</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">"user"</span>
 <span class="w">      </span><span class="p">],</span>
-<span class="w">      </span><span class="nt">&quot;attributes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;freva&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">          </span><span class="s2">&quot;experiment&quot;</span><span class="p">,</span>
-<span class="w">          </span><span class="s2">&quot;ensemble&quot;</span><span class="p">,</span>
-<span class="w">          </span><span class="s2">&quot;fs_type&quot;</span><span class="p">,</span>
-<span class="w">          </span><span class="s2">&quot;grid_label&quot;</span><span class="p">,</span>
-<span class="w">          </span><span class="s2">&quot;institute&quot;</span><span class="p">,</span>
-<span class="w">          </span><span class="s2">&quot;model&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"attributes"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">"freva"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">          </span><span class="s2">"experiment"</span><span class="p">,</span>
+<span class="w">          </span><span class="s2">"ensemble"</span><span class="p">,</span>
+<span class="w">          </span><span class="s2">"fs_type"</span><span class="p">,</span>
+<span class="w">          </span><span class="s2">"grid_label"</span><span class="p">,</span>
+<span class="w">          </span><span class="s2">"institute"</span><span class="p">,</span>
+<span class="w">          </span><span class="s2">"model"</span><span class="p">,</span>
 <span class="w">          </span><span class="c1">// ... (other facets)</span>
 <span class="w">        </span><span class="p">],</span>
-<span class="w">        </span><span class="nt">&quot;cmip6&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">          </span><span class="s2">&quot;experiment_id&quot;</span><span class="p">,</span>
-<span class="w">          </span><span class="s2">&quot;member_id&quot;</span><span class="p">,</span>
-<span class="w">          </span><span class="s2">&quot;fs_type&quot;</span><span class="p">,</span>
-<span class="w">          </span><span class="s2">&quot;grid_label&quot;</span><span class="p">,</span>
-<span class="w">          </span><span class="s2">&quot;institution_id&quot;</span><span class="p">,</span>
-<span class="w">          </span><span class="s2">&quot;source_id&quot;</span><span class="p">,</span>
-<span class="w">          </span><span class="s2">&quot;mip_era&quot;</span><span class="p">,</span>
-<span class="w">          </span><span class="s2">&quot;activity_id&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"cmip6"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">          </span><span class="s2">"experiment_id"</span><span class="p">,</span>
+<span class="w">          </span><span class="s2">"member_id"</span><span class="p">,</span>
+<span class="w">          </span><span class="s2">"fs_type"</span><span class="p">,</span>
+<span class="w">          </span><span class="s2">"grid_label"</span><span class="p">,</span>
+<span class="w">          </span><span class="s2">"institution_id"</span><span class="p">,</span>
+<span class="w">          </span><span class="s2">"source_id"</span><span class="p">,</span>
+<span class="w">          </span><span class="s2">"mip_era"</span><span class="p">,</span>
+<span class="w">          </span><span class="s2">"activity_id"</span><span class="p">,</span>
 <span class="w">          </span><span class="c1">// ... (other facets)</span>
 <span class="w">        </span><span class="p">],</span>
 <span class="w">          </span><span class="c1">// ... (other DRS standards)</span>
@@ -603,20 +603,20 @@ curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span
 </div>
 </div><div class="tab codetab" data-id="1">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
-<span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/overview&quot;</span><span class="p">)</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/overview"</span><span class="p">)</span>
 <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="2">
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
-<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">GET</span><span class="p">(</span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/overview&quot;</span><span class="p">)</span>
-<span class="n">data</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">jsonlite</span><span class="o">::</span><span class="nf">fromJSON</span><span class="p">(</span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;text&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;utf-8&quot;</span><span class="p">))</span>
+<span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">GET</span><span class="p">(</span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/overview"</span><span class="p">)</span>
+<span class="n">data</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">jsonlite</span><span class="o">::</span><span class="nf">fromJSON</span><span class="p">(</span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"text"</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"utf-8"</span><span class="p">))</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="3">
 <div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span>
 <span class="k">using</span><span class="w"> </span><span class="n">JSON</span>
-<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/overview&quot;</span><span class="p">)</span>
+<span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/overview"</span><span class="p">)</span>
 <span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">HTTP</span><span class="o">.</span><span class="n">body</span><span class="p">(</span><span class="n">response</span><span class="p">)))</span>
 </pre></div>
 </div>
@@ -630,7 +630,7 @@ curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span
 
 <span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">url</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/overview&quot;</span><span class="p">;</span>
+<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">url</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/overview"</span><span class="p">;</span>
 
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">);</span>
 <span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
@@ -690,7 +690,7 @@ on the DRS standard flavour <code class="docutils literal notranslate"><span cla
 </dd>
 <dt class="field-even">Response Headers<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7231#section-3.1.1.5">Content-Type</a></span> – <code class="docutils literal notranslate"><span class="pre">text/plain</span></code>: <cite>stream</cite> providing a list of data
+<li><p><span><a class="reference external" href="https://www.rfc-editor.org/info/rfc7231#section-3.1.1.5">Content-Type</a></span> – <code class="docutils literal notranslate"><span class="pre">text/plain</span></code>: <cite>stream</cite> providing a list of data
 files or locations that match the search criteria.</p></li>
 </ul>
 </dd>
@@ -735,14 +735,14 @@ gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(thi
 Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
 C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="se">\</span>
-<span class="s1">&#39;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data-search/freva/file?product=EUR-11&amp;fs_type=swift&#39;</span>
+<span class="s1">'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data-search/freva/file?product=EUR-11&amp;fs_type=swift'</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="1">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-    <span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data-search/freva/file&quot;</span><span class="p">,</span>
-    <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;product&quot;</span><span class="p">:</span> <span class="s2">&quot;EUR-11&quot;</span><span class="p">,</span> <span class="s2">&quot;fs_type&quot;</span><span class="p">:</span> <span class="s2">&quot;swift&quot;</span><span class="p">}</span>
+    <span class="s2">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data-search/freva/file"</span><span class="p">,</span>
+    <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">"product"</span><span class="p">:</span> <span class="s2">"EUR-11"</span><span class="p">,</span> <span class="s2">"fs_type"</span><span class="p">:</span> <span class="s2">"swift"</span><span class="p">}</span>
 <span class="p">)</span>
 <span class="n">data</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">iter_lines</span><span class="p">(</span><span class="n">decode_unicode</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
 </pre></div>
@@ -750,19 +750,19 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 </div><div class="tab codetab" data-id="2">
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
 <span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">GET</span><span class="p">(</span>
-<span class="w">    </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data-search/freva/file&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;EUR-11&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">fs_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;swift&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data-search/freva/file"</span><span class="p">,</span>
+<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"EUR-11"</span><span class="p">,</span><span class="w"> </span><span class="n">fs_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"swift"</span><span class="p">)</span>
 <span class="p">)</span>
-<span class="n">data</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">strsplit</span><span class="p">(</span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;text&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;UTF-8&quot;</span><span class="p">),</span><span class="w"> </span><span class="s">&quot;\n&quot;</span><span class="p">)[[</span><span class="m">1</span><span class="p">]]</span>
+<span class="n">data</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">strsplit</span><span class="p">(</span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"text"</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"UTF-8"</span><span class="p">),</span><span class="w"> </span><span class="s">"\n"</span><span class="p">)[[</span><span class="m">1</span><span class="p">]]</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="3">
 <div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span>
 <span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-<span class="w">    </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data-search/freva/file&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span><span class="s">&quot;product&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;EUR-11&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;fs_type&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;swift&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data-search/freva/file"</span><span class="p">,</span>
+<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span><span class="s">"product"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"EUR-11"</span><span class="p">,</span><span class="w"> </span><span class="s">"fs_type"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"swift"</span><span class="p">)</span>
 <span class="p">)</span>
-<span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">split</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">HTTP</span><span class="o">.</span><span class="n">body</span><span class="p">(</span><span class="n">response</span><span class="p">)),</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">split</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">HTTP</span><span class="o">.</span><span class="n">body</span><span class="p">(</span><span class="n">response</span><span class="p">)),</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="4">
@@ -772,29 +772,29 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="n">CURL</span><span class="w"> </span><span class="o">*</span><span class="n">curl</span><span class="p">;</span>
 <span class="w">    </span><span class="n">CURLcode</span><span class="w"> </span><span class="n">res</span><span class="p">;</span>
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data-search/freva/file&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/data-search/freva/file"</span><span class="p">;</span>
 
 <span class="w">    </span><span class="c1">// Query parameters</span>
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;EUR-11&quot;</span><span class="p">;</span>
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">fs_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;swift&quot;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"EUR-11"</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">fs_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"swift"</span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">multi_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="c1">// 0 for false, 1 for true</span>
 
 <span class="w">    </span><span class="c1">// Build the query string</span>
 <span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">query</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
 <span class="w">    </span><span class="n">snprintf</span><span class="p">(</span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">query</span><span class="p">),</span>
-<span class="w">        </span><span class="s">&quot;?product=%s&amp;fs_type=%s&amp;start=%d&amp;multi-version=%d&quot;</span><span class="p">,</span><span class="n">product</span><span class="p">,</span><span class="w"> </span><span class="n">fs_type</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="n">start</span><span class="p">,</span><span class="w"> </span><span class="n">multi_version</span><span class="p">);</span>
+<span class="w">        </span><span class="s">"?product=%s&amp;fs_type=%s&amp;start=%d&amp;multi-version=%d"</span><span class="p">,</span><span class="n">product</span><span class="p">,</span><span class="w"> </span><span class="n">fs_type</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="n">start</span><span class="p">,</span><span class="w"> </span><span class="n">multi_version</span><span class="p">);</span>
 
 <span class="w">    </span><span class="c1">// Initialize curl</span>
 <span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Failed to initialize curl</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">"Failed to initialize curl</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
 <span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
 <span class="w">    </span><span class="p">}</span>
 
 <span class="w">    </span><span class="c1">// Construct the full URL with query parameters</span>
 <span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">full_url</span><span class="p">[</span><span class="mi">512</span><span class="p">];</span>
-<span class="w">    </span><span class="n">snprintf</span><span class="p">(</span><span class="n">full_url</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">full_url</span><span class="p">),</span><span class="w"> </span><span class="s">&quot;%s%s&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="n">query</span><span class="p">);</span>
+<span class="w">    </span><span class="n">snprintf</span><span class="p">(</span><span class="n">full_url</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">full_url</span><span class="p">),</span><span class="w"> </span><span class="s">"%s%s"</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="n">query</span><span class="p">);</span>
 
 <span class="w">    </span><span class="c1">// Set the URL to fetch</span>
 <span class="w">    </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">full_url</span><span class="p">);</span>
@@ -802,7 +802,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="w">    </span><span class="c1">// Perform the request</span>
 <span class="w">    </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">res</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">CURLE_OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;curl_easy_perform() failed: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">curl_easy_strerror</span><span class="p">(</span><span class="n">res</span><span class="p">));</span>
+<span class="w">        </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">"curl_easy_perform() failed: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="n">curl_easy_strerror</span><span class="p">(</span><span class="n">res</span><span class="p">));</span>
 <span class="w">    </span><span class="p">}</span>
 
 <span class="w">    </span><span class="c1">// Clean up</span>
@@ -869,7 +869,7 @@ on the DRS standard flavour <code class="docutils literal notranslate"><span cla
 </dd>
 <dt class="field-even">Response Headers<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7231#section-3.1.1.5">Content-Type</a></span> – <p><code class="docutils literal notranslate"><span class="pre">application/json</span></code>: Metadata matching the data
+<li><p><span><a class="reference external" href="https://www.rfc-editor.org/info/rfc7231#section-3.1.1.5">Content-Type</a></span> – <p><code class="docutils literal notranslate"><span class="pre">application/json</span></code>: Metadata matching the data
 query.</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">total_count</span></code>: Number of dataset found for</p></li>
@@ -907,52 +907,52 @@ Here we also want to get only those datasets that belong to the <code class="doc
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
 <span class="p">{</span>
-<span class="w">   </span><span class="nt">&quot;total_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span><span class="p">,</span>
-<span class="w">   </span><span class="nt">&quot;facets&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">       </span><span class="nt">&quot;cmor_table&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;1day&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;3hr&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;fx&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;1&quot;</span><span class="p">],</span>
-<span class="w">       </span><span class="nt">&quot;dataset&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;cordex-fs&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;cordex-hsm&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;cordex-swfit&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;2&quot;</span><span class="p">],</span>
-<span class="w">       </span><span class="nt">&quot;driving_model&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;mpi-m-mpi-esm-lr&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;4&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;ncc-noresm1-m&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p">],</span>
-<span class="w">       </span><span class="nt">&quot;ensemble&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;r0i0p0&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;r1i1p1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;6&quot;</span><span class="p">],</span>
-<span class="w">       </span><span class="nt">&quot;experiment&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;historical&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;4&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;rcp85&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p">],</span>
-<span class="w">       </span><span class="nt">&quot;format&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;nc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;5&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;zarr&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;2&quot;</span><span class="p">],</span>
-<span class="w">       </span><span class="nt">&quot;fs_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;posix&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;7&quot;</span><span class="p">],</span>
-<span class="w">       </span><span class="nt">&quot;grid_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
-<span class="w">       </span><span class="nt">&quot;grid_label&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;gn&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;7&quot;</span><span class="p">],</span>
-<span class="w">       </span><span class="nt">&quot;institute&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;clmcom&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;4&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;gerics&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p">],</span>
-<span class="w">       </span><span class="nt">&quot;level_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;2d&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;7&quot;</span><span class="p">],</span>
-<span class="w">       </span><span class="nt">&quot;model&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;4&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;ncc-noresm1-m-gerics-remo2015-v1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p">],</span>
-<span class="w">       </span><span class="nt">&quot;product&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;eur-11&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;7&quot;</span><span class="p">],</span>
-<span class="w">       </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;cordex&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;7&quot;</span><span class="p">],</span>
-<span class="w">       </span><span class="nt">&quot;rcm_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;clmcom-cclm4-8-17&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;4&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;gerics-remo2015&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p">],</span>
-<span class="w">       </span><span class="nt">&quot;rcm_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;v1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;7&quot;</span><span class="p">],</span>
-<span class="w">       </span><span class="nt">&quot;realm&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;atmos&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;7&quot;</span><span class="p">],</span>
-<span class="w">       </span><span class="nt">&quot;time_aggregation&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;avg&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;7&quot;</span><span class="p">],</span>
-<span class="w">       </span><span class="nt">&quot;time_frequency&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;1day&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;3hr&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;fx&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;1&quot;</span><span class="p">],</span>
-<span class="w">       </span><span class="nt">&quot;variable&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;orog&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pr&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;tas&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p">]</span>
+<span class="w">   </span><span class="nt">"total_count"</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">"facets"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="nt">"cmor_table"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"1day"</span><span class="p">,</span><span class="w"> </span><span class="s2">"3"</span><span class="p">,</span><span class="w"> </span><span class="s2">"3hr"</span><span class="p">,</span><span class="w"> </span><span class="s2">"3"</span><span class="p">,</span><span class="w"> </span><span class="s2">"fx"</span><span class="p">,</span><span class="w"> </span><span class="s2">"1"</span><span class="p">],</span>
+<span class="w">       </span><span class="nt">"dataset"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"cordex-fs"</span><span class="p">,</span><span class="w"> </span><span class="s2">"3"</span><span class="p">,</span><span class="w"> </span><span class="s2">"cordex-hsm"</span><span class="p">,</span><span class="w"> </span><span class="s2">"2"</span><span class="p">,</span><span class="w"> </span><span class="s2">"cordex-swfit"</span><span class="p">,</span><span class="w"> </span><span class="s2">"2"</span><span class="p">],</span>
+<span class="w">       </span><span class="nt">"driving_model"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"mpi-m-mpi-esm-lr"</span><span class="p">,</span><span class="w"> </span><span class="s2">"4"</span><span class="p">,</span><span class="w"> </span><span class="s2">"ncc-noresm1-m"</span><span class="p">,</span><span class="w"> </span><span class="s2">"3"</span><span class="p">],</span>
+<span class="w">       </span><span class="nt">"ensemble"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"r0i0p0"</span><span class="p">,</span><span class="w"> </span><span class="s2">"1"</span><span class="p">,</span><span class="w"> </span><span class="s2">"r1i1p1"</span><span class="p">,</span><span class="w"> </span><span class="s2">"6"</span><span class="p">],</span>
+<span class="w">       </span><span class="nt">"experiment"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"historical"</span><span class="p">,</span><span class="w"> </span><span class="s2">"4"</span><span class="p">,</span><span class="w"> </span><span class="s2">"rcp85"</span><span class="p">,</span><span class="w"> </span><span class="s2">"3"</span><span class="p">],</span>
+<span class="w">       </span><span class="nt">"format"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"nc"</span><span class="p">,</span><span class="w"> </span><span class="s2">"5"</span><span class="p">,</span><span class="w"> </span><span class="s2">"zarr"</span><span class="p">,</span><span class="w"> </span><span class="s2">"2"</span><span class="p">],</span>
+<span class="w">       </span><span class="nt">"fs_type"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"posix"</span><span class="p">,</span><span class="w"> </span><span class="s2">"7"</span><span class="p">],</span>
+<span class="w">       </span><span class="nt">"grid_id"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">       </span><span class="nt">"grid_label"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"gn"</span><span class="p">,</span><span class="w"> </span><span class="s2">"7"</span><span class="p">],</span>
+<span class="w">       </span><span class="nt">"institute"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"clmcom"</span><span class="p">,</span><span class="w"> </span><span class="s2">"4"</span><span class="p">,</span><span class="w"> </span><span class="s2">"gerics"</span><span class="p">,</span><span class="w"> </span><span class="s2">"3"</span><span class="p">],</span>
+<span class="w">       </span><span class="nt">"level_type"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"2d"</span><span class="p">,</span><span class="w"> </span><span class="s2">"7"</span><span class="p">],</span>
+<span class="w">       </span><span class="nt">"model"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"mpi-m-mpi-esm-lr-clmcom-cclm4-8-17-v1"</span><span class="p">,</span><span class="w"> </span><span class="s2">"4"</span><span class="p">,</span><span class="w"> </span><span class="s2">"ncc-noresm1-m-gerics-remo2015-v1"</span><span class="p">,</span><span class="w"> </span><span class="s2">"3"</span><span class="p">],</span>
+<span class="w">       </span><span class="nt">"product"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"eur-11"</span><span class="p">,</span><span class="w"> </span><span class="s2">"7"</span><span class="p">],</span>
+<span class="w">       </span><span class="nt">"project"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"cordex"</span><span class="p">,</span><span class="w"> </span><span class="s2">"7"</span><span class="p">],</span>
+<span class="w">       </span><span class="nt">"rcm_name"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"clmcom-cclm4-8-17"</span><span class="p">,</span><span class="w"> </span><span class="s2">"4"</span><span class="p">,</span><span class="w"> </span><span class="s2">"gerics-remo2015"</span><span class="p">,</span><span class="w"> </span><span class="s2">"3"</span><span class="p">],</span>
+<span class="w">       </span><span class="nt">"rcm_version"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"v1"</span><span class="p">,</span><span class="w"> </span><span class="s2">"7"</span><span class="p">],</span>
+<span class="w">       </span><span class="nt">"realm"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"atmos"</span><span class="p">,</span><span class="w"> </span><span class="s2">"7"</span><span class="p">],</span>
+<span class="w">       </span><span class="nt">"time_aggregation"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"avg"</span><span class="p">,</span><span class="w"> </span><span class="s2">"7"</span><span class="p">],</span>
+<span class="w">       </span><span class="nt">"time_frequency"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"1day"</span><span class="p">,</span><span class="w"> </span><span class="s2">"3"</span><span class="p">,</span><span class="w"> </span><span class="s2">"3hr"</span><span class="p">,</span><span class="w"> </span><span class="s2">"3"</span><span class="p">,</span><span class="w"> </span><span class="s2">"fx"</span><span class="p">,</span><span class="w"> </span><span class="s2">"1"</span><span class="p">],</span>
+<span class="w">       </span><span class="nt">"variable"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"orog"</span><span class="p">,</span><span class="w"> </span><span class="s2">"1"</span><span class="p">,</span><span class="w"> </span><span class="s2">"pr"</span><span class="p">,</span><span class="w"> </span><span class="s2">"3"</span><span class="p">,</span><span class="w"> </span><span class="s2">"tas"</span><span class="p">,</span><span class="w"> </span><span class="s2">"3"</span><span class="p">]</span>
 <span class="w">   </span><span class="p">},</span>
-<span class="w">   </span><span class="nt">&quot;facet_mapping&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">       </span><span class="nt">&quot;experiment&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;experiment&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;ensemble&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ensemble&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;fs_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fs_type&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;grid_label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;grid_label&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;institute&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;institute&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;model&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;project&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;product&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;product&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;realm&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;realm&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;variable&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;variable&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;time_aggregation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;time_aggregation&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;time_frequency&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;time_frequency&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;cmor_table&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cmor_table&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;dataset&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dataset&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;driving_model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;driving_model&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;format&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;grid_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;grid_id&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;level_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;level_type&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;rcm_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;rcm_name&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;rcm_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;rcm_version&quot;</span>
+<span class="w">   </span><span class="nt">"facet_mapping"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="nt">"experiment"</span><span class="p">:</span><span class="w"> </span><span class="s2">"experiment"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"ensemble"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ensemble"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"fs_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fs_type"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"grid_label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"grid_label"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"institute"</span><span class="p">:</span><span class="w"> </span><span class="s2">"institute"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"model"</span><span class="p">:</span><span class="w"> </span><span class="s2">"model"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"project"</span><span class="p">:</span><span class="w"> </span><span class="s2">"project"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"product"</span><span class="p">:</span><span class="w"> </span><span class="s2">"product"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"realm"</span><span class="p">:</span><span class="w"> </span><span class="s2">"realm"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"variable"</span><span class="p">:</span><span class="w"> </span><span class="s2">"variable"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"time_aggregation"</span><span class="p">:</span><span class="w"> </span><span class="s2">"time_aggregation"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"time_frequency"</span><span class="p">:</span><span class="w"> </span><span class="s2">"time_frequency"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"cmor_table"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cmor_table"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"dataset"</span><span class="p">:</span><span class="w"> </span><span class="s2">"dataset"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"driving_model"</span><span class="p">:</span><span class="w"> </span><span class="s2">"driving_model"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"format"</span><span class="p">:</span><span class="w"> </span><span class="s2">"format"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"grid_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"grid_id"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"level_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"level_type"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"rcm_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"rcm_name"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"rcm_version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"rcm_version"</span>
 <span class="w">   </span><span class="p">},</span>
-<span class="w">   </span><span class="nt">&quot;primary_facets&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;experiment&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;ensemble&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;institute&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;model&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;project&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;product&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;realm&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;time_aggregation&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;time_frequency&quot;</span><span class="p">]</span>
+<span class="w">   </span><span class="nt">"primary_facets"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">,</span><span class="w"> </span><span class="s2">"ensemble"</span><span class="p">,</span><span class="w"> </span><span class="s2">"institute"</span><span class="p">,</span><span class="w"> </span><span class="s2">"model"</span><span class="p">,</span><span class="w"> </span><span class="s2">"project"</span><span class="p">,</span><span class="w"> </span><span class="s2">"product"</span><span class="p">,</span><span class="w"> </span><span class="s2">"realm"</span><span class="p">,</span><span class="w"> </span><span class="s2">"time_aggregation"</span><span class="p">,</span><span class="w"> </span><span class="s2">"time_frequency"</span><span class="p">]</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -969,14 +969,14 @@ Python</li><li class="tabbutton" data-id="2" onclick="sphinx_code_tabs_onclick(t
 gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(this)">
 Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
 C/C++</li></ul><div class="tab codetab selected" data-id="0">
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="s1">&#39;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata-search/freva/file?product=EUR-11&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="s1">'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata-search/freva/file?product=EUR-11'</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="1">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-    <span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata-search/freva/file&quot;</span><span class="p">,</span>
-    <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;product&quot;</span><span class="p">:</span> <span class="s2">&quot;EUR-11&quot;</span><span class="p">}</span>
+    <span class="s2">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata-search/freva/file"</span><span class="p">,</span>
+    <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">"product"</span><span class="p">:</span> <span class="s2">"EUR-11"</span><span class="p">}</span>
 <span class="p">)</span>
 <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
 </pre></div>
@@ -984,18 +984,18 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 </div><div class="tab codetab" data-id="2">
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
 <span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">GET</span><span class="p">(</span>
-<span class="w">    </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata-search/freva/file&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;EUR-11&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata-search/freva/file"</span><span class="p">,</span>
+<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"EUR-11"</span><span class="p">)</span>
 <span class="p">)</span>
-<span class="n">data</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">jsonlite</span><span class="o">::</span><span class="nf">fromJSON</span><span class="p">(</span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;text&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;utf-8&quot;</span><span class="p">))</span>
+<span class="n">data</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">jsonlite</span><span class="o">::</span><span class="nf">fromJSON</span><span class="p">(</span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"text"</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"utf-8"</span><span class="p">))</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="3">
 <div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span>
 <span class="k">using</span><span class="w"> </span><span class="n">JSON</span>
 <span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-<span class="w">    </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata-search/freva/file&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span><span class="s">&quot;product&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;EUR-11&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata-search/freva/file"</span><span class="p">,</span>
+<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span><span class="s">"product"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"EUR-11"</span><span class="p">)</span>
 <span class="p">)</span>
 <span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">HTTP</span><span class="o">.</span><span class="n">body</span><span class="p">(</span><span class="n">response</span><span class="p">)))</span>
 </pre></div>
@@ -1007,25 +1007,25 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="n">CURL</span><span class="w"> </span><span class="o">*</span><span class="n">curl</span><span class="p">;</span>
 <span class="w">    </span><span class="n">CURLcode</span><span class="w"> </span><span class="n">res</span><span class="p">;</span>
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata-search/freva/file&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/metadata-search/freva/file"</span><span class="p">;</span>
 
 <span class="w">    </span><span class="c1">// Query parameters</span>
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;EUR-11&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"EUR-11"</span><span class="p">;</span>
 
 <span class="w">    </span><span class="c1">// Build the query string</span>
 <span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">query</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
-<span class="w">    </span><span class="n">snprintf</span><span class="p">(</span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">query</span><span class="p">),</span><span class="w"> </span><span class="s">&quot;?product=%s&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">product</span><span class="p">);</span>
+<span class="w">    </span><span class="n">snprintf</span><span class="p">(</span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">query</span><span class="p">),</span><span class="w"> </span><span class="s">"?product=%s"</span><span class="p">,</span><span class="w"> </span><span class="n">product</span><span class="p">);</span>
 
 <span class="w">    </span><span class="c1">// Initialize curl</span>
 <span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Failed to initialize curl</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">"Failed to initialize curl</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
 <span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
 <span class="w">    </span><span class="p">}</span>
 
 <span class="w">    </span><span class="c1">// Construct the full URL with query parameters</span>
 <span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">full_url</span><span class="p">[</span><span class="mi">512</span><span class="p">];</span>
-<span class="w">    </span><span class="n">snprintf</span><span class="p">(</span><span class="n">full_url</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">full_url</span><span class="p">),</span><span class="w"> </span><span class="s">&quot;%s%s&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="n">query</span><span class="p">);</span>
+<span class="w">    </span><span class="n">snprintf</span><span class="p">(</span><span class="n">full_url</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">full_url</span><span class="p">),</span><span class="w"> </span><span class="s">"%s%s"</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="n">query</span><span class="p">);</span>
 
 <span class="w">    </span><span class="c1">// Set the URL to fetch</span>
 <span class="w">    </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">full_url</span><span class="p">);</span>
@@ -1033,7 +1033,7 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="w">    </span><span class="c1">// Perform the request</span>
 <span class="w">    </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">res</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">CURLE_OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;curl_easy_perform() failed: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">curl_easy_strerror</span><span class="p">(</span><span class="n">res</span><span class="p">));</span>
+<span class="w">        </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">"curl_easy_perform() failed: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="n">curl_easy_strerror</span><span class="p">(</span><span class="n">res</span><span class="p">));</span>
 <span class="w">    </span><span class="p">}</span>
 
 <span class="w">    </span><span class="c1">// Clean up</span>
@@ -1098,7 +1098,7 @@ on the DRS standard flavour <code class="docutils literal notranslate"><span cla
 </dd>
 <dt class="field-even">Response Headers<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7231#section-3.1.1.5">Content-Type</a></span> – <code class="docutils literal notranslate"><span class="pre">application/zip</span></code></p></li>
+<li><p><span><a class="reference external" href="https://www.rfc-editor.org/info/rfc7231#section-3.1.1.5">Content-Type</a></span> – <code class="docutils literal notranslate"><span class="pre">application/zip</span></code></p></li>
 </ul>
 </dd>
 </dl>
@@ -1116,7 +1116,7 @@ We’re specifically looking for datasets from the <code class="docutils literal
 <h3>Example Response<a class="headerlink" href="#id8" title="Link to this heading">#</a></h3>
 <div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/zip</span>
-<span class="na">Content-Disposition</span><span class="o">:</span> <span class="l">attachment; filename=&quot;stac-catalog-Dataset-freva-674ff427-2e2-file.zip&quot;</span>
+<span class="na">Content-Disposition</span><span class="o">:</span> <span class="l">attachment; filename="stac-catalog-Dataset-freva-674ff427-2e2-file.zip"</span>
 
 [Json content of the zip archive]
 </pre></div>
@@ -1134,7 +1134,7 @@ gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(thi
 Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
 C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="se">\</span>
-<span class="s1">&#39;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-catalogue/freva/file?product=EUR-11&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="s1">'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-catalogue/freva/file?product=EUR-11'</span><span class="w"> </span><span class="se">\</span>
 --output<span class="w"> </span>stac-catalog.zip
 </pre></div>
 </div>
@@ -1142,11 +1142,11 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 
 <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-    <span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-catalogue/freva/file&quot;</span><span class="p">,</span>
-    <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;product&quot;</span><span class="p">:</span> <span class="s2">&quot;EUR-11&quot;</span><span class="p">},</span>
+    <span class="s2">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-catalogue/freva/file"</span><span class="p">,</span>
+    <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">"product"</span><span class="p">:</span> <span class="s2">"EUR-11"</span><span class="p">},</span>
     <span class="n">stream</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;stac-catalog.zip&quot;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">"stac-catalog.zip"</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">iter_content</span><span class="p">(</span><span class="n">chunk_size</span><span class="o">=</span><span class="mi">8192</span><span class="p">):</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
 </pre></div>
@@ -1156,9 +1156,9 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 
 <span class="c1"># For static STAC</span>
 <span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">GET</span><span class="p">(</span>
-<span class="w">    </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-catalogue/freva/file&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;EUR-11&quot;</span><span class="p">),</span>
-<span class="w">    </span><span class="nf">write_disk</span><span class="p">(</span><span class="s">&quot;stac-catalog.zip&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">overwrite</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">TRUE</span><span class="p">)</span>
+<span class="w">    </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-catalogue/freva/file"</span><span class="p">,</span>
+<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"EUR-11"</span><span class="p">),</span>
+<span class="w">    </span><span class="nf">write_disk</span><span class="p">(</span><span class="s">"stac-catalog.zip"</span><span class="p">,</span><span class="w"> </span><span class="n">overwrite</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">TRUE</span><span class="p">)</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -1167,10 +1167,10 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <span class="k">using</span><span class="w"> </span><span class="n">JSON</span>
 
 <span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-<span class="w">    </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-catalogue/freva/file&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span><span class="s">&quot;product&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;EUR-11&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-catalogue/freva/file"</span><span class="p">,</span>
+<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span><span class="s">"product"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"EUR-11"</span><span class="p">)</span>
 <span class="p">)</span>
-<span class="n">open</span><span class="p">(</span><span class="s">&quot;stac-catalog.zip&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;w&quot;</span><span class="p">)</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="n">f</span>
+<span class="n">open</span><span class="p">(</span><span class="s">"stac-catalog.zip"</span><span class="p">,</span><span class="w"> </span><span class="s">"w"</span><span class="p">)</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="n">f</span>
 <span class="w">    </span><span class="n">write</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
 <span class="k">end</span>
 </pre></div>
@@ -1186,15 +1186,15 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 
 <span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">static_url</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-catalogue/freva/file?product=EUR-11&quot;</span><span class="p">;</span>
-<span class="w">        </span><span class="n">fp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fopen</span><span class="p">(</span><span class="s">&quot;stac-catalog.zip&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;wb&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">static_url</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/stac-catalogue/freva/file?product=EUR-11"</span><span class="p">;</span>
+<span class="w">        </span><span class="n">fp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fopen</span><span class="p">(</span><span class="s">"stac-catalog.zip"</span><span class="p">,</span><span class="w"> </span><span class="s">"wb"</span><span class="p">);</span>
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">static_url</span><span class="p">);</span>
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_WRITEDATA</span><span class="p">,</span><span class="w"> </span><span class="n">fp</span><span class="p">);</span>
 <span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
 <span class="w">        </span><span class="n">fclose</span><span class="p">(</span><span class="n">fp</span><span class="p">);</span>
 
 <span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">res</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">CURLE_OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">            </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Error: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">curl_easy_strerror</span><span class="p">(</span><span class="n">res</span><span class="p">));</span>
+<span class="w">            </span><span class="n">printf</span><span class="p">(</span><span class="s">"Error: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="n">curl_easy_strerror</span><span class="p">(</span><span class="n">res</span><span class="p">));</span>
 <span class="w">        </span><span class="p">}</span>
 
 <span class="w">        </span><span class="n">curl_easy_cleanup</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
@@ -1256,7 +1256,7 @@ on the DRS standard flavour <code class="docutils literal notranslate"><span cla
 </dd>
 <dt class="field-even">Response Headers<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7231#section-3.1.1.5">Content-Type</a></span> – <code class="docutils literal notranslate"><span class="pre">application/json</span></code>: the intake-esm catalogue</p></li>
+<li><p><span><a class="reference external" href="https://www.rfc-editor.org/info/rfc7231#section-3.1.1.5">Content-Type</a></span> – <code class="docutils literal notranslate"><span class="pre">application/json</span></code>: the intake-esm catalogue</p></li>
 </ul>
 </dd>
 </dl>
@@ -1278,48 +1278,48 @@ Here we also want to get only those datasets that belong to the <code class="doc
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
 <span class="p">{</span>
-<span class="w">     </span><span class="nt">&quot;esmcat_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.1.0&quot;</span><span class="p">,</span>
-<span class="w">     </span><span class="nt">&quot;attributes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">     </span><span class="nt">"esmcat_version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0.1.0"</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">"attributes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">       </span><span class="p">{</span>
-<span class="w">         </span><span class="nt">&quot;column_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;project&quot;</span><span class="p">,</span>
-<span class="w">         </span><span class="nt">&quot;vocabulary&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<span class="w">         </span><span class="nt">"column_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"project"</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">"vocabulary"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span>
 <span class="w">       </span><span class="p">},</span>
 <span class="w">       </span><span class="p">{</span>
-<span class="w">         </span><span class="nt">&quot;column_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;product&quot;</span><span class="p">,</span>
-<span class="w">         </span><span class="nt">&quot;vocabulary&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<span class="w">         </span><span class="nt">"column_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"product"</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">"vocabulary"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span>
 <span class="w">       </span><span class="p">},</span>
 <span class="w">       </span><span class="p">{</span>
-<span class="w">         </span><span class="nt">&quot;column_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;institute&quot;</span><span class="p">,</span>
-<span class="w">         </span><span class="nt">&quot;vocabulary&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<span class="w">         </span><span class="nt">"column_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"institute"</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">"vocabulary"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span>
 <span class="w">       </span><span class="p">},</span>
 <span class="w">       </span><span class="c1">// ... (other attributes)</span>
 <span class="w">     </span><span class="p">],</span>
-<span class="w">     </span><span class="nt">&quot;assets&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">       </span><span class="nt">&quot;column_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;uri&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;format_column_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;format&quot;</span>
+<span class="w">     </span><span class="nt">"assets"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="nt">"column_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"uri"</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">"format_column_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"format"</span>
 <span class="w">     </span><span class="p">},</span>
-<span class="w">     </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;freva&quot;</span><span class="p">,</span>
-<span class="w">     </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Catalogue from freva-databrowser v2023.4.1&quot;</span><span class="p">,</span>
-<span class="w">     </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;freva-databrowser catalogue&quot;</span><span class="p">,</span>
-<span class="w">     </span><span class="nt">&quot;last_updated&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2023-07-26T10:50:18.592898&quot;</span><span class="p">,</span>
-<span class="w">     </span><span class="nt">&quot;aggregation_control&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">     </span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"freva"</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Catalogue from freva-databrowser v2023.4.1"</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">"title"</span><span class="p">:</span><span class="w"> </span><span class="s2">"freva-databrowser catalogue"</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">"last_updated"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2023-07-26T10:50:18.592898"</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">"aggregation_control"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">       </span><span class="c1">// ... (aggregation options)</span>
 <span class="w">     </span><span class="p">},</span>
-<span class="w">     </span><span class="nt">&quot;catalog_dict&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">     </span><span class="nt">"catalog_dict"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">       </span><span class="p">{</span>
-<span class="w">         </span><span class="nt">&quot;file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://swift.dkrz.de/v1/...&quot;</span><span class="p">,</span>
-<span class="w">         </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;cordex&quot;</span><span class="p">],</span>
-<span class="w">         </span><span class="nt">&quot;product&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;EUR-11&quot;</span><span class="p">],</span>
-<span class="w">         </span><span class="nt">&quot;institute&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;GERICS&quot;</span><span class="p">],</span>
-<span class="w">         </span><span class="nt">&quot;model&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;NCC-NorESM1-M-GERICS-REMO2015-v1&quot;</span><span class="p">],</span>
-<span class="w">         </span><span class="nt">&quot;experiment&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;rcp85&quot;</span><span class="p">],</span>
-<span class="w">         </span><span class="nt">&quot;time_frequency&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;3hr&quot;</span><span class="p">],</span>
-<span class="w">         </span><span class="nt">&quot;realm&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;atmos&quot;</span><span class="p">],</span>
-<span class="w">         </span><span class="nt">&quot;variable&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;pr&quot;</span><span class="p">],</span>
-<span class="w">         </span><span class="nt">&quot;ensemble&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;r1i1p1&quot;</span><span class="p">],</span>
-<span class="w">         </span><span class="nt">&quot;cmor_table&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;3hr&quot;</span><span class="p">],</span>
-<span class="w">         </span><span class="nt">&quot;fs_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;posix&quot;</span><span class="p">,</span>
-<span class="w">         </span><span class="nt">&quot;grid_label&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;gn&quot;</span><span class="p">]</span>
+<span class="w">         </span><span class="nt">"file"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://swift.dkrz.de/v1/..."</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">"project"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"cordex"</span><span class="p">],</span>
+<span class="w">         </span><span class="nt">"product"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"EUR-11"</span><span class="p">],</span>
+<span class="w">         </span><span class="nt">"institute"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"GERICS"</span><span class="p">],</span>
+<span class="w">         </span><span class="nt">"model"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"NCC-NorESM1-M-GERICS-REMO2015-v1"</span><span class="p">],</span>
+<span class="w">         </span><span class="nt">"experiment"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"rcp85"</span><span class="p">],</span>
+<span class="w">         </span><span class="nt">"time_frequency"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"3hr"</span><span class="p">],</span>
+<span class="w">         </span><span class="nt">"realm"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"atmos"</span><span class="p">],</span>
+<span class="w">         </span><span class="nt">"variable"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"pr"</span><span class="p">],</span>
+<span class="w">         </span><span class="nt">"ensemble"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"r1i1p1"</span><span class="p">],</span>
+<span class="w">         </span><span class="nt">"cmor_table"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"3hr"</span><span class="p">],</span>
+<span class="w">         </span><span class="nt">"fs_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"posix"</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">"grid_label"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"gn"</span><span class="p">]</span>
 <span class="w">       </span><span class="p">},</span>
 <span class="w">       </span><span class="c1">// ... (other datasets)</span>
 <span class="w">     </span><span class="p">]</span>
@@ -1340,15 +1340,15 @@ gnuR</li><li class="tabbutton" data-id="3" onclick="sphinx_code_tabs_onclick(thi
 Julia</li><li class="tabbutton" data-id="4" onclick="sphinx_code_tabs_onclick(this)">
 C/C++</li></ul><div class="tab codetab selected" data-id="0">
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="se">\</span>
-<span class="s1">&#39;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake-catalogue/freva/file?product=EUR-11&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>catalogue.json
+<span class="s1">'https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake-catalogue/freva/file?product=EUR-11'</span><span class="w"> </span>&gt;<span class="w"> </span>catalogue.json
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="1">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">intake</span>
 <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-    <span class="s2">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake-catalogue/freva/file&quot;</span><span class="p">,</span>
-    <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;product&quot;</span><span class="p">:</span> <span class="s2">&quot;EUR-11&quot;</span><span class="p">}</span>
+    <span class="s2">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake-catalogue/freva/file"</span><span class="p">,</span>
+    <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">"product"</span><span class="p">:</span> <span class="s2">"EUR-11"</span><span class="p">}</span>
 <span class="p">)</span>
 <span class="n">cat</span> <span class="o">=</span> <span class="n">intake</span><span class="o">.</span><span class="n">open_esm_datastore</span><span class="p">(</span><span class="n">cat</span><span class="p">)</span>
 </pre></div>
@@ -1356,22 +1356,22 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 </div><div class="tab codetab" data-id="2">
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">httr</span><span class="p">)</span>
 <span class="n">response</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">GET</span><span class="p">(</span>
-<span class="w">    </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake-catalogue/freva/file&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;EUR-11&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake-catalogue/freva/file"</span><span class="p">,</span>
+<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"EUR-11"</span><span class="p">)</span>
 <span class="p">)</span>
-<span class="n">json_content</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;text&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="o">=</span><span class="s">&quot;utf-8&quot;</span><span class="p">)</span>
-<span class="nf">write</span><span class="p">(</span><span class="n">json_content</span><span class="p">,</span><span class="w"> </span><span class="n">file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;intake-catalogue.json&quot;</span><span class="p">)</span>
+<span class="n">json_content</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="s">"text"</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="o">=</span><span class="s">"utf-8"</span><span class="p">)</span>
+<span class="nf">write</span><span class="p">(</span><span class="n">json_content</span><span class="p">,</span><span class="w"> </span><span class="n">file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"intake-catalogue.json"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div><div class="tab codetab" data-id="3">
 <div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">HTTP</span>
 <span class="k">using</span><span class="w"> </span><span class="n">JSON</span>
 <span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HTTP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-<span class="w">    </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake-catalogue/freva/file&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span><span class="s">&quot;product&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;EUR-11&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake-catalogue/freva/file"</span><span class="p">,</span>
+<span class="w">    </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">Dict</span><span class="p">(</span><span class="s">"product"</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">"EUR-11"</span><span class="p">)</span>
 <span class="p">)</span>
 <span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="kt">String</span><span class="p">(</span><span class="n">HTTP</span><span class="o">.</span><span class="n">body</span><span class="p">(</span><span class="n">response</span><span class="p">)))</span>
-<span class="n">open</span><span class="p">(</span><span class="s">&quot;intake-catalogue.json&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;w&quot;</span><span class="p">)</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="n">io</span>
+<span class="n">open</span><span class="p">(</span><span class="s">"intake-catalogue.json"</span><span class="p">,</span><span class="w"> </span><span class="s">"w"</span><span class="p">)</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="n">io</span>
 <span class="w">    </span><span class="n">write</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="w"> </span><span class="n">JSON</span><span class="o">.</span><span class="n">json</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
 <span class="k">end</span>
 </pre></div>
@@ -1387,15 +1387,15 @@ C/C++</li></ul><div class="tab codetab selected" data-id="0">
 
 <span class="w">    </span><span class="n">curl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_init</span><span class="p">();</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">curl</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">url</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake-catalogue/freva/file?product=EUR-11&quot;</span><span class="p">;</span>
+<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">url</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"https://www.freva.dkrz.de/api/freva-nextgen/databrowser/intake-catalogue/freva/file?product=EUR-11"</span><span class="p">;</span>
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_URL</span><span class="p">,</span><span class="w"> </span><span class="n">url</span><span class="p">);</span>
 
-<span class="w">        </span><span class="n">fp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fopen</span><span class="p">(</span><span class="s">&quot;intake-catalogue.json&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;w&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="n">fp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fopen</span><span class="p">(</span><span class="s">"intake-catalogue.json"</span><span class="p">,</span><span class="w"> </span><span class="s">"w"</span><span class="p">);</span>
 <span class="w">        </span><span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">curl</span><span class="p">,</span><span class="w"> </span><span class="n">CURLOPT_WRITEDATA</span><span class="p">,</span><span class="w"> </span><span class="n">fp</span><span class="p">);</span>
 
 <span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl_easy_perform</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
 <span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">res</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">CURLE_OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">            </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Error: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">curl_easy_strerror</span><span class="p">(</span><span class="n">res</span><span class="p">));</span>
+<span class="w">            </span><span class="n">printf</span><span class="p">(</span><span class="s">"Error: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="n">curl_easy_strerror</span><span class="p">(</span><span class="n">res</span><span class="p">));</span>
 <span class="w">        </span><span class="p">}</span>
 
 <span class="w">        </span><span class="n">curl_easy_cleanup</span><span class="p">(</span><span class="n">curl</span><span class="p">);</span>
@@ -1454,7 +1454,7 @@ The actual response will include more datasets in the <cite>catalog_dict</cite> 
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <dialog id="pst-secondary-sidebar-modal" tabindex="-1"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
@@ -1487,8 +1487,8 @@ The actual response will include more datasets in the <cite>catalog_dict</cite> 
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1508,8 +1508,7 @@ The actual response will include more datasets in the <cite>catalog_dict</cite> 
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
-    <br/>
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.2.0.
   </p>
 </div>
       
@@ -1522,7 +1521,7 @@ The actual response will include more datasets in the <cite>catalog_dict</cite> 
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.24.0.
 </p></div>
       
     </div>
