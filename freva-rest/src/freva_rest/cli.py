@@ -185,7 +185,7 @@ def create_arg_parser(fields: Dict[str, FieldInfo]) -> argparse.ArgumentParser:
             Union[Dict[str, str], NoneType],
             Union[Dict[str, List[str]], NoneType],
         ):
-            default = _dict_to_defaults(field.default)  # type: ignore
+            default = _dict_to_defaults(field.default)
 
             parser.add_argument(
                 *args,
@@ -199,7 +199,7 @@ def create_arg_parser(fields: Dict[str, FieldInfo]) -> argparse.ArgumentParser:
             List[str],
             Union[List[str], NoneType],
         ):
-            parser.add_argument(    # type: ignore
+            parser.add_argument(
                 *args,
                 help=field.description,
                 default=field.default or None,
