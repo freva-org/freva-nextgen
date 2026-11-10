@@ -263,7 +263,7 @@ class TestZarrReduction:
                 timeout=30,
             )
             body = res.json()
-            if body.get("status") in (3, 4):
+            if body.get("status") in (3, 4, 5):
                 time.sleep(1)
                 continue
             return str(body.get("reason", ""))
