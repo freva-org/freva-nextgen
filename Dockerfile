@@ -42,6 +42,7 @@ session required pam_sss.so\n\
        "cryptography=45.*" \
         dask \
         h5netcdf \
+        h5py \
         jq \
         platformdirs \
         netcdf4 \
