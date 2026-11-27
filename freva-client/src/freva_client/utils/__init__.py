@@ -9,7 +9,7 @@ from typing import Any, Callable, Dict, List, Literal, Optional, Union, cast
 from urllib.parse import urlsplit, urlunsplit
 
 import requests
-from py_oidc_auth_client import Config, Token, TokenStore
+from py_oidc_auth_client import Config, TokenStore
 from py_oidc_auth_client.utils import choose_token_strategy
 from rich import print as pprint
 
@@ -58,32 +58,38 @@ class AuthConfig:
 
     app_name = "freva"
 
-    def __init__(self, host: str, _redirect_ports: List[int] = []):
+    def __init__(self, host: str, _redirect_ports: Optional[List[int]] = None):
 
         self.token_db = TokenStore(app_name=self.app_name)
         host = self.get_rest_host(host)
-        kwargs: Dict[str, Union[str, List[int]]] = {"app_name": self.app_name}
-        if not _redirect_ports:
+        # A fresh list per instance: a shared default would collect the
+        # ports of every AuthConfig created in this process.
+        redirect_ports = list(_redirect_ports or [])
+        if not redirect_ports:
             try:
-                _redirect_ports += (
+                redirect_ports = (
                     requests.get(f"{host}/auth/v2/auth-ports")
                     .json()
                     .get("valid_ports", [])
                 ) or []
-                kwargs["redirect_ports"] = _redirect_ports
             except Exception:
                 pass
-        self.config = Config(host, **kwargs)
+        if redirect_ports:
+            self.config = Config(
+                host, app_name=self.app_name, redirect_ports=redirect_ports
+            )
+        else:
+            self.config = Config(host, app_name=self.app_name)
 
     @property
-    def token_strategy(self) -> Optional[Token]:
+    def token_strategy(
+        self,
+    ) -> Literal["use_token", "refresh_token", "interactive_auth", "fail"]:
         """Determine how an access token can be generated."""
         return choose_token_strategy(self.token_db.get(self.config.host) or None)
 
     @classmethod
-    def from_token_file(
-        cls, host: str, token_file: Union[str, Path]
-    ) -> "AuthConfig":
+    def from_token_file(cls, host: str, token_file: Union[str, Path]) -> "AuthConfig":
         """Create an instance of AuthConfig by adding a token to the token store."""
         store = TokenStore(app_name=cls.app_name)
         host = cls.get_rest_host(host)

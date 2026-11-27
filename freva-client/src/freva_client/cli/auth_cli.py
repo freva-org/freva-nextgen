@@ -1,8 +1,8 @@
 """Command line interface for authentication."""
 
 import json
-import os
-from typing import Optional
+from enum import Enum
+from typing import List, Optional
 
 import typer
 
@@ -10,6 +10,15 @@ from freva_client import authenticate
 from freva_client.utils import exception_handler, logger
 
 from .cli_utils import version_callback
+
+
+class LoginFlow(str, Enum):
+    """How ``freva-client auth`` logs in."""
+
+    auto = "auto"
+    device = "device"
+    code = "code"
+
 
 auth_app = typer.Typer(
     name="auth",
@@ -29,8 +38,9 @@ def authenticate_cli(
         ),
     ),
     token_file: str = typer.Option(
-        os.getenv("OIDC_TOKEN_FILE", "").strip(),
+        "",
         "--token-file",
+        envvar="OIDC_TOKEN_FILE",
         help=(
             "Instead of authenticating via code based authentication flow "
             "you can set the path to the json file that contains a "
@@ -42,6 +52,24 @@ def authenticate_cli(
         "--force",
         "-f",
         help="Force token recreation, even if current token is still valid.",
+    ),
+    scope: Optional[List[str]] = typer.Option(
+        None,
+        "--scope",
+        "-s",
+        help=(
+            "Scope to request instead of the server's default ones. Repeat "
+            "the option, or give several separated by spaces."
+        ),
+    ),
+    flow: LoginFlow = typer.Option(
+        LoginFlow.auto,
+        "--flow",
+        help=(
+            "auto: the device flow, or the browser based code flow where "
+            "the server has no device flow. device or code force one."
+        ),
+        case_sensitive=False,
     ),
     timeout: int = typer.Option(
         30,
@@ -60,8 +88,11 @@ def authenticate_cli(
     """Create OAuth2 access and refresh token."""
     logger.set_verbosity(verbose)
     token = authenticate(
+        token_file=token_file.strip() or None,
         host=host,
         force=force,
-        timeout=timeout,
+        timeout=timeout or None,
+        scopes=" ".join(scope) if scope else None,
+        flow=flow.value,
     )
     print(json.dumps(token, indent=3))
