@@ -65,4 +65,7 @@ def authenticate(
         timeout=timeout,
         store=auth.token_db,
         app_name=auth.app_name,
+        # The server's own callback ports (/auth/v2/auth-ports), which
+        # its identity provider accepts as redirect URIs.
+        redirect_ports=auth.config.redirect_ports,
     )

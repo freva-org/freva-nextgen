@@ -3,6 +3,16 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
+Unreleased
+^^^^^^^^^^
+
+Fixed
+"""""
+- ``freva-client auth --token-file`` (and ``OIDC_TOKEN_FILE``) was ignored.
+- Logins use the callback ports the server announces under
+  ``/auth/v2/auth-ports`` instead of the client library's defaults.
+- ``freva-client auth --timeout 0`` waits indefinitely, as documented.
+
 v2611.0.0
 ^^^^^^^^^
 

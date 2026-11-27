@@ -1,7 +1,6 @@
 """Command line interface for authentication."""
 
 import json
-import os
 from typing import Optional
 
 import typer
@@ -29,8 +28,9 @@ def authenticate_cli(
         ),
     ),
     token_file: str = typer.Option(
-        os.getenv("OIDC_TOKEN_FILE", "").strip(),
+        "",
         "--token-file",
+        envvar="OIDC_TOKEN_FILE",
         help=(
             "Instead of authenticating via code based authentication flow "
             "you can set the path to the json file that contains a "
@@ -60,8 +60,9 @@ def authenticate_cli(
     """Create OAuth2 access and refresh token."""
     logger.set_verbosity(verbose)
     token = authenticate(
+        token_file=token_file.strip() or None,
         host=host,
         force=force,
-        timeout=timeout,
+        timeout=timeout or None,
     )
     print(json.dumps(token, indent=3))
