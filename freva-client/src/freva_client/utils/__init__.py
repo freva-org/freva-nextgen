@@ -9,7 +9,7 @@ from typing import Any, Callable, Dict, List, Literal, Optional, Union, cast
 from urllib.parse import urlsplit, urlunsplit
 
 import requests
-from py_oidc_auth_client import Config, Token, TokenStore
+from py_oidc_auth_client import Config, TokenStore
 from py_oidc_auth_client.utils import choose_token_strategy
 from rich import print as pprint
 
@@ -62,7 +62,6 @@ class AuthConfig:
 
         self.token_db = TokenStore(app_name=self.app_name)
         host = self.get_rest_host(host)
-        kwargs: Dict[str, Union[str, List[int]]] = {"app_name": self.app_name}
         # A fresh list per instance: a shared default would collect the
         # ports of every AuthConfig created in this process.
         redirect_ports = list(_redirect_ports or [])
@@ -76,11 +75,16 @@ class AuthConfig:
             except Exception:
                 pass
         if redirect_ports:
-            kwargs["redirect_ports"] = redirect_ports
-        self.config = Config(host, **kwargs)
+            self.config = Config(
+                host, app_name=self.app_name, redirect_ports=redirect_ports
+            )
+        else:
+            self.config = Config(host, app_name=self.app_name)
 
     @property
-    def token_strategy(self) -> Optional[Token]:
+    def token_strategy(
+        self,
+    ) -> Literal["use_token", "refresh_token", "interactive_auth", "fail"]:
         """Determine how an access token can be generated."""
         return choose_token_strategy(self.token_db.get(self.config.host) or None)
 

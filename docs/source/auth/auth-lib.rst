@@ -52,6 +52,36 @@ will have two options:
        chmod 600 ~/.my_new_token.json
 
 
+Choosing the login flow and scopes
+----------------------------------
+
+By default ``freva-client auth`` logs in with the device flow: it prints a link
+and a code that you can open on any device, which also works on HPC login nodes.
+Where the server offers no device flow it falls back to the browser based code
+flow.  ``--flow`` picks one explicitly:
+
+.. code:: console
+
+    freva-client auth --flow code      # open the login page in the local browser
+    freva-client auth --flow device    # always print a link and a code
+
+``--scope`` asks for fewer scopes than the server's default ones, e.g. for a
+tool that only needs to know who you are.  Such a token is cached next to your
+normal login and never replaces it:
+
+.. code:: console
+
+    freva-client auth --scope openid email
+
+The same options exist in Python:
+
+.. code:: python
+
+    from freva_client import authenticate
+
+    token = authenticate(scopes="openid email", flow="code")
+
+
 .. warning::
 
     Avoid storing access tokens insecurely. Access tokens are sensitive and

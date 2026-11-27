@@ -100,3 +100,102 @@ class TestAuthCli:
     def test_zero_timeout_waits_indefinitely(self, runner: CliRunner) -> None:
         assert self._invoke(runner, ["--timeout", "0"])["timeout"] is None
         assert self._invoke(runner, ["--timeout", "45"])["timeout"] == 45
+
+
+class TestScopesAndFlow:
+    """authenticate(scopes=..., flow=...) and the matching CLI options."""
+
+    @pytest.fixture(autouse=True)
+    def _ports(self) -> Any:
+        with mock.patch("freva_client.utils.requests.get") as get:
+            get.return_value = _ports_response([8091])
+            yield
+
+    def test_auto_passes_scopes(self) -> None:
+        from freva_client import authenticate
+
+        with mock.patch(
+            "py_oidc_auth_client.authenticate", return_value={"access_token": "t"}
+        ) as auth:
+            authenticate(host=HOST, scopes="openid email")
+        assert auth.call_args.kwargs["scopes"] == "openid email"
+
+    @pytest.mark.parametrize("flow", ["device", "code"])
+    def test_forced_flow(self, flow: str) -> None:
+        from py_oidc_auth_client import CodeFlow, DeviceFlow
+
+        from freva_client import authenticate
+
+        cls = DeviceFlow if flow == "device" else CodeFlow
+        run = mock.AsyncMock(return_value={"access_token": "t"})
+        with mock.patch.object(cls, "authenticate", run):
+            with mock.patch("py_oidc_auth_client.authenticate") as auto:
+                token = authenticate(
+                    host=HOST, scopes=["openid"], flow=flow, force=True  # type: ignore
+                )
+        assert token == {"access_token": "t"}
+        run.assert_awaited_once_with(force=True)
+        auto.assert_not_called()
+
+    def test_forced_flow_uses_scopes_and_ports(self) -> None:
+        from py_oidc_auth_client import CodeFlow
+
+        from freva_client import authenticate
+
+        seen: Dict[str, Any] = {}
+
+        async def fake(self: CodeFlow, *, force: bool = False) -> Dict[str, str]:
+            seen["scopes"] = self.identity.scopes
+            seen["ports"] = self.provider.config.redirect_ports
+            return {"access_token": "t"}
+
+        with mock.patch.object(CodeFlow, "authenticate", fake):
+            authenticate(host=HOST, scopes="email openid", flow="code")
+        assert seen == {"scopes": ("email", "openid"), "ports": [8091]}
+
+    def test_unknown_flow(self) -> None:
+        from freva_client import authenticate
+
+        with pytest.raises(ValueError, match="Unknown login flow"):
+            authenticate(host=HOST, flow="exchange")  # type: ignore[arg-type]
+
+    def test_token_strategy_is_a_strategy_name(self) -> None:
+        assert AuthConfig(HOST).token_strategy in (
+            "use_token",
+            "refresh_token",
+            "interactive_auth",
+            "fail",
+        )
+
+    def test_cli_scope_and_flow(self) -> None:
+        with mock.patch(
+            "freva_client.cli.auth_cli.authenticate",
+            return_value={"access_token": "t"},
+        ) as auth:
+            res = CliRunner().invoke(
+                main_app,
+                [
+                    "auth",
+                    "--host",
+                    HOST,
+                    "-s",
+                    "openid",
+                    "--scope",
+                    "email profile",
+                    "--flow",
+                    "CODE",
+                ],
+            )
+        assert res.exit_code == 0, res.output
+        assert auth.call_args.kwargs["scopes"] == "openid email profile"
+        assert auth.call_args.kwargs["flow"] == "code"
+
+    def test_cli_defaults(self) -> None:
+        with mock.patch(
+            "freva_client.cli.auth_cli.authenticate",
+            return_value={"access_token": "t"},
+        ) as auth:
+            res = CliRunner().invoke(main_app, ["auth", "--host", HOST])
+        assert res.exit_code == 0, res.output
+        assert auth.call_args.kwargs["scopes"] is None
+        assert auth.call_args.kwargs["flow"] == "auto"

@@ -6,6 +6,18 @@ All notable changes to this project will be documented in this file.
 Unreleased
 ^^^^^^^^^^
 
+Added
+"""""
+- ``freva-client auth --scope`` and ``authenticate(scopes=...)`` request
+  fewer scopes than the server's default ones.
+- ``freva-client auth --flow auto|device|code`` and
+  ``authenticate(flow=...)`` choose the login flow; ``auto`` uses the
+  device flow, or the code flow where the server has none.
+
+Changed
+"""""""
+- freva-client needs ``py-oidc-auth-client>=2611.0.0``.
+
 Fixed
 """""
 - ``freva-client auth --token-file`` (and ``OIDC_TOKEN_FILE``) was ignored.
